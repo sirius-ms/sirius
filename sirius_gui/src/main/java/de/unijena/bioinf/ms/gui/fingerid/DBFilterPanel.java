@@ -38,6 +38,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static de.unijena.bioinf.fingerid.AddExternalStructureJJob.SKETCHED_DB_NAME;
+
 @Slf4j
 public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>, CustomDataSources.DataSourceChangeListener {
     public final static Set<String> NON_FILTERABLE = Set.of(
@@ -52,6 +54,8 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     protected long bitSet;
     protected List<JCheckBox> checkboxes;
     private final AtomicBoolean isRefreshing = new AtomicBoolean(false);
+
+    private JCheckBox sketchedCheckbox;
 
 
     public DBFilterPanel(StructureList sourceList) {
@@ -75,10 +79,18 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     }
 
     public void fireFilterChangeEvent() {
-        listeners.forEach(l -> l.fireFilterChanged(bitSet));
+        listeners.forEach(l -> l.fireFilterChanged(bitSet, sketchedCheckbox.isSelected()));
     }
 
     protected void addBoxes() {
+        sketchedCheckbox = new JCheckBox(SKETCHED_DB_NAME);
+        sketchedCheckbox.addChangeListener(e -> {
+            if (!isRefreshing.get()) {
+                fireFilterChangeEvent();
+            }
+        });
+        add(sketchedCheckbox);
+
         checkboxes.sort(Comparator.comparing(o -> o.getText().toUpperCase()));
 
         this.bitSet = 0L;
@@ -98,7 +110,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
         }
     }
 
-    protected void reset(InstanceBean parent) {
+    protected void reset(InstanceBean parent, List<FingerprintCandidateBean> resultElements) {
         Set<String> specifiedDBs = Optional.ofNullable(parent)
                 .map(p -> p.getSourceFeature().getTopAnnotations())
                 .map(FeatureAnnotations::getSpecifiedDatabases)
@@ -112,6 +124,8 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
                 .orElse(new HashSet<>());
 
         isRefreshing.set(true);
+        sketchedCheckbox.setSelected(false);
+        sketchedCheckbox.setVisible(resultElements.stream().anyMatch(FingerprintCandidateBean::isSketched));
         bitSet = 0;
         try {
             for (JCheckBox checkbox : checkboxes) {
@@ -123,7 +137,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
                     checkbox.setForeground(fallbackDbBgColor);
                     checkbox.setToolTipText("Was used as to expand search space by expansive search.");
                 } else {
-                    checkbox.setBackground(null);
+                    checkbox.setForeground(null);
                     checkbox.setToolTipText(null);
                 }
             }
@@ -140,7 +154,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
 
     @Override
     public void resultsChanged(InstanceBean elementsParent, FingerprintCandidateBean selectedElement, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
-        reset(elementsParent);
+        reset(elementsParent, resultElements);
     }
 
     @Override
@@ -173,6 +187,6 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     }
 
     public interface FilterChangeListener extends EventListener {
-        void fireFilterChanged(long filterSet);
+        void fireFilterChanged(long filterSet, boolean sketched);
     }
 }

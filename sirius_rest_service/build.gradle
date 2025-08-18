@@ -70,6 +70,14 @@ dependencies {
 
     implementation 'org.apache.lucene:lucene-queryparser:10.0.0'
     implementation 'org.apache.lucene:lucene-analysis-common:10.0.0'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+
+
+    implementation 'com.brightgiant:secure-api:1.2.0'
+
 }
 //todo use logback instead of java util logging! => needs support in jjobs
 configurations.each { Configuration conf ->

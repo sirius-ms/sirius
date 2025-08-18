@@ -26,8 +26,8 @@ import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.table.SiriusListCellRenderer;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
@@ -117,10 +117,10 @@ public class DatabaseDialog extends JDialog {
                         ).awaitResult();
                     } catch (ExecutionException ex) {
                         LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
-                        Jobs.runEDTLater(() -> new StacktraceDialog(DatabaseDialog.this, gui.getSiriusClient().unwrapErrorMessage(ex), ex));
+                        Jobs.runEDTLater(() -> new ErrorWithDetailsDialog(DatabaseDialog.this, gui.getSiriusClient().unwrapErrorMessage(ex), ex));
                     } catch (Exception ex2) {
                         LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB removal.", ex2);
-                        new StacktraceDialog(getOwner(), "Fatal Error during Custom DB removal.", ex2);
+                        new ErrorWithDetailsDialog(getOwner(), "Fatal Error during Custom DB removal.", ex2);
                     }
 
                     loadDatabaseList();

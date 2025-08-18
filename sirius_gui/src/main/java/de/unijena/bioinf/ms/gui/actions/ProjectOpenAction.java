@@ -25,7 +25,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.NoSQLProjectFileFilter;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -128,7 +128,7 @@ public class ProjectOpenAction extends AbstractGuiAction {
             openProjectByID(pid, closeCurrent);
         } catch (ExecutionException e) {
             LoggerFactory.getLogger(getClass()).error("Error when opening project!", e);
-            Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), gui.getSiriusClient().unwrapErrorMessage(e), e));
+            Jobs.runEDTLater(() -> new ErrorWithDetailsDialog(gui.getMainFrame(), gui.getSiriusClient().unwrapErrorMessage(e), e));
         }
     }
 

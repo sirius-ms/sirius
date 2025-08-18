@@ -26,6 +26,7 @@ import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.*;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.*;
+import de.unijena.bioinf.lcms.trace.filter.NoFilter;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
@@ -73,7 +74,9 @@ public class LCMSProcessing {
      * Determines which peaks to pick from the LCMS
      */
     @Getter @Setter private TraceDetectionStrategy traceDetectionStrategy = new CombinedTraceDetectionStrategy(
-            new PickIntensivePeaksDetectionStrategy(),
+            //new PickIntensivePeaksDetectionStrategy(),
+            new PickIntensivePeaksInConsecutiveSpectraStrategy(),
+
             new PickMsPrecursorPeakDetectionStrategy(),
             new AdductAndIsotopeBasedDetectionStrategy()
     );
@@ -106,7 +109,7 @@ public class LCMSProcessing {
     @Getter @Setter private SiriusDatabaseAdapter siriusDatabaseAdapter;
 
     @Getter @Setter private TraceSegmentationStrategy mergedTraceSegmentationStrategy =
-        new PersistentHomology();
+        new PersistentHomology(new NoFilter());
 
     @Getter @Setter private ProjectSpaceImporter<?> importer = new PickFeaturesAndImportToSirius(
             new SegmentMergedFeatures(), new MergedApexIsotopePatternExtractor(), new MergeGreedyStrategy()
@@ -435,9 +438,10 @@ public class LCMSProcessing {
                 MoI moi = new MoI(rect, segment.apex, sample.getMapping().getRetentionTimeAt(segment.apex),
                         (float) normalizer.normalize(trace.intensity(segment.apex)), sample.getUid());
 
-                if (trace.getSegments().length==1) moi.setSingleApex(true);
+                if (trace.getSegments().length==1 && !trace.isNoisyTrace()) moi.setSingleApex(true);
                 detectIsotopesForMoI(sample, trace, segment, moi);
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample, trace, moi, null));
+                if (trace.isNoisyTrace()) moi.setConfidence(Math.min(0f, moi.getConfidence()));
                 if (moi.getConfidence() >= 0) {
                     //System.out.println(moi + " intensity = " + moi.getIntensity() + ", isotopes = " + (moi.getIsotopes()==null ? 0 : moi.getIsotopes().isotopeIntensities.length) + ", confidence = "+ moi.getConfidence());
                     alignmentStorage.addMoI(moi);

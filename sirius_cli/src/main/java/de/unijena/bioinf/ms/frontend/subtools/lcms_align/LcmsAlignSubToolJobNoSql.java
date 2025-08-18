@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.LCMSProcessing;
 import de.unijena.bioinf.lcms.adducts.AdductManager;
@@ -53,6 +54,7 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectStateException;
@@ -73,10 +75,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
@@ -191,6 +190,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         setProjectTypeOrThrow(ps);
+        setProjectSourceFormats(ps);
 
         LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds, ps.getStorage().location().getParent(), inMemoryOnMerged);
         processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
@@ -381,6 +381,13 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         } finally {
             processing.closeStorages();
         }
+    }
+
+    private void setProjectSourceFormats(SiriusProjectDatabaseImpl<? extends Database<?>> ps) {
+        ProjectSourceFormats psSources = ps.findProjectSourceFormats().orElseGet(ProjectSourceFormats::new);
+        inputFiles.stream().map(Path::toString).map(FileUtils::getFileExt).filter(Objects::nonNull)
+                .forEach(psSources::addFormat);
+        ps.upsertProjectSourceFormats(psSources);
     }
 
     private void setProjectTypeOrThrow(SiriusProjectDatabaseImpl<? extends Database<?>> ps) {

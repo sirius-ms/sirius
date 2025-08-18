@@ -40,6 +40,8 @@ public enum AlignedFeatureOptField {
   
   MSDATA("msData"),
   
+  TOPANNOTATIONSSUMMARY("topAnnotationsSummary"),
+  
   TOPANNOTATIONS("topAnnotations"),
   
   TOPANNOTATIONSDENOVO("topAnnotationsDeNovo"),
@@ -71,7 +73,7 @@ public enum AlignedFeatureOptField {
         return b;
       }
     }
-    return null;
+    throw new IllegalArgumentException("Unexpected value '" + value + "'");
   }
 }
 

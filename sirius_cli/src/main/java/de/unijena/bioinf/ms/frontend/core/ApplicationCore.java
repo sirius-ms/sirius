@@ -35,9 +35,9 @@ import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.sirius.SiriusFactory;
-import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.webapi.rest.RestAPI;
+import io.sirius.ms.utils.jwt.AccessTokens;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
@@ -257,7 +257,7 @@ public abstract class ApplicationCore {
             AuthService service = ProxyManager.applyClient(c -> AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, c));
             Subscription sub = null; //web connection
             try {
-                sub = NetUtils.tryAndWait(() -> service.getToken().map(Tokens::getActiveSubscription).orElse(null),
+                sub = NetUtils.tryAndWait(() -> service.getToken().map(AccessTokens.ACCESS_TOKENS::getActiveSubscription).orElse(null),
                         () -> NetUtils.checkThreadInterrupt(Thread.currentThread()), 30000) ;
             } catch (Exception e) {
                 LoggerFactory.getLogger(ApplicationCore.class).debug("Error when refreshing token", e);

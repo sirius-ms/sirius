@@ -31,6 +31,16 @@ If you modify this Program, or any covered work, by linking or combining it with
 containing parts covered by the terms of UCSD license <https://github.com/CCMS-UCSD/GNPS_Workflows/blob/master/LICENSE>, the licensors of this Program grant you additional permission
 to convey the resulting work.
 
+Additional Permission Under AGPLv3 Section 7 (Bright Giant secure-api Exception):
+Notwithstanding any provision of the AGPLv3, the SIRIUS developers grant you permission to
+link or combine this program with the Bright Giant secure-api in unmodified form, and to
+convey the resulting combined work. As a result of this exception, the copyleft requirements of
+the AGPLv3 do not apply to the secure-api library – in particular, you are not obligated to provide
+the source code of secure-api nor license secure-api under the AGPLv3 when you distribute the
+combined work. This exception applies solely to the secure-api library licensed under
+BRIGHT GIANT PROPRIETARY LICENSE 1.0 (BGPLv1).
+It does not grant any rights to the secure-api library independently.
+
 Additional Permission Under AGPLv3 Section 7 (JxBrowser Exception):
 Notwithstanding any provision of the AGPLv3, the SIRIUS developers grant you permission to
 link or combine this program with the TeamDev JxBrowser library in unmodified form, and to

@@ -3,7 +3,7 @@
   "info": {
     "title": "SIRIUS Nightsky API",
     "description": "REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6",
-    "version": "3.1.0"
+    "version": "3.1"
   },
   "servers": [
     {
@@ -8768,6 +8768,29 @@
           }
         }
       },
+      "AllowedFeatures": {
+        "type": "object",
+        "properties": {
+          "cli": {
+            "type": "boolean"
+          },
+          "api": {
+            "type": "boolean"
+          },
+          "deNovo": {
+            "type": "boolean"
+          },
+          "importMSRuns": {
+            "type": "boolean"
+          },
+          "importPeakLists": {
+            "type": "boolean"
+          },
+          "importCef": {
+            "type": "boolean"
+          }
+        }
+      },
       "Subscription": {
         "type": "object",
         "properties": {
@@ -8839,6 +8862,9 @@
           "pp": {
             "type": "string",
             "nullable": true
+          },
+          "allowedFeatures": {
+            "$ref": "#/components/schemas/AllowedFeatures"
           }
         }
       },
@@ -9591,6 +9617,7 @@
         "enum": [
           "none",
           "msData",
+          "topAnnotationsSummary",
           "topAnnotations",
           "topAnnotationsDeNovo",
           "computedTools",

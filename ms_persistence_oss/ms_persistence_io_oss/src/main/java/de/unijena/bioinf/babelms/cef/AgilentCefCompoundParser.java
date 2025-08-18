@@ -180,11 +180,14 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
             if (ISOTOPE_PEAK_MATCHER.matcher(p.getS()).find()) {
                 LoggerFactory.getLogger(getClass()).debug("Skipping isotope peak during precursor search '{}Da' ('{}').", p.getX(), p.getS());
                 return false;
-            } else {
-                return true;
             }
+            if (Math.abs(p.getZ().intValue()) > 1) {
+                LoggerFactory.getLogger(getClass()).info("Skipping multiple charged adduct species during precursor search '{}Da' ('{}').", p.getX(), p.getS());
+                return  false;
+            }
+            return  true;
         }).forEach(p -> {
-            PrecursorIonType ionType = PrecursorIonType.fromString("[" + p.getS() + "]" + mfe.getMSDetails().p);
+            PrecursorIonType ionType = PrecursorIonType.fromString("[" + p.getS() + "]" + Math.abs(p.getZ().intValue()) + mfe.getMSDetails().p);
             Feature f = Feature.builder()
                     .averageMass(p.getX().doubleValue())
                     .apexMass(p.getX().doubleValue())

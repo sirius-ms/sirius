@@ -31,9 +31,9 @@ import de.unijena.bioinf.ms.annotations.Provides;
 import de.unijena.bioinf.ms.annotations.Requires;
 import de.unijena.bioinf.sirius.deisotope.IsotopePatternDetection;
 import de.unijena.bioinf.sirius.deisotope.TargetedIsotopePatternDetection;
-import de.unijena.bioinf.sirius.elementdetection.DeepNeuralNetworkElementDetector;
 import de.unijena.bioinf.sirius.elementdetection.DetectedFormulaConstraints;
 import de.unijena.bioinf.sirius.elementdetection.ElementDetection;
+import de.unijena.bioinf.sirius.elementdetection.TransformerElementDetector;
 import de.unijena.bioinf.sirius.iondetection.DetectIonsFromMs1;
 import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import de.unijena.bioinf.sirius.validation.Ms1Validator;
@@ -52,7 +52,7 @@ import static java.util.function.Predicate.not;
  */
 public class Ms1Preprocessor implements SiriusPreprocessor {
     protected Ms2ExperimentValidator validator = new Ms1Validator();
-    protected ElementDetection elementDetection = new DeepNeuralNetworkElementDetector();
+    protected ElementDetection elementDetection = new TransformerElementDetector();
     protected DetectIonsFromMs1 ms1IonAdductDetection = new DetectIonsFromMs1();
     protected Ms1Merging ms1Merging = new Ms1Merging();
     protected IsotopePatternDetection deisotoper = new TargetedIsotopePatternDetection();

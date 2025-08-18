@@ -5,6 +5,7 @@ All URIs are relative to *http://localhost:8888*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**addAlignedFeatures**](FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project. |
+| [**addDeNovoStructureCandidate**](FeaturesApi.md#addDeNovoStructureCandidate) | **PUT** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. |
 | [**addTagsToAlignedFeatureExperimental**](FeaturesApi.md#addTagsToAlignedFeatureExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project |
 | [**deleteAlignedFeature**](FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**deleteAlignedFeatures**](FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
@@ -121,6 +122,76 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | the Features that have been imported with specified optional fields |  -  |
+
+
+## addDeNovoStructureCandidate
+
+> List&lt;StructureCandidateFormula&gt; addDeNovoStructureCandidate(projectId, alignedFeatureId, smiles)
+
+[EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
+
+[EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
+        String smiles = "none"; // String | smiles
+        try {
+            List<StructureCandidateFormula> result = apiInstance.addDeNovoStructureCandidate(projectId, alignedFeatureId, smiles);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#addDeNovoStructureCandidate");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
+| **smiles** | **String**| smiles | [optional] [default to none] |
+
+### Return type
+
+[**List&lt;StructureCandidateFormula&gt;**](StructureCandidateFormula.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | StructureCandidate of this feature candidate with specified optional fields. |  -  |
 
 
 ## addTagsToAlignedFeatureExperimental

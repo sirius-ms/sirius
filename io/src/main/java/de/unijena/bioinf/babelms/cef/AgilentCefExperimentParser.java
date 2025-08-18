@@ -168,13 +168,16 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
             if (ISOTOPE_PEAK_MATCHER.matcher(p.getS()).find()) {
                 log.debug("Skipping isotope peak during precursor search '{}Da' ('{}').", p.getX(), p.getS());
                 return false;
-            } else {
-                return true;
             }
+            if (Math.abs(p.getZ().intValue()) > 1) {
+                log.info("Skipping multiple charged adduct species during precursor search '{}Da' ('{}').", p.getX(), p.getS());
+                return  false;
+            }
+            return  true;
         }).forEach(p -> {
             MutableMs2Experiment exp = new MutableMs2Experiment();
             exp.setIonMass(p.getX().doubleValue());
-            exp.setPrecursorIonType(PrecursorIonType.fromString("[" + p.getS() + "]" + mfe.getMSDetails().p));
+            exp.setPrecursorIonType(PrecursorIonType.fromString("[" + p.getS() + "]" + Math.abs(p.getZ().intValue()) + mfe.getMSDetails().p));
             siriusCompounds.add(experimentFromCompound(compound, exp));
         });
 

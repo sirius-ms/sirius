@@ -63,6 +63,7 @@ import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueFormatter;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
@@ -133,9 +134,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (searchService != null) {
             storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.addTagDefinition(projectId, tagDef));
             storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.removeTagDefinition(projectId, tagDef.getTagName()));
-
-            StopWatch stopWatch = new StopWatch();
-            stopWatch.start();
             searchService.indexProject(projectId, projectSpaceManager.getProject());
         }
     }
@@ -1060,6 +1058,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
         if (optFields.contains(AlignedFeature.OptField.topAnnotations))
             builder.topAnnotations(extractTopCsiNovoAnnotations(features.getAlignedFeatureId()));
+        else if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary)) {
+            builder.topAnnotations(extractTopAnnotationsSummary(features.getAlignedFeatureId()));
+        }
         if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
             builder.topAnnotationsDeNovo(extractTopDeNovoAnnotations(features.getAlignedFeatureId()));
         if (optFields.contains(AlignedFeature.OptField.computedTools))
@@ -1193,39 +1194,53 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private FeatureAnnotations extractTopDeNovoAnnotations(long longAFIf) {
         return extractTopAnnotations(longAFIf, DenovoStructureMatch.class);
-
     }
 
     @SneakyThrows
-    private FeatureAnnotations extractTopAnnotations(long longAFIf, Class<? extends StructureMatch> clzz) {
+    private FeatureAnnotations extractTopAnnotationsSummary(long longAFIf) {
         final FeatureAnnotations cSum = new FeatureAnnotations();
 
-        StructureMatch structureMatch = project().findTopStructureMatchByFeatureId(longAFIf, clzz).orElse(null);
+        storage().getByPrimaryKey(longAFIf, CsiStructureSearchResult.class).ifPresent(structureSearchResult -> {
+            cSum.setConfidenceExactMatch(structureSearchResult.getConfidenceExact());
+            cSum.setConfidenceApproxMatch(structureSearchResult.getConfidenceApprox());
+            cSum.setExpansiveSearchState(structureSearchResult.getExpansiveSearchConfidenceMode());
+            cSum.setSpecifiedDatabases(structureSearchResult.getSpecifiedDatabases());
+            cSum.setExpandedDatabases(structureSearchResult.getExpandedDatabases());
+        });
+
+        return cSum;
+    }
+
+    @SneakyThrows
+    private FeatureAnnotations extractTopAnnotations(long longAFIf, @NotNull Class<? extends StructureMatch> clzz) {
+        final FeatureAnnotations cSum = new FeatureAnnotations();
+
+        @Nullable CsiStructureSearchResult structureSearchResult = null;
+        if (clzz == CsiStructureMatch.class)
+            structureSearchResult = storage().getByPrimaryKey(longAFIf, CsiStructureSearchResult.class)
+                    .orElse(null);
+
+        if (structureSearchResult != null) {
+            cSum.setConfidenceExactMatch(structureSearchResult.getConfidenceExact());
+            cSum.setConfidenceApproxMatch(structureSearchResult.getConfidenceApprox());
+            cSum.setExpansiveSearchState(structureSearchResult.getExpansiveSearchConfidenceMode());
+            cSum.setSpecifiedDatabases(structureSearchResult.getSpecifiedDatabases());
+            cSum.setExpandedDatabases(structureSearchResult.getExpandedDatabases());
+        }
 
         de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate formulaCandidate;
+
+        StructureMatch structureMatch = (clzz != CsiStructureMatch.class || structureSearchResult != null)
+                ? project().findTopStructureMatchByFeatureId(longAFIf, clzz).orElse(null)
+                : null;
+
         if (structureMatch != null) {
             formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
                     .orElseThrow();
-
             //set Structure match
             cSum.setStructureAnnotation(convertStructureMatch(structureMatch, EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.libraryMatches)));
-
-            if (structureMatch instanceof CsiStructureMatch) //csi only but not denovo
-                storage().getByPrimaryKey(longAFIf, CsiStructureSearchResult.class)
-                        .ifPresent(it -> {
-                            cSum.setConfidenceExactMatch(it.getConfidenceExact());
-                            cSum.setConfidenceApproxMatch(it.getConfidenceApprox());
-                            cSum.setExpansiveSearchState(it.getExpansiveSearchConfidenceMode());
-                            cSum.setSpecifiedDatabases(it.getSpecifiedDatabases());
-                            cSum.setExpandedDatabases(it.getExpandedDatabases());
-                        });
         } else {
-            formulaCandidate = storage().findStr(
-                            Filter.and(
-                                    Filter.where("alignedFeatureId").eq(longAFIf),
-                                    Filter.where("formulaRank").eq(1)
-                            ), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
-                    .findFirst().orElse(null);
+            formulaCandidate = project().findTopFormulaCandidateByFeatureId(longAFIf).orElse(null);
         }
 
         //get Canopus result. either for
@@ -1346,7 +1361,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+    public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures, @NotNull String importSource) {
         setProjectTypeOrThrow(project());
         List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream()
                 .peek(ci -> {
@@ -1366,6 +1381,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             return Collections.emptyList();
 
         project().importCompounds(dbc);
+
+        // specify the source of the direct import. e.g. to specify an explorer source.
+        ProjectSourceFormats format = project().findProjectSourceFormats().map(m -> {
+            m.addDirectImport(importSource);
+            return m;
+        }).orElse(ProjectSourceFormats.fromDirectImports(importSource));
+        project().upsertProjectSourceFormats(format);
+
         return dbc.stream().map(c -> convertToApiCompound(c, false, optFields, optFieldsFeatures)).toList();
     }
 
@@ -1450,9 +1473,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * @return imported features with selected opt fields and UUIDs for features and compounds.
      */
     @Override
-    public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields, @NotNull String importSource) {
         List<CompoundImport> cis = features.stream().map(f -> CompoundImport.builder().name(f.getName()).features(List.of(f)).build()).toList();
-        return addCompounds(cis, profile, EnumSet.of(Compound.OptField.none), optFields).stream()
+        return addCompounds(cis, profile, EnumSet.of(Compound.OptField.none), optFields, importSource).stream()
                 .flatMap(c -> c.getFeatures().stream()).toList();
     }
 
@@ -2293,6 +2316,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                         throw new ResponseStatusException(BAD_REQUEST, "Tree exists but FormulaID does not belong to the requested FeatureID. Are you using the correct Ids?");
                     return new FTJsonWriter().treeToJsonString(ftreeRes.getFTree());
                 }).orElse(null);
+    }
+
+    @Override
+    public Optional<ProjectType> getProjectType() {
+        return project().findProjectType();
+    }
+
+    @Override
+    public Optional<ProjectSourceFormats> getProjectSourceFormats() {
+        return project().findProjectSourceFormats();
     }
 
     private <T> Stream<T> findPageStr(Class<T> clz, Pageable pageable, Function<Sort,
