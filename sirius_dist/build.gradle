@@ -15,7 +15,7 @@ dependencies {
 version = siriusFrontendVersion
 
 enum DistJRE {
-    LIBERICA, JBR_JCEF
+    LIBERICA, JBR_JCEF, MICROSOFT, ZULU_JRE, ZULU_JDK, TEMURIN
 }
 
 ext {
@@ -45,26 +45,42 @@ ext {
     }
 
     // configure infos for bundled JRE
-    def distJre = DistJRE.LIBERICA;
-    jre_version = '21.0.7'
+    def distJre = siriusTargetPlatform.isWin() ? DistJRE.MICROSOFT : DistJRE.TEMURIN
+    jre_version = '21.0.8'
     jre_major = jre_version.split("[.]")[0]
 
     switch (distJre) {
         case DistJRE.LIBERICA:
-            // liberica config
             jre_distributor_version = "$jre_version+9"
             jre_mac_prefix = null
-            jre_fname = "bellsoft-jre${jre_distributor_version}-${siriusTargetPlatform.bellsoftClassifier().get()}${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
-//            jre_fname = "bellsoft-jre${jre_distributor_version}-${siriusTargetPlatform.bellsoftClassifier().get()}-full${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
+            jre_fname = "bellsoft-jre${jre_distributor_version}-${siriusTargetPlatform.bellsoftClassifier().get()}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
             jre_download_base_link = "https://download.bell-sw.com/java/${jre_distributor_version}/"
             break
         case DistJRE.JBR_JCEF:
-            //jbr config
             jre_distributor_version = 'b1020.35'
             jre_mac_prefix = "Contents/Home"
             jre_fname = "jbr_jcef-${jre_version}-${siriusTargetPlatform.jbrClassifier().get()}-${jre_distributor_version}.tar.gz"
             jre_download_base_link = "https://cache-redirector.jetbrains.com/intellij-jbr/"
             break
+        case DistJRE.ZULU_JRE:
+            jre_distributor_version = '21.44.17'
+            jre_mac_prefix = "zulu-${jre_major}.jre/Contents/Home"
+            jre_fname = "zulu${jre_distributor_version}-ca-jre${jre_version}-${siriusTargetPlatform.zuluClassifier().get()}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
+            jre_download_base_link = "https://cdn.azul.com/zulu/bin/"
+            break
+        case DistJRE.TEMURIN:
+            //https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.8%2B9/OpenJDK21U-jre_x64_mac_hotspot_21.0.8_9.tar.gz
+            jre_mac_prefix = "Contents/Home"
+            jre_distributor_version = "9"
+            jre_fname = "jdk-${jre_version}%2B9/OpenJDK21U-jre_${siriusTargetPlatform.adoptClassifier().get()}_hotspot_${jre_version}_${jre_distributor_version}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
+            jre_download_base_link = "https://github.com/adoptium/temurin21-binaries/releases/download/"
+            break;
+        case DistJRE.MICROSOFT:
+            //https://aka.ms/download-jdk/microsoft-jdk-21.0.8-windows-aarch64.zip
+            jre_mac_prefix = null
+            jre_fname = "microsoft-jdk-${jre_version}-${siriusTargetPlatform.msClassifier().get()}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
+            jre_download_base_link = "https://aka.ms/download-jdk/"
+            break;
     }
     jre_download_link = "${jre_download_base_link}${jre_fname}"
 }

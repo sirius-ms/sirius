@@ -99,6 +99,8 @@ jobs:
           files-folder: ./sirius_dist/sirius_gui_dist/build/jpDists/
           files-folder-filter: msi
           file-digest: SHA256
+          # This value is shown as application name when windows asks for install permission.
+          description: 'SIRIUS Installer'
 
       - name: Upload Distributions
         uses: actions/upload-artifact@v4

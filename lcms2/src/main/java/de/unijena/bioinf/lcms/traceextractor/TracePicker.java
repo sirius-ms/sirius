@@ -157,7 +157,11 @@ public class TracePicker {
         return detected.map(x->{ // TODO: evtl. hier schon points of interests einfügen
             //
             x.setSegments(segmentationStrategy.detectSegments(storage.getStatistics(), x, new int[0]).toArray(TraceSegment[]::new));
-            if (x.getSegments().length==0) x.setSegments(new TraceSegment[]{new TraceSegment(x.apex(), x.startId(), x.endId())});
+            if (x.getSegments().length==0) {
+                x.setSegments(new TraceSegment[]{new TraceSegment(x.apex(), x.startId(), x.endId())});
+                x.setNoisyTrace(true);
+            }
+
             return cache.addTraceToCache(x);
         });
     }

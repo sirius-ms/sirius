@@ -20,7 +20,7 @@
 package de.unijena.bioinf.ms.gui.mainframe;
 
 import ca.odell.glazedlists.EventList;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
@@ -87,7 +87,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return compoundList.getCompoundList();
     }
 
-    public DefaultEventSelectionModel<InstanceBean> getCompoundListSelectionModel() {
+    public AdvancedListSelectionModel<InstanceBean> getCompoundListSelectionModel() {
         return compoundList.getCompoundListSelectionModel();
     }
 

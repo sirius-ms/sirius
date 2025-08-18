@@ -32,11 +32,11 @@ import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingCache;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.BinaryFingerprint;
 import io.sirius.ms.sdk.model.DBLink;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchSummary;
 import io.sirius.ms.sdk.model.StructureCandidateFormula;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import it.unimi.dsi.fastutil.shorts.ShortList;
 import lombok.Getter;
@@ -57,10 +57,13 @@ import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.fingerid.AddExternalStructureJJob.SKETCHED_DB_NAME;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -114,6 +117,8 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected final DatabaseLabel bestRefMatchLabel;
     @Nullable
     protected final EmptyLabel moreRefMatchesLabel;
+
+    protected Rectangle moleculeImageBounds;
 
     protected boolean atomCoordinatesAreComputed = false;
     protected ReentrantLock compoundLock = new ReentrantLock();
@@ -299,6 +304,12 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                 .map(s -> s.stream().map(DBLink::getName).collect(toList()))
                 .map(CustomDataSources::getDBFlagsFromNames)
                 .orElse(0L);
+    }
+
+    public boolean isSketched() {
+        return Optional.ofNullable(candidate.getDbLinks())
+                .map(links -> links.stream().anyMatch(link -> SKETCHED_DB_NAME.equals(link.getName())))
+                .orElse(false);
     }
 
     public String getMolecularFormula() {

@@ -102,6 +102,12 @@ public class SpectralUtils {
                 if (saf.additionalFields().containsKey("instrument_type")) b.instrumentType(saf.additionalFields().get("instrument_type"));
                 if (saf.additionalFields().containsKey("instrument")) b.instrument(saf.additionalFields().get("instrument"));
                 if (saf.additionalFields().containsKey("ce")) b.ce(saf.additionalFields().get("ce"));
+                if (saf.additionalFields().containsKey("url")) {
+                    b.url(saf.additionalFields().get("url"));
+                }
+                if (saf.additionalFields().containsKey("accession")) {
+                    b.libraryId(saf.additionalFields().get("accession"));
+                }
             }
 
             experiment.getAnnotation(Splash.class).ifPresentOrElse((splash -> b.splash(splash.getSplash())), () -> {
@@ -119,7 +125,6 @@ public class SpectralUtils {
                     if (fields.containsKey(MassbankFormat.ACCESSION.k())) {
                         b.libraryId(fields.get(MassbankFormat.ACCESSION.k()));
                     }
-                
             }
 
             return b.build();
