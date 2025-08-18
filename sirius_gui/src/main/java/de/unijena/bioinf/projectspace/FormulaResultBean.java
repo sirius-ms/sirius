@@ -30,13 +30,13 @@ import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.*;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
@@ -50,7 +50,6 @@ import java.util.stream.Stream;
  */
 public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBean>, DataAnnotation {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
-    private final PropertyChangeListener listener;
 
     private final InstanceBean parentInstance;
 
@@ -66,6 +65,10 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     private Pair<CompoundClasses, CanopusPrediction> canopusResults;
     private Optional<String> ftreeJson;
 
+    @Getter
+    @Setter(AccessLevel.PACKAGE)
+    boolean isTopStructureFormula = false;
+
 
     @Override
     public HiddenChangeSupport pcs() {
@@ -76,7 +79,6 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         this.formulaId = null;
         this.sourceCandidate = null;
         this.parentInstance = null;
-        listener = null;
         //dummy constructor
     }
 
@@ -95,30 +97,6 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
         if (sourceCandidate != null)
             assert sourceCandidate.getFormulaId().equals(formulaId);
-        this.listener = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getNewValue() != null && evt.getNewValue() instanceof ProjectChangeEvent pce) {
-                    if (sourceCandidate.getFormulaId().equals(pce.getFormulaId())) {
-                        if (pce.getEventType() == ProjectEventType.RESULT_UPDATED) {
-                            synchronized (FormulaResultBean.this) {
-                                FormulaResultBean.this.sourceCandidate = null;
-                                FormulaResultBean.this.canopusResults = null;
-                                FormulaResultBean.this.fp = null;
-                                FormulaResultBean.this.lipidAnnotation = null;
-                                FormulaResultBean.this.isotopePatterAnnotation = null;
-                                FormulaResultBean.this.fragmentationTree = null;
-                                FormulaResultBean.this.ftreeJson = null;
-                            }
-                            pcs.firePropertyChange("formulaResult.update", null, pce);
-                        }
-                    } else {
-                        LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong formula id! Id is {} instead of {}!", pce.getFormulaId(), getFormulaId());
-                    }
-                }
-            }
-        };
-        registerProjectSpaceListeners();
     }
 
     public SiriusClient getClient() {
@@ -161,14 +139,6 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     @NotNull
     public String getFormulaId() {
         return formulaId;
-    }
-
-    public void registerProjectSpaceListeners() {
-        parentInstance.addPropertyChangeListener("instance.updateFormulaResult." + getFormulaId(), listener);
-    }
-
-    public void unregisterProjectSpaceListeners() {
-        parentInstance.removePropertyChangeListener("instance.updateFormulaResult." + getFormulaId(), listener);
     }
 
     private synchronized <R> R withIds(TriFunction<String, String, String, R> doWithClient) {

@@ -23,7 +23,7 @@ import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.NoSQLProjectFileFilter;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ErrorReportingDocumentListener;
@@ -201,7 +201,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
                 onSuccess.accept(projectName, selectedFile.toPath());
 
             } catch (Exception e) {
-                Jobs.runEDTLater(() -> new StacktraceDialog(mainFrame, e.getMessage(), e));
+                Jobs.runEDTLater(() -> new ErrorWithDetailsDialog(mainFrame, e.getMessage(), e));
             }
         }
     }
@@ -238,7 +238,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
             openProjectByID(pid, closeCurrent);
         } catch (ExecutionException e) {
             LoggerFactory.getLogger(getClass()).error("Error when creating new project!", e);
-            Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), "Error when creating new project!", e));
+            Jobs.runEDTLater(() -> new ErrorWithDetailsDialog(gui.getMainFrame(), "Error when creating new project!", e));
         }
     }
 

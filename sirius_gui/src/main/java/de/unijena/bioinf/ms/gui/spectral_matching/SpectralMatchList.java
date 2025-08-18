@@ -21,7 +21,7 @@
 package de.unijena.bioinf.ms.gui.spectral_matching;
 
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -50,7 +50,6 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
     private JJob<Boolean> backgroundLoader = null;
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
-    private InstanceBean instanceBean;
     @Getter
     private FingerprintCandidateBean fingerprintCandidateBean;
     private boolean loadAll = false;
@@ -72,13 +71,11 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         this.gui = compoundList.getGui();
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+            public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {
                 if (!selection.isSelectionEmpty()) {
                     while (event.next()) {
                         if (selection.isSelectedIndex(event.getIndex())) {
-                            instanceBean = selection.getSelected().getFirst();
-                            fingerprintCandidateBean = null;
-                            reloadData();
+                            changeData(selection.getSelected().getFirst(), null);
                             return;
                         }
                     }
@@ -86,48 +83,15 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
-                if (!selected.isEmpty()) {
-                    instanceBean = selected.getFirst();
-                } else {
-                    instanceBean = null;
-                }
-                fingerprintCandidateBean = null;
-                reloadData();
+            public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+                changeData(!selected.isEmpty() ? selected.getFirst() : null, null);
+
             }
         });
 
         //set initial state because listeners are called on change and not on creation
-        DefaultEventSelectionModel<InstanceBean> m = compoundList.getCompoundListSelectionModel();
-        if (!m.isSelectionEmpty()) {
-            this.instanceBean = m.getSelected().iterator().next();
-            this.fingerprintCandidateBean = null;
-        } else {
-            this.instanceBean = null;
-            this.fingerprintCandidateBean = null;
-        }
-        reloadData();
-    }
-
-    public SpectralMatchList(final InstanceBean instanceBean, final FingerprintCandidateBean candidateBean, SiriusGui gui) {
-        super(SpectralMatchBean.class);
-        this.similarityStats = new DoubleListStats();
-        this.sharedPeaksStats = new DoubleListStats();
-        this.gui = gui;
-
-        this.instanceBean = instanceBean;
-        this.fingerprintCandidateBean = candidateBean;
-        reloadData();
-    }
-
-    public List<SpectralMatchBean> getMatchBeanGroup(long refSpecUUID) {
-        if (fingerprintCandidateBean != null) {
-            return loadAll ? fingerprintCandidateBean.getSpectralMatchGroup(refSpecUUID) : fingerprintCandidateBean.getSpectralMatchGroupFromTop(refSpecUUID);
-        } else if (instanceBean != null) {
-            return loadAll ? instanceBean.getSpectralMatchGroup(refSpecUUID) : instanceBean.getSpectralMatchGroupFromTop(refSpecUUID);
-        } else {
-            return List.of();
-        }
+        AdvancedListSelectionModel<InstanceBean> m = compoundList.getCompoundListSelectionModel();
+        changeData(!m.isSelectionEmpty() ? m.getSelected().iterator().next() : null, null);
     }
 
     public void addSizeChangedListener(BiConsumer<Integer, Integer> listener) {
@@ -139,6 +103,10 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
     }
 
     public void reloadData() {
+        changeData(data, fingerprintCandidateBean);
+    }
+
+    private void changeData(InstanceBean instanceBean, FingerprintCandidateBean fingerprintCandidateBean) {
         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
         try {
             backgroundLoaderLock.lock();
@@ -151,6 +119,13 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
                         old.cancel(false);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
+                    checkForInterruption();
+
+                    Jobs.runEDTAndWait(() -> {
+                        setDataEDT(instanceBean);
+                        SpectralMatchList.this.fingerprintCandidateBean = fingerprintCandidateBean;
+                    });
+
                     checkForInterruption();
 
                     List<SpectralMatchBean> beans;

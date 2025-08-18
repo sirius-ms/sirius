@@ -53,8 +53,11 @@ import java.util.Optional;
 
 public class ResultPanel extends JTabbedPane {
 
+    public static final String DENOVO_TAB_TITLE = "De Novo Structures";
+
     protected static final Logger logger = LoggerFactory.getLogger(ResultPanel.class);
 
+    @Getter
     private final CompoundList compoundList;
     private final SiriusGui gui;
 
@@ -62,6 +65,7 @@ public class ResultPanel extends JTabbedPane {
 
     private LCMSViewerPanel lcmsTab;
     private final CandidateListDetailViewPanel structuresTab;
+    @Getter
     private final DeNovoStructureListDetailViewPanel deNovoStructuresTab;
     @Getter
     private final EpimetheusPanel structureAnnoTab;
@@ -151,7 +155,7 @@ public class ResultPanel extends JTabbedPane {
         // combined denovo structure db search tabs
         combinedStructureListDeNovoView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
         deNovoStructuresTab = new DeNovoStructureListDetailViewPanel(this, combinedStructureListDeNovoView, gui);
-        addTab("De Novo Structures", null, deNovoStructuresTab, deNovoStructuresTab.getDescription());
+        addTab(DENOVO_TAB_TITLE, null, deNovoStructuresTab, deNovoStructuresTab.getDescription());
 
         // substructure annotation tab
         combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
@@ -266,6 +270,13 @@ public class ResultPanel extends JTabbedPane {
         }
         if (!show && idx >= 0) {
             removeTabAt(idx);
+        }
+    }
+
+    public void selectDeNovoTab() {
+        int deNovoTabIndex = indexOfTab(DENOVO_TAB_TITLE);
+        if (deNovoTabIndex >= 0) {
+            setSelectedIndex(deNovoTabIndex);
         }
     }
 }

@@ -29,7 +29,6 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.rest.ProxyManager;
-import de.unijena.bioinf.webapi.Tokens;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +41,8 @@ import java.awt.event.ActionListener;
 import java.net.URI;
 import java.util.Optional;
 import java.util.Properties;
+
+import static io.sirius.ms.utils.jwt.AccessTokens.ACCESS_TOKENS;
 
 
 /**
@@ -167,7 +168,7 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
                 ApplicationCore.WEB_API.changeActiveSubscription(
                         ApplicationCore.WEB_API.getAuthService().getToken()
-                                .map(Tokens::getActiveSubscription).orElse(null));
+                                .map(ACCESS_TOKENS::getActiveSubscription).orElse(null));
             });
 
         } catch (Exception e) {

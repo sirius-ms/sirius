@@ -9,6 +9,7 @@ docs/AggregationType.md
 docs/AlignedFeature.md
 docs/AlignedFeatureOptField.md
 docs/AlignedFeatureQualityExperimental.md
+docs/AllowedFeatures.md
 docs/AnnotatedMsMsData.md
 docs/AnnotatedPeak.md
 docs/AnnotatedSpectrum.md
@@ -55,7 +56,6 @@ docs/FormulaCandidate.md
 docs/FormulaCandidateOptField.md
 docs/FragmentNode.md
 docs/FragmentationTree.md
-docs/GuiAdvancedApi.md
 docs/GuiApi.md
 docs/GuiInfo.md
 docs/ImportResult.md
@@ -153,7 +153,6 @@ src/main/java/io/sirius/ms/sdk/api/CompoundStatisticsApi.java
 src/main/java/io/sirius/ms/sdk/api/CompoundsApi.java
 src/main/java/io/sirius/ms/sdk/api/FeatureStatisticsApi.java
 src/main/java/io/sirius/ms/sdk/api/FeaturesApi.java
-src/main/java/io/sirius/ms/sdk/api/GuiAdvancedApi.java
 src/main/java/io/sirius/ms/sdk/api/GuiApi.java
 src/main/java/io/sirius/ms/sdk/api/InfoApi.java
 src/main/java/io/sirius/ms/sdk/api/JobsApi.java
@@ -180,6 +179,7 @@ src/main/java/io/sirius/ms/sdk/model/AggregationType.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeature.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureOptField.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureQualityExperimental.java
+src/main/java/io/sirius/ms/sdk/model/AllowedFeatures.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedMsMsData.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedPeak.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedSpectrum.java

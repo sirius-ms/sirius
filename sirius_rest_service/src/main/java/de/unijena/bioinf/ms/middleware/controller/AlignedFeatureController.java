@@ -39,11 +39,13 @@ import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.security.Authorities;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.spectraldb.SpectrumType;
@@ -65,12 +67,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrBlank;
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
@@ -163,7 +167,11 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
                                                    @RequestParam(required = false) InstrumentProfile profile,
                                                    @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        List<AlignedFeature> importedFeatures = projectsProvider.getProjectOrThrow(projectId).addAlignedFeatures(features, profile, removeNone(optFields));
+        String directImportSource = Authorities.hasAuthority(Authorities.BYPASS__EXPLORER,  SecurityContextHolder.getContext().getAuthentication())
+                ? ProjectSourceFormats.EXPLORER_DIRECT_IMPORT : ProjectSourceFormats.GENERIC_DIRECT_IMPORT;
+
+        List<AlignedFeature> importedFeatures = projectsProvider.getProjectOrThrow(projectId)
+                .addAlignedFeatures(features, profile, removeNone(optFields), directImportSource);
 
         // Prepare and Send SSE Event
         List<String> fids = importedFeatures.stream().map(AlignedFeature::getAlignedFeatureId).toList();
@@ -826,9 +834,11 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
     public IsotopePatternAnnotation getIsotopePatternAnnotation(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
-        IsotopePatternAnnotation res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, false, FormulaCandidate.OptField.isotopePattern)
-                .getIsotopePatternAnnotation();
+        FormulaCandidate fc = projectsProvider.getProjectOrThrow(projectId)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, false, FormulaCandidate.OptField.isotopePattern);
+
+        IsotopePatternAnnotation res = fc != null ? fc.getIsotopePatternAnnotation() : null;
+
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Isotope Pattern for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return res;
@@ -1181,8 +1191,9 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     private boolean existingStructureCandidate(Project<?> project, String alignedFeatureId, String smiles) throws CDKException {
         String inchiKey = InChISMILESUtils.getInchiFromSmiles(smiles, false).key.substring(0, 14);
 
-        return project.findStructureCandidatesByFeatureId(alignedFeatureId, Pageable.unpaged()).stream()
-                .map(c -> c.getInchiKey().substring(0, 14))
+        return Stream.concat(project.findStructureCandidatesByFeatureId(alignedFeatureId, Pageable.unpaged()).stream(),
+                             project.findDeNovoStructureCandidatesByFeatureId(alignedFeatureId, Pageable.unpaged()).stream())
+                .map(StructureCandidate::getInchiKey)
                 .anyMatch(inchiKey::equals);
     }
 

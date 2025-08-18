@@ -96,7 +96,8 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
         setVisible(false);
         this.lipidSpecies = null;
         if (elementsParent != null) {
-            this.lipidSpecies = elementsParent.getFormulaAnnotationAsBean().map(b -> b.getLipidAnnotation().orElse(null)).orElse(null);
+            this.lipidSpecies = elementsParent.getFormulaAnnotation()
+                    .map(b -> b.getLipidAnnotation().orElse(null)).orElse(null);
             if (this.lipidSpecies != null && lipidSpecies.getLipidSpecies() != null){
                 setText("<html>" +
                         "<b>" + lipidSpecies.getLipidSpecies() + "</b>" +

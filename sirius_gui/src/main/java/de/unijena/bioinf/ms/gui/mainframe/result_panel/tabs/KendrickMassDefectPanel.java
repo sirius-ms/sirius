@@ -1,13 +1,13 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
-import de.unijena.bioinf.ms.gui.webView.BrowserPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.gui.webView.BrowserPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,12 +32,12 @@ public class KendrickMassDefectPanel extends JPanel implements ExperimentListCha
     }
 
     @Override
-    public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+    public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {
         //selection change will also happen if list change affects selection
     }
 
     @Override
-    public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+    public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
         browserPanel.updateSelectedFeature(selected == null || selected.isEmpty() ? null
                 : selected.getFirst().getFeatureId());
     }

@@ -73,6 +73,12 @@ public class Subscription {
     @Schema(nullable = true)
     private String pp;
 
+    /**
+     * Specifies the software features that are available via this subscription.
+     * Features not specified here are always active.
+     */
+    private AllowedFeatures allowedFeatures;
+
     @JsonIgnore
     public boolean hasCompoundLimit() {
         Integer l = getCompoundLimit();
@@ -85,9 +91,26 @@ public class Subscription {
     }
 
     @JsonIgnore
+    public boolean hasStartTime(){
+        return getStartDate() != null;
+    }
+
+    @JsonIgnore
     public boolean isExpired() {
         if (!hasExpirationTime())
             return false;
         return getExpirationDate().getTime() < System.currentTimeMillis();
+    }
+
+    @JsonIgnore
+    public boolean isNotStarted() {
+        if (!hasStartTime())
+            return false;
+        return getStartDate().getTime() > System.currentTimeMillis();
+    }
+
+    @JsonIgnore
+    public boolean isNotStartedOrExpired() {
+        return isNotStarted() || isExpired();
     }
 }
