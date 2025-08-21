@@ -22,7 +22,11 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -52,12 +56,16 @@ public class LcmsSubmissionParameters {
      * Maximal allowed mass deviation for peaks in ms1 to be considered as belonging to the same trace.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "null")
+    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonDeserialize(using = SimpleSerializers.DeviationDeserializer.class)
     protected Deviation traceMaxMassDeviation = null;
 
     /**
      * Maximal allowed mass deviation for aligning features. If not specified, this parameter is estimated from data.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "null")
+    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonDeserialize(using = SimpleSerializers.DeviationDeserializer.class)
     protected Deviation alignMaxMassDeviation = null;
 
     /**
