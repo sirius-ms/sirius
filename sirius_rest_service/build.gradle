@@ -1,3 +1,6 @@
+import java.nio.file.Files
+import java.util.stream.Collectors
+
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
@@ -151,6 +154,103 @@ tasks.register("generateOpenApiDocsAdvancedEnumsAsString") {
     }
     finalizedBy "generateOpenApiDocs"
 }
+
+//###################################### Start Default values ##########################################
+//collect auto generated profiles and check them for null values
+tasks.register('collectProfiles') {
+    group = 'properties'
+
+    inputs.files(sourceSets.main.compileClasspath)
+
+    outputs.dir("$buildDir/tmp/profiles")
+
+    doLast {
+        delete(outputs.files.singleFile.listFiles())
+        copy {
+            from configurations.runtimeClasspath.resolve().stream()
+                    .filter { it.isFile() && it.toString().endsWith(".jar") }
+                    .peek {println("======> $it")}
+                    .map {
+                        zipTree(it).matching {
+                            include 'de.unijena.bioinf.ms.defaults/*.auto.config'
+                            include 'de.unijena.bioinf.ms.defaults/*.class.map'
+                        }
+                    }.filter{!it.isEmpty()}.collect(Collectors.toList())
+
+            into outputs.files.singleFile
+        }
+    }
+}
+
+
+tasks.register('makeProfileTemplates') {
+    group = 'properties'
+    dependsOn(tasks.named('collectProfiles'))
+
+    def input = tasks.named('collectProfiles').map {it.outputs.files.singleFile}
+    inputs.dir(input)
+
+//    def outDir = file("$buildDir/tmp/profiles_concat")
+//    outDir.mkdirs()
+
+    outputs.dir("$buildDir/tmp/profiles_concat/")
+
+    doLast {
+        delete(outputs.files.singleFile.listFiles())
+        def defaultsDir = outputs.files.singleFile.toPath().resolve("de.unijena.bioinf.ms.defaults")
+        Files.createDirectories(defaultsDir)
+
+        [".auto.config", ".class.map"].each { ext ->
+            defaultsDir.resolve("concat$ext").withWriter { w ->
+                inputs.files.asFileTree.filter {it.getName().endsWith(ext)}.each { f ->
+                    // Get a reader for the input file
+                    f.withReader { r ->
+                        // And write data from the input into the output
+                        w << r << '\n'
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.register('checkDefaultProfile') {
+    group = 'properties'
+    dependsOn(tasks.named('makeProfileTemplates'))
+
+    def input = tasks.named('makeProfileTemplates').map {it.outputs.files.singleFile}
+    inputs.dir(input)
+
+    doLast {
+        def inp = inputs.files.asFileTree.filter {it.toString().endsWith("de.unijena.bioinf.ms.defaults/concat.auto.config")}.singleFile
+        Properties defaultProfile = new Properties()
+        inp.withReader("UTF8", {
+                    defaultProfile.load(it)
+                })
+
+        def errorCount = 0
+        logger.lifecycle(System.lineSeparator() + "Checking for NULL values in Profile...")
+        defaultProfile.keys().each { e ->
+            def v = defaultProfile.getProperty(e)
+            if (v == null || ((String) v).isEmpty()) {
+                logger.warn("${e} is NULL!")
+                errorCount++
+            }
+        }
+        if (errorCount > 0) {
+            logger.error("FAILED: $errorCount NULL values found!" + System.lineSeparator())
+            throw new GradleException("Error: There are NULL values in at least one auto.config files. See Warnings for more detailed information")
+        }
+        logger.lifecycle("DONE: No NULL values found!" + System.lineSeparator())
+    }
+}
+
+tasks.named('processResources', ProcessResources) {
+    dependsOn tasks.named('checkDefaultProfile')
+    from(tasks.named('makeProfileTemplates'))
+}
+
+//###################################### END Default values ##########################################
 
 /*################### JAVASCRIPT DEV MANAGEMENT ################### */
 
