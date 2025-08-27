@@ -21,6 +21,6 @@
 dependencies {
     implementation 'commons-beanutils:commons-beanutils:1.9.4'
     implementation "org.apache.commons:commons-configuration2:$commons_configuration_version"
-
+    implementation 'net.oneandone.reflections8:reflections8:0.11.7' //remove for production builds
     testImplementation project(':chemistry_base')
 }
