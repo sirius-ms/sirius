@@ -25,8 +25,6 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.io.FileHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.reflections8.Reflections;
-import org.reflections8.scanners.ResourcesScanner;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -39,10 +37,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 /**
  * Created as part of the SIRIUS
@@ -80,18 +74,14 @@ public class PropertyManager {
             PROPERTIES.addConfiguration(PERSISTENT_PROPERTIES, ConfigType.PERSISTENT_PROPERTIES.name());
             PERSISTENT_PROPERTIES.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
             CHANGED_PROPERTIES = loadDefaultProperties();
-            Reflections.log.ifPresent(l -> {
-                Logger logger = LogManager.getLogManager().getLogger(l.getName());
-                if (logger != null)
-                    logger.setLevel(Level.SEVERE);
-            });
-            final Reflections reflections = new Reflections("de.unijena.bioinf.ms.defaults", new ResourcesScanner());
             DEFAULTS_LAYOUT = new PropertiesConfigurationLayout();
 
-            LinkedHashSet<String> classResources =  new LinkedHashSet<>(reflections.getResources(Pattern.compile(".*\\.map")));
+            LinkedHashSet<String> classResources =  new LinkedHashSet<>();
+            classResources.add("de.unijena.bioinf.ms.defaults/concat.class.map");
             CombinedConfiguration classConfig = addPropertiesFromResources(classResources, MS_CONFIG_CLASSES_BASE, "CONFIG_CLASSES");
 
-            LinkedHashSet<String> configResources =  new LinkedHashSet<>(reflections.getResources(Pattern.compile(".*\\.config")));
+            LinkedHashSet<String> configResources =  new LinkedHashSet<>();
+            configResources.add("de.unijena.bioinf.ms.defaults/concat.auto.config");
             // this adds changed defaults from some locations specified by this key
             configResources.addAll(SiriusConfigUtils.parseResourcesLocation(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY)));
             CombinedConfiguration globalConfig = addPropertiesFromResources(configResources, MS_CONFIGS_BASE, ConfigType.GLOBAL.name());
