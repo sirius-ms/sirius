@@ -100,6 +100,8 @@ configurations.each { Configuration conf ->
     conf.exclude group: "com.gurobi", module: "gurobi-jar"
     conf.exclude group: "cplex", module: "cplex"
 //    conf.exclude group: "org.slf4j", module: "slf4j-jdk14"
+    //remove reflection scanner because we use prebuilt default config (see below)
+    conf.exclude group: 'net.oneandone.reflections8', module: 'reflections8'
 }
 
 jar {
