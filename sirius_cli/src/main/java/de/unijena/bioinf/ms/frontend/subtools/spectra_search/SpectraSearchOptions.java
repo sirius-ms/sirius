@@ -112,7 +112,7 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
     @Override
     public InstanceJob.Factory<SpectraSearchSubtoolJob> call() throws Exception {
         SpectraCache cache = new SpectraCache(
-                ApplicationCore.WEB_API.getChemDB(),
+                ApplicationCore.WEB_API().getChemDB(),
                 defaultConfigOptions.config.createInstanceWithDefaults(SpectralSearchDB.class).searchDBs
         );
         return new InstanceJob.Factory<>(sub -> new SpectraSearchSubtoolJob(sub, cache), getInvalidator());

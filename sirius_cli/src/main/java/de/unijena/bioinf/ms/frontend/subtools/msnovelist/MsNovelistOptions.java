@@ -77,7 +77,7 @@ public class MsNovelistOptions implements ToolChainOptions<MsNovelistSubToolJob,
     }
 
     private static void validateLicense(){
-        boolean denovo = Optional.ofNullable(ApplicationCore.WEB_API).map(WebAPI::getActiveSubscription)
+        boolean denovo = Optional.ofNullable(ApplicationCore.WEB_API()).map(WebAPI::getActiveSubscription)
                 .map(Subscription::getAllowedFeatures)
                 .map(AllowedFeatures::deNovo).orElse(false);
 
