@@ -92,7 +92,7 @@ public class SiriusSubToolJob extends InstanceJob {
             final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
             if (searchDB.isPresent() && !searchDB.get().isEmpty())
                 wSet = submitSubJob(FormulaWhiteListJob
-                        .create(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp))
+                        .create(ApplicationCore.WEB_API().getChemDB(), searchDB.get().searchDBs, exp))
                         .awaitResult();
 
             checkForInterruption();

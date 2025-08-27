@@ -60,7 +60,7 @@ public class ShowAccountDialog extends AbstractGuiAction implements PropertyChan
         Jobs.runEDTLater(() -> {
             if (check != null) {
                 if (ConnectionChecks.isLoggedIn(check)) {
-                    URI imageURI = ApplicationCore.WEB_API.getAuthService().getToken()
+                    URI imageURI = ApplicationCore.WEB_API().getAuthService().getToken()
                             .flatMap(ID_TOKENS::getUserImage).orElse(null);
 
                     if (imageURI == null) {
@@ -87,7 +87,7 @@ public class ShowAccountDialog extends AbstractGuiAction implements PropertyChan
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new AccountDialog(gui, ApplicationCore.WEB_API.getAuthService());
+        new AccountDialog(gui, ApplicationCore.WEB_API().getAuthService());
     }
 
     @Override
