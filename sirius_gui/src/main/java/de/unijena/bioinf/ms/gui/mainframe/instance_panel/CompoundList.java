@@ -34,7 +34,9 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.matchers.BackgroundJJobMatcheEditor;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
@@ -153,20 +155,7 @@ public class CompoundList {
 
         compountListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
-        compountListSelectionModel.addListSelectionListener(e -> {
-            final Component c = gui.getMainFrame().getResultsPanel().getSelectedComponent();
-            if (c instanceof Loadable l)
-                l.setLoading(true, true);
 
-            if (!e.getValueIsAdjusting()) {
-                //we only enable listener for first selected because this is the one where results are visible.
-                compountListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
-                compountListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
-                if (!compountListSelectionModel.isSelectionEmpty())
-                    compountListSelectionModel.getSelected().getFirst().enableProjectSpaceListener();
-                notifyListenerSelectionChange();
-            }
-        });
 
         // data change listener needs to operate on unfiltered list as well to notice add or removal on filtered elements
         sortedSource.addListEventListener(this::notifyListenerFullListDataChange);
@@ -175,6 +164,29 @@ public class CompoundList {
         //init filters
         compoundFilterModel.updateAdducts(sortedSource);
         compoundFilterModel.fireUpdateCompleted();
+    }
+
+
+    private boolean selectionListenerRegistered = false;
+    public synchronized void initializedSelectionListener(@NotNull LazyLoadingPanel<ResultPanel> resultPanelProvider){
+        if (!selectionListenerRegistered) {
+            compountListSelectionModel.addListSelectionListener(e -> {
+                final Component c = resultPanelProvider.getContentPanelIfReady().map(ResultPanel::getSelectedComponent)
+                        .orElse(null);
+                if (c instanceof Loadable l)
+                    l.setLoading(true, true);
+
+                if (!e.getValueIsAdjusting()) {
+                    //we only enable listener for first selected because this is the one where results are visible.
+                    compountListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
+                    compountListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
+                    if (!compountListSelectionModel.isSelectionEmpty())
+                        compountListSelectionModel.getSelected().getFirst().enableProjectSpaceListener();
+                    notifyListenerSelectionChange();
+                }
+            });
+            selectionListenerRegistered = true;
+        }
     }
 
     private void colorByActiveFilter() {

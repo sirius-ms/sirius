@@ -42,6 +42,7 @@ import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.FMetFilter;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.EpimetheusPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SubstructurePanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -295,7 +296,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         } else if (e.getSource() == sketchStructure) {
             Jobs.runEDTLater(() -> {
                 if (sketcherDialog == null) {
-                    sketcherDialog = new SketcherDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this), gui, c);
+                    sketcherDialog = new SketcherDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this), resultPanel, gui, c);
                     sketcherDialog.setVisible(true);
                 } else {
                     sketcherDialog.updateMolecule(c);
@@ -341,23 +342,25 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             });
 
         } else if (c != null && e.getSource() == this.annotateSpectrum) {
+            EpimetheusPanel structureAnnotationTab = resultPanel.getStructureAnnoTab();
+            if (structureAnnotationTab != null) {
+                final int idx = Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), () -> {
+                    int i = 0;
+                    for (FingerprintCandidateBean fpc : structureAnnotationTab.getCandidateTable().getFilteredSource()) {
+                        if (fpc.getInChiKey().equals(c.getInChiKey()))
+                            return i;
+                        i++;
+                    }
+                    return 0;
+                }).getResult();
 
-            final int idx = Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), () -> {
-                int i = 0;
-                for (FingerprintCandidateBean fpc : resultPanel.getStructureAnnoTab().getCandidateTable().getFilteredSource()) {
-                    if (fpc.getInChiKey().equals(c.getInChiKey()))
-                        return i;
-                    i++;
-                }
-                return 0;
-            }).getResult();
-
-            //select correct compound in annotated spectrum view.
-            Jobs.runEDTLater(() -> {
-                resultPanel.setSelectedComponent(resultPanel.getStructureAnnoTab());
-                resultPanel.getStructureAnnoTab().getCandidateTable().getTable()
-                        .changeSelection(idx, 0, false, false);
-            });
+                //select correct compound in annotated spectrum view.
+                Jobs.runEDTLater(() -> {
+                    resultPanel.setSelectedComponent(structureAnnotationTab);
+                    structureAnnotationTab.getCandidateTable().getTable()
+                            .changeSelection(idx, 0, false, false);
+                });
+            }
         }
     }
 

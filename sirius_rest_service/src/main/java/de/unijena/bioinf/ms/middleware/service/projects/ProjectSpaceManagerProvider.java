@@ -124,7 +124,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
         if (optFields.contains(ProjectInfo.OptField.sizeInformation))
             b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countAllFeatures()).numOfCompounds(psm.countAllCompounds());
         if (optFields.contains(ProjectInfo.OptField.compatibilityInfo))
-            b.compatible(psm.isCompatibleWithBackendDataUnchecked(ApplicationCore.WEB_API));
+            b.compatible(psm.isCompatibleWithBackendDataUnchecked(ApplicationCore.WEB_API()));
 
         return b.build();
     }

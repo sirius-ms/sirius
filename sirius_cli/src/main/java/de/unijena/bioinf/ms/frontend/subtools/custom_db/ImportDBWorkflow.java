@@ -41,7 +41,7 @@ public class ImportDBWorkflow  extends BasicMasterJJob<Boolean> implements Workf
 
     @Override
     protected Boolean compute() throws Exception {
-        final CdkFingerprintVersion version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
+        final CdkFingerprintVersion version = ApplicationCore.WEB_API().getCDKChemDBFingerprintVersion();
         return importIntoDB(version);
     }
 
@@ -77,7 +77,7 @@ public class ImportDBWorkflow  extends BasicMasterJJob<Boolean> implements Workf
                 structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
                 createImportProgressTracker(totalBytesToRead, importOptions.bioTransformerOptions != null),
                 (NoSQLCustomDatabase<?, ?>) db,
-                ApplicationCore.WEB_API,
+                ApplicationCore.WEB_API(),
                 ApplicationCore.IFP_CACHE(),
                 importOptions.writeBuffer,
                 importOptions.bioTransformerOptions != null ? importOptions.bioTransformerOptions.toBioTransformerSetting() : null

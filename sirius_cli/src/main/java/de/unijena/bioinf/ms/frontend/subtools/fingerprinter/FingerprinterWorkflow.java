@@ -104,7 +104,7 @@ public class FingerprinterWorkflow implements Workflow {
 
     public void loadFingerprintVersionData() {
         // get WEB API
-        WebAPI<?> api = ApplicationCore.WEB_API;
+        WebAPI<?> api = ApplicationCore.WEB_API();
         try {
             // get FingerIdDate File based on charge
             fdata = charge > 0 ? api.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE) : api.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE);

@@ -39,7 +39,7 @@ public class OpenPortalAction extends AbstractUserPortalAction {
 
     @Override
     URI path() {
-        return Jobs.runInBackgroundAndLoad(mainFrame, () -> ApplicationCore.WEB_API.getAuthService().getToken()
+        return Jobs.runInBackgroundAndLoad(mainFrame, () -> ApplicationCore.WEB_API().getAuthService().getToken()
                 .flatMap(AccessTokens.ACCESS_TOKENS::getUsername)
                 .map(UserPortal::signInURL).orElse(UserPortal.signInURL())).getResult();
     }
