@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -72,15 +73,22 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
                 projectLocation = projectLocation.getParent().resolve(nu);
             }
         }
+        boolean exists = Files.exists(projectLocation);
         NoSQLProjectSpaceManager projectSpaceManager = new NoSQLProjectSpaceManager(new NitriteSirirusProject(projectLocation));
-        updateProjectType(projectSpaceManager.getProject());
-        updateProjectSourceFormats(projectSpaceManager.getProject());
+        // new projects get project-type unimported to prevent updates for newly created projects
+        Optional<ProjectType> typeOpt = exists
+                ? projectSpaceManager.getProject().findProjectType()
+                : projectSpaceManager.getProject().upsertProjectType(ProjectType.UNIMPORTED);
+
+
+        updateProjectType(projectSpaceManager.getProject(), typeOpt);
+        updateProjectSourceFormats(projectSpaceManager.getProject(), typeOpt);
         return projectSpaceManager;
     }
 
     @SneakyThrows
-    private static void updateProjectType(SiriusProjectDatabaseImpl<? extends Database<?>> project) {
-        if (project.findProjectType().isEmpty()) {
+    private static void updateProjectType(SiriusProjectDatabaseImpl<? extends Database<?>> project, Optional<ProjectType> typeOpt) {
+        if (typeOpt.isEmpty()) {
             StopWatch w = StopWatch.createStarted();
             log.info("Updating project type information...");
             if (project.getStorage().countAll(MergedLCMSRun.class) > 0) {
@@ -100,58 +108,60 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
     }
 
     @SneakyThrows
-    private static void updateProjectSourceFormats(SiriusProjectDatabaseImpl<? extends Database<?>> project) {
-        if (project.findProjectSourceFormats().isEmpty()) {
-            StopWatch w = StopWatch.createStarted();
-            log.info("Updating project source information...");
-            project.findProjectType().ifPresentOrElse(projectType -> {
-                if (projectType == ProjectType.ALIGNED_RUNS || projectType == ProjectType.UNALIGNED_RUNS) {
-                    try {
-                        @NotNull Set<String> exts = project.getStorage().findAllStr(LCMSRun.class)
-                                .map(LCMSRun::getSourceReference)
-                                .flatMap(o -> o.getFileName().stream())
-                                .map(FileUtils::getFileExt)
-                                .filter(Objects::nonNull)
-                                .filter(MsExperimentParser::isSupportedEnding)
-                                .map(String::toLowerCase)
-                                .collect(Collectors.toSet());
-                        project.upsertProjectSourceFormats(ProjectSourceFormats.fromFormats(exts));
-                    } catch (IOException e) {
-                        log.warn("Could not update project source formats for {}", projectType, e);
-                        // there is not really a security measure that distiguises the different LCMS formats, so we
-                        // can assume mzml as default even if it might be fake.
-                        project.upsertProjectSourceFormats(ProjectSourceFormats.fromFormats(".mzml"));
+    private static void updateProjectSourceFormats(SiriusProjectDatabaseImpl<? extends Database<?>> project, Optional<ProjectType> typeOpt) {
+        if (typeOpt.map(t -> t != ProjectType.UNIMPORTED).orElse(true)) {
+            if (project.findProjectSourceFormats().isEmpty()) {
+                StopWatch w = StopWatch.createStarted();
+                log.info("Updating project source information...");
+                project.findProjectType().ifPresentOrElse(projectType -> {
+                    if (projectType == ProjectType.ALIGNED_RUNS || projectType == ProjectType.UNALIGNED_RUNS) {
+                        try {
+                            @NotNull Set<String> exts = project.getStorage().findAllStr(LCMSRun.class)
+                                    .map(LCMSRun::getSourceReference)
+                                    .flatMap(o -> o.getFileName().stream())
+                                    .map(FileUtils::getFileExt)
+                                    .filter(Objects::nonNull)
+                                    .filter(MsExperimentParser::isSupportedEnding)
+                                    .map(String::toLowerCase)
+                                    .collect(Collectors.toSet());
+                            project.upsertProjectSourceFormats(ProjectSourceFormats.fromFormats(exts));
+                        } catch (IOException e) {
+                            log.warn("Could not update project source formats for {}", projectType, e);
+                            // there is not really a security measure that distiguises the different LCMS formats, so we
+                            // can assume mzml as default even if it might be fake.
+                            project.upsertProjectSourceFormats(ProjectSourceFormats.fromFormats(".mzml"));
+                        }
+                    } else if (projectType == ProjectType.PEAKLISTS) {
+                        try {
+                            @NotNull Set<String> exts = project.getStorage().findAllStr(AlignedFeatures.class)
+                                    .flatMap(af -> af.getDataSource().stream())
+                                    .map(DataSource::getSource)
+                                    .map(FileUtils::getFileExt)
+                                    .filter(Objects::nonNull)
+                                    .filter(MsExperimentParser::isSupportedEnding)
+                                    .map(String::toLowerCase)
+                                    .collect(Collectors.toSet());
+                            project.upsertProjectSourceFormats(ProjectSourceFormats.fromFormats(exts));
+                        } catch (IOException e) {
+                            // if this is not readable, the project should be not usable anyway we just skip and try again next
+                            // time in case it was a temproray io issue.
+                            log.warn("Could not update project source formats for {}. try again next time!", projectType, e);
+                        }
+                    } else if (projectType == ProjectType.DIRECT_IMPORT) {
+                        // we do not update direct import projects because we cannot determine the source from historic projects
+                        // and want to keep compatibility high
                     }
-                } else if (projectType == ProjectType.PEAKLISTS) {
-                    try {
-                        @NotNull Set<String> exts = project.getStorage().findAllStr(AlignedFeatures.class)
-                                .flatMap(af -> af.getDataSource().stream())
-                                .map(DataSource::getSource)
-                                .map(FileUtils::getFileExt)
-                                .filter(Objects::nonNull)
-                                .filter(MsExperimentParser::isSupportedEnding)
-                                .map(String::toLowerCase)
-                                .collect(Collectors.toSet());
-                        project.upsertProjectSourceFormats(ProjectSourceFormats.fromFormats(exts));
-                    } catch (IOException e) {
-                        // if this is not readable, the project should be not usable anyway we just skip and try again next
-                        // time in case it was a temproray io issue.
-                        log.warn("Could not update project source formats for {}. try again next time!", projectType, e);
-                    }
-                } else if (projectType == ProjectType.DIRECT_IMPORT) {
-                    // we do not update direct import projects because we cannot determine the source from historic projects
-                    // and want to keep compatibility high
-                }
-                log.info("Updating project source information done in {}.", w);
+                    log.info("Updating project source information done in {}.", w);
 
-            }, () -> log.info("Could not update project source information because project type info is missing!"));
-            project.findProjectSourceFormats().ifPresent(projectSourceFormats -> {
-                try {
-                    System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(projectSourceFormats));
-                } catch (JsonProcessingException e) {
-                   log.error("Error while printing project source formats!", e);
-                }
-            });
+                }, () -> log.info("Could not update project source information because project type info is missing!"));
+                project.findProjectSourceFormats().ifPresent(projectSourceFormats -> {
+                    try {
+                        System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(projectSourceFormats));
+                    } catch (JsonProcessingException e) {
+                       log.error("Error while printing project source formats!", e);
+                    }
+                });
+            }
         }
     }
 }
