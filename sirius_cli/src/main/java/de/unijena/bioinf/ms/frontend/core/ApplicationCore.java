@@ -26,20 +26,18 @@ import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.fingerid.fingerprints.cache.NonBlockingIFingerprinterCache;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
-import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBPropertyUtils;
 import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
-import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.sirius.SiriusFactory;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.webapi.rest.RestAPI;
-import io.sirius.ms.utils.jwt.AccessTokens;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jbibtex.BibTeXDatabase;
 import org.jbibtex.BibTeXParser;
@@ -83,7 +81,27 @@ public abstract class ApplicationCore {
     }
 
     public static final SiriusFactory SIRIUS_PROVIDER = StorageUtils.siriusProvider();
-    public static final WebAPI<?> WEB_API;
+    private static volatile WebAPI<?> WEB_API;
+
+    public static WebAPI<?> WEB_API(){
+        if (WEB_API == null){
+            synchronized (ApplicationCore.class){
+                if (WEB_API == null){
+                    try {
+                        StopWatch stopWatch = StopWatch.createStarted();
+                        AuthService service = ProxyManager.applyClient(c -> AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, c));
+                        WEB_API = new RestAPI(service, (Subscription) null);
+                        DEFAULT_LOGGER.info("Web API initialized in {}", stopWatch);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
+        return WEB_API;
+    }
+
+
     @NotNull
     public static final BibtexManager BIBTEX;
 
@@ -93,7 +111,7 @@ public abstract class ApplicationCore {
     public static void measureTime(String message) {
         if (TIME) {
             long t2 = System.currentTimeMillis();
-            System.err.println("===> " + message + " - " + (t2 - t1) / 1000d);
+            System.out.println("===> " + message + " - " + (t2 - t1) / 1000d);
             t1 = t2;
         }
     }
@@ -112,7 +130,7 @@ public abstract class ApplicationCore {
             try {
                 if (Files.exists(versionFile)) {
                     List<String> lines = Files.readAllLines(versionFile);
-                    if (lines == null || lines.isEmpty() || !lines.get(0).equals(version)) {
+                    if (lines == null || lines.isEmpty() || !lines.getFirst().equals(version)) {
                         deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile);
                         Files.write(versionFile, version.getBytes(), StandardOpenOption.CREATE);
                     }
@@ -157,7 +175,7 @@ public abstract class ApplicationCore {
                     System.err.println("Could not set logging properties, using default java logging properties and directories");
                     e.printStackTrace();
                 }
-                measureTime("DONE init logging, START init Configs");
+                measureTime("DONE init logging, START init logging Configs");
 
                 try {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -168,9 +186,11 @@ public abstract class ApplicationCore {
                     System.err.println("Could not read logging configuration.");
                     e.printStackTrace();
                 }
+                measureTime("DONE init logging Configs, START init USER config");
             }
 
             //create custom properties if it not exists -> everything is commented out
+            //todo create at build time???
             if (Files.notExists(customProfileFile)) {
                 final StringWriter buff = new StringWriter();
                 PropertyManager.DEFAULTS.write(buff);
@@ -194,20 +214,25 @@ public abstract class ApplicationCore {
                 e.printStackTrace();
             }
 
+            measureTime("DONE init USER config, START init global variables.");
+
+
             DEFAULT_LOGGER = LoggerFactory.getLogger(ApplicationCore.class);
             DEFAULT_LOGGER.debug("Logging service initialized!");
 
-            DEFAULT_LOGGER.debug("java.library.path = " + System.getProperty("java.library.path"));
-            DEFAULT_LOGGER.debug("LD_LIBRARY_PATH = " + System.getenv("LD_LIBRARY_PATH"));
-            DEFAULT_LOGGER.debug("java.class.path = " + System.getProperty("java.class.path"));
-            DEFAULT_LOGGER.info("Sirius Workspace Successfull initialized at: " + WORKSPACE.toAbsolutePath().toString());
+            DEFAULT_LOGGER.debug("java.library.path = {}", System.getProperty("java.library.path"));
+            DEFAULT_LOGGER.debug("LD_LIBRARY_PATH = {}", System.getenv("LD_LIBRARY_PATH"));
+            DEFAULT_LOGGER.debug("java.class.path = {}", System.getProperty("java.class.path"));
+            DEFAULT_LOGGER.info("Sirius Workspace Successfully initialized at: {}", WORKSPACE.toAbsolutePath());
 
 
             PropertyManager.setProperty("de.unijena.bioinf.sirius.versionString", (version != null) ? "SIRIUS " + version : "SIRIUS <Version Unknown>");
             String arch = System.getProperty("os.arch").toLowerCase();
             String os = System.getProperty("os.name").toLowerCase();
-            DEFAULT_LOGGER.info("You run " + VERSION_STRING() + " on " + os + "_" + arch);
-            DEFAULT_LOGGER.info("You run SIRIUS in '" + APP_TYPE + "' mode." );
+            DEFAULT_LOGGER.info("You run {} on {}_{}", VERSION_STRING(), os, arch);
+            DEFAULT_LOGGER.info("You run SIRIUS in '{}' mode.", APP_TYPE);
+
+            measureTime("DONE init global variables, START init Bibtext.");
 
 
             BibTeXDatabase bibtex = null;
@@ -220,6 +245,8 @@ public abstract class ApplicationCore {
                 BIBTEX = new BibtexManager(bibtex);
             }
 
+            measureTime("DONE init Bibtext, START init USER sirius.properties.");
+
 
             DEFAULT_LOGGER.debug("build properties initialized!");
 
@@ -228,52 +255,28 @@ public abstract class ApplicationCore {
                 final PropertiesConfiguration defaultProps = SiriusConfigUtils.makeConfigFromStream(stream);
                 defaultProps.setProperty("de.unijena.bioinf.sirius.fingerID.cache", WORKSPACE.resolve("csi_fingerid_cache").toString());
                 SiriusProperties.initSiriusPropertyFile(siriusPropsFile.toFile(), defaultProps);
-            } catch (IOException e) {
+            } catch (IOException | NullPointerException e) {
                 DEFAULT_LOGGER.error("Could NOT create sirius properties file", e);
             }
 
+            measureTime("DONE inti USER sirius.properties, Start Hardware Check");
 
             PropertyManager.setProperty("de.unijena.bioinf.sirius.workspace", WORKSPACE.toAbsolutePath().toString());
             DEFAULT_LOGGER.debug("application properties initialized!");
 
 
             DEFAULT_LOGGER.info(TreeBuilderFactory.ILP_VERSIONS_STRING);
-            DEFAULT_LOGGER.info("Treebuilder priorities loaded from 'sirius.properties' are: " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()));
+            DEFAULT_LOGGER.info("Treebuilder priorities loaded from 'sirius.properties' are: {}", Arrays.toString(TreeBuilderFactory.getBuilderPriorities()));
 
-            measureTime("DONE init Configs, start Hardware Check");
-
-
-//            HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
-//            int cores = hardware.getProcessor().getPhysicalProcessorCount();
             int threads = Runtime.getRuntime().availableProcessors();
             PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(Math.max(1, threads / 2)));
             PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(threads));
-            DEFAULT_LOGGER.info("CPU check done. " + PropertyManager.getNumberOfCores() + " cores that handle " + PropertyManager.getNumberOfThreads() + " threads were found.");
-            measureTime("DONE  Hardware Check, START init bug reporting");
-
+            DEFAULT_LOGGER.info("CPU check done. {} cores that handle {} threads were found.", PropertyManager.getNumberOfCores(), PropertyManager.getNumberOfThreads());
+            measureTime("DONE  Hardware Check, START init Web API in background!");
 
             TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile", null, ".rtoken"));
-
-            AuthService service = ProxyManager.applyClient(c -> AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, c));
-            Subscription sub = null; //web connection
-            try {
-                sub = NetUtils.tryAndWait(() -> service.getToken().map(AccessTokens.ACCESS_TOKENS::getActiveSubscription).orElse(null),
-                        () -> NetUtils.checkThreadInterrupt(Thread.currentThread()), 30000) ;
-            } catch (Exception e) {
-                LoggerFactory.getLogger(ApplicationCore.class).debug("Error when refreshing token", e);
-                if (APP_TYPE == AppType.CLI){
-                    LoggerFactory.getLogger(ApplicationCore.class).error("Error when refreshing token: " + e.getMessage() + " Your refresh token might be corrupted or invalid. Please clear login and re-login!", e);
-                    throw e; // fail CLI execution, since a run without login is likely to mak no sense.
-                }else {
-                    LoggerFactory.getLogger(ApplicationCore.class).warn("Error when refreshing token: " + e.getMessage() + " Cleaning login information. Please re-login!");
-                    AuthServices.clearRefreshToken(service, TOKEN_FILE); // in case token is corrupted or the account has been deleted
-                }
-            }
-            WEB_API = new RestAPI(service, sub);
-            DEFAULT_LOGGER.info("Web API initialized.");
-            CustomDBPropertyUtils.loadAllCustomDBs(WEB_API.getCDKChemDBFingerprintVersion());
-            DEFAULT_LOGGER.info("Custom databases loaded.");
-            measureTime("DONE init WebAPI");
+            //start preloading WEB_API
+            SiriusJobs.runInBackground(ApplicationCore::WEB_API);
 
         } catch (Throwable e) {
             System.err.println("Application Core STATIC Block Error!");
@@ -287,7 +290,7 @@ public abstract class ApplicationCore {
             try {
                 Files.deleteIfExists(file);
             } catch (IOException e) {
-                System.err.println("Could NOT delete " + file.toAbsolutePath().toString());
+                System.err.println("Could NOT delete " + file.toAbsolutePath());
                 e.printStackTrace();
             }
         }

@@ -39,7 +39,7 @@ public class SignInAction extends AbstractGuiAction {
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = new UserLoginDialog(gui, ApplicationCore.WEB_API.getAuthService()).hasPerformedLogin();
+        boolean r = new UserLoginDialog(gui, ApplicationCore.WEB_API().getAuthService()).hasPerformedLogin();
         firePropertyChange("login", null, r);
     }
 }

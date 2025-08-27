@@ -42,6 +42,7 @@ public class Workspace {
     public static final Path versionFile;
 
     public static final Path runConfigDir;
+    public static final Path jxBrowserDir;
 
     static {
         try {
@@ -127,6 +128,7 @@ public class Workspace {
             customProfileFile = WORKSPACE.resolve("custom.config");
             versionFile = WORKSPACE.resolve("version");
             runConfigDir = WORKSPACE.resolve("run-configs");
+            jxBrowserDir = WORKSPACE.resolve("jxBrowser");
 
             Files.createDirectories(runConfigDir);
         } catch (Exception e) {

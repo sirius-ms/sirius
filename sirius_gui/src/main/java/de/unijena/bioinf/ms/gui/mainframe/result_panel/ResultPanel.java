@@ -57,7 +57,6 @@ public class ResultPanel extends JTabbedPane {
 
     protected static final Logger logger = LoggerFactory.getLogger(ResultPanel.class);
 
-    @Getter
     private final CompoundList compoundList;
     private final SiriusGui gui;
 

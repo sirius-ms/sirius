@@ -40,8 +40,8 @@ public class SelectActiveSubscriptionAction extends AbstractGuiAction {
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = new SubscriptionDialog(gui, true, ApplicationCore.WEB_API.getAuthService().getToken().map(AccessTokens.ACCESS_TOKENS::getSubscriptions).orElse(List.of())).hasPerformedChange();
+        boolean r = new SubscriptionDialog(gui, true, ApplicationCore.WEB_API().getAuthService().getToken().map(AccessTokens.ACCESS_TOKENS::getSubscriptions).orElse(List.of())).hasPerformedChange();
         if (r)
-            firePropertyChange("change-sub", null, ApplicationCore.WEB_API.getActiveSubscription());
+            firePropertyChange("change-sub", null, ApplicationCore.WEB_API().getActiveSubscription());
     }
 }
