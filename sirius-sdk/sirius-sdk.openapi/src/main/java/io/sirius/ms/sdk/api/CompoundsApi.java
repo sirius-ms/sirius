@@ -17,24 +17,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class CompoundsApi {
     private ApiClient apiClient;
 
@@ -42,7 +43,6 @@ public class CompoundsApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public CompoundsApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
@@ -55,6 +55,7 @@ public class CompoundsApi {
         this.apiClient = apiClient;
     }
 
+    
     /**
      * Import Compounds and its contained features.
      * Import Compounds and its contained features. Compounds and Features must not exist in the project.  Otherwise, they will exist twice.
@@ -67,7 +68,7 @@ public class CompoundsApi {
      * @return List&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addCompoundsRequestCreation(String projectId, List<CompoundImport> compoundImport, InstrumentProfile profile, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec addCompoundsRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<CompoundImport> compoundImport, @jakarta.annotation.Nullable InstrumentProfile profile, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = compoundImport;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -118,7 +119,7 @@ public class CompoundsApi {
      * @return List&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Compound> addCompounds(String projectId, List<CompoundImport> compoundImport, InstrumentProfile profile, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public List<Compound> addCompounds(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<CompoundImport> compoundImport, @jakarta.annotation.Nullable InstrumentProfile profile, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
         return addCompoundsRequestCreation(projectId, compoundImport, profile, optFields, optFieldsFeatures).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -135,7 +136,7 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;List&lt;Compound&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Compound>> addCompoundsWithHttpInfo(String projectId, List<CompoundImport> compoundImport, InstrumentProfile profile, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<List<Compound>> addCompoundsWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<CompoundImport> compoundImport, @jakarta.annotation.Nullable InstrumentProfile profile, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
         return addCompoundsRequestCreation(projectId, compoundImport, profile, optFields, optFieldsFeatures).toEntityList(localVarReturnType).block();
     }
@@ -152,9 +153,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addCompoundsWithResponseSpec(String projectId, List<CompoundImport> compoundImport, InstrumentProfile profile, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseSpec addCompoundsWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<CompoundImport> compoundImport, @jakarta.annotation.Nullable InstrumentProfile profile, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         return addCompoundsRequestCreation(projectId, compoundImport, profile, optFields, optFieldsFeatures);
     }
+
     /**
      * [EXPERIMENTAL] Tags with the same name will be overwritten
      * [EXPERIMENTAL] Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -165,7 +167,7 @@ public class CompoundsApi {
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addTagsToCompoundExperimentalRequestCreation(String projectId, String compoundId, List<Tag> tag) throws WebClientResponseException {
+    private ResponseSpec addTagsToCompoundExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nonnull List<Tag> tag) throws WebClientResponseException {
         Object postBody = tag;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -215,7 +217,7 @@ public class CompoundsApi {
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Tag> addTagsToCompoundExperimental(String projectId, String compoundId, List<Tag> tag) throws WebClientResponseException {
+    public List<Tag> addTagsToCompoundExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nonnull List<Tag> tag) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
         return addTagsToCompoundExperimentalRequestCreation(projectId, compoundId, tag).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -230,7 +232,7 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Tag>> addTagsToCompoundExperimentalWithHttpInfo(String projectId, String compoundId, List<Tag> tag) throws WebClientResponseException {
+    public ResponseEntity<List<Tag>> addTagsToCompoundExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nonnull List<Tag> tag) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
         return addTagsToCompoundExperimentalRequestCreation(projectId, compoundId, tag).toEntityList(localVarReturnType).block();
     }
@@ -245,9 +247,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addTagsToCompoundExperimentalWithResponseSpec(String projectId, String compoundId, List<Tag> tag) throws WebClientResponseException {
+    public ResponseSpec addTagsToCompoundExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nonnull List<Tag> tag) throws WebClientResponseException {
         return addTagsToCompoundExperimentalRequestCreation(projectId, compoundId, tag);
     }
+
     /**
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
@@ -256,7 +259,7 @@ public class CompoundsApi {
      * @param compoundId identifier of the compound to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteCompoundRequestCreation(String projectId, String compoundId) throws WebClientResponseException {
+    private ResponseSpec deleteCompoundRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -296,7 +299,7 @@ public class CompoundsApi {
      * @param compoundId identifier of the compound to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteCompound(String projectId, String compoundId) throws WebClientResponseException {
+    public void deleteCompound(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         deleteCompoundRequestCreation(projectId, compoundId).bodyToMono(localVarReturnType).block();
     }
@@ -309,7 +312,7 @@ public class CompoundsApi {
      * @param compoundId identifier of the compound to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteCompoundWithHttpInfo(String projectId, String compoundId) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteCompoundWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return deleteCompoundRequestCreation(projectId, compoundId).toEntity(localVarReturnType).block();
     }
@@ -323,9 +326,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteCompoundWithResponseSpec(String projectId, String compoundId) throws WebClientResponseException {
+    public ResponseSpec deleteCompoundWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId) throws WebClientResponseException {
         return deleteCompoundRequestCreation(projectId, compoundId);
     }
+
     /**
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
@@ -338,7 +342,7 @@ public class CompoundsApi {
      * @return Compound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundRequestCreation(String projectId, String compoundId, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec getCompoundRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -388,7 +392,7 @@ public class CompoundsApi {
      * @return Compound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Compound getCompound(String projectId, String compoundId, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public Compound getCompound(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
         return getCompoundRequestCreation(projectId, compoundId, msDataSearchPrepared, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
     }
@@ -405,7 +409,7 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Compound> getCompoundWithHttpInfo(String projectId, String compoundId, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<Compound> getCompoundWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
         return getCompoundRequestCreation(projectId, compoundId, msDataSearchPrepared, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
     }
@@ -422,9 +426,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundWithResponseSpec(String projectId, String compoundId, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseSpec getCompoundWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         return getCompoundRequestCreation(projectId, compoundId, msDataSearchPrepared, optFields, optFieldsFeatures);
     }
+
     /**
      * [EXPERIMENTAL] Returns the full quantification table of compounds
      * [EXPERIMENTAL] Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains a quantification of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
@@ -434,7 +439,7 @@ public class CompoundsApi {
      * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundQuantTableExperimentalRequestCreation(String projectId, QuantMeasure type) throws WebClientResponseException {
+    private ResponseSpec getCompoundQuantTableExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -474,7 +479,7 @@ public class CompoundsApi {
      * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantTableExperimental getCompoundQuantTableExperimental(String projectId, QuantMeasure type) throws WebClientResponseException {
+    public QuantTableExperimental getCompoundQuantTableExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getCompoundQuantTableExperimentalRequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
     }
@@ -488,7 +493,7 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;QuantTableExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantTableExperimental> getCompoundQuantTableExperimentalWithHttpInfo(String projectId, QuantMeasure type) throws WebClientResponseException {
+    public ResponseEntity<QuantTableExperimental> getCompoundQuantTableExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getCompoundQuantTableExperimentalRequestCreation(projectId, type).toEntity(localVarReturnType).block();
     }
@@ -502,9 +507,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundQuantTableExperimentalWithResponseSpec(String projectId, QuantMeasure type) throws WebClientResponseException {
+    public ResponseSpec getCompoundQuantTableExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         return getCompoundQuantTableExperimentalRequestCreation(projectId, type);
     }
+
     /**
      * [EXPERIMENTAL] Returns a single quantification table row for the given compound
      * [EXPERIMENTAL] Returns a single quantification table row for the given compound.  &lt;p&gt;  The quantification table contains a quantification of the feature within all  samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
@@ -515,7 +521,7 @@ public class CompoundsApi {
      * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundQuantTableRowExperimentalRequestCreation(String projectId, String compoundId, QuantMeasure type) throws WebClientResponseException {
+    private ResponseSpec getCompoundQuantTableRowExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -561,7 +567,7 @@ public class CompoundsApi {
      * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantTableExperimental getCompoundQuantTableRowExperimental(String projectId, String compoundId, QuantMeasure type) throws WebClientResponseException {
+    public QuantTableExperimental getCompoundQuantTableRowExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getCompoundQuantTableRowExperimentalRequestCreation(projectId, compoundId, type).bodyToMono(localVarReturnType).block();
     }
@@ -576,7 +582,7 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;QuantTableExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantTableExperimental> getCompoundQuantTableRowExperimentalWithHttpInfo(String projectId, String compoundId, QuantMeasure type) throws WebClientResponseException {
+    public ResponseEntity<QuantTableExperimental> getCompoundQuantTableRowExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getCompoundQuantTableRowExperimentalRequestCreation(projectId, compoundId, type).toEntity(localVarReturnType).block();
     }
@@ -591,9 +597,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundQuantTableRowExperimentalWithResponseSpec(String projectId, String compoundId, QuantMeasure type) throws WebClientResponseException {
+    public ResponseSpec getCompoundQuantTableRowExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         return getCompoundQuantTableRowExperimentalRequestCreation(projectId, compoundId, type);
     }
+
     /**
      * [EXPERIMENTAL] Returns the traces of the given compound
      * [EXPERIMENTAL] Returns the traces of the given compound.  &lt;p&gt;  A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
@@ -604,7 +611,7 @@ public class CompoundsApi {
      * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundTracesExperimentalRequestCreation(String projectId, String compoundId, String featureId) throws WebClientResponseException {
+    private ResponseSpec getCompoundTracesExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable String featureId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -650,7 +657,7 @@ public class CompoundsApi {
      * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TraceSetExperimental getCompoundTracesExperimental(String projectId, String compoundId, String featureId) throws WebClientResponseException {
+    public TraceSetExperimental getCompoundTracesExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable String featureId) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return getCompoundTracesExperimentalRequestCreation(projectId, compoundId, featureId).bodyToMono(localVarReturnType).block();
     }
@@ -665,7 +672,7 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;TraceSetExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TraceSetExperimental> getCompoundTracesExperimentalWithHttpInfo(String projectId, String compoundId, String featureId) throws WebClientResponseException {
+    public ResponseEntity<TraceSetExperimental> getCompoundTracesExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable String featureId) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return getCompoundTracesExperimentalRequestCreation(projectId, compoundId, featureId).toEntity(localVarReturnType).block();
     }
@@ -680,9 +687,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundTracesExperimentalWithResponseSpec(String projectId, String compoundId, String featureId) throws WebClientResponseException {
+    public ResponseSpec getCompoundTracesExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable String featureId) throws WebClientResponseException {
         return getCompoundTracesExperimentalRequestCreation(projectId, compoundId, featureId);
     }
+
     /**
      * List of all available compounds (group of ion identities) in the given project-space.
      * List of all available compounds (group of ion identities) in the given project-space.
@@ -694,7 +702,7 @@ public class CompoundsApi {
      * @return List&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundsRequestCreation(String projectId, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec getCompoundsRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -738,7 +746,7 @@ public class CompoundsApi {
      * @return List&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Compound> getCompounds(String projectId, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public List<Compound> getCompounds(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
         return getCompoundsRequestCreation(projectId, msDataSearchPrepared, optFields, optFieldsFeatures).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -754,7 +762,7 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;List&lt;Compound&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Compound>> getCompoundsWithHttpInfo(String projectId, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<List<Compound>> getCompoundsWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
         return getCompoundsRequestCreation(projectId, msDataSearchPrepared, optFields, optFieldsFeatures).toEntityList(localVarReturnType).block();
     }
@@ -770,9 +778,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundsWithResponseSpec(String projectId, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseSpec getCompoundsWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         return getCompoundsRequestCreation(projectId, msDataSearchPrepared, optFields, optFieldsFeatures);
     }
+
     /**
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -786,7 +795,7 @@ public class CompoundsApi {
      * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundsByGroupExperimentalRequestCreation(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getCompoundsByGroupExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<CompoundOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -838,7 +847,7 @@ public class CompoundsApi {
      * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelCompound getCompoundsByGroupExperimental(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+    public PagedModelCompound getCompoundsByGroupExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<CompoundOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
         return getCompoundsByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -856,7 +865,7 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;PagedModelCompound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelCompound> getCompoundsByGroupExperimentalWithHttpInfo(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelCompound> getCompoundsByGroupExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<CompoundOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
         return getCompoundsByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
@@ -874,9 +883,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundsByGroupExperimentalWithResponseSpec(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getCompoundsByGroupExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<CompoundOptField> optFields) throws WebClientResponseException {
         return getCompoundsByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields);
     }
+
     /**
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -890,7 +900,7 @@ public class CompoundsApi {
      * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundsByTagExperimentalRequestCreation(String projectId, String filter, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getCompoundsByTagExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String filter, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<CompoundOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -938,7 +948,7 @@ public class CompoundsApi {
      * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelCompound getCompoundsByTagExperimental(String projectId, String filter, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+    public PagedModelCompound getCompoundsByTagExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String filter, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<CompoundOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
         return getCompoundsByTagExperimentalRequestCreation(projectId, filter, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -956,7 +966,7 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;PagedModelCompound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelCompound> getCompoundsByTagExperimentalWithHttpInfo(String projectId, String filter, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelCompound> getCompoundsByTagExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String filter, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<CompoundOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
         return getCompoundsByTagExperimentalRequestCreation(projectId, filter, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
@@ -974,9 +984,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundsByTagExperimentalWithResponseSpec(String projectId, String filter, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getCompoundsByTagExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String filter, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<CompoundOptField> optFields) throws WebClientResponseException {
         return getCompoundsByTagExperimentalRequestCreation(projectId, filter, page, size, sort, optFields);
     }
+
     /**
      * Page of available compounds (group of ion identities) in the given project-space.
      * Page of available compounds (group of ion identities) in the given project-space.
@@ -991,7 +1002,7 @@ public class CompoundsApi {
      * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundsPagedRequestCreation(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec getCompoundsPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1041,7 +1052,7 @@ public class CompoundsApi {
      * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelCompound getCompoundsPaged(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public PagedModelCompound getCompoundsPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
         return getCompoundsPagedRequestCreation(projectId, page, size, sort, msDataSearchPrepared, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
     }
@@ -1060,7 +1071,7 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;PagedModelCompound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelCompound> getCompoundsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<PagedModelCompound> getCompoundsPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
         return getCompoundsPagedRequestCreation(projectId, page, size, sort, msDataSearchPrepared, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
     }
@@ -1079,9 +1090,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundsPagedWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseSpec getCompoundsPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<CompoundOptField> optFields, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         return getCompoundsPagedRequestCreation(projectId, page, size, sort, msDataSearchPrepared, optFields, optFieldsFeatures);
     }
+
     /**
      * [EXPERIMENTAL] Get all tags associated with this Compound
      * [EXPERIMENTAL] Get all tags associated with this Compound
@@ -1091,7 +1103,7 @@ public class CompoundsApi {
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getTagsForCompoundExperimentalRequestCreation(String projectId, String objectId) throws WebClientResponseException {
+    private ResponseSpec getTagsForCompoundExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1134,7 +1146,7 @@ public class CompoundsApi {
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Tag> getTagsForCompoundExperimental(String projectId, String objectId) throws WebClientResponseException {
+    public List<Tag> getTagsForCompoundExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
         return getTagsForCompoundExperimentalRequestCreation(projectId, objectId).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -1148,7 +1160,7 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Tag>> getTagsForCompoundExperimentalWithHttpInfo(String projectId, String objectId) throws WebClientResponseException {
+    public ResponseEntity<List<Tag>> getTagsForCompoundExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
         return getTagsForCompoundExperimentalRequestCreation(projectId, objectId).toEntityList(localVarReturnType).block();
     }
@@ -1162,9 +1174,10 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getTagsForCompoundExperimentalWithResponseSpec(String projectId, String objectId) throws WebClientResponseException {
+    public ResponseSpec getTagsForCompoundExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         return getTagsForCompoundExperimentalRequestCreation(projectId, objectId);
     }
+
     /**
      * [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space
      * [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -1174,7 +1187,7 @@ public class CompoundsApi {
      * @param tagName name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec removeTagFromCompoundExperimentalRequestCreation(String projectId, String compoundId, String tagName) throws WebClientResponseException {
+    private ResponseSpec removeTagFromCompoundExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1220,7 +1233,7 @@ public class CompoundsApi {
      * @param tagName name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void removeTagFromCompoundExperimental(String projectId, String compoundId, String tagName) throws WebClientResponseException {
+    public void removeTagFromCompoundExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         removeTagFromCompoundExperimentalRequestCreation(projectId, compoundId, tagName).bodyToMono(localVarReturnType).block();
     }
@@ -1234,7 +1247,7 @@ public class CompoundsApi {
      * @param tagName name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> removeTagFromCompoundExperimentalWithHttpInfo(String projectId, String compoundId, String tagName) throws WebClientResponseException {
+    public ResponseEntity<Void> removeTagFromCompoundExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return removeTagFromCompoundExperimentalRequestCreation(projectId, compoundId, tagName).toEntity(localVarReturnType).block();
     }
@@ -1249,7 +1262,7 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec removeTagFromCompoundExperimentalWithResponseSpec(String projectId, String compoundId, String tagName) throws WebClientResponseException {
+    public ResponseSpec removeTagFromCompoundExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         return removeTagFromCompoundExperimentalRequestCreation(projectId, compoundId, tagName);
     }
 }

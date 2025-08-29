@@ -13,24 +13,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class CompoundStatisticsApi {
     private ApiClient apiClient;
 
@@ -38,7 +39,6 @@ public class CompoundStatisticsApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public CompoundStatisticsApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
@@ -51,6 +51,7 @@ public class CompoundStatisticsApi {
         this.apiClient = apiClient;
     }
 
+    
     /**
      * [EXPERIMENTAL] Compute the fold change between two groups of runs
      * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -64,7 +65,7 @@ public class CompoundStatisticsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec computeCompoundFoldChangesExperimentalRequestCreation(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec computeCompoundFoldChangesExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -120,7 +121,7 @@ public class CompoundStatisticsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job computeCompoundFoldChangesExperimental(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job computeCompoundFoldChangesExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return computeCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -138,7 +139,7 @@ public class CompoundStatisticsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> computeCompoundFoldChangesExperimentalWithHttpInfo(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> computeCompoundFoldChangesExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return computeCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields).toEntity(localVarReturnType).block();
     }
@@ -156,9 +157,10 @@ public class CompoundStatisticsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec computeCompoundFoldChangesExperimentalWithResponseSpec(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec computeCompoundFoldChangesExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         return computeCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
     }
+
     /**
      * [EXPERIMENTAL] Delete fold changes
      * [EXPERIMENTAL] Delete fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -170,7 +172,7 @@ public class CompoundStatisticsApi {
      * @param quantification The quantification parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteCompoundFoldChangesExperimentalRequestCreation(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+    private ResponseSpec deleteCompoundFoldChangesExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -221,7 +223,7 @@ public class CompoundStatisticsApi {
      * @param quantification The quantification parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteCompoundFoldChangesExperimental(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+    public void deleteCompoundFoldChangesExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         deleteCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification).bodyToMono(localVarReturnType).block();
     }
@@ -237,7 +239,7 @@ public class CompoundStatisticsApi {
      * @param quantification The quantification parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteCompoundFoldChangesExperimentalWithHttpInfo(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteCompoundFoldChangesExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return deleteCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification).toEntity(localVarReturnType).block();
     }
@@ -254,9 +256,10 @@ public class CompoundStatisticsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteCompoundFoldChangesExperimentalWithResponseSpec(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+    public ResponseSpec deleteCompoundFoldChangesExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification) throws WebClientResponseException {
         return deleteCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification);
     }
+
     /**
      * [EXPERIMENTAL] Get table of all fold changes in the project space
      * [EXPERIMENTAL] Get table of all fold changes in the project space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -267,7 +270,7 @@ public class CompoundStatisticsApi {
      * @return StatisticsTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundFoldChangeTableExperimentalRequestCreation(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+    private ResponseSpec getCompoundFoldChangeTableExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -309,7 +312,7 @@ public class CompoundStatisticsApi {
      * @return StatisticsTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public StatisticsTable getCompoundFoldChangeTableExperimental(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+    public StatisticsTable getCompoundFoldChangeTableExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
         return getCompoundFoldChangeTableExperimentalRequestCreation(projectId, aggregation, quantification).bodyToMono(localVarReturnType).block();
     }
@@ -324,7 +327,7 @@ public class CompoundStatisticsApi {
      * @return ResponseEntity&lt;StatisticsTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<StatisticsTable> getCompoundFoldChangeTableExperimentalWithHttpInfo(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+    public ResponseEntity<StatisticsTable> getCompoundFoldChangeTableExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
         return getCompoundFoldChangeTableExperimentalRequestCreation(projectId, aggregation, quantification).toEntity(localVarReturnType).block();
     }
@@ -339,9 +342,10 @@ public class CompoundStatisticsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundFoldChangeTableExperimentalWithResponseSpec(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+    public ResponseSpec getCompoundFoldChangeTableExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification) throws WebClientResponseException {
         return getCompoundFoldChangeTableExperimentalRequestCreation(projectId, aggregation, quantification);
     }
+
     /**
      * [EXPERIMENTAL] List all fold changes that are associated with an object
      * [EXPERIMENTAL] List all fold changes that are associated with an object.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -351,7 +355,7 @@ public class CompoundStatisticsApi {
      * @return List&lt;FoldChange&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFoldChangesByCompoundExperimentalRequestCreation(String projectId, String objectId) throws WebClientResponseException {
+    private ResponseSpec getFoldChangesByCompoundExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -394,7 +398,7 @@ public class CompoundStatisticsApi {
      * @return List&lt;FoldChange&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<FoldChange> getFoldChangesByCompoundExperimental(String projectId, String objectId) throws WebClientResponseException {
+    public List<FoldChange> getFoldChangesByCompoundExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
         return getFoldChangesByCompoundExperimentalRequestCreation(projectId, objectId).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -408,7 +412,7 @@ public class CompoundStatisticsApi {
      * @return ResponseEntity&lt;List&lt;FoldChange&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<FoldChange>> getFoldChangesByCompoundExperimentalWithHttpInfo(String projectId, String objectId) throws WebClientResponseException {
+    public ResponseEntity<List<FoldChange>> getFoldChangesByCompoundExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
         return getFoldChangesByCompoundExperimentalRequestCreation(projectId, objectId).toEntityList(localVarReturnType).block();
     }
@@ -422,7 +426,7 @@ public class CompoundStatisticsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFoldChangesByCompoundExperimentalWithResponseSpec(String projectId, String objectId) throws WebClientResponseException {
+    public ResponseSpec getFoldChangesByCompoundExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         return getFoldChangesByCompoundExperimentalRequestCreation(projectId, objectId);
     }
 }

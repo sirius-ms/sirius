@@ -248,8 +248,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Close project-space and remove it from application",
-        "description": "Close project-space and remove it from application. Project will NOT be deleted from disk.\n \u003cp\u003e\n ATTENTION: This will cancel and remove all jobs running on this Project before closing it.\n If there are many jobs, this might take some time.",
+        "summary": "Close project-space and remove it from the application",
+        "description": "Close project-space and remove it from the application. The Project will NOT be deleted from disk.\n \u003cp\u003e\n ATTENTION: This will cancel and remove all jobs running on this Project before closing it.\n If there are many jobs, this might take some time.",
         "operationId": "closeProject",
         "parameters": [
           {
@@ -1846,6 +1846,7 @@
                 "properties": {
                   "inputFiles": {
                     "type": "array",
+                    "description": "files to import into project",
                     "items": {
                       "type": "string",
                       "format": "binary"
@@ -2037,7 +2038,7 @@
                 "properties": {
                   "inputFiles": {
                     "type": "array",
-                    "description": "Files to import into project.",
+                    "description": "files to import into project",
                     "items": {
                       "type": "string",
                       "format": "binary"
@@ -2118,7 +2119,7 @@
                 "properties": {
                   "inputFiles": {
                     "type": "array",
-                    "description": "Files to import into project.",
+                    "description": "files to import into project",
                     "items": {
                       "type": "string",
                       "format": "binary"
@@ -2407,6 +2408,7 @@
                 "enum": [
                   "none",
                   "msData",
+                  "topAnnotationsSummary",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -2502,6 +2504,7 @@
                 "enum": [
                   "none",
                   "msData",
+                  "topAnnotationsSummary",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -2586,6 +2589,7 @@
                 "enum": [
                   "none",
                   "msData",
+                  "topAnnotationsSummary",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -2658,6 +2662,7 @@
                 "enum": [
                   "none",
                   "msData",
+                  "topAnnotationsSummary",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -2983,7 +2988,7 @@
                 "properties": {
                   "inputFiles": {
                     "type": "array",
-                    "description": "files to be imported",
+                    "description": "files to import into project",
                     "items": {
                       "type": "string",
                       "format": "binary"
@@ -3097,25 +3102,11 @@
         "summary": "Actuator web endpoint \u0027shutdown\u0027",
         "operationId": "shutdown",
         "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/vnd.spring-boot.actuator.v3+json": {
-                "schema": {
-                  "type": "object"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              },
-              "application/vnd.spring-boot.actuator.v2+json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request"
           }
         }
       }
@@ -4086,6 +4077,7 @@
                 "enum": [
                   "none",
                   "msData",
+                  "topAnnotationsSummary",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -4646,6 +4638,7 @@
                 "enum": [
                   "none",
                   "msData",
+                  "topAnnotationsSummary",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -4866,6 +4859,7 @@
                 "enum": [
                   "none",
                   "msData",
+                  "topAnnotationsSummary",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -7264,6 +7258,7 @@
                 "enum": [
                   "none",
                   "msData",
+                  "topAnnotationsSummary",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -7517,6 +7512,7 @@
                 "enum": [
                   "none",
                   "msData",
+                  "topAnnotationsSummary",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -7617,6 +7613,7 @@
                 "enum": [
                   "none",
                   "msData",
+                  "topAnnotationsSummary",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -8066,12 +8063,12 @@
                   "type": "object"
                 }
               },
-              "application/json": {
+              "application/vnd.spring-boot.actuator.v2+json": {
                 "schema": {
                   "type": "object"
                 }
               },
-              "application/vnd.spring-boot.actuator.v2+json": {
+              "application/json": {
                 "schema": {
                   "type": "object"
                 }
@@ -8471,6 +8468,7 @@
             "description": "Type of this project.\n NULL if project type has not yet been specified by importing data.",
             "nullable": true,
             "enum": [
+              "UNIMPORTED",
               "DIRECT_IMPORT",
               "PEAKLISTS",
               "ALIGNED_RUNS",
@@ -12139,6 +12137,27 @@
           }
         },
         "nullable": true
+      },
+      "WebServerNamespace": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "SecurityContext": {
+        "type": "object",
+        "properties": {
+          "principal": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     }
   }

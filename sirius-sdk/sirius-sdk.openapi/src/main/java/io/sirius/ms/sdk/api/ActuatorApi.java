@@ -7,24 +7,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ActuatorApi {
     private ApiClient apiClient;
 
@@ -32,7 +33,6 @@ public class ActuatorApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public ActuatorApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
@@ -63,7 +63,7 @@ public class ActuatorApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/vnd.spring-boot.actuator.v3+json", "application/json", "application/vnd.spring-boot.actuator.v2+json"
+            "application/vnd.spring-boot.actuator.v3+json", "application/vnd.spring-boot.actuator.v2+json", "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -83,7 +83,8 @@ public class ActuatorApi {
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public String health() throws WebClientResponseException {
-        return healthRequestCreation().bodyToMono(String.class).block();
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
+        return healthRequestCreation().bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -94,7 +95,8 @@ public class ActuatorApi {
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ResponseEntity<String> healthWithHttpInfo() throws WebClientResponseException {
-        return healthRequestCreation().toEntity(String.class).block();
+        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
+        return healthRequestCreation().toEntity(localVarReturnType).block();
     }
 
     /**
@@ -107,11 +109,12 @@ public class ActuatorApi {
     public ResponseSpec healthWithResponseSpec() throws WebClientResponseException {
         return healthRequestCreation();
     }
+
     /**
      * Actuator web endpoint &#39;shutdown&#39;
      * 
-     * <p><b>200</b> - OK
-     * @return Object
+     * <p><b>204</b> - No Content
+     * <p><b>400</b> - Bad Request
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec shutdownRequestCreation() throws WebClientResponseException {
@@ -124,45 +127,46 @@ public class ActuatorApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        final String[] localVarAccepts = { 
-            "application/vnd.spring-boot.actuator.v3+json", "application/json", "application/vnd.spring-boot.actuator.v2+json"
-        };
+        final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<Object> localVarReturnType = new ParameterizedTypeReference<Object>() {};
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return apiClient.invokeAPI("/actuator/shutdown", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
      * Actuator web endpoint &#39;shutdown&#39;
      * 
-     * <p><b>200</b> - OK
-     * @return Object
+     * <p><b>204</b> - No Content
+     * <p><b>400</b> - Bad Request
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public String shutdown() throws WebClientResponseException {
-        return shutdownRequestCreation().bodyToMono(String.class).block();
+    public void shutdown() throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        shutdownRequestCreation().bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Actuator web endpoint &#39;shutdown&#39;
      * 
-     * <p><b>200</b> - OK
-     * @return ResponseEntity&lt;Object&gt;
+     * <p><b>204</b> - No Content
+     * <p><b>400</b> - Bad Request
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<String> shutdownWithHttpInfo() throws WebClientResponseException {
-        return shutdownRequestCreation().toEntity(String.class).block();
+    public ResponseEntity<Void> shutdownWithHttpInfo() throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return shutdownRequestCreation().toEntity(localVarReturnType).block();
     }
 
     /**
      * Actuator web endpoint &#39;shutdown&#39;
      * 
-     * <p><b>200</b> - OK
+     * <p><b>204</b> - No Content
+     * <p><b>400</b> - Bad Request
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */

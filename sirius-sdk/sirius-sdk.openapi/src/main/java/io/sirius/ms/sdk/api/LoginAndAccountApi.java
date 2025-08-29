@@ -10,24 +10,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class LoginAndAccountApi {
     private ApiClient apiClient;
 
@@ -35,7 +36,6 @@ public class LoginAndAccountApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public LoginAndAccountApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
@@ -48,6 +48,7 @@ public class LoginAndAccountApi {
         this.apiClient = apiClient;
     }
 
+    
     /**
      * Get information about the account currently logged in.
      * Get information about the account currently logged in. Fails if not logged in.
@@ -56,7 +57,7 @@ public class LoginAndAccountApi {
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAccountInfoRequestCreation(Boolean includeSubs) throws WebClientResponseException {
+    private ResponseSpec getAccountInfoRequestCreation(@jakarta.annotation.Nullable Boolean includeSubs) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -89,7 +90,7 @@ public class LoginAndAccountApi {
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AccountInfo getAccountInfo(Boolean includeSubs) throws WebClientResponseException {
+    public AccountInfo getAccountInfo(@jakarta.annotation.Nullable Boolean includeSubs) throws WebClientResponseException {
         ParameterizedTypeReference<AccountInfo> localVarReturnType = new ParameterizedTypeReference<AccountInfo>() {};
         return getAccountInfoRequestCreation(includeSubs).bodyToMono(localVarReturnType).block();
     }
@@ -102,7 +103,7 @@ public class LoginAndAccountApi {
      * @return ResponseEntity&lt;AccountInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AccountInfo> getAccountInfoWithHttpInfo(Boolean includeSubs) throws WebClientResponseException {
+    public ResponseEntity<AccountInfo> getAccountInfoWithHttpInfo(@jakarta.annotation.Nullable Boolean includeSubs) throws WebClientResponseException {
         ParameterizedTypeReference<AccountInfo> localVarReturnType = new ParameterizedTypeReference<AccountInfo>() {};
         return getAccountInfoRequestCreation(includeSubs).toEntity(localVarReturnType).block();
     }
@@ -115,9 +116,10 @@ public class LoginAndAccountApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAccountInfoWithResponseSpec(Boolean includeSubs) throws WebClientResponseException {
+    public ResponseSpec getAccountInfoWithResponseSpec(@jakarta.annotation.Nullable Boolean includeSubs) throws WebClientResponseException {
         return getAccountInfoRequestCreation(includeSubs);
     }
+
     /**
      * Get SignUp URL (For signUp via web browser)
      * Get SignUp URL (For signUp via web browser)
@@ -182,6 +184,7 @@ public class LoginAndAccountApi {
     public ResponseSpec getSignUpURLWithResponseSpec() throws WebClientResponseException {
         return getSignUpURLRequestCreation();
     }
+
     /**
      * Get available subscriptions of the account currently logged in.
      * Get available subscriptions of the account currently logged in. Fails if not logged in.
@@ -246,6 +249,7 @@ public class LoginAndAccountApi {
     public ResponseSpec getSubscriptionsWithResponseSpec() throws WebClientResponseException {
         return getSubscriptionsRequestCreation();
     }
+
     /**
      * Check if a user is logged in.
      * Check if a user is logged in.
@@ -310,6 +314,7 @@ public class LoginAndAccountApi {
     public ResponseSpec isLoggedInWithResponseSpec() throws WebClientResponseException {
         return isLoggedInRequestCreation();
     }
+
     /**
      * Login into SIRIUS web services and activate default subscription if available.
      * Login into SIRIUS web services and activate default subscription if available.
@@ -321,7 +326,7 @@ public class LoginAndAccountApi {
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec loginRequestCreation(Boolean acceptTerms, AccountCredentials accountCredentials, Boolean failWhenLoggedIn, Boolean includeSubs) throws WebClientResponseException {
+    private ResponseSpec loginRequestCreation(@jakarta.annotation.Nonnull Boolean acceptTerms, @jakarta.annotation.Nonnull AccountCredentials accountCredentials, @jakarta.annotation.Nullable Boolean failWhenLoggedIn, @jakarta.annotation.Nullable Boolean includeSubs) throws WebClientResponseException {
         Object postBody = accountCredentials;
         // verify the required parameter 'acceptTerms' is set
         if (acceptTerms == null) {
@@ -369,7 +374,7 @@ public class LoginAndAccountApi {
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AccountInfo login(Boolean acceptTerms, AccountCredentials accountCredentials, Boolean failWhenLoggedIn, Boolean includeSubs) throws WebClientResponseException {
+    public AccountInfo login(@jakarta.annotation.Nonnull Boolean acceptTerms, @jakarta.annotation.Nonnull AccountCredentials accountCredentials, @jakarta.annotation.Nullable Boolean failWhenLoggedIn, @jakarta.annotation.Nullable Boolean includeSubs) throws WebClientResponseException {
         ParameterizedTypeReference<AccountInfo> localVarReturnType = new ParameterizedTypeReference<AccountInfo>() {};
         return loginRequestCreation(acceptTerms, accountCredentials, failWhenLoggedIn, includeSubs).bodyToMono(localVarReturnType).block();
     }
@@ -385,7 +390,7 @@ public class LoginAndAccountApi {
      * @return ResponseEntity&lt;AccountInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AccountInfo> loginWithHttpInfo(Boolean acceptTerms, AccountCredentials accountCredentials, Boolean failWhenLoggedIn, Boolean includeSubs) throws WebClientResponseException {
+    public ResponseEntity<AccountInfo> loginWithHttpInfo(@jakarta.annotation.Nonnull Boolean acceptTerms, @jakarta.annotation.Nonnull AccountCredentials accountCredentials, @jakarta.annotation.Nullable Boolean failWhenLoggedIn, @jakarta.annotation.Nullable Boolean includeSubs) throws WebClientResponseException {
         ParameterizedTypeReference<AccountInfo> localVarReturnType = new ParameterizedTypeReference<AccountInfo>() {};
         return loginRequestCreation(acceptTerms, accountCredentials, failWhenLoggedIn, includeSubs).toEntity(localVarReturnType).block();
     }
@@ -401,9 +406,10 @@ public class LoginAndAccountApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec loginWithResponseSpec(Boolean acceptTerms, AccountCredentials accountCredentials, Boolean failWhenLoggedIn, Boolean includeSubs) throws WebClientResponseException {
+    public ResponseSpec loginWithResponseSpec(@jakarta.annotation.Nonnull Boolean acceptTerms, @jakarta.annotation.Nonnull AccountCredentials accountCredentials, @jakarta.annotation.Nullable Boolean failWhenLoggedIn, @jakarta.annotation.Nullable Boolean includeSubs) throws WebClientResponseException {
         return loginRequestCreation(acceptTerms, accountCredentials, failWhenLoggedIn, includeSubs);
     }
+
     /**
      * Logout from SIRIUS web services.
      * Logout from SIRIUS web services.
@@ -463,6 +469,7 @@ public class LoginAndAccountApi {
     public ResponseSpec logoutWithResponseSpec() throws WebClientResponseException {
         return logoutRequestCreation();
     }
+
     /**
      * Open User portal in browser.
      * Open User portal in browser. If user is logged in SIRIUS tries to transfer the login state to the browser.
@@ -522,6 +529,7 @@ public class LoginAndAccountApi {
     public ResponseSpec openPortalWithResponseSpec() throws WebClientResponseException {
         return openPortalRequestCreation();
     }
+
     /**
      * Select a subscription as active subscription to be used for computations.
      * Select a subscription as active subscription to be used for computations.
@@ -530,7 +538,7 @@ public class LoginAndAccountApi {
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec selectSubscriptionRequestCreation(String sid) throws WebClientResponseException {
+    private ResponseSpec selectSubscriptionRequestCreation(@jakarta.annotation.Nonnull String sid) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'sid' is set
         if (sid == null) {
@@ -567,7 +575,7 @@ public class LoginAndAccountApi {
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AccountInfo selectSubscription(String sid) throws WebClientResponseException {
+    public AccountInfo selectSubscription(@jakarta.annotation.Nonnull String sid) throws WebClientResponseException {
         ParameterizedTypeReference<AccountInfo> localVarReturnType = new ParameterizedTypeReference<AccountInfo>() {};
         return selectSubscriptionRequestCreation(sid).bodyToMono(localVarReturnType).block();
     }
@@ -580,7 +588,7 @@ public class LoginAndAccountApi {
      * @return ResponseEntity&lt;AccountInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AccountInfo> selectSubscriptionWithHttpInfo(String sid) throws WebClientResponseException {
+    public ResponseEntity<AccountInfo> selectSubscriptionWithHttpInfo(@jakarta.annotation.Nonnull String sid) throws WebClientResponseException {
         ParameterizedTypeReference<AccountInfo> localVarReturnType = new ParameterizedTypeReference<AccountInfo>() {};
         return selectSubscriptionRequestCreation(sid).toEntity(localVarReturnType).block();
     }
@@ -593,9 +601,10 @@ public class LoginAndAccountApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec selectSubscriptionWithResponseSpec(String sid) throws WebClientResponseException {
+    public ResponseSpec selectSubscriptionWithResponseSpec(@jakarta.annotation.Nonnull String sid) throws WebClientResponseException {
         return selectSubscriptionRequestCreation(sid);
     }
+
     /**
      * Open SignUp window in system browser and return signUp link.
      * Open SignUp window in system browser and return signUp link.

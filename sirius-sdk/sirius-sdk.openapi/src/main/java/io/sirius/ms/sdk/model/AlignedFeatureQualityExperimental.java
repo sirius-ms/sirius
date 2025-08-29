@@ -45,30 +45,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeatureQualityExperimental.JSON_PROPERTY_OVERALL_QUALITY,
   AlignedFeatureQualityExperimental.JSON_PROPERTY_CATEGORIES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class AlignedFeatureQualityExperimental {
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_ID = "alignedFeatureId";
+  @jakarta.annotation.Nonnull
   private String alignedFeatureId;
 
   public static final String JSON_PROPERTY_OVERALL_QUALITY = "overallQuality";
+  @jakarta.annotation.Nullable
   private DataQuality overallQuality;
 
   public static final String JSON_PROPERTY_CATEGORIES = "categories";
+  @jakarta.annotation.Nonnull
   private Map<String, Category> categories = new HashMap<>();
 
   public AlignedFeatureQualityExperimental() {
   }
 
-  public AlignedFeatureQualityExperimental alignedFeatureId(String alignedFeatureId) {
+  public AlignedFeatureQualityExperimental alignedFeatureId(@jakarta.annotation.Nonnull String alignedFeatureId) {
     
     this.alignedFeatureId = alignedFeatureId;
     return this;
   }
 
-   /**
+  /**
    * Id of the feature (aligned over runs) this quality information belongs to.
    * @return alignedFeatureId
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -80,20 +83,20 @@ public class AlignedFeatureQualityExperimental {
 
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setAlignedFeatureId(String alignedFeatureId) {
+  public void setAlignedFeatureId(@jakarta.annotation.Nonnull String alignedFeatureId) {
     this.alignedFeatureId = alignedFeatureId;
   }
 
-  public AlignedFeatureQualityExperimental overallQuality(DataQuality overallQuality) {
+  public AlignedFeatureQualityExperimental overallQuality(@jakarta.annotation.Nullable DataQuality overallQuality) {
     
     this.overallQuality = overallQuality;
     return this;
   }
 
-   /**
+  /**
    * Get overallQuality
    * @return overallQuality
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_OVERALL_QUALITY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -105,11 +108,11 @@ public class AlignedFeatureQualityExperimental {
 
   @JsonProperty(JSON_PROPERTY_OVERALL_QUALITY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setOverallQuality(DataQuality overallQuality) {
+  public void setOverallQuality(@jakarta.annotation.Nullable DataQuality overallQuality) {
     this.overallQuality = overallQuality;
   }
 
-  public AlignedFeatureQualityExperimental categories(Map<String, Category> categories) {
+  public AlignedFeatureQualityExperimental categories(@jakarta.annotation.Nonnull Map<String, Category> categories) {
     
     this.categories = categories;
     return this;
@@ -120,10 +123,10 @@ public class AlignedFeatureQualityExperimental {
     return this;
   }
 
-   /**
+  /**
    * Contains all pre-computation quality information that belong to  this feature (aligned over runs), such as information about the quality of the peak shape, MS2 spectrum etc.,
    * @return categories
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_CATEGORIES)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -135,9 +138,10 @@ public class AlignedFeatureQualityExperimental {
 
   @JsonProperty(JSON_PROPERTY_CATEGORIES)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setCategories(Map<String, Category> categories) {
+  public void setCategories(@jakarta.annotation.Nonnull Map<String, Category> categories) {
     this.categories = categories;
   }
+
 
   @Override
   public boolean equals(Object o) {

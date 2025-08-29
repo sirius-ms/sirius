@@ -50,45 +50,53 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Zodiac.JSON_PROPERTY_LIBRARY_SEARCH_ANCHORS,
   Zodiac.JSON_PROPERTY_ANALOGUE_SEARCH_ANCHORS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class Zodiac {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
+  @jakarta.annotation.Nullable
   private Boolean enabled;
 
   public static final String JSON_PROPERTY_CONSIDERED_CANDIDATES_AT300_MZ = "consideredCandidatesAt300Mz";
+  @jakarta.annotation.Nullable
   private Integer consideredCandidatesAt300Mz;
 
   public static final String JSON_PROPERTY_CONSIDERED_CANDIDATES_AT800_MZ = "consideredCandidatesAt800Mz";
+  @jakarta.annotation.Nullable
   private Integer consideredCandidatesAt800Mz;
 
   public static final String JSON_PROPERTY_RUN_IN_TWO_STEPS = "runInTwoSteps";
+  @jakarta.annotation.Nullable
   private Boolean runInTwoSteps;
 
   public static final String JSON_PROPERTY_EDGE_FILTER_THRESHOLDS = "edgeFilterThresholds";
+  @jakarta.annotation.Nullable
   private ZodiacEdgeFilterThresholds edgeFilterThresholds;
 
   public static final String JSON_PROPERTY_GIBBS_SAMPLER_PARAMETERS = "gibbsSamplerParameters";
+  @jakarta.annotation.Nullable
   private ZodiacEpochs gibbsSamplerParameters;
 
   public static final String JSON_PROPERTY_LIBRARY_SEARCH_ANCHORS = "librarySearchAnchors";
+  @jakarta.annotation.Nullable
   private ZodiacLibraryScoring librarySearchAnchors;
 
   public static final String JSON_PROPERTY_ANALOGUE_SEARCH_ANCHORS = "analogueSearchAnchors";
+  @jakarta.annotation.Nullable
   private ZodiacAnalogueNodes analogueSearchAnchors;
 
   public Zodiac() {
   }
 
-  public Zodiac enabled(Boolean enabled) {
+  public Zodiac enabled(@jakarta.annotation.Nullable Boolean enabled) {
     
     this.enabled = enabled;
     return this;
   }
 
-   /**
+  /**
    * tags whether the tool is enabled
    * @return enabled
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -100,20 +108,20 @@ public class Zodiac {
 
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnabled(Boolean enabled) {
+  public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
   }
 
-  public Zodiac consideredCandidatesAt300Mz(Integer consideredCandidatesAt300Mz) {
+  public Zodiac consideredCandidatesAt300Mz(@jakarta.annotation.Nullable Integer consideredCandidatesAt300Mz) {
     
     this.consideredCandidatesAt300Mz = consideredCandidatesAt300Mz;
     return this;
   }
 
-   /**
+  /**
    * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds below 300 m/z.
    * @return consideredCandidatesAt300Mz
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONSIDERED_CANDIDATES_AT300_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -125,20 +133,20 @@ public class Zodiac {
 
   @JsonProperty(JSON_PROPERTY_CONSIDERED_CANDIDATES_AT300_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConsideredCandidatesAt300Mz(Integer consideredCandidatesAt300Mz) {
+  public void setConsideredCandidatesAt300Mz(@jakarta.annotation.Nullable Integer consideredCandidatesAt300Mz) {
     this.consideredCandidatesAt300Mz = consideredCandidatesAt300Mz;
   }
 
-  public Zodiac consideredCandidatesAt800Mz(Integer consideredCandidatesAt800Mz) {
+  public Zodiac consideredCandidatesAt800Mz(@jakarta.annotation.Nullable Integer consideredCandidatesAt800Mz) {
     
     this.consideredCandidatesAt800Mz = consideredCandidatesAt800Mz;
     return this;
   }
 
-   /**
+  /**
    * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds above 800 m/z.
    * @return consideredCandidatesAt800Mz
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONSIDERED_CANDIDATES_AT800_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -150,20 +158,20 @@ public class Zodiac {
 
   @JsonProperty(JSON_PROPERTY_CONSIDERED_CANDIDATES_AT800_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConsideredCandidatesAt800Mz(Integer consideredCandidatesAt800Mz) {
+  public void setConsideredCandidatesAt800Mz(@jakarta.annotation.Nullable Integer consideredCandidatesAt800Mz) {
     this.consideredCandidatesAt800Mz = consideredCandidatesAt800Mz;
   }
 
-  public Zodiac runInTwoSteps(Boolean runInTwoSteps) {
+  public Zodiac runInTwoSteps(@jakarta.annotation.Nullable Boolean runInTwoSteps) {
     
     this.runInTwoSteps = runInTwoSteps;
     return this;
   }
 
-   /**
+  /**
    * As default ZODIAC runs a 2-step approach. First running &#39;good quality compounds&#39; only, and afterwards including the remaining.
    * @return runInTwoSteps
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RUN_IN_TWO_STEPS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -175,20 +183,20 @@ public class Zodiac {
 
   @JsonProperty(JSON_PROPERTY_RUN_IN_TWO_STEPS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRunInTwoSteps(Boolean runInTwoSteps) {
+  public void setRunInTwoSteps(@jakarta.annotation.Nullable Boolean runInTwoSteps) {
     this.runInTwoSteps = runInTwoSteps;
   }
 
-  public Zodiac edgeFilterThresholds(ZodiacEdgeFilterThresholds edgeFilterThresholds) {
+  public Zodiac edgeFilterThresholds(@jakarta.annotation.Nullable ZodiacEdgeFilterThresholds edgeFilterThresholds) {
     
     this.edgeFilterThresholds = edgeFilterThresholds;
     return this;
   }
 
-   /**
+  /**
    * Get edgeFilterThresholds
    * @return edgeFilterThresholds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_EDGE_FILTER_THRESHOLDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -200,20 +208,20 @@ public class Zodiac {
 
   @JsonProperty(JSON_PROPERTY_EDGE_FILTER_THRESHOLDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEdgeFilterThresholds(ZodiacEdgeFilterThresholds edgeFilterThresholds) {
+  public void setEdgeFilterThresholds(@jakarta.annotation.Nullable ZodiacEdgeFilterThresholds edgeFilterThresholds) {
     this.edgeFilterThresholds = edgeFilterThresholds;
   }
 
-  public Zodiac gibbsSamplerParameters(ZodiacEpochs gibbsSamplerParameters) {
+  public Zodiac gibbsSamplerParameters(@jakarta.annotation.Nullable ZodiacEpochs gibbsSamplerParameters) {
     
     this.gibbsSamplerParameters = gibbsSamplerParameters;
     return this;
   }
 
-   /**
+  /**
    * Get gibbsSamplerParameters
    * @return gibbsSamplerParameters
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_GIBBS_SAMPLER_PARAMETERS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -225,20 +233,20 @@ public class Zodiac {
 
   @JsonProperty(JSON_PROPERTY_GIBBS_SAMPLER_PARAMETERS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setGibbsSamplerParameters(ZodiacEpochs gibbsSamplerParameters) {
+  public void setGibbsSamplerParameters(@jakarta.annotation.Nullable ZodiacEpochs gibbsSamplerParameters) {
     this.gibbsSamplerParameters = gibbsSamplerParameters;
   }
 
-  public Zodiac librarySearchAnchors(ZodiacLibraryScoring librarySearchAnchors) {
+  public Zodiac librarySearchAnchors(@jakarta.annotation.Nullable ZodiacLibraryScoring librarySearchAnchors) {
     
     this.librarySearchAnchors = librarySearchAnchors;
     return this;
   }
 
-   /**
+  /**
    * Get librarySearchAnchors
    * @return librarySearchAnchors
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LIBRARY_SEARCH_ANCHORS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -250,20 +258,20 @@ public class Zodiac {
 
   @JsonProperty(JSON_PROPERTY_LIBRARY_SEARCH_ANCHORS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLibrarySearchAnchors(ZodiacLibraryScoring librarySearchAnchors) {
+  public void setLibrarySearchAnchors(@jakarta.annotation.Nullable ZodiacLibraryScoring librarySearchAnchors) {
     this.librarySearchAnchors = librarySearchAnchors;
   }
 
-  public Zodiac analogueSearchAnchors(ZodiacAnalogueNodes analogueSearchAnchors) {
+  public Zodiac analogueSearchAnchors(@jakarta.annotation.Nullable ZodiacAnalogueNodes analogueSearchAnchors) {
     
     this.analogueSearchAnchors = analogueSearchAnchors;
     return this;
   }
 
-   /**
+  /**
    * Get analogueSearchAnchors
    * @return analogueSearchAnchors
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ANALOGUE_SEARCH_ANCHORS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -275,9 +283,10 @@ public class Zodiac {
 
   @JsonProperty(JSON_PROPERTY_ANALOGUE_SEARCH_ANCHORS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAnalogueSearchAnchors(ZodiacAnalogueNodes analogueSearchAnchors) {
+  public void setAnalogueSearchAnchors(@jakarta.annotation.Nullable ZodiacAnalogueNodes analogueSearchAnchors) {
     this.analogueSearchAnchors = analogueSearchAnchors;
   }
+
 
   @Override
   public boolean equals(Object o) {

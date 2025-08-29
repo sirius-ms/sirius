@@ -44,21 +44,24 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SampleTypeFoldChangeRequest.JSON_PROPERTY_BLANK_RUN_IDS,
   SampleTypeFoldChangeRequest.JSON_PROPERTY_CONTROL_RUN_IDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class SampleTypeFoldChangeRequest {
   public static final String JSON_PROPERTY_SAMPLE_RUN_IDS = "sampleRunIds";
+  @jakarta.annotation.Nullable
   private List<String> sampleRunIds = new ArrayList<>();
 
   public static final String JSON_PROPERTY_BLANK_RUN_IDS = "blankRunIds";
+  @jakarta.annotation.Nullable
   private List<String> blankRunIds = new ArrayList<>();
 
   public static final String JSON_PROPERTY_CONTROL_RUN_IDS = "controlRunIds";
+  @jakarta.annotation.Nullable
   private List<String> controlRunIds = new ArrayList<>();
 
   public SampleTypeFoldChangeRequest() {
   }
 
-  public SampleTypeFoldChangeRequest sampleRunIds(List<String> sampleRunIds) {
+  public SampleTypeFoldChangeRequest sampleRunIds(@jakarta.annotation.Nullable List<String> sampleRunIds) {
     
     this.sampleRunIds = sampleRunIds;
     return this;
@@ -72,10 +75,10 @@ public class SampleTypeFoldChangeRequest {
     return this;
   }
 
-   /**
+  /**
    * Get sampleRunIds
    * @return sampleRunIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SAMPLE_RUN_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -87,11 +90,11 @@ public class SampleTypeFoldChangeRequest {
 
   @JsonProperty(JSON_PROPERTY_SAMPLE_RUN_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSampleRunIds(List<String> sampleRunIds) {
+  public void setSampleRunIds(@jakarta.annotation.Nullable List<String> sampleRunIds) {
     this.sampleRunIds = sampleRunIds;
   }
 
-  public SampleTypeFoldChangeRequest blankRunIds(List<String> blankRunIds) {
+  public SampleTypeFoldChangeRequest blankRunIds(@jakarta.annotation.Nullable List<String> blankRunIds) {
     
     this.blankRunIds = blankRunIds;
     return this;
@@ -105,10 +108,10 @@ public class SampleTypeFoldChangeRequest {
     return this;
   }
 
-   /**
+  /**
    * Get blankRunIds
    * @return blankRunIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_BLANK_RUN_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -120,11 +123,11 @@ public class SampleTypeFoldChangeRequest {
 
   @JsonProperty(JSON_PROPERTY_BLANK_RUN_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setBlankRunIds(List<String> blankRunIds) {
+  public void setBlankRunIds(@jakarta.annotation.Nullable List<String> blankRunIds) {
     this.blankRunIds = blankRunIds;
   }
 
-  public SampleTypeFoldChangeRequest controlRunIds(List<String> controlRunIds) {
+  public SampleTypeFoldChangeRequest controlRunIds(@jakarta.annotation.Nullable List<String> controlRunIds) {
     
     this.controlRunIds = controlRunIds;
     return this;
@@ -138,10 +141,10 @@ public class SampleTypeFoldChangeRequest {
     return this;
   }
 
-   /**
+  /**
    * Get controlRunIds
    * @return controlRunIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONTROL_RUN_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -153,9 +156,10 @@ public class SampleTypeFoldChangeRequest {
 
   @JsonProperty(JSON_PROPERTY_CONTROL_RUN_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setControlRunIds(List<String> controlRunIds) {
+  public void setControlRunIds(@jakarta.annotation.Nullable List<String> controlRunIds) {
     this.controlRunIds = controlRunIds;
   }
+
 
   @Override
   public boolean equals(Object o) {

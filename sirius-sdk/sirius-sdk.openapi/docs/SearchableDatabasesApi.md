@@ -433,7 +433,7 @@ public class Example {
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         String databaseId = "databaseId_example"; // String | database to import into
-        List<File> inputFiles = Arrays.asList(); // List<File> | files to be imported
+        List<File> inputFiles = Arrays.asList(); // List<File> | files to import into project
         Integer bufferSize = 1000; // Integer | 
         BioTransformerParameters bioTransformerParameters = new BioTransformerParameters(); // BioTransformerParameters | 
         try {
@@ -456,7 +456,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **databaseId** | **String**| database to import into | |
-| **inputFiles** | **List&lt;File&gt;**| files to be imported | |
+| **inputFiles** | **List&lt;File&gt;**| files to import into project | |
 | **bufferSize** | **Integer**|  | [optional] [default to 1000] |
 | **bioTransformerParameters** | [**BioTransformerParameters**](BioTransformerParameters.md)|  | [optional] |
 

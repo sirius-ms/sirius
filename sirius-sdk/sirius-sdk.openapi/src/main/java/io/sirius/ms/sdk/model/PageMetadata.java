@@ -42,33 +42,37 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PageMetadata.JSON_PROPERTY_TOTAL_ELEMENTS,
   PageMetadata.JSON_PROPERTY_TOTAL_PAGES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class PageMetadata {
   public static final String JSON_PROPERTY_SIZE = "size";
+  @jakarta.annotation.Nullable
   private Long size;
 
   public static final String JSON_PROPERTY_NUMBER = "number";
+  @jakarta.annotation.Nullable
   private Long number;
 
   public static final String JSON_PROPERTY_TOTAL_ELEMENTS = "totalElements";
+  @jakarta.annotation.Nullable
   private Long totalElements;
 
   public static final String JSON_PROPERTY_TOTAL_PAGES = "totalPages";
+  @jakarta.annotation.Nullable
   private Long totalPages;
 
   public PageMetadata() {
   }
 
-  public PageMetadata size(Long size) {
+  public PageMetadata size(@jakarta.annotation.Nullable Long size) {
     
     this.size = size;
     return this;
   }
 
-   /**
+  /**
    * Get size
    * @return size
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SIZE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -80,20 +84,20 @@ public class PageMetadata {
 
   @JsonProperty(JSON_PROPERTY_SIZE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSize(Long size) {
+  public void setSize(@jakarta.annotation.Nullable Long size) {
     this.size = size;
   }
 
-  public PageMetadata number(Long number) {
+  public PageMetadata number(@jakarta.annotation.Nullable Long number) {
     
     this.number = number;
     return this;
   }
 
-   /**
+  /**
    * Get number
    * @return number
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NUMBER)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -105,20 +109,20 @@ public class PageMetadata {
 
   @JsonProperty(JSON_PROPERTY_NUMBER)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumber(Long number) {
+  public void setNumber(@jakarta.annotation.Nullable Long number) {
     this.number = number;
   }
 
-  public PageMetadata totalElements(Long totalElements) {
+  public PageMetadata totalElements(@jakarta.annotation.Nullable Long totalElements) {
     
     this.totalElements = totalElements;
     return this;
   }
 
-   /**
+  /**
    * Get totalElements
    * @return totalElements
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TOTAL_ELEMENTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -130,20 +134,20 @@ public class PageMetadata {
 
   @JsonProperty(JSON_PROPERTY_TOTAL_ELEMENTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTotalElements(Long totalElements) {
+  public void setTotalElements(@jakarta.annotation.Nullable Long totalElements) {
     this.totalElements = totalElements;
   }
 
-  public PageMetadata totalPages(Long totalPages) {
+  public PageMetadata totalPages(@jakarta.annotation.Nullable Long totalPages) {
     
     this.totalPages = totalPages;
     return this;
   }
 
-   /**
+  /**
    * Get totalPages
    * @return totalPages
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TOTAL_PAGES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -155,9 +159,10 @@ public class PageMetadata {
 
   @JsonProperty(JSON_PROPERTY_TOTAL_PAGES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTotalPages(Long totalPages) {
+  public void setTotalPages(@jakarta.annotation.Nullable Long totalPages) {
     this.totalPages = totalPages;
   }
+
 
   @Override
   public boolean equals(Object o) {

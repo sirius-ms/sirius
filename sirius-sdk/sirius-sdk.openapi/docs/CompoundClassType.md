@@ -5,7 +5,7 @@
 ## Enum
 
 
-* `CLASSYFIRE` (value: `"ClassyFire"`)
+* `CLASSY_FIRE` (value: `"ClassyFire"`)
 
 * `NPC` (value: `"NPC"`)
 

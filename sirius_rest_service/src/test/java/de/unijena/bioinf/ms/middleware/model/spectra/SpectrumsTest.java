@@ -1,19 +1,16 @@
+package de.unijena.bioinf.ms.middleware.model.spectra;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
-import de.unijena.bioinf.ms.middleware.model.spectra.*;
-import de.unijena.bioinf.sirius.Ms2Preprocessor;
-import de.unijena.bioinf.sirius.ProcessedInput;
-import de.unijena.bioinf.sirius.ProcessedPeak;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
 

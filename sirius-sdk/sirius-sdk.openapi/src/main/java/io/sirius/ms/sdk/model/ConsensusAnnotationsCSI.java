@@ -51,42 +51,49 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ConsensusAnnotationsCSI.JSON_PROPERTY_CONFIDENCE_EXACT_MATCH,
   ConsensusAnnotationsCSI.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ConsensusAnnotationsCSI {
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  @jakarta.annotation.Nullable
   private String molecularFormula;
 
   public static final String JSON_PROPERTY_COMPOUND_CLASSES = "compoundClasses";
+  @jakarta.annotation.Nullable
   private CompoundClasses compoundClasses;
 
   public static final String JSON_PROPERTY_SUPPORTING_FEATURE_IDS = "supportingFeatureIds";
+  @jakarta.annotation.Nullable
   private List<String> supportingFeatureIds;
 
   public static final String JSON_PROPERTY_SELECTION_CRITERION = "selectionCriterion";
+  @jakarta.annotation.Nullable
   private ConsensusCriterionCSI selectionCriterion;
 
   public static final String JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE = "csiFingerIdStructure";
+  @jakarta.annotation.Nullable
   private StructureCandidate csiFingerIdStructure;
 
   public static final String JSON_PROPERTY_CONFIDENCE_EXACT_MATCH = "confidenceExactMatch";
+  @jakarta.annotation.Nullable
   private Double confidenceExactMatch;
 
   public static final String JSON_PROPERTY_CONFIDENCE_APPROX_MATCH = "confidenceApproxMatch";
+  @jakarta.annotation.Nullable
   private Double confidenceApproxMatch;
 
   public ConsensusAnnotationsCSI() {
   }
 
-  public ConsensusAnnotationsCSI molecularFormula(String molecularFormula) {
+  public ConsensusAnnotationsCSI molecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     
     this.molecularFormula = molecularFormula;
     return this;
   }
 
-   /**
+  /**
    * Molecular formula of the consensus annotation  Might be null if no consensus formula is available.
    * @return molecularFormula
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -98,20 +105,20 @@ public class ConsensusAnnotationsCSI {
 
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMolecularFormula(String molecularFormula) {
+  public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
   }
 
-  public ConsensusAnnotationsCSI compoundClasses(CompoundClasses compoundClasses) {
+  public ConsensusAnnotationsCSI compoundClasses(@jakarta.annotation.Nullable CompoundClasses compoundClasses) {
     
     this.compoundClasses = compoundClasses;
     return this;
   }
 
-   /**
+  /**
    * Get compoundClasses
    * @return compoundClasses
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -123,11 +130,11 @@ public class ConsensusAnnotationsCSI {
 
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCompoundClasses(CompoundClasses compoundClasses) {
+  public void setCompoundClasses(@jakarta.annotation.Nullable CompoundClasses compoundClasses) {
     this.compoundClasses = compoundClasses;
   }
 
-  public ConsensusAnnotationsCSI supportingFeatureIds(List<String> supportingFeatureIds) {
+  public ConsensusAnnotationsCSI supportingFeatureIds(@jakarta.annotation.Nullable List<String> supportingFeatureIds) {
     
     this.supportingFeatureIds = supportingFeatureIds;
     return this;
@@ -141,10 +148,10 @@ public class ConsensusAnnotationsCSI {
     return this;
   }
 
-   /**
+  /**
    * FeatureIds where the topAnnotation supports this annotation.
    * @return supportingFeatureIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -156,20 +163,20 @@ public class ConsensusAnnotationsCSI {
 
   @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSupportingFeatureIds(List<String> supportingFeatureIds) {
+  public void setSupportingFeatureIds(@jakarta.annotation.Nullable List<String> supportingFeatureIds) {
     this.supportingFeatureIds = supportingFeatureIds;
   }
 
-  public ConsensusAnnotationsCSI selectionCriterion(ConsensusCriterionCSI selectionCriterion) {
+  public ConsensusAnnotationsCSI selectionCriterion(@jakarta.annotation.Nullable ConsensusCriterionCSI selectionCriterion) {
     
     this.selectionCriterion = selectionCriterion;
     return this;
   }
 
-   /**
+  /**
    * Get selectionCriterion
    * @return selectionCriterion
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -181,20 +188,20 @@ public class ConsensusAnnotationsCSI {
 
   @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSelectionCriterion(ConsensusCriterionCSI selectionCriterion) {
+  public void setSelectionCriterion(@jakarta.annotation.Nullable ConsensusCriterionCSI selectionCriterion) {
     this.selectionCriterion = selectionCriterion;
   }
 
-  public ConsensusAnnotationsCSI csiFingerIdStructure(StructureCandidate csiFingerIdStructure) {
+  public ConsensusAnnotationsCSI csiFingerIdStructure(@jakarta.annotation.Nullable StructureCandidate csiFingerIdStructure) {
     
     this.csiFingerIdStructure = csiFingerIdStructure;
     return this;
   }
 
-   /**
+  /**
    * Get csiFingerIdStructure
    * @return csiFingerIdStructure
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -206,20 +213,20 @@ public class ConsensusAnnotationsCSI {
 
   @JsonProperty(JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCsiFingerIdStructure(StructureCandidate csiFingerIdStructure) {
+  public void setCsiFingerIdStructure(@jakarta.annotation.Nullable StructureCandidate csiFingerIdStructure) {
     this.csiFingerIdStructure = csiFingerIdStructure;
   }
 
-  public ConsensusAnnotationsCSI confidenceExactMatch(Double confidenceExactMatch) {
+  public ConsensusAnnotationsCSI confidenceExactMatch(@jakarta.annotation.Nullable Double confidenceExactMatch) {
     
     this.confidenceExactMatch = confidenceExactMatch;
     return this;
   }
 
-   /**
+  /**
    * Confidence value that represents the certainty that reported consensus structure is exactly the measured one  If multiple features support this consensus structure the maximum confidence is reported
    * @return confidenceExactMatch
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -231,20 +238,20 @@ public class ConsensusAnnotationsCSI {
 
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConfidenceExactMatch(Double confidenceExactMatch) {
+  public void setConfidenceExactMatch(@jakarta.annotation.Nullable Double confidenceExactMatch) {
     this.confidenceExactMatch = confidenceExactMatch;
   }
 
-  public ConsensusAnnotationsCSI confidenceApproxMatch(Double confidenceApproxMatch) {
+  public ConsensusAnnotationsCSI confidenceApproxMatch(@jakarta.annotation.Nullable Double confidenceApproxMatch) {
     
     this.confidenceApproxMatch = confidenceApproxMatch;
     return this;
   }
 
-   /**
+  /**
    * Confidence value that represents the certainty that the exact consensus structure or a very similar  structure (e.g. measured by Maximum Common Edge Subgraph Distance) is the measured one.  If multiple features support this consensus structure the maximum confidence is reported
    * @return confidenceApproxMatch
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -256,9 +263,10 @@ public class ConsensusAnnotationsCSI {
 
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConfidenceApproxMatch(Double confidenceApproxMatch) {
+  public void setConfidenceApproxMatch(@jakarta.annotation.Nullable Double confidenceApproxMatch) {
     this.confidenceApproxMatch = confidenceApproxMatch;
   }
+
 
   @Override
   public boolean equals(Object o) {

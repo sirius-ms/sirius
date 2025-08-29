@@ -44,21 +44,24 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CommandSubmission.JSON_PROPERTY_ALIGNED_FEATURE_IDS,
   CommandSubmission.JSON_PROPERTY_COMMAND
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class CommandSubmission {
   public static final String JSON_PROPERTY_COMPOUND_IDS = "compoundIds";
+  @jakarta.annotation.Nullable
   private List<String> compoundIds;
 
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_IDS = "alignedFeatureIds";
+  @jakarta.annotation.Nullable
   private List<String> alignedFeatureIds;
 
   public static final String JSON_PROPERTY_COMMAND = "command";
+  @jakarta.annotation.Nonnull
   private List<String> command = new ArrayList<>();
 
   public CommandSubmission() {
   }
 
-  public CommandSubmission compoundIds(List<String> compoundIds) {
+  public CommandSubmission compoundIds(@jakarta.annotation.Nullable List<String> compoundIds) {
     
     this.compoundIds = compoundIds;
     return this;
@@ -72,10 +75,10 @@ public class CommandSubmission {
     return this;
   }
 
-   /**
+  /**
    * Compounds that should be the input for this Job  Will be converted to the respective alignedFeatureIds for computation.   At least one compoundId or alignedFeatureId needs to be specified.
    * @return compoundIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -87,11 +90,11 @@ public class CommandSubmission {
 
   @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCompoundIds(List<String> compoundIds) {
+  public void setCompoundIds(@jakarta.annotation.Nullable List<String> compoundIds) {
     this.compoundIds = compoundIds;
   }
 
-  public CommandSubmission alignedFeatureIds(List<String> alignedFeatureIds) {
+  public CommandSubmission alignedFeatureIds(@jakarta.annotation.Nullable List<String> alignedFeatureIds) {
     
     this.alignedFeatureIds = alignedFeatureIds;
     return this;
@@ -105,10 +108,10 @@ public class CommandSubmission {
     return this;
   }
 
-   /**
+  /**
    * Features (aligned over runs) that should be the input for this Job   At least one compoundId or alignedFeatureId needs to be specified.
    * @return alignedFeatureIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -120,11 +123,11 @@ public class CommandSubmission {
 
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAlignedFeatureIds(List<String> alignedFeatureIds) {
+  public void setAlignedFeatureIds(@jakarta.annotation.Nullable List<String> alignedFeatureIds) {
     this.alignedFeatureIds = alignedFeatureIds;
   }
 
-  public CommandSubmission command(List<String> command) {
+  public CommandSubmission command(@jakarta.annotation.Nonnull List<String> command) {
     
     this.command = command;
     return this;
@@ -138,10 +141,10 @@ public class CommandSubmission {
     return this;
   }
 
-   /**
+  /**
    * Get command
    * @return command
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_COMMAND)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -153,9 +156,10 @@ public class CommandSubmission {
 
   @JsonProperty(JSON_PROPERTY_COMMAND)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setCommand(List<String> command) {
+  public void setCommand(@jakarta.annotation.Nonnull List<String> command) {
     this.command = command;
   }
+
 
   @Override
   public boolean equals(Object o) {

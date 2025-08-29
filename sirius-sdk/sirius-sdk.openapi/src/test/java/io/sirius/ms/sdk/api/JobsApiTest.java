@@ -232,7 +232,7 @@ public class JobsApiTest {
         List<JobOptField> optFields = new ArrayList<>();
         if (includeProgress) optFields.add(JobOptField.PROGRESS);
         if (includeCommand) optFields.add(JobOptField.COMMAND);
-        if (includeAffectedCompounds) optFields.add(JobOptField.AFFECTEDIDS);
+        if (includeAffectedCompounds) optFields.add(JobOptField.AFFECTED_IDS);
         if (optFields.isEmpty())
             optFields.add(JobOptField.NONE);
         return optFields;

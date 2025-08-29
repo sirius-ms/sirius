@@ -11,24 +11,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class SearchableDatabasesApi {
     private ApiClient apiClient;
 
@@ -36,7 +37,6 @@ public class SearchableDatabasesApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public SearchableDatabasesApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
@@ -49,6 +49,7 @@ public class SearchableDatabasesApi {
         this.apiClient = apiClient;
     }
 
+    
     /**
      * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
@@ -59,7 +60,7 @@ public class SearchableDatabasesApi {
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec addDatabasesRequestCreation(List<String> requestBody) throws WebClientResponseException {
+    private ResponseSpec addDatabasesRequestCreation(@jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         Object postBody = requestBody;
         // verify the required parameter 'requestBody' is set
         if (requestBody == null) {
@@ -96,7 +97,7 @@ public class SearchableDatabasesApi {
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<SearchableDatabase> addDatabases(List<String> requestBody) throws WebClientResponseException {
+    public List<SearchableDatabase> addDatabases(@jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return addDatabasesRequestCreation(requestBody).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -109,7 +110,7 @@ public class SearchableDatabasesApi {
      * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<SearchableDatabase>> addDatabasesWithHttpInfo(List<String> requestBody) throws WebClientResponseException {
+    public ResponseEntity<List<SearchableDatabase>> addDatabasesWithHttpInfo(@jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return addDatabasesRequestCreation(requestBody).toEntityList(localVarReturnType).block();
     }
@@ -122,9 +123,10 @@ public class SearchableDatabasesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addDatabasesWithResponseSpec(List<String> requestBody) throws WebClientResponseException {
+    public ResponseSpec addDatabasesWithResponseSpec(@jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         return addDatabasesRequestCreation(requestBody);
     }
+
     /**
      * 
      * 
@@ -134,7 +136,7 @@ public class SearchableDatabasesApi {
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec createDatabaseRequestCreation(String databaseId, SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
+    private ResponseSpec createDatabaseRequestCreation(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
         Object postBody = searchableDatabaseParameters;
         // verify the required parameter 'databaseId' is set
         if (databaseId == null) {
@@ -174,7 +176,7 @@ public class SearchableDatabasesApi {
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public SearchableDatabase createDatabase(String databaseId, SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
+    public SearchableDatabase createDatabase(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return createDatabaseRequestCreation(databaseId, searchableDatabaseParameters).bodyToMono(localVarReturnType).block();
     }
@@ -188,7 +190,7 @@ public class SearchableDatabasesApi {
      * @return ResponseEntity&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<SearchableDatabase> createDatabaseWithHttpInfo(String databaseId, SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
+    public ResponseEntity<SearchableDatabase> createDatabaseWithHttpInfo(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return createDatabaseRequestCreation(databaseId, searchableDatabaseParameters).toEntity(localVarReturnType).block();
     }
@@ -202,9 +204,10 @@ public class SearchableDatabasesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec createDatabaseWithResponseSpec(String databaseId, SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
+    public ResponseSpec createDatabaseWithResponseSpec(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
         return createDatabaseRequestCreation(databaseId, searchableDatabaseParameters);
     }
+
     /**
      * 
      * 
@@ -214,7 +217,7 @@ public class SearchableDatabasesApi {
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCustomDatabasesRequestCreation(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
+    private ResponseSpec getCustomDatabasesRequestCreation(@jakarta.annotation.Nullable Boolean includeStats, @jakarta.annotation.Nullable Boolean includeWithErrors) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -249,7 +252,7 @@ public class SearchableDatabasesApi {
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<SearchableDatabase> getCustomDatabases(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
+    public List<SearchableDatabase> getCustomDatabases(@jakarta.annotation.Nullable Boolean includeStats, @jakarta.annotation.Nullable Boolean includeWithErrors) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return getCustomDatabasesRequestCreation(includeStats, includeWithErrors).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -263,7 +266,7 @@ public class SearchableDatabasesApi {
      * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<SearchableDatabase>> getCustomDatabasesWithHttpInfo(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
+    public ResponseEntity<List<SearchableDatabase>> getCustomDatabasesWithHttpInfo(@jakarta.annotation.Nullable Boolean includeStats, @jakarta.annotation.Nullable Boolean includeWithErrors) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return getCustomDatabasesRequestCreation(includeStats, includeWithErrors).toEntityList(localVarReturnType).block();
     }
@@ -277,9 +280,10 @@ public class SearchableDatabasesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCustomDatabasesWithResponseSpec(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
+    public ResponseSpec getCustomDatabasesWithResponseSpec(@jakarta.annotation.Nullable Boolean includeStats, @jakarta.annotation.Nullable Boolean includeWithErrors) throws WebClientResponseException {
         return getCustomDatabasesRequestCreation(includeStats, includeWithErrors);
     }
+
     /**
      * 
      * 
@@ -289,7 +293,7 @@ public class SearchableDatabasesApi {
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getDatabaseRequestCreation(String databaseId, Boolean includeStats) throws WebClientResponseException {
+    private ResponseSpec getDatabaseRequestCreation(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Boolean includeStats) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'databaseId' is set
         if (databaseId == null) {
@@ -329,7 +333,7 @@ public class SearchableDatabasesApi {
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public SearchableDatabase getDatabase(String databaseId, Boolean includeStats) throws WebClientResponseException {
+    public SearchableDatabase getDatabase(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Boolean includeStats) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return getDatabaseRequestCreation(databaseId, includeStats).bodyToMono(localVarReturnType).block();
     }
@@ -343,7 +347,7 @@ public class SearchableDatabasesApi {
      * @return ResponseEntity&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<SearchableDatabase> getDatabaseWithHttpInfo(String databaseId, Boolean includeStats) throws WebClientResponseException {
+    public ResponseEntity<SearchableDatabase> getDatabaseWithHttpInfo(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Boolean includeStats) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return getDatabaseRequestCreation(databaseId, includeStats).toEntity(localVarReturnType).block();
     }
@@ -357,9 +361,10 @@ public class SearchableDatabasesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getDatabaseWithResponseSpec(String databaseId, Boolean includeStats) throws WebClientResponseException {
+    public ResponseSpec getDatabaseWithResponseSpec(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Boolean includeStats) throws WebClientResponseException {
         return getDatabaseRequestCreation(databaseId, includeStats);
     }
+
     /**
      * 
      * 
@@ -369,7 +374,7 @@ public class SearchableDatabasesApi {
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getDatabasesRequestCreation(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
+    private ResponseSpec getDatabasesRequestCreation(@jakarta.annotation.Nullable Boolean includeStats, @jakarta.annotation.Nullable Boolean includeWithErrors) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -404,7 +409,7 @@ public class SearchableDatabasesApi {
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<SearchableDatabase> getDatabases(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
+    public List<SearchableDatabase> getDatabases(@jakarta.annotation.Nullable Boolean includeStats, @jakarta.annotation.Nullable Boolean includeWithErrors) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return getDatabasesRequestCreation(includeStats, includeWithErrors).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -418,7 +423,7 @@ public class SearchableDatabasesApi {
      * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<SearchableDatabase>> getDatabasesWithHttpInfo(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
+    public ResponseEntity<List<SearchableDatabase>> getDatabasesWithHttpInfo(@jakarta.annotation.Nullable Boolean includeStats, @jakarta.annotation.Nullable Boolean includeWithErrors) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return getDatabasesRequestCreation(includeStats, includeWithErrors).toEntityList(localVarReturnType).block();
     }
@@ -432,9 +437,10 @@ public class SearchableDatabasesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getDatabasesWithResponseSpec(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
+    public ResponseSpec getDatabasesWithResponseSpec(@jakarta.annotation.Nullable Boolean includeStats, @jakarta.annotation.Nullable Boolean includeWithErrors) throws WebClientResponseException {
         return getDatabasesRequestCreation(includeStats, includeWithErrors);
     }
+
     /**
      * 
      * 
@@ -443,7 +449,7 @@ public class SearchableDatabasesApi {
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getIncludedDatabasesRequestCreation(Boolean includeStats) throws WebClientResponseException {
+    private ResponseSpec getIncludedDatabasesRequestCreation(@jakarta.annotation.Nullable Boolean includeStats) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -476,7 +482,7 @@ public class SearchableDatabasesApi {
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<SearchableDatabase> getIncludedDatabases(Boolean includeStats) throws WebClientResponseException {
+    public List<SearchableDatabase> getIncludedDatabases(@jakarta.annotation.Nullable Boolean includeStats) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return getIncludedDatabasesRequestCreation(includeStats).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -489,7 +495,7 @@ public class SearchableDatabasesApi {
      * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<SearchableDatabase>> getIncludedDatabasesWithHttpInfo(Boolean includeStats) throws WebClientResponseException {
+    public ResponseEntity<List<SearchableDatabase>> getIncludedDatabasesWithHttpInfo(@jakarta.annotation.Nullable Boolean includeStats) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return getIncludedDatabasesRequestCreation(includeStats).toEntityList(localVarReturnType).block();
     }
@@ -502,21 +508,22 @@ public class SearchableDatabasesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getIncludedDatabasesWithResponseSpec(Boolean includeStats) throws WebClientResponseException {
+    public ResponseSpec getIncludedDatabasesWithResponseSpec(@jakarta.annotation.Nullable Boolean includeStats) throws WebClientResponseException {
         return getIncludedDatabasesRequestCreation(includeStats);
     }
+
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
      * @param databaseId database to import into
-     * @param inputFiles files to be imported
+     * @param inputFiles files to import into project
      * @param bufferSize The bufferSize parameter
      * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importIntoDatabaseRequestCreation(String databaseId, List<File> inputFiles, Integer bufferSize, BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
+    private ResponseSpec importIntoDatabaseRequestCreation(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Integer bufferSize, @jakarta.annotation.Nullable BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'databaseId' is set
         if (databaseId == null) {
@@ -563,13 +570,13 @@ public class SearchableDatabasesApi {
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
      * @param databaseId database to import into
-     * @param inputFiles files to be imported
+     * @param inputFiles files to import into project
      * @param bufferSize The bufferSize parameter
      * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public SearchableDatabase importIntoDatabase(String databaseId, List<File> inputFiles, Integer bufferSize, BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
+    public SearchableDatabase importIntoDatabase(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Integer bufferSize, @jakarta.annotation.Nullable BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return importIntoDatabaseRequestCreation(databaseId, inputFiles, bufferSize, bioTransformerParameters).bodyToMono(localVarReturnType).block();
     }
@@ -579,13 +586,13 @@ public class SearchableDatabasesApi {
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
      * @param databaseId database to import into
-     * @param inputFiles files to be imported
+     * @param inputFiles files to import into project
      * @param bufferSize The bufferSize parameter
      * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return ResponseEntity&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<SearchableDatabase> importIntoDatabaseWithHttpInfo(String databaseId, List<File> inputFiles, Integer bufferSize, BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
+    public ResponseEntity<SearchableDatabase> importIntoDatabaseWithHttpInfo(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Integer bufferSize, @jakarta.annotation.Nullable BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return importIntoDatabaseRequestCreation(databaseId, inputFiles, bufferSize, bioTransformerParameters).toEntity(localVarReturnType).block();
     }
@@ -595,15 +602,16 @@ public class SearchableDatabasesApi {
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
      * @param databaseId database to import into
-     * @param inputFiles files to be imported
+     * @param inputFiles files to import into project
      * @param bufferSize The bufferSize parameter
      * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importIntoDatabaseWithResponseSpec(String databaseId, List<File> inputFiles, Integer bufferSize, BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
+    public ResponseSpec importIntoDatabaseWithResponseSpec(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Integer bufferSize, @jakarta.annotation.Nullable BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
         return importIntoDatabaseRequestCreation(databaseId, inputFiles, bufferSize, bioTransformerParameters);
     }
+
     /**
      * 
      * 
@@ -612,7 +620,7 @@ public class SearchableDatabasesApi {
      * @param delete The delete parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec removeDatabaseRequestCreation(String databaseId, Boolean delete) throws WebClientResponseException {
+    private ResponseSpec removeDatabaseRequestCreation(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Boolean delete) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'databaseId' is set
         if (databaseId == null) {
@@ -649,7 +657,7 @@ public class SearchableDatabasesApi {
      * @param delete The delete parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void removeDatabase(String databaseId, Boolean delete) throws WebClientResponseException {
+    public void removeDatabase(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Boolean delete) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         removeDatabaseRequestCreation(databaseId, delete).bodyToMono(localVarReturnType).block();
     }
@@ -662,7 +670,7 @@ public class SearchableDatabasesApi {
      * @param delete The delete parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> removeDatabaseWithHttpInfo(String databaseId, Boolean delete) throws WebClientResponseException {
+    public ResponseEntity<Void> removeDatabaseWithHttpInfo(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Boolean delete) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return removeDatabaseRequestCreation(databaseId, delete).toEntity(localVarReturnType).block();
     }
@@ -676,9 +684,10 @@ public class SearchableDatabasesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec removeDatabaseWithResponseSpec(String databaseId, Boolean delete) throws WebClientResponseException {
+    public ResponseSpec removeDatabaseWithResponseSpec(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Boolean delete) throws WebClientResponseException {
         return removeDatabaseRequestCreation(databaseId, delete);
     }
+
     /**
      * 
      * 
@@ -688,7 +697,7 @@ public class SearchableDatabasesApi {
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec updateDatabaseRequestCreation(String databaseId, SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
+    private ResponseSpec updateDatabaseRequestCreation(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
         Object postBody = searchableDatabaseParameters;
         // verify the required parameter 'databaseId' is set
         if (databaseId == null) {
@@ -728,7 +737,7 @@ public class SearchableDatabasesApi {
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public SearchableDatabase updateDatabase(String databaseId, SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
+    public SearchableDatabase updateDatabase(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return updateDatabaseRequestCreation(databaseId, searchableDatabaseParameters).bodyToMono(localVarReturnType).block();
     }
@@ -742,7 +751,7 @@ public class SearchableDatabasesApi {
      * @return ResponseEntity&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<SearchableDatabase> updateDatabaseWithHttpInfo(String databaseId, SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
+    public ResponseEntity<SearchableDatabase> updateDatabaseWithHttpInfo(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return updateDatabaseRequestCreation(databaseId, searchableDatabaseParameters).toEntity(localVarReturnType).block();
     }
@@ -756,7 +765,7 @@ public class SearchableDatabasesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec updateDatabaseWithResponseSpec(String databaseId, SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
+    public ResponseSpec updateDatabaseWithResponseSpec(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable SearchableDatabaseParameters searchableDatabaseParameters) throws WebClientResponseException {
         return updateDatabaseRequestCreation(databaseId, searchableDatabaseParameters);
     }
 }

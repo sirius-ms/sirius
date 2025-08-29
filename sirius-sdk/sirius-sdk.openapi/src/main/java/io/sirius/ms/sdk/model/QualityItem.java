@@ -43,30 +43,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   QualityItem.JSON_PROPERTY_QUALITY,
   QualityItem.JSON_PROPERTY_WEIGHT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class QualityItem {
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
+  @jakarta.annotation.Nullable
   private String description;
 
   public static final String JSON_PROPERTY_QUALITY = "quality";
+  @jakarta.annotation.Nullable
   private DataQuality quality;
 
   public static final String JSON_PROPERTY_WEIGHT = "weight";
+  @jakarta.annotation.Nullable
   private QualityWeight weight;
 
   public QualityItem() {
   }
 
-  public QualityItem description(String description) {
+  public QualityItem description(@jakarta.annotation.Nullable String description) {
     
     this.description = description;
     return this;
   }
 
-   /**
+  /**
    * Get description
    * @return description
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -78,20 +81,20 @@ public class QualityItem {
 
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDescription(String description) {
+  public void setDescription(@jakarta.annotation.Nullable String description) {
     this.description = description;
   }
 
-  public QualityItem quality(DataQuality quality) {
+  public QualityItem quality(@jakarta.annotation.Nullable DataQuality quality) {
     
     this.quality = quality;
     return this;
   }
 
-   /**
+  /**
    * Get quality
    * @return quality
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -103,20 +106,20 @@ public class QualityItem {
 
   @JsonProperty(JSON_PROPERTY_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setQuality(DataQuality quality) {
+  public void setQuality(@jakarta.annotation.Nullable DataQuality quality) {
     this.quality = quality;
   }
 
-  public QualityItem weight(QualityWeight weight) {
+  public QualityItem weight(@jakarta.annotation.Nullable QualityWeight weight) {
     
     this.weight = weight;
     return this;
   }
 
-   /**
+  /**
    * Get weight
    * @return weight
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_WEIGHT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -128,9 +131,10 @@ public class QualityItem {
 
   @JsonProperty(JSON_PROPERTY_WEIGHT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setWeight(QualityWeight weight) {
+  public void setWeight(@jakarta.annotation.Nullable QualityWeight weight) {
     this.weight = weight;
   }
+
 
   @Override
   public boolean equals(Object o) {

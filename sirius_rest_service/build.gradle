@@ -21,6 +21,7 @@ apply plugin: 'application'
 ext['jna.version'] = '5.4.0' //force correct jna version -> springs is not compatible with ilp solver
 ext['slf4j.version'] = slf4j_version
 ext['okhttp.version'] = okhttp_version
+ext['junit-jupiter.version'] = junit_version
 
 version = siriusFrontendVersion
 
@@ -158,32 +159,32 @@ tasks.register("generateOpenApiDocsAdvancedEnumsAsString") {
 }
 
 //###################################### Start Default values ##########################################
-//collect auto generated profiles and check them for null values
-tasks.register('collectProfiles') {
+tasks.register('collectProfiles', Copy) {
     group = 'properties'
 
-    inputs.files(sourceSets.main.compileClasspath)
+    // Find ALL (direct and transitive) project dependencies
+    def allProjectDeps = configurations.runtimeClasspath.incoming.resolutionResult.allComponents
+            .findAll { it.id instanceof org.gradle.api.artifacts.component.ProjectComponentIdentifier }
+            .collect { project(it.id.projectPath) } // Get the Project object for each dependency
+            .findAll { it != project }
 
-    outputs.dir("$buildDir/tmp/profiles")
-
-    doLast {
-        delete(outputs.files.singleFile.listFiles())
-        copy {
-            from configurations.runtimeClasspath.resolve().stream()
-                    .filter { it.isFile() && it.toString().endsWith(".jar") }
-                    .peek {println("======> $it")}
-                    .map {
-                        zipTree(it).matching {
-                            include 'de.unijena.bioinf.ms.defaults/*.auto.config'
-                            include 'de.unijena.bioinf.ms.defaults/*.class.map'
-                        }
-                    }.filter{!it.isEmpty()}.collect(Collectors.toList())
-
-            into outputs.files.singleFile
+    // Use the full list of project dependencies found above.
+    def projectResources = allProjectDeps.collect { projectDep ->
+        def resourcesDir = projectDep.sourceSets.main.output.resourcesDir
+        fileTree(resourcesDir) {
+            include 'de.unijena.bioinf.ms.defaults/*.auto.config'
+            include 'de.unijena.bioinf.ms.defaults/*.class.map'
         }
     }
-}
+    //todo we might want to add config files from the current project as well if needed in the future
 
+    // Use the full list of projects to depend on their 'processResources' tasks.
+    dependsOn(allProjectDeps.collect { it.tasks.named('processResources') })
+
+    from projectResources
+    into("$buildDir/tmp/profiles")
+    includeEmptyDirs = false
+}
 
 tasks.register('makeProfileTemplates') {
     group = 'properties'
@@ -191,9 +192,6 @@ tasks.register('makeProfileTemplates') {
 
     def input = tasks.named('collectProfiles').map {it.outputs.files.singleFile}
     inputs.dir(input)
-
-//    def outDir = file("$buildDir/tmp/profiles_concat")
-//    outDir.mkdirs()
 
     outputs.dir("$buildDir/tmp/profiles_concat/")
 

@@ -60,7 +60,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/vnd.spring-boot.actuator.v3+json, application/json, application/vnd.spring-boot.actuator.v2+json
+- **Accept**: application/vnd.spring-boot.actuator.v3+json, application/vnd.spring-boot.actuator.v2+json, application/json
 
 
 ### HTTP response details
@@ -71,7 +71,7 @@ No authorization required
 
 ## shutdown
 
-> Object shutdown()
+> shutdown()
 
 Actuator web endpoint &#39;shutdown&#39;
 
@@ -92,8 +92,7 @@ public class Example {
 
         ActuatorApi apiInstance = new ActuatorApi(defaultClient);
         try {
-            Object result = apiInstance.shutdown();
-            System.out.println(result);
+            apiInstance.shutdown();
         } catch (ApiException e) {
             System.err.println("Exception when calling ActuatorApi#shutdown");
             System.err.println("Status code: " + e.getCode());
@@ -111,7 +110,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-**Object**
+null (empty response body)
 
 ### Authorization
 
@@ -120,11 +119,12 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/vnd.spring-boot.actuator.v3+json, application/json, application/vnd.spring-boot.actuator.v2+json
+- **Accept**: Not defined
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | OK |  -  |
+| **204** | No Content |  -  |
+| **400** | Bad Request |  -  |
 

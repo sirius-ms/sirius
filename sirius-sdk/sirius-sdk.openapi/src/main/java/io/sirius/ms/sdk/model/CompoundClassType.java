@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum CompoundClassType {
   
-  CLASSYFIRE("ClassyFire"),
+  CLASSY_FIRE("ClassyFire"),
   
   NPC("NPC");
 

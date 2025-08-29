@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**closeProject**](ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application |
+| [**closeProject**](ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from the application |
 | [**copyProject**](ProjectsApi.md#copyProject) | **PUT** /api/projects/{projectId}/copy | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
 | [**createProject**](ProjectsApi.md#createProject) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId. |
 | [**getCanopusClassyFireData**](ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes |
@@ -28,9 +28,9 @@ All URIs are relative to *http://localhost:8888*
 
 > closeProject(projectId, compact)
 
-Close project-space and remove it from application
+Close project-space and remove it from the application
 
-Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
 
 ### Example
 
@@ -586,7 +586,7 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
-        List<File> inputFiles = Arrays.asList(); // List<File> | Files to import into project.
+        List<File> inputFiles = Arrays.asList(); // List<File> | files to import into project
         LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | 
         try {
             ImportResult result = apiInstance.importMsRunData(projectId, inputFiles, parameters);
@@ -608,7 +608,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
-| **inputFiles** | **List&lt;File&gt;**| Files to import into project. | |
+| **inputFiles** | **List&lt;File&gt;**| files to import into project | |
 | **parameters** | [**LcmsSubmissionParameters**](LcmsSubmissionParameters.md)|  | |
 
 ### Return type
@@ -656,7 +656,7 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
-        List<File> inputFiles = Arrays.asList(); // List<File> | Files to import into project.
+        List<File> inputFiles = Arrays.asList(); // List<File> | files to import into project
         LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | 
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
         try {
@@ -679,7 +679,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
-| **inputFiles** | **List&lt;File&gt;**| Files to import into project. | |
+| **inputFiles** | **List&lt;File&gt;**| files to import into project | |
 | **parameters** | [**LcmsSubmissionParameters**](LcmsSubmissionParameters.md)|  | |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| Set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
@@ -942,7 +942,7 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to import into.
-        List<File> inputFiles = Arrays.asList(); // List<File> | 
+        List<File> inputFiles = Arrays.asList(); // List<File> | files to import into project
         Boolean ignoreFormulas = false; // Boolean | 
         Boolean allowMs1Only = true; // Boolean | 
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
@@ -966,7 +966,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to import into. | |
-| **inputFiles** | **List&lt;File&gt;**|  | |
+| **inputFiles** | **List&lt;File&gt;**| files to import into project | |
 | **ignoreFormulas** | **Boolean**|  | [optional] [default to false] |
 | **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
