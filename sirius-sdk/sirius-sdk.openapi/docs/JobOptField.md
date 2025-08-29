@@ -11,7 +11,7 @@
 
 * `PROGRESS` (value: `"progress"`)
 
-* `AFFECTEDIDS` (value: `"affectedIds"`)
+* `AFFECTED_IDS` (value: `"affectedIds"`)
 
 
 

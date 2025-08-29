@@ -38,7 +38,7 @@ public enum SpectralLibraryMatchOptField {
   
   NONE("none"),
   
-  REFERENCESPECTRUM("referenceSpectrum");
+  REFERENCE_SPECTRUM("referenceSpectrum");
 
   private String value;
 

@@ -56,57 +56,69 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateScored.JSON_PROPERTY_MCES_DIST_TO_TOP_HIT,
   StructureCandidateScored.JSON_PROPERTY_FINGERPRINT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class StructureCandidateScored {
   public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
+  @jakarta.annotation.Nullable
   private String inchiKey;
 
   public static final String JSON_PROPERTY_SMILES = "smiles";
+  @jakarta.annotation.Nullable
   private String smiles;
 
   public static final String JSON_PROPERTY_STRUCTURE_NAME = "structureName";
+  @jakarta.annotation.Nullable
   private String structureName;
 
   public static final String JSON_PROPERTY_STRUCTURE_SVG = "structureSvg";
+  @jakarta.annotation.Nullable
   private String structureSvg;
 
   public static final String JSON_PROPERTY_DB_LINKS = "dbLinks";
+  @jakarta.annotation.Nullable
   private List<DBLink> dbLinks;
 
   public static final String JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES = "spectralLibraryMatches";
+  @jakarta.annotation.Nullable
   private List<SpectralLibraryMatch> spectralLibraryMatches;
 
   public static final String JSON_PROPERTY_XLOG_P = "xlogP";
+  @jakarta.annotation.Nullable
   private Double xlogP;
 
   public static final String JSON_PROPERTY_RANK = "rank";
+  @jakarta.annotation.Nullable
   private Integer rank;
 
   public static final String JSON_PROPERTY_CSI_SCORE = "csiScore";
+  @jakarta.annotation.Nullable
   private Double csiScore;
 
   public static final String JSON_PROPERTY_TANIMOTO_SIMILARITY = "tanimotoSimilarity";
+  @jakarta.annotation.Nullable
   private Double tanimotoSimilarity;
 
   public static final String JSON_PROPERTY_MCES_DIST_TO_TOP_HIT = "mcesDistToTopHit";
+  @jakarta.annotation.Nullable
   private Double mcesDistToTopHit;
 
   public static final String JSON_PROPERTY_FINGERPRINT = "fingerprint";
+  @jakarta.annotation.Nullable
   private BinaryFingerprint fingerprint;
 
   public StructureCandidateScored() {
   }
 
-  public StructureCandidateScored inchiKey(String inchiKey) {
+  public StructureCandidateScored inchiKey(@jakarta.annotation.Nullable String inchiKey) {
     
     this.inchiKey = inchiKey;
     return this;
   }
 
-   /**
+  /**
    * Get inchiKey
    * @return inchiKey
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INCHI_KEY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -118,20 +130,20 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_INCHI_KEY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setInchiKey(String inchiKey) {
+  public void setInchiKey(@jakarta.annotation.Nullable String inchiKey) {
     this.inchiKey = inchiKey;
   }
 
-  public StructureCandidateScored smiles(String smiles) {
+  public StructureCandidateScored smiles(@jakarta.annotation.Nullable String smiles) {
     
     this.smiles = smiles;
     return this;
   }
 
-   /**
+  /**
    * Get smiles
    * @return smiles
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SMILES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -143,20 +155,20 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_SMILES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSmiles(String smiles) {
+  public void setSmiles(@jakarta.annotation.Nullable String smiles) {
     this.smiles = smiles;
   }
 
-  public StructureCandidateScored structureName(String structureName) {
+  public StructureCandidateScored structureName(@jakarta.annotation.Nullable String structureName) {
     
     this.structureName = structureName;
     return this;
   }
 
-   /**
+  /**
    * Get structureName
    * @return structureName
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -168,20 +180,20 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureName(String structureName) {
+  public void setStructureName(@jakarta.annotation.Nullable String structureName) {
     this.structureName = structureName;
   }
 
-  public StructureCandidateScored structureSvg(String structureSvg) {
+  public StructureCandidateScored structureSvg(@jakarta.annotation.Nullable String structureSvg) {
     
     this.structureSvg = structureSvg;
     return this;
   }
 
-   /**
+  /**
    * SVG graphics of the structure candidate  OPTIONAL: needs to be added by parameter
    * @return structureSvg
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_SVG)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -193,11 +205,11 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_SVG)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureSvg(String structureSvg) {
+  public void setStructureSvg(@jakarta.annotation.Nullable String structureSvg) {
     this.structureSvg = structureSvg;
   }
 
-  public StructureCandidateScored dbLinks(List<DBLink> dbLinks) {
+  public StructureCandidateScored dbLinks(@jakarta.annotation.Nullable List<DBLink> dbLinks) {
     
     this.dbLinks = dbLinks;
     return this;
@@ -211,10 +223,10 @@ public class StructureCandidateScored {
     return this;
   }
 
-   /**
+  /**
    * List of structure database links belonging to this structure candidate  OPTIONAL: needs to be added by parameter
    * @return dbLinks
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DB_LINKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -226,11 +238,11 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_DB_LINKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDbLinks(List<DBLink> dbLinks) {
+  public void setDbLinks(@jakarta.annotation.Nullable List<DBLink> dbLinks) {
     this.dbLinks = dbLinks;
   }
 
-  public StructureCandidateScored spectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
+  public StructureCandidateScored spectralLibraryMatches(@jakarta.annotation.Nullable List<SpectralLibraryMatch> spectralLibraryMatches) {
     
     this.spectralLibraryMatches = spectralLibraryMatches;
     return this;
@@ -244,10 +256,10 @@ public class StructureCandidateScored {
     return this;
   }
 
-   /**
+  /**
    * List of spectral library matches belonging to this structure candidate  OPTIONAL: needs to be added by parameter
    * @return spectralLibraryMatches
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -259,20 +271,20 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSpectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
+  public void setSpectralLibraryMatches(@jakarta.annotation.Nullable List<SpectralLibraryMatch> spectralLibraryMatches) {
     this.spectralLibraryMatches = spectralLibraryMatches;
   }
 
-  public StructureCandidateScored xlogP(Double xlogP) {
+  public StructureCandidateScored xlogP(@jakarta.annotation.Nullable Double xlogP) {
     
     this.xlogP = xlogP;
     return this;
   }
 
-   /**
+  /**
    * Get xlogP
    * @return xlogP
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_XLOG_P)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -284,20 +296,20 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_XLOG_P)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setXlogP(Double xlogP) {
+  public void setXlogP(@jakarta.annotation.Nullable Double xlogP) {
     this.xlogP = xlogP;
   }
 
-  public StructureCandidateScored rank(Integer rank) {
+  public StructureCandidateScored rank(@jakarta.annotation.Nullable Integer rank) {
     
     this.rank = rank;
     return this;
   }
 
-   /**
+  /**
    * the overall rank of this candidate among all candidates of this feature
    * @return rank
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RANK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -309,20 +321,20 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_RANK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRank(Integer rank) {
+  public void setRank(@jakarta.annotation.Nullable Integer rank) {
     this.rank = rank;
   }
 
-  public StructureCandidateScored csiScore(Double csiScore) {
+  public StructureCandidateScored csiScore(@jakarta.annotation.Nullable Double csiScore) {
     
     this.csiScore = csiScore;
     return this;
   }
 
-   /**
+  /**
    * CSI:FingerID score of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID  This is the score used for ranking structure candidates
    * @return csiScore
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CSI_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -334,20 +346,20 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_CSI_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCsiScore(Double csiScore) {
+  public void setCsiScore(@jakarta.annotation.Nullable Double csiScore) {
     this.csiScore = csiScore;
   }
 
-  public StructureCandidateScored tanimotoSimilarity(Double tanimotoSimilarity) {
+  public StructureCandidateScored tanimotoSimilarity(@jakarta.annotation.Nullable Double tanimotoSimilarity) {
     
     this.tanimotoSimilarity = tanimotoSimilarity;
     return this;
   }
 
-   /**
+  /**
    * Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
    * @return tanimotoSimilarity
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TANIMOTO_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -359,20 +371,20 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_TANIMOTO_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTanimotoSimilarity(Double tanimotoSimilarity) {
+  public void setTanimotoSimilarity(@jakarta.annotation.Nullable Double tanimotoSimilarity) {
     this.tanimotoSimilarity = tanimotoSimilarity;
   }
 
-  public StructureCandidateScored mcesDistToTopHit(Double mcesDistToTopHit) {
+  public StructureCandidateScored mcesDistToTopHit(@jakarta.annotation.Nullable Double mcesDistToTopHit) {
     
     this.mcesDistToTopHit = mcesDistToTopHit;
     return this;
   }
 
-   /**
+  /**
    * Maximum Common Edge Subgraph (MCES) distance to the top scoring hit (CSI:FingerID) in a candidate list.
    * @return mcesDistToTopHit
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MCES_DIST_TO_TOP_HIT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -384,20 +396,20 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_MCES_DIST_TO_TOP_HIT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMcesDistToTopHit(Double mcesDistToTopHit) {
+  public void setMcesDistToTopHit(@jakarta.annotation.Nullable Double mcesDistToTopHit) {
     this.mcesDistToTopHit = mcesDistToTopHit;
   }
 
-  public StructureCandidateScored fingerprint(BinaryFingerprint fingerprint) {
+  public StructureCandidateScored fingerprint(@jakarta.annotation.Nullable BinaryFingerprint fingerprint) {
     
     this.fingerprint = fingerprint;
     return this;
   }
 
-   /**
+  /**
    * Get fingerprint
    * @return fingerprint
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FINGERPRINT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -409,9 +421,10 @@ public class StructureCandidateScored {
 
   @JsonProperty(JSON_PROPERTY_FINGERPRINT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFingerprint(BinaryFingerprint fingerprint) {
+  public void setFingerprint(@jakarta.annotation.Nullable BinaryFingerprint fingerprint) {
     this.fingerprint = fingerprint;
   }
+
 
   @Override
   public boolean equals(Object o) {

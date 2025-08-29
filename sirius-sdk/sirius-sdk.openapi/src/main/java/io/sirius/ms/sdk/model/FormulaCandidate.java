@@ -68,81 +68,101 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FormulaCandidate.JSON_PROPERTY_COMPOUND_CLASSES,
   FormulaCandidate.JSON_PROPERTY_CANOPUS_PREDICTION
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class FormulaCandidate {
   public static final String JSON_PROPERTY_FORMULA_ID = "formulaId";
+  @jakarta.annotation.Nullable
   private String formulaId;
 
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  @jakarta.annotation.Nullable
   private String molecularFormula;
 
   public static final String JSON_PROPERTY_ADDUCT = "adduct";
+  @jakarta.annotation.Nullable
   private String adduct;
 
   public static final String JSON_PROPERTY_RANK = "rank";
+  @jakarta.annotation.Nullable
   private Integer rank;
 
   public static final String JSON_PROPERTY_SIRIUS_SCORE_NORMALIZED = "siriusScoreNormalized";
+  @jakarta.annotation.Nullable
   private Double siriusScoreNormalized;
 
   public static final String JSON_PROPERTY_SIRIUS_SCORE = "siriusScore";
+  @jakarta.annotation.Nullable
   private Double siriusScore;
 
   public static final String JSON_PROPERTY_ISOTOPE_SCORE = "isotopeScore";
+  @jakarta.annotation.Nullable
   private Double isotopeScore;
 
   public static final String JSON_PROPERTY_TREE_SCORE = "treeScore";
+  @jakarta.annotation.Nullable
   private Double treeScore;
 
   public static final String JSON_PROPERTY_ZODIAC_SCORE = "zodiacScore";
+  @jakarta.annotation.Nullable
   private Double zodiacScore;
 
   public static final String JSON_PROPERTY_NUM_OF_EXPLAINED_PEAKS = "numOfExplainedPeaks";
+  @jakarta.annotation.Nullable
   private Integer numOfExplainedPeaks;
 
   public static final String JSON_PROPERTY_NUM_OF_EXPLAINABLE_PEAKS = "numOfExplainablePeaks";
+  @jakarta.annotation.Nullable
   private Integer numOfExplainablePeaks;
 
   public static final String JSON_PROPERTY_TOTAL_EXPLAINED_INTENSITY = "totalExplainedIntensity";
+  @jakarta.annotation.Nullable
   private Double totalExplainedIntensity;
 
   public static final String JSON_PROPERTY_MEDIAN_MASS_DEVIATION = "medianMassDeviation";
+  @jakarta.annotation.Nullable
   private Deviation medianMassDeviation;
 
   public static final String JSON_PROPERTY_FRAGMENTATION_TREE = "fragmentationTree";
+  @jakarta.annotation.Nullable
   private FragmentationTree fragmentationTree;
 
   public static final String JSON_PROPERTY_ANNOTATED_SPECTRUM = "annotatedSpectrum";
+  @jakarta.annotation.Nullable
   private AnnotatedSpectrum annotatedSpectrum;
 
   public static final String JSON_PROPERTY_ISOTOPE_PATTERN_ANNOTATION = "isotopePatternAnnotation";
+  @jakarta.annotation.Nullable
   private IsotopePatternAnnotation isotopePatternAnnotation;
 
   public static final String JSON_PROPERTY_LIPID_ANNOTATION = "lipidAnnotation";
+  @jakarta.annotation.Nullable
   private LipidAnnotation lipidAnnotation;
 
   public static final String JSON_PROPERTY_PREDICTED_FINGERPRINT = "predictedFingerprint";
+  @jakarta.annotation.Nullable
   private List<Double> predictedFingerprint;
 
   public static final String JSON_PROPERTY_COMPOUND_CLASSES = "compoundClasses";
+  @jakarta.annotation.Nullable
   private CompoundClasses compoundClasses;
 
   public static final String JSON_PROPERTY_CANOPUS_PREDICTION = "canopusPrediction";
+  @jakarta.annotation.Nullable
   private CanopusPrediction canopusPrediction;
 
   public FormulaCandidate() {
   }
 
-  public FormulaCandidate formulaId(String formulaId) {
+  public FormulaCandidate formulaId(@jakarta.annotation.Nullable String formulaId) {
     
     this.formulaId = formulaId;
     return this;
   }
 
-   /**
+  /**
    * Unique identifier of this formula candidate
    * @return formulaId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FORMULA_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -154,20 +174,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_FORMULA_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFormulaId(String formulaId) {
+  public void setFormulaId(@jakarta.annotation.Nullable String formulaId) {
     this.formulaId = formulaId;
   }
 
-  public FormulaCandidate molecularFormula(String molecularFormula) {
+  public FormulaCandidate molecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     
     this.molecularFormula = molecularFormula;
     return this;
   }
 
-   /**
+  /**
    * molecular formula of this formula candidate
    * @return molecularFormula
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -179,20 +199,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMolecularFormula(String molecularFormula) {
+  public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
   }
 
-  public FormulaCandidate adduct(String adduct) {
+  public FormulaCandidate adduct(@jakarta.annotation.Nullable String adduct) {
     
     this.adduct = adduct;
     return this;
   }
 
-   /**
+  /**
    * Adduct of this formula candidate
    * @return adduct
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -204,20 +224,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAdduct(String adduct) {
+  public void setAdduct(@jakarta.annotation.Nullable String adduct) {
     this.adduct = adduct;
   }
 
-  public FormulaCandidate rank(Integer rank) {
+  public FormulaCandidate rank(@jakarta.annotation.Nullable Integer rank) {
     
     this.rank = rank;
     return this;
   }
 
-   /**
+  /**
    * Get rank
    * @return rank
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RANK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -229,20 +249,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_RANK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRank(Integer rank) {
+  public void setRank(@jakarta.annotation.Nullable Integer rank) {
     this.rank = rank;
   }
 
-  public FormulaCandidate siriusScoreNormalized(Double siriusScoreNormalized) {
+  public FormulaCandidate siriusScoreNormalized(@jakarta.annotation.Nullable Double siriusScoreNormalized) {
     
     this.siriusScoreNormalized = siriusScoreNormalized;
     return this;
   }
 
-   /**
+  /**
    * Normalized Sirius Score of the formula candidate.  If NULL result is not available
    * @return siriusScoreNormalized
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SIRIUS_SCORE_NORMALIZED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -254,20 +274,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_SIRIUS_SCORE_NORMALIZED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSiriusScoreNormalized(Double siriusScoreNormalized) {
+  public void setSiriusScoreNormalized(@jakarta.annotation.Nullable Double siriusScoreNormalized) {
     this.siriusScoreNormalized = siriusScoreNormalized;
   }
 
-  public FormulaCandidate siriusScore(Double siriusScore) {
+  public FormulaCandidate siriusScore(@jakarta.annotation.Nullable Double siriusScore) {
     
     this.siriusScore = siriusScore;
     return this;
   }
 
-   /**
+  /**
    * Sirius Score (isotope + tree score) of the formula candidate.  If NULL result is not available
    * @return siriusScore
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SIRIUS_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -279,20 +299,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_SIRIUS_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSiriusScore(Double siriusScore) {
+  public void setSiriusScore(@jakarta.annotation.Nullable Double siriusScore) {
     this.siriusScore = siriusScore;
   }
 
-  public FormulaCandidate isotopeScore(Double isotopeScore) {
+  public FormulaCandidate isotopeScore(@jakarta.annotation.Nullable Double isotopeScore) {
     
     this.isotopeScore = isotopeScore;
     return this;
   }
 
-   /**
+  /**
    * Get isotopeScore
    * @return isotopeScore
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ISOTOPE_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -304,20 +324,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_ISOTOPE_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIsotopeScore(Double isotopeScore) {
+  public void setIsotopeScore(@jakarta.annotation.Nullable Double isotopeScore) {
     this.isotopeScore = isotopeScore;
   }
 
-  public FormulaCandidate treeScore(Double treeScore) {
+  public FormulaCandidate treeScore(@jakarta.annotation.Nullable Double treeScore) {
     
     this.treeScore = treeScore;
     return this;
   }
 
-   /**
+  /**
    * Get treeScore
    * @return treeScore
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TREE_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -329,20 +349,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_TREE_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTreeScore(Double treeScore) {
+  public void setTreeScore(@jakarta.annotation.Nullable Double treeScore) {
     this.treeScore = treeScore;
   }
 
-  public FormulaCandidate zodiacScore(Double zodiacScore) {
+  public FormulaCandidate zodiacScore(@jakarta.annotation.Nullable Double zodiacScore) {
     
     this.zodiacScore = zodiacScore;
     return this;
   }
 
-   /**
+  /**
    * Zodiac Score of the formula candidate.  If NULL result is not available
    * @return zodiacScore
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ZODIAC_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -354,20 +374,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_ZODIAC_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setZodiacScore(Double zodiacScore) {
+  public void setZodiacScore(@jakarta.annotation.Nullable Double zodiacScore) {
     this.zodiacScore = zodiacScore;
   }
 
-  public FormulaCandidate numOfExplainedPeaks(Integer numOfExplainedPeaks) {
+  public FormulaCandidate numOfExplainedPeaks(@jakarta.annotation.Nullable Integer numOfExplainedPeaks) {
     
     this.numOfExplainedPeaks = numOfExplainedPeaks;
     return this;
   }
 
-   /**
+  /**
    * Get numOfExplainedPeaks
    * @return numOfExplainedPeaks
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NUM_OF_EXPLAINED_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -379,20 +399,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_NUM_OF_EXPLAINED_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumOfExplainedPeaks(Integer numOfExplainedPeaks) {
+  public void setNumOfExplainedPeaks(@jakarta.annotation.Nullable Integer numOfExplainedPeaks) {
     this.numOfExplainedPeaks = numOfExplainedPeaks;
   }
 
-  public FormulaCandidate numOfExplainablePeaks(Integer numOfExplainablePeaks) {
+  public FormulaCandidate numOfExplainablePeaks(@jakarta.annotation.Nullable Integer numOfExplainablePeaks) {
     
     this.numOfExplainablePeaks = numOfExplainablePeaks;
     return this;
   }
 
-   /**
+  /**
    * Get numOfExplainablePeaks
    * @return numOfExplainablePeaks
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NUM_OF_EXPLAINABLE_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -404,20 +424,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_NUM_OF_EXPLAINABLE_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumOfExplainablePeaks(Integer numOfExplainablePeaks) {
+  public void setNumOfExplainablePeaks(@jakarta.annotation.Nullable Integer numOfExplainablePeaks) {
     this.numOfExplainablePeaks = numOfExplainablePeaks;
   }
 
-  public FormulaCandidate totalExplainedIntensity(Double totalExplainedIntensity) {
+  public FormulaCandidate totalExplainedIntensity(@jakarta.annotation.Nullable Double totalExplainedIntensity) {
     
     this.totalExplainedIntensity = totalExplainedIntensity;
     return this;
   }
 
-   /**
+  /**
    * Get totalExplainedIntensity
    * @return totalExplainedIntensity
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TOTAL_EXPLAINED_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -429,20 +449,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_TOTAL_EXPLAINED_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTotalExplainedIntensity(Double totalExplainedIntensity) {
+  public void setTotalExplainedIntensity(@jakarta.annotation.Nullable Double totalExplainedIntensity) {
     this.totalExplainedIntensity = totalExplainedIntensity;
   }
 
-  public FormulaCandidate medianMassDeviation(Deviation medianMassDeviation) {
+  public FormulaCandidate medianMassDeviation(@jakarta.annotation.Nullable Deviation medianMassDeviation) {
     
     this.medianMassDeviation = medianMassDeviation;
     return this;
   }
 
-   /**
+  /**
    * Get medianMassDeviation
    * @return medianMassDeviation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MEDIAN_MASS_DEVIATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -454,20 +474,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_MEDIAN_MASS_DEVIATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMedianMassDeviation(Deviation medianMassDeviation) {
+  public void setMedianMassDeviation(@jakarta.annotation.Nullable Deviation medianMassDeviation) {
     this.medianMassDeviation = medianMassDeviation;
   }
 
-  public FormulaCandidate fragmentationTree(FragmentationTree fragmentationTree) {
+  public FormulaCandidate fragmentationTree(@jakarta.annotation.Nullable FragmentationTree fragmentationTree) {
     
     this.fragmentationTree = fragmentationTree;
     return this;
   }
 
-   /**
+  /**
    * Get fragmentationTree
    * @return fragmentationTree
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FRAGMENTATION_TREE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -479,20 +499,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_FRAGMENTATION_TREE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFragmentationTree(FragmentationTree fragmentationTree) {
+  public void setFragmentationTree(@jakarta.annotation.Nullable FragmentationTree fragmentationTree) {
     this.fragmentationTree = fragmentationTree;
   }
 
-  public FormulaCandidate annotatedSpectrum(AnnotatedSpectrum annotatedSpectrum) {
+  public FormulaCandidate annotatedSpectrum(@jakarta.annotation.Nullable AnnotatedSpectrum annotatedSpectrum) {
     
     this.annotatedSpectrum = annotatedSpectrum;
     return this;
   }
 
-   /**
+  /**
    * Get annotatedSpectrum
    * @return annotatedSpectrum
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ANNOTATED_SPECTRUM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -504,20 +524,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_ANNOTATED_SPECTRUM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAnnotatedSpectrum(AnnotatedSpectrum annotatedSpectrum) {
+  public void setAnnotatedSpectrum(@jakarta.annotation.Nullable AnnotatedSpectrum annotatedSpectrum) {
     this.annotatedSpectrum = annotatedSpectrum;
   }
 
-  public FormulaCandidate isotopePatternAnnotation(IsotopePatternAnnotation isotopePatternAnnotation) {
+  public FormulaCandidate isotopePatternAnnotation(@jakarta.annotation.Nullable IsotopePatternAnnotation isotopePatternAnnotation) {
     
     this.isotopePatternAnnotation = isotopePatternAnnotation;
     return this;
   }
 
-   /**
+  /**
    * Get isotopePatternAnnotation
    * @return isotopePatternAnnotation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -529,20 +549,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIsotopePatternAnnotation(IsotopePatternAnnotation isotopePatternAnnotation) {
+  public void setIsotopePatternAnnotation(@jakarta.annotation.Nullable IsotopePatternAnnotation isotopePatternAnnotation) {
     this.isotopePatternAnnotation = isotopePatternAnnotation;
   }
 
-  public FormulaCandidate lipidAnnotation(LipidAnnotation lipidAnnotation) {
+  public FormulaCandidate lipidAnnotation(@jakarta.annotation.Nullable LipidAnnotation lipidAnnotation) {
     
     this.lipidAnnotation = lipidAnnotation;
     return this;
   }
 
-   /**
+  /**
    * Get lipidAnnotation
    * @return lipidAnnotation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LIPID_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -554,11 +574,11 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_LIPID_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLipidAnnotation(LipidAnnotation lipidAnnotation) {
+  public void setLipidAnnotation(@jakarta.annotation.Nullable LipidAnnotation lipidAnnotation) {
     this.lipidAnnotation = lipidAnnotation;
   }
 
-  public FormulaCandidate predictedFingerprint(List<Double> predictedFingerprint) {
+  public FormulaCandidate predictedFingerprint(@jakarta.annotation.Nullable List<Double> predictedFingerprint) {
     
     this.predictedFingerprint = predictedFingerprint;
     return this;
@@ -572,10 +592,10 @@ public class FormulaCandidate {
     return this;
   }
 
-   /**
+  /**
    * Probabilistic molecular fingerprint predicted by CSI:FingerID
    * @return predictedFingerprint
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PREDICTED_FINGERPRINT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -587,20 +607,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_PREDICTED_FINGERPRINT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPredictedFingerprint(List<Double> predictedFingerprint) {
+  public void setPredictedFingerprint(@jakarta.annotation.Nullable List<Double> predictedFingerprint) {
     this.predictedFingerprint = predictedFingerprint;
   }
 
-  public FormulaCandidate compoundClasses(CompoundClasses compoundClasses) {
+  public FormulaCandidate compoundClasses(@jakarta.annotation.Nullable CompoundClasses compoundClasses) {
     
     this.compoundClasses = compoundClasses;
     return this;
   }
 
-   /**
+  /**
    * Get compoundClasses
    * @return compoundClasses
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -612,20 +632,20 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCompoundClasses(CompoundClasses compoundClasses) {
+  public void setCompoundClasses(@jakarta.annotation.Nullable CompoundClasses compoundClasses) {
     this.compoundClasses = compoundClasses;
   }
 
-  public FormulaCandidate canopusPrediction(CanopusPrediction canopusPrediction) {
+  public FormulaCandidate canopusPrediction(@jakarta.annotation.Nullable CanopusPrediction canopusPrediction) {
     
     this.canopusPrediction = canopusPrediction;
     return this;
   }
 
-   /**
+  /**
    * Get canopusPrediction
    * @return canopusPrediction
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CANOPUS_PREDICTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -637,9 +657,10 @@ public class FormulaCandidate {
 
   @JsonProperty(JSON_PROPERTY_CANOPUS_PREDICTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCanopusPrediction(CanopusPrediction canopusPrediction) {
+  public void setCanopusPrediction(@jakarta.annotation.Nullable CanopusPrediction canopusPrediction) {
     this.canopusPrediction = canopusPrediction;
   }
+
 
   @Override
   public boolean equals(Object o) {

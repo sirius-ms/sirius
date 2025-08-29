@@ -47,48 +47,57 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectrumAnnotation.JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG,
   SpectrumAnnotation.JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class SpectrumAnnotation {
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  @jakarta.annotation.Nullable
   private String molecularFormula;
 
   public static final String JSON_PROPERTY_ADDUCT = "adduct";
+  @jakarta.annotation.Nullable
   private String adduct;
 
   public static final String JSON_PROPERTY_EXACT_MASS = "exactMass";
+  @jakarta.annotation.Nullable
   private Double exactMass;
 
   public static final String JSON_PROPERTY_MASS_DEVIATION_MZ = "massDeviationMz";
+  @jakarta.annotation.Nullable
   private Double massDeviationMz;
 
   public static final String JSON_PROPERTY_MASS_DEVIATION_PPM = "massDeviationPpm";
+  @jakarta.annotation.Nullable
   private Double massDeviationPpm;
 
   public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION_SMILES = "structureAnnotationSmiles";
+  @jakarta.annotation.Nullable
   private String structureAnnotationSmiles;
 
   public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION_NAME = "structureAnnotationName";
+  @jakarta.annotation.Nullable
   private String structureAnnotationName;
 
   public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG = "structureAnnotationSvg";
+  @jakarta.annotation.Nullable
   private String structureAnnotationSvg;
 
   public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE = "structureAnnotationScore";
+  @jakarta.annotation.Nullable
   private Double structureAnnotationScore;
 
   public SpectrumAnnotation() {
   }
 
-  public SpectrumAnnotation molecularFormula(String molecularFormula) {
+  public SpectrumAnnotation molecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     
     this.molecularFormula = molecularFormula;
     return this;
   }
 
-   /**
+  /**
    * Molecular formula that has been annotated to this spectrum
    * @return molecularFormula
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -100,20 +109,20 @@ public class SpectrumAnnotation {
 
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMolecularFormula(String molecularFormula) {
+  public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
   }
 
-  public SpectrumAnnotation adduct(String adduct) {
+  public SpectrumAnnotation adduct(@jakarta.annotation.Nullable String adduct) {
     
     this.adduct = adduct;
     return this;
   }
 
-   /**
+  /**
    * Adduct that has been annotated to this spectrum
    * @return adduct
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -125,20 +134,20 @@ public class SpectrumAnnotation {
 
   @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAdduct(String adduct) {
+  public void setAdduct(@jakarta.annotation.Nullable String adduct) {
     this.adduct = adduct;
   }
 
-  public SpectrumAnnotation exactMass(Double exactMass) {
+  public SpectrumAnnotation exactMass(@jakarta.annotation.Nullable Double exactMass) {
     
     this.exactMass = exactMass;
     return this;
   }
 
-   /**
+  /**
    * Exact mass based on the annotated molecular formula and ionization
    * @return exactMass
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_EXACT_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -150,20 +159,20 @@ public class SpectrumAnnotation {
 
   @JsonProperty(JSON_PROPERTY_EXACT_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExactMass(Double exactMass) {
+  public void setExactMass(@jakarta.annotation.Nullable Double exactMass) {
     this.exactMass = exactMass;
   }
 
-  public SpectrumAnnotation massDeviationMz(Double massDeviationMz) {
+  public SpectrumAnnotation massDeviationMz(@jakarta.annotation.Nullable Double massDeviationMz) {
     
     this.massDeviationMz = massDeviationMz;
     return this;
   }
 
-   /**
+  /**
    * Absolute mass deviation of the exact mass to the precursor mass (precursorMz) of this spectrum in mDa
    * @return massDeviationMz
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -175,20 +184,20 @@ public class SpectrumAnnotation {
 
   @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMassDeviationMz(Double massDeviationMz) {
+  public void setMassDeviationMz(@jakarta.annotation.Nullable Double massDeviationMz) {
     this.massDeviationMz = massDeviationMz;
   }
 
-  public SpectrumAnnotation massDeviationPpm(Double massDeviationPpm) {
+  public SpectrumAnnotation massDeviationPpm(@jakarta.annotation.Nullable Double massDeviationPpm) {
     
     this.massDeviationPpm = massDeviationPpm;
     return this;
   }
 
-   /**
+  /**
    * Relative mass deviation of the exact mass to the precursor mass (precursorMz) of this spectrum in ppm
    * @return massDeviationPpm
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -200,20 +209,20 @@ public class SpectrumAnnotation {
 
   @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMassDeviationPpm(Double massDeviationPpm) {
+  public void setMassDeviationPpm(@jakarta.annotation.Nullable Double massDeviationPpm) {
     this.massDeviationPpm = massDeviationPpm;
   }
 
-  public SpectrumAnnotation structureAnnotationSmiles(String structureAnnotationSmiles) {
+  public SpectrumAnnotation structureAnnotationSmiles(@jakarta.annotation.Nullable String structureAnnotationSmiles) {
     
     this.structureAnnotationSmiles = structureAnnotationSmiles;
     return this;
   }
 
-   /**
+  /**
    * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.  &lt;p&gt;  Smiles of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation  Substructure highlighting (bond and atom indices) refer to this specific SMILES.  If you standardize or canonicalize this SMILES in any way the indices of substructure highlighting might  not match correctly anymore.  &lt;p&gt;  Null if substructure annotation not available or not requested.
    * @return structureAnnotationSmiles
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SMILES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -225,20 +234,20 @@ public class SpectrumAnnotation {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SMILES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureAnnotationSmiles(String structureAnnotationSmiles) {
+  public void setStructureAnnotationSmiles(@jakarta.annotation.Nullable String structureAnnotationSmiles) {
     this.structureAnnotationSmiles = structureAnnotationSmiles;
   }
 
-  public SpectrumAnnotation structureAnnotationName(String structureAnnotationName) {
+  public SpectrumAnnotation structureAnnotationName(@jakarta.annotation.Nullable String structureAnnotationName) {
     
     this.structureAnnotationName = structureAnnotationName;
     return this;
   }
 
-   /**
+  /**
    * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.  &lt;p&gt;  Name of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation.  &lt;p&gt;  Null if substructure annotation not available or not requested.
    * @return structureAnnotationName
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -250,20 +259,20 @@ public class SpectrumAnnotation {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureAnnotationName(String structureAnnotationName) {
+  public void setStructureAnnotationName(@jakarta.annotation.Nullable String structureAnnotationName) {
     this.structureAnnotationName = structureAnnotationName;
   }
 
-  public SpectrumAnnotation structureAnnotationSvg(String structureAnnotationSvg) {
+  public SpectrumAnnotation structureAnnotationSvg(@jakarta.annotation.Nullable String structureAnnotationSvg) {
     
     this.structureAnnotationSvg = structureAnnotationSvg;
     return this;
   }
 
-   /**
+  /**
    * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.  &lt;p&gt;  SVG graphics of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation  Substructure highlighting (bond and atom indices) refers to this SVG.  &lt;p&gt;  Null if substructure annotation not available or not requested.
    * @return structureAnnotationSvg
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -275,20 +284,20 @@ public class SpectrumAnnotation {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureAnnotationSvg(String structureAnnotationSvg) {
+  public void setStructureAnnotationSvg(@jakarta.annotation.Nullable String structureAnnotationSvg) {
     this.structureAnnotationSvg = structureAnnotationSvg;
   }
 
-  public SpectrumAnnotation structureAnnotationScore(Double structureAnnotationScore) {
+  public SpectrumAnnotation structureAnnotationScore(@jakarta.annotation.Nullable Double structureAnnotationScore) {
     
     this.structureAnnotationScore = structureAnnotationScore;
     return this;
   }
 
-   /**
+  /**
    * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.  &lt;p&gt;  Overall score of all substructure annotations computed for this structure candidate (structureAnnotationSmiles)  &lt;p&gt;  Null if substructure annotation not available or not requested.
    * @return structureAnnotationScore
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -300,9 +309,10 @@ public class SpectrumAnnotation {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureAnnotationScore(Double structureAnnotationScore) {
+  public void setStructureAnnotationScore(@jakarta.annotation.Nullable Double structureAnnotationScore) {
     this.structureAnnotationScore = structureAnnotationScore;
   }
+
 
   @Override
   public boolean equals(Object o) {

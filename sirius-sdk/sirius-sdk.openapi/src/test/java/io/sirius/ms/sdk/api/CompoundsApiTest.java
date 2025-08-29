@@ -63,9 +63,9 @@ public class CompoundsApiTest {
     public void getCompoundsTest() {
         String projectId = project.getProjectId();
         List<CompoundOptField> compoundOptFields = List.of(
-                CompoundOptField.CONSENSUSANNOTATIONS,
-                CompoundOptField.CUSTOMANNOTATIONS,
-                CompoundOptField.CONSENSUSANNOTATIONSDENOVO
+                CompoundOptField.CONSENSUS_ANNOTATIONS,
+                CompoundOptField.CUSTOM_ANNOTATIONS,
+                CompoundOptField.CONSENSUS_ANNOTATIONS_DE_NOVO
         );
         List<Compound> response = instance.getCompounds(projectId, false, compoundOptFields, null);
         assertNotNull(response);
@@ -83,7 +83,7 @@ public class CompoundsApiTest {
                 .name(newCompoundName).features(List.of(feature));
 
         List<Compound> newCompounds = instance.addCompounds(project.getProjectId(), List.of(compoundImport),
-                null, null, List.of(AlignedFeatureOptField.MSDATA));
+                null, null, List.of(AlignedFeatureOptField.MS_DATA));
 
         assertNotNull(newCompounds);
         Compound newCompound = newCompounds.getFirst();
@@ -108,7 +108,7 @@ public class CompoundsApiTest {
                 List.of(compoundImport),
                 null,
                 null,
-                List.of(AlignedFeatureOptField.MSDATA)
+                List.of(AlignedFeatureOptField.MS_DATA)
         );
 
         Compound newCompound = newCompounds.getFirst();
@@ -131,8 +131,8 @@ public class CompoundsApiTest {
                 project.getProjectId(),
                 newCompound.getCompoundId(),
                 false,
-                List.of(CompoundOptField.CONSENSUSANNOTATIONS),
-                List.of(AlignedFeatureOptField.TOPANNOTATIONS)
+                List.of(CompoundOptField.CONSENSUS_ANNOTATIONS),
+                List.of(AlignedFeatureOptField.TOP_ANNOTATIONS)
         );
 
         assertTrue(Set.of("diazepam", "valium").contains(compound.getConsensusAnnotations().getCsiFingerIdStructure().getStructureName().toLowerCase()));

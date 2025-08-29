@@ -42,7 +42,7 @@ public enum JobOptField {
   
   PROGRESS("progress"),
   
-  AFFECTEDIDS("affectedIds");
+  AFFECTED_IDS("affectedIds");
 
   private String value;
 

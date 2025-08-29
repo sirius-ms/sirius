@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.properties;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.configuration2.*;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.io.FileHandler;
@@ -44,6 +45,7 @@ import java.util.function.Supplier;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
+@Slf4j
 public class PropertyManager {
     public static final String PROPERTY_BASE = "de.unijena.bioinf";
     public static final String MS_PROPERTY_BASE = PROPERTY_BASE + ".ms";
@@ -85,6 +87,7 @@ public class PropertyManager {
                 classResources.add("de.unijena.bioinf.ms.defaults/concat.class.map");
                 configResources.add("de.unijena.bioinf.ms.defaults/concat.auto.config");
             } else {
+                log.warn("No prebuilt DEFAULT configuration found. Crawling classpath to find configs. NOT FOR PRODUCTION!");
                 classResources.addAll(ReflectionConfigCrawler.getAllClassMaps());
                 configResources.addAll(ReflectionConfigCrawler.getAllConfigs());
             }

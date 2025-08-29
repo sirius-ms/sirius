@@ -323,7 +323,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     private synchronized Pair<CompoundClasses, CanopusPrediction> getCanopusResults() {
         if (canopusResults == null) {
             @NotNull FormulaCandidate f = sourceCandidate().filter(fc -> fc.getCanopusPrediction() != null && fc.getCompoundClasses() != null)
-                    .orElse(getFormulaCandidate(FormulaCandidateOptField.CANOPUSPREDICTIONS, FormulaCandidateOptField.COMPOUNDCLASSES));
+                    .orElse(getFormulaCandidate(FormulaCandidateOptField.CANOPUS_PREDICTIONS, FormulaCandidateOptField.COMPOUND_CLASSES));
             canopusResults = Pair.of(f.getCompoundClasses(), f.getCanopusPrediction());
         }
         return canopusResults;

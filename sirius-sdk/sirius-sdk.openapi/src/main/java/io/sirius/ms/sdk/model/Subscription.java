@@ -56,69 +56,85 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Subscription.JSON_PROPERTY_PP,
   Subscription.JSON_PROPERTY_ALLOWED_FEATURES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class Subscription {
   public static final String JSON_PROPERTY_SID = "sid";
+  @jakarta.annotation.Nullable
   private String sid;
 
   public static final String JSON_PROPERTY_SUBSCRIBER_ID = "subscriberId";
+  @jakarta.annotation.Nullable
   private String subscriberId;
 
   public static final String JSON_PROPERTY_SUBSCRIBER_NAME = "subscriberName";
+  @jakarta.annotation.Nullable
   private String subscriberName;
 
   public static final String JSON_PROPERTY_EXPIRATION_DATE = "expirationDate";
+  @jakarta.annotation.Nullable
   private Date expirationDate;
 
   public static final String JSON_PROPERTY_START_DATE = "startDate";
+  @jakarta.annotation.Nullable
   private Date startDate;
 
   public static final String JSON_PROPERTY_COUNT_QUERIES = "countQueries";
+  @jakarta.annotation.Nullable
   private Boolean countQueries;
 
   public static final String JSON_PROPERTY_INSTANCE_LIMIT = "instanceLimit";
+  @jakarta.annotation.Nullable
   private Integer instanceLimit;
 
   public static final String JSON_PROPERTY_INSTANCE_HASH_RECORDING_TIME = "instanceHashRecordingTime";
+  @jakarta.annotation.Nullable
   private Integer instanceHashRecordingTime;
 
   public static final String JSON_PROPERTY_MAX_QUERIES_PER_INSTANCE = "maxQueriesPerInstance";
+  @jakarta.annotation.Nullable
   private Integer maxQueriesPerInstance;
 
   public static final String JSON_PROPERTY_MAX_USER_ACCOUNTS = "maxUserAccounts";
+  @jakarta.annotation.Nullable
   private Integer maxUserAccounts;
 
   public static final String JSON_PROPERTY_SERVICE_URL = "serviceUrl";
+  @jakarta.annotation.Nullable
   private String serviceUrl;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
+  @jakarta.annotation.Nullable
   private String description;
 
   public static final String JSON_PROPERTY_NAME = "name";
+  @jakarta.annotation.Nullable
   private String name;
 
   public static final String JSON_PROPERTY_TOS = "tos";
+  @jakarta.annotation.Nullable
   private String tos;
 
   public static final String JSON_PROPERTY_PP = "pp";
+  @jakarta.annotation.Nullable
   private String pp;
 
   public static final String JSON_PROPERTY_ALLOWED_FEATURES = "allowedFeatures";
+  @jakarta.annotation.Nullable
   private AllowedFeatures allowedFeatures;
 
   public Subscription() {
   }
 
-  public Subscription sid(String sid) {
+  public Subscription sid(@jakarta.annotation.Nullable String sid) {
     
     this.sid = sid;
     return this;
   }
 
-   /**
+  /**
    * Unique identifier of this subscription
    * @return sid
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -130,20 +146,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_SID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSid(String sid) {
+  public void setSid(@jakarta.annotation.Nullable String sid) {
     this.sid = sid;
   }
 
-  public Subscription subscriberId(String subscriberId) {
+  public Subscription subscriberId(@jakarta.annotation.Nullable String subscriberId) {
     
     this.subscriberId = subscriberId;
     return this;
   }
 
-   /**
+  /**
    * ID of the owner of the subscription.  This can be the ID of any SubscriptionOwner (e.g.  Group or  User)  depending on the level on which a subscription should be is valid.
    * @return subscriberId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SUBSCRIBER_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -155,20 +171,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_SUBSCRIBER_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSubscriberId(String subscriberId) {
+  public void setSubscriberId(@jakarta.annotation.Nullable String subscriberId) {
     this.subscriberId = subscriberId;
   }
 
-  public Subscription subscriberName(String subscriberName) {
+  public Subscription subscriberName(@jakarta.annotation.Nullable String subscriberName) {
     
     this.subscriberName = subscriberName;
     return this;
   }
 
-   /**
+  /**
    * Optional name of the owner of this subscription
    * @return subscriberName
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SUBSCRIBER_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -180,20 +196,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_SUBSCRIBER_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSubscriberName(String subscriberName) {
+  public void setSubscriberName(@jakarta.annotation.Nullable String subscriberName) {
     this.subscriberName = subscriberName;
   }
 
-  public Subscription expirationDate(Date expirationDate) {
+  public Subscription expirationDate(@jakarta.annotation.Nullable Date expirationDate) {
     
     this.expirationDate = expirationDate;
     return this;
   }
 
-   /**
+  /**
    * Get expirationDate
    * @return expirationDate
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_EXPIRATION_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -205,20 +221,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_EXPIRATION_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExpirationDate(Date expirationDate) {
+  public void setExpirationDate(@jakarta.annotation.Nullable Date expirationDate) {
     this.expirationDate = expirationDate;
   }
 
-  public Subscription startDate(Date startDate) {
+  public Subscription startDate(@jakarta.annotation.Nullable Date startDate) {
     
     this.startDate = startDate;
     return this;
   }
 
-   /**
+  /**
    * Get startDate
    * @return startDate
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_START_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -230,20 +246,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_START_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStartDate(Date startDate) {
+  public void setStartDate(@jakarta.annotation.Nullable Date startDate) {
     this.startDate = startDate;
   }
 
-  public Subscription countQueries(Boolean countQueries) {
+  public Subscription countQueries(@jakarta.annotation.Nullable Boolean countQueries) {
     
     this.countQueries = countQueries;
     return this;
   }
 
-   /**
+  /**
    * Get countQueries
    * @return countQueries
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COUNT_QUERIES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -255,20 +271,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_COUNT_QUERIES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCountQueries(Boolean countQueries) {
+  public void setCountQueries(@jakarta.annotation.Nullable Boolean countQueries) {
     this.countQueries = countQueries;
   }
 
-  public Subscription instanceLimit(Integer instanceLimit) {
+  public Subscription instanceLimit(@jakarta.annotation.Nullable Integer instanceLimit) {
     
     this.instanceLimit = instanceLimit;
     return this;
   }
 
-   /**
+  /**
    * Limit of instances (features) that can be computed with this subscription
    * @return instanceLimit
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INSTANCE_LIMIT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -280,20 +296,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_INSTANCE_LIMIT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setInstanceLimit(Integer instanceLimit) {
+  public void setInstanceLimit(@jakarta.annotation.Nullable Integer instanceLimit) {
     this.instanceLimit = instanceLimit;
   }
 
-  public Subscription instanceHashRecordingTime(Integer instanceHashRecordingTime) {
+  public Subscription instanceHashRecordingTime(@jakarta.annotation.Nullable Integer instanceHashRecordingTime) {
     
     this.instanceHashRecordingTime = instanceHashRecordingTime;
     return this;
   }
 
-   /**
+  /**
    * Hash is used to allow recomputing identical data without increasing counted instances (features).  The recording time is the amount of time an instance is memorized is
    * @return instanceHashRecordingTime
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INSTANCE_HASH_RECORDING_TIME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -305,20 +321,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_INSTANCE_HASH_RECORDING_TIME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setInstanceHashRecordingTime(Integer instanceHashRecordingTime) {
+  public void setInstanceHashRecordingTime(@jakarta.annotation.Nullable Integer instanceHashRecordingTime) {
     this.instanceHashRecordingTime = instanceHashRecordingTime;
   }
 
-  public Subscription maxQueriesPerInstance(Integer maxQueriesPerInstance) {
+  public Subscription maxQueriesPerInstance(@jakarta.annotation.Nullable Integer maxQueriesPerInstance) {
     
     this.maxQueriesPerInstance = maxQueriesPerInstance;
     return this;
   }
 
-   /**
+  /**
    * Maximum number of queries (e.g. prediction) that can be performed  for one instance before it is counted another time.
    * @return maxQueriesPerInstance
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MAX_QUERIES_PER_INSTANCE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -330,20 +346,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_MAX_QUERIES_PER_INSTANCE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMaxQueriesPerInstance(Integer maxQueriesPerInstance) {
+  public void setMaxQueriesPerInstance(@jakarta.annotation.Nullable Integer maxQueriesPerInstance) {
     this.maxQueriesPerInstance = maxQueriesPerInstance;
   }
 
-  public Subscription maxUserAccounts(Integer maxUserAccounts) {
+  public Subscription maxUserAccounts(@jakarta.annotation.Nullable Integer maxUserAccounts) {
     
     this.maxUserAccounts = maxUserAccounts;
     return this;
   }
 
-   /**
+  /**
    * Get maxUserAccounts
    * @return maxUserAccounts
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MAX_USER_ACCOUNTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -355,20 +371,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_MAX_USER_ACCOUNTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMaxUserAccounts(Integer maxUserAccounts) {
+  public void setMaxUserAccounts(@jakarta.annotation.Nullable Integer maxUserAccounts) {
     this.maxUserAccounts = maxUserAccounts;
   }
 
-  public Subscription serviceUrl(String serviceUrl) {
+  public Subscription serviceUrl(@jakarta.annotation.Nullable String serviceUrl) {
     
     this.serviceUrl = serviceUrl;
     return this;
   }
 
-   /**
+  /**
    * Get serviceUrl
    * @return serviceUrl
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SERVICE_URL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -380,20 +396,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_SERVICE_URL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setServiceUrl(String serviceUrl) {
+  public void setServiceUrl(@jakarta.annotation.Nullable String serviceUrl) {
     this.serviceUrl = serviceUrl;
   }
 
-  public Subscription description(String description) {
+  public Subscription description(@jakarta.annotation.Nullable String description) {
     
     this.description = description;
     return this;
   }
 
-   /**
+  /**
    * Get description
    * @return description
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -405,20 +421,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDescription(String description) {
+  public void setDescription(@jakarta.annotation.Nullable String description) {
     this.description = description;
   }
 
-  public Subscription name(String name) {
+  public Subscription name(@jakarta.annotation.Nullable String name) {
     
     this.name = name;
     return this;
   }
 
-   /**
+  /**
    * Get name
    * @return name
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -430,20 +446,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
+  public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
   }
 
-  public Subscription tos(String tos) {
+  public Subscription tos(@jakarta.annotation.Nullable String tos) {
     
     this.tos = tos;
     return this;
   }
 
-   /**
+  /**
    * Get tos
    * @return tos
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TOS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -455,20 +471,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_TOS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTos(String tos) {
+  public void setTos(@jakarta.annotation.Nullable String tos) {
     this.tos = tos;
   }
 
-  public Subscription pp(String pp) {
+  public Subscription pp(@jakarta.annotation.Nullable String pp) {
     
     this.pp = pp;
     return this;
   }
 
-   /**
+  /**
    * Get pp
    * @return pp
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PP)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -480,20 +496,20 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_PP)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPp(String pp) {
+  public void setPp(@jakarta.annotation.Nullable String pp) {
     this.pp = pp;
   }
 
-  public Subscription allowedFeatures(AllowedFeatures allowedFeatures) {
+  public Subscription allowedFeatures(@jakarta.annotation.Nullable AllowedFeatures allowedFeatures) {
     
     this.allowedFeatures = allowedFeatures;
     return this;
   }
 
-   /**
+  /**
    * Get allowedFeatures
    * @return allowedFeatures
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ALLOWED_FEATURES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -505,9 +521,10 @@ public class Subscription {
 
   @JsonProperty(JSON_PROPERTY_ALLOWED_FEATURES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAllowedFeatures(AllowedFeatures allowedFeatures) {
+  public void setAllowedFeatures(@jakarta.annotation.Nullable AllowedFeatures allowedFeatures) {
     this.allowedFeatures = allowedFeatures;
   }
+
 
   @Override
   public boolean equals(Object o) {
