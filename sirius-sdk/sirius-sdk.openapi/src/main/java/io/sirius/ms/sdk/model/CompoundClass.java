@@ -49,51 +49,61 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CompoundClass.JSON_PROPERTY_PARENT_ID,
   CompoundClass.JSON_PROPERTY_PARENT_NAME
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class CompoundClass {
   public static final String JSON_PROPERTY_TYPE = "type";
+  @jakarta.annotation.Nullable
   private CompoundClassType type;
 
   public static final String JSON_PROPERTY_LEVEL = "level";
+  @jakarta.annotation.Nullable
   private String level;
 
   public static final String JSON_PROPERTY_LEVEL_INDEX = "levelIndex";
+  @jakarta.annotation.Nullable
   private Integer levelIndex;
 
   public static final String JSON_PROPERTY_NAME = "name";
+  @jakarta.annotation.Nullable
   private String name;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
+  @jakarta.annotation.Nullable
   private String description;
 
   public static final String JSON_PROPERTY_ID = "id";
+  @jakarta.annotation.Nullable
   private Integer id;
 
   public static final String JSON_PROPERTY_PROBABILITY = "probability";
+  @jakarta.annotation.Nullable
   private Double probability;
 
   public static final String JSON_PROPERTY_INDEX = "index";
+  @jakarta.annotation.Nullable
   private Integer index;
 
   public static final String JSON_PROPERTY_PARENT_ID = "parentId";
+  @jakarta.annotation.Nullable
   private Integer parentId;
 
   public static final String JSON_PROPERTY_PARENT_NAME = "parentName";
+  @jakarta.annotation.Nullable
   private String parentName;
 
   public CompoundClass() {
   }
 
-  public CompoundClass type(CompoundClassType type) {
+  public CompoundClass type(@jakarta.annotation.Nullable CompoundClassType type) {
     
     this.type = type;
     return this;
   }
 
-   /**
+  /**
    * Get type
    * @return type
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -105,20 +115,20 @@ public class CompoundClass {
 
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setType(CompoundClassType type) {
+  public void setType(@jakarta.annotation.Nullable CompoundClassType type) {
     this.type = type;
   }
 
-  public CompoundClass level(String level) {
+  public CompoundClass level(@jakarta.annotation.Nullable String level) {
     
     this.level = level;
     return this;
   }
 
-   /**
+  /**
    * Name of the level this compound class belongs to
    * @return level
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LEVEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -130,20 +140,20 @@ public class CompoundClass {
 
   @JsonProperty(JSON_PROPERTY_LEVEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLevel(String level) {
+  public void setLevel(@jakarta.annotation.Nullable String level) {
     this.level = level;
   }
 
-  public CompoundClass levelIndex(Integer levelIndex) {
+  public CompoundClass levelIndex(@jakarta.annotation.Nullable Integer levelIndex) {
     
     this.levelIndex = levelIndex;
     return this;
   }
 
-   /**
+  /**
    * Index of the level this compound class belongs to
    * @return levelIndex
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LEVEL_INDEX)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -155,20 +165,20 @@ public class CompoundClass {
 
   @JsonProperty(JSON_PROPERTY_LEVEL_INDEX)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLevelIndex(Integer levelIndex) {
+  public void setLevelIndex(@jakarta.annotation.Nullable Integer levelIndex) {
     this.levelIndex = levelIndex;
   }
 
-  public CompoundClass name(String name) {
+  public CompoundClass name(@jakarta.annotation.Nullable String name) {
     
     this.name = name;
     return this;
   }
 
-   /**
+  /**
    * Name of the compound class.
    * @return name
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -180,20 +190,20 @@ public class CompoundClass {
 
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
+  public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
   }
 
-  public CompoundClass description(String description) {
+  public CompoundClass description(@jakarta.annotation.Nullable String description) {
     
     this.description = description;
     return this;
   }
 
-   /**
+  /**
    * Description of the compound class.
    * @return description
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -205,20 +215,20 @@ public class CompoundClass {
 
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDescription(String description) {
+  public void setDescription(@jakarta.annotation.Nullable String description) {
     this.description = description;
   }
 
-  public CompoundClass id(Integer id) {
+  public CompoundClass id(@jakarta.annotation.Nullable Integer id) {
     
     this.id = id;
     return this;
   }
 
-   /**
+  /**
    * Unique id of the class. Might be undefined for certain classification ontologies.
    * @return id
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -230,20 +240,20 @@ public class CompoundClass {
 
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setId(Integer id) {
+  public void setId(@jakarta.annotation.Nullable Integer id) {
     this.id = id;
   }
 
-  public CompoundClass probability(Double probability) {
+  public CompoundClass probability(@jakarta.annotation.Nullable Double probability) {
     
     this.probability = probability;
     return this;
   }
 
-   /**
+  /**
    * prediction probability
    * @return probability
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PROBABILITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -255,20 +265,20 @@ public class CompoundClass {
 
   @JsonProperty(JSON_PROPERTY_PROBABILITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setProbability(Double probability) {
+  public void setProbability(@jakarta.annotation.Nullable Double probability) {
     this.probability = probability;
   }
 
-  public CompoundClass index(Integer index) {
+  public CompoundClass index(@jakarta.annotation.Nullable Integer index) {
     
     this.index = index;
     return this;
   }
 
-   /**
+  /**
    * Absolute index of this property in the predicted vector/embedding
    * @return index
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INDEX)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -280,20 +290,20 @@ public class CompoundClass {
 
   @JsonProperty(JSON_PROPERTY_INDEX)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIndex(Integer index) {
+  public void setIndex(@jakarta.annotation.Nullable Integer index) {
     this.index = index;
   }
 
-  public CompoundClass parentId(Integer parentId) {
+  public CompoundClass parentId(@jakarta.annotation.Nullable Integer parentId) {
     
     this.parentId = parentId;
     return this;
   }
 
-   /**
+  /**
    * Unique id of the parent class. Might be undefined for certain classification ontologies.
    * @return parentId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PARENT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -305,20 +315,20 @@ public class CompoundClass {
 
   @JsonProperty(JSON_PROPERTY_PARENT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setParentId(Integer parentId) {
+  public void setParentId(@jakarta.annotation.Nullable Integer parentId) {
     this.parentId = parentId;
   }
 
-  public CompoundClass parentName(String parentName) {
+  public CompoundClass parentName(@jakarta.annotation.Nullable String parentName) {
     
     this.parentName = parentName;
     return this;
   }
 
-   /**
+  /**
    * Name of the parent compound class.
    * @return parentName
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PARENT_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -330,9 +340,10 @@ public class CompoundClass {
 
   @JsonProperty(JSON_PROPERTY_PARENT_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setParentName(String parentName) {
+  public void setParentName(@jakarta.annotation.Nullable String parentName) {
     this.parentName = parentName;
   }
+
 
   @Override
   public boolean equals(Object o) {

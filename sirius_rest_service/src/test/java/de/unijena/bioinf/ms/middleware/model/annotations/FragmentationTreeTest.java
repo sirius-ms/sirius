@@ -1,10 +1,10 @@
+package de.unijena.bioinf.ms.middleware.model.annotations;
+
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
-import de.unijena.bioinf.ms.middleware.model.annotations.FragmentationTree;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

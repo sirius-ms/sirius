@@ -41,30 +41,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SearchableDatabaseParameters.JSON_PROPERTY_LOCATION,
   SearchableDatabaseParameters.JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class SearchableDatabaseParameters {
   public static final String JSON_PROPERTY_DISPLAY_NAME = "displayName";
+  @jakarta.annotation.Nullable
   private String displayName;
 
   public static final String JSON_PROPERTY_LOCATION = "location";
+  @jakarta.annotation.Nullable
   private String location;
 
   public static final String JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA = "matchRtOfReferenceSpectra";
+  @jakarta.annotation.Nullable
   private Boolean matchRtOfReferenceSpectra = false;
 
   public SearchableDatabaseParameters() {
   }
 
-  public SearchableDatabaseParameters displayName(String displayName) {
+  public SearchableDatabaseParameters displayName(@jakarta.annotation.Nullable String displayName) {
     
     this.displayName = displayName;
     return this;
   }
 
-   /**
+  /**
    * display name of the database  Should be short
    * @return displayName
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DISPLAY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -76,20 +79,20 @@ public class SearchableDatabaseParameters {
 
   @JsonProperty(JSON_PROPERTY_DISPLAY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDisplayName(String displayName) {
+  public void setDisplayName(@jakarta.annotation.Nullable String displayName) {
     this.displayName = displayName;
   }
 
-  public SearchableDatabaseParameters location(String location) {
+  public SearchableDatabaseParameters location(@jakarta.annotation.Nullable String location) {
     
     this.location = location;
     return this;
   }
 
-   /**
+  /**
    * Storage location of user database  Might be NULL for non-user databases or if default location is used.
    * @return location
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LOCATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -101,20 +104,20 @@ public class SearchableDatabaseParameters {
 
   @JsonProperty(JSON_PROPERTY_LOCATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLocation(String location) {
+  public void setLocation(@jakarta.annotation.Nullable String location) {
     this.location = location;
   }
 
-  public SearchableDatabaseParameters matchRtOfReferenceSpectra(Boolean matchRtOfReferenceSpectra) {
+  public SearchableDatabaseParameters matchRtOfReferenceSpectra(@jakarta.annotation.Nullable Boolean matchRtOfReferenceSpectra) {
     
     this.matchRtOfReferenceSpectra = matchRtOfReferenceSpectra;
     return this;
   }
 
-   /**
+  /**
    * Indicates whether this database shall be used to use retention time information for library matching.  Typically used for in-house spectral libraries that have been measured on
    * @return matchRtOfReferenceSpectra
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -126,9 +129,10 @@ public class SearchableDatabaseParameters {
 
   @JsonProperty(JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMatchRtOfReferenceSpectra(Boolean matchRtOfReferenceSpectra) {
+  public void setMatchRtOfReferenceSpectra(@jakarta.annotation.Nullable Boolean matchRtOfReferenceSpectra) {
     this.matchRtOfReferenceSpectra = matchRtOfReferenceSpectra;
   }
+
 
   @Override
   public boolean equals(Object o) {

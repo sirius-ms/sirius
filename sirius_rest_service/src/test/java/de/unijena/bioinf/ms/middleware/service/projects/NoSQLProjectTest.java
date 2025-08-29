@@ -1,4 +1,4 @@
-/*
+package de.unijena.bioinf.ms.middleware.service.projects;/*
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
@@ -33,7 +33,6 @@ import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
 import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
-import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.search.FakeLuceneSearchService;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;

@@ -9,11 +9,11 @@
 
 * `FINGERPRINT` (value: `"fingerprint"`)
 
-* `DBLINKS` (value: `"dbLinks"`)
+* `DB_LINKS` (value: `"dbLinks"`)
 
-* `LIBRARYMATCHES` (value: `"libraryMatches"`)
+* `LIBRARY_MATCHES` (value: `"libraryMatches"`)
 
-* `STRUCTURESVG` (value: `"structureSvg"`)
+* `STRUCTURE_SVG` (value: `"structureSvg"`)
 
 
 

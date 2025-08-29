@@ -44,39 +44,45 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AllowedFeatures.JSON_PROPERTY_IMPORT_PEAK_LISTS,
   AllowedFeatures.JSON_PROPERTY_IMPORT_CEF
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class AllowedFeatures {
   public static final String JSON_PROPERTY_CLI = "cli";
+  @jakarta.annotation.Nullable
   private Boolean cli;
 
   public static final String JSON_PROPERTY_API = "api";
+  @jakarta.annotation.Nullable
   private Boolean api;
 
   public static final String JSON_PROPERTY_DE_NOVO = "deNovo";
+  @jakarta.annotation.Nullable
   private Boolean deNovo;
 
   public static final String JSON_PROPERTY_IMPORT_M_S_RUNS = "importMSRuns";
+  @jakarta.annotation.Nullable
   private Boolean importMSRuns;
 
   public static final String JSON_PROPERTY_IMPORT_PEAK_LISTS = "importPeakLists";
+  @jakarta.annotation.Nullable
   private Boolean importPeakLists;
 
   public static final String JSON_PROPERTY_IMPORT_CEF = "importCef";
+  @jakarta.annotation.Nullable
   private Boolean importCef;
 
   public AllowedFeatures() {
   }
 
-  public AllowedFeatures cli(Boolean cli) {
+  public AllowedFeatures cli(@jakarta.annotation.Nullable Boolean cli) {
     
     this.cli = cli;
     return this;
   }
 
-   /**
+  /**
    * Get cli
    * @return cli
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CLI)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -88,20 +94,20 @@ public class AllowedFeatures {
 
   @JsonProperty(JSON_PROPERTY_CLI)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCli(Boolean cli) {
+  public void setCli(@jakarta.annotation.Nullable Boolean cli) {
     this.cli = cli;
   }
 
-  public AllowedFeatures api(Boolean api) {
+  public AllowedFeatures api(@jakarta.annotation.Nullable Boolean api) {
     
     this.api = api;
     return this;
   }
 
-   /**
+  /**
    * Get api
    * @return api
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_API)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -113,20 +119,20 @@ public class AllowedFeatures {
 
   @JsonProperty(JSON_PROPERTY_API)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setApi(Boolean api) {
+  public void setApi(@jakarta.annotation.Nullable Boolean api) {
     this.api = api;
   }
 
-  public AllowedFeatures deNovo(Boolean deNovo) {
+  public AllowedFeatures deNovo(@jakarta.annotation.Nullable Boolean deNovo) {
     
     this.deNovo = deNovo;
     return this;
   }
 
-   /**
+  /**
    * Get deNovo
    * @return deNovo
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DE_NOVO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -138,20 +144,20 @@ public class AllowedFeatures {
 
   @JsonProperty(JSON_PROPERTY_DE_NOVO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDeNovo(Boolean deNovo) {
+  public void setDeNovo(@jakarta.annotation.Nullable Boolean deNovo) {
     this.deNovo = deNovo;
   }
 
-  public AllowedFeatures importMSRuns(Boolean importMSRuns) {
+  public AllowedFeatures importMSRuns(@jakarta.annotation.Nullable Boolean importMSRuns) {
     
     this.importMSRuns = importMSRuns;
     return this;
   }
 
-   /**
+  /**
    * Get importMSRuns
    * @return importMSRuns
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_IMPORT_M_S_RUNS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -163,20 +169,20 @@ public class AllowedFeatures {
 
   @JsonProperty(JSON_PROPERTY_IMPORT_M_S_RUNS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setImportMSRuns(Boolean importMSRuns) {
+  public void setImportMSRuns(@jakarta.annotation.Nullable Boolean importMSRuns) {
     this.importMSRuns = importMSRuns;
   }
 
-  public AllowedFeatures importPeakLists(Boolean importPeakLists) {
+  public AllowedFeatures importPeakLists(@jakarta.annotation.Nullable Boolean importPeakLists) {
     
     this.importPeakLists = importPeakLists;
     return this;
   }
 
-   /**
+  /**
    * Get importPeakLists
    * @return importPeakLists
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_IMPORT_PEAK_LISTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -188,20 +194,20 @@ public class AllowedFeatures {
 
   @JsonProperty(JSON_PROPERTY_IMPORT_PEAK_LISTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setImportPeakLists(Boolean importPeakLists) {
+  public void setImportPeakLists(@jakarta.annotation.Nullable Boolean importPeakLists) {
     this.importPeakLists = importPeakLists;
   }
 
-  public AllowedFeatures importCef(Boolean importCef) {
+  public AllowedFeatures importCef(@jakarta.annotation.Nullable Boolean importCef) {
     
     this.importCef = importCef;
     return this;
   }
 
-   /**
+  /**
    * Get importCef
    * @return importCef
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_IMPORT_CEF)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -213,9 +219,10 @@ public class AllowedFeatures {
 
   @JsonProperty(JSON_PROPERTY_IMPORT_CEF)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setImportCef(Boolean importCef) {
+  public void setImportCef(@jakarta.annotation.Nullable Boolean importCef) {
     this.importCef = importCef;
   }
+
 
   @Override
   public boolean equals(Object o) {

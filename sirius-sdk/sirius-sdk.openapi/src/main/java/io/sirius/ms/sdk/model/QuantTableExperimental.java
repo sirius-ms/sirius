@@ -50,42 +50,49 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   QuantTableExperimental.JSON_PROPERTY_COLUMN_NAMES,
   QuantTableExperimental.JSON_PROPERTY_VALUES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class QuantTableExperimental {
   public static final String JSON_PROPERTY_QUANTIFICATION_MEASURE = "quantificationMeasure";
+  @jakarta.annotation.Nullable
   private QuantMeasure quantificationMeasure;
 
   public static final String JSON_PROPERTY_ROW_TYPE = "rowType";
+  @jakarta.annotation.Nullable
   private QuantRowType rowType;
 
   public static final String JSON_PROPERTY_ROW_IDS = "rowIds";
+  @jakarta.annotation.Nullable
   private List<Long> rowIds;
 
   public static final String JSON_PROPERTY_COLUMN_IDS = "columnIds";
+  @jakarta.annotation.Nullable
   private List<Long> columnIds;
 
   public static final String JSON_PROPERTY_ROW_NAMES = "rowNames";
+  @jakarta.annotation.Nullable
   private List<String> rowNames;
 
   public static final String JSON_PROPERTY_COLUMN_NAMES = "columnNames";
+  @jakarta.annotation.Nullable
   private List<String> columnNames;
 
   public static final String JSON_PROPERTY_VALUES = "values";
+  @jakarta.annotation.Nullable
   private List<List<Double>> values = new ArrayList<>();
 
   public QuantTableExperimental() {
   }
 
-  public QuantTableExperimental quantificationMeasure(QuantMeasure quantificationMeasure) {
+  public QuantTableExperimental quantificationMeasure(@jakarta.annotation.Nullable QuantMeasure quantificationMeasure) {
     
     this.quantificationMeasure = quantificationMeasure;
     return this;
   }
 
-   /**
+  /**
    * Get quantificationMeasure
    * @return quantificationMeasure
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -97,20 +104,20 @@ public class QuantTableExperimental {
 
   @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setQuantificationMeasure(QuantMeasure quantificationMeasure) {
+  public void setQuantificationMeasure(@jakarta.annotation.Nullable QuantMeasure quantificationMeasure) {
     this.quantificationMeasure = quantificationMeasure;
   }
 
-  public QuantTableExperimental rowType(QuantRowType rowType) {
+  public QuantTableExperimental rowType(@jakarta.annotation.Nullable QuantRowType rowType) {
     
     this.rowType = rowType;
     return this;
   }
 
-   /**
+  /**
    * Get rowType
    * @return rowType
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ROW_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -122,11 +129,11 @@ public class QuantTableExperimental {
 
   @JsonProperty(JSON_PROPERTY_ROW_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRowType(QuantRowType rowType) {
+  public void setRowType(@jakarta.annotation.Nullable QuantRowType rowType) {
     this.rowType = rowType;
   }
 
-  public QuantTableExperimental rowIds(List<Long> rowIds) {
+  public QuantTableExperimental rowIds(@jakarta.annotation.Nullable List<Long> rowIds) {
     
     this.rowIds = rowIds;
     return this;
@@ -140,10 +147,10 @@ public class QuantTableExperimental {
     return this;
   }
 
-   /**
+  /**
    * Get rowIds
    * @return rowIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ROW_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -155,11 +162,11 @@ public class QuantTableExperimental {
 
   @JsonProperty(JSON_PROPERTY_ROW_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRowIds(List<Long> rowIds) {
+  public void setRowIds(@jakarta.annotation.Nullable List<Long> rowIds) {
     this.rowIds = rowIds;
   }
 
-  public QuantTableExperimental columnIds(List<Long> columnIds) {
+  public QuantTableExperimental columnIds(@jakarta.annotation.Nullable List<Long> columnIds) {
     
     this.columnIds = columnIds;
     return this;
@@ -173,10 +180,10 @@ public class QuantTableExperimental {
     return this;
   }
 
-   /**
+  /**
    * Get columnIds
    * @return columnIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COLUMN_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -188,11 +195,11 @@ public class QuantTableExperimental {
 
   @JsonProperty(JSON_PROPERTY_COLUMN_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setColumnIds(List<Long> columnIds) {
+  public void setColumnIds(@jakarta.annotation.Nullable List<Long> columnIds) {
     this.columnIds = columnIds;
   }
 
-  public QuantTableExperimental rowNames(List<String> rowNames) {
+  public QuantTableExperimental rowNames(@jakarta.annotation.Nullable List<String> rowNames) {
     
     this.rowNames = rowNames;
     return this;
@@ -206,10 +213,10 @@ public class QuantTableExperimental {
     return this;
   }
 
-   /**
+  /**
    * Get rowNames
    * @return rowNames
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ROW_NAMES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -221,11 +228,11 @@ public class QuantTableExperimental {
 
   @JsonProperty(JSON_PROPERTY_ROW_NAMES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRowNames(List<String> rowNames) {
+  public void setRowNames(@jakarta.annotation.Nullable List<String> rowNames) {
     this.rowNames = rowNames;
   }
 
-  public QuantTableExperimental columnNames(List<String> columnNames) {
+  public QuantTableExperimental columnNames(@jakarta.annotation.Nullable List<String> columnNames) {
     
     this.columnNames = columnNames;
     return this;
@@ -239,10 +246,10 @@ public class QuantTableExperimental {
     return this;
   }
 
-   /**
+  /**
    * Get columnNames
    * @return columnNames
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COLUMN_NAMES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -254,11 +261,11 @@ public class QuantTableExperimental {
 
   @JsonProperty(JSON_PROPERTY_COLUMN_NAMES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setColumnNames(List<String> columnNames) {
+  public void setColumnNames(@jakarta.annotation.Nullable List<String> columnNames) {
     this.columnNames = columnNames;
   }
 
-  public QuantTableExperimental values(List<List<Double>> values) {
+  public QuantTableExperimental values(@jakarta.annotation.Nullable List<List<Double>> values) {
     
     this.values = values;
     return this;
@@ -272,10 +279,10 @@ public class QuantTableExperimental {
     return this;
   }
 
-   /**
+  /**
    * Get values
    * @return values
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_VALUES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -287,9 +294,10 @@ public class QuantTableExperimental {
 
   @JsonProperty(JSON_PROPERTY_VALUES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setValues(List<List<Double>> values) {
+  public void setValues(@jakarta.annotation.Nullable List<List<Double>> values) {
     this.values = values;
   }
+
 
   @Override
   public boolean equals(Object o) {
