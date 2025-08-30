@@ -40,27 +40,29 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PeakPair.JSON_PROPERTY_QUERY_PEAK,
   PeakPair.JSON_PROPERTY_REFERENCE_PEAK
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class PeakPair {
   public static final String JSON_PROPERTY_QUERY_PEAK = "queryPeak";
+  @jakarta.annotation.Nonnull
   private Integer queryPeak;
 
   public static final String JSON_PROPERTY_REFERENCE_PEAK = "referencePeak";
+  @jakarta.annotation.Nonnull
   private Integer referencePeak;
 
   public PeakPair() {
   }
 
-  public PeakPair queryPeak(Integer queryPeak) {
+  public PeakPair queryPeak(@jakarta.annotation.Nonnull Integer queryPeak) {
     
     this.queryPeak = queryPeak;
     return this;
   }
 
-   /**
+  /**
    * Get queryPeak
    * @return queryPeak
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_QUERY_PEAK)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -72,20 +74,20 @@ public class PeakPair {
 
   @JsonProperty(JSON_PROPERTY_QUERY_PEAK)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setQueryPeak(Integer queryPeak) {
+  public void setQueryPeak(@jakarta.annotation.Nonnull Integer queryPeak) {
     this.queryPeak = queryPeak;
   }
 
-  public PeakPair referencePeak(Integer referencePeak) {
+  public PeakPair referencePeak(@jakarta.annotation.Nonnull Integer referencePeak) {
     
     this.referencePeak = referencePeak;
     return this;
   }
 
-   /**
+  /**
    * Get referencePeak
    * @return referencePeak
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_REFERENCE_PEAK)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -97,9 +99,10 @@ public class PeakPair {
 
   @JsonProperty(JSON_PROPERTY_REFERENCE_PEAK)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setReferencePeak(Integer referencePeak) {
+  public void setReferencePeak(@jakarta.annotation.Nonnull Integer referencePeak) {
     this.referencePeak = referencePeak;
   }
+
 
   @Override
   public boolean equals(Object o) {

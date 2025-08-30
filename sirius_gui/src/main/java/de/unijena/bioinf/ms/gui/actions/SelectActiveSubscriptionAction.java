@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.gui.actions;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.login.SubscriptionDialog;
-import de.unijena.bioinf.webapi.Tokens;
+import io.sirius.ms.utils.jwt.AccessTokens;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -40,8 +40,8 @@ public class SelectActiveSubscriptionAction extends AbstractGuiAction {
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = new SubscriptionDialog(gui, true, ApplicationCore.WEB_API.getAuthService().getToken().map(Tokens::getSubscriptions).orElse(List.of())).hasPerformedChange();
+        boolean r = new SubscriptionDialog(gui, true, ApplicationCore.WEB_API().getAuthService().getToken().map(AccessTokens.ACCESS_TOKENS::getSubscriptions).orElse(List.of())).hasPerformedChange();
         if (r)
-            firePropertyChange("change-sub", null, ApplicationCore.WEB_API.getActiveSubscription());
+            firePropertyChange("change-sub", null, ApplicationCore.WEB_API().getActiveSubscription());
     }
 }

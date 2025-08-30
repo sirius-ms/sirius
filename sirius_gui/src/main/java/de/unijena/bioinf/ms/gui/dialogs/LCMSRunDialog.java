@@ -198,7 +198,7 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
                 task.awaitResult();
             }
         } catch (Exception exc) {
-            Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), exc.getMessage(), exc.getCause() != null ? exc.getCause(): exc));
+            Jobs.runEDTLater(() -> new ErrorWithDetailsDialog(gui.getMainFrame(), exc.getMessage(), exc.getCause() != null ? exc.getCause(): exc));
         }
     }
 

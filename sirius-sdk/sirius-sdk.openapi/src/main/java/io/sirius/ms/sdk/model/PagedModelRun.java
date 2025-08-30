@@ -45,18 +45,20 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PagedModelRun.JSON_PROPERTY_CONTENT,
   PagedModelRun.JSON_PROPERTY_PAGE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class PagedModelRun {
   public static final String JSON_PROPERTY_CONTENT = "content";
+  @jakarta.annotation.Nullable
   private List<Run> content = new ArrayList<>();
 
   public static final String JSON_PROPERTY_PAGE = "page";
+  @jakarta.annotation.Nullable
   private PageMetadata page;
 
   public PagedModelRun() {
   }
 
-  public PagedModelRun content(List<Run> content) {
+  public PagedModelRun content(@jakarta.annotation.Nullable List<Run> content) {
     
     this.content = content;
     return this;
@@ -70,10 +72,10 @@ public class PagedModelRun {
     return this;
   }
 
-   /**
+  /**
    * Get content
    * @return content
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -85,20 +87,20 @@ public class PagedModelRun {
 
   @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setContent(List<Run> content) {
+  public void setContent(@jakarta.annotation.Nullable List<Run> content) {
     this.content = content;
   }
 
-  public PagedModelRun page(PageMetadata page) {
+  public PagedModelRun page(@jakarta.annotation.Nullable PageMetadata page) {
     
     this.page = page;
     return this;
   }
 
-   /**
+  /**
    * Get page
    * @return page
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -110,9 +112,10 @@ public class PagedModelRun {
 
   @JsonProperty(JSON_PROPERTY_PAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPage(PageMetadata page) {
+  public void setPage(@jakarta.annotation.Nullable PageMetadata page) {
     this.page = page;
   }
+
 
   @Override
   public boolean equals(Object o) {

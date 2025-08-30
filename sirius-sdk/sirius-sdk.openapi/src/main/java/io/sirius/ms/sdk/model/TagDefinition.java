@@ -50,45 +50,53 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   TagDefinition.JSON_PROPERTY_MAX_VALUE,
   TagDefinition.JSON_PROPERTY_EDITABLE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class TagDefinition {
   public static final String JSON_PROPERTY_TAG_NAME = "tagName";
+  @jakarta.annotation.Nonnull
   private String tagName;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
+  @jakarta.annotation.Nullable
   private String description;
 
   public static final String JSON_PROPERTY_TAG_TYPE = "tagType";
+  @jakarta.annotation.Nullable
   private String tagType;
 
   public static final String JSON_PROPERTY_VALUE_TYPE = "valueType";
+  @jakarta.annotation.Nonnull
   private ValueType valueType;
 
   public static final String JSON_PROPERTY_POSSIBLE_VALUES = "possibleValues";
+  @jakarta.annotation.Nullable
   private List<Object> possibleValues;
 
   public static final String JSON_PROPERTY_MIN_VALUE = "minValue";
+  @jakarta.annotation.Nullable
   private Object minValue;
 
   public static final String JSON_PROPERTY_MAX_VALUE = "maxValue";
+  @jakarta.annotation.Nullable
   private Object maxValue;
 
   public static final String JSON_PROPERTY_EDITABLE = "editable";
+  @jakarta.annotation.Nullable
   private Boolean editable;
 
   public TagDefinition() {
   }
 
-  public TagDefinition tagName(String tagName) {
+  public TagDefinition tagName(@jakarta.annotation.Nonnull String tagName) {
     
     this.tagName = tagName;
     return this;
   }
 
-   /**
+  /**
    * Name of this tag defined by this definition (key)
    * @return tagName
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_TAG_NAME)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -100,20 +108,20 @@ public class TagDefinition {
 
   @JsonProperty(JSON_PROPERTY_TAG_NAME)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setTagName(String tagName) {
+  public void setTagName(@jakarta.annotation.Nonnull String tagName) {
     this.tagName = tagName;
   }
 
-  public TagDefinition description(String description) {
+  public TagDefinition description(@jakarta.annotation.Nullable String description) {
     
     this.description = description;
     return this;
   }
 
-   /**
+  /**
    * A human-readable description about the purpose of this tag.
    * @return description
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -125,20 +133,20 @@ public class TagDefinition {
 
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDescription(String description) {
+  public void setDescription(@jakarta.annotation.Nullable String description) {
     this.description = description;
   }
 
-  public TagDefinition tagType(String tagType) {
+  public TagDefinition tagType(@jakarta.annotation.Nullable String tagType) {
     
     this.tagType = tagType;
     return this;
   }
 
-   /**
+  /**
    * A simple string based identifier to specify the type/scope/purpose of this tag.
    * @return tagType
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TAG_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -150,20 +158,20 @@ public class TagDefinition {
 
   @JsonProperty(JSON_PROPERTY_TAG_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTagType(String tagType) {
+  public void setTagType(@jakarta.annotation.Nullable String tagType) {
     this.tagType = tagType;
   }
 
-  public TagDefinition valueType(ValueType valueType) {
+  public TagDefinition valueType(@jakarta.annotation.Nonnull ValueType valueType) {
     
     this.valueType = valueType;
     return this;
   }
 
-   /**
+  /**
    * Get valueType
    * @return valueType
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_VALUE_TYPE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -175,11 +183,11 @@ public class TagDefinition {
 
   @JsonProperty(JSON_PROPERTY_VALUE_TYPE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setValueType(ValueType valueType) {
+  public void setValueType(@jakarta.annotation.Nonnull ValueType valueType) {
     this.valueType = valueType;
   }
 
-  public TagDefinition possibleValues(List<Object> possibleValues) {
+  public TagDefinition possibleValues(@jakarta.annotation.Nullable List<Object> possibleValues) {
     
     this.possibleValues = possibleValues;
     return this;
@@ -193,10 +201,10 @@ public class TagDefinition {
     return this;
   }
 
-   /**
+  /**
    * Get possibleValues
    * @return possibleValues
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_POSSIBLE_VALUES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -208,20 +216,20 @@ public class TagDefinition {
 
   @JsonProperty(JSON_PROPERTY_POSSIBLE_VALUES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPossibleValues(List<Object> possibleValues) {
+  public void setPossibleValues(@jakarta.annotation.Nullable List<Object> possibleValues) {
     this.possibleValues = possibleValues;
   }
 
-  public TagDefinition minValue(Object minValue) {
+  public TagDefinition minValue(@jakarta.annotation.Nullable Object minValue) {
     
     this.minValue = minValue;
     return this;
   }
 
-   /**
+  /**
    * Get minValue
    * @return minValue
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -233,20 +241,20 @@ public class TagDefinition {
 
   @JsonProperty(JSON_PROPERTY_MIN_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinValue(Object minValue) {
+  public void setMinValue(@jakarta.annotation.Nullable Object minValue) {
     this.minValue = minValue;
   }
 
-  public TagDefinition maxValue(Object maxValue) {
+  public TagDefinition maxValue(@jakarta.annotation.Nullable Object maxValue) {
     
     this.maxValue = maxValue;
     return this;
   }
 
-   /**
+  /**
    * Get maxValue
    * @return maxValue
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MAX_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -258,20 +266,20 @@ public class TagDefinition {
 
   @JsonProperty(JSON_PROPERTY_MAX_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMaxValue(Object maxValue) {
+  public void setMaxValue(@jakarta.annotation.Nullable Object maxValue) {
     this.maxValue = maxValue;
   }
 
-  public TagDefinition editable(Boolean editable) {
+  public TagDefinition editable(@jakarta.annotation.Nullable Boolean editable) {
     
     this.editable = editable;
     return this;
   }
 
-   /**
+  /**
    * Get editable
    * @return editable
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_EDITABLE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -283,9 +291,10 @@ public class TagDefinition {
 
   @JsonProperty(JSON_PROPERTY_EDITABLE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEditable(Boolean editable) {
+  public void setEditable(@jakarta.annotation.Nullable Boolean editable) {
     this.editable = editable;
   }
+
 
   @Override
   public boolean equals(Object o) {

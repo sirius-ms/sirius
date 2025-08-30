@@ -28,11 +28,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Tag(name = "Gui")
 @ConditionalOnExpression("${sirius.middleware.controller.gui.advanced:false} && !${de.unijena.bioinf.sirius.headless:false}")
+@PreAuthorize("hasAuthority('bypass:explorer') or hasAuthority('bypass:gui')")
 public class GuiControllerAdvanced{
 
     protected final ProjectsProvider projectsProvider;

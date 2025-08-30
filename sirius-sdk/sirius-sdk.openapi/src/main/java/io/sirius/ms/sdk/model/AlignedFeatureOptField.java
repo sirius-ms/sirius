@@ -38,15 +38,15 @@ public enum AlignedFeatureOptField {
   
   NONE("none"),
   
-  MSDATA("msData"),
+  MS_DATA("msData"),
   
-  INDEXEDTOPANNOTATIONS("indexedTopAnnotations"),
+  TOP_ANNOTATIONS_SUMMARY("topAnnotationsSummary"),
   
-  TOPANNOTATIONS("topAnnotations"),
+  TOP_ANNOTATIONS("topAnnotations"),
   
-  TOPANNOTATIONSDENOVO("topAnnotationsDeNovo"),
+  TOP_ANNOTATIONS_DE_NOVO("topAnnotationsDeNovo"),
   
-  COMPUTEDTOOLS("computedTools"),
+  COMPUTED_TOOLS("computedTools"),
   
   QUALITIES("qualities"),
   

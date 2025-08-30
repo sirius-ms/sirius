@@ -52,51 +52,61 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibrarySearch.JSON_PROPERTY_SCORING,
   SpectralLibrarySearch.JSON_PROPERTY_PEAK_DEVIATION_PPM
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class SpectralLibrarySearch {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
+  @jakarta.annotation.Nullable
   private Boolean enabled;
 
   public static final String JSON_PROPERTY_SPECTRA_SEARCH_D_BS = "spectraSearchDBs";
+  @jakarta.annotation.Nullable
   private List<String> spectraSearchDBs;
 
   public static final String JSON_PROPERTY_PRECURSOR_DEVIATION_PPM = "precursorDeviationPpm";
+  @jakarta.annotation.Nullable
   private Double precursorDeviationPpm;
 
   public static final String JSON_PROPERTY_MIN_SIMILARITY = "minSimilarity";
+  @jakarta.annotation.Nullable
   private Float minSimilarity;
 
   public static final String JSON_PROPERTY_MIN_NUM_OF_PEAKS = "minNumOfPeaks";
+  @jakarta.annotation.Nullable
   private Integer minNumOfPeaks;
 
   public static final String JSON_PROPERTY_ENABLE_ANALOGUE_SEARCH = "enableAnalogueSearch";
+  @jakarta.annotation.Nullable
   private Boolean enableAnalogueSearch;
 
   public static final String JSON_PROPERTY_MIN_SIMILARITY_ANALOGUE = "minSimilarityAnalogue";
+  @jakarta.annotation.Nullable
   private Float minSimilarityAnalogue;
 
   public static final String JSON_PROPERTY_MIN_NUM_OF_PEAKS_ANALOGUE = "minNumOfPeaksAnalogue";
+  @jakarta.annotation.Nullable
   private Integer minNumOfPeaksAnalogue;
 
   public static final String JSON_PROPERTY_SCORING = "scoring";
+  @jakarta.annotation.Nullable
   private SpectralMatchingType scoring;
 
   public static final String JSON_PROPERTY_PEAK_DEVIATION_PPM = "peakDeviationPpm";
+  @jakarta.annotation.Nullable
   private Double peakDeviationPpm;
 
   public SpectralLibrarySearch() {
   }
 
-  public SpectralLibrarySearch enabled(Boolean enabled) {
+  public SpectralLibrarySearch enabled(@jakarta.annotation.Nullable Boolean enabled) {
     
     this.enabled = enabled;
     return this;
   }
 
-   /**
+  /**
    * tags whether the tool is enabled
    * @return enabled
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -108,11 +118,11 @@ public class SpectralLibrarySearch {
 
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnabled(Boolean enabled) {
+  public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
   }
 
-  public SpectralLibrarySearch spectraSearchDBs(List<String> spectraSearchDBs) {
+  public SpectralLibrarySearch spectraSearchDBs(@jakarta.annotation.Nullable List<String> spectraSearchDBs) {
     
     this.spectraSearchDBs = spectraSearchDBs;
     return this;
@@ -126,10 +136,10 @@ public class SpectralLibrarySearch {
     return this;
   }
 
-   /**
+  /**
    * Structure Databases with Reference spectra to search in.  &lt;p&gt;  Defaults to BIO + Custom Databases. Possible values are available to Database API.
    * @return spectraSearchDBs
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_D_BS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -141,20 +151,20 @@ public class SpectralLibrarySearch {
 
   @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_D_BS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSpectraSearchDBs(List<String> spectraSearchDBs) {
+  public void setSpectraSearchDBs(@jakarta.annotation.Nullable List<String> spectraSearchDBs) {
     this.spectraSearchDBs = spectraSearchDBs;
   }
 
-  public SpectralLibrarySearch precursorDeviationPpm(Double precursorDeviationPpm) {
+  public SpectralLibrarySearch precursorDeviationPpm(@jakarta.annotation.Nullable Double precursorDeviationPpm) {
     
     this.precursorDeviationPpm = precursorDeviationPpm;
     return this;
   }
 
-   /**
+  /**
    * Maximum allowed mass deviation in ppm for matching the precursor. If not specified, the same value as for the peaks is used.
    * @return precursorDeviationPpm
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PRECURSOR_DEVIATION_PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -166,20 +176,20 @@ public class SpectralLibrarySearch {
 
   @JsonProperty(JSON_PROPERTY_PRECURSOR_DEVIATION_PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPrecursorDeviationPpm(Double precursorDeviationPpm) {
+  public void setPrecursorDeviationPpm(@jakarta.annotation.Nullable Double precursorDeviationPpm) {
     this.precursorDeviationPpm = precursorDeviationPpm;
   }
 
-  public SpectralLibrarySearch minSimilarity(Float minSimilarity) {
+  public SpectralLibrarySearch minSimilarity(@jakarta.annotation.Nullable Float minSimilarity) {
     
     this.minSimilarity = minSimilarity;
     return this;
   }
 
-   /**
+  /**
    * Minimal spectral similarity of a spectral match to be considered a hit.
    * @return minSimilarity
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -191,20 +201,20 @@ public class SpectralLibrarySearch {
 
   @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinSimilarity(Float minSimilarity) {
+  public void setMinSimilarity(@jakarta.annotation.Nullable Float minSimilarity) {
     this.minSimilarity = minSimilarity;
   }
 
-  public SpectralLibrarySearch minNumOfPeaks(Integer minNumOfPeaks) {
+  public SpectralLibrarySearch minNumOfPeaks(@jakarta.annotation.Nullable Integer minNumOfPeaks) {
     
     this.minNumOfPeaks = minNumOfPeaks;
     return this;
   }
 
-   /**
+  /**
    * Minimal number of matching peaks of a spectral match to be considered a hit.
    * @return minNumOfPeaks
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -216,20 +226,20 @@ public class SpectralLibrarySearch {
 
   @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinNumOfPeaks(Integer minNumOfPeaks) {
+  public void setMinNumOfPeaks(@jakarta.annotation.Nullable Integer minNumOfPeaks) {
     this.minNumOfPeaks = minNumOfPeaks;
   }
 
-  public SpectralLibrarySearch enableAnalogueSearch(Boolean enableAnalogueSearch) {
+  public SpectralLibrarySearch enableAnalogueSearch(@jakarta.annotation.Nullable Boolean enableAnalogueSearch) {
     
     this.enableAnalogueSearch = enableAnalogueSearch;
     return this;
   }
 
-   /**
+  /**
    * Enable analogue search in addition to the identity spectral library search
    * @return enableAnalogueSearch
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ENABLE_ANALOGUE_SEARCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -241,20 +251,20 @@ public class SpectralLibrarySearch {
 
   @JsonProperty(JSON_PROPERTY_ENABLE_ANALOGUE_SEARCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnableAnalogueSearch(Boolean enableAnalogueSearch) {
+  public void setEnableAnalogueSearch(@jakarta.annotation.Nullable Boolean enableAnalogueSearch) {
     this.enableAnalogueSearch = enableAnalogueSearch;
   }
 
-  public SpectralLibrarySearch minSimilarityAnalogue(Float minSimilarityAnalogue) {
+  public SpectralLibrarySearch minSimilarityAnalogue(@jakarta.annotation.Nullable Float minSimilarityAnalogue) {
     
     this.minSimilarityAnalogue = minSimilarityAnalogue;
     return this;
   }
 
-   /**
+  /**
    * Minimal spectral similarity of a spectral match to be considered an analogue hit.
    * @return minSimilarityAnalogue
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY_ANALOGUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -266,20 +276,20 @@ public class SpectralLibrarySearch {
 
   @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY_ANALOGUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinSimilarityAnalogue(Float minSimilarityAnalogue) {
+  public void setMinSimilarityAnalogue(@jakarta.annotation.Nullable Float minSimilarityAnalogue) {
     this.minSimilarityAnalogue = minSimilarityAnalogue;
   }
 
-  public SpectralLibrarySearch minNumOfPeaksAnalogue(Integer minNumOfPeaksAnalogue) {
+  public SpectralLibrarySearch minNumOfPeaksAnalogue(@jakarta.annotation.Nullable Integer minNumOfPeaksAnalogue) {
     
     this.minNumOfPeaksAnalogue = minNumOfPeaksAnalogue;
     return this;
   }
 
-   /**
+  /**
    * Minimal number of matching peaks of a spectral match to be considered an analogue hit.
    * @return minNumOfPeaksAnalogue
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS_ANALOGUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -291,20 +301,20 @@ public class SpectralLibrarySearch {
 
   @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS_ANALOGUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinNumOfPeaksAnalogue(Integer minNumOfPeaksAnalogue) {
+  public void setMinNumOfPeaksAnalogue(@jakarta.annotation.Nullable Integer minNumOfPeaksAnalogue) {
     this.minNumOfPeaksAnalogue = minNumOfPeaksAnalogue;
   }
 
-  public SpectralLibrarySearch scoring(SpectralMatchingType scoring) {
+  public SpectralLibrarySearch scoring(@jakarta.annotation.Nullable SpectralMatchingType scoring) {
     
     this.scoring = scoring;
     return this;
   }
 
-   /**
+  /**
    * Get scoring
    * @return scoring
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SCORING)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -316,21 +326,21 @@ public class SpectralLibrarySearch {
 
   @JsonProperty(JSON_PROPERTY_SCORING)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setScoring(SpectralMatchingType scoring) {
+  public void setScoring(@jakarta.annotation.Nullable SpectralMatchingType scoring) {
     this.scoring = scoring;
   }
 
-  public SpectralLibrarySearch peakDeviationPpm(Double peakDeviationPpm) {
+  public SpectralLibrarySearch peakDeviationPpm(@jakarta.annotation.Nullable Double peakDeviationPpm) {
     
     this.peakDeviationPpm = peakDeviationPpm;
     return this;
   }
 
-   /**
+  /**
    * NO LONGER SUPPORTED (IGNORED)  Maximum allowed mass deviation in ppm for matching peaks.
    * @return peakDeviationPpm
    * @deprecated
-  **/
+   */
   @Deprecated
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PEAK_DEVIATION_PPM)
@@ -343,9 +353,10 @@ public class SpectralLibrarySearch {
 
   @JsonProperty(JSON_PROPERTY_PEAK_DEVIATION_PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPeakDeviationPpm(Double peakDeviationPpm) {
+  public void setPeakDeviationPpm(@jakarta.annotation.Nullable Double peakDeviationPpm) {
     this.peakDeviationPpm = peakDeviationPpm;
   }
+
 
   @Override
   public boolean equals(Object o) {

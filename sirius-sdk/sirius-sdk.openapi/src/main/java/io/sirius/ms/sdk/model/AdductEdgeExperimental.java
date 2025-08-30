@@ -47,48 +47,57 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AdductEdgeExperimental.JSON_PROPERTY_PVALUE,
   AdductEdgeExperimental.JSON_PROPERTY_INTENSITY_RATIO_SCORE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class AdductEdgeExperimental {
   public static final String JSON_PROPERTY_MZ_DELTA = "mzDelta";
+  @jakarta.annotation.Nullable
   private Double mzDelta;
 
   public static final String JSON_PROPERTY_ANNOTATION = "annotation";
+  @jakarta.annotation.Nullable
   private String annotation;
 
   public static final String JSON_PROPERTY_FROM = "from";
+  @jakarta.annotation.Nullable
   private Integer from;
 
   public static final String JSON_PROPERTY_TO = "to";
+  @jakarta.annotation.Nullable
   private Integer to;
 
   public static final String JSON_PROPERTY_MERGED_CORRELATION = "mergedCorrelation";
+  @jakarta.annotation.Nullable
   private Float mergedCorrelation;
 
   public static final String JSON_PROPERTY_REPRESENTATIVE_CORRELATION = "representativeCorrelation";
+  @jakarta.annotation.Nullable
   private Float representativeCorrelation;
 
   public static final String JSON_PROPERTY_MS2COSINE = "ms2cosine";
+  @jakarta.annotation.Nullable
   private Float ms2cosine;
 
   public static final String JSON_PROPERTY_PVALUE = "pvalue";
+  @jakarta.annotation.Nullable
   private Float pvalue;
 
   public static final String JSON_PROPERTY_INTENSITY_RATIO_SCORE = "intensityRatioScore";
+  @jakarta.annotation.Nullable
   private Float intensityRatioScore;
 
   public AdductEdgeExperimental() {
   }
 
-  public AdductEdgeExperimental mzDelta(Double mzDelta) {
+  public AdductEdgeExperimental mzDelta(@jakarta.annotation.Nullable Double mzDelta) {
     
     this.mzDelta = mzDelta;
     return this;
   }
 
-   /**
+  /**
    * Get mzDelta
    * @return mzDelta
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MZ_DELTA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -100,20 +109,20 @@ public class AdductEdgeExperimental {
 
   @JsonProperty(JSON_PROPERTY_MZ_DELTA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMzDelta(Double mzDelta) {
+  public void setMzDelta(@jakarta.annotation.Nullable Double mzDelta) {
     this.mzDelta = mzDelta;
   }
 
-  public AdductEdgeExperimental annotation(String annotation) {
+  public AdductEdgeExperimental annotation(@jakarta.annotation.Nullable String annotation) {
     
     this.annotation = annotation;
     return this;
   }
 
-   /**
+  /**
    * Get annotation
    * @return annotation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -125,20 +134,20 @@ public class AdductEdgeExperimental {
 
   @JsonProperty(JSON_PROPERTY_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAnnotation(String annotation) {
+  public void setAnnotation(@jakarta.annotation.Nullable String annotation) {
     this.annotation = annotation;
   }
 
-  public AdductEdgeExperimental from(Integer from) {
+  public AdductEdgeExperimental from(@jakarta.annotation.Nullable Integer from) {
     
     this.from = from;
     return this;
   }
 
-   /**
+  /**
    * Get from
    * @return from
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FROM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -150,20 +159,20 @@ public class AdductEdgeExperimental {
 
   @JsonProperty(JSON_PROPERTY_FROM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFrom(Integer from) {
+  public void setFrom(@jakarta.annotation.Nullable Integer from) {
     this.from = from;
   }
 
-  public AdductEdgeExperimental to(Integer to) {
+  public AdductEdgeExperimental to(@jakarta.annotation.Nullable Integer to) {
     
     this.to = to;
     return this;
   }
 
-   /**
+  /**
    * Get to
    * @return to
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -175,20 +184,20 @@ public class AdductEdgeExperimental {
 
   @JsonProperty(JSON_PROPERTY_TO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTo(Integer to) {
+  public void setTo(@jakarta.annotation.Nullable Integer to) {
     this.to = to;
   }
 
-  public AdductEdgeExperimental mergedCorrelation(Float mergedCorrelation) {
+  public AdductEdgeExperimental mergedCorrelation(@jakarta.annotation.Nullable Float mergedCorrelation) {
     
     this.mergedCorrelation = mergedCorrelation;
     return this;
   }
 
-   /**
+  /**
    * Get mergedCorrelation
    * @return mergedCorrelation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MERGED_CORRELATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -200,20 +209,20 @@ public class AdductEdgeExperimental {
 
   @JsonProperty(JSON_PROPERTY_MERGED_CORRELATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMergedCorrelation(Float mergedCorrelation) {
+  public void setMergedCorrelation(@jakarta.annotation.Nullable Float mergedCorrelation) {
     this.mergedCorrelation = mergedCorrelation;
   }
 
-  public AdductEdgeExperimental representativeCorrelation(Float representativeCorrelation) {
+  public AdductEdgeExperimental representativeCorrelation(@jakarta.annotation.Nullable Float representativeCorrelation) {
     
     this.representativeCorrelation = representativeCorrelation;
     return this;
   }
 
-   /**
+  /**
    * Get representativeCorrelation
    * @return representativeCorrelation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_REPRESENTATIVE_CORRELATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -225,20 +234,20 @@ public class AdductEdgeExperimental {
 
   @JsonProperty(JSON_PROPERTY_REPRESENTATIVE_CORRELATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRepresentativeCorrelation(Float representativeCorrelation) {
+  public void setRepresentativeCorrelation(@jakarta.annotation.Nullable Float representativeCorrelation) {
     this.representativeCorrelation = representativeCorrelation;
   }
 
-  public AdductEdgeExperimental ms2cosine(Float ms2cosine) {
+  public AdductEdgeExperimental ms2cosine(@jakarta.annotation.Nullable Float ms2cosine) {
     
     this.ms2cosine = ms2cosine;
     return this;
   }
 
-   /**
+  /**
    * Get ms2cosine
    * @return ms2cosine
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS2COSINE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -250,20 +259,20 @@ public class AdductEdgeExperimental {
 
   @JsonProperty(JSON_PROPERTY_MS2COSINE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMs2cosine(Float ms2cosine) {
+  public void setMs2cosine(@jakarta.annotation.Nullable Float ms2cosine) {
     this.ms2cosine = ms2cosine;
   }
 
-  public AdductEdgeExperimental pvalue(Float pvalue) {
+  public AdductEdgeExperimental pvalue(@jakarta.annotation.Nullable Float pvalue) {
     
     this.pvalue = pvalue;
     return this;
   }
 
-   /**
+  /**
    * Get pvalue
    * @return pvalue
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PVALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -275,20 +284,20 @@ public class AdductEdgeExperimental {
 
   @JsonProperty(JSON_PROPERTY_PVALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPvalue(Float pvalue) {
+  public void setPvalue(@jakarta.annotation.Nullable Float pvalue) {
     this.pvalue = pvalue;
   }
 
-  public AdductEdgeExperimental intensityRatioScore(Float intensityRatioScore) {
+  public AdductEdgeExperimental intensityRatioScore(@jakarta.annotation.Nullable Float intensityRatioScore) {
     
     this.intensityRatioScore = intensityRatioScore;
     return this;
   }
 
-   /**
+  /**
    * Get intensityRatioScore
    * @return intensityRatioScore
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INTENSITY_RATIO_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -300,9 +309,10 @@ public class AdductEdgeExperimental {
 
   @JsonProperty(JSON_PROPERTY_INTENSITY_RATIO_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIntensityRatioScore(Float intensityRatioScore) {
+  public void setIntensityRatioScore(@jakarta.annotation.Nullable Float intensityRatioScore) {
     this.intensityRatioScore = intensityRatioScore;
   }
+
 
   @Override
   public boolean equals(Object o) {

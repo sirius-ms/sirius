@@ -49,33 +49,40 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   LcmsSubmissionParameters.JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION,
   LcmsSubmissionParameters.JSON_PROPERTY_MIN_S_N_R
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class LcmsSubmissionParameters {
   public static final String JSON_PROPERTY_SAMPLE_TYPES = "sampleTypes";
+  @jakarta.annotation.Nullable
   private List<String> sampleTypes;
 
   public static final String JSON_PROPERTY_ALIGN_L_C_M_S_RUNS = "alignLCMSRuns";
+  @jakarta.annotation.Nullable
   private Boolean alignLCMSRuns = true;
 
   public static final String JSON_PROPERTY_NOISE_INTENSITY = "noiseIntensity";
+  @jakarta.annotation.Nullable
   private Double noiseIntensity = -1d;
 
   public static final String JSON_PROPERTY_TRACE_MAX_MASS_DEVIATION = "traceMaxMassDeviation";
+  @jakarta.annotation.Nullable
   private Deviation traceMaxMassDeviation;
 
   public static final String JSON_PROPERTY_ALIGN_MAX_MASS_DEVIATION = "alignMaxMassDeviation";
+  @jakarta.annotation.Nullable
   private Deviation alignMaxMassDeviation;
 
   public static final String JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION = "alignMaxRetentionTimeDeviation";
+  @jakarta.annotation.Nullable
   private Double alignMaxRetentionTimeDeviation = -1d;
 
   public static final String JSON_PROPERTY_MIN_S_N_R = "minSNR";
+  @jakarta.annotation.Nullable
   private Double minSNR = 3d;
 
   public LcmsSubmissionParameters() {
   }
 
-  public LcmsSubmissionParameters sampleTypes(List<String> sampleTypes) {
+  public LcmsSubmissionParameters sampleTypes(@jakarta.annotation.Nullable List<String> sampleTypes) {
     
     this.sampleTypes = sampleTypes;
     return this;
@@ -89,10 +96,10 @@ public class LcmsSubmissionParameters {
     return this;
   }
 
-   /**
+  /**
    * Sample type for each input file to be used to compute fold changes between blank and sample runs  If NULL or empty no fold changes will be computed during preprocessing.
    * @return sampleTypes
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SAMPLE_TYPES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -104,20 +111,20 @@ public class LcmsSubmissionParameters {
 
   @JsonProperty(JSON_PROPERTY_SAMPLE_TYPES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSampleTypes(List<String> sampleTypes) {
+  public void setSampleTypes(@jakarta.annotation.Nullable List<String> sampleTypes) {
     this.sampleTypes = sampleTypes;
   }
 
-  public LcmsSubmissionParameters alignLCMSRuns(Boolean alignLCMSRuns) {
+  public LcmsSubmissionParameters alignLCMSRuns(@jakarta.annotation.Nullable Boolean alignLCMSRuns) {
     
     this.alignLCMSRuns = alignLCMSRuns;
     return this;
   }
 
-   /**
+  /**
    * Specifies whether LC/MS runs should be aligned
    * @return alignLCMSRuns
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ALIGN_L_C_M_S_RUNS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -129,20 +136,20 @@ public class LcmsSubmissionParameters {
 
   @JsonProperty(JSON_PROPERTY_ALIGN_L_C_M_S_RUNS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAlignLCMSRuns(Boolean alignLCMSRuns) {
+  public void setAlignLCMSRuns(@jakarta.annotation.Nullable Boolean alignLCMSRuns) {
     this.alignLCMSRuns = alignLCMSRuns;
   }
 
-  public LcmsSubmissionParameters noiseIntensity(Double noiseIntensity) {
+  public LcmsSubmissionParameters noiseIntensity(@jakarta.annotation.Nullable Double noiseIntensity) {
     
     this.noiseIntensity = noiseIntensity;
     return this;
   }
 
-   /**
+  /**
    * Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level  to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.  If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify  this parameter, as the automated detection is usually sufficient.
    * @return noiseIntensity
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NOISE_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -154,20 +161,20 @@ public class LcmsSubmissionParameters {
 
   @JsonProperty(JSON_PROPERTY_NOISE_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNoiseIntensity(Double noiseIntensity) {
+  public void setNoiseIntensity(@jakarta.annotation.Nullable Double noiseIntensity) {
     this.noiseIntensity = noiseIntensity;
   }
 
-  public LcmsSubmissionParameters traceMaxMassDeviation(Deviation traceMaxMassDeviation) {
+  public LcmsSubmissionParameters traceMaxMassDeviation(@jakarta.annotation.Nullable Deviation traceMaxMassDeviation) {
     
     this.traceMaxMassDeviation = traceMaxMassDeviation;
     return this;
   }
 
-   /**
+  /**
    * Get traceMaxMassDeviation
    * @return traceMaxMassDeviation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TRACE_MAX_MASS_DEVIATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -179,20 +186,20 @@ public class LcmsSubmissionParameters {
 
   @JsonProperty(JSON_PROPERTY_TRACE_MAX_MASS_DEVIATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTraceMaxMassDeviation(Deviation traceMaxMassDeviation) {
+  public void setTraceMaxMassDeviation(@jakarta.annotation.Nullable Deviation traceMaxMassDeviation) {
     this.traceMaxMassDeviation = traceMaxMassDeviation;
   }
 
-  public LcmsSubmissionParameters alignMaxMassDeviation(Deviation alignMaxMassDeviation) {
+  public LcmsSubmissionParameters alignMaxMassDeviation(@jakarta.annotation.Nullable Deviation alignMaxMassDeviation) {
     
     this.alignMaxMassDeviation = alignMaxMassDeviation;
     return this;
   }
 
-   /**
+  /**
    * Get alignMaxMassDeviation
    * @return alignMaxMassDeviation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ALIGN_MAX_MASS_DEVIATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -204,20 +211,20 @@ public class LcmsSubmissionParameters {
 
   @JsonProperty(JSON_PROPERTY_ALIGN_MAX_MASS_DEVIATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAlignMaxMassDeviation(Deviation alignMaxMassDeviation) {
+  public void setAlignMaxMassDeviation(@jakarta.annotation.Nullable Deviation alignMaxMassDeviation) {
     this.alignMaxMassDeviation = alignMaxMassDeviation;
   }
 
-  public LcmsSubmissionParameters alignMaxRetentionTimeDeviation(Double alignMaxRetentionTimeDeviation) {
+  public LcmsSubmissionParameters alignMaxRetentionTimeDeviation(@jakarta.annotation.Nullable Double alignMaxRetentionTimeDeviation) {
     
     this.alignMaxRetentionTimeDeviation = alignMaxRetentionTimeDeviation;
     return this;
   }
 
-   /**
+  /**
    * Maximal allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from data.
    * @return alignMaxRetentionTimeDeviation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -229,20 +236,20 @@ public class LcmsSubmissionParameters {
 
   @JsonProperty(JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAlignMaxRetentionTimeDeviation(Double alignMaxRetentionTimeDeviation) {
+  public void setAlignMaxRetentionTimeDeviation(@jakarta.annotation.Nullable Double alignMaxRetentionTimeDeviation) {
     this.alignMaxRetentionTimeDeviation = alignMaxRetentionTimeDeviation;
   }
 
-  public LcmsSubmissionParameters minSNR(Double minSNR) {
+  public LcmsSubmissionParameters minSNR(@jakarta.annotation.Nullable Double minSNR) {
     
     this.minSNR = minSNR;
     return this;
   }
 
-   /**
+  /**
    * Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory
    * @return minSNR
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_S_N_R)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -254,9 +261,10 @@ public class LcmsSubmissionParameters {
 
   @JsonProperty(JSON_PROPERTY_MIN_S_N_R)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinSNR(Double minSNR) {
+  public void setMinSNR(@jakarta.annotation.Nullable Double minSNR) {
     this.minSNR = minSNR;
   }
+
 
   @Override
   public boolean equals(Object o) {

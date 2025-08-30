@@ -79,7 +79,7 @@ public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBea
         if (instance == null)
             return Optional.empty();
         SpectralLibraryMatch tmpMatch = instance.withIds((pid, fid) -> instance.getClient().features()
-                .getSpectralLibraryMatch(pid, fid, getMatch().getSpecMatchId(), List.of(SpectralLibraryMatchOptField.REFERENCESPECTRUM)));
+                .getSpectralLibraryMatch(pid, fid, getMatch().getSpecMatchId(), List.of(SpectralLibraryMatchOptField.REFERENCE_SPECTRUM)));
         getMatch().setReferenceSpectrum(tmpMatch.getReferenceSpectrum());
         return Optional.ofNullable(getMatch().getReferenceSpectrum());
     }

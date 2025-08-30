@@ -53,60 +53,73 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SearchableDatabase.JSON_PROPERTY_NUMBER_OF_REFERENCE_SPECTRA,
   SearchableDatabase.JSON_PROPERTY_ERROR_MESSAGE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class SearchableDatabase {
   public static final String JSON_PROPERTY_DISPLAY_NAME = "displayName";
+  @jakarta.annotation.Nullable
   private String displayName;
 
   public static final String JSON_PROPERTY_LOCATION = "location";
+  @jakarta.annotation.Nullable
   private String location;
 
   public static final String JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA = "matchRtOfReferenceSpectra";
+  @jakarta.annotation.Nullable
   private Boolean matchRtOfReferenceSpectra = false;
 
   public static final String JSON_PROPERTY_DATABASE_ID = "databaseId";
+  @jakarta.annotation.Nonnull
   private String databaseId;
 
   public static final String JSON_PROPERTY_CUSTOM_DB = "customDb";
+  @jakarta.annotation.Nonnull
   private Boolean customDb;
 
   public static final String JSON_PROPERTY_SEARCHABLE = "searchable";
+  @jakarta.annotation.Nonnull
   private Boolean searchable;
 
   public static final String JSON_PROPERTY_DB_DATE = "dbDate";
+  @jakarta.annotation.Nullable
   private String dbDate;
 
   public static final String JSON_PROPERTY_DB_VERSION = "dbVersion";
+  @jakarta.annotation.Nullable
   private Integer dbVersion;
 
   public static final String JSON_PROPERTY_UPDATE_NEEDED = "updateNeeded";
+  @jakarta.annotation.Nonnull
   private Boolean updateNeeded;
 
   public static final String JSON_PROPERTY_NUMBER_OF_STRUCTURES = "numberOfStructures";
+  @jakarta.annotation.Nullable
   private Long numberOfStructures;
 
   public static final String JSON_PROPERTY_NUMBER_OF_FORMULAS = "numberOfFormulas";
+  @jakarta.annotation.Nullable
   private Long numberOfFormulas;
 
   public static final String JSON_PROPERTY_NUMBER_OF_REFERENCE_SPECTRA = "numberOfReferenceSpectra";
+  @jakarta.annotation.Nullable
   private Long numberOfReferenceSpectra;
 
   public static final String JSON_PROPERTY_ERROR_MESSAGE = "errorMessage";
+  @jakarta.annotation.Nullable
   private String errorMessage;
 
   public SearchableDatabase() {
   }
 
-  public SearchableDatabase displayName(String displayName) {
+  public SearchableDatabase displayName(@jakarta.annotation.Nullable String displayName) {
     
     this.displayName = displayName;
     return this;
   }
 
-   /**
+  /**
    * display name of the database  Should be short
    * @return displayName
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DISPLAY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -118,20 +131,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_DISPLAY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDisplayName(String displayName) {
+  public void setDisplayName(@jakarta.annotation.Nullable String displayName) {
     this.displayName = displayName;
   }
 
-  public SearchableDatabase location(String location) {
+  public SearchableDatabase location(@jakarta.annotation.Nullable String location) {
     
     this.location = location;
     return this;
   }
 
-   /**
+  /**
    * Storage location of user database  Might be NULL for non-user databases or if default location is used.
    * @return location
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LOCATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -143,20 +156,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_LOCATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLocation(String location) {
+  public void setLocation(@jakarta.annotation.Nullable String location) {
     this.location = location;
   }
 
-  public SearchableDatabase matchRtOfReferenceSpectra(Boolean matchRtOfReferenceSpectra) {
+  public SearchableDatabase matchRtOfReferenceSpectra(@jakarta.annotation.Nullable Boolean matchRtOfReferenceSpectra) {
     
     this.matchRtOfReferenceSpectra = matchRtOfReferenceSpectra;
     return this;
   }
 
-   /**
+  /**
    * Indicates whether this database shall be used to use retention time information for library matching.  Typically used for in-house spectral libraries that have been measured on
    * @return matchRtOfReferenceSpectra
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -168,20 +181,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMatchRtOfReferenceSpectra(Boolean matchRtOfReferenceSpectra) {
+  public void setMatchRtOfReferenceSpectra(@jakarta.annotation.Nullable Boolean matchRtOfReferenceSpectra) {
     this.matchRtOfReferenceSpectra = matchRtOfReferenceSpectra;
   }
 
-  public SearchableDatabase databaseId(String databaseId) {
+  public SearchableDatabase databaseId(@jakarta.annotation.Nonnull String databaseId) {
     
     this.databaseId = databaseId;
     return this;
   }
 
-   /**
+  /**
    * A unique identifier or name of the database.  Should only contain file path and url save characters  For user databases this is usually the file name.
    * @return databaseId
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_DATABASE_ID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -193,20 +206,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_DATABASE_ID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setDatabaseId(String databaseId) {
+  public void setDatabaseId(@jakarta.annotation.Nonnull String databaseId) {
     this.databaseId = databaseId;
   }
 
-  public SearchableDatabase customDb(Boolean customDb) {
+  public SearchableDatabase customDb(@jakarta.annotation.Nonnull Boolean customDb) {
     
     this.customDb = customDb;
     return this;
   }
 
-   /**
+  /**
    * Indicates whether the database is a user managed custom database or if it is a  database that is included in SIRIUS which cannot be modified.
    * @return customDb
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_CUSTOM_DB)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -218,20 +231,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_CUSTOM_DB)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setCustomDb(Boolean customDb) {
+  public void setCustomDb(@jakarta.annotation.Nonnull Boolean customDb) {
     this.customDb = customDb;
   }
 
-  public SearchableDatabase searchable(Boolean searchable) {
+  public SearchableDatabase searchable(@jakarta.annotation.Nonnull Boolean searchable) {
     
     this.searchable = searchable;
     return this;
   }
 
-   /**
+  /**
    * True when this database can be used as a search parameter.  False if the database is just an additional filter that can be applied after search.
    * @return searchable
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_SEARCHABLE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -243,20 +256,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_SEARCHABLE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSearchable(Boolean searchable) {
+  public void setSearchable(@jakarta.annotation.Nonnull Boolean searchable) {
     this.searchable = searchable;
   }
 
-  public SearchableDatabase dbDate(String dbDate) {
+  public SearchableDatabase dbDate(@jakarta.annotation.Nullable String dbDate) {
     
     this.dbDate = dbDate;
     return this;
   }
 
-   /**
+  /**
    * Date on which the data was imported / database was created.
    * @return dbDate
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DB_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -268,20 +281,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_DB_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDbDate(String dbDate) {
+  public void setDbDate(@jakarta.annotation.Nullable String dbDate) {
     this.dbDate = dbDate;
   }
 
-  public SearchableDatabase dbVersion(Integer dbVersion) {
+  public SearchableDatabase dbVersion(@jakarta.annotation.Nullable Integer dbVersion) {
     
     this.dbVersion = dbVersion;
     return this;
   }
 
-   /**
+  /**
    * database schema version
    * @return dbVersion
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DB_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -293,20 +306,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_DB_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDbVersion(Integer dbVersion) {
+  public void setDbVersion(@jakarta.annotation.Nullable Integer dbVersion) {
     this.dbVersion = dbVersion;
   }
 
-  public SearchableDatabase updateNeeded(Boolean updateNeeded) {
+  public SearchableDatabase updateNeeded(@jakarta.annotation.Nonnull Boolean updateNeeded) {
     
     this.updateNeeded = updateNeeded;
     return this;
   }
 
-   /**
+  /**
    * If true the database version is outdated and the database needs to be updated or re-imported before it can be used.
    * @return updateNeeded
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_UPDATE_NEEDED)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -318,20 +331,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_UPDATE_NEEDED)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setUpdateNeeded(Boolean updateNeeded) {
+  public void setUpdateNeeded(@jakarta.annotation.Nonnull Boolean updateNeeded) {
     this.updateNeeded = updateNeeded;
   }
 
-  public SearchableDatabase numberOfStructures(Long numberOfStructures) {
+  public SearchableDatabase numberOfStructures(@jakarta.annotation.Nullable Long numberOfStructures) {
     
     this.numberOfStructures = numberOfStructures;
     return this;
   }
 
-   /**
+  /**
    * Number of unique compounds available in this database.
    * @return numberOfStructures
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_STRUCTURES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -343,20 +356,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_STRUCTURES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumberOfStructures(Long numberOfStructures) {
+  public void setNumberOfStructures(@jakarta.annotation.Nullable Long numberOfStructures) {
     this.numberOfStructures = numberOfStructures;
   }
 
-  public SearchableDatabase numberOfFormulas(Long numberOfFormulas) {
+  public SearchableDatabase numberOfFormulas(@jakarta.annotation.Nullable Long numberOfFormulas) {
     
     this.numberOfFormulas = numberOfFormulas;
     return this;
   }
 
-   /**
+  /**
    * Number of different molecular formulas available in this database.
    * @return numberOfFormulas
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_FORMULAS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -368,20 +381,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_FORMULAS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumberOfFormulas(Long numberOfFormulas) {
+  public void setNumberOfFormulas(@jakarta.annotation.Nullable Long numberOfFormulas) {
     this.numberOfFormulas = numberOfFormulas;
   }
 
-  public SearchableDatabase numberOfReferenceSpectra(Long numberOfReferenceSpectra) {
+  public SearchableDatabase numberOfReferenceSpectra(@jakarta.annotation.Nullable Long numberOfReferenceSpectra) {
     
     this.numberOfReferenceSpectra = numberOfReferenceSpectra;
     return this;
   }
 
-   /**
+  /**
    * Number of reference spectra available in this database
    * @return numberOfReferenceSpectra
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_REFERENCE_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -393,20 +406,20 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_REFERENCE_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumberOfReferenceSpectra(Long numberOfReferenceSpectra) {
+  public void setNumberOfReferenceSpectra(@jakarta.annotation.Nullable Long numberOfReferenceSpectra) {
     this.numberOfReferenceSpectra = numberOfReferenceSpectra;
   }
 
-  public SearchableDatabase errorMessage(String errorMessage) {
+  public SearchableDatabase errorMessage(@jakarta.annotation.Nullable String errorMessage) {
     
     this.errorMessage = errorMessage;
     return this;
   }
 
-   /**
+  /**
    * Error message if the database could not be loaded
    * @return errorMessage
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ERROR_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -418,9 +431,10 @@ public class SearchableDatabase {
 
   @JsonProperty(JSON_PROPERTY_ERROR_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setErrorMessage(String errorMessage) {
+  public void setErrorMessage(@jakarta.annotation.Nullable String errorMessage) {
     this.errorMessage = errorMessage;
   }
+
 
   @Override
   public boolean equals(Object o) {
@@ -451,12 +465,10 @@ public class SearchableDatabase {
     return Objects.hash(displayName, location, matchRtOfReferenceSpectra, databaseId, customDb, searchable, dbDate, dbVersion, updateNeeded, numberOfStructures, numberOfFormulas, numberOfReferenceSpectra, errorMessage);
   }
 
-  //todo find a way to preserve this change during generation or find a solution downstream in the sirius gui
   @Override
   public String toString() {
     return Optional.ofNullable(getDisplayName()).orElse(getDatabaseId());
   }
-
 
   /**
    * Convert the given object to string with each line indented by 4 spaces

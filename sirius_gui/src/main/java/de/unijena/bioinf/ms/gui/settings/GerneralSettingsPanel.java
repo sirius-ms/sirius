@@ -24,7 +24,7 @@ import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.properties.MolecularStructuresDisplayColors;
@@ -166,7 +166,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
                     CustomDataSources.getWebDatabaseCacheStorage().clear();
                 } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when clearing DB cache", e);
-                    new StacktraceDialog(mf, "Error when clearing DB cache", e);
+                    new ErrorWithDetailsDialog(mf, "Error when clearing DB cache", e);
                 }
             });
         });
