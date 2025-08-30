@@ -94,13 +94,13 @@ public class FingerblastSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // add CSIClientData to PS if it is not already there
-        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeFingerIdDataIfMissing(ApplicationCore.WEB_API), this::checkForInterruption);
+        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeFingerIdDataIfMissing(ApplicationCore.WEB_API()), this::checkForInterruption);
 
         updateProgress(10);
         checkForInterruption();
 
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor)
-                        ApplicationCore.WEB_API.getStructurePredictor(inst.getCharge()),
+                        ApplicationCore.WEB_API().getStructurePredictor(inst.getCharge()),
                 this::checkForInterruption);
 
         updateProgress(15);
@@ -108,7 +108,7 @@ public class FingerblastSubToolJob extends InstanceJob {
 
         updateProgress(20);
         {
-            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(),
+            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API(), inst.getExperiment(),
                     inputData.stream().map(fc -> fc.getAnnotationOrThrow(FingerIdResult.class)).toList());
 
             checkForInterruption();

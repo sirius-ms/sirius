@@ -80,7 +80,7 @@ import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getWebDatabaseCa
 public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     default void shutdown() throws IOException {
-        if (!getAuthService().needsLogin()) {
+        if (!getAuthService().needsLogin() && getActiveSubscription() != null && !getActiveSubscription().isNotStartedOrExpired()) {
             LoggerFactory.getLogger(getClass()).info("Try to delete leftover jobs on web server...");
             deleteClientAndJobs();
             LoggerFactory.getLogger(getClass()).info("...Job deletion Done!");
@@ -96,6 +96,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     void changeActiveSubscription(Subscription activeSubscription);
 
+    @Nullable
     Subscription getActiveSubscription();
 
     void changeHost(Supplier<URI> hostSupplier);
@@ -132,6 +133,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
         return getVersionInfo(false);
     }
 
+    @NotNull
     Map<ConnectionError.Klass, Set<ConnectionError>> checkConnection();
     //endregion
 

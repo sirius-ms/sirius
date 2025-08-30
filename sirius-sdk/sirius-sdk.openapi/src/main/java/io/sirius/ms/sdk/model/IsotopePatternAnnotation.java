@@ -41,27 +41,29 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   IsotopePatternAnnotation.JSON_PROPERTY_ISOTOPE_PATTERN,
   IsotopePatternAnnotation.JSON_PROPERTY_SIMULATED_PATTERN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class IsotopePatternAnnotation {
   public static final String JSON_PROPERTY_ISOTOPE_PATTERN = "isotopePattern";
+  @jakarta.annotation.Nullable
   private BasicSpectrum isotopePattern;
 
   public static final String JSON_PROPERTY_SIMULATED_PATTERN = "simulatedPattern";
+  @jakarta.annotation.Nullable
   private BasicSpectrum simulatedPattern;
 
   public IsotopePatternAnnotation() {
   }
 
-  public IsotopePatternAnnotation isotopePattern(BasicSpectrum isotopePattern) {
+  public IsotopePatternAnnotation isotopePattern(@jakarta.annotation.Nullable BasicSpectrum isotopePattern) {
     
     this.isotopePattern = isotopePattern;
     return this;
   }
 
-   /**
+  /**
    * Get isotopePattern
    * @return isotopePattern
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -73,20 +75,20 @@ public class IsotopePatternAnnotation {
 
   @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIsotopePattern(BasicSpectrum isotopePattern) {
+  public void setIsotopePattern(@jakarta.annotation.Nullable BasicSpectrum isotopePattern) {
     this.isotopePattern = isotopePattern;
   }
 
-  public IsotopePatternAnnotation simulatedPattern(BasicSpectrum simulatedPattern) {
+  public IsotopePatternAnnotation simulatedPattern(@jakarta.annotation.Nullable BasicSpectrum simulatedPattern) {
     
     this.simulatedPattern = simulatedPattern;
     return this;
   }
 
-   /**
+  /**
    * Get simulatedPattern
    * @return simulatedPattern
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SIMULATED_PATTERN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -98,9 +100,10 @@ public class IsotopePatternAnnotation {
 
   @JsonProperty(JSON_PROPERTY_SIMULATED_PATTERN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSimulatedPattern(BasicSpectrum simulatedPattern) {
+  public void setSimulatedPattern(@jakarta.annotation.Nullable BasicSpectrum simulatedPattern) {
     this.simulatedPattern = simulatedPattern;
   }
+
 
   @Override
   public boolean equals(Object o) {

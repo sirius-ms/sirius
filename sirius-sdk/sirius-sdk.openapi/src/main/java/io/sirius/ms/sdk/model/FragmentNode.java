@@ -46,45 +46,53 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FragmentNode.JSON_PROPERTY_INTENSITY,
   FragmentNode.JSON_PROPERTY_MZ
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class FragmentNode {
   public static final String JSON_PROPERTY_FRAGMENT_ID = "fragmentId";
+  @jakarta.annotation.Nullable
   private Integer fragmentId;
 
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  @jakarta.annotation.Nullable
   private String molecularFormula;
 
   public static final String JSON_PROPERTY_ADDUCT = "adduct";
+  @jakarta.annotation.Nullable
   private String adduct;
 
   public static final String JSON_PROPERTY_MASS_DEVIATION_DA = "massDeviationDa";
+  @jakarta.annotation.Nullable
   private Double massDeviationDa;
 
   public static final String JSON_PROPERTY_MASS_DEVIATION_PPM = "massDeviationPpm";
+  @jakarta.annotation.Nullable
   private Double massDeviationPpm;
 
   public static final String JSON_PROPERTY_SCORE = "score";
+  @jakarta.annotation.Nullable
   private Double score;
 
   public static final String JSON_PROPERTY_INTENSITY = "intensity";
+  @jakarta.annotation.Nullable
   private Double intensity;
 
   public static final String JSON_PROPERTY_MZ = "mz";
+  @jakarta.annotation.Nullable
   private Double mz;
 
   public FragmentNode() {
   }
 
-  public FragmentNode fragmentId(Integer fragmentId) {
+  public FragmentNode fragmentId(@jakarta.annotation.Nullable Integer fragmentId) {
     
     this.fragmentId = fragmentId;
     return this;
   }
 
-   /**
+  /**
    * Get fragmentId
    * @return fragmentId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FRAGMENT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -96,20 +104,20 @@ public class FragmentNode {
 
   @JsonProperty(JSON_PROPERTY_FRAGMENT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFragmentId(Integer fragmentId) {
+  public void setFragmentId(@jakarta.annotation.Nullable Integer fragmentId) {
     this.fragmentId = fragmentId;
   }
 
-  public FragmentNode molecularFormula(String molecularFormula) {
+  public FragmentNode molecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     
     this.molecularFormula = molecularFormula;
     return this;
   }
 
-   /**
+  /**
    * neutral molecular formula of the fragment without adduct
    * @return molecularFormula
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -121,20 +129,20 @@ public class FragmentNode {
 
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMolecularFormula(String molecularFormula) {
+  public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
   }
 
-  public FragmentNode adduct(String adduct) {
+  public FragmentNode adduct(@jakarta.annotation.Nullable String adduct) {
     
     this.adduct = adduct;
     return this;
   }
 
-   /**
+  /**
    * This combines the ionization plus adduct of the fragment. In contrast to the {@link FragmentationTree FragmentationTree}s adduct,  this adduct may not include any in-source loss.
    * @return adduct
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -146,20 +154,20 @@ public class FragmentNode {
 
   @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAdduct(String adduct) {
+  public void setAdduct(@jakarta.annotation.Nullable String adduct) {
     this.adduct = adduct;
   }
 
-  public FragmentNode massDeviationDa(Double massDeviationDa) {
+  public FragmentNode massDeviationDa(@jakarta.annotation.Nullable Double massDeviationDa) {
     
     this.massDeviationDa = massDeviationDa;
     return this;
   }
 
-   /**
+  /**
    * Get massDeviationDa
    * @return massDeviationDa
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_DA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -171,20 +179,20 @@ public class FragmentNode {
 
   @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_DA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMassDeviationDa(Double massDeviationDa) {
+  public void setMassDeviationDa(@jakarta.annotation.Nullable Double massDeviationDa) {
     this.massDeviationDa = massDeviationDa;
   }
 
-  public FragmentNode massDeviationPpm(Double massDeviationPpm) {
+  public FragmentNode massDeviationPpm(@jakarta.annotation.Nullable Double massDeviationPpm) {
     
     this.massDeviationPpm = massDeviationPpm;
     return this;
   }
 
-   /**
+  /**
    * Get massDeviationPpm
    * @return massDeviationPpm
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -196,20 +204,20 @@ public class FragmentNode {
 
   @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMassDeviationPpm(Double massDeviationPpm) {
+  public void setMassDeviationPpm(@jakarta.annotation.Nullable Double massDeviationPpm) {
     this.massDeviationPpm = massDeviationPpm;
   }
 
-  public FragmentNode score(Double score) {
+  public FragmentNode score(@jakarta.annotation.Nullable Double score) {
     
     this.score = score;
     return this;
   }
 
-   /**
+  /**
    * Get score
    * @return score
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -221,20 +229,20 @@ public class FragmentNode {
 
   @JsonProperty(JSON_PROPERTY_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setScore(Double score) {
+  public void setScore(@jakarta.annotation.Nullable Double score) {
     this.score = score;
   }
 
-  public FragmentNode intensity(Double intensity) {
+  public FragmentNode intensity(@jakarta.annotation.Nullable Double intensity) {
     
     this.intensity = intensity;
     return this;
   }
 
-   /**
+  /**
    * Get intensity
    * @return intensity
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -246,20 +254,20 @@ public class FragmentNode {
 
   @JsonProperty(JSON_PROPERTY_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIntensity(Double intensity) {
+  public void setIntensity(@jakarta.annotation.Nullable Double intensity) {
     this.intensity = intensity;
   }
 
-  public FragmentNode mz(Double mz) {
+  public FragmentNode mz(@jakarta.annotation.Nullable Double mz) {
     
     this.mz = mz;
     return this;
   }
 
-   /**
+  /**
    * Get mz
    * @return mz
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -271,9 +279,10 @@ public class FragmentNode {
 
   @JsonProperty(JSON_PROPERTY_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMz(Double mz) {
+  public void setMz(@jakarta.annotation.Nullable Double mz) {
     this.mz = mz;
   }
+
 
   @Override
   public boolean equals(Object o) {

@@ -29,7 +29,6 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.rest.ProxyManager;
-import de.unijena.bioinf.webapi.Tokens;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +41,8 @@ import java.awt.event.ActionListener;
 import java.net.URI;
 import java.util.Optional;
 import java.util.Properties;
+
+import static io.sirius.ms.utils.jwt.AccessTokens.ACCESS_TOKENS;
 
 
 /**
@@ -64,7 +65,7 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
         super();
         this.gui = gui;
         this.props = properties;
-        webserverURL = new JTextField(Optional.ofNullable(ApplicationCore.WEB_API.getActiveSubscription()).map(Subscription::getServiceUrl).orElse("<No subscription active>"));
+        webserverURL = new JTextField(Optional.ofNullable(ApplicationCore.WEB_API().getActiveSubscription()).map(Subscription::getServiceUrl).orElse("<No subscription active>"));
         addNamed("Web service URL", webserverURL);
         webserverURL.setEditable(false);
         webserverURL.setToolTipText(GuiUtils.formatToolTip("URL is provided via your active subscription and cannot be changed manually. You need to be logged in to see the URL."));
@@ -155,19 +156,19 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
     public void reloadChanges() {
         try {
             ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
-                ApplicationCore.WEB_API.changeActiveSubscription(null);
+                ApplicationCore.WEB_API().changeActiveSubscription(null);
 
                 URI host = URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"));
                 ProxyManager.reconnect();
 
-                ProxyManager.consumeClient(c -> ApplicationCore.WEB_API.getAuthService()
+                ProxyManager.consumeClient(c -> ApplicationCore.WEB_API().getAuthService()
                         .reconnectService(AuthServices.createDefaultApi(host), c)); //load new proxy data from service.
 
                 ProxyManager.enforceGlobalProxySetting(); //update global proxy stuff for Webview.
 
-                ApplicationCore.WEB_API.changeActiveSubscription(
-                        ApplicationCore.WEB_API.getAuthService().getToken()
-                                .map(Tokens::getActiveSubscription).orElse(null));
+                ApplicationCore.WEB_API().changeActiveSubscription(
+                        ApplicationCore.WEB_API().getAuthService().getToken()
+                                .map(ACCESS_TOKENS::getActiveSubscription).orElse(null));
             });
 
         } catch (Exception e) {

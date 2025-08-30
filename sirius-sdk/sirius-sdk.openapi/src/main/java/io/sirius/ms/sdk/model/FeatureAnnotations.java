@@ -53,45 +53,53 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FeatureAnnotations.JSON_PROPERTY_SPECIFIED_DATABASES,
   FeatureAnnotations.JSON_PROPERTY_EXPANDED_DATABASES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class FeatureAnnotations {
   public static final String JSON_PROPERTY_FORMULA_ANNOTATION = "formulaAnnotation";
+  @jakarta.annotation.Nullable
   private FormulaCandidate formulaAnnotation;
 
   public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION = "structureAnnotation";
+  @jakarta.annotation.Nullable
   private StructureCandidateScored structureAnnotation;
 
   public static final String JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION = "compoundClassAnnotation";
+  @jakarta.annotation.Nullable
   private CompoundClasses compoundClassAnnotation;
 
   public static final String JSON_PROPERTY_CONFIDENCE_EXACT_MATCH = "confidenceExactMatch";
+  @jakarta.annotation.Nullable
   private Double confidenceExactMatch;
 
   public static final String JSON_PROPERTY_CONFIDENCE_APPROX_MATCH = "confidenceApproxMatch";
+  @jakarta.annotation.Nullable
   private Double confidenceApproxMatch;
 
   public static final String JSON_PROPERTY_EXPANSIVE_SEARCH_STATE = "expansiveSearchState";
+  @jakarta.annotation.Nullable
   private ConfidenceMode expansiveSearchState;
 
   public static final String JSON_PROPERTY_SPECIFIED_DATABASES = "specifiedDatabases";
+  @jakarta.annotation.Nullable
   private List<String> specifiedDatabases;
 
   public static final String JSON_PROPERTY_EXPANDED_DATABASES = "expandedDatabases";
+  @jakarta.annotation.Nullable
   private List<String> expandedDatabases;
 
   public FeatureAnnotations() {
   }
 
-  public FeatureAnnotations formulaAnnotation(FormulaCandidate formulaAnnotation) {
+  public FeatureAnnotations formulaAnnotation(@jakarta.annotation.Nullable FormulaCandidate formulaAnnotation) {
     
     this.formulaAnnotation = formulaAnnotation;
     return this;
   }
 
-   /**
+  /**
    * Get formulaAnnotation
    * @return formulaAnnotation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FORMULA_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -103,20 +111,20 @@ public class FeatureAnnotations {
 
   @JsonProperty(JSON_PROPERTY_FORMULA_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFormulaAnnotation(FormulaCandidate formulaAnnotation) {
+  public void setFormulaAnnotation(@jakarta.annotation.Nullable FormulaCandidate formulaAnnotation) {
     this.formulaAnnotation = formulaAnnotation;
   }
 
-  public FeatureAnnotations structureAnnotation(StructureCandidateScored structureAnnotation) {
+  public FeatureAnnotations structureAnnotation(@jakarta.annotation.Nullable StructureCandidateScored structureAnnotation) {
     
     this.structureAnnotation = structureAnnotation;
     return this;
   }
 
-   /**
+  /**
    * Get structureAnnotation
    * @return structureAnnotation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -128,20 +136,20 @@ public class FeatureAnnotations {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureAnnotation(StructureCandidateScored structureAnnotation) {
+  public void setStructureAnnotation(@jakarta.annotation.Nullable StructureCandidateScored structureAnnotation) {
     this.structureAnnotation = structureAnnotation;
   }
 
-  public FeatureAnnotations compoundClassAnnotation(CompoundClasses compoundClassAnnotation) {
+  public FeatureAnnotations compoundClassAnnotation(@jakarta.annotation.Nullable CompoundClasses compoundClassAnnotation) {
     
     this.compoundClassAnnotation = compoundClassAnnotation;
     return this;
   }
 
-   /**
+  /**
    * Get compoundClassAnnotation
    * @return compoundClassAnnotation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -153,20 +161,20 @@ public class FeatureAnnotations {
 
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCompoundClassAnnotation(CompoundClasses compoundClassAnnotation) {
+  public void setCompoundClassAnnotation(@jakarta.annotation.Nullable CompoundClasses compoundClassAnnotation) {
     this.compoundClassAnnotation = compoundClassAnnotation;
   }
 
-  public FeatureAnnotations confidenceExactMatch(Double confidenceExactMatch) {
+  public FeatureAnnotations confidenceExactMatch(@jakarta.annotation.Nullable Double confidenceExactMatch) {
     
     this.confidenceExactMatch = confidenceExactMatch;
     return this;
   }
 
-   /**
+  /**
    * Confidence Score that represents the confidence whether the top hit is correct.
    * @return confidenceExactMatch
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -178,20 +186,20 @@ public class FeatureAnnotations {
 
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConfidenceExactMatch(Double confidenceExactMatch) {
+  public void setConfidenceExactMatch(@jakarta.annotation.Nullable Double confidenceExactMatch) {
     this.confidenceExactMatch = confidenceExactMatch;
   }
 
-  public FeatureAnnotations confidenceApproxMatch(Double confidenceApproxMatch) {
+  public FeatureAnnotations confidenceApproxMatch(@jakarta.annotation.Nullable Double confidenceApproxMatch) {
     
     this.confidenceApproxMatch = confidenceApproxMatch;
     return this;
   }
 
-   /**
+  /**
    * Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.
    * @return confidenceApproxMatch
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -203,20 +211,20 @@ public class FeatureAnnotations {
 
   @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConfidenceApproxMatch(Double confidenceApproxMatch) {
+  public void setConfidenceApproxMatch(@jakarta.annotation.Nullable Double confidenceApproxMatch) {
     this.confidenceApproxMatch = confidenceApproxMatch;
   }
 
-  public FeatureAnnotations expansiveSearchState(ConfidenceMode expansiveSearchState) {
+  public FeatureAnnotations expansiveSearchState(@jakarta.annotation.Nullable ConfidenceMode expansiveSearchState) {
     
     this.expansiveSearchState = expansiveSearchState;
     return this;
   }
 
-   /**
+  /**
    * Get expansiveSearchState
    * @return expansiveSearchState
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_STATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -228,11 +236,11 @@ public class FeatureAnnotations {
 
   @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_STATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExpansiveSearchState(ConfidenceMode expansiveSearchState) {
+  public void setExpansiveSearchState(@jakarta.annotation.Nullable ConfidenceMode expansiveSearchState) {
     this.expansiveSearchState = expansiveSearchState;
   }
 
-  public FeatureAnnotations specifiedDatabases(List<String> specifiedDatabases) {
+  public FeatureAnnotations specifiedDatabases(@jakarta.annotation.Nullable List<String> specifiedDatabases) {
     
     this.specifiedDatabases = specifiedDatabases;
     return this;
@@ -246,10 +254,10 @@ public class FeatureAnnotations {
     return this;
   }
 
-   /**
+  /**
    * List of databases that have been specified by for structure db search. Null if no structure db search has been performed.
    * @return specifiedDatabases
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SPECIFIED_DATABASES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -261,11 +269,11 @@ public class FeatureAnnotations {
 
   @JsonProperty(JSON_PROPERTY_SPECIFIED_DATABASES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSpecifiedDatabases(List<String> specifiedDatabases) {
+  public void setSpecifiedDatabases(@jakarta.annotation.Nullable List<String> specifiedDatabases) {
     this.specifiedDatabases = specifiedDatabases;
   }
 
-  public FeatureAnnotations expandedDatabases(List<String> expandedDatabases) {
+  public FeatureAnnotations expandedDatabases(@jakarta.annotation.Nullable List<String> expandedDatabases) {
     
     this.expandedDatabases = expandedDatabases;
     return this;
@@ -279,10 +287,10 @@ public class FeatureAnnotations {
     return this;
   }
 
-   /**
+  /**
    * List of databases that have been used to expand search space during expansive search. Null if no structure db search has been performed.
    * @return expandedDatabases
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_EXPANDED_DATABASES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -294,9 +302,10 @@ public class FeatureAnnotations {
 
   @JsonProperty(JSON_PROPERTY_EXPANDED_DATABASES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExpandedDatabases(List<String> expandedDatabases) {
+  public void setExpandedDatabases(@jakarta.annotation.Nullable List<String> expandedDatabases) {
     this.expandedDatabases = expandedDatabases;
   }
+
 
   @Override
   public boolean equals(Object o) {

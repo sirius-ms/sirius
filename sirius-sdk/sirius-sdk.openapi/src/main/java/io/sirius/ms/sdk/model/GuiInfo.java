@@ -39,24 +39,25 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   GuiInfo.JSON_PROPERTY_PROJECT_ID
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class GuiInfo {
   public static final String JSON_PROPERTY_PROJECT_ID = "projectId";
+  @jakarta.annotation.Nullable
   private String projectId;
 
   public GuiInfo() {
   }
 
-  public GuiInfo projectId(String projectId) {
+  public GuiInfo projectId(@jakarta.annotation.Nullable String projectId) {
     
     this.projectId = projectId;
     return this;
   }
 
-   /**
+  /**
    * The project this instance is running on
    * @return projectId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PROJECT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -68,9 +69,10 @@ public class GuiInfo {
 
   @JsonProperty(JSON_PROPERTY_PROJECT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setProjectId(String projectId) {
+  public void setProjectId(@jakarta.annotation.Nullable String projectId) {
     this.projectId = projectId;
   }
+
 
   @Override
   public boolean equals(Object o) {

@@ -68,6 +68,7 @@ import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueFormatter;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
@@ -1217,7 +1218,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         if (optFields.contains(AlignedFeature.OptField.topAnnotations)) {
             feature.setTopAnnotations(extractTopCsiAnnotations(alignedFeatureId));
-        } else if (optFields.contains(AlignedFeature.OptField.indexedTopAnnotations)) { // fast confidence score retrieval without any additional data.
+        } else if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary)) { // fast confidence score retrieval without any additional data.
             if (feature.getTopAnnotations() == null)
                 feature.setTopAnnotations(extractSearchIndexTopAnnotations(alignedFeatureId));
         } else {
@@ -1439,9 +1440,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
 
         de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate formulaCandidate;
-        if (clzz != CsiStructureMatch.class || structureSearchResult != null) {
-            StructureMatch structureMatch = project().findTopStructureMatchByFeatureId(longAFIf, clzz).orElse(null);
 
+        StructureMatch structureMatch = (clzz != CsiStructureMatch.class || structureSearchResult != null)
+                ? project().findTopStructureMatchByFeatureId(longAFIf, clzz).orElse(null)
+                : null;
+
+        if (structureMatch != null) {
             formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
                     .orElseThrow();
 
@@ -1612,7 +1616,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+    public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures, @NotNull String importSource) {
         setProjectTypeOrThrow(project());
         List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream()
                 .peek(ci -> {
@@ -1632,6 +1636,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             return Collections.emptyList();
 
         project().importCompounds(dbc);
+
+        // specify the source of the direct import. e.g. to specify an explorer source.
+        ProjectSourceFormats format = project().findProjectSourceFormats().map(m -> {
+            m.addDirectImport(importSource);
+            return m;
+        }).orElse(ProjectSourceFormats.fromDirectImports(importSource));
+        project().upsertProjectSourceFormats(format);
+
         //todo fire import api event
         //todo handle index update
         return dbc.stream().map(c -> convertToApiCompound(c, false, optFields, optFieldsFeatures)).toList();
@@ -1773,7 +1785,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
 
         TinyBackgroundJJob<Long2ObjectOpenHashMap<ComputedSubtools>> compJob = null;
-        if (optFields.contains(AlignedFeature.OptField.computedTools) || optFields.contains(AlignedFeature.OptField.indexedTopAnnotations) || optFields.contains(AlignedFeature.OptField.topAnnotations)) {
+        if (optFields.contains(AlignedFeature.OptField.computedTools) || optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) || optFields.contains(AlignedFeature.OptField.topAnnotations)) {
             compJob = SiriusJobs.runInBackground(() -> storage().findStr(Filter.where("alignedFeatureId").in(ids), ComputedSubtools.class)
                     .collect(Collectors.toMap(AlignedFeatureAnnotation::getAlignedFeatureId, c -> c
                             , (existing, replacement) -> existing, Long2ObjectOpenHashMap::new
@@ -1797,7 +1809,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
 
         TinyBackgroundJJob<Long2ObjectOpenHashMap<List<Statistics>>> statJob = null;
-        if (optFields.contains(AlignedFeature.OptField.indexedTopAnnotations)) {
+        if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary)) {
             statJob = SiriusJobs.runInBackground(() -> {
                 final Long2ObjectOpenHashMap<List<Statistics>> statsMap = new Long2ObjectOpenHashMap<>();
                 storage().find(Filter.where("alignedFeatureId").in(ids), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class)
@@ -1815,7 +1827,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
 
         TinyBackgroundJJob<Long2ObjectOpenHashMap<CsiStructureSearchResult>> csiJob = null;
-        if (optFields.contains(AlignedFeature.OptField.indexedTopAnnotations) || optFields.contains(AlignedFeature.OptField.topAnnotations)) {
+        if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) || optFields.contains(AlignedFeature.OptField.topAnnotations)) {
             Long[] filterIds = Arrays.stream(ids).filter(computed::containsKey).filter(id -> computed.get(id).hasResults()).toArray(Long[]::new);
             if (filterIds.length > 0) {
                 Filter resultFilter = Filter.where("alignedFeatureId").in(filterIds);
@@ -1843,7 +1855,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     apiFeture.setComputedTools(computed.get(fid));
                     apiFeture.setTags(tags.get(fid));
                     apiFeture.setStats(stats.get(fid));
-                    if (optFields.contains(AlignedFeature.OptField.indexedTopAnnotations) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
+                    if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
                         apiFeture.setTopAnnotations(extractSearchIndexTopAnnotations(fid, csires.get(fid)));
                     //add additional anotations that are not yes covered by bulk retrieval.
                     annotateApiFeature(fid, apiFeture, msDataAsCosineQuery, optFields);
@@ -1864,9 +1876,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * @return imported features with selected opt fields and UUIDs for features and compounds.
      */
     @Override
-    public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields, @NotNull String importSource) {
         List<CompoundImport> cis = features.stream().map(f -> CompoundImport.builder().name(f.getName()).features(List.of(f)).build()).toList();
-        List<AlignedFeature> importedFeatures = addCompounds(cis, profile, EnumSet.of(Compound.OptField.none), optFields).stream()
+        List<AlignedFeature> importedFeatures = addCompounds(cis, profile, EnumSet.of(Compound.OptField.none), optFields, importSource).stream()
                 .flatMap(c -> c.getFeatures().stream()).toList();
         searchService.addDocuments(projectId, importedFeatures);
         //todo fire import event?
@@ -2657,5 +2669,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 }).orElse(null);
     }
 
+    @Override
+    public Optional<ProjectType> getProjectType() {
+        return project().findProjectType();
+    }
 
+    @Override
+    public Optional<ProjectSourceFormats> getProjectSourceFormats() {
+        return project().findProjectSourceFormats();
+    }
 }

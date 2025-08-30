@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.compute;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -9,19 +10,18 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
+import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.ProblemResponse;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -279,8 +279,6 @@ public class BatchComputeController {
             @Override
             protected Boolean compute() throws InterruptedException, InvocationTargetException {
                 updateProgress(0, 100, 0, "Configuring Computation...");
-                //prevent many instance updates caused by multi selection
-                Jobs.runEDTLater(() -> gui.getMainFrame().getCompoundList().getCompoundListSelectionModel().clearSelection());
 
                 checkForInterruption();
 
@@ -330,8 +328,19 @@ public class BatchComputeController {
                                 .map(InstanceBean::getFeatureId).toList());
                     gui.applySiriusClient((c, pid) -> c.jobs().startJob(pid, jobSubmission, List.of(JobOptField.COMMAND)));
                 } catch (Exception e) {
-                    log.error("Error when starting Computation.", e);
-                    new ExceptionDialog(rootOwner, "Error when starting Computation: " + e.getMessage());
+                    if (e instanceof WebClientResponseException we) {
+                        try {
+                            ProblemResponse problemDetail = new ObjectMapper().readValue(we.getResponseBodyAsString(), ProblemResponse.class);
+                            new ErrorWithDetailsDialog(rootOwner, problemDetail);
+                        } catch (JsonProcessingException ex) {
+                            log.warn("Error while parsing error information.", ex);
+                            new ExceptionDialog(rootOwner, e.getMessage());
+                        }
+                    } else {
+                        log.error("Unexpected error when starting Computation.", e);
+                        new ExceptionDialog(rootOwner, "Error when starting Computation: " + e.getMessage());
+                    }
+
                 }
 
                 updateProgress(0, 100, 100, "Computation Configured!");

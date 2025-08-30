@@ -32,6 +32,8 @@ import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
@@ -89,10 +91,18 @@ public interface Project<PSM extends ProjectSpaceManager> {
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
     Page<Compound> findCompoundsByGroup(@NotNull String groupName, Pageable pageable, boolean msDataSearchPrepared, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
 
+    default List<Compound> addCompounds(@NotNull List<CompoundImport> compounds,
+                                @Nullable InstrumentProfile profile,
+                                @NotNull EnumSet<Compound.OptField> optFields,
+                                @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures){
+        return addCompounds(compounds, profile, optFields, optFieldsFeatures, ProjectSourceFormats.GENERIC_DIRECT_IMPORT);
+    };
+
     List<Compound> addCompounds(@NotNull List<CompoundImport> compounds,
                                 @Nullable InstrumentProfile profile,
                                 @NotNull EnumSet<Compound.OptField> optFields,
-                                @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures);
+                                @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures,
+                                @NotNull String importSource);
 
     default Page<Compound> findCompounds(Pageable pageable, Compound.OptField... optFields) {
         return findCompounds(pageable, false, toEnumSet(Compound.OptField.class, optFields),
@@ -138,9 +148,16 @@ public interface Project<PSM extends ProjectSpaceManager> {
      * @param optFields opt fields to be returned as part of the imported features/
      * @return imported features with selected opt fields and UUIDs for features and compounds.
      */
+    default List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
+                                            @Nullable InstrumentProfile profile,
+                                            @NotNull EnumSet<AlignedFeature.OptField> optFields){
+        return addAlignedFeatures(features, profile, optFields, ProjectSourceFormats.GENERIC_DIRECT_IMPORT);
+    }
+
     List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
                                             @Nullable InstrumentProfile profile,
-                                            @NotNull EnumSet<AlignedFeature.OptField> optFields);
+                                            @NotNull EnumSet<AlignedFeature.OptField> optFields,
+                                            @NotNull String importSource);
 
 
     default AlignedFeature findAlignedFeaturesById(String alignedFeatureId, boolean msDataSearchPrepared, AlignedFeature.OptField... optFields) {
@@ -302,6 +319,9 @@ public interface Project<PSM extends ProjectSpaceManager> {
     String getCanopusClassyFireDataCSV(int charge);
 
     String getCanopusNpcDataCSV(int charge);
+
+    Optional<ProjectType> getProjectType();
+    Optional<ProjectSourceFormats> getProjectSourceFormats();
 
     @Deprecated
     String findSiriusFtreeJsonById(String formulaId, String alignedFeatureId);
