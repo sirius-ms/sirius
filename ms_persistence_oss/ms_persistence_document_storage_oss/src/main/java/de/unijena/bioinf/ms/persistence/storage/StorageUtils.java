@@ -150,11 +150,13 @@ public class StorageUtils {
                 .getAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class)
                 .orElse(new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts());
 
+        PossibleAdducts ionTypeAdducts = new PossibleAdducts(exp.getPrecursorIonType());
         if (!exp.getPrecursorIonType().isIonizationUnknown()) {
             PossibleAdducts inputFileAdducts = det.get(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE);
-            PossibleAdducts ionTypeAdducts = new PossibleAdducts(exp.getPrecursorIonType());
             det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE,
                     inputFileAdducts == null ? ionTypeAdducts : PossibleAdducts.union(inputFileAdducts, ionTypeAdducts));
+        } else if (!det.hasAdducts()){
+            det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE, ionTypeAdducts);
         }
 
         // build feature
