@@ -14,24 +14,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ProjectsApi {
     private ApiClient apiClient;
 
@@ -39,7 +40,6 @@ public class ProjectsApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public ProjectsApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
@@ -52,6 +52,7 @@ public class ProjectsApi {
         this.apiClient = apiClient;
     }
 
+    
     /**
      * Create a search index for the given project.
      * Create a search index for the given project.
@@ -60,7 +61,7 @@ public class ProjectsApi {
      * @param force if true an existing index will be deleted and recreated.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec buildSearchIndexRequestCreation(String projectId, Boolean force) throws WebClientResponseException {
+    private ResponseSpec buildSearchIndexRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean force) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -97,7 +98,7 @@ public class ProjectsApi {
      * @param force if true an existing index will be deleted and recreated.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void buildSearchIndex(String projectId, Boolean force) throws WebClientResponseException {
+    public void buildSearchIndex(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean force) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         buildSearchIndexRequestCreation(projectId, force).bodyToMono(localVarReturnType).block();
     }
@@ -110,7 +111,7 @@ public class ProjectsApi {
      * @param force if true an existing index will be deleted and recreated.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> buildSearchIndexWithHttpInfo(String projectId, Boolean force) throws WebClientResponseException {
+    public ResponseEntity<Void> buildSearchIndexWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean force) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return buildSearchIndexRequestCreation(projectId, force).toEntity(localVarReturnType).block();
     }
@@ -124,18 +125,19 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec buildSearchIndexWithResponseSpec(String projectId, Boolean force) throws WebClientResponseException {
+    public ResponseSpec buildSearchIndexWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean force) throws WebClientResponseException {
         return buildSearchIndexRequestCreation(projectId, force);
     }
+
     /**
-     * Close project-space and remove it from application
-     * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application
+     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec closeProjectRequestCreation(String projectId, Boolean compact) throws WebClientResponseException {
+    private ResponseSpec closeProjectRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -165,43 +167,44 @@ public class ProjectsApi {
     }
 
     /**
-     * Close project-space and remove it from application
-     * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application
+     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void closeProject(String projectId, Boolean compact) throws WebClientResponseException {
+    public void closeProject(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         closeProjectRequestCreation(projectId, compact).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Close project-space and remove it from application
-     * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application
+     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> closeProjectWithHttpInfo(String projectId, Boolean compact) throws WebClientResponseException {
+    public ResponseEntity<Void> closeProjectWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return closeProjectRequestCreation(projectId, compact).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Close project-space and remove it from application
-     * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application
+     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec closeProjectWithResponseSpec(String projectId, Boolean compact) throws WebClientResponseException {
+    public ResponseSpec closeProjectWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact) throws WebClientResponseException {
         return closeProjectRequestCreation(projectId, compact);
     }
+
     /**
      * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [DEPRECATED] Move an existing (opened) project-space to another location.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
@@ -215,7 +218,7 @@ public class ProjectsApi {
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec copyProjectRequestCreation(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec copyProjectRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String pathToCopiedProject, @jakarta.annotation.Nullable String copyProjectId, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -263,7 +266,7 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ProjectInfo copyProject(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ProjectInfo copyProject(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String pathToCopiedProject, @jakarta.annotation.Nullable String copyProjectId, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
         return copyProjectRequestCreation(projectId, pathToCopiedProject, copyProjectId, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -279,7 +282,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ProjectInfo> copyProjectWithHttpInfo(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<ProjectInfo> copyProjectWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String pathToCopiedProject, @jakarta.annotation.Nullable String copyProjectId, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
         return copyProjectRequestCreation(projectId, pathToCopiedProject, copyProjectId, optFields).toEntity(localVarReturnType).block();
     }
@@ -295,9 +298,10 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec copyProjectWithResponseSpec(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec copyProjectWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String pathToCopiedProject, @jakarta.annotation.Nullable String copyProjectId, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         return copyProjectRequestCreation(projectId, pathToCopiedProject, copyProjectId, optFields);
     }
+
     /**
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * Create and open a new project-space at given location and make it accessible via the given projectId.
@@ -308,7 +312,7 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec createProjectRequestCreation(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec createProjectRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -350,7 +354,7 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ProjectInfo createProject(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ProjectInfo createProject(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
         return createProjectRequestCreation(projectId, pathToProject, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -365,7 +369,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ProjectInfo> createProjectWithHttpInfo(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<ProjectInfo> createProjectWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
         return createProjectRequestCreation(projectId, pathToProject, optFields).toEntity(localVarReturnType).block();
     }
@@ -380,9 +384,10 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec createProjectWithResponseSpec(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec createProjectWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         return createProjectRequestCreation(projectId, pathToProject, optFields);
     }
+
     /**
      * Get CANOPUS prediction vector definition for ClassyFire classes
      * 
@@ -392,7 +397,7 @@ public class ProjectsApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCanopusClassyFireDataRequestCreation(String projectId, Integer charge) throws WebClientResponseException {
+    private ResponseSpec getCanopusClassyFireDataRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -436,7 +441,7 @@ public class ProjectsApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public String getCanopusClassyFireData(String projectId, Integer charge) throws WebClientResponseException {
+    public String getCanopusClassyFireData(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return getCanopusClassyFireDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
     }
@@ -450,7 +455,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<String> getCanopusClassyFireDataWithHttpInfo(String projectId, Integer charge) throws WebClientResponseException {
+    public ResponseEntity<String> getCanopusClassyFireDataWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return getCanopusClassyFireDataRequestCreation(projectId, charge).toEntity(localVarReturnType).block();
     }
@@ -464,9 +469,10 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCanopusClassyFireDataWithResponseSpec(String projectId, Integer charge) throws WebClientResponseException {
+    public ResponseSpec getCanopusClassyFireDataWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         return getCanopusClassyFireDataRequestCreation(projectId, charge);
     }
+
     /**
      * Get CANOPUS prediction vector definition for NPC classes
      * 
@@ -476,7 +482,7 @@ public class ProjectsApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCanopusNpcDataRequestCreation(String projectId, Integer charge) throws WebClientResponseException {
+    private ResponseSpec getCanopusNpcDataRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -520,7 +526,7 @@ public class ProjectsApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public String getCanopusNpcData(String projectId, Integer charge) throws WebClientResponseException {
+    public String getCanopusNpcData(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return getCanopusNpcDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
     }
@@ -534,7 +540,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<String> getCanopusNpcDataWithHttpInfo(String projectId, Integer charge) throws WebClientResponseException {
+    public ResponseEntity<String> getCanopusNpcDataWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return getCanopusNpcDataRequestCreation(projectId, charge).toEntity(localVarReturnType).block();
     }
@@ -548,9 +554,10 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCanopusNpcDataWithResponseSpec(String projectId, Integer charge) throws WebClientResponseException {
+    public ResponseSpec getCanopusNpcDataWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         return getCanopusNpcDataRequestCreation(projectId, charge);
     }
+
     /**
      * Get CSI:FingerID fingerprint (prediction vector) definition
      * 
@@ -560,7 +567,7 @@ public class ProjectsApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFingerIdDataRequestCreation(String projectId, Integer charge) throws WebClientResponseException {
+    private ResponseSpec getFingerIdDataRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -604,7 +611,7 @@ public class ProjectsApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public String getFingerIdData(String projectId, Integer charge) throws WebClientResponseException {
+    public String getFingerIdData(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return getFingerIdDataRequestCreation(projectId, charge).bodyToMono(localVarReturnType).block();
     }
@@ -618,7 +625,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<String> getFingerIdDataWithHttpInfo(String projectId, Integer charge) throws WebClientResponseException {
+    public ResponseEntity<String> getFingerIdDataWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return getFingerIdDataRequestCreation(projectId, charge).toEntity(localVarReturnType).block();
     }
@@ -632,9 +639,10 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFingerIdDataWithResponseSpec(String projectId, Integer charge) throws WebClientResponseException {
+    public ResponseSpec getFingerIdDataWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull Integer charge) throws WebClientResponseException {
         return getFingerIdDataRequestCreation(projectId, charge);
     }
+
     /**
      * Get project space info by its projectId.
      * Get project space info by its projectId.
@@ -644,7 +652,7 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getProjectRequestCreation(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getProjectRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -684,7 +692,7 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ProjectInfo getProject(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ProjectInfo getProject(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
         return getProjectRequestCreation(projectId, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -698,7 +706,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ProjectInfo> getProjectWithHttpInfo(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<ProjectInfo> getProjectWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
         return getProjectRequestCreation(projectId, optFields).toEntity(localVarReturnType).block();
     }
@@ -712,9 +720,10 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getProjectWithResponseSpec(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getProjectWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         return getProjectRequestCreation(projectId, optFields);
     }
+
     /**
      * List opened project spaces.
      * List opened project spaces.
@@ -779,17 +788,18 @@ public class ProjectsApi {
     public ResponseSpec getProjectsWithResponseSpec() throws WebClientResponseException {
         return getProjectsRequestCreation();
     }
+
     /**
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
-     * @param inputFiles Files to import into project.
+     * @param inputFiles files to import into project
      * @param parameters The parameters parameter
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importMsRunDataRequestCreation(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -838,12 +848,12 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
-     * @param inputFiles Files to import into project.
+     * @param inputFiles files to import into project
      * @param parameters The parameters parameter
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ImportResult importMsRunData(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
+    public ImportResult importMsRunData(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return importMsRunDataRequestCreation(projectId, inputFiles, parameters).bodyToMono(localVarReturnType).block();
     }
@@ -853,12 +863,12 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
-     * @param inputFiles Files to import into project.
+     * @param inputFiles files to import into project
      * @param parameters The parameters parameter
      * @return ResponseEntity&lt;ImportResult&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ImportResult> importMsRunDataWithHttpInfo(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
+    public ResponseEntity<ImportResult> importMsRunDataWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return importMsRunDataRequestCreation(projectId, inputFiles, parameters).toEntity(localVarReturnType).block();
     }
@@ -868,26 +878,27 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
-     * @param inputFiles Files to import into project.
+     * @param inputFiles files to import into project
      * @param parameters The parameters parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataWithResponseSpec(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
+    public ResponseSpec importMsRunDataWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters) throws WebClientResponseException {
         return importMsRunDataRequestCreation(projectId, inputFiles, parameters);
     }
+
     /**
      * Import and Align full MS-Runs from various formats into the specified project as background job.
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
-     * @param inputFiles Files to import into project.
+     * @param inputFiles files to import into project
      * @param parameters The parameters parameter
      * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importMsRunDataAsJobRequestCreation(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataAsJobRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -938,13 +949,13 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
-     * @param inputFiles Files to import into project.
+     * @param inputFiles files to import into project
      * @param parameters The parameters parameter
      * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importMsRunDataAsJob(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job importMsRunDataAsJob(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return importMsRunDataAsJobRequestCreation(projectId, inputFiles, parameters, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -954,13 +965,13 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
-     * @param inputFiles Files to import into project.
+     * @param inputFiles files to import into project
      * @param parameters The parameters parameter
      * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importMsRunDataAsJobWithHttpInfo(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> importMsRunDataAsJobWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return importMsRunDataAsJobRequestCreation(projectId, inputFiles, parameters, optFields).toEntity(localVarReturnType).block();
     }
@@ -970,15 +981,16 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
-     * @param inputFiles Files to import into project.
+     * @param inputFiles files to import into project
      * @param parameters The parameters parameter
      * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataAsJobWithResponseSpec(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec importMsRunDataAsJobWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         return importMsRunDataAsJobRequestCreation(projectId, inputFiles, parameters, optFields);
     }
+
     /**
      * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job
      * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
@@ -992,7 +1004,7 @@ public class ProjectsApi {
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec importMsRunDataAsJobLocallyRequestCreation(String projectId, LcmsSubmissionParameters parameters, List<String> requestBody, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataAsJobLocallyRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = requestBody;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1051,7 +1063,7 @@ public class ProjectsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importMsRunDataAsJobLocally(String projectId, LcmsSubmissionParameters parameters, List<String> requestBody, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job importMsRunDataAsJobLocally(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return importMsRunDataAsJobLocallyRequestCreation(projectId, parameters, requestBody, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -1067,7 +1079,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importMsRunDataAsJobLocallyWithHttpInfo(String projectId, LcmsSubmissionParameters parameters, List<String> requestBody, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> importMsRunDataAsJobLocallyWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return importMsRunDataAsJobLocallyRequestCreation(projectId, parameters, requestBody, optFields).toEntity(localVarReturnType).block();
     }
@@ -1083,9 +1095,10 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataAsJobLocallyWithResponseSpec(String projectId, LcmsSubmissionParameters parameters, List<String> requestBody, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec importMsRunDataAsJobLocallyWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         return importMsRunDataAsJobLocallyRequestCreation(projectId, parameters, requestBody, optFields);
     }
+
     /**
      * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
      * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
@@ -1098,7 +1111,7 @@ public class ProjectsApi {
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec importMsRunDataLocallyRequestCreation(String projectId, LcmsSubmissionParameters parameters, List<String> requestBody) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataLocallyRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         Object postBody = requestBody;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1155,7 +1168,7 @@ public class ProjectsApi {
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ImportResult importMsRunDataLocally(String projectId, LcmsSubmissionParameters parameters, List<String> requestBody) throws WebClientResponseException {
+    public ImportResult importMsRunDataLocally(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return importMsRunDataLocallyRequestCreation(projectId, parameters, requestBody).bodyToMono(localVarReturnType).block();
     }
@@ -1170,7 +1183,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ImportResult&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ImportResult> importMsRunDataLocallyWithHttpInfo(String projectId, LcmsSubmissionParameters parameters, List<String> requestBody) throws WebClientResponseException {
+    public ResponseEntity<ImportResult> importMsRunDataLocallyWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return importMsRunDataLocallyRequestCreation(projectId, parameters, requestBody).toEntity(localVarReturnType).block();
     }
@@ -1185,9 +1198,10 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataLocallyWithResponseSpec(String projectId, LcmsSubmissionParameters parameters, List<String> requestBody) throws WebClientResponseException {
+    public ResponseSpec importMsRunDataLocallyWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull LcmsSubmissionParameters parameters, @jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         return importMsRunDataLocallyRequestCreation(projectId, parameters, requestBody);
     }
+
     /**
      * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
      * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
@@ -1199,7 +1213,7 @@ public class ProjectsApi {
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importPreprocessedDataRequestCreation(String projectId, List<File> inputFiles, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+    private ResponseSpec importPreprocessedDataRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1251,7 +1265,7 @@ public class ProjectsApi {
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ImportResult importPreprocessedData(String projectId, List<File> inputFiles, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+    public ImportResult importPreprocessedData(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return importPreprocessedDataRequestCreation(projectId, inputFiles, ignoreFormulas, allowMs1Only).bodyToMono(localVarReturnType).block();
     }
@@ -1267,7 +1281,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ImportResult&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ImportResult> importPreprocessedDataWithHttpInfo(String projectId, List<File> inputFiles, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+    public ResponseEntity<ImportResult> importPreprocessedDataWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return importPreprocessedDataRequestCreation(projectId, inputFiles, ignoreFormulas, allowMs1Only).toEntity(localVarReturnType).block();
     }
@@ -1283,22 +1297,23 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importPreprocessedDataWithResponseSpec(String projectId, List<File> inputFiles, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+    public ResponseSpec importPreprocessedDataWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only) throws WebClientResponseException {
         return importPreprocessedDataRequestCreation(projectId, inputFiles, ignoreFormulas, allowMs1Only);
     }
+
     /**
      * Import ms/ms data from the given format into the specified project-space as background job.
      * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)
      * <p><b>200</b> - the import job.
      * @param projectId project-space to import into.
-     * @param inputFiles The inputFiles parameter
+     * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importPreprocessedDataAsJobRequestCreation(String projectId, List<File> inputFiles, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec importPreprocessedDataAsJobRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1345,14 +1360,14 @@ public class ProjectsApi {
      * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)
      * <p><b>200</b> - the import job.
      * @param projectId project-space to import into.
-     * @param inputFiles The inputFiles parameter
+     * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importPreprocessedDataAsJob(String projectId, List<File> inputFiles, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job importPreprocessedDataAsJob(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return importPreprocessedDataAsJobRequestCreation(projectId, inputFiles, ignoreFormulas, allowMs1Only, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -1362,14 +1377,14 @@ public class ProjectsApi {
      * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)
      * <p><b>200</b> - the import job.
      * @param projectId project-space to import into.
-     * @param inputFiles The inputFiles parameter
+     * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importPreprocessedDataAsJobWithHttpInfo(String projectId, List<File> inputFiles, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> importPreprocessedDataAsJobWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return importPreprocessedDataAsJobRequestCreation(projectId, inputFiles, ignoreFormulas, allowMs1Only, optFields).toEntity(localVarReturnType).block();
     }
@@ -1379,16 +1394,17 @@ public class ProjectsApi {
      * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)
      * <p><b>200</b> - the import job.
      * @param projectId project-space to import into.
-     * @param inputFiles The inputFiles parameter
+     * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importPreprocessedDataAsJobWithResponseSpec(String projectId, List<File> inputFiles, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec importPreprocessedDataAsJobWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<File> inputFiles, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         return importPreprocessedDataAsJobRequestCreation(projectId, inputFiles, ignoreFormulas, allowMs1Only, optFields);
     }
+
     /**
      * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
      * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
@@ -1403,7 +1419,7 @@ public class ProjectsApi {
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec importPreprocessedDataAsJobLocallyRequestCreation(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec importPreprocessedDataAsJobLocallyRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = requestBody;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1454,7 +1470,7 @@ public class ProjectsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importPreprocessedDataAsJobLocally(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job importPreprocessedDataAsJobLocally(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return importPreprocessedDataAsJobLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -1471,7 +1487,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importPreprocessedDataAsJobLocallyWithHttpInfo(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> importPreprocessedDataAsJobLocallyWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return importPreprocessedDataAsJobLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only, optFields).toEntity(localVarReturnType).block();
     }
@@ -1488,9 +1504,10 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importPreprocessedDataAsJobLocallyWithResponseSpec(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec importPreprocessedDataAsJobLocallyWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         return importPreprocessedDataAsJobLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only, optFields);
     }
+
     /**
      * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
      * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
@@ -1504,7 +1521,7 @@ public class ProjectsApi {
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec importPreprocessedDataLocallyRequestCreation(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+    private ResponseSpec importPreprocessedDataLocallyRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only) throws WebClientResponseException {
         Object postBody = requestBody;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1553,7 +1570,7 @@ public class ProjectsApi {
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ImportResult importPreprocessedDataLocally(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+    public ImportResult importPreprocessedDataLocally(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return importPreprocessedDataLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only).bodyToMono(localVarReturnType).block();
     }
@@ -1569,7 +1586,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ImportResult&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ImportResult> importPreprocessedDataLocallyWithHttpInfo(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+    public ResponseEntity<ImportResult> importPreprocessedDataLocallyWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return importPreprocessedDataLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only).toEntity(localVarReturnType).block();
     }
@@ -1585,9 +1602,10 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importPreprocessedDataLocallyWithResponseSpec(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+    public ResponseSpec importPreprocessedDataLocallyWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean ignoreFormulas, @jakarta.annotation.Nullable Boolean allowMs1Only) throws WebClientResponseException {
         return importPreprocessedDataLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only);
     }
+
     /**
      * Open an existing project-space and make it accessible via the given projectId.
      * Open an existing project-space and make it accessible via the given projectId.
@@ -1598,7 +1616,7 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec openProjectRequestCreation(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec openProjectRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1640,7 +1658,7 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ProjectInfo openProject(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ProjectInfo openProject(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
         return openProjectRequestCreation(projectId, pathToProject, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -1655,7 +1673,7 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ProjectInfo> openProjectWithHttpInfo(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<ProjectInfo> openProjectWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
         return openProjectRequestCreation(projectId, pathToProject, optFields).toEntity(localVarReturnType).block();
     }
@@ -1670,7 +1688,7 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec openProjectWithResponseSpec(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec openProjectWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         return openProjectRequestCreation(projectId, pathToProject, optFields);
     }
 }

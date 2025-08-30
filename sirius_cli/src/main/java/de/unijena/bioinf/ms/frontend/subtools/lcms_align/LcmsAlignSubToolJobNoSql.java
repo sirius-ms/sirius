@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.LCMSProcessing;
 import de.unijena.bioinf.lcms.adducts.AdductManager;
@@ -57,6 +58,7 @@ import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.tags.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectStateException;
@@ -203,6 +205,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         setProjectTypeOrThrow(ps);
+        setProjectSourceFormats(ps);
 
         LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds, ps.getStorage().location().getParent(), inMemoryOnMerged);
         processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
@@ -408,9 +411,16 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         }
     }
 
+    private void setProjectSourceFormats(SiriusProjectDatabaseImpl<? extends Database<?>> ps) {
+        ProjectSourceFormats psSources = ps.findProjectSourceFormats().orElseGet(ProjectSourceFormats::new);
+        inputFiles.stream().map(Path::toString).map(FileUtils::getFileExt).filter(Objects::nonNull)
+                .forEach(psSources::addFormat);
+        ps.upsertProjectSourceFormats(psSources);
+    }
+
     private void setProjectTypeOrThrow(SiriusProjectDatabaseImpl<? extends Database<?>> ps) {
         Optional<ProjectType> psType = ps.findProjectType();
-        if (psType.isPresent()) {
+        if (psType.map(pst -> pst != ProjectType.UNIMPORTED).orElse(false) ) {
             switch (psType.get()) {
                 case DIRECT_IMPORT ->
                         throw new ProjectTypeException("Project already contains data from direct API import. Additional MS run data (.mzml, .mzxml) cannot be added to this project. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, ProjectType.DIRECT_IMPORT);

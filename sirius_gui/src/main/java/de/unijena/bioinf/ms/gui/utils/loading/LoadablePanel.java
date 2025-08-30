@@ -14,6 +14,7 @@ public class LoadablePanel extends JPanel implements Loadable {
 
     protected final AtomicInteger loadingCounter = new AtomicInteger(0);
     private final SiriusCardLayout centerCards = new SiriusCardLayout();
+    private JComponent content;
     //todo transparent overlay instead of card layout would be cool
     //todo maybe add some error state card?
     //todo the spinner progress panel supports progress support. Connect to ProgressJJob and RunInBackgroundAndLoad logic.
@@ -32,8 +33,10 @@ public class LoadablePanel extends JPanel implements Loadable {
     public LoadablePanel(@Nullable JComponent content, @Nullable String loadingText) {
         setLayout(centerCards);
         setOpaque(false);
-        if (content != null)
+        if (content != null) {
+            this.content = content;
             add("content", content);
+        }
         add("load", new SpinnerProgressPanel(loadingText));
     }
 
@@ -44,6 +47,7 @@ public class LoadablePanel extends JPanel implements Loadable {
                 break;
             }
         }
+        this.content = content;
         add("content", content);
         return content;
     }
@@ -68,6 +72,6 @@ public class LoadablePanel extends JPanel implements Loadable {
     }
 
     protected JComponent getContent() {
-        return (JComponent) getComponent(0);
+        return content;
     }
 }

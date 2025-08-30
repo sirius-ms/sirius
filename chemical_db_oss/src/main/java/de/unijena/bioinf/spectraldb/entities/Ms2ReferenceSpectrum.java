@@ -142,6 +142,11 @@ public class Ms2ReferenceSpectrum implements ReferenceSpectrum {
     private SimpleSpectrum spectrum;
 
     /**
+     * Link to spectrum in an online repository
+     */
+    private String url;
+
+    /**
      * Processed spectrum for fast cosine calculation
      */
     @JsonAlias("querySpectrum") //allows us to read old databases as well (Old name was never released but already used a lot internally).

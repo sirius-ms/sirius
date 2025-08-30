@@ -83,9 +83,9 @@ public class FeaturesApiTest {
     public void testGetAlignedFeatures() {
         String projectId = project.getProjectId();
         List<AlignedFeatureOptField> featureOptFields = List.of(
-                AlignedFeatureOptField.TOPANNOTATIONS,
-                AlignedFeatureOptField.TOPANNOTATIONSDENOVO,
-                AlignedFeatureOptField.MSDATA
+                AlignedFeatureOptField.TOP_ANNOTATIONS,
+                AlignedFeatureOptField.TOP_ANNOTATIONS_DE_NOVO,
+                AlignedFeatureOptField.MS_DATA
         );
 
         List<AlignedFeature> response = instance.getAlignedFeatures(projectId, false, featureOptFields);
@@ -136,9 +136,9 @@ public class FeaturesApiTest {
         String alignedFeatureId = featureIdGet;
         List<StructureCandidateOptField> structureCandidateOptField = List.of(
                 StructureCandidateOptField.FINGERPRINT,
-                StructureCandidateOptField.DBLINKS,
-                StructureCandidateOptField.LIBRARYMATCHES,
-                StructureCandidateOptField.STRUCTURESVG
+                StructureCandidateOptField.DB_LINKS,
+                StructureCandidateOptField.LIBRARY_MATCHES,
+                StructureCandidateOptField.STRUCTURE_SVG
         );
 
         List<StructureCandidateFormula> response = instance.getStructureCandidates(projectId, alignedFeatureId, structureCandidateOptField);

@@ -31,7 +31,7 @@ public class RemoveDBOptions implements StandaloneTool<Workflow> {
         return () -> {
             CdkFingerprintVersion version;
             try {
-                version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
+                version = ApplicationCore.WEB_API().getCDKChemDBFingerprintVersion();
             } catch (IOException e) {
                 log.error("Error getting fingerprint version", e);
                 return;

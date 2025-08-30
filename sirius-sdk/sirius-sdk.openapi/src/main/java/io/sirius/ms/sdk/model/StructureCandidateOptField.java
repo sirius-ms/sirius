@@ -40,11 +40,11 @@ public enum StructureCandidateOptField {
   
   FINGERPRINT("fingerprint"),
   
-  DBLINKS("dbLinks"),
+  DB_LINKS("dbLinks"),
   
-  LIBRARYMATCHES("libraryMatches"),
+  LIBRARY_MATCHES("libraryMatches"),
   
-  STRUCTURESVG("structureSvg");
+  STRUCTURE_SVG("structureSvg");
 
   private String value;
 

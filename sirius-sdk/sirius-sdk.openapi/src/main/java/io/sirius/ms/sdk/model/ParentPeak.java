@@ -41,30 +41,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ParentPeak.JSON_PROPERTY_PARENT_FRAGMENT_ID,
   ParentPeak.JSON_PROPERTY_LOSS_FORMULA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ParentPeak {
   public static final String JSON_PROPERTY_PARENT_IDX = "parentIdx";
+  @jakarta.annotation.Nonnull
   private Integer parentIdx;
 
   public static final String JSON_PROPERTY_PARENT_FRAGMENT_ID = "parentFragmentId";
+  @jakarta.annotation.Nonnull
   private Integer parentFragmentId;
 
   public static final String JSON_PROPERTY_LOSS_FORMULA = "lossFormula";
+  @jakarta.annotation.Nonnull
   private String lossFormula;
 
   public ParentPeak() {
   }
 
-  public ParentPeak parentIdx(Integer parentIdx) {
+  public ParentPeak parentIdx(@jakarta.annotation.Nonnull Integer parentIdx) {
     
     this.parentIdx = parentIdx;
     return this;
   }
 
-   /**
+  /**
    * Index to the parent peak connected by this loss in this particular spectrum
    * @return parentIdx
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_PARENT_IDX)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -76,20 +79,20 @@ public class ParentPeak {
 
   @JsonProperty(JSON_PROPERTY_PARENT_IDX)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setParentIdx(Integer parentIdx) {
+  public void setParentIdx(@jakarta.annotation.Nonnull Integer parentIdx) {
     this.parentIdx = parentIdx;
   }
 
-  public ParentPeak parentFragmentId(Integer parentFragmentId) {
+  public ParentPeak parentFragmentId(@jakarta.annotation.Nonnull Integer parentFragmentId) {
     
     this.parentFragmentId = parentFragmentId;
     return this;
   }
 
-   /**
+  /**
    * Identifier of the parent fragment connected via this loss. Can be used to map fragments and peaks  among fragmentation trees and spectra.
    * @return parentFragmentId
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_PARENT_FRAGMENT_ID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -101,20 +104,20 @@ public class ParentPeak {
 
   @JsonProperty(JSON_PROPERTY_PARENT_FRAGMENT_ID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setParentFragmentId(Integer parentFragmentId) {
+  public void setParentFragmentId(@jakarta.annotation.Nonnull Integer parentFragmentId) {
     this.parentFragmentId = parentFragmentId;
   }
 
-  public ParentPeak lossFormula(String lossFormula) {
+  public ParentPeak lossFormula(@jakarta.annotation.Nonnull String lossFormula) {
     
     this.lossFormula = lossFormula;
     return this;
   }
 
-   /**
+  /**
    * Molecular formula of the neutral loss that connects these two peaks.
    * @return lossFormula
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_LOSS_FORMULA)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -126,9 +129,10 @@ public class ParentPeak {
 
   @JsonProperty(JSON_PROPERTY_LOSS_FORMULA)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setLossFormula(String lossFormula) {
+  public void setLossFormula(@jakarta.annotation.Nonnull String lossFormula) {
     this.lossFormula = lossFormula;
   }
+
 
   @Override
   public boolean equals(Object o) {

@@ -27,7 +27,7 @@ public class AddDBOptions implements StandaloneTool<Workflow> {
         return () -> {
             CdkFingerprintVersion version;
             try {
-                version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
+                version = ApplicationCore.WEB_API().getCDKChemDBFingerprintVersion();
                 CustomDatabase newDb = CustomDatabases.open(location, true, version, true);
                 CustomDBPropertyUtils.addDB(location, newDb.name());
             } catch (IOException e) {

@@ -44,27 +44,29 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AnnotatedMsMsData.JSON_PROPERTY_MERGED_MS2,
   AnnotatedMsMsData.JSON_PROPERTY_MS2_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class AnnotatedMsMsData {
   public static final String JSON_PROPERTY_MERGED_MS2 = "mergedMs2";
+  @jakarta.annotation.Nullable
   private AnnotatedSpectrum mergedMs2;
 
   public static final String JSON_PROPERTY_MS2_SPECTRA = "ms2Spectra";
+  @jakarta.annotation.Nonnull
   private List<AnnotatedSpectrum> ms2Spectra = new ArrayList<>();
 
   public AnnotatedMsMsData() {
   }
 
-  public AnnotatedMsMsData mergedMs2(AnnotatedSpectrum mergedMs2) {
+  public AnnotatedMsMsData mergedMs2(@jakarta.annotation.Nullable AnnotatedSpectrum mergedMs2) {
     
     this.mergedMs2 = mergedMs2;
     return this;
   }
 
-   /**
+  /**
    * Get mergedMs2
    * @return mergedMs2
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MERGED_MS2)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -76,11 +78,11 @@ public class AnnotatedMsMsData {
 
   @JsonProperty(JSON_PROPERTY_MERGED_MS2)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setMergedMs2(AnnotatedSpectrum mergedMs2) {
+  public void setMergedMs2(@jakarta.annotation.Nullable AnnotatedSpectrum mergedMs2) {
     this.mergedMs2 = mergedMs2;
   }
 
-  public AnnotatedMsMsData ms2Spectra(List<AnnotatedSpectrum> ms2Spectra) {
+  public AnnotatedMsMsData ms2Spectra(@jakarta.annotation.Nonnull List<AnnotatedSpectrum> ms2Spectra) {
     
     this.ms2Spectra = ms2Spectra;
     return this;
@@ -94,10 +96,10 @@ public class AnnotatedMsMsData {
     return this;
   }
 
-   /**
+  /**
    * Get ms2Spectra
    * @return ms2Spectra
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -109,9 +111,10 @@ public class AnnotatedMsMsData {
 
   @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setMs2Spectra(List<AnnotatedSpectrum> ms2Spectra) {
+  public void setMs2Spectra(@jakarta.annotation.Nonnull List<AnnotatedSpectrum> ms2Spectra) {
     this.ms2Spectra = ms2Spectra;
   }
+
 
   @Override
   public boolean equals(Object o) {

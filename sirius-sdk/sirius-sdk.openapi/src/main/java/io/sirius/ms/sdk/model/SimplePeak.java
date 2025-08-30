@@ -40,27 +40,29 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SimplePeak.JSON_PROPERTY_MZ,
   SimplePeak.JSON_PROPERTY_INTENSITY
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class SimplePeak {
   public static final String JSON_PROPERTY_MZ = "mz";
+  @jakarta.annotation.Nullable
   private Double mz;
 
   public static final String JSON_PROPERTY_INTENSITY = "intensity";
+  @jakarta.annotation.Nullable
   private Double intensity;
 
   public SimplePeak() {
   }
 
-  public SimplePeak mz(Double mz) {
+  public SimplePeak mz(@jakarta.annotation.Nullable Double mz) {
     
     this.mz = mz;
     return this;
   }
 
-   /**
+  /**
    * Get mz
    * @return mz
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -72,20 +74,20 @@ public class SimplePeak {
 
   @JsonProperty(JSON_PROPERTY_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMz(Double mz) {
+  public void setMz(@jakarta.annotation.Nullable Double mz) {
     this.mz = mz;
   }
 
-  public SimplePeak intensity(Double intensity) {
+  public SimplePeak intensity(@jakarta.annotation.Nullable Double intensity) {
     
     this.intensity = intensity;
     return this;
   }
 
-   /**
+  /**
    * Get intensity
    * @return intensity
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -97,9 +99,10 @@ public class SimplePeak {
 
   @JsonProperty(JSON_PROPERTY_INTENSITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIntensity(Double intensity) {
+  public void setIntensity(@jakarta.annotation.Nullable Double intensity) {
     this.intensity = intensity;
   }
+
 
   @Override
   public boolean equals(Object o) {

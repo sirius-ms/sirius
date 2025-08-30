@@ -223,7 +223,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         });
 
 
-        WebWithCustomDatabase chemDB = ApplicationCore.WEB_API.getChemDB();
+        WebWithCustomDatabase chemDB = ApplicationCore.WEB_API().getChemDB();
         List<FTree> trees = new ArrayList<>();
         for (Map.Entry<String, LongOpenHashSet> entry : ids.entrySet()) {
             CustomDataSources.Source source = CustomDataSources.getSourceFromName(entry.getKey());

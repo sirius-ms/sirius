@@ -41,30 +41,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   TagSubmission.JSON_PROPERTY_VALUE,
   TagSubmission.JSON_PROPERTY_TAGGED_OBJECT_ID
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class TagSubmission {
   public static final String JSON_PROPERTY_TAG_NAME = "tagName";
+  @jakarta.annotation.Nonnull
   private String tagName;
 
   public static final String JSON_PROPERTY_VALUE = "value";
+  @jakarta.annotation.Nullable
   private Object value;
 
   public static final String JSON_PROPERTY_TAGGED_OBJECT_ID = "taggedObjectId";
+  @jakarta.annotation.Nonnull
   private String taggedObjectId;
 
   public TagSubmission() {
   }
 
-  public TagSubmission tagName(String tagName) {
+  public TagSubmission tagName(@jakarta.annotation.Nonnull String tagName) {
     
     this.tagName = tagName;
     return this;
   }
 
-   /**
+  /**
    * Name of the tag as defined by the corresponding TagDefinition  Links tag object to their definition.
    * @return tagName
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_TAG_NAME)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -76,20 +79,20 @@ public class TagSubmission {
 
   @JsonProperty(JSON_PROPERTY_TAG_NAME)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setTagName(String tagName) {
+  public void setTagName(@jakarta.annotation.Nonnull String tagName) {
     this.tagName = tagName;
   }
 
-  public TagSubmission value(Object value) {
+  public TagSubmission value(@jakarta.annotation.Nullable Object value) {
     
     this.value = value;
     return this;
   }
 
-   /**
+  /**
    * Optional value of the tag.  &lt;p&gt;  Generic value of the tag as defined by the corresponding TagDefinition.  Can be Integer, Double, Boolean and String, whereas String values can represent Text, Date (yyyy-MM-dd) or Time (HH:mm:ss).
    * @return value
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -101,20 +104,20 @@ public class TagSubmission {
 
   @JsonProperty(JSON_PROPERTY_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setValue(Object value) {
+  public void setValue(@jakarta.annotation.Nullable Object value) {
     this.value = value;
   }
 
-  public TagSubmission taggedObjectId(String taggedObjectId) {
+  public TagSubmission taggedObjectId(@jakarta.annotation.Nonnull String taggedObjectId) {
     
     this.taggedObjectId = taggedObjectId;
     return this;
   }
 
-   /**
+  /**
    * ID of the object where the tag should be added.  Then Object type is taken from context of the API endpoint.
    * @return taggedObjectId
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_TAGGED_OBJECT_ID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -126,9 +129,10 @@ public class TagSubmission {
 
   @JsonProperty(JSON_PROPERTY_TAGGED_OBJECT_ID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setTaggedObjectId(String taggedObjectId) {
+  public void setTaggedObjectId(@jakarta.annotation.Nonnull String taggedObjectId) {
     this.taggedObjectId = taggedObjectId;
   }
+
 
   @Override
   public boolean equals(Object o) {

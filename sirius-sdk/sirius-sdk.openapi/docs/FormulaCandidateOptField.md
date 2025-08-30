@@ -9,19 +9,19 @@
 
 * `STATISTICS` (value: `"statistics"`)
 
-* `FRAGMENTATIONTREE` (value: `"fragmentationTree"`)
+* `FRAGMENTATION_TREE` (value: `"fragmentationTree"`)
 
-* `ANNOTATEDSPECTRUM` (value: `"annotatedSpectrum"`)
+* `ANNOTATED_SPECTRUM` (value: `"annotatedSpectrum"`)
 
-* `ISOTOPEPATTERN` (value: `"isotopePattern"`)
+* `ISOTOPE_PATTERN` (value: `"isotopePattern"`)
 
-* `LIPIDANNOTATION` (value: `"lipidAnnotation"`)
+* `LIPID_ANNOTATION` (value: `"lipidAnnotation"`)
 
-* `PREDICTEDFINGERPRINT` (value: `"predictedFingerprint"`)
+* `PREDICTED_FINGERPRINT` (value: `"predictedFingerprint"`)
 
-* `COMPOUNDCLASSES` (value: `"compoundClasses"`)
+* `COMPOUND_CLASSES` (value: `"compoundClasses"`)
 
-* `CANOPUSPREDICTIONS` (value: `"canopusPredictions"`)
+* `CANOPUS_PREDICTIONS` (value: `"canopusPredictions"`)
 
 
 

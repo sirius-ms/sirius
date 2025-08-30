@@ -20,9 +20,11 @@
 package de.unijena.bioinf.projectspace;
 
 import ca.odell.glazedlists.BasicEventList;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.FastPropertyChangeSupport;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
@@ -30,10 +32,10 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
-import io.sirius.ms.sdk.SiriusClient;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.*;
 import io.sirius.ms.sse.DataEventType;
 import io.sirius.ms.sse.DataObjectEvents;
@@ -175,13 +177,9 @@ public class GuiProjectManager implements Closeable {
                                             .filter(i -> idsToComputeState.containsKey(i.getFeatureId()))
                                             .forEach(inst -> inst.changeComputeStateOfCache(idsToComputeState.get(inst.getFeatureId())));
                                 } finally {
+                                    // we just repaint since the compute state has no influence on sorting or filtering, result deletion or updates are handled later below.
+                                    Jobs.runEDTLater(() -> siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint());
                                     INSTANCE_LIST.getReadWriteLock().readLock().unlock();
-                                    // we just repaint since the compute state has no influence on sorting or filtering
-                                    DefaultEventSelectionModel<InstanceBean> m = siriusGui.getMainFrame().getCompoundListSelectionModel();
-                                    if (!m.isSelectionEmpty()) //todo we should run that for all instances to ensure that all are invalidated.
-                                        GuiProjectManager.this.pcs.firePropertyChange("project.updateInstance" + m.getSelected().getFirst().getFeatureId(), null, null);
-                                    else
-                                        Jobs.runEDTLater(() -> siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint());
                                 }
                             }
                         }
@@ -224,7 +222,7 @@ public class GuiProjectManager implements Closeable {
 
     private synchronized void reloadProjectData() {
         System.out.printf("Remove JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
-        ProjectInfo info = siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.SIZEINFORMATION, ProjectInfoOptField.DETECTEDADDUCTS));
+        ProjectInfo info = siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.SIZE_INFORMATION, ProjectInfoOptField.DETECTED_ADDUCTS));
         totalInstances.set(info.getNumOfFeatures());
         detectedAdducts = info.getDetectedAdducts().stream().map(PrecursorIonType::fromString).collect(Collectors.toSet());
         featureFilterModel.updateAdducts(detectedAdducts);
@@ -351,7 +349,7 @@ public class GuiProjectManager implements Closeable {
     }
 
     public ProjectInfo getProjectInfo() {
-        return getProjectInfo(List.of(ProjectInfoOptField.SIZEINFORMATION, ProjectInfoOptField.COMPATIBILITYINFO));
+        return getProjectInfo(List.of(ProjectInfoOptField.SIZE_INFORMATION, ProjectInfoOptField.COMPATIBILITY_INFO));
     }
 
     public ProjectInfo compactWithLoading(Window parent) {
@@ -371,7 +369,7 @@ public class GuiProjectManager implements Closeable {
     public ProjectInfo compact() {
         String location = getProjectLocation();
         siriusClient.projects().closeProject(projectId, true);
-        return siriusClient.projects().openProject(projectId, location, List.of(ProjectInfoOptField.SIZEINFORMATION));
+        return siriusClient.projects().openProject(projectId, location, List.of(ProjectInfoOptField.SIZE_INFORMATION));
     }
 
     @Override

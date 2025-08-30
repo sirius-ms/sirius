@@ -1,5 +1,5 @@
 {
-	"openApiNullable": "false",
+	"openApiNullable": false,
 	"booleanGetterPrefix": "is",
 	"hideGenerationTimestamp": true,
 	"invokerPackage": "io.sirius.ms.sdk.client",

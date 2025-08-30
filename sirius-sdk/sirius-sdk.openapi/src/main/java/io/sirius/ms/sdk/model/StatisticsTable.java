@@ -54,48 +54,57 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StatisticsTable.JSON_PROPERTY_COLUMN_RIGHT_GROUPS,
   StatisticsTable.JSON_PROPERTY_VALUES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class StatisticsTable {
   public static final String JSON_PROPERTY_STATISTICS_TYPE = "statisticsType";
+  @jakarta.annotation.Nullable
   private StatisticsType statisticsType;
 
   public static final String JSON_PROPERTY_AGGREGATION_TYPE = "aggregationType";
+  @jakarta.annotation.Nullable
   private AggregationType aggregationType;
 
   public static final String JSON_PROPERTY_QUANTIFICATION_MEASURE = "quantificationMeasure";
+  @jakarta.annotation.Nullable
   private QuantMeasure quantificationMeasure;
 
   public static final String JSON_PROPERTY_ROW_TYPE = "rowType";
+  @jakarta.annotation.Nullable
   private QuantRowType rowType;
 
   public static final String JSON_PROPERTY_ROW_IDS = "rowIds";
+  @jakarta.annotation.Nullable
   private List<String> rowIds = new ArrayList<>();
 
   public static final String JSON_PROPERTY_COLUMN_NAMES = "columnNames";
+  @jakarta.annotation.Nullable
   private List<String> columnNames = new ArrayList<>();
 
   public static final String JSON_PROPERTY_COLUMN_LEFT_GROUPS = "columnLeftGroups";
+  @jakarta.annotation.Nullable
   private List<String> columnLeftGroups = new ArrayList<>();
 
   public static final String JSON_PROPERTY_COLUMN_RIGHT_GROUPS = "columnRightGroups";
+  @jakarta.annotation.Nullable
   private List<String> columnRightGroups = new ArrayList<>();
 
   public static final String JSON_PROPERTY_VALUES = "values";
+  @jakarta.annotation.Nullable
   private List<List<Double>> values = new ArrayList<>();
 
   public StatisticsTable() {
   }
 
-  public StatisticsTable statisticsType(StatisticsType statisticsType) {
+  public StatisticsTable statisticsType(@jakarta.annotation.Nullable StatisticsType statisticsType) {
     
     this.statisticsType = statisticsType;
     return this;
   }
 
-   /**
+  /**
    * Get statisticsType
    * @return statisticsType
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STATISTICS_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -107,20 +116,20 @@ public class StatisticsTable {
 
   @JsonProperty(JSON_PROPERTY_STATISTICS_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStatisticsType(StatisticsType statisticsType) {
+  public void setStatisticsType(@jakarta.annotation.Nullable StatisticsType statisticsType) {
     this.statisticsType = statisticsType;
   }
 
-  public StatisticsTable aggregationType(AggregationType aggregationType) {
+  public StatisticsTable aggregationType(@jakarta.annotation.Nullable AggregationType aggregationType) {
     
     this.aggregationType = aggregationType;
     return this;
   }
 
-   /**
+  /**
    * Get aggregationType
    * @return aggregationType
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_AGGREGATION_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -132,20 +141,20 @@ public class StatisticsTable {
 
   @JsonProperty(JSON_PROPERTY_AGGREGATION_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAggregationType(AggregationType aggregationType) {
+  public void setAggregationType(@jakarta.annotation.Nullable AggregationType aggregationType) {
     this.aggregationType = aggregationType;
   }
 
-  public StatisticsTable quantificationMeasure(QuantMeasure quantificationMeasure) {
+  public StatisticsTable quantificationMeasure(@jakarta.annotation.Nullable QuantMeasure quantificationMeasure) {
     
     this.quantificationMeasure = quantificationMeasure;
     return this;
   }
 
-   /**
+  /**
    * Get quantificationMeasure
    * @return quantificationMeasure
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -157,20 +166,20 @@ public class StatisticsTable {
 
   @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setQuantificationMeasure(QuantMeasure quantificationMeasure) {
+  public void setQuantificationMeasure(@jakarta.annotation.Nullable QuantMeasure quantificationMeasure) {
     this.quantificationMeasure = quantificationMeasure;
   }
 
-  public StatisticsTable rowType(QuantRowType rowType) {
+  public StatisticsTable rowType(@jakarta.annotation.Nullable QuantRowType rowType) {
     
     this.rowType = rowType;
     return this;
   }
 
-   /**
+  /**
    * Get rowType
    * @return rowType
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ROW_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -182,11 +191,11 @@ public class StatisticsTable {
 
   @JsonProperty(JSON_PROPERTY_ROW_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRowType(QuantRowType rowType) {
+  public void setRowType(@jakarta.annotation.Nullable QuantRowType rowType) {
     this.rowType = rowType;
   }
 
-  public StatisticsTable rowIds(List<String> rowIds) {
+  public StatisticsTable rowIds(@jakarta.annotation.Nullable List<String> rowIds) {
     
     this.rowIds = rowIds;
     return this;
@@ -200,10 +209,10 @@ public class StatisticsTable {
     return this;
   }
 
-   /**
+  /**
    * Get rowIds
    * @return rowIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ROW_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -215,11 +224,11 @@ public class StatisticsTable {
 
   @JsonProperty(JSON_PROPERTY_ROW_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRowIds(List<String> rowIds) {
+  public void setRowIds(@jakarta.annotation.Nullable List<String> rowIds) {
     this.rowIds = rowIds;
   }
 
-  public StatisticsTable columnNames(List<String> columnNames) {
+  public StatisticsTable columnNames(@jakarta.annotation.Nullable List<String> columnNames) {
     
     this.columnNames = columnNames;
     return this;
@@ -233,10 +242,10 @@ public class StatisticsTable {
     return this;
   }
 
-   /**
+  /**
    * Get columnNames
    * @return columnNames
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COLUMN_NAMES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -248,11 +257,11 @@ public class StatisticsTable {
 
   @JsonProperty(JSON_PROPERTY_COLUMN_NAMES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setColumnNames(List<String> columnNames) {
+  public void setColumnNames(@jakarta.annotation.Nullable List<String> columnNames) {
     this.columnNames = columnNames;
   }
 
-  public StatisticsTable columnLeftGroups(List<String> columnLeftGroups) {
+  public StatisticsTable columnLeftGroups(@jakarta.annotation.Nullable List<String> columnLeftGroups) {
     
     this.columnLeftGroups = columnLeftGroups;
     return this;
@@ -266,10 +275,10 @@ public class StatisticsTable {
     return this;
   }
 
-   /**
+  /**
    * Get columnLeftGroups
    * @return columnLeftGroups
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COLUMN_LEFT_GROUPS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -281,11 +290,11 @@ public class StatisticsTable {
 
   @JsonProperty(JSON_PROPERTY_COLUMN_LEFT_GROUPS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setColumnLeftGroups(List<String> columnLeftGroups) {
+  public void setColumnLeftGroups(@jakarta.annotation.Nullable List<String> columnLeftGroups) {
     this.columnLeftGroups = columnLeftGroups;
   }
 
-  public StatisticsTable columnRightGroups(List<String> columnRightGroups) {
+  public StatisticsTable columnRightGroups(@jakarta.annotation.Nullable List<String> columnRightGroups) {
     
     this.columnRightGroups = columnRightGroups;
     return this;
@@ -299,10 +308,10 @@ public class StatisticsTable {
     return this;
   }
 
-   /**
+  /**
    * Get columnRightGroups
    * @return columnRightGroups
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COLUMN_RIGHT_GROUPS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -314,11 +323,11 @@ public class StatisticsTable {
 
   @JsonProperty(JSON_PROPERTY_COLUMN_RIGHT_GROUPS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setColumnRightGroups(List<String> columnRightGroups) {
+  public void setColumnRightGroups(@jakarta.annotation.Nullable List<String> columnRightGroups) {
     this.columnRightGroups = columnRightGroups;
   }
 
-  public StatisticsTable values(List<List<Double>> values) {
+  public StatisticsTable values(@jakarta.annotation.Nullable List<List<Double>> values) {
     
     this.values = values;
     return this;
@@ -332,10 +341,10 @@ public class StatisticsTable {
     return this;
   }
 
-   /**
+  /**
    * Get values
    * @return values
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_VALUES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -347,9 +356,10 @@ public class StatisticsTable {
 
   @JsonProperty(JSON_PROPERTY_VALUES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setValues(List<List<Double>> values) {
+  public void setValues(@jakarta.annotation.Nullable List<List<Double>> values) {
     this.values = values;
   }
+
 
   @Override
   public boolean equals(Object o) {

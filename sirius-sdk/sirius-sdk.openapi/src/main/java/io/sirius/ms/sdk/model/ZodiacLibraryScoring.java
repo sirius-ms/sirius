@@ -40,27 +40,29 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ZodiacLibraryScoring.JSON_PROPERTY_ENABLED,
   ZodiacLibraryScoring.JSON_PROPERTY_MIN_SIMILARITY
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ZodiacLibraryScoring {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
+  @jakarta.annotation.Nullable
   private Boolean enabled;
 
   public static final String JSON_PROPERTY_MIN_SIMILARITY = "minSimilarity";
+  @jakarta.annotation.Nullable
   private Double minSimilarity;
 
   public ZodiacLibraryScoring() {
   }
 
-  public ZodiacLibraryScoring enabled(Boolean enabled) {
+  public ZodiacLibraryScoring enabled(@jakarta.annotation.Nullable Boolean enabled) {
     
     this.enabled = enabled;
     return this;
   }
 
-   /**
+  /**
    * Get enabled
    * @return enabled
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -72,20 +74,20 @@ public class ZodiacLibraryScoring {
 
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnabled(Boolean enabled) {
+  public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
   }
 
-  public ZodiacLibraryScoring minSimilarity(Double minSimilarity) {
+  public ZodiacLibraryScoring minSimilarity(@jakarta.annotation.Nullable Double minSimilarity) {
     
     this.minSimilarity = minSimilarity;
     return this;
   }
 
-   /**
+  /**
    * Get minSimilarity
    * @return minSimilarity
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -97,9 +99,10 @@ public class ZodiacLibraryScoring {
 
   @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinSimilarity(Double minSimilarity) {
+  public void setMinSimilarity(@jakarta.annotation.Nullable Double minSimilarity) {
     this.minSimilarity = minSimilarity;
   }
+
 
   @Override
   public boolean equals(Object o) {

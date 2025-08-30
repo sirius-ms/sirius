@@ -41,30 +41,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ZodiacEpochs.JSON_PROPERTY_BURN_IN_PERIOD,
   ZodiacEpochs.JSON_PROPERTY_NUMBER_OF_MARKOV_CHAINS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ZodiacEpochs {
   public static final String JSON_PROPERTY_ITERATIONS = "iterations";
+  @jakarta.annotation.Nullable
   private Integer iterations;
 
   public static final String JSON_PROPERTY_BURN_IN_PERIOD = "burnInPeriod";
+  @jakarta.annotation.Nullable
   private Integer burnInPeriod;
 
   public static final String JSON_PROPERTY_NUMBER_OF_MARKOV_CHAINS = "numberOfMarkovChains";
+  @jakarta.annotation.Nullable
   private Integer numberOfMarkovChains;
 
   public ZodiacEpochs() {
   }
 
-  public ZodiacEpochs iterations(Integer iterations) {
+  public ZodiacEpochs iterations(@jakarta.annotation.Nullable Integer iterations) {
     
     this.iterations = iterations;
     return this;
   }
 
-   /**
+  /**
    * Get iterations
    * @return iterations
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ITERATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -76,20 +79,20 @@ public class ZodiacEpochs {
 
   @JsonProperty(JSON_PROPERTY_ITERATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIterations(Integer iterations) {
+  public void setIterations(@jakarta.annotation.Nullable Integer iterations) {
     this.iterations = iterations;
   }
 
-  public ZodiacEpochs burnInPeriod(Integer burnInPeriod) {
+  public ZodiacEpochs burnInPeriod(@jakarta.annotation.Nullable Integer burnInPeriod) {
     
     this.burnInPeriod = burnInPeriod;
     return this;
   }
 
-   /**
+  /**
    * Get burnInPeriod
    * @return burnInPeriod
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_BURN_IN_PERIOD)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -101,20 +104,20 @@ public class ZodiacEpochs {
 
   @JsonProperty(JSON_PROPERTY_BURN_IN_PERIOD)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setBurnInPeriod(Integer burnInPeriod) {
+  public void setBurnInPeriod(@jakarta.annotation.Nullable Integer burnInPeriod) {
     this.burnInPeriod = burnInPeriod;
   }
 
-  public ZodiacEpochs numberOfMarkovChains(Integer numberOfMarkovChains) {
+  public ZodiacEpochs numberOfMarkovChains(@jakarta.annotation.Nullable Integer numberOfMarkovChains) {
     
     this.numberOfMarkovChains = numberOfMarkovChains;
     return this;
   }
 
-   /**
+  /**
    * Get numberOfMarkovChains
    * @return numberOfMarkovChains
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_MARKOV_CHAINS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -126,9 +129,10 @@ public class ZodiacEpochs {
 
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_MARKOV_CHAINS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumberOfMarkovChains(Integer numberOfMarkovChains) {
+  public void setNumberOfMarkovChains(@jakarta.annotation.Nullable Integer numberOfMarkovChains) {
     this.numberOfMarkovChains = numberOfMarkovChains;
   }
+
 
   @Override
   public boolean equals(Object o) {

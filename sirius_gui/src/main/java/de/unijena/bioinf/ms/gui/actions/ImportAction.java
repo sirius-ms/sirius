@@ -19,24 +19,29 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.import5.CombinedImportDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.ProblemResponse;
 import de.unijena.bioinf.projectspace.InstanceImporter;
 import io.sirius.ms.sdk.jjobs.SseProgressJJob;
-import io.sirius.ms.sdk.model.*;
+import io.sirius.ms.sdk.model.Job;
+import io.sirius.ms.sdk.model.JobOptField;
+import io.sirius.ms.sdk.model.LcmsSubmissionParameters;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,15 +52,18 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static de.unijena.bioinf.ms.rest.model.ProblemResponses.ERROR_TYPE_IMPORT_VALIDATION;
+
 /**
  * @author Markus Fleischauer
  */
+@Slf4j
 public class ImportAction extends AbstractGuiAction {
 
     public ImportAction(SiriusGui gui) {
         super("Import", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.DOCS.derive(32,32));
-        putValue(Action.SMALL_ICON, Icons.DOCS.derive(16,16));
+        putValue(Action.LARGE_ICON_KEY, Icons.DOCS.derive(32, 32));
+        putValue(Action.SMALL_ICON, Icons.DOCS.derive(16, 16));
         putValue(Action.SHORT_DESCRIPTION, "<html>" +
                 "<p>Import measurements of:</p>" +
                 "<ul style=\"list-style-type:none;\">" +
@@ -151,10 +159,32 @@ public class ImportAction extends AbstractGuiAction {
             }
 
         } catch (Exception e) {
+            try {
+                if (e instanceof WebClientResponseException we) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    ProblemResponse problemDetail = mapper.readValue(we.getResponseBodyAsString(), ProblemResponse.class);
+
+                    if (ERROR_TYPE_IMPORT_VALIDATION.equals(problemDetail.getType())) {
+                        List<String> messages = new ArrayList<>();
+                        messages.add(problemDetail.getDetail());
+                        messages.add("");
+                        messages.add("Allowed formats: " + String.join(", " ,(Collection<? extends String>) problemDetail.getProperties().get("allowedFormats")));
+
+                        new ErrorWithDetailsDialog(gui.getMainFrame(), GuiUtils.formatAndStripToolTip(messages), problemDetail);
+                        return;
+                    } else {
+                        new ErrorWithDetailsDialog(gui.getMainFrame(), problemDetail);
+                        return;
+                    }
+                }
+            } catch (Exception ex) {
+                log.warn("Error while parsing error information.", ex);
+            }
+
             String m = Objects.requireNonNullElse(e.getMessage(), "");
             Stream.of("ProjectTypeException:", "ProjectStateException:").filter(m::contains).findFirst().ifPresentOrElse(
                     extText -> Jobs.runEDTLater(() -> new WarningDialog(gui.getMainFrame(), extText, GuiUtils.formatAndStripToolTip(m.substring(m.lastIndexOf(extText) + extText.length()).split(" \\| ")[0]), null)),
-                    () -> Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(),
+                    () -> Jobs.runEDTLater(() -> new ErrorWithDetailsDialog(gui.getMainFrame(),
                             GuiUtils.formatAndStripToolTip("Data import failed. This project may be incomplete or corrupted.", "We recommend discontinuing its use.", "", e.getMessage()), e.getCause() != null ? e.getCause() : e))
             );
         }

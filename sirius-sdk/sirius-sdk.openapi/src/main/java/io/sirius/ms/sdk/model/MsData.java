@@ -47,36 +47,41 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   MsData.JSON_PROPERTY_MS1_SPECTRA,
   MsData.JSON_PROPERTY_MS2_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class MsData {
   public static final String JSON_PROPERTY_ISOTOPE_PATTERN = "isotopePattern";
+  @jakarta.annotation.Nullable
   private BasicSpectrum isotopePattern;
 
   public static final String JSON_PROPERTY_MERGED_MS1 = "mergedMs1";
+  @jakarta.annotation.Nullable
   private BasicSpectrum mergedMs1;
 
   public static final String JSON_PROPERTY_MERGED_MS2 = "mergedMs2";
+  @jakarta.annotation.Nullable
   private BasicSpectrum mergedMs2;
 
   public static final String JSON_PROPERTY_MS1_SPECTRA = "ms1Spectra";
+  @jakarta.annotation.Nullable
   private List<BasicSpectrum> ms1Spectra = new ArrayList<>();
 
   public static final String JSON_PROPERTY_MS2_SPECTRA = "ms2Spectra";
+  @jakarta.annotation.Nullable
   private List<BasicSpectrum> ms2Spectra = new ArrayList<>();
 
   public MsData() {
   }
 
-  public MsData isotopePattern(BasicSpectrum isotopePattern) {
+  public MsData isotopePattern(@jakarta.annotation.Nullable BasicSpectrum isotopePattern) {
     
     this.isotopePattern = isotopePattern;
     return this;
   }
 
-   /**
+  /**
    * Get isotopePattern
    * @return isotopePattern
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -88,20 +93,20 @@ public class MsData {
 
   @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIsotopePattern(BasicSpectrum isotopePattern) {
+  public void setIsotopePattern(@jakarta.annotation.Nullable BasicSpectrum isotopePattern) {
     this.isotopePattern = isotopePattern;
   }
 
-  public MsData mergedMs1(BasicSpectrum mergedMs1) {
+  public MsData mergedMs1(@jakarta.annotation.Nullable BasicSpectrum mergedMs1) {
     
     this.mergedMs1 = mergedMs1;
     return this;
   }
 
-   /**
+  /**
    * Get mergedMs1
    * @return mergedMs1
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MERGED_MS1)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -113,20 +118,20 @@ public class MsData {
 
   @JsonProperty(JSON_PROPERTY_MERGED_MS1)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMergedMs1(BasicSpectrum mergedMs1) {
+  public void setMergedMs1(@jakarta.annotation.Nullable BasicSpectrum mergedMs1) {
     this.mergedMs1 = mergedMs1;
   }
 
-  public MsData mergedMs2(BasicSpectrum mergedMs2) {
+  public MsData mergedMs2(@jakarta.annotation.Nullable BasicSpectrum mergedMs2) {
     
     this.mergedMs2 = mergedMs2;
     return this;
   }
 
-   /**
+  /**
    * Get mergedMs2
    * @return mergedMs2
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MERGED_MS2)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -138,11 +143,11 @@ public class MsData {
 
   @JsonProperty(JSON_PROPERTY_MERGED_MS2)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMergedMs2(BasicSpectrum mergedMs2) {
+  public void setMergedMs2(@jakarta.annotation.Nullable BasicSpectrum mergedMs2) {
     this.mergedMs2 = mergedMs2;
   }
 
-  public MsData ms1Spectra(List<BasicSpectrum> ms1Spectra) {
+  public MsData ms1Spectra(@jakarta.annotation.Nullable List<BasicSpectrum> ms1Spectra) {
     
     this.ms1Spectra = ms1Spectra;
     return this;
@@ -156,10 +161,10 @@ public class MsData {
     return this;
   }
 
-   /**
+  /**
    * Get ms1Spectra
    * @return ms1Spectra
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -171,11 +176,11 @@ public class MsData {
 
   @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMs1Spectra(List<BasicSpectrum> ms1Spectra) {
+  public void setMs1Spectra(@jakarta.annotation.Nullable List<BasicSpectrum> ms1Spectra) {
     this.ms1Spectra = ms1Spectra;
   }
 
-  public MsData ms2Spectra(List<BasicSpectrum> ms2Spectra) {
+  public MsData ms2Spectra(@jakarta.annotation.Nullable List<BasicSpectrum> ms2Spectra) {
     
     this.ms2Spectra = ms2Spectra;
     return this;
@@ -189,10 +194,10 @@ public class MsData {
     return this;
   }
 
-   /**
+  /**
    * Get ms2Spectra
    * @return ms2Spectra
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -204,9 +209,10 @@ public class MsData {
 
   @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMs2Spectra(List<BasicSpectrum> ms2Spectra) {
+  public void setMs2Spectra(@jakarta.annotation.Nullable List<BasicSpectrum> ms2Spectra) {
     this.ms2Spectra = ms2Spectra;
   }
+
 
   @Override
   public boolean equals(Object o) {

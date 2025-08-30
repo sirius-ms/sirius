@@ -13,24 +13,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class JobsApi {
     private ApiClient apiClient;
 
@@ -38,7 +39,6 @@ public class JobsApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public JobsApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
@@ -51,6 +51,7 @@ public class JobsApi {
         this.apiClient = apiClient;
     }
 
+    
     /**
      * Delete job.
      * Delete job. Specify how to behave for running jobs.
@@ -61,7 +62,7 @@ public class JobsApi {
      * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteJobRequestCreation(String projectId, String jobId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+    private ResponseSpec deleteJobRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobId, @jakarta.annotation.Nullable Boolean cancelIfRunning, @jakarta.annotation.Nullable Boolean awaitDeletion) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -106,7 +107,7 @@ public class JobsApi {
      * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteJob(String projectId, String jobId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+    public void deleteJob(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobId, @jakarta.annotation.Nullable Boolean cancelIfRunning, @jakarta.annotation.Nullable Boolean awaitDeletion) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         deleteJobRequestCreation(projectId, jobId, cancelIfRunning, awaitDeletion).bodyToMono(localVarReturnType).block();
     }
@@ -121,7 +122,7 @@ public class JobsApi {
      * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteJobWithHttpInfo(String projectId, String jobId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteJobWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobId, @jakarta.annotation.Nullable Boolean cancelIfRunning, @jakarta.annotation.Nullable Boolean awaitDeletion) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return deleteJobRequestCreation(projectId, jobId, cancelIfRunning, awaitDeletion).toEntity(localVarReturnType).block();
     }
@@ -137,9 +138,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteJobWithResponseSpec(String projectId, String jobId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+    public ResponseSpec deleteJobWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobId, @jakarta.annotation.Nullable Boolean cancelIfRunning, @jakarta.annotation.Nullable Boolean awaitDeletion) throws WebClientResponseException {
         return deleteJobRequestCreation(projectId, jobId, cancelIfRunning, awaitDeletion);
     }
+
     /**
      * Delete job configuration with given name.
      * Delete job configuration with given name.
@@ -147,7 +149,7 @@ public class JobsApi {
      * @param name name of the job-config to delete
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteJobConfigRequestCreation(String name) throws WebClientResponseException {
+    private ResponseSpec deleteJobConfigRequestCreation(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'name' is set
         if (name == null) {
@@ -181,7 +183,7 @@ public class JobsApi {
      * @param name name of the job-config to delete
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteJobConfig(String name) throws WebClientResponseException {
+    public void deleteJobConfig(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         deleteJobConfigRequestCreation(name).bodyToMono(localVarReturnType).block();
     }
@@ -193,7 +195,7 @@ public class JobsApi {
      * @param name name of the job-config to delete
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteJobConfigWithHttpInfo(String name) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteJobConfigWithHttpInfo(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return deleteJobConfigRequestCreation(name).toEntity(localVarReturnType).block();
     }
@@ -206,9 +208,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteJobConfigWithResponseSpec(String name) throws WebClientResponseException {
+    public ResponseSpec deleteJobConfigWithResponseSpec(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
         return deleteJobConfigRequestCreation(name);
     }
+
     /**
      * * Delete ALL jobs.
      * * Delete ALL jobs. Specify how to behave for running jobs.
@@ -218,7 +221,7 @@ public class JobsApi {
      * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteJobsRequestCreation(String projectId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+    private ResponseSpec deleteJobsRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean cancelIfRunning, @jakarta.annotation.Nullable Boolean awaitDeletion) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -257,7 +260,7 @@ public class JobsApi {
      * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteJobs(String projectId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+    public void deleteJobs(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean cancelIfRunning, @jakarta.annotation.Nullable Boolean awaitDeletion) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         deleteJobsRequestCreation(projectId, cancelIfRunning, awaitDeletion).bodyToMono(localVarReturnType).block();
     }
@@ -271,7 +274,7 @@ public class JobsApi {
      * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteJobsWithHttpInfo(String projectId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteJobsWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean cancelIfRunning, @jakarta.annotation.Nullable Boolean awaitDeletion) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return deleteJobsRequestCreation(projectId, cancelIfRunning, awaitDeletion).toEntity(localVarReturnType).block();
     }
@@ -286,9 +289,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteJobsWithResponseSpec(String projectId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
+    public ResponseSpec deleteJobsWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean cancelIfRunning, @jakarta.annotation.Nullable Boolean awaitDeletion) throws WebClientResponseException {
         return deleteJobsRequestCreation(projectId, cancelIfRunning, awaitDeletion);
     }
+
     /**
      * Get a CLI command for the given job configuration.
      * Get a CLI command for the given job configuration.
@@ -297,7 +301,7 @@ public class JobsApi {
      * @return List&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCommandRequestCreation(JobSubmission jobSubmission) throws WebClientResponseException {
+    private ResponseSpec getCommandRequestCreation(@jakarta.annotation.Nonnull JobSubmission jobSubmission) throws WebClientResponseException {
         Object postBody = jobSubmission;
         // verify the required parameter 'jobSubmission' is set
         if (jobSubmission == null) {
@@ -334,7 +338,7 @@ public class JobsApi {
      * @return List&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<String> getCommand(JobSubmission jobSubmission) throws WebClientResponseException {
+    public List<String> getCommand(@jakarta.annotation.Nonnull JobSubmission jobSubmission) throws WebClientResponseException {
         ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
         return getCommandRequestCreation(jobSubmission).bodyToMono(localVarReturnType).block();
     }
@@ -347,7 +351,7 @@ public class JobsApi {
      * @return ResponseEntity&lt;List&lt;String&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<String>> getCommandWithHttpInfo(JobSubmission jobSubmission) throws WebClientResponseException {
+    public ResponseEntity<List<String>> getCommandWithHttpInfo(@jakarta.annotation.Nonnull JobSubmission jobSubmission) throws WebClientResponseException {
         ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
         return getCommandRequestCreation(jobSubmission).toEntity(localVarReturnType).block();
     }
@@ -360,9 +364,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCommandWithResponseSpec(JobSubmission jobSubmission) throws WebClientResponseException {
+    public ResponseSpec getCommandWithResponseSpec(@jakarta.annotation.Nonnull JobSubmission jobSubmission) throws WebClientResponseException {
         return getCommandRequestCreation(jobSubmission);
     }
+
     /**
      * Request default job configuration
      * Request default job configuration
@@ -373,7 +378,7 @@ public class JobsApi {
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getDefaultJobConfigRequestCreation(Boolean includeConfigMap, Boolean moveParametersToConfigMap, Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
+    private ResponseSpec getDefaultJobConfigRequestCreation(@jakarta.annotation.Nullable Boolean includeConfigMap, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap, @jakarta.annotation.Nullable Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -410,7 +415,7 @@ public class JobsApi {
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public JobSubmission getDefaultJobConfig(Boolean includeConfigMap, Boolean moveParametersToConfigMap, Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
+    public JobSubmission getDefaultJobConfig(@jakarta.annotation.Nullable Boolean includeConfigMap, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap, @jakarta.annotation.Nullable Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
         return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch).bodyToMono(localVarReturnType).block();
     }
@@ -425,7 +430,7 @@ public class JobsApi {
      * @return ResponseEntity&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<JobSubmission> getDefaultJobConfigWithHttpInfo(Boolean includeConfigMap, Boolean moveParametersToConfigMap, Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
+    public ResponseEntity<JobSubmission> getDefaultJobConfigWithHttpInfo(@jakarta.annotation.Nullable Boolean includeConfigMap, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap, @jakarta.annotation.Nullable Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
         return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch).toEntity(localVarReturnType).block();
     }
@@ -440,9 +445,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getDefaultJobConfigWithResponseSpec(Boolean includeConfigMap, Boolean moveParametersToConfigMap, Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
+    public ResponseSpec getDefaultJobConfigWithResponseSpec(@jakarta.annotation.Nullable Boolean includeConfigMap, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap, @jakarta.annotation.Nullable Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
         return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch);
     }
+
     /**
      * Get job information and its current state and progress (if available).
      * Get job information and its current state and progress (if available).
@@ -453,7 +459,7 @@ public class JobsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getJobRequestCreation(String projectId, String jobId, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getJobRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -499,7 +505,7 @@ public class JobsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job getJob(String projectId, String jobId, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job getJob(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return getJobRequestCreation(projectId, jobId, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -514,7 +520,7 @@ public class JobsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> getJobWithHttpInfo(String projectId, String jobId, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> getJobWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return getJobRequestCreation(projectId, jobId, optFields).toEntity(localVarReturnType).block();
     }
@@ -529,9 +535,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getJobWithResponseSpec(String projectId, String jobId, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getJobWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         return getJobRequestCreation(projectId, jobId, optFields);
     }
+
     /**
      * Request job configuration with given name.
      * Request job configuration with given name.
@@ -541,7 +548,7 @@ public class JobsApi {
      * @return StoredJobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getJobConfigRequestCreation(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    private ResponseSpec getJobConfigRequestCreation(@jakarta.annotation.Nonnull String name, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'name' is set
         if (name == null) {
@@ -581,7 +588,7 @@ public class JobsApi {
      * @return StoredJobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public StoredJobSubmission getJobConfig(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    public StoredJobSubmission getJobConfig(@jakarta.annotation.Nonnull String name, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap) throws WebClientResponseException {
         ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
         return getJobConfigRequestCreation(name, moveParametersToConfigMap).bodyToMono(localVarReturnType).block();
     }
@@ -595,7 +602,7 @@ public class JobsApi {
      * @return ResponseEntity&lt;StoredJobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<StoredJobSubmission> getJobConfigWithHttpInfo(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    public ResponseEntity<StoredJobSubmission> getJobConfigWithHttpInfo(@jakarta.annotation.Nonnull String name, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap) throws WebClientResponseException {
         ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
         return getJobConfigRequestCreation(name, moveParametersToConfigMap).toEntity(localVarReturnType).block();
     }
@@ -609,9 +616,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getJobConfigWithResponseSpec(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    public ResponseSpec getJobConfigWithResponseSpec(@jakarta.annotation.Nonnull String name, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap) throws WebClientResponseException {
         return getJobConfigRequestCreation(name, moveParametersToConfigMap);
     }
+
     /**
      * [DEPRECATED] Get all (non-default) job configuration names  
      * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
@@ -678,6 +686,7 @@ public class JobsApi {
     public ResponseSpec getJobConfigNamesWithResponseSpec() throws WebClientResponseException {
         return getJobConfigNamesRequestCreation();
     }
+
     /**
      * Request all available job configurations
      * Request all available job configurations
@@ -742,6 +751,7 @@ public class JobsApi {
     public ResponseSpec getJobConfigsWithResponseSpec() throws WebClientResponseException {
         return getJobConfigsRequestCreation();
     }
+
     /**
      * Get List of all available jobs with information such as current state and progress (if available).
      * Get List of all available jobs with information such as current state and progress (if available).
@@ -751,7 +761,7 @@ public class JobsApi {
      * @return List&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getJobsRequestCreation(String projectId, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getJobsRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -791,7 +801,7 @@ public class JobsApi {
      * @return List&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Job> getJobs(String projectId, List<JobOptField> optFields) throws WebClientResponseException {
+    public List<Job> getJobs(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return getJobsRequestCreation(projectId, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -805,7 +815,7 @@ public class JobsApi {
      * @return ResponseEntity&lt;List&lt;Job&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Job>> getJobsWithHttpInfo(String projectId, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<Job>> getJobsWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return getJobsRequestCreation(projectId, optFields).toEntityList(localVarReturnType).block();
     }
@@ -819,9 +829,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getJobsWithResponseSpec(String projectId, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getJobsWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         return getJobsRequestCreation(projectId, optFields);
     }
+
     /**
      * Get Page of jobs with information such as current state and progress (if available).
      * Get Page of jobs with information such as current state and progress (if available).
@@ -834,7 +845,7 @@ public class JobsApi {
      * @return PagedModelJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getJobsPagedRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getJobsPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -880,7 +891,7 @@ public class JobsApi {
      * @return PagedModelJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelJob getJobsPaged(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
+    public PagedModelJob getJobsPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelJob> localVarReturnType = new ParameterizedTypeReference<PagedModelJob>() {};
         return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -897,7 +908,7 @@ public class JobsApi {
      * @return ResponseEntity&lt;PagedModelJob&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelJob> getJobsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelJob> getJobsPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelJob> localVarReturnType = new ParameterizedTypeReference<PagedModelJob>() {};
         return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
@@ -914,9 +925,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getJobsPagedWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getJobsPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         return getJobsPagedRequestCreation(projectId, page, size, sort, optFields);
     }
+
     /**
      * 
      * 
@@ -926,7 +938,7 @@ public class JobsApi {
      * @return Boolean
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec hasJobsRequestCreation(String projectId, Boolean includeFinished) throws WebClientResponseException {
+    private ResponseSpec hasJobsRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean includeFinished) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -966,7 +978,7 @@ public class JobsApi {
      * @return Boolean
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Boolean hasJobs(String projectId, Boolean includeFinished) throws WebClientResponseException {
+    public Boolean hasJobs(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean includeFinished) throws WebClientResponseException {
         ParameterizedTypeReference<Boolean> localVarReturnType = new ParameterizedTypeReference<Boolean>() {};
         return hasJobsRequestCreation(projectId, includeFinished).bodyToMono(localVarReturnType).block();
     }
@@ -980,7 +992,7 @@ public class JobsApi {
      * @return ResponseEntity&lt;Boolean&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Boolean> hasJobsWithHttpInfo(String projectId, Boolean includeFinished) throws WebClientResponseException {
+    public ResponseEntity<Boolean> hasJobsWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean includeFinished) throws WebClientResponseException {
         ParameterizedTypeReference<Boolean> localVarReturnType = new ParameterizedTypeReference<Boolean>() {};
         return hasJobsRequestCreation(projectId, includeFinished).toEntity(localVarReturnType).block();
     }
@@ -994,9 +1006,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec hasJobsWithResponseSpec(String projectId, Boolean includeFinished) throws WebClientResponseException {
+    public ResponseSpec hasJobsWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean includeFinished) throws WebClientResponseException {
         return hasJobsRequestCreation(projectId, includeFinished);
     }
+
     /**
      * Add new job configuration with given name.
      * Add new job configuration with given name.
@@ -1008,7 +1021,7 @@ public class JobsApi {
      * @return StoredJobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec saveJobConfigRequestCreation(String name, JobSubmission jobSubmission, Boolean overrideExisting, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    private ResponseSpec saveJobConfigRequestCreation(@jakarta.annotation.Nonnull String name, @jakarta.annotation.Nonnull JobSubmission jobSubmission, @jakarta.annotation.Nullable Boolean overrideExisting, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap) throws WebClientResponseException {
         Object postBody = jobSubmission;
         // verify the required parameter 'name' is set
         if (name == null) {
@@ -1057,7 +1070,7 @@ public class JobsApi {
      * @return StoredJobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public StoredJobSubmission saveJobConfig(String name, JobSubmission jobSubmission, Boolean overrideExisting, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    public StoredJobSubmission saveJobConfig(@jakarta.annotation.Nonnull String name, @jakarta.annotation.Nonnull JobSubmission jobSubmission, @jakarta.annotation.Nullable Boolean overrideExisting, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap) throws WebClientResponseException {
         ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
         return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting, moveParametersToConfigMap).bodyToMono(localVarReturnType).block();
     }
@@ -1073,7 +1086,7 @@ public class JobsApi {
      * @return ResponseEntity&lt;StoredJobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<StoredJobSubmission> saveJobConfigWithHttpInfo(String name, JobSubmission jobSubmission, Boolean overrideExisting, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    public ResponseEntity<StoredJobSubmission> saveJobConfigWithHttpInfo(@jakarta.annotation.Nonnull String name, @jakarta.annotation.Nonnull JobSubmission jobSubmission, @jakarta.annotation.Nullable Boolean overrideExisting, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap) throws WebClientResponseException {
         ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
         return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting, moveParametersToConfigMap).toEntity(localVarReturnType).block();
     }
@@ -1089,9 +1102,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec saveJobConfigWithResponseSpec(String name, JobSubmission jobSubmission, Boolean overrideExisting, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    public ResponseSpec saveJobConfigWithResponseSpec(@jakarta.annotation.Nonnull String name, @jakarta.annotation.Nonnull JobSubmission jobSubmission, @jakarta.annotation.Nullable Boolean overrideExisting, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap) throws WebClientResponseException {
         return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting, moveParametersToConfigMap);
     }
+
     /**
      * [DEPRECATED] Start computation for given command and input
      * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
@@ -1104,7 +1118,7 @@ public class JobsApi {
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec startCommandRequestCreation(String projectId, CommandSubmission commandSubmission, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec startCommandRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull CommandSubmission commandSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = commandSubmission;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1151,7 +1165,7 @@ public class JobsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job startCommand(String projectId, CommandSubmission commandSubmission, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job startCommand(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull CommandSubmission commandSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return startCommandRequestCreation(projectId, commandSubmission, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -1166,7 +1180,7 @@ public class JobsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> startCommandWithHttpInfo(String projectId, CommandSubmission commandSubmission, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> startCommandWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull CommandSubmission commandSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return startCommandRequestCreation(projectId, commandSubmission, optFields).toEntity(localVarReturnType).block();
     }
@@ -1181,9 +1195,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec startCommandWithResponseSpec(String projectId, CommandSubmission commandSubmission, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec startCommandWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull CommandSubmission commandSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         return startCommandRequestCreation(projectId, commandSubmission, optFields);
     }
+
     /**
      * Start computation for given compounds and with given parameters.
      * Start computation for given compounds and with given parameters.
@@ -1194,7 +1209,7 @@ public class JobsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec startJobRequestCreation(String projectId, JobSubmission jobSubmission, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec startJobRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull JobSubmission jobSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = jobSubmission;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1241,7 +1256,7 @@ public class JobsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job startJob(String projectId, JobSubmission jobSubmission, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job startJob(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull JobSubmission jobSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return startJobRequestCreation(projectId, jobSubmission, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -1256,7 +1271,7 @@ public class JobsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> startJobWithHttpInfo(String projectId, JobSubmission jobSubmission, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> startJobWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull JobSubmission jobSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return startJobRequestCreation(projectId, jobSubmission, optFields).toEntity(localVarReturnType).block();
     }
@@ -1271,9 +1286,10 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec startJobWithResponseSpec(String projectId, JobSubmission jobSubmission, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec startJobWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull JobSubmission jobSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         return startJobRequestCreation(projectId, jobSubmission, optFields);
     }
+
     /**
      * Start computation for given compounds and with parameters from a stored job-config.
      * Start computation for given compounds and with parameters from a stored job-config.
@@ -1286,7 +1302,7 @@ public class JobsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec startJobFromConfigRequestCreation(String projectId, String jobConfigName, List<String> requestBody, Boolean recompute, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec startJobFromConfigRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobConfigName, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean recompute, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = requestBody;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1341,7 +1357,7 @@ public class JobsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job startJobFromConfig(String projectId, String jobConfigName, List<String> requestBody, Boolean recompute, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job startJobFromConfig(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobConfigName, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean recompute, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return startJobFromConfigRequestCreation(projectId, jobConfigName, requestBody, recompute, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -1358,7 +1374,7 @@ public class JobsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> startJobFromConfigWithHttpInfo(String projectId, String jobConfigName, List<String> requestBody, Boolean recompute, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> startJobFromConfigWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobConfigName, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean recompute, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return startJobFromConfigRequestCreation(projectId, jobConfigName, requestBody, recompute, optFields).toEntity(localVarReturnType).block();
     }
@@ -1375,7 +1391,7 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec startJobFromConfigWithResponseSpec(String projectId, String jobConfigName, List<String> requestBody, Boolean recompute, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec startJobFromConfigWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String jobConfigName, @jakarta.annotation.Nonnull List<String> requestBody, @jakarta.annotation.Nullable Boolean recompute, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         return startJobFromConfigRequestCreation(projectId, jobConfigName, requestBody, recompute, optFields);
     }
 }

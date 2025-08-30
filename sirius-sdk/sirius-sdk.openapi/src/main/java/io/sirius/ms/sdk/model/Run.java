@@ -52,45 +52,53 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Run.JSON_PROPERTY_MASS_ANALYZERS,
   Run.JSON_PROPERTY_TAGS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class Run {
   public static final String JSON_PROPERTY_RUN_ID = "runId";
+  @jakarta.annotation.Nullable
   private String runId;
 
   public static final String JSON_PROPERTY_NAME = "name";
+  @jakarta.annotation.Nullable
   private String name;
 
   public static final String JSON_PROPERTY_SOURCE = "source";
+  @jakarta.annotation.Nullable
   private String source;
 
   public static final String JSON_PROPERTY_CHROMATOGRAPHY = "chromatography";
+  @jakarta.annotation.Nullable
   private String chromatography;
 
   public static final String JSON_PROPERTY_IONIZATION = "ionization";
+  @jakarta.annotation.Nullable
   private String ionization;
 
   public static final String JSON_PROPERTY_FRAGMENTATION = "fragmentation";
+  @jakarta.annotation.Nullable
   private String fragmentation;
 
   public static final String JSON_PROPERTY_MASS_ANALYZERS = "massAnalyzers";
+  @jakarta.annotation.Nullable
   private List<String> massAnalyzers;
 
   public static final String JSON_PROPERTY_TAGS = "tags";
+  @jakarta.annotation.Nullable
   private Map<String, Tag> tags;
 
   public Run() {
   }
 
-  public Run runId(String runId) {
+  public Run runId(@jakarta.annotation.Nullable String runId) {
     
     this.runId = runId;
     return this;
   }
 
-   /**
+  /**
    * Identifier
    * @return runId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RUN_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -102,20 +110,20 @@ public class Run {
 
   @JsonProperty(JSON_PROPERTY_RUN_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRunId(String runId) {
+  public void setRunId(@jakarta.annotation.Nullable String runId) {
     this.runId = runId;
   }
 
-  public Run name(String name) {
+  public Run name(@jakarta.annotation.Nullable String name) {
     
     this.name = name;
     return this;
   }
 
-   /**
+  /**
    * Informative, human-readable name of this run
    * @return name
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -127,20 +135,20 @@ public class Run {
 
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
+  public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
   }
 
-  public Run source(String source) {
+  public Run source(@jakarta.annotation.Nullable String source) {
     
     this.source = source;
     return this;
   }
 
-   /**
+  /**
    * Source location
    * @return source
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SOURCE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -152,20 +160,20 @@ public class Run {
 
   @JsonProperty(JSON_PROPERTY_SOURCE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSource(String source) {
+  public void setSource(@jakarta.annotation.Nullable String source) {
     this.source = source;
   }
 
-  public Run chromatography(String chromatography) {
+  public Run chromatography(@jakarta.annotation.Nullable String chromatography) {
     
     this.chromatography = chromatography;
     return this;
   }
 
-   /**
+  /**
    * Get chromatography
    * @return chromatography
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CHROMATOGRAPHY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -177,20 +185,20 @@ public class Run {
 
   @JsonProperty(JSON_PROPERTY_CHROMATOGRAPHY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setChromatography(String chromatography) {
+  public void setChromatography(@jakarta.annotation.Nullable String chromatography) {
     this.chromatography = chromatography;
   }
 
-  public Run ionization(String ionization) {
+  public Run ionization(@jakarta.annotation.Nullable String ionization) {
     
     this.ionization = ionization;
     return this;
   }
 
-   /**
+  /**
    * Get ionization
    * @return ionization
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_IONIZATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -202,20 +210,20 @@ public class Run {
 
   @JsonProperty(JSON_PROPERTY_IONIZATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIonization(String ionization) {
+  public void setIonization(@jakarta.annotation.Nullable String ionization) {
     this.ionization = ionization;
   }
 
-  public Run fragmentation(String fragmentation) {
+  public Run fragmentation(@jakarta.annotation.Nullable String fragmentation) {
     
     this.fragmentation = fragmentation;
     return this;
   }
 
-   /**
+  /**
    * Get fragmentation
    * @return fragmentation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FRAGMENTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -227,11 +235,11 @@ public class Run {
 
   @JsonProperty(JSON_PROPERTY_FRAGMENTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFragmentation(String fragmentation) {
+  public void setFragmentation(@jakarta.annotation.Nullable String fragmentation) {
     this.fragmentation = fragmentation;
   }
 
-  public Run massAnalyzers(List<String> massAnalyzers) {
+  public Run massAnalyzers(@jakarta.annotation.Nullable List<String> massAnalyzers) {
     
     this.massAnalyzers = massAnalyzers;
     return this;
@@ -245,10 +253,10 @@ public class Run {
     return this;
   }
 
-   /**
+  /**
    * Get massAnalyzers
    * @return massAnalyzers
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MASS_ANALYZERS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -260,11 +268,11 @@ public class Run {
 
   @JsonProperty(JSON_PROPERTY_MASS_ANALYZERS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMassAnalyzers(List<String> massAnalyzers) {
+  public void setMassAnalyzers(@jakarta.annotation.Nullable List<String> massAnalyzers) {
     this.massAnalyzers = massAnalyzers;
   }
 
-  public Run tags(Map<String, Tag> tags) {
+  public Run tags(@jakarta.annotation.Nullable Map<String, Tag> tags) {
     
     this.tags = tags;
     return this;
@@ -278,10 +286,10 @@ public class Run {
     return this;
   }
 
-   /**
+  /**
    * Key: tagName, value: tag
    * @return tags
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TAGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -293,9 +301,10 @@ public class Run {
 
   @JsonProperty(JSON_PROPERTY_TAGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTags(Map<String, Tag> tags) {
+  public void setTags(@jakarta.annotation.Nullable Map<String, Tag> tags) {
     this.tags = tags;
   }
+
 
   @Override
   public boolean equals(Object o) {

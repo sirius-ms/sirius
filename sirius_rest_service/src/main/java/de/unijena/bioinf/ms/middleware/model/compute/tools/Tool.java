@@ -23,6 +23,8 @@ package de.unijena.bioinf.ms.middleware.model.compute.tools;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import picocli.CommandLine;
 
@@ -37,6 +39,8 @@ public abstract class Tool<C> {
     /**
      * tags whether the tool is enabled
      */
+    @Setter
+    @Getter
     @Builder.Default
     private boolean enabled = true;
 
@@ -48,14 +52,6 @@ public abstract class Tool<C> {
      */
     protected Tool(Class<C> annotatedObject) {
         command = annotatedObject.getAnnotation(CommandLine.Command.class);
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 
     @JsonIgnore

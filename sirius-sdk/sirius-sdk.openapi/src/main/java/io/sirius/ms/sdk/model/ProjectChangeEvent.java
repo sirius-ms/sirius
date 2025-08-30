@@ -45,39 +45,45 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ProjectChangeEvent.JSON_PROPERTY_FORMULA_ID,
   ProjectChangeEvent.JSON_PROPERTY_STRUCTURE_IN_CH_I_KEY
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ProjectChangeEvent {
   public static final String JSON_PROPERTY_EVENT_TYPE = "eventType";
+  @jakarta.annotation.Nullable
   private ProjectEventType eventType;
 
   public static final String JSON_PROPERTY_PROJECT_ID = "projectId";
+  @jakarta.annotation.Nullable
   private String projectId;
 
   public static final String JSON_PROPERTY_COMPOUND_ID = "compoundId";
+  @jakarta.annotation.Nullable
   private String compoundId;
 
   public static final String JSON_PROPERTY_FEATURED_ID = "featuredId";
+  @jakarta.annotation.Nullable
   private String featuredId;
 
   public static final String JSON_PROPERTY_FORMULA_ID = "formulaId";
+  @jakarta.annotation.Nullable
   private String formulaId;
 
   public static final String JSON_PROPERTY_STRUCTURE_IN_CH_I_KEY = "structureInChIKey";
+  @jakarta.annotation.Nullable
   private String structureInChIKey;
 
   public ProjectChangeEvent() {
   }
 
-  public ProjectChangeEvent eventType(ProjectEventType eventType) {
+  public ProjectChangeEvent eventType(@jakarta.annotation.Nullable ProjectEventType eventType) {
     
     this.eventType = eventType;
     return this;
   }
 
-   /**
+  /**
    * Get eventType
    * @return eventType
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_EVENT_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -89,20 +95,20 @@ public class ProjectChangeEvent {
 
   @JsonProperty(JSON_PROPERTY_EVENT_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEventType(ProjectEventType eventType) {
+  public void setEventType(@jakarta.annotation.Nullable ProjectEventType eventType) {
     this.eventType = eventType;
   }
 
-  public ProjectChangeEvent projectId(String projectId) {
+  public ProjectChangeEvent projectId(@jakarta.annotation.Nullable String projectId) {
     
     this.projectId = projectId;
     return this;
   }
 
-   /**
+  /**
    * Get projectId
    * @return projectId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PROJECT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -114,20 +120,20 @@ public class ProjectChangeEvent {
 
   @JsonProperty(JSON_PROPERTY_PROJECT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setProjectId(String projectId) {
+  public void setProjectId(@jakarta.annotation.Nullable String projectId) {
     this.projectId = projectId;
   }
 
-  public ProjectChangeEvent compoundId(String compoundId) {
+  public ProjectChangeEvent compoundId(@jakarta.annotation.Nullable String compoundId) {
     
     this.compoundId = compoundId;
     return this;
   }
 
-   /**
+  /**
    * Get compoundId
    * @return compoundId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -139,20 +145,20 @@ public class ProjectChangeEvent {
 
   @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCompoundId(String compoundId) {
+  public void setCompoundId(@jakarta.annotation.Nullable String compoundId) {
     this.compoundId = compoundId;
   }
 
-  public ProjectChangeEvent featuredId(String featuredId) {
+  public ProjectChangeEvent featuredId(@jakarta.annotation.Nullable String featuredId) {
     
     this.featuredId = featuredId;
     return this;
   }
 
-   /**
+  /**
    * Get featuredId
    * @return featuredId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FEATURED_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -164,20 +170,20 @@ public class ProjectChangeEvent {
 
   @JsonProperty(JSON_PROPERTY_FEATURED_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFeaturedId(String featuredId) {
+  public void setFeaturedId(@jakarta.annotation.Nullable String featuredId) {
     this.featuredId = featuredId;
   }
 
-  public ProjectChangeEvent formulaId(String formulaId) {
+  public ProjectChangeEvent formulaId(@jakarta.annotation.Nullable String formulaId) {
     
     this.formulaId = formulaId;
     return this;
   }
 
-   /**
+  /**
    * Get formulaId
    * @return formulaId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FORMULA_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -189,20 +195,20 @@ public class ProjectChangeEvent {
 
   @JsonProperty(JSON_PROPERTY_FORMULA_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFormulaId(String formulaId) {
+  public void setFormulaId(@jakarta.annotation.Nullable String formulaId) {
     this.formulaId = formulaId;
   }
 
-  public ProjectChangeEvent structureInChIKey(String structureInChIKey) {
+  public ProjectChangeEvent structureInChIKey(@jakarta.annotation.Nullable String structureInChIKey) {
     
     this.structureInChIKey = structureInChIKey;
     return this;
   }
 
-   /**
+  /**
    * Get structureInChIKey
    * @return structureInChIKey
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_IN_CH_I_KEY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -214,9 +220,10 @@ public class ProjectChangeEvent {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_IN_CH_I_KEY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureInChIKey(String structureInChIKey) {
+  public void setStructureInChIKey(@jakarta.annotation.Nullable String structureInChIKey) {
     this.structureInChIKey = structureInChIKey;
   }
+
 
   @Override
   public boolean equals(Object o) {

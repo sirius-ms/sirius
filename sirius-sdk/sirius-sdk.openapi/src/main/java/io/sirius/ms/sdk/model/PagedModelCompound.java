@@ -45,18 +45,20 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PagedModelCompound.JSON_PROPERTY_CONTENT,
   PagedModelCompound.JSON_PROPERTY_PAGE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class PagedModelCompound {
   public static final String JSON_PROPERTY_CONTENT = "content";
+  @jakarta.annotation.Nullable
   private List<Compound> content = new ArrayList<>();
 
   public static final String JSON_PROPERTY_PAGE = "page";
+  @jakarta.annotation.Nullable
   private PageMetadata page;
 
   public PagedModelCompound() {
   }
 
-  public PagedModelCompound content(List<Compound> content) {
+  public PagedModelCompound content(@jakarta.annotation.Nullable List<Compound> content) {
     
     this.content = content;
     return this;
@@ -70,10 +72,10 @@ public class PagedModelCompound {
     return this;
   }
 
-   /**
+  /**
    * Get content
    * @return content
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -85,20 +87,20 @@ public class PagedModelCompound {
 
   @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setContent(List<Compound> content) {
+  public void setContent(@jakarta.annotation.Nullable List<Compound> content) {
     this.content = content;
   }
 
-  public PagedModelCompound page(PageMetadata page) {
+  public PagedModelCompound page(@jakarta.annotation.Nullable PageMetadata page) {
     
     this.page = page;
     return this;
   }
 
-   /**
+  /**
    * Get page
    * @return page
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -110,9 +112,10 @@ public class PagedModelCompound {
 
   @JsonProperty(JSON_PROPERTY_PAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPage(PageMetadata page) {
+  public void setPage(@jakarta.annotation.Nullable PageMetadata page) {
     this.page = page;
   }
+
 
   @Override
   public boolean equals(Object o) {

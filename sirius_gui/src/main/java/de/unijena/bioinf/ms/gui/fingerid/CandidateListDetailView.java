@@ -42,6 +42,7 @@ import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.FMetFilter;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.EpimetheusPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SubstructurePanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -51,6 +52,7 @@ import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.rest.ProxyManager;
+import io.sirius.ms.sdk.model.AllowedFeatures;
 import io.sirius.ms.sdk.model.DBLink;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -79,7 +81,7 @@ import java.util.stream.Collectors;
 
 public class CandidateListDetailView extends CandidateListView implements MouseListener, ActionListener {
     protected JList<FingerprintCandidateBean> candidateList;
-    protected StructureSearcher structureSearcher;
+    protected final StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
     protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum, CopySmiles, sketchStructure;
@@ -167,8 +169,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         candidateList.addMouseListener(this);
         this.structureSearcher = new StructureSearcher(sourceList.getElementList().size());
         this.structureSearcherThread = new Thread(structureSearcher);
-        structureSearcherThread.start();
-        this.structureSearcher.reloadList(sourceList);
         this.molecularPropertyMatcherEditor.setStructureSearcher(structureSearcher);
 
         ///// add popup menu
@@ -200,6 +200,26 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         popupMenu.add(CopyInchi);
         popupMenu.addSeparator();
         popupMenu.add(sketchStructure);
+
+        // Add a PopupMenuListener to dynamically update menu items before they are shown
+        popupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent e) {
+                // This method is called right before the popup menu is displayed.
+                sketchStructure.setEnabled(gui.getAllowedFeatures().map(AllowedFeatures::isDeNovo).orElse(false));
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent e) {
+                // This method is called after the menu is closed. No action needed here.
+            }
+
+            @Override
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent e) {
+                // This method is called if the user dismisses the menu without selecting an item.
+            }
+        });
+
         initializeFunctionalMetabolomicsFunctionality();
         setVisible(true);
     }
@@ -276,7 +296,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         } else if (e.getSource() == sketchStructure) {
             Jobs.runEDTLater(() -> {
                 if (sketcherDialog == null) {
-                    sketcherDialog = new SketcherDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this), gui, c);
+                    sketcherDialog = new SketcherDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this), resultPanel, gui, c);
                     sketcherDialog.setVisible(true);
                 } else {
                     sketcherDialog.updateMolecule(c);
@@ -322,28 +342,61 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             });
 
         } else if (c != null && e.getSource() == this.annotateSpectrum) {
+            EpimetheusPanel structureAnnotationTab = resultPanel.getStructureAnnoTab();
+            if (structureAnnotationTab != null) {
+                final int idx = Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), () -> {
+                    int i = 0;
+                    for (FingerprintCandidateBean fpc : structureAnnotationTab.getCandidateTable().getFilteredSource()) {
+                        if (fpc.getInChiKey().equals(c.getInChiKey()))
+                            return i;
+                        i++;
+                    }
+                    return 0;
+                }).getResult();
 
-            final int idx = Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), () -> {
-                int i = 0;
-                for (FingerprintCandidateBean fpc : resultPanel.getStructureAnnoTab().getCandidateTable().getFilteredSource()) {
-                    if (fpc.getInChiKey().equals(c.getInChiKey()))
-                        return i;
-                    i++;
-                }
-                return 0;
-            }).getResult();
-
-            //select correct compound in annotated spectrum view.
-            Jobs.runEDTLater(() -> {
-                resultPanel.setSelectedComponent(resultPanel.getStructureAnnoTab());
-                resultPanel.getStructureAnnoTab().getCandidateTable().getTable()
-                        .changeSelection(idx, 0, false, false);
-            });
+                //select correct compound in annotated spectrum view.
+                Jobs.runEDTLater(() -> {
+                    resultPanel.setSelectedComponent(structureAnnotationTab);
+                    structureAnnotationTab.getCandidateTable().getTable()
+                            .changeSelection(idx, 0, false, false);
+                });
+            }
         }
     }
 
-    public void dispose() {
-        structureSearcher.stop();
+    /**
+     * Called when the panel is added to a visible container.
+     * This is the best place to start the background thread.
+     */
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if (structureSearcherThread != null && !structureSearcherThread.isAlive()) {
+            structureSearcherThread.start();
+            this.structureSearcher.reloadList(source);
+        }
+    }
+
+    /**
+     * Called just before the panel is removed from its container.
+     * This is the perfect place to stop the background thread.
+     */
+    @Override
+    public void removeNotify() {
+        stop(); // Call your shutdown method
+        super.removeNotify(); // Always call the super method
+    }
+
+    /**
+     * Stops the background thread.
+     */
+    public void stop() {
+        synchronized (structureSearcher) {
+            structureSearcher.stop();
+            if (structureSearcherThread != null) {
+                structureSearcherThread.interrupt(); // Wake up the thread from wait()
+            }
+        }
     }
 
     @Override

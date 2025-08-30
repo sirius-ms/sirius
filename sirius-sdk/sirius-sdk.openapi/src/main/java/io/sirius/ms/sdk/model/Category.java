@@ -47,33 +47,37 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Category.JSON_PROPERTY_OVERALL_QUALITY,
   Category.JSON_PROPERTY_ITEMS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class Category {
   public static final String JSON_PROPERTY_CATEGORY_ID = "categoryId";
+  @jakarta.annotation.Nullable
   private String categoryId;
 
   public static final String JSON_PROPERTY_CATEGORY_NAME = "categoryName";
+  @jakarta.annotation.Nullable
   private String categoryName;
 
   public static final String JSON_PROPERTY_OVERALL_QUALITY = "overallQuality";
+  @jakarta.annotation.Nullable
   private DataQuality overallQuality;
 
   public static final String JSON_PROPERTY_ITEMS = "items";
+  @jakarta.annotation.Nullable
   private List<QualityItem> items = new ArrayList<>();
 
   public Category() {
   }
 
-  public Category categoryId(String categoryId) {
+  public Category categoryId(@jakarta.annotation.Nullable String categoryId) {
     
     this.categoryId = categoryId;
     return this;
   }
 
-   /**
+  /**
    * Get categoryId
    * @return categoryId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CATEGORY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -85,20 +89,20 @@ public class Category {
 
   @JsonProperty(JSON_PROPERTY_CATEGORY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCategoryId(String categoryId) {
+  public void setCategoryId(@jakarta.annotation.Nullable String categoryId) {
     this.categoryId = categoryId;
   }
 
-  public Category categoryName(String categoryName) {
+  public Category categoryName(@jakarta.annotation.Nullable String categoryName) {
     
     this.categoryName = categoryName;
     return this;
   }
 
-   /**
+  /**
    * Get categoryName
    * @return categoryName
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -110,20 +114,20 @@ public class Category {
 
   @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCategoryName(String categoryName) {
+  public void setCategoryName(@jakarta.annotation.Nullable String categoryName) {
     this.categoryName = categoryName;
   }
 
-  public Category overallQuality(DataQuality overallQuality) {
+  public Category overallQuality(@jakarta.annotation.Nullable DataQuality overallQuality) {
     
     this.overallQuality = overallQuality;
     return this;
   }
 
-   /**
+  /**
    * Get overallQuality
    * @return overallQuality
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_OVERALL_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -135,11 +139,11 @@ public class Category {
 
   @JsonProperty(JSON_PROPERTY_OVERALL_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setOverallQuality(DataQuality overallQuality) {
+  public void setOverallQuality(@jakarta.annotation.Nullable DataQuality overallQuality) {
     this.overallQuality = overallQuality;
   }
 
-  public Category items(List<QualityItem> items) {
+  public Category items(@jakarta.annotation.Nullable List<QualityItem> items) {
     
     this.items = items;
     return this;
@@ -153,10 +157,10 @@ public class Category {
     return this;
   }
 
-   /**
+  /**
    * Get items
    * @return items
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ITEMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -168,9 +172,10 @@ public class Category {
 
   @JsonProperty(JSON_PROPERTY_ITEMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setItems(List<QualityItem> items) {
+  public void setItems(@jakarta.annotation.Nullable List<QualityItem> items) {
     this.items = items;
   }
+
 
   @Override
   public boolean equals(Object o) {

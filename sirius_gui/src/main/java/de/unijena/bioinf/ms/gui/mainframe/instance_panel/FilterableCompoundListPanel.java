@@ -20,7 +20,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
@@ -42,12 +42,12 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
 
     private final ExperimentListChangeListener sizeListener = new ExperimentListChangeListener() {
         @Override
-        public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, long totalElements) {
+        public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, long totalElements) {
             decorateElementCounter(selection.getSelected().size(), event.getSourceList().size(), (int) totalElements);
         }
 
         @Override
-        public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, java.util.List<InstanceBean> selected, java.util.List<InstanceBean> deselected, long totalElements) {
+        public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, java.util.List<InstanceBean> selected, java.util.List<InstanceBean> deselected, long totalElements) {
             int selectedSize = selected.size();
             int filteredSize = (deselected.size() + selectedSize);
             decorateElementCounter(selectedSize, filteredSize, (int) totalElements);

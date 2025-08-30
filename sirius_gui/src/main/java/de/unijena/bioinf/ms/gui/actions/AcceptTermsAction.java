@@ -42,7 +42,7 @@ public class AcceptTermsAction extends AbstractGuiAction {
     public synchronized void actionPerformed(ActionEvent e) {
         Jobs.runInBackgroundAndLoad(mainFrame, "Accepting and Refreshing...", () -> {
             try {
-                ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
+                ApplicationCore.WEB_API().acceptTermsAndRefreshToken();
                 return true;
             } catch (IOException ex) {
                 LoggerFactory.getLogger(getClass()).warn("Error when accepting terms.", ex);

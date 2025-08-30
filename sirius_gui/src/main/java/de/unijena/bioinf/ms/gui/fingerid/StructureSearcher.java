@@ -101,7 +101,7 @@ public class StructureSearcher implements Runnable {
                 u.c = c;
                 Jobs.runEDTLater(u);
             } catch (InterruptedException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+                LoggerFactory.getLogger(this.getClass()).debug(e.getMessage(), e);
             }
         }
     }

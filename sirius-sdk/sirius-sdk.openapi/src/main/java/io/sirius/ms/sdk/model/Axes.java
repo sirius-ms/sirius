@@ -44,21 +44,24 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Axes.JSON_PROPERTY_SCAN_IDS,
   Axes.JSON_PROPERTY_RETENTION_TIME_IN_SECONDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class Axes {
   public static final String JSON_PROPERTY_SCAN_NUMBER = "scanNumber";
+  @jakarta.annotation.Nullable
   private List<Integer> scanNumber = new ArrayList<>();
 
   public static final String JSON_PROPERTY_SCAN_IDS = "scanIds";
+  @jakarta.annotation.Nullable
   private List<String> scanIds = new ArrayList<>();
 
   public static final String JSON_PROPERTY_RETENTION_TIME_IN_SECONDS = "retentionTimeInSeconds";
+  @jakarta.annotation.Nullable
   private List<Double> retentionTimeInSeconds = new ArrayList<>();
 
   public Axes() {
   }
 
-  public Axes scanNumber(List<Integer> scanNumber) {
+  public Axes scanNumber(@jakarta.annotation.Nullable List<Integer> scanNumber) {
     
     this.scanNumber = scanNumber;
     return this;
@@ -72,10 +75,10 @@ public class Axes {
     return this;
   }
 
-   /**
+  /**
    * Get scanNumber
    * @return scanNumber
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SCAN_NUMBER)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -87,11 +90,11 @@ public class Axes {
 
   @JsonProperty(JSON_PROPERTY_SCAN_NUMBER)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setScanNumber(List<Integer> scanNumber) {
+  public void setScanNumber(@jakarta.annotation.Nullable List<Integer> scanNumber) {
     this.scanNumber = scanNumber;
   }
 
-  public Axes scanIds(List<String> scanIds) {
+  public Axes scanIds(@jakarta.annotation.Nullable List<String> scanIds) {
     
     this.scanIds = scanIds;
     return this;
@@ -105,10 +108,10 @@ public class Axes {
     return this;
   }
 
-   /**
+  /**
    * Get scanIds
    * @return scanIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SCAN_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -120,11 +123,11 @@ public class Axes {
 
   @JsonProperty(JSON_PROPERTY_SCAN_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setScanIds(List<String> scanIds) {
+  public void setScanIds(@jakarta.annotation.Nullable List<String> scanIds) {
     this.scanIds = scanIds;
   }
 
-  public Axes retentionTimeInSeconds(List<Double> retentionTimeInSeconds) {
+  public Axes retentionTimeInSeconds(@jakarta.annotation.Nullable List<Double> retentionTimeInSeconds) {
     
     this.retentionTimeInSeconds = retentionTimeInSeconds;
     return this;
@@ -138,10 +141,10 @@ public class Axes {
     return this;
   }
 
-   /**
+  /**
    * Get retentionTimeInSeconds
    * @return retentionTimeInSeconds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RETENTION_TIME_IN_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -153,9 +156,10 @@ public class Axes {
 
   @JsonProperty(JSON_PROPERTY_RETENTION_TIME_IN_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRetentionTimeInSeconds(List<Double> retentionTimeInSeconds) {
+  public void setRetentionTimeInSeconds(@jakarta.annotation.Nullable List<Double> retentionTimeInSeconds) {
     this.retentionTimeInSeconds = retentionTimeInSeconds;
   }
+
 
   @Override
   public boolean equals(Object o) {

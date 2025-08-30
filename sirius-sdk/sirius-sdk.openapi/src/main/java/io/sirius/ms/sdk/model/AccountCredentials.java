@@ -41,30 +41,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AccountCredentials.JSON_PROPERTY_PASSWORD,
   AccountCredentials.JSON_PROPERTY_REFRESH_TOKEN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class AccountCredentials {
   public static final String JSON_PROPERTY_USERNAME = "username";
+  @jakarta.annotation.Nullable
   private String username;
 
   public static final String JSON_PROPERTY_PASSWORD = "password";
+  @jakarta.annotation.Nullable
   private String password;
 
   public static final String JSON_PROPERTY_REFRESH_TOKEN = "refreshToken";
+  @jakarta.annotation.Nullable
   private String refreshToken;
 
   public AccountCredentials() {
   }
 
-  public AccountCredentials username(String username) {
+  public AccountCredentials username(@jakarta.annotation.Nullable String username) {
     
     this.username = username;
     return this;
   }
 
-   /**
+  /**
    * Get username
    * @return username
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_USERNAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -76,20 +79,20 @@ public class AccountCredentials {
 
   @JsonProperty(JSON_PROPERTY_USERNAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUsername(String username) {
+  public void setUsername(@jakarta.annotation.Nullable String username) {
     this.username = username;
   }
 
-  public AccountCredentials password(String password) {
+  public AccountCredentials password(@jakarta.annotation.Nullable String password) {
     
     this.password = password;
     return this;
   }
 
-   /**
+  /**
    * Get password
    * @return password
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PASSWORD)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -101,20 +104,20 @@ public class AccountCredentials {
 
   @JsonProperty(JSON_PROPERTY_PASSWORD)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPassword(String password) {
+  public void setPassword(@jakarta.annotation.Nullable String password) {
     this.password = password;
   }
 
-  public AccountCredentials refreshToken(String refreshToken) {
+  public AccountCredentials refreshToken(@jakarta.annotation.Nullable String refreshToken) {
     
     this.refreshToken = refreshToken;
     return this;
   }
 
-   /**
+  /**
    * Get refreshToken
    * @return refreshToken
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_REFRESH_TOKEN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -126,9 +129,10 @@ public class AccountCredentials {
 
   @JsonProperty(JSON_PROPERTY_REFRESH_TOKEN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRefreshToken(String refreshToken) {
+  public void setRefreshToken(@jakarta.annotation.Nullable String refreshToken) {
     this.refreshToken = refreshToken;
   }
+
 
   @Override
   public boolean equals(Object o) {

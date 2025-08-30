@@ -189,7 +189,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
 
                     try {
                         if (r.getSpectrumType()== SpectrumType.MERGED_SPECTRUM) {
-                            MergedReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getMergedReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getCandidateInChiKey(), r.getAdduct(), false);
+                            MergedReferenceSpectrum reference = ApplicationCore.WEB_API().getChemDB().getMergedReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getCandidateInChiKey(), r.getAdduct(), false);
                             builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f |%8s | %s | %s | %s  | %s",
                                     similarity.similarity,
                                     similarity.sharedPeaks,
@@ -202,7 +202,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                                     r.getDbName()
                             ));
                         } else {
-                            Ms2ReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getMs2ReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getUuid());
+                            Ms2ReferenceSpectrum reference = ApplicationCore.WEB_API().getChemDB().getMs2ReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getUuid());
                             builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
                                     similarity.similarity,
                                     similarity.sharedPeaks,

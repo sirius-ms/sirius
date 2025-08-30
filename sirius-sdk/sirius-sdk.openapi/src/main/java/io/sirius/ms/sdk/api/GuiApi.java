@@ -8,24 +8,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class GuiApi {
     private ApiClient apiClient;
 
@@ -33,7 +34,6 @@ public class GuiApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public GuiApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
@@ -46,6 +46,7 @@ public class GuiApi {
         this.apiClient = apiClient;
     }
 
+    
     /**
      * Close GUI instance of given project-space if available.
      * Close GUI instance of given project-space if available.
@@ -55,7 +56,7 @@ public class GuiApi {
      * @return Boolean
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec closeGuiRequestCreation(String projectId, Boolean closeProject) throws WebClientResponseException {
+    private ResponseSpec closeGuiRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean closeProject) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -95,7 +96,7 @@ public class GuiApi {
      * @return Boolean
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Boolean closeGui(String projectId, Boolean closeProject) throws WebClientResponseException {
+    public Boolean closeGui(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean closeProject) throws WebClientResponseException {
         ParameterizedTypeReference<Boolean> localVarReturnType = new ParameterizedTypeReference<Boolean>() {};
         return closeGuiRequestCreation(projectId, closeProject).bodyToMono(localVarReturnType).block();
     }
@@ -109,7 +110,7 @@ public class GuiApi {
      * @return ResponseEntity&lt;Boolean&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Boolean> closeGuiWithHttpInfo(String projectId, Boolean closeProject) throws WebClientResponseException {
+    public ResponseEntity<Boolean> closeGuiWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean closeProject) throws WebClientResponseException {
         ParameterizedTypeReference<Boolean> localVarReturnType = new ParameterizedTypeReference<Boolean>() {};
         return closeGuiRequestCreation(projectId, closeProject).toEntity(localVarReturnType).block();
     }
@@ -123,9 +124,10 @@ public class GuiApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec closeGuiWithResponseSpec(String projectId, Boolean closeProject) throws WebClientResponseException {
+    public ResponseSpec closeGuiWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean closeProject) throws WebClientResponseException {
         return closeGuiRequestCreation(projectId, closeProject);
     }
+
     /**
      * Get list of currently running gui windows, managed by this SIRIUS instance.
      * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
@@ -190,6 +192,7 @@ public class GuiApi {
     public ResponseSpec getGuisWithResponseSpec() throws WebClientResponseException {
         return getGuisRequestCreation();
     }
+
     /**
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
@@ -197,7 +200,7 @@ public class GuiApi {
      * @param projectId of project-space the GUI instance will connect to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec openGuiRequestCreation(String projectId) throws WebClientResponseException {
+    private ResponseSpec openGuiRequestCreation(@jakarta.annotation.Nonnull String projectId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -231,7 +234,7 @@ public class GuiApi {
      * @param projectId of project-space the GUI instance will connect to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void openGui(String projectId) throws WebClientResponseException {
+    public void openGui(@jakarta.annotation.Nonnull String projectId) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         openGuiRequestCreation(projectId).bodyToMono(localVarReturnType).block();
     }
@@ -243,7 +246,7 @@ public class GuiApi {
      * @param projectId of project-space the GUI instance will connect to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> openGuiWithHttpInfo(String projectId) throws WebClientResponseException {
+    public ResponseEntity<Void> openGuiWithHttpInfo(@jakarta.annotation.Nonnull String projectId) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return openGuiRequestCreation(projectId).toEntity(localVarReturnType).block();
     }
@@ -256,7 +259,7 @@ public class GuiApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec openGuiWithResponseSpec(String projectId) throws WebClientResponseException {
+    public ResponseSpec openGuiWithResponseSpec(@jakarta.annotation.Nonnull String projectId) throws WebClientResponseException {
         return openGuiRequestCreation(projectId);
     }
 }

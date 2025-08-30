@@ -26,7 +26,7 @@ import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import io.sirius.ms.sdk.jjobs.SseProgressJJob;
@@ -142,12 +142,12 @@ class ImportDatabaseDialog extends JDialog {
             if (ex instanceof ExecutionException) {
                 LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", ex);
                 if (ex.getCause() != null)
-                    new StacktraceDialog(this, ex.getCause().getMessage(), ex.getCause());
+                    new ErrorWithDetailsDialog(this, ex.getCause().getMessage(), ex.getCause());
                 else
-                    new StacktraceDialog(this, "Unexpected error when importing custom DB!", ex);
+                    new ErrorWithDetailsDialog(this, "Unexpected error when importing custom DB!", ex);
             } else if (!(ex instanceof CancellationException) && !(ex.getCause() instanceof CancellationException)) {
                 LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", ex);
-                new StacktraceDialog(databaseDialog.getGui().getMainFrame(), "Fatal Error during Custom DB import.", ex);
+                new ErrorWithDetailsDialog(databaseDialog.getGui().getMainFrame(), "Fatal Error during Custom DB import.", ex);
             }
 
             if (new QuestionDialog(

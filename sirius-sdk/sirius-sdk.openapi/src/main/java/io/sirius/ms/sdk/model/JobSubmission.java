@@ -64,54 +64,68 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   JobSubmission.JSON_PROPERTY_MS_NOVELIST_PARAMS,
   JobSubmission.JSON_PROPERTY_CONFIG_MAP
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class JobSubmission {
   public static final String JSON_PROPERTY_COMPOUND_IDS = "compoundIds";
+  @jakarta.annotation.Nullable
   private List<String> compoundIds;
 
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_IDS = "alignedFeatureIds";
+  @jakarta.annotation.Nullable
   private List<String> alignedFeatureIds;
 
   public static final String JSON_PROPERTY_FALLBACK_ADDUCTS = "fallbackAdducts";
+  @jakarta.annotation.Nullable
   private List<String> fallbackAdducts;
 
   public static final String JSON_PROPERTY_ENFORCED_ADDUCTS = "enforcedAdducts";
+  @jakarta.annotation.Nullable
   private List<String> enforcedAdducts;
 
   public static final String JSON_PROPERTY_DETECTABLE_ADDUCTS = "detectableAdducts";
+  @jakarta.annotation.Nullable
   private List<String> detectableAdducts;
 
   public static final String JSON_PROPERTY_RECOMPUTE = "recompute";
+  @jakarta.annotation.Nullable
   private Boolean recompute;
 
   public static final String JSON_PROPERTY_SPECTRA_SEARCH_PARAMS = "spectraSearchParams";
+  @jakarta.annotation.Nullable
   private SpectralLibrarySearch spectraSearchParams;
 
   public static final String JSON_PROPERTY_FORMULA_ID_PARAMS = "formulaIdParams";
+  @jakarta.annotation.Nullable
   private Sirius formulaIdParams;
 
   public static final String JSON_PROPERTY_ZODIAC_PARAMS = "zodiacParams";
+  @jakarta.annotation.Nullable
   private Zodiac zodiacParams;
 
   public static final String JSON_PROPERTY_FINGERPRINT_PREDICTION_PARAMS = "fingerprintPredictionParams";
+  @jakarta.annotation.Nullable
   private FingerprintPrediction fingerprintPredictionParams;
 
   public static final String JSON_PROPERTY_CANOPUS_PARAMS = "canopusParams";
+  @jakarta.annotation.Nullable
   private Canopus canopusParams;
 
   public static final String JSON_PROPERTY_STRUCTURE_DB_SEARCH_PARAMS = "structureDbSearchParams";
+  @jakarta.annotation.Nullable
   private StructureDbSearch structureDbSearchParams;
 
   public static final String JSON_PROPERTY_MS_NOVELIST_PARAMS = "msNovelistParams";
+  @jakarta.annotation.Nullable
   private MsNovelist msNovelistParams;
 
   public static final String JSON_PROPERTY_CONFIG_MAP = "configMap";
+  @jakarta.annotation.Nullable
   private Map<String, String> configMap;
 
   public JobSubmission() {
   }
 
-  public JobSubmission compoundIds(List<String> compoundIds) {
+  public JobSubmission compoundIds(@jakarta.annotation.Nullable List<String> compoundIds) {
     
     this.compoundIds = compoundIds;
     return this;
@@ -125,10 +139,10 @@ public class JobSubmission {
     return this;
   }
 
-   /**
+  /**
    * Compounds that should be the input for this Job  Will be converted to the respective alignedFeatureIds for computation.   At least one compoundId or alignedFeatureId needs to be specified.
    * @return compoundIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -140,11 +154,11 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCompoundIds(List<String> compoundIds) {
+  public void setCompoundIds(@jakarta.annotation.Nullable List<String> compoundIds) {
     this.compoundIds = compoundIds;
   }
 
-  public JobSubmission alignedFeatureIds(List<String> alignedFeatureIds) {
+  public JobSubmission alignedFeatureIds(@jakarta.annotation.Nullable List<String> alignedFeatureIds) {
     
     this.alignedFeatureIds = alignedFeatureIds;
     return this;
@@ -158,10 +172,10 @@ public class JobSubmission {
     return this;
   }
 
-   /**
+  /**
    * Features (aligned over runs) that should be the input for this Job   At least one compoundId or alignedFeatureId needs to be specified.
    * @return alignedFeatureIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -173,11 +187,11 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAlignedFeatureIds(List<String> alignedFeatureIds) {
+  public void setAlignedFeatureIds(@jakarta.annotation.Nullable List<String> alignedFeatureIds) {
     this.alignedFeatureIds = alignedFeatureIds;
   }
 
-  public JobSubmission fallbackAdducts(List<String> fallbackAdducts) {
+  public JobSubmission fallbackAdducts(@jakarta.annotation.Nullable List<String> fallbackAdducts) {
     
     this.fallbackAdducts = fallbackAdducts;
     return this;
@@ -191,10 +205,10 @@ public class JobSubmission {
     return this;
   }
 
-   /**
+  /**
    * Describes how to deal with Adducts: Fallback adducts are considered if the auto detection did not find any indication for an ion mode.  Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+  Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-
    * @return fallbackAdducts
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FALLBACK_ADDUCTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -206,11 +220,11 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_FALLBACK_ADDUCTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFallbackAdducts(List<String> fallbackAdducts) {
+  public void setFallbackAdducts(@jakarta.annotation.Nullable List<String> fallbackAdducts) {
     this.fallbackAdducts = fallbackAdducts;
   }
 
-  public JobSubmission enforcedAdducts(List<String> enforcedAdducts) {
+  public JobSubmission enforcedAdducts(@jakarta.annotation.Nullable List<String> enforcedAdducts) {
     
     this.enforcedAdducts = enforcedAdducts;
     return this;
@@ -224,10 +238,10 @@ public class JobSubmission {
     return this;
   }
 
-   /**
+  /**
    * Describes how to deal with Adducts:  Enforced adducts that are always considered.  Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+  Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-
    * @return enforcedAdducts
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ENFORCED_ADDUCTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -239,11 +253,11 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_ENFORCED_ADDUCTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnforcedAdducts(List<String> enforcedAdducts) {
+  public void setEnforcedAdducts(@jakarta.annotation.Nullable List<String> enforcedAdducts) {
     this.enforcedAdducts = enforcedAdducts;
   }
 
-  public JobSubmission detectableAdducts(List<String> detectableAdducts) {
+  public JobSubmission detectableAdducts(@jakarta.annotation.Nullable List<String> detectableAdducts) {
     
     this.detectableAdducts = detectableAdducts;
     return this;
@@ -257,10 +271,10 @@ public class JobSubmission {
     return this;
   }
 
-   /**
+  /**
    * Describes how to deal with Adducts: Detectable adducts which are only considered if there is an indication in the MS1 scan (e.g. correct mass delta).  Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+  Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-
    * @return detectableAdducts
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DETECTABLE_ADDUCTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -272,20 +286,20 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_DETECTABLE_ADDUCTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDetectableAdducts(List<String> detectableAdducts) {
+  public void setDetectableAdducts(@jakarta.annotation.Nullable List<String> detectableAdducts) {
     this.detectableAdducts = detectableAdducts;
   }
 
-  public JobSubmission recompute(Boolean recompute) {
+  public JobSubmission recompute(@jakarta.annotation.Nullable Boolean recompute) {
     
     this.recompute = recompute;
     return this;
   }
 
-   /**
+  /**
    * Indicate if already existing result for a tool to be executed should be overwritten or not.
    * @return recompute
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RECOMPUTE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -297,20 +311,20 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_RECOMPUTE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRecompute(Boolean recompute) {
+  public void setRecompute(@jakarta.annotation.Nullable Boolean recompute) {
     this.recompute = recompute;
   }
 
-  public JobSubmission spectraSearchParams(SpectralLibrarySearch spectraSearchParams) {
+  public JobSubmission spectraSearchParams(@jakarta.annotation.Nullable SpectralLibrarySearch spectraSearchParams) {
     
     this.spectraSearchParams = spectraSearchParams;
     return this;
   }
 
-   /**
+  /**
    * Get spectraSearchParams
    * @return spectraSearchParams
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -322,20 +336,20 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSpectraSearchParams(SpectralLibrarySearch spectraSearchParams) {
+  public void setSpectraSearchParams(@jakarta.annotation.Nullable SpectralLibrarySearch spectraSearchParams) {
     this.spectraSearchParams = spectraSearchParams;
   }
 
-  public JobSubmission formulaIdParams(Sirius formulaIdParams) {
+  public JobSubmission formulaIdParams(@jakarta.annotation.Nullable Sirius formulaIdParams) {
     
     this.formulaIdParams = formulaIdParams;
     return this;
   }
 
-   /**
+  /**
    * Get formulaIdParams
    * @return formulaIdParams
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FORMULA_ID_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -347,20 +361,20 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_FORMULA_ID_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFormulaIdParams(Sirius formulaIdParams) {
+  public void setFormulaIdParams(@jakarta.annotation.Nullable Sirius formulaIdParams) {
     this.formulaIdParams = formulaIdParams;
   }
 
-  public JobSubmission zodiacParams(Zodiac zodiacParams) {
+  public JobSubmission zodiacParams(@jakarta.annotation.Nullable Zodiac zodiacParams) {
     
     this.zodiacParams = zodiacParams;
     return this;
   }
 
-   /**
+  /**
    * Get zodiacParams
    * @return zodiacParams
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ZODIAC_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -372,20 +386,20 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_ZODIAC_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setZodiacParams(Zodiac zodiacParams) {
+  public void setZodiacParams(@jakarta.annotation.Nullable Zodiac zodiacParams) {
     this.zodiacParams = zodiacParams;
   }
 
-  public JobSubmission fingerprintPredictionParams(FingerprintPrediction fingerprintPredictionParams) {
+  public JobSubmission fingerprintPredictionParams(@jakarta.annotation.Nullable FingerprintPrediction fingerprintPredictionParams) {
     
     this.fingerprintPredictionParams = fingerprintPredictionParams;
     return this;
   }
 
-   /**
+  /**
    * Get fingerprintPredictionParams
    * @return fingerprintPredictionParams
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FINGERPRINT_PREDICTION_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -397,20 +411,20 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_FINGERPRINT_PREDICTION_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFingerprintPredictionParams(FingerprintPrediction fingerprintPredictionParams) {
+  public void setFingerprintPredictionParams(@jakarta.annotation.Nullable FingerprintPrediction fingerprintPredictionParams) {
     this.fingerprintPredictionParams = fingerprintPredictionParams;
   }
 
-  public JobSubmission canopusParams(Canopus canopusParams) {
+  public JobSubmission canopusParams(@jakarta.annotation.Nullable Canopus canopusParams) {
     
     this.canopusParams = canopusParams;
     return this;
   }
 
-   /**
+  /**
    * Get canopusParams
    * @return canopusParams
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CANOPUS_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -422,20 +436,20 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_CANOPUS_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCanopusParams(Canopus canopusParams) {
+  public void setCanopusParams(@jakarta.annotation.Nullable Canopus canopusParams) {
     this.canopusParams = canopusParams;
   }
 
-  public JobSubmission structureDbSearchParams(StructureDbSearch structureDbSearchParams) {
+  public JobSubmission structureDbSearchParams(@jakarta.annotation.Nullable StructureDbSearch structureDbSearchParams) {
     
     this.structureDbSearchParams = structureDbSearchParams;
     return this;
   }
 
-   /**
+  /**
    * Get structureDbSearchParams
    * @return structureDbSearchParams
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_DB_SEARCH_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -447,20 +461,20 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_DB_SEARCH_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureDbSearchParams(StructureDbSearch structureDbSearchParams) {
+  public void setStructureDbSearchParams(@jakarta.annotation.Nullable StructureDbSearch structureDbSearchParams) {
     this.structureDbSearchParams = structureDbSearchParams;
   }
 
-  public JobSubmission msNovelistParams(MsNovelist msNovelistParams) {
+  public JobSubmission msNovelistParams(@jakarta.annotation.Nullable MsNovelist msNovelistParams) {
     
     this.msNovelistParams = msNovelistParams;
     return this;
   }
 
-   /**
+  /**
    * Get msNovelistParams
    * @return msNovelistParams
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS_NOVELIST_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -472,11 +486,11 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_MS_NOVELIST_PARAMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMsNovelistParams(MsNovelist msNovelistParams) {
+  public void setMsNovelistParams(@jakarta.annotation.Nullable MsNovelist msNovelistParams) {
     this.msNovelistParams = msNovelistParams;
   }
 
-  public JobSubmission configMap(Map<String, String> configMap) {
+  public JobSubmission configMap(@jakarta.annotation.Nullable Map<String, String> configMap) {
     
     this.configMap = configMap;
     return this;
@@ -490,10 +504,10 @@ public class JobSubmission {
     return this;
   }
 
-   /**
+  /**
    * As an alternative to the object based parameters, this map allows to store key value pairs  of ALL SIRIUS parameters. All possible parameters can be retrieved from SIRIUS via the respective endpoint.
    * @return configMap
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONFIG_MAP)
   @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
@@ -505,9 +519,10 @@ public class JobSubmission {
 
   @JsonProperty(JSON_PROPERTY_CONFIG_MAP)
   @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConfigMap(Map<String, String> configMap) {
+  public void setConfigMap(@jakarta.annotation.Nullable Map<String, String> configMap) {
     this.configMap = configMap;
   }
+
 
   @Override
   public boolean equals(Object o) {

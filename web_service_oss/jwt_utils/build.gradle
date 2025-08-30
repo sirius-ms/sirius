@@ -1,0 +1,16 @@
+group = 'io.sirius-ms'
+version = '0.9-SNAPSHOT'
+
+
+dependencies {
+    api project(':web_service_oss:web_core_oss')
+
+    compileOnly("org.springframework.security:spring-security-oauth2-jose:6.5.2")
+    compileOnly("com.auth0:java-jwt:$auth0_version")
+    compileOnly project(":web_service_oss:client_auth_oss")
+
+    testImplementation("org.springframework.security:spring-security-oauth2-jose:6.5.2")
+    testImplementation("com.auth0:java-jwt:$auth0_version")
+    testImplementation project(":web_service_oss:client_auth_oss")
+}
+

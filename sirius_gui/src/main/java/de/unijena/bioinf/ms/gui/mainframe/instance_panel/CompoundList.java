@@ -21,15 +21,23 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.*;
 import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.event.ListEventListener;
+import ca.odell.glazedlists.matchers.AbstractMatcherEditorListenerSupport;
+import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
+import ca.odell.glazedlists.matchers.Matcher;
+import ca.odell.glazedlists.matchers.MatcherEditor;
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.filter.FeatureFilterOptionsDialog;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
+import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
@@ -73,7 +81,7 @@ public class CompoundList {
     final EventList<InstanceBean> compoundList;
 
     @Getter
-    final DefaultEventSelectionModel<InstanceBean> compoundListSelectionModel;
+    final AdvancedListSelectionModel<InstanceBean> compoundListSelectionModel;
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
@@ -120,23 +128,6 @@ public class CompoundList {
 
         compoundListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
-        compoundListSelectionModel.addListSelectionListener(e -> {
-            final Component c = gui.getMainFrame().getResultsPanel().getSelectedComponent();
-            if (c instanceof Loadable l)
-                l.setLoading(true, true);
-
-            if (!e.getValueIsAdjusting()) {
-                //we only enable listener for first selected because this is the one where results are visible.
-                compoundListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
-                compoundListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
-                if (!compoundListSelectionModel.isSelectionEmpty()){
-                    InstanceBean selected = compoundListSelectionModel.getSelected().getFirst();
-                    selected.enableProjectSpaceListener();
-                    projectManager.removeTemporaryJumpToFeatureIfNotSelected(selected.getFeatureId());
-                }
-                notifyListenerSelectionChange();
-            }
-        });
 
         // data change listener needs to operate on unfiltered list as well to notice add or removal on filtered elements
         compoundList.addListEventListener(this::notifyListenerDataChange);
@@ -149,6 +140,32 @@ public class CompoundList {
         filterModel.addPropertyChangeListener("possibleAdductsUpdated", evt -> updateTogglesByActiveFilter());
         filterModel.updateAdducts(projectManager.getDetectedAdducts());
         filterModel.fireUpdateCompleted();
+    }
+
+
+    private boolean selectionListenerRegistered = false;
+    public synchronized void initializedSelectionListener(@NotNull LazyLoadingPanel<ResultPanel> resultPanelProvider){
+        if (!selectionListenerRegistered) {
+            compoundListSelectionModel.addListSelectionListener(e -> {
+                final Component c = resultPanelProvider.getContentPanelIfReady().map(ResultPanel::getSelectedComponent)
+                        .orElse(null);
+                if (c instanceof Loadable l)
+                    l.setLoading(true, true);
+
+                if (!e.getValueIsAdjusting()) {
+                    //we only enable listener for first selected because this is the one where results are visible.
+                    compoundListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
+                    compoundListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
+                    if (!compoundListSelectionModel.isSelectionEmpty()){
+                        InstanceBean selected = compoundListSelectionModel.getSelected().getFirst();
+                        selected.enableProjectSpaceListener();
+                        projectManager.removeTemporaryJumpToFeatureIfNotSelected(selected.getFeatureId());
+                    }
+                    notifyListenerSelectionChange();
+                }
+            });
+            selectionListenerRegistered = true;
+        }
     }
 
     private void colorByActiveFilter() {

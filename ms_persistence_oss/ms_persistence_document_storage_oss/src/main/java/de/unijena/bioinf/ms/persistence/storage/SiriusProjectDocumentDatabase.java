@@ -31,6 +31,7 @@ import de.unijena.bioinf.chemdb.nitrite.serializers.NitriteCompoundSerializers;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
@@ -114,6 +115,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     <T extends FingerprintData<?>> Optional<T> findFingerprintData(Class<T> dataClazz, int charge);
 
+    <T> Optional<T> findJsonProjectProperty(@NotNull String key, Class<T> valueType);
+
     <T> Optional<T> findProjectProperty(@NotNull String key, Class<T> valueType);
 
     default Optional<Set<String>> findProjectPropertyAsStringSet(String key) {
@@ -152,6 +155,14 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return upsertProjectProperty("projectType", projectType);
     }
 
+    default Optional<ProjectSourceFormats> findProjectSourceFormats() {
+        return findJsonProjectProperty("projectSourceFormats", ProjectSourceFormats.class);
+    }
+
+    default Optional<ProjectSourceFormats> upsertProjectSourceFormats(@NotNull ProjectSourceFormats projectSourceFormats) {
+        return upsertJsonProjectProperty("projectSourceFormats", projectSourceFormats);
+    }
+
     default Optional<ProjectDetectedAdducts> findDetectedAdducts() {
         return findProjectPropertyAsStringSet("detectedAdducts")
                 .map(it -> ProjectDetectedAdducts.builder().detectedAdducts(it).build());
@@ -172,6 +183,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     <T> Optional<T> upsertProjectProperty(String key, T value);
 
+    <T> Optional<T> upsertJsonProjectProperty(String key, T value);
+
     @SneakyThrows
     default Optional<CsiStructureSearchResult> findCsiStructureSearchResult(long alignedFeatureId, boolean includeStructureMatches) {
         Optional<CsiStructureSearchResult> result = getStorage().getByPrimaryKey(alignedFeatureId, CsiStructureSearchResult.class);
@@ -190,7 +203,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         if (feature == null)
             return Optional.empty();
 
-        fetchMsData(feature);
+        if (feature.getMSData().isEmpty())
+            fetchMsData(feature);
 
         if (feature.getMSData().isEmpty())
             return Optional.empty();

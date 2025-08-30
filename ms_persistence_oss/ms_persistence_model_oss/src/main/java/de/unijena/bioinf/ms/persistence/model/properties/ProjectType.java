@@ -2,6 +2,10 @@ package de.unijena.bioinf.ms.persistence.model.properties;
 
 public enum ProjectType {
     /**
+     * Flogs that not data has been imported yet
+     */
+    UNIMPORTED,
+    /**
      * Flags project created via direct import of compounds and features from API
      */
     DIRECT_IMPORT,
@@ -16,5 +20,5 @@ public enum ProjectType {
     /**
      * Flags project created from one or multiple MS run(s) (.mzml, mzxml) that have NOT been aligned
      */
-    UNALIGNED_RUNS,
+    UNALIGNED_RUNS
 }

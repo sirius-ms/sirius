@@ -35,6 +35,7 @@ import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import it.unimi.dsi.fastutil.Pair;
+import org.dizitart.no2.exceptions.NitriteIOException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -126,7 +127,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
         if (optFields.contains(ProjectInfo.OptField.sizeInformation))
             b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countAllFeatures()).numOfCompounds(psm.countAllCompounds());
         if (optFields.contains(ProjectInfo.OptField.compatibilityInfo))
-            b.compatible(psm.isCompatibleWithBackendDataUnchecked(ApplicationCore.WEB_API));
+            b.compatible(psm.isCompatibleWithBackendDataUnchecked(ApplicationCore.WEB_API()));
         if (optFields.contains(ProjectInfo.OptField.detectedAdducts))
             b.detectedAdducts(psm.getDetectedAdducts().getDetectedAdducts());
 
@@ -185,11 +186,15 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     protected abstract void validateExistingLocation(Path location) throws IOException;
 
     private ProjectInfo createOrOpen(String projectId, Path location, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
-        PSM psm = projectSpaceManagerFactory.createOrOpen(location);
-        registerEventListeners(projectId, psm);
-        projectSpaces.put(projectId, createProject(projectId, psm));
-        eventService.sendEvent(ServerEvents.newProjectEvent(projectId, PROJECT_OPENED));
-        return createProjectInfo(projectId, psm, optFields);
+        try {
+            PSM psm = projectSpaceManagerFactory.createOrOpen(location);
+            registerEventListeners(projectId, psm);
+            projectSpaces.put(projectId, createProject(projectId, psm));
+            eventService.sendEvent(ServerEvents.newProjectEvent(projectId, PROJECT_OPENED));
+            return createProjectInfo(projectId, psm, optFields);
+        } catch (NitriteIOException e) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, String.format("Project with ID '%s' could not be opened. Cause: %s", projectId, e.getMessage()) , e);
+        }
     }
 
     protected abstract P createProject(String projectId, PSM managerToWrap);

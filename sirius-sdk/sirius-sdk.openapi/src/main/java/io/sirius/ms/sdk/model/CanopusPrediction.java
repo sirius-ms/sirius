@@ -44,18 +44,20 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CanopusPrediction.JSON_PROPERTY_CLASSY_FIRE_CLASSES,
   CanopusPrediction.JSON_PROPERTY_NPC_CLASSES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class CanopusPrediction {
   public static final String JSON_PROPERTY_CLASSY_FIRE_CLASSES = "classyFireClasses";
+  @jakarta.annotation.Nullable
   private List<CompoundClass> classyFireClasses;
 
   public static final String JSON_PROPERTY_NPC_CLASSES = "npcClasses";
+  @jakarta.annotation.Nullable
   private List<CompoundClass> npcClasses;
 
   public CanopusPrediction() {
   }
 
-  public CanopusPrediction classyFireClasses(List<CompoundClass> classyFireClasses) {
+  public CanopusPrediction classyFireClasses(@jakarta.annotation.Nullable List<CompoundClass> classyFireClasses) {
     
     this.classyFireClasses = classyFireClasses;
     return this;
@@ -69,10 +71,10 @@ public class CanopusPrediction {
     return this;
   }
 
-   /**
+  /**
    * All predicted ClassyFire classes
    * @return classyFireClasses
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -84,11 +86,11 @@ public class CanopusPrediction {
 
   @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setClassyFireClasses(List<CompoundClass> classyFireClasses) {
+  public void setClassyFireClasses(@jakarta.annotation.Nullable List<CompoundClass> classyFireClasses) {
     this.classyFireClasses = classyFireClasses;
   }
 
-  public CanopusPrediction npcClasses(List<CompoundClass> npcClasses) {
+  public CanopusPrediction npcClasses(@jakarta.annotation.Nullable List<CompoundClass> npcClasses) {
     
     this.npcClasses = npcClasses;
     return this;
@@ -102,10 +104,10 @@ public class CanopusPrediction {
     return this;
   }
 
-   /**
+  /**
    * All predicted NPC classes
    * @return npcClasses
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NPC_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -117,9 +119,10 @@ public class CanopusPrediction {
 
   @JsonProperty(JSON_PROPERTY_NPC_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNpcClasses(List<CompoundClass> npcClasses) {
+  public void setNpcClasses(@jakarta.annotation.Nullable List<CompoundClass> npcClasses) {
     this.npcClasses = npcClasses;
   }
+
 
   @Override
   public boolean equals(Object o) {

@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.fingerid.DatabaseLabel;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
@@ -75,6 +76,8 @@ public class InstanceBean implements SiriusPCS {
     private volatile AlignedFeature sourceFeature;
     private volatile MsData msData;
     private volatile SpectralMatchingCache spectralMatchingCache;
+    private volatile List<FormulaResultBean> formulaAnnotationCache;
+    private volatile Optional<FormulaResultBean> topFormulaCache;
 
     @Getter
     @NotNull
@@ -111,12 +114,14 @@ public class InstanceBean implements SiriusPCS {
         this.featureId = featureId;
         this.projectManager = projectManager;
         this.sourceFeature = sourceFeature;
+        this.optsLoaded = new HashSet<>(10);
+        if (optsLoaded != null)
+            this.optsLoaded.addAll(optsLoaded);
 
         if (this.sourceFeature == null) {
-            //preload minimal information for compound list to prevent them from being loaded in EDT.
+            //preload minimal information for the compound list to prevent them from being loaded in EDT.
             this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
-        } else if (optsLoaded != null) {
-            this.optsLoaded.addAll(optsLoaded);
+            this.optsLoaded.addAll(DEFAULT_OPT_FEATURE_FIELDS);
         }
 
         this.listener = new PropertyChangeListener() {
@@ -140,13 +145,18 @@ public class InstanceBean implements SiriusPCS {
     private void clearCache(@NotNull Object evt) {
         if (SwingUtilities.isEventDispatchThread())
             log.warn("Cache update happened in GUI thread. Might cause GUI stutters!");
-        synchronized (InstanceBean.this) {
+        synchronized (this) {
+            this.optsLoaded.clear();
             try {
-                InstanceBean.this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+                this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+                this.optsLoaded.addAll(DEFAULT_OPT_FEATURE_FIELDS);
             } catch (WebClientResponseException.NotFound e) {  // feature has been deleted on server, will be deleted on client with a following event
-                InstanceBean.this.sourceFeature = null;
+                this.sourceFeature = null;
             }
-            InstanceBean.this.spectralMatchingCache = null;
+
+            //todo this should go into  clearResultCache but this seems to have side effects, due to suboptimal caching architecture
+            this.spectralMatchingCache = null;
+            clearResultCache();
         }
         if (evt instanceof BackgroundComputationsStateEvent pce) {
             if (pcsEnabled.get())
@@ -183,12 +193,23 @@ public class InstanceBean implements SiriusPCS {
 
     public void disableProjectSpaceListener() {
         pcsEnabled.set(false);
+        clearResultCache();
+    }
+
+    private void clearResultCache() {
+        synchronized (this) {
+            //todo find the side effects happending with removing on deselsection and enable it again.
+//            this.spectralMatchingCache = null;
+            this.formulaAnnotationCache = null;
+            this.topFormulaCache = null;
+        }
     }
 
     public SiriusClient getClient() {
         return getProjectManager().getClient();
     }
 
+    //todo can we remove this again? bad architecture
     public GuiProjectManager getProjectManager() {
         return projectManager;
     }
@@ -204,34 +225,38 @@ public class InstanceBean implements SiriusPCS {
         return Optional.ofNullable(sourceFeature);
     }
 
-    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(COMPUTEDTOOLS, INDEXEDTOPANNOTATIONS);
+    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(COMPUTED_TOOLS, TOP_ANNOTATIONS_SUMMARY);
 
-    private final Set<AlignedFeatureOptField> optsLoaded = new HashSet<>(10);
+    private final Set<AlignedFeatureOptField> optsLoaded;
 
     @NotNull
     public AlignedFeature getSourceFeature(AlignedFeatureOptField... optFields) {
         return getSourceFeature(List.of(optFields));
     }
 
+    @NotNull
     public AlignedFeature getSourceFeature(@Nullable List<AlignedFeatureOptField> optFields) {
         //we always load top annotations because it contains mandatory information for the SIRIUS GUI
-        Set<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
+        Set<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(NONE))
                 ? Stream.concat(optFields.stream().filter(opt -> !NONE.equals(opt)), optsLoaded.stream()).collect(Collectors.toSet())
                 : optsLoaded);
 
-        //double checked locking source feature must be volatile
+        //double-checked locking source feature must be volatile
         if (sourceFeature == null || !optsLoaded.containsAll(of)) {
             synchronized (this) {
                 // we update every time here since we do not know which optional fields are already loaded.
                 if (sourceFeature == null || !optsLoaded.containsAll(of)) {
+                    if (SwingUtilities.isEventDispatchThread())
+                        log.warn("Reload Featured '{}' with nu [{}] vs current [{}] in Event Thread. Might cause GUI stutters!", sourceFeature.getAlignedFeatureId(), of.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")), this.optsLoaded.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")));
+
                     StopWatch w = StopWatch.createStarted();
                     optsLoaded.clear();
                     sourceFeature = withIds((pid, fid) ->
                             getClient().features().getAlignedFeature(pid, fid, false, of.stream().toList()));
                     optsLoaded.addAll(of);
-                    // this is to ensure that INDEXEDTOPANNOTATIONS request do not cause reload if TOPANNOTATIONS have already been loaded
-                    if (optsLoaded.contains(TOPANNOTATIONS))
-                        optsLoaded.add(INDEXEDTOPANNOTATIONS);
+                    // this is to ensure that TOP_ANNOTATIONS_SUMMARY request do not cause reload if TOPANNOTATIONS have already been loaded
+                    if (optsLoaded.contains(TOP_ANNOTATIONS))
+                        optsLoaded.add(TOP_ANNOTATIONS_SUMMARY);
 
                     System.out.println("Loaded data from API for '" + getGUIName() + "' in: " + w);
                 }
@@ -239,7 +264,6 @@ public class InstanceBean implements SiriusPCS {
             }
         }
         return sourceFeature;
-
     }
 
     public String getName() {
@@ -256,8 +280,9 @@ public class InstanceBean implements SiriusPCS {
         return getSourceFeature().getQuality();
     }
 
+    @Nullable
     public AlignedFeatureQualityExperimental getQualityReport() {
-        return withIds((pid, fid) -> getClient().features().getAlignedFeatureQualityExperimentalWithResponseSpec(pid, fid)
+        return withIdsCatched((pid, fid) -> getClient().features().getAlignedFeatureQualityExperimentalWithResponseSpec(pid, fid)
                 .bodyToMono(AlignedFeatureQualityExperimental.class).onErrorComplete().block());
     }
 
@@ -335,44 +360,67 @@ public class InstanceBean implements SiriusPCS {
         return getRT().orElseGet(RetentionTime::NA);
     }
 
-
-    //top annotations needed.
-    public Optional<FormulaResultBean> getFormulaAnnotationAsBean() {
-        return getFormulaAnnotation().map(fc -> new FormulaResultBean(fc, this));
-    }
-
-    public Optional<FormulaCandidate> getFormulaAnnotation() {
-        return Optional.ofNullable(getSourceFeature(TOPANNOTATIONS).getTopAnnotations()).map(FeatureAnnotations::getFormulaAnnotation);
-    }
-
-    public Optional<StructureCandidateScored> getStructureAnnotation() {
-        return Optional.ofNullable(getSourceFeature(TOPANNOTATIONS).getTopAnnotations()).map(FeatureAnnotations::getStructureAnnotation);
-    }
-
-    public Optional<CompoundClasses> getCompoundClassesAnnotation() {
-        return Optional.ofNullable(getSourceFeature(TOPANNOTATIONS).getTopAnnotations()).map(FeatureAnnotations::getCompoundClassAnnotation);
+    @NotNull
+    public Optional<FormulaResultBean> getFormulaAnnotation() {
+        if (topFormulaCache == null) {
+            synchronized (this) {
+                if (topFormulaCache == null) {
+                    List<FormulaResultBean> candidates = getFormulaCandidates();
+                    if (Utils.isNullOrEmpty(candidates)) {
+                        topFormulaCache = Optional.empty();
+                    } else {
+                        topFormulaCache = candidates.stream().filter(FormulaResultBean::isTopStructureFormula).findFirst();
+                        if (topFormulaCache.isEmpty())
+                            topFormulaCache = Optional.of(candidates.getFirst());
+                    }
+                }
+            }
+        }
+        return topFormulaCache;
     }
 
     public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
         return viewMode == ConfidenceDisplayMode.APPROXIMATE
-                ? Optional.ofNullable(getSourceFeature(INDEXEDTOPANNOTATIONS).getTopAnnotations())
+                ? Optional.ofNullable(getSourceFeature(TOP_ANNOTATIONS_SUMMARY).getTopAnnotations())
                 .map(FeatureAnnotations::getConfidenceApproxMatch)
-                : Optional.ofNullable(getSourceFeature(INDEXEDTOPANNOTATIONS).getTopAnnotations())
+                : Optional.ofNullable(getSourceFeature(TOP_ANNOTATIONS_SUMMARY).getTopAnnotations())
                 .map(FeatureAnnotations::getConfidenceExactMatch);
     }
 
+    @NotNull
     public List<FormulaResultBean> getFormulaCandidates() {
-        return withIds((pid, fid) -> getClient().features()
-                .getFormulaCandidates(pid, fid, false, ensureDefaultOptFields(null)))
-                .stream()
-                .map(formulaCandidate -> new FormulaResultBean(formulaCandidate, this))
-                .toList();
+        if (!getSourceFeature().getComputedTools().isFormulaSearch())
+            return List.of();
+        //double-checked locking, msData must be volatile
+        if (formulaAnnotationCache == null) {
+            synchronized (this) {
+                if (formulaAnnotationCache == null) {
+                    formulaAnnotationCache = withIdsCatched((pid, fid) -> getClient().features()
+                            .getFormulaCandidates(pid, fid, false, ensureDefaultOptFields(null)))
+                            .stream()
+                            .map(formulaCandidate -> new FormulaResultBean(formulaCandidate, this))
+                            .toList();
 
+                    if (Boolean.TRUE.equals(getComputedTools().isStructureSearch())) {
+                        List<FingerprintCandidateBean> top = getStructureCandidates(1, false);
+                        if (Utils.notNullOrEmpty(top)) {
+                            String formulaId = top.getFirst().getCandidate().getFormulaId();
+                            formulaAnnotationCache.stream().filter(fa -> fa.getFormulaId().equals(formulaId))
+                                    .forEach(fa -> fa.setTopStructureFormula(true));
+                        }
+                    }
+
+
+                }
+            }
+        }
+        return formulaAnnotationCache;
     }
 
     /**
      * retrieves database and de novo structure candidates and merges identical structures
      */
+    @NotNull
     public List<FingerprintCandidateBean> getBothStructureCandidates(int topK, boolean fp, boolean loadDatabaseHits, boolean loadDenovo) {
         final List<FingerprintCandidateBean> database = !loadDatabaseHits ? Collections.emptyList() : toFingerprintCandidateBeans(getStructureCandidatesPage(topK, fp), true, false);
         final List<FingerprintCandidateBean> deNovo = !loadDenovo ? Collections.emptyList() : toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK, fp), false, true);
@@ -380,7 +428,8 @@ public class InstanceBean implements SiriusPCS {
         return addDeNovoDatabaseLabels(merged);
     }
 
-    private List<FingerprintCandidateBean> mergeIdenticalStructures(List<FingerprintCandidateBean> database, List<FingerprintCandidateBean> deNovo) {
+    @NotNull
+    private List<FingerprintCandidateBean> mergeIdenticalStructures(@NotNull List<FingerprintCandidateBean> database, @NotNull List<FingerprintCandidateBean> deNovo) {
         if (database.isEmpty()) return deNovo;
         if (deNovo.isEmpty()) return database;
 
@@ -421,58 +470,73 @@ public class InstanceBean implements SiriusPCS {
         return merged;
     }
 
-    private List<FingerprintCandidateBean> addDeNovoDatabaseLabels(List<FingerprintCandidateBean> merged) {
+    @NotNull
+    private List<FingerprintCandidateBean> addDeNovoDatabaseLabels(@NotNull List<FingerprintCandidateBean> merged) {
         return merged.stream().map(fpc -> fpc.isDeNovo() ? fpc.withAdditionalLabelAtBeginning(new DatabaseLabel[]{new DatabaseLabel("De Novo", null)}) : fpc).toList();
     }
 
+    @NotNull
     public List<FingerprintCandidateBean> getStructureCandidates(int topK, boolean fp) {
         return toFingerprintCandidateBeans(getStructureCandidatesPage(topK, fp), true, false);
     }
 
+    @Nullable
     public PagedModelStructureCandidateFormula getStructureCandidatesPage(int topK, boolean fp) {
         return getStructureCandidatesPage(0, topK, fp);
     }
 
+    @Nullable
     public PagedModelStructureCandidateFormula getStructureCandidatesPage(int pageNum, int pageSize, boolean fp) {
-        return withIds((pid, fid) -> getClient().features()
+        if (!getSourceFeature().getComputedTools().isStructureSearch())
+            return null;
+        return withIdsCatched((pid, fid) -> getClient().features()
                 .getStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
-                        fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DBLINKS)));
+                        fp ? List.of(StructureCandidateOptField.DB_LINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DB_LINKS)));
     }
 
 
+    @NotNull
     public List<FingerprintCandidateBean> getDeNovoStructureCandidates(int topK, boolean fp) {
         return toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK, fp), false, true);
     }
 
 
+    @Nullable
     public PagedModelStructureCandidateFormula getDeNovoStructureCandidatesPage(int topK, boolean fp) {
         return getDeNovoStructureCandidatesPage(0, topK, fp);
     }
 
+    @Nullable
     public PagedModelStructureCandidateFormula getDeNovoStructureCandidatesPage(int pageNum, int pageSize, boolean fp) {
-        return withIds((pid, fid) -> getClient().features()
+        if (!getSourceFeature().getComputedTools().isDeNovoSearch())
+            return null;
+        return withIdsCatched((pid, fid) -> getClient().features()
                 .getDeNovoStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
-                        fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DBLINKS)));
+                        fp ? List.of(StructureCandidateOptField.DB_LINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DB_LINKS)));
     }
 
-    @Nullable
+    @NotNull
     private List<FingerprintCandidateBean> toFingerprintCandidateBeans(PagedModelStructureCandidateFormula page, boolean isDatabase, boolean isDeNovo) {
-        if (page.getContent() == null)
-            return null; //this does usually not happen?!
+        if (page == null || page.getContent() == null)
+            return List.of();
         if (page.getContent().isEmpty())
             return List.of();
 
 
-        MaskedFingerprintVersion fpVersion = getProjectManager().getFingerIdData(getIonType().getCharge())
-                .getFingerprintVersion();
+        try {
+            MaskedFingerprintVersion fpVersion = getProjectManager().getFingerIdData(getIonType().getCharge())
+                    .getFingerprintVersion();
 
-        Map<String, ProbabilityFingerprint> fps = page.getContent().stream()
-                .map(StructureCandidateFormula::getFormulaId).distinct()
-                .collect(Collectors.toMap(fcid -> fcid, fcid -> new ProbabilityFingerprint(
-                        fpVersion,
-                        (List<Double>) withIds((pid, fid) -> getClient().features().getFingerprintPrediction(pid, fid, fcid))
-                )));
-        return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, isDatabase, isDeNovo, fps.get(c.getFormulaId()), this)).toList();
+            Map<String, ProbabilityFingerprint> fps = page.getContent().stream()
+                    .map(StructureCandidateFormula::getFormulaId).distinct()
+                    .collect(Collectors.toMap(fcid -> fcid, fcid -> new ProbabilityFingerprint(
+                            fpVersion,
+                            (List<Double>) withIds((pid, fid) -> getClient().features().getFingerprintPrediction(pid, fid, fcid))
+                    )));
+            return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, isDatabase, isDeNovo, fps.get(c.getFormulaId()), this)).toList();
+        } catch (WebClientResponseException e) {
+            return List.of();
+        }
     }
 
     public List<SpectralMatchBean> getTopSpectralMatches() {
@@ -489,7 +553,7 @@ public class InstanceBean implements SiriusPCS {
             synchronized (this) {
                 if (msData == null) {
                     msData = sourceFeature().map(AlignedFeature::getMsData)
-                            .orElse(withIds((pid, fid) -> getClient().features().getMsData(pid, getFeatureId(), asSearchPreparedMsData)));
+                            .orElse(withIdsCatched((pid, fid) -> getClient().features().getMsData(pid, getFeatureId(), asSearchPreparedMsData)));
                 }
                 return msData;
             }
@@ -536,7 +600,7 @@ public class InstanceBean implements SiriusPCS {
 
     @NotNull
     public ComputedSubtools getComputedTools() {
-        ComputedSubtools tools = getSourceFeature(COMPUTEDTOOLS).getComputedTools();
+        ComputedSubtools tools = getSourceFeature(COMPUTED_TOOLS).getComputedTools();
         if (tools == null) { //should not happen
 //            log.warn("Computed subtools information is null for feature {}.", getFeatureId());
             return NO_COMPUTATIONS;
@@ -567,6 +631,17 @@ public class InstanceBean implements SiriusPCS {
 
     public synchronized <R> R withIds(BiFunction<String, String, R> doWithClient) {
         return doWithClient.apply(projectManager.getProjectId(), getFeatureId());
+    }
+
+
+    public synchronized <R> R withIdsCatched(BiFunction<String, String, R> doWithClient) {
+        try {
+            return withIds(doWithClient);
+        } catch (WebClientResponseException e) {
+            log.warn("Error during request | {}", e.getMessage());
+            log.debug("Error during request!", e);
+            return null;
+        }
     }
 
     public Setter set() {

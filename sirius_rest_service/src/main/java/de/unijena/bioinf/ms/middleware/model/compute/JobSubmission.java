@@ -27,6 +27,9 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
+import de.unijena.bioinf.ms.frontend.subtools.ToolChainJobImpl;
+import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.middleware.model.compute.tools.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -136,7 +139,9 @@ public class JobSubmission extends AbstractSubmission {
         AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
         //for database search (CSI, spectral library) we only use BIO per default so that results are (mostly)
         // consistent for different users with different custom DBs
-        List<String> searchDbs = Arrays.stream(DataSource.valuesAllBioOnly()).map(DataSource::name).toList();
+        List<String> searchDbs = Arrays.stream(DataSource.valuesAllBioOnly()).map(DataSource::name)
+                .collect(Collectors.toList());
+
         if (includeCustomDbsForStructureSearch)
             CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource).distinct()
                     .map(CustomDataSources.Source::name).forEach(searchDbs::add);
@@ -238,13 +243,18 @@ public class JobSubmission extends AbstractSubmission {
     }
 
     @JsonIgnore
-    public List<Tool<?>> getTools() {
+    private Stream<Tool<? extends ToolChainOptions<? extends ToolChainJobImpl<?>,? extends ToolChainJob.FactoryImpl<? extends ToolChainJobImpl<?>>>>> tools() {
         return Stream.of(spectraSearchParams, formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams, msNovelistParams)
-                .filter(Objects::nonNull).collect(Collectors.toList());
+                .filter(Objects::nonNull);
+    }
+
+    @JsonIgnore
+    public List<Tool<?>> getTools() {
+        return tools().collect(Collectors.toList());
     }
 
     @JsonIgnore
     public List<Tool<?>> getEnabledTools() {
-        return getTools().stream().filter(Objects::nonNull).filter(Tool::isEnabled).collect(Collectors.toList());
+        return tools().filter(Tool::isEnabled).collect(Collectors.toList());
     }
 }

@@ -84,12 +84,12 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // add CSIClientData to PS if it is not already there
-        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeFingerIdDataIfMissing(ApplicationCore.WEB_API), this::checkForInterruption);
+        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeFingerIdDataIfMissing(ApplicationCore.WEB_API()), this::checkForInterruption);
 
         updateProgress(10);
         checkForInterruption();
 
-        final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API.
+        final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API().
                 getStructurePredictor(inst.getCharge()), this::checkForInterruption);
 
         checkForInterruption();
@@ -109,7 +109,7 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // prediction jobs: predict fingerprints via webservice
-        final FingerprintJJob fpPredictJob = submitSubJob(FingerprintJJob.of(csi, ApplicationCore.WEB_API, inst.getExperiment(), filteredResults.stream().map(SScored::getCandidate)));
+        final FingerprintJJob fpPredictJob = submitSubJob(FingerprintJJob.of(csi, ApplicationCore.WEB_API(), inst.getExperiment(), filteredResults.stream().map(SScored::getCandidate)));
 
         updateProgress(35);
         List<FingerIdResult> result = fpPredictJob.awaitResult();

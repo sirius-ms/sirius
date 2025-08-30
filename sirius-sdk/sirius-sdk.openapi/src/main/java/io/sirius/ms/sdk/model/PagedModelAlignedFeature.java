@@ -45,18 +45,20 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PagedModelAlignedFeature.JSON_PROPERTY_CONTENT,
   PagedModelAlignedFeature.JSON_PROPERTY_PAGE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class PagedModelAlignedFeature {
   public static final String JSON_PROPERTY_CONTENT = "content";
+  @jakarta.annotation.Nullable
   private List<AlignedFeature> content = new ArrayList<>();
 
   public static final String JSON_PROPERTY_PAGE = "page";
+  @jakarta.annotation.Nullable
   private PageMetadata page;
 
   public PagedModelAlignedFeature() {
   }
 
-  public PagedModelAlignedFeature content(List<AlignedFeature> content) {
+  public PagedModelAlignedFeature content(@jakarta.annotation.Nullable List<AlignedFeature> content) {
     
     this.content = content;
     return this;
@@ -70,10 +72,10 @@ public class PagedModelAlignedFeature {
     return this;
   }
 
-   /**
+  /**
    * Get content
    * @return content
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -85,20 +87,20 @@ public class PagedModelAlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setContent(List<AlignedFeature> content) {
+  public void setContent(@jakarta.annotation.Nullable List<AlignedFeature> content) {
     this.content = content;
   }
 
-  public PagedModelAlignedFeature page(PageMetadata page) {
+  public PagedModelAlignedFeature page(@jakarta.annotation.Nullable PageMetadata page) {
     
     this.page = page;
     return this;
   }
 
-   /**
+  /**
    * Get page
    * @return page
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -110,9 +112,10 @@ public class PagedModelAlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_PAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPage(PageMetadata page) {
+  public void setPage(@jakarta.annotation.Nullable PageMetadata page) {
     this.page = page;
   }
+
 
   @Override
   public boolean equals(Object o) {

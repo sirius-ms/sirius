@@ -170,7 +170,7 @@ public class SiriusClient implements AutoCloseable {
                 optFields.add(COMMAND);
             }
             if (includeAffectedIds) {
-                optFields.add(AFFECTEDIDS);
+                optFields.add(AFFECTED_IDS);
             }
             jobUpdate = jobs.getJob(pid, jobUpdate.getId(), optFields);
         }

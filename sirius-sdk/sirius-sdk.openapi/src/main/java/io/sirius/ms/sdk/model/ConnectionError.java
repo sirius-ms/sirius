@@ -48,45 +48,53 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ConnectionError.JSON_PROPERTY_ERROR,
   ConnectionError.JSON_PROPERTY_WARNING
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ConnectionError {
   public static final String JSON_PROPERTY_ERROR_TYPE = "errorType";
+  @jakarta.annotation.Nonnull
   private ConnectionErrorType errorType;
 
   public static final String JSON_PROPERTY_ERROR_KLASS = "errorKlass";
+  @jakarta.annotation.Nonnull
   private ConnectionErrorClass errorKlass;
 
   public static final String JSON_PROPERTY_SIRIUS_ERROR_CODE = "siriusErrorCode";
+  @jakarta.annotation.Nonnull
   private Integer siriusErrorCode;
 
   public static final String JSON_PROPERTY_SIRIUS_MESSAGE = "siriusMessage";
+  @jakarta.annotation.Nonnull
   private String siriusMessage;
 
   public static final String JSON_PROPERTY_SERVER_RESPONSE_ERROR_CODE = "serverResponseErrorCode";
+  @jakarta.annotation.Nullable
   private Integer serverResponseErrorCode;
 
   public static final String JSON_PROPERTY_SERVER_RESPONSE_ERROR_MESSAGE = "serverResponseErrorMessage";
+  @jakarta.annotation.Nullable
   private String serverResponseErrorMessage;
 
   public static final String JSON_PROPERTY_ERROR = "error";
+  @jakarta.annotation.Nullable
   private Boolean error;
 
   public static final String JSON_PROPERTY_WARNING = "warning";
+  @jakarta.annotation.Nullable
   private Boolean warning;
 
   public ConnectionError() {
   }
 
-  public ConnectionError errorType(ConnectionErrorType errorType) {
+  public ConnectionError errorType(@jakarta.annotation.Nonnull ConnectionErrorType errorType) {
     
     this.errorType = errorType;
     return this;
   }
 
-   /**
+  /**
    * Get errorType
    * @return errorType
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_ERROR_TYPE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -98,20 +106,20 @@ public class ConnectionError {
 
   @JsonProperty(JSON_PROPERTY_ERROR_TYPE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setErrorType(ConnectionErrorType errorType) {
+  public void setErrorType(@jakarta.annotation.Nonnull ConnectionErrorType errorType) {
     this.errorType = errorType;
   }
 
-  public ConnectionError errorKlass(ConnectionErrorClass errorKlass) {
+  public ConnectionError errorKlass(@jakarta.annotation.Nonnull ConnectionErrorClass errorKlass) {
     
     this.errorKlass = errorKlass;
     return this;
   }
 
-   /**
+  /**
    * Get errorKlass
    * @return errorKlass
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_ERROR_KLASS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -123,20 +131,20 @@ public class ConnectionError {
 
   @JsonProperty(JSON_PROPERTY_ERROR_KLASS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setErrorKlass(ConnectionErrorClass errorKlass) {
+  public void setErrorKlass(@jakarta.annotation.Nonnull ConnectionErrorClass errorKlass) {
     this.errorKlass = errorKlass;
   }
 
-  public ConnectionError siriusErrorCode(Integer siriusErrorCode) {
+  public ConnectionError siriusErrorCode(@jakarta.annotation.Nonnull Integer siriusErrorCode) {
     
     this.siriusErrorCode = siriusErrorCode;
     return this;
   }
 
-   /**
+  /**
    * Get siriusErrorCode
    * @return siriusErrorCode
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_SIRIUS_ERROR_CODE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -148,20 +156,20 @@ public class ConnectionError {
 
   @JsonProperty(JSON_PROPERTY_SIRIUS_ERROR_CODE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSiriusErrorCode(Integer siriusErrorCode) {
+  public void setSiriusErrorCode(@jakarta.annotation.Nonnull Integer siriusErrorCode) {
     this.siriusErrorCode = siriusErrorCode;
   }
 
-  public ConnectionError siriusMessage(String siriusMessage) {
+  public ConnectionError siriusMessage(@jakarta.annotation.Nonnull String siriusMessage) {
     
     this.siriusMessage = siriusMessage;
     return this;
   }
 
-   /**
+  /**
    * Get siriusMessage
    * @return siriusMessage
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_SIRIUS_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -173,20 +181,20 @@ public class ConnectionError {
 
   @JsonProperty(JSON_PROPERTY_SIRIUS_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSiriusMessage(String siriusMessage) {
+  public void setSiriusMessage(@jakarta.annotation.Nonnull String siriusMessage) {
     this.siriusMessage = siriusMessage;
   }
 
-  public ConnectionError serverResponseErrorCode(Integer serverResponseErrorCode) {
+  public ConnectionError serverResponseErrorCode(@jakarta.annotation.Nullable Integer serverResponseErrorCode) {
     
     this.serverResponseErrorCode = serverResponseErrorCode;
     return this;
   }
 
-   /**
+  /**
    * Get serverResponseErrorCode
    * @return serverResponseErrorCode
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SERVER_RESPONSE_ERROR_CODE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -198,20 +206,20 @@ public class ConnectionError {
 
   @JsonProperty(JSON_PROPERTY_SERVER_RESPONSE_ERROR_CODE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setServerResponseErrorCode(Integer serverResponseErrorCode) {
+  public void setServerResponseErrorCode(@jakarta.annotation.Nullable Integer serverResponseErrorCode) {
     this.serverResponseErrorCode = serverResponseErrorCode;
   }
 
-  public ConnectionError serverResponseErrorMessage(String serverResponseErrorMessage) {
+  public ConnectionError serverResponseErrorMessage(@jakarta.annotation.Nullable String serverResponseErrorMessage) {
     
     this.serverResponseErrorMessage = serverResponseErrorMessage;
     return this;
   }
 
-   /**
+  /**
    * Get serverResponseErrorMessage
    * @return serverResponseErrorMessage
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SERVER_RESPONSE_ERROR_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -223,20 +231,20 @@ public class ConnectionError {
 
   @JsonProperty(JSON_PROPERTY_SERVER_RESPONSE_ERROR_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setServerResponseErrorMessage(String serverResponseErrorMessage) {
+  public void setServerResponseErrorMessage(@jakarta.annotation.Nullable String serverResponseErrorMessage) {
     this.serverResponseErrorMessage = serverResponseErrorMessage;
   }
 
-  public ConnectionError error(Boolean error) {
+  public ConnectionError error(@jakarta.annotation.Nullable Boolean error) {
     
     this.error = error;
     return this;
   }
 
-   /**
+  /**
    * Get error
    * @return error
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ERROR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -248,20 +256,20 @@ public class ConnectionError {
 
   @JsonProperty(JSON_PROPERTY_ERROR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setError(Boolean error) {
+  public void setError(@jakarta.annotation.Nullable Boolean error) {
     this.error = error;
   }
 
-  public ConnectionError warning(Boolean warning) {
+  public ConnectionError warning(@jakarta.annotation.Nullable Boolean warning) {
     
     this.warning = warning;
     return this;
   }
 
-   /**
+  /**
    * Get warning
    * @return warning
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_WARNING)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -273,9 +281,10 @@ public class ConnectionError {
 
   @JsonProperty(JSON_PROPERTY_WARNING)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setWarning(Boolean warning) {
+  public void setWarning(@jakarta.annotation.Nullable Boolean warning) {
     this.warning = warning;
   }
+
 
   @Override
   public boolean equals(Object o) {
