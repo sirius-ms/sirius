@@ -232,7 +232,7 @@ public class GuiProjectManager implements Closeable {
     public synchronized InstanceBean findAndAddTemporaryJumpToFeature(String alignedFeatureId) {
         System.out.printf("Add JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
         AlignedFeature feature = siriusClient.features()
-                .getAlignedFeature(projectId, alignedFeatureId, false, null);
+                .getAlignedFeature(projectId, alignedFeatureId, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS);
         if (feature == null)
             return null;
 
