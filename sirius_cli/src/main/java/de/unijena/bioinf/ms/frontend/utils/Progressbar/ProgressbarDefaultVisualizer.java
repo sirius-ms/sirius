@@ -46,15 +46,9 @@ public class ProgressbarDefaultVisualizer<ProgressbarCalc extends ProgressbarCal
         catch (InterruptedException ignored) {}
     }
 
-    private String printProgress() throws InterruptedException{
-        StringBuilder progressbar = new StringBuilder();
-        progressbar.append("█".repeat(calculator.getProgress()));
-        if (status == 0) progressbar.append("▏");
-        else if (status == 1) progressbar.append("▍");
-        else if (status == 2) progressbar.append("▋");
-        else if (status == 3) progressbar.append("▉");
-        while(progressbar.length() < calculator.getMaxsize()) progressbar.append(" ");
-        return ("Progress: ["+progressbar+"]\r");
+    private String printProgress() {
+        String progressBar = formatProgressBarUnicode(calculator.getProgress() * 4 + status, calculator.getMaxsize() * 4, calculator.getMaxsize());
+        return ("Progress: ["+progressBar+"]\r");
     }
 
     /**
@@ -89,4 +83,25 @@ public class ProgressbarDefaultVisualizer<ProgressbarCalc extends ProgressbarCal
         else output.println(message);
     }
 
+    /**
+     * @param progress current progress
+     * @param maxProgress max progress
+     * @param barWidth length in chars of the resulting progress bar
+     * @return a string of length {@code barWidth} representing current progress
+     */
+    public static String formatProgressBarUnicode(long progress, long maxProgress, int barWidth) {
+        if (progress >= maxProgress) {
+            return "█".repeat(barWidth);
+        }
+        int barProgress = (int) Math.round(((progress + 0d)/maxProgress) * (barWidth * 4));
+        StringBuilder sb = new StringBuilder();
+        int full = barProgress / 4;
+        int rem = barProgress % 4;
+        sb.append("█".repeat(full));
+        if (rem == 1) sb.append("▎");
+        if (rem == 2) sb.append("▌");
+        if (rem == 3) sb.append("▊");
+        if (sb.length() < barWidth) sb.append(" ".repeat(barWidth - sb.length()));
+        return sb.toString();
+    }
 }
