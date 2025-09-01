@@ -14,7 +14,7 @@ public class TsvExporter extends DbExporter {
 
     public TsvExporter(BufferedWriter writer) throws IOException {
         tsvWriter = new TsvTableWriter(writer, false);
-        tsvWriter.writeHeader(List.of("name", "SMILES", "InChIKey", "InChI", "formula", "mass"));
+        tsvWriter.writeHeader(List.of("name", "SMILES", "InChIkey2D", "InChI", "formula", "mass"));
     }
 
     @Override
