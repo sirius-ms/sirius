@@ -62,7 +62,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Setter
     private Long dbFlag = null;
 
-    public ChemicalNoSQLDatabase(Database<Doctype> database) throws IOException {
+    public ChemicalNoSQLDatabase(Database<Doctype> database) {
         super(database);
     }
 
@@ -274,6 +274,10 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
             updated.add(FingerprintCandidateWrapper.of(wrapper.getFormula(), wrapper.getMass(), fingerprintCandidate));
         }
         this.storage.upsertAll(updated);
+    }
+
+    public Stream<FingerprintCandidateWrapper> getAll() throws IOException {
+        return storage.findAllStr(FingerprintCandidateWrapper.class);
     }
 
     @Getter
