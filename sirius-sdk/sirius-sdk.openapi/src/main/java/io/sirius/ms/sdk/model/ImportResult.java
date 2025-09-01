@@ -43,18 +43,20 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ImportResult.JSON_PROPERTY_AFFECTED_COMPOUND_IDS,
   ImportResult.JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ImportResult {
   public static final String JSON_PROPERTY_AFFECTED_COMPOUND_IDS = "affectedCompoundIds";
+  @jakarta.annotation.Nonnull
   private List<String> affectedCompoundIds = new ArrayList<>();
 
   public static final String JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS = "affectedAlignedFeatureIds";
+  @jakarta.annotation.Nonnull
   private List<String> affectedAlignedFeatureIds = new ArrayList<>();
 
   public ImportResult() {
   }
 
-  public ImportResult affectedCompoundIds(List<String> affectedCompoundIds) {
+  public ImportResult affectedCompoundIds(@jakarta.annotation.Nonnull List<String> affectedCompoundIds) {
     
     this.affectedCompoundIds = affectedCompoundIds;
     return this;
@@ -68,10 +70,10 @@ public class ImportResult {
     return this;
   }
 
-   /**
+  /**
    * List of compoundIds that have been imported.
    * @return affectedCompoundIds
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_AFFECTED_COMPOUND_IDS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -83,11 +85,11 @@ public class ImportResult {
 
   @JsonProperty(JSON_PROPERTY_AFFECTED_COMPOUND_IDS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setAffectedCompoundIds(List<String> affectedCompoundIds) {
+  public void setAffectedCompoundIds(@jakarta.annotation.Nonnull List<String> affectedCompoundIds) {
     this.affectedCompoundIds = affectedCompoundIds;
   }
 
-  public ImportResult affectedAlignedFeatureIds(List<String> affectedAlignedFeatureIds) {
+  public ImportResult affectedAlignedFeatureIds(@jakarta.annotation.Nonnull List<String> affectedAlignedFeatureIds) {
     
     this.affectedAlignedFeatureIds = affectedAlignedFeatureIds;
     return this;
@@ -101,10 +103,10 @@ public class ImportResult {
     return this;
   }
 
-   /**
+  /**
    * List of alignedFeatureIds that have been imported..
    * @return affectedAlignedFeatureIds
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -116,9 +118,10 @@ public class ImportResult {
 
   @JsonProperty(JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setAffectedAlignedFeatureIds(List<String> affectedAlignedFeatureIds) {
+  public void setAffectedAlignedFeatureIds(@jakarta.annotation.Nonnull List<String> affectedAlignedFeatureIds) {
     this.affectedAlignedFeatureIds = affectedAlignedFeatureIds;
   }
+
 
   @Override
   public boolean equals(Object o) {

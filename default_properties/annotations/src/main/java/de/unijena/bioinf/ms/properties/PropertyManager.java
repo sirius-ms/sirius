@@ -20,13 +20,12 @@
 
 package de.unijena.bioinf.ms.properties;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.configuration2.*;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.io.FileHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.reflections8.Reflections;
-import org.reflections8.scanners.ResourcesScanner;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -39,10 +38,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 /**
  * Created as part of the SIRIUS
@@ -50,14 +45,18 @@ import java.util.regex.Pattern;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
+@Slf4j
 public class PropertyManager {
     public static final String PROPERTY_BASE = "de.unijena.bioinf";
     public static final String MS_PROPERTY_BASE = PROPERTY_BASE + ".ms";
     private static final String PROPERTY_LOCATIONS_KEY = MS_PROPERTY_BASE + ".propertyLocations";
 
     public static final String DEFAULT_PROPERTY_SOURCE = "sirius.build.properties";
-//    public static final String DEFAULT_CONFIG_SOURCE = "default.config";
-//    public static final String DEFAULT_CONFIG_CLASSES_SOURCE = "default_config_class.map";
+
+    public static final String DEFAULT_CONFIG_SOURCE = MS_PROPERTY_BASE + ".defaults";
+    public static final String DEFAULT_PREBUILT_CONFIG = DEFAULT_CONFIG_SOURCE + "/concat.auto.config";
+    public static final String DEFAULT_PREBUILT_CLASS_MAP = DEFAULT_CONFIG_SOURCE + "/concat.class.map";
+
 
     public static final String MS_CONFIGS_BASE = PropertyManager.MS_PROPERTY_BASE + ".configs";
     public static final String MS_CONFIG_CLASSES_BASE = PropertyManager.MS_PROPERTY_BASE + ".configClasses";
@@ -80,18 +79,20 @@ public class PropertyManager {
             PROPERTIES.addConfiguration(PERSISTENT_PROPERTIES, ConfigType.PERSISTENT_PROPERTIES.name());
             PERSISTENT_PROPERTIES.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
             CHANGED_PROPERTIES = loadDefaultProperties();
-            Reflections.log.ifPresent(l -> {
-                Logger logger = LogManager.getLogManager().getLogger(l.getName());
-                if (logger != null)
-                    logger.setLevel(Level.SEVERE);
-            });
-            final Reflections reflections = new Reflections("de.unijena.bioinf.ms.defaults", new ResourcesScanner());
             DEFAULTS_LAYOUT = new PropertiesConfigurationLayout();
 
-            LinkedHashSet<String> classResources =  new LinkedHashSet<>(reflections.getResources(Pattern.compile(".*\\.map")));
-            CombinedConfiguration classConfig = addPropertiesFromResources(classResources, MS_CONFIG_CLASSES_BASE, "CONFIG_CLASSES");
+            LinkedHashSet<String> classResources =  new LinkedHashSet<>();
+            LinkedHashSet<String> configResources =  new LinkedHashSet<>();
+            if (prebuiltConfigExists()) {
+                classResources.add("de.unijena.bioinf.ms.defaults/concat.class.map");
+                configResources.add("de.unijena.bioinf.ms.defaults/concat.auto.config");
+            } else {
+                log.warn("No prebuilt DEFAULT configuration found. Crawling classpath to find configs. NOT FOR PRODUCTION!");
+                classResources.addAll(ReflectionConfigCrawler.getAllClassMaps());
+                configResources.addAll(ReflectionConfigCrawler.getAllConfigs());
+            }
 
-            LinkedHashSet<String> configResources =  new LinkedHashSet<>(reflections.getResources(Pattern.compile(".*\\.config")));
+            CombinedConfiguration classConfig = addPropertiesFromResources(classResources, MS_CONFIG_CLASSES_BASE, "CONFIG_CLASSES");
             // this adds changed defaults from some locations specified by this key
             configResources.addAll(SiriusConfigUtils.parseResourcesLocation(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY)));
             CombinedConfiguration globalConfig = addPropertiesFromResources(configResources, MS_CONFIGS_BASE, ConfigType.GLOBAL.name());
@@ -99,7 +100,7 @@ public class PropertyManager {
 
             DEFAULTS = new ParameterConfig(
                     globalConfig,//config class for configs
-                    classConfig,//configs an properties need to have disjoint keys
+                    classConfig,//configs and properties need to have disjoint keys
                     DEFAULTS_LAYOUT,
                     null,
                     MS_CONFIGS_BASE,
@@ -112,6 +113,10 @@ public class PropertyManager {
         }
     }
 
+    private static boolean prebuiltConfigExists(){
+        return PropertyManager.class.getResource("/" + DEFAULT_PREBUILT_CONFIG) != null
+                && PropertyManager.class.getResource("/" + DEFAULT_PREBUILT_CLASS_MAP) != null;
+    }
 
     public static ImmutableConfiguration getConfigClassProperties() {
         return DEFAULTS.getClassConfigs();

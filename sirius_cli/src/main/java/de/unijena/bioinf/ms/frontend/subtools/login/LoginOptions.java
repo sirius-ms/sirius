@@ -173,7 +173,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             PropertyManager.DEFAULTS.changeConfig("PrintCitations", "FALSE");
             if (clearLogin) {
                 try {
-                    AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
+                    AuthServices.clearRefreshToken(ApplicationCore.WEB_API().getAuthService(), ApplicationCore.TOKEN_FILE);
                     System.out.println("Token successfully removed. You are now logged out!");
                 } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when clearing refresh token.", e);
@@ -182,7 +182,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             }
 
 
-            AuthService service = ApplicationCore.WEB_API.getAuthService();
+            AuthService service = ApplicationCore.WEB_API().getAuthService();
             try {
                 if (login != null) {
                     try {
@@ -276,7 +276,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
         }
 
         private void showLicense() throws IOException {
-            WebAPI<?> api = ApplicationCore.WEB_API;
+            WebAPI<?> api = ApplicationCore.WEB_API();
             @Nullable Subscription sub = accessTokens.getActiveSubscription(api.getAuthService().getToken().orElse(null));
 
             System.out.println();
@@ -336,10 +336,10 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                     LoggerFactory.getLogger(getClass()).debug("Could not find subscription with sid '{}'. Trying to find fallback", sid);
                 sub = accessTokens.getActiveSubscription(subs, accessTokens.getDefaultSubscriptionId(token));
             }
-            ApplicationCore.WEB_API.changeActiveSubscription(sub);
+            ApplicationCore.WEB_API().changeActiveSubscription(sub);
 
             //check connection
-            Map<ConnectionError.Klass, Set<ConnectionError>> errors = ApplicationCore.WEB_API.checkConnection();
+            Map<ConnectionError.Klass, Set<ConnectionError>> errors = ApplicationCore.WEB_API().checkConnection();
             LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: {}",
                     errors.values().stream().flatMap(Set::stream)
                             .sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
@@ -357,9 +357,9 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 String answer = scanner.next();
                 System.out.println("##########################################################");
                 if (answer.equalsIgnoreCase("Y") || answer.equalsIgnoreCase("YES")) {
-                    ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
+                    ApplicationCore.WEB_API().acceptTermsAndRefreshToken();
                     System.out.println("Terms accepted! Checking web service permissions...");
-                    errors = ApplicationCore.WEB_API.checkConnection();
+                    errors = ApplicationCore.WEB_API().checkConnection();
                 } else { //not accepted clear account data
                     System.out.println("Terms NOT Accepted! Removing login information. Please re-login and accept terms to use web service based features.");
                     AuthServices.clearRefreshToken(ApplicationCore.TOKEN_FILE);
@@ -369,7 +369,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
             }
 
-            Subscription subUsed = ApplicationCore.WEB_API.getActiveSubscription();
+            Subscription subUsed = ApplicationCore.WEB_API().getActiveSubscription();
             System.out.println();
             if (sid != null && sid.equals(subUsed.getSid())) {
                 //make host change persistent because the connection was successful

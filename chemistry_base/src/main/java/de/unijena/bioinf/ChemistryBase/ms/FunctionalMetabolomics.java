@@ -90,7 +90,7 @@ public class FunctionalMetabolomics implements Ms2ExperimentAnnotation {
 
     @DefaultInstanceProvider
     public static FunctionalMetabolomics fromString(@DefaultProperty @Nullable String value) {
-        if (Utils.isNullOrBlank(value))
+        if (Utils.isNullOrBlank(value) || value.toLowerCase().equals("none"))
             return none();
 
         ObjectMapper mapper = new ObjectMapper();

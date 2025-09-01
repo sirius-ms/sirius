@@ -43,18 +43,20 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BinaryFingerprint.JSON_PROPERTY_BITS_SET,
   BinaryFingerprint.JSON_PROPERTY_LENGTH
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class BinaryFingerprint {
   public static final String JSON_PROPERTY_BITS_SET = "bitsSet";
+  @jakarta.annotation.Nullable
   private List<Integer> bitsSet = new ArrayList<>();
 
   public static final String JSON_PROPERTY_LENGTH = "length";
+  @jakarta.annotation.Nullable
   private Integer length;
 
   public BinaryFingerprint() {
   }
 
-  public BinaryFingerprint bitsSet(List<Integer> bitsSet) {
+  public BinaryFingerprint bitsSet(@jakarta.annotation.Nullable List<Integer> bitsSet) {
     
     this.bitsSet = bitsSet;
     return this;
@@ -68,10 +70,10 @@ public class BinaryFingerprint {
     return this;
   }
 
-   /**
+  /**
    * Array that contains all RELATIVE indices (masked FP) of bits that are set (are 1)
    * @return bitsSet
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_BITS_SET)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -83,20 +85,20 @@ public class BinaryFingerprint {
 
   @JsonProperty(JSON_PROPERTY_BITS_SET)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setBitsSet(List<Integer> bitsSet) {
+  public void setBitsSet(@jakarta.annotation.Nullable List<Integer> bitsSet) {
     this.bitsSet = bitsSet;
   }
 
-  public BinaryFingerprint length(Integer length) {
+  public BinaryFingerprint length(@jakarta.annotation.Nullable Integer length) {
     
     this.length = length;
     return this;
   }
 
-   /**
+  /**
    * Size of the fingerprint (masked fp), e.g. to reconstruct the binary array from the array of set bits
    * @return length
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LENGTH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -108,9 +110,10 @@ public class BinaryFingerprint {
 
   @JsonProperty(JSON_PROPERTY_LENGTH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLength(Integer length) {
+  public void setLength(@jakarta.annotation.Nullable Integer length) {
     this.length = length;
   }
+
 
   @Override
   public boolean equals(Object o) {

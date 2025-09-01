@@ -64,78 +64,97 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibraryMatch.JSON_PROPERTY_REFERENCE_SPECTRUM,
   SpectralLibraryMatch.JSON_PROPERTY_QUERY_SPECTRUM_TYPE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class SpectralLibraryMatch {
   public static final String JSON_PROPERTY_SPEC_MATCH_ID = "specMatchId";
+  @jakarta.annotation.Nullable
   private String specMatchId;
 
   public static final String JSON_PROPERTY_RANK = "rank";
+  @jakarta.annotation.Nullable
   private Integer rank;
 
   public static final String JSON_PROPERTY_SIMILARITY = "similarity";
+  @jakarta.annotation.Nonnull
   private Float similarity;
 
   public static final String JSON_PROPERTY_SHARED_PEAKS = "sharedPeaks";
+  @jakarta.annotation.Nullable
   private Integer sharedPeaks;
 
   public static final String JSON_PROPERTY_SHARED_PEAK_MAPPING = "sharedPeakMapping";
+  @jakarta.annotation.Nullable
   private List<PeakPair> sharedPeakMapping = new ArrayList<>();
 
   public static final String JSON_PROPERTY_QUERY_SPECTRUM_INDEX = "querySpectrumIndex";
+  @jakarta.annotation.Nonnull
   private Integer querySpectrumIndex;
 
   public static final String JSON_PROPERTY_DB_NAME = "dbName";
+  @jakarta.annotation.Nullable
   private String dbName;
 
   public static final String JSON_PROPERTY_DB_ID = "dbId";
+  @jakarta.annotation.Nullable
   private String dbId;
 
   public static final String JSON_PROPERTY_UUID = "uuid";
+  @jakarta.annotation.Nonnull
   private Long uuid;
 
   public static final String JSON_PROPERTY_SPLASH = "splash";
+  @jakarta.annotation.Nullable
   private String splash;
 
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  @jakarta.annotation.Nullable
   private String molecularFormula;
 
   public static final String JSON_PROPERTY_ADDUCT = "adduct";
+  @jakarta.annotation.Nullable
   private String adduct;
 
   public static final String JSON_PROPERTY_EXACT_MASS = "exactMass";
+  @jakarta.annotation.Nullable
   private Double exactMass;
 
   public static final String JSON_PROPERTY_SMILES = "smiles";
+  @jakarta.annotation.Nullable
   private String smiles;
 
   public static final String JSON_PROPERTY_TYPE = "type";
+  @jakarta.annotation.Nullable
   private SpectralMatchType type = SpectralMatchType.IDENTITY;
 
   public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
+  @jakarta.annotation.Nonnull
   private String inchiKey;
 
   public static final String JSON_PROPERTY_REFERENCE_SPECTRUM_TYPE = "referenceSpectrumType";
+  @jakarta.annotation.Nullable
   private SpectrumType referenceSpectrumType;
 
   public static final String JSON_PROPERTY_REFERENCE_SPECTRUM = "referenceSpectrum";
+  @jakarta.annotation.Nullable
   private BasicSpectrum referenceSpectrum;
 
   public static final String JSON_PROPERTY_QUERY_SPECTRUM_TYPE = "querySpectrumType";
+  @jakarta.annotation.Nullable
   private SpectrumType querySpectrumType;
 
   public SpectralLibraryMatch() {
   }
 
-  public SpectralLibraryMatch specMatchId(String specMatchId) {
+  public SpectralLibraryMatch specMatchId(@jakarta.annotation.Nullable String specMatchId) {
     
     this.specMatchId = specMatchId;
     return this;
   }
 
-   /**
+  /**
    * Get specMatchId
    * @return specMatchId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SPEC_MATCH_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -147,20 +166,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_SPEC_MATCH_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSpecMatchId(String specMatchId) {
+  public void setSpecMatchId(@jakarta.annotation.Nullable String specMatchId) {
     this.specMatchId = specMatchId;
   }
 
-  public SpectralLibraryMatch rank(Integer rank) {
+  public SpectralLibraryMatch rank(@jakarta.annotation.Nullable Integer rank) {
     
     this.rank = rank;
     return this;
   }
 
-   /**
+  /**
    * Get rank
    * @return rank
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RANK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -172,20 +191,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_RANK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRank(Integer rank) {
+  public void setRank(@jakarta.annotation.Nullable Integer rank) {
     this.rank = rank;
   }
 
-  public SpectralLibraryMatch similarity(Float similarity) {
+  public SpectralLibraryMatch similarity(@jakarta.annotation.Nonnull Float similarity) {
     
     this.similarity = similarity;
     return this;
   }
 
-   /**
+  /**
    * Similarity between query and reference spectrum
    * @return similarity
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -197,20 +216,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSimilarity(Float similarity) {
+  public void setSimilarity(@jakarta.annotation.Nonnull Float similarity) {
     this.similarity = similarity;
   }
 
-  public SpectralLibraryMatch sharedPeaks(Integer sharedPeaks) {
+  public SpectralLibraryMatch sharedPeaks(@jakarta.annotation.Nullable Integer sharedPeaks) {
     
     this.sharedPeaks = sharedPeaks;
     return this;
   }
 
-   /**
+  /**
    * Number of shared/matched peaks
    * @return sharedPeaks
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SHARED_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -222,11 +241,11 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_SHARED_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSharedPeaks(Integer sharedPeaks) {
+  public void setSharedPeaks(@jakarta.annotation.Nullable Integer sharedPeaks) {
     this.sharedPeaks = sharedPeaks;
   }
 
-  public SpectralLibraryMatch sharedPeakMapping(List<PeakPair> sharedPeakMapping) {
+  public SpectralLibraryMatch sharedPeakMapping(@jakarta.annotation.Nullable List<PeakPair> sharedPeakMapping) {
     
     this.sharedPeakMapping = sharedPeakMapping;
     return this;
@@ -240,10 +259,10 @@ public class SpectralLibraryMatch {
     return this;
   }
 
-   /**
+  /**
    * List of paired/matched peak indices.   Maps indices of peaks from the query spectrum (mass sorted)  to indices of matched peaks in the reference spectrum (mass sorted)
    * @return sharedPeakMapping
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SHARED_PEAK_MAPPING)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -255,20 +274,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_SHARED_PEAK_MAPPING)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSharedPeakMapping(List<PeakPair> sharedPeakMapping) {
+  public void setSharedPeakMapping(@jakarta.annotation.Nullable List<PeakPair> sharedPeakMapping) {
     this.sharedPeakMapping = sharedPeakMapping;
   }
 
-  public SpectralLibraryMatch querySpectrumIndex(Integer querySpectrumIndex) {
+  public SpectralLibraryMatch querySpectrumIndex(@jakarta.annotation.Nonnull Integer querySpectrumIndex) {
     
     this.querySpectrumIndex = querySpectrumIndex;
     return this;
   }
 
-   /**
+  /**
    * Get querySpectrumIndex
    * @return querySpectrumIndex
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_QUERY_SPECTRUM_INDEX)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -280,20 +299,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_QUERY_SPECTRUM_INDEX)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setQuerySpectrumIndex(Integer querySpectrumIndex) {
+  public void setQuerySpectrumIndex(@jakarta.annotation.Nonnull Integer querySpectrumIndex) {
     this.querySpectrumIndex = querySpectrumIndex;
   }
 
-  public SpectralLibraryMatch dbName(String dbName) {
+  public SpectralLibraryMatch dbName(@jakarta.annotation.Nullable String dbName) {
     
     this.dbName = dbName;
     return this;
   }
 
-   /**
+  /**
    * Get dbName
    * @return dbName
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DB_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -305,20 +324,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_DB_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDbName(String dbName) {
+  public void setDbName(@jakarta.annotation.Nullable String dbName) {
     this.dbName = dbName;
   }
 
-  public SpectralLibraryMatch dbId(String dbId) {
+  public SpectralLibraryMatch dbId(@jakarta.annotation.Nullable String dbId) {
     
     this.dbId = dbId;
     return this;
   }
 
-   /**
+  /**
    * Get dbId
    * @return dbId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DB_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -330,20 +349,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_DB_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDbId(String dbId) {
+  public void setDbId(@jakarta.annotation.Nullable String dbId) {
     this.dbId = dbId;
   }
 
-  public SpectralLibraryMatch uuid(Long uuid) {
+  public SpectralLibraryMatch uuid(@jakarta.annotation.Nonnull Long uuid) {
     
     this.uuid = uuid;
     return this;
   }
 
-   /**
+  /**
    * Get uuid
    * @return uuid
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_UUID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -355,20 +374,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_UUID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setUuid(Long uuid) {
+  public void setUuid(@jakarta.annotation.Nonnull Long uuid) {
     this.uuid = uuid;
   }
 
-  public SpectralLibraryMatch splash(String splash) {
+  public SpectralLibraryMatch splash(@jakarta.annotation.Nullable String splash) {
     
     this.splash = splash;
     return this;
   }
 
-   /**
+  /**
    * Get splash
    * @return splash
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SPLASH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -380,20 +399,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_SPLASH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSplash(String splash) {
+  public void setSplash(@jakarta.annotation.Nullable String splash) {
     this.splash = splash;
   }
 
-  public SpectralLibraryMatch molecularFormula(String molecularFormula) {
+  public SpectralLibraryMatch molecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     
     this.molecularFormula = molecularFormula;
     return this;
   }
 
-   /**
+  /**
    * Get molecularFormula
    * @return molecularFormula
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -405,20 +424,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMolecularFormula(String molecularFormula) {
+  public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
   }
 
-  public SpectralLibraryMatch adduct(String adduct) {
+  public SpectralLibraryMatch adduct(@jakarta.annotation.Nullable String adduct) {
     
     this.adduct = adduct;
     return this;
   }
 
-   /**
+  /**
    * Get adduct
    * @return adduct
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -430,20 +449,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAdduct(String adduct) {
+  public void setAdduct(@jakarta.annotation.Nullable String adduct) {
     this.adduct = adduct;
   }
 
-  public SpectralLibraryMatch exactMass(Double exactMass) {
+  public SpectralLibraryMatch exactMass(@jakarta.annotation.Nullable Double exactMass) {
     
     this.exactMass = exactMass;
     return this;
   }
 
-   /**
+  /**
    * Get exactMass
    * @return exactMass
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_EXACT_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -455,20 +474,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_EXACT_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExactMass(Double exactMass) {
+  public void setExactMass(@jakarta.annotation.Nullable Double exactMass) {
     this.exactMass = exactMass;
   }
 
-  public SpectralLibraryMatch smiles(String smiles) {
+  public SpectralLibraryMatch smiles(@jakarta.annotation.Nullable String smiles) {
     
     this.smiles = smiles;
     return this;
   }
 
-   /**
+  /**
    * Get smiles
    * @return smiles
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SMILES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -480,20 +499,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_SMILES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSmiles(String smiles) {
+  public void setSmiles(@jakarta.annotation.Nullable String smiles) {
     this.smiles = smiles;
   }
 
-  public SpectralLibraryMatch type(SpectralMatchType type) {
+  public SpectralLibraryMatch type(@jakarta.annotation.Nullable SpectralMatchType type) {
     
     this.type = type;
     return this;
   }
 
-   /**
+  /**
    * Get type
    * @return type
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -505,20 +524,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setType(SpectralMatchType type) {
+  public void setType(@jakarta.annotation.Nullable SpectralMatchType type) {
     this.type = type;
   }
 
-  public SpectralLibraryMatch inchiKey(String inchiKey) {
+  public SpectralLibraryMatch inchiKey(@jakarta.annotation.Nonnull String inchiKey) {
     
     this.inchiKey = inchiKey;
     return this;
   }
 
-   /**
+  /**
    * Get inchiKey
    * @return inchiKey
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_INCHI_KEY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -530,20 +549,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_INCHI_KEY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setInchiKey(String inchiKey) {
+  public void setInchiKey(@jakarta.annotation.Nonnull String inchiKey) {
     this.inchiKey = inchiKey;
   }
 
-  public SpectralLibraryMatch referenceSpectrumType(SpectrumType referenceSpectrumType) {
+  public SpectralLibraryMatch referenceSpectrumType(@jakarta.annotation.Nullable SpectrumType referenceSpectrumType) {
     
     this.referenceSpectrumType = referenceSpectrumType;
     return this;
   }
 
-   /**
+  /**
    * Get referenceSpectrumType
    * @return referenceSpectrumType
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRUM_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -555,20 +574,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRUM_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setReferenceSpectrumType(SpectrumType referenceSpectrumType) {
+  public void setReferenceSpectrumType(@jakarta.annotation.Nullable SpectrumType referenceSpectrumType) {
     this.referenceSpectrumType = referenceSpectrumType;
   }
 
-  public SpectralLibraryMatch referenceSpectrum(BasicSpectrum referenceSpectrum) {
+  public SpectralLibraryMatch referenceSpectrum(@jakarta.annotation.Nullable BasicSpectrum referenceSpectrum) {
     
     this.referenceSpectrum = referenceSpectrum;
     return this;
   }
 
-   /**
+  /**
    * Get referenceSpectrum
    * @return referenceSpectrum
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRUM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -580,20 +599,20 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRUM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setReferenceSpectrum(BasicSpectrum referenceSpectrum) {
+  public void setReferenceSpectrum(@jakarta.annotation.Nullable BasicSpectrum referenceSpectrum) {
     this.referenceSpectrum = referenceSpectrum;
   }
 
-  public SpectralLibraryMatch querySpectrumType(SpectrumType querySpectrumType) {
+  public SpectralLibraryMatch querySpectrumType(@jakarta.annotation.Nullable SpectrumType querySpectrumType) {
     
     this.querySpectrumType = querySpectrumType;
     return this;
   }
 
-   /**
+  /**
    * Get querySpectrumType
    * @return querySpectrumType
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_QUERY_SPECTRUM_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -605,9 +624,10 @@ public class SpectralLibraryMatch {
 
   @JsonProperty(JSON_PROPERTY_QUERY_SPECTRUM_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setQuerySpectrumType(SpectrumType querySpectrumType) {
+  public void setQuerySpectrumType(@jakarta.annotation.Nullable SpectrumType querySpectrumType) {
     this.querySpectrumType = querySpectrumType;
   }
+
 
   @Override
   public boolean equals(Object o) {

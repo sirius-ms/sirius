@@ -392,7 +392,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private void setProjectTypeOrThrow(SiriusProjectDatabaseImpl<? extends Database<?>> ps) {
         Optional<ProjectType> psType = ps.findProjectType();
-        if (psType.isPresent()) {
+        if (psType.map(pst -> pst != ProjectType.UNIMPORTED).orElse(false) ) {
             switch (psType.get()) {
                 case DIRECT_IMPORT ->
                         throw new ProjectTypeException("Project already contains data from direct API import. Additional MS run data (.mzml, .mzxml) cannot be added to this project. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, ProjectType.DIRECT_IMPORT);

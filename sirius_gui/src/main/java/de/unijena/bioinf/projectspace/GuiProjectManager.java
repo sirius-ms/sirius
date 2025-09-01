@@ -268,7 +268,7 @@ public class GuiProjectManager implements Closeable {
     }
 
     public ProjectInfo getProjectInfo() {
-        return getProjectInfo(List.of(ProjectInfoOptField.SIZEINFORMATION, ProjectInfoOptField.COMPATIBILITYINFO));
+        return getProjectInfo(List.of(ProjectInfoOptField.SIZE_INFORMATION, ProjectInfoOptField.COMPATIBILITY_INFO));
     }
 
     public ProjectInfo compactWithLoading(Window parent) {
@@ -288,7 +288,7 @@ public class GuiProjectManager implements Closeable {
     public ProjectInfo compact() {
         String location = getProjectLocation();
         siriusClient.projects().closeProject(projectId, true);
-        return siriusClient.projects().openProject(projectId, location, List.of(ProjectInfoOptField.SIZEINFORMATION));
+        return siriusClient.projects().openProject(projectId, location, List.of(ProjectInfoOptField.SIZE_INFORMATION));
     }
 
     @Override

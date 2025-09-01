@@ -43,36 +43,41 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   LipidAnnotation.JSON_PROPERTY_HYPOTHETICAL_STRUCTURE,
   LipidAnnotation.JSON_PROPERTY_CHAINS_UNKNOWN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class LipidAnnotation {
   public static final String JSON_PROPERTY_LIPID_SPECIES = "lipidSpecies";
+  @jakarta.annotation.Nullable
   private String lipidSpecies;
 
   public static final String JSON_PROPERTY_LIPID_MAPS_ID = "lipidMapsId";
+  @jakarta.annotation.Nullable
   private String lipidMapsId;
 
   public static final String JSON_PROPERTY_LIPID_CLASS_NAME = "lipidClassName";
+  @jakarta.annotation.Nullable
   private String lipidClassName;
 
   public static final String JSON_PROPERTY_HYPOTHETICAL_STRUCTURE = "hypotheticalStructure";
+  @jakarta.annotation.Nullable
   private String hypotheticalStructure;
 
   public static final String JSON_PROPERTY_CHAINS_UNKNOWN = "chainsUnknown";
+  @jakarta.annotation.Nullable
   private Boolean chainsUnknown;
 
   public LipidAnnotation() {
   }
 
-  public LipidAnnotation lipidSpecies(String lipidSpecies) {
+  public LipidAnnotation lipidSpecies(@jakarta.annotation.Nullable String lipidSpecies) {
     
     this.lipidSpecies = lipidSpecies;
     return this;
   }
 
-   /**
+  /**
    * Predicted lipid species in LIPID MAPS notation.  NULL if not classified as lipid.
    * @return lipidSpecies
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LIPID_SPECIES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -84,20 +89,20 @@ public class LipidAnnotation {
 
   @JsonProperty(JSON_PROPERTY_LIPID_SPECIES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLipidSpecies(String lipidSpecies) {
+  public void setLipidSpecies(@jakarta.annotation.Nullable String lipidSpecies) {
     this.lipidSpecies = lipidSpecies;
   }
 
-  public LipidAnnotation lipidMapsId(String lipidMapsId) {
+  public LipidAnnotation lipidMapsId(@jakarta.annotation.Nullable String lipidMapsId) {
     
     this.lipidMapsId = lipidMapsId;
     return this;
   }
 
-   /**
+  /**
    * LIPID MAPS id of the predicted lipid class.
    * @return lipidMapsId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LIPID_MAPS_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -109,20 +114,20 @@ public class LipidAnnotation {
 
   @JsonProperty(JSON_PROPERTY_LIPID_MAPS_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLipidMapsId(String lipidMapsId) {
+  public void setLipidMapsId(@jakarta.annotation.Nullable String lipidMapsId) {
     this.lipidMapsId = lipidMapsId;
   }
 
-  public LipidAnnotation lipidClassName(String lipidClassName) {
+  public LipidAnnotation lipidClassName(@jakarta.annotation.Nullable String lipidClassName) {
     
     this.lipidClassName = lipidClassName;
     return this;
   }
 
-   /**
+  /**
    * Human-readable name of the predicted lipid class.
    * @return lipidClassName
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LIPID_CLASS_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -134,20 +139,20 @@ public class LipidAnnotation {
 
   @JsonProperty(JSON_PROPERTY_LIPID_CLASS_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLipidClassName(String lipidClassName) {
+  public void setLipidClassName(@jakarta.annotation.Nullable String lipidClassName) {
     this.lipidClassName = lipidClassName;
   }
 
-  public LipidAnnotation hypotheticalStructure(String hypotheticalStructure) {
+  public LipidAnnotation hypotheticalStructure(@jakarta.annotation.Nullable String hypotheticalStructure) {
     
     this.hypotheticalStructure = hypotheticalStructure;
     return this;
   }
 
-   /**
+  /**
    * Hypothetical molecular structure of the predicted lipid species as SMILES.  NULL if hypothetical structure not available.
    * @return hypotheticalStructure
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_HYPOTHETICAL_STRUCTURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -159,20 +164,20 @@ public class LipidAnnotation {
 
   @JsonProperty(JSON_PROPERTY_HYPOTHETICAL_STRUCTURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setHypotheticalStructure(String hypotheticalStructure) {
+  public void setHypotheticalStructure(@jakarta.annotation.Nullable String hypotheticalStructure) {
     this.hypotheticalStructure = hypotheticalStructure;
   }
 
-  public LipidAnnotation chainsUnknown(Boolean chainsUnknown) {
+  public LipidAnnotation chainsUnknown(@jakarta.annotation.Nullable Boolean chainsUnknown) {
     
     this.chainsUnknown = chainsUnknown;
     return this;
   }
 
-   /**
+  /**
    * True of the formula composition of the chains could not be determined from the MS/MS.
    * @return chainsUnknown
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CHAINS_UNKNOWN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -184,9 +189,10 @@ public class LipidAnnotation {
 
   @JsonProperty(JSON_PROPERTY_CHAINS_UNKNOWN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setChainsUnknown(Boolean chainsUnknown) {
+  public void setChainsUnknown(@jakarta.annotation.Nullable Boolean chainsUnknown) {
     this.chainsUnknown = chainsUnknown;
   }
+
 
   @Override
   public boolean equals(Object o) {

@@ -70,7 +70,7 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
     }
 
     private void loadSize() {
-        loadSize(gui.getProjectManager().getProjectInfo(List.of(ProjectInfoOptField.SIZEINFORMATION)));
+        loadSize(gui.getProjectManager().getProjectInfo(List.of(ProjectInfoOptField.SIZE_INFORMATION)));
     }
 
     private void loadSize(ProjectInfo projectInfo) {

@@ -9,24 +9,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class InfoApi {
     private ApiClient apiClient;
 
@@ -34,7 +35,6 @@ public class InfoApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public InfoApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
@@ -47,6 +47,7 @@ public class InfoApi {
         this.apiClient = apiClient;
     }
 
+    
     /**
      * 
      * 
@@ -111,6 +112,7 @@ public class InfoApi {
     public ResponseSpec getConnectionCheckWithResponseSpec() throws WebClientResponseException {
         return getConnectionCheckRequestCreation();
     }
+
     /**
      * 
      * 
@@ -120,7 +122,7 @@ public class InfoApi {
      * @return Info
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getInfoRequestCreation(Boolean serverInfo, Boolean updateInfo) throws WebClientResponseException {
+    private ResponseSpec getInfoRequestCreation(@jakarta.annotation.Nullable Boolean serverInfo, @jakarta.annotation.Nullable Boolean updateInfo) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -155,7 +157,7 @@ public class InfoApi {
      * @return Info
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Info getInfo(Boolean serverInfo, Boolean updateInfo) throws WebClientResponseException {
+    public Info getInfo(@jakarta.annotation.Nullable Boolean serverInfo, @jakarta.annotation.Nullable Boolean updateInfo) throws WebClientResponseException {
         ParameterizedTypeReference<Info> localVarReturnType = new ParameterizedTypeReference<Info>() {};
         return getInfoRequestCreation(serverInfo, updateInfo).bodyToMono(localVarReturnType).block();
     }
@@ -169,7 +171,7 @@ public class InfoApi {
      * @return ResponseEntity&lt;Info&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Info> getInfoWithHttpInfo(Boolean serverInfo, Boolean updateInfo) throws WebClientResponseException {
+    public ResponseEntity<Info> getInfoWithHttpInfo(@jakarta.annotation.Nullable Boolean serverInfo, @jakarta.annotation.Nullable Boolean updateInfo) throws WebClientResponseException {
         ParameterizedTypeReference<Info> localVarReturnType = new ParameterizedTypeReference<Info>() {};
         return getInfoRequestCreation(serverInfo, updateInfo).toEntity(localVarReturnType).block();
     }
@@ -183,7 +185,7 @@ public class InfoApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getInfoWithResponseSpec(Boolean serverInfo, Boolean updateInfo) throws WebClientResponseException {
+    public ResponseSpec getInfoWithResponseSpec(@jakarta.annotation.Nullable Boolean serverInfo, @jakarta.annotation.Nullable Boolean updateInfo) throws WebClientResponseException {
         return getInfoRequestCreation(serverInfo, updateInfo);
     }
 }

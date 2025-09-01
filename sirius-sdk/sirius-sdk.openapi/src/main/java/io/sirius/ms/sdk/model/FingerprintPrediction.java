@@ -41,30 +41,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FingerprintPrediction.JSON_PROPERTY_USE_SCORE_THRESHOLD,
   FingerprintPrediction.JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class FingerprintPrediction {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
+  @jakarta.annotation.Nullable
   private Boolean enabled;
 
   public static final String JSON_PROPERTY_USE_SCORE_THRESHOLD = "useScoreThreshold";
+  @jakarta.annotation.Nullable
   private Boolean useScoreThreshold;
 
   public static final String JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES = "alwaysPredictHighRefMatches";
+  @jakarta.annotation.Nullable
   private Boolean alwaysPredictHighRefMatches;
 
   public FingerprintPrediction() {
   }
 
-  public FingerprintPrediction enabled(Boolean enabled) {
+  public FingerprintPrediction enabled(@jakarta.annotation.Nullable Boolean enabled) {
     
     this.enabled = enabled;
     return this;
   }
 
-   /**
+  /**
    * tags whether the tool is enabled
    * @return enabled
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -76,20 +79,20 @@ public class FingerprintPrediction {
 
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnabled(Boolean enabled) {
+  public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
   }
 
-  public FingerprintPrediction useScoreThreshold(Boolean useScoreThreshold) {
+  public FingerprintPrediction useScoreThreshold(@jakarta.annotation.Nullable Boolean useScoreThreshold) {
     
     this.useScoreThreshold = useScoreThreshold;
     return this;
   }
 
-   /**
+  /**
    * If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates  Enabling is highly recommended.
    * @return useScoreThreshold
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_USE_SCORE_THRESHOLD)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -101,20 +104,20 @@ public class FingerprintPrediction {
 
   @JsonProperty(JSON_PROPERTY_USE_SCORE_THRESHOLD)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUseScoreThreshold(Boolean useScoreThreshold) {
+  public void setUseScoreThreshold(@jakarta.annotation.Nullable Boolean useScoreThreshold) {
     this.useScoreThreshold = useScoreThreshold;
   }
 
-  public FingerprintPrediction alwaysPredictHighRefMatches(Boolean alwaysPredictHighRefMatches) {
+  public FingerprintPrediction alwaysPredictHighRefMatches(@jakarta.annotation.Nullable Boolean alwaysPredictHighRefMatches) {
     
     this.alwaysPredictHighRefMatches = alwaysPredictHighRefMatches;
     return this;
   }
 
-   /**
+  /**
    * If true Fingerprint/Classes/Structures will be predicted for formulas candidates with  reference spectrum similarity &gt; Sirius.minReferenceMatchScoreToInject will be predicted no matter which  score threshold rules apply.  If NULL default value will be used.
    * @return alwaysPredictHighRefMatches
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -126,9 +129,10 @@ public class FingerprintPrediction {
 
   @JsonProperty(JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAlwaysPredictHighRefMatches(Boolean alwaysPredictHighRefMatches) {
+  public void setAlwaysPredictHighRefMatches(@jakarta.annotation.Nullable Boolean alwaysPredictHighRefMatches) {
     this.alwaysPredictHighRefMatches = alwaysPredictHighRefMatches;
   }
+
 
   @Override
   public boolean equals(Object o) {

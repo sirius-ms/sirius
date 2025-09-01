@@ -57,51 +57,61 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Compound.JSON_PROPERTY_CUSTOM_ANNOTATIONS,
   Compound.JSON_PROPERTY_TAGS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class Compound {
   public static final String JSON_PROPERTY_COMPOUND_ID = "compoundId";
+  @jakarta.annotation.Nullable
   private String compoundId;
 
   public static final String JSON_PROPERTY_NAME = "name";
+  @jakarta.annotation.Nullable
   private String name;
 
   public static final String JSON_PROPERTY_RT_START_SECONDS = "rtStartSeconds";
+  @jakarta.annotation.Nullable
   private Double rtStartSeconds;
 
   public static final String JSON_PROPERTY_RT_END_SECONDS = "rtEndSeconds";
+  @jakarta.annotation.Nullable
   private Double rtEndSeconds;
 
   public static final String JSON_PROPERTY_NEUTRAL_MASS = "neutralMass";
+  @jakarta.annotation.Nullable
   private Double neutralMass;
 
   public static final String JSON_PROPERTY_FEATURES = "features";
+  @jakarta.annotation.Nullable
   private List<AlignedFeature> features = new ArrayList<>();
 
   public static final String JSON_PROPERTY_CONSENSUS_ANNOTATIONS = "consensusAnnotations";
+  @jakarta.annotation.Nullable
   private ConsensusAnnotationsCSI consensusAnnotations;
 
   public static final String JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO = "consensusAnnotationsDeNovo";
+  @jakarta.annotation.Nullable
   private ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo;
 
   public static final String JSON_PROPERTY_CUSTOM_ANNOTATIONS = "customAnnotations";
+  @jakarta.annotation.Nullable
   private ConsensusAnnotationsCSI customAnnotations;
 
   public static final String JSON_PROPERTY_TAGS = "tags";
+  @jakarta.annotation.Nullable
   private Map<String, Tag> tags;
 
   public Compound() {
   }
 
-  public Compound compoundId(String compoundId) {
+  public Compound compoundId(@jakarta.annotation.Nullable String compoundId) {
     
     this.compoundId = compoundId;
     return this;
   }
 
-   /**
+  /**
    * uid of this compound Entity
    * @return compoundId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -113,20 +123,20 @@ public class Compound {
 
   @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCompoundId(String compoundId) {
+  public void setCompoundId(@jakarta.annotation.Nullable String compoundId) {
     this.compoundId = compoundId;
   }
 
-  public Compound name(String name) {
+  public Compound name(@jakarta.annotation.Nullable String name) {
     
     this.name = name;
     return this;
   }
 
-   /**
+  /**
    * Some (optional) human-readable name
    * @return name
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -138,20 +148,20 @@ public class Compound {
 
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
+  public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
   }
 
-  public Compound rtStartSeconds(Double rtStartSeconds) {
+  public Compound rtStartSeconds(@jakarta.annotation.Nullable Double rtStartSeconds) {
     
     this.rtStartSeconds = rtStartSeconds;
     return this;
   }
 
-   /**
+  /**
    * The merged/consensus retention time start (earliest rt) of this compound
    * @return rtStartSeconds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -163,20 +173,20 @@ public class Compound {
 
   @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRtStartSeconds(Double rtStartSeconds) {
+  public void setRtStartSeconds(@jakarta.annotation.Nullable Double rtStartSeconds) {
     this.rtStartSeconds = rtStartSeconds;
   }
 
-  public Compound rtEndSeconds(Double rtEndSeconds) {
+  public Compound rtEndSeconds(@jakarta.annotation.Nullable Double rtEndSeconds) {
     
     this.rtEndSeconds = rtEndSeconds;
     return this;
   }
 
-   /**
+  /**
    * The merged/consensus retention time end (latest rt) of this compound
    * @return rtEndSeconds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -188,20 +198,20 @@ public class Compound {
 
   @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRtEndSeconds(Double rtEndSeconds) {
+  public void setRtEndSeconds(@jakarta.annotation.Nullable Double rtEndSeconds) {
     this.rtEndSeconds = rtEndSeconds;
   }
 
-  public Compound neutralMass(Double neutralMass) {
+  public Compound neutralMass(@jakarta.annotation.Nullable Double neutralMass) {
     
     this.neutralMass = neutralMass;
     return this;
   }
 
-   /**
+  /**
    * Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature of  this compound should result in the same neutral mass
    * @return neutralMass
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NEUTRAL_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -213,11 +223,11 @@ public class Compound {
 
   @JsonProperty(JSON_PROPERTY_NEUTRAL_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNeutralMass(Double neutralMass) {
+  public void setNeutralMass(@jakarta.annotation.Nullable Double neutralMass) {
     this.neutralMass = neutralMass;
   }
 
-  public Compound features(List<AlignedFeature> features) {
+  public Compound features(@jakarta.annotation.Nullable List<AlignedFeature> features) {
     
     this.features = features;
     return this;
@@ -231,10 +241,10 @@ public class Compound {
     return this;
   }
 
-   /**
+  /**
    * List of aligned features (adducts) that belong to the same (this) compound
    * @return features
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FEATURES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -246,20 +256,20 @@ public class Compound {
 
   @JsonProperty(JSON_PROPERTY_FEATURES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFeatures(List<AlignedFeature> features) {
+  public void setFeatures(@jakarta.annotation.Nullable List<AlignedFeature> features) {
     this.features = features;
   }
 
-  public Compound consensusAnnotations(ConsensusAnnotationsCSI consensusAnnotations) {
+  public Compound consensusAnnotations(@jakarta.annotation.Nullable ConsensusAnnotationsCSI consensusAnnotations) {
     
     this.consensusAnnotations = consensusAnnotations;
     return this;
   }
 
-   /**
+  /**
    * Get consensusAnnotations
    * @return consensusAnnotations
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -271,20 +281,20 @@ public class Compound {
 
   @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConsensusAnnotations(ConsensusAnnotationsCSI consensusAnnotations) {
+  public void setConsensusAnnotations(@jakarta.annotation.Nullable ConsensusAnnotationsCSI consensusAnnotations) {
     this.consensusAnnotations = consensusAnnotations;
   }
 
-  public Compound consensusAnnotationsDeNovo(ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo) {
+  public Compound consensusAnnotationsDeNovo(@jakarta.annotation.Nullable ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo) {
     
     this.consensusAnnotationsDeNovo = consensusAnnotationsDeNovo;
     return this;
   }
 
-   /**
+  /**
    * Get consensusAnnotationsDeNovo
    * @return consensusAnnotationsDeNovo
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -296,20 +306,20 @@ public class Compound {
 
   @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConsensusAnnotationsDeNovo(ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo) {
+  public void setConsensusAnnotationsDeNovo(@jakarta.annotation.Nullable ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo) {
     this.consensusAnnotationsDeNovo = consensusAnnotationsDeNovo;
   }
 
-  public Compound customAnnotations(ConsensusAnnotationsCSI customAnnotations) {
+  public Compound customAnnotations(@jakarta.annotation.Nullable ConsensusAnnotationsCSI customAnnotations) {
     
     this.customAnnotations = customAnnotations;
     return this;
   }
 
-   /**
+  /**
    * Get customAnnotations
    * @return customAnnotations
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CUSTOM_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -321,11 +331,11 @@ public class Compound {
 
   @JsonProperty(JSON_PROPERTY_CUSTOM_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCustomAnnotations(ConsensusAnnotationsCSI customAnnotations) {
+  public void setCustomAnnotations(@jakarta.annotation.Nullable ConsensusAnnotationsCSI customAnnotations) {
     this.customAnnotations = customAnnotations;
   }
 
-  public Compound tags(Map<String, Tag> tags) {
+  public Compound tags(@jakarta.annotation.Nullable Map<String, Tag> tags) {
     
     this.tags = tags;
     return this;
@@ -339,10 +349,10 @@ public class Compound {
     return this;
   }
 
-   /**
+  /**
    * Key: tagName, value: tag
    * @return tags
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TAGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -354,9 +364,10 @@ public class Compound {
 
   @JsonProperty(JSON_PROPERTY_TAGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTags(Map<String, Tag> tags) {
+  public void setTags(@jakarta.annotation.Nullable Map<String, Tag> tags) {
     this.tags = tags;
   }
+
 
   @Override
   public boolean equals(Object o) {

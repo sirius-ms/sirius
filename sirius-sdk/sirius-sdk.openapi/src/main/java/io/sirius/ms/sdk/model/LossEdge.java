@@ -42,33 +42,37 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   LossEdge.JSON_PROPERTY_MOLECULAR_FORMULA,
   LossEdge.JSON_PROPERTY_SCORE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class LossEdge {
   public static final String JSON_PROPERTY_SOURCE_FRAGMENT_IDX = "sourceFragmentIdx";
+  @jakarta.annotation.Nullable
   private Integer sourceFragmentIdx;
 
   public static final String JSON_PROPERTY_TARGET_FRAGMENT_IDX = "targetFragmentIdx";
+  @jakarta.annotation.Nullable
   private Integer targetFragmentIdx;
 
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  @jakarta.annotation.Nullable
   private String molecularFormula;
 
   public static final String JSON_PROPERTY_SCORE = "score";
+  @jakarta.annotation.Nullable
   private Double score;
 
   public LossEdge() {
   }
 
-  public LossEdge sourceFragmentIdx(Integer sourceFragmentIdx) {
+  public LossEdge sourceFragmentIdx(@jakarta.annotation.Nullable Integer sourceFragmentIdx) {
     
     this.sourceFragmentIdx = sourceFragmentIdx;
     return this;
   }
 
-   /**
+  /**
    * Get sourceFragmentIdx
    * @return sourceFragmentIdx
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SOURCE_FRAGMENT_IDX)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -80,20 +84,20 @@ public class LossEdge {
 
   @JsonProperty(JSON_PROPERTY_SOURCE_FRAGMENT_IDX)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSourceFragmentIdx(Integer sourceFragmentIdx) {
+  public void setSourceFragmentIdx(@jakarta.annotation.Nullable Integer sourceFragmentIdx) {
     this.sourceFragmentIdx = sourceFragmentIdx;
   }
 
-  public LossEdge targetFragmentIdx(Integer targetFragmentIdx) {
+  public LossEdge targetFragmentIdx(@jakarta.annotation.Nullable Integer targetFragmentIdx) {
     
     this.targetFragmentIdx = targetFragmentIdx;
     return this;
   }
 
-   /**
+  /**
    * Get targetFragmentIdx
    * @return targetFragmentIdx
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TARGET_FRAGMENT_IDX)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -105,20 +109,20 @@ public class LossEdge {
 
   @JsonProperty(JSON_PROPERTY_TARGET_FRAGMENT_IDX)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTargetFragmentIdx(Integer targetFragmentIdx) {
+  public void setTargetFragmentIdx(@jakarta.annotation.Nullable Integer targetFragmentIdx) {
     this.targetFragmentIdx = targetFragmentIdx;
   }
 
-  public LossEdge molecularFormula(String molecularFormula) {
+  public LossEdge molecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     
     this.molecularFormula = molecularFormula;
     return this;
   }
 
-   /**
+  /**
    * Get molecularFormula
    * @return molecularFormula
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -130,20 +134,20 @@ public class LossEdge {
 
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMolecularFormula(String molecularFormula) {
+  public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
   }
 
-  public LossEdge score(Double score) {
+  public LossEdge score(@jakarta.annotation.Nullable Double score) {
     
     this.score = score;
     return this;
   }
 
-   /**
+  /**
    * Get score
    * @return score
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -155,9 +159,10 @@ public class LossEdge {
 
   @JsonProperty(JSON_PROPERTY_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setScore(Double score) {
+  public void setScore(@jakarta.annotation.Nullable Double score) {
     this.score = score;
   }
+
 
   @Override
   public boolean equals(Object o) {

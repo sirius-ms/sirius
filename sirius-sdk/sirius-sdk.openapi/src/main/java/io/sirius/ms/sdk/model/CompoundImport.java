@@ -44,27 +44,29 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CompoundImport.JSON_PROPERTY_NAME,
   CompoundImport.JSON_PROPERTY_FEATURES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class CompoundImport {
   public static final String JSON_PROPERTY_NAME = "name";
+  @jakarta.annotation.Nullable
   private String name;
 
   public static final String JSON_PROPERTY_FEATURES = "features";
+  @jakarta.annotation.Nonnull
   private List<FeatureImport> features = new ArrayList<>();
 
   public CompoundImport() {
   }
 
-  public CompoundImport name(String name) {
+  public CompoundImport name(@jakarta.annotation.Nullable String name) {
     
     this.name = name;
     return this;
   }
 
-   /**
+  /**
    * Some (optional) human-readable name
    * @return name
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -76,11 +78,11 @@ public class CompoundImport {
 
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
+  public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
   }
 
-  public CompoundImport features(List<FeatureImport> features) {
+  public CompoundImport features(@jakarta.annotation.Nonnull List<FeatureImport> features) {
     
     this.features = features;
     return this;
@@ -94,10 +96,10 @@ public class CompoundImport {
     return this;
   }
 
-   /**
+  /**
    * The features this compound consists of.
    * @return features
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_FEATURES)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -109,9 +111,10 @@ public class CompoundImport {
 
   @JsonProperty(JSON_PROPERTY_FEATURES)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setFeatures(List<FeatureImport> features) {
+  public void setFeatures(@jakarta.annotation.Nonnull List<FeatureImport> features) {
     this.features = features;
   }
+
 
   @Override
   public boolean equals(Object o) {

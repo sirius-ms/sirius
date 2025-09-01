@@ -44,30 +44,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   DataImportEvent.JSON_PROPERTY_IMPORTED_COMPOUND_IDS,
   DataImportEvent.JSON_PROPERTY_IMPORTED_FEATURE_IDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class DataImportEvent {
   public static final String JSON_PROPERTY_IMPORT_JOB_ID = "importJobId";
+  @jakarta.annotation.Nullable
   private String importJobId;
 
   public static final String JSON_PROPERTY_IMPORTED_COMPOUND_IDS = "importedCompoundIds";
+  @jakarta.annotation.Nonnull
   private List<String> importedCompoundIds = new ArrayList<>();
 
   public static final String JSON_PROPERTY_IMPORTED_FEATURE_IDS = "importedFeatureIds";
+  @jakarta.annotation.Nonnull
   private List<String> importedFeatureIds = new ArrayList<>();
 
   public DataImportEvent() {
   }
 
-  public DataImportEvent importJobId(String importJobId) {
+  public DataImportEvent importJobId(@jakarta.annotation.Nullable String importJobId) {
     
     this.importJobId = importJobId;
     return this;
   }
 
-   /**
+  /**
    * Get importJobId
    * @return importJobId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_IMPORT_JOB_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -79,11 +82,11 @@ public class DataImportEvent {
 
   @JsonProperty(JSON_PROPERTY_IMPORT_JOB_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setImportJobId(String importJobId) {
+  public void setImportJobId(@jakarta.annotation.Nullable String importJobId) {
     this.importJobId = importJobId;
   }
 
-  public DataImportEvent importedCompoundIds(List<String> importedCompoundIds) {
+  public DataImportEvent importedCompoundIds(@jakarta.annotation.Nonnull List<String> importedCompoundIds) {
     
     this.importedCompoundIds = importedCompoundIds;
     return this;
@@ -97,10 +100,10 @@ public class DataImportEvent {
     return this;
   }
 
-   /**
+  /**
    * Get importedCompoundIds
    * @return importedCompoundIds
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_IMPORTED_COMPOUND_IDS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -112,11 +115,11 @@ public class DataImportEvent {
 
   @JsonProperty(JSON_PROPERTY_IMPORTED_COMPOUND_IDS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setImportedCompoundIds(List<String> importedCompoundIds) {
+  public void setImportedCompoundIds(@jakarta.annotation.Nonnull List<String> importedCompoundIds) {
     this.importedCompoundIds = importedCompoundIds;
   }
 
-  public DataImportEvent importedFeatureIds(List<String> importedFeatureIds) {
+  public DataImportEvent importedFeatureIds(@jakarta.annotation.Nonnull List<String> importedFeatureIds) {
     
     this.importedFeatureIds = importedFeatureIds;
     return this;
@@ -130,10 +133,10 @@ public class DataImportEvent {
     return this;
   }
 
-   /**
+  /**
    * Get importedFeatureIds
    * @return importedFeatureIds
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_IMPORTED_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -145,9 +148,10 @@ public class DataImportEvent {
 
   @JsonProperty(JSON_PROPERTY_IMPORTED_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setImportedFeatureIds(List<String> importedFeatureIds) {
+  public void setImportedFeatureIds(@jakarta.annotation.Nonnull List<String> importedFeatureIds) {
     this.importedFeatureIds = importedFeatureIds;
   }
+
 
   @Override
   public boolean equals(Object o) {

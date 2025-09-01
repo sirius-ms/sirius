@@ -49,36 +49,41 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   LicenseInfo.JSON_PROPERTY_CONSUMABLES,
   LicenseInfo.JSON_PROPERTY_TERMS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class LicenseInfo {
   public static final String JSON_PROPERTY_USER_EMAIL = "userEmail";
+  @jakarta.annotation.Nullable
   private String userEmail;
 
   public static final String JSON_PROPERTY_USER_ID = "userId";
+  @jakarta.annotation.Nullable
   private String userId;
 
   public static final String JSON_PROPERTY_SUBSCRIPTION = "subscription";
+  @jakarta.annotation.Nullable
   private Subscription subscription;
 
   public static final String JSON_PROPERTY_CONSUMABLES = "consumables";
+  @jakarta.annotation.Nullable
   private SubscriptionConsumables consumables;
 
   public static final String JSON_PROPERTY_TERMS = "terms";
+  @jakarta.annotation.Nullable
   private List<Term> terms;
 
   public LicenseInfo() {
   }
 
-  public LicenseInfo userEmail(String userEmail) {
+  public LicenseInfo userEmail(@jakarta.annotation.Nullable String userEmail) {
     
     this.userEmail = userEmail;
     return this;
   }
 
-   /**
+  /**
    * Email address of the user account this license information belongs to.
    * @return userEmail
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_USER_EMAIL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -90,20 +95,20 @@ public class LicenseInfo {
 
   @JsonProperty(JSON_PROPERTY_USER_EMAIL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUserEmail(String userEmail) {
+  public void setUserEmail(@jakarta.annotation.Nullable String userEmail) {
     this.userEmail = userEmail;
   }
 
-  public LicenseInfo userId(String userId) {
+  public LicenseInfo userId(@jakarta.annotation.Nullable String userId) {
     
     this.userId = userId;
     return this;
   }
 
-   /**
+  /**
    * User ID (uid) of the user account this license information belongs to.
    * @return userId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_USER_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -115,20 +120,20 @@ public class LicenseInfo {
 
   @JsonProperty(JSON_PROPERTY_USER_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUserId(String userId) {
+  public void setUserId(@jakarta.annotation.Nullable String userId) {
     this.userId = userId;
   }
 
-  public LicenseInfo subscription(Subscription subscription) {
+  public LicenseInfo subscription(@jakarta.annotation.Nullable Subscription subscription) {
     
     this.subscription = subscription;
     return this;
   }
 
-   /**
+  /**
    * Get subscription
    * @return subscription
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SUBSCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -140,20 +145,20 @@ public class LicenseInfo {
 
   @JsonProperty(JSON_PROPERTY_SUBSCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSubscription(Subscription subscription) {
+  public void setSubscription(@jakarta.annotation.Nullable Subscription subscription) {
     this.subscription = subscription;
   }
 
-  public LicenseInfo consumables(SubscriptionConsumables consumables) {
+  public LicenseInfo consumables(@jakarta.annotation.Nullable SubscriptionConsumables consumables) {
     
     this.consumables = consumables;
     return this;
   }
 
-   /**
+  /**
    * Get consumables
    * @return consumables
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONSUMABLES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -165,11 +170,11 @@ public class LicenseInfo {
 
   @JsonProperty(JSON_PROPERTY_CONSUMABLES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConsumables(SubscriptionConsumables consumables) {
+  public void setConsumables(@jakarta.annotation.Nullable SubscriptionConsumables consumables) {
     this.consumables = consumables;
   }
 
-  public LicenseInfo terms(List<Term> terms) {
+  public LicenseInfo terms(@jakarta.annotation.Nullable List<Term> terms) {
     
     this.terms = terms;
     return this;
@@ -183,10 +188,10 @@ public class LicenseInfo {
     return this;
   }
 
-   /**
+  /**
    * Get terms
    * @return terms
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TERMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -198,9 +203,10 @@ public class LicenseInfo {
 
   @JsonProperty(JSON_PROPERTY_TERMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTerms(List<Term> terms) {
+  public void setTerms(@jakarta.annotation.Nullable List<Term> terms) {
     this.terms = terms;
   }
+
 
   @Override
   public boolean equals(Object o) {

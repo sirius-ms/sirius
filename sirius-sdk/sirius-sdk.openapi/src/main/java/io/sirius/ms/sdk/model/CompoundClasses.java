@@ -47,36 +47,41 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CompoundClasses.JSON_PROPERTY_CLASSY_FIRE_LINEAGE,
   CompoundClasses.JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class CompoundClasses {
   public static final String JSON_PROPERTY_NPC_PATHWAY = "npcPathway";
+  @jakarta.annotation.Nullable
   private CompoundClass npcPathway;
 
   public static final String JSON_PROPERTY_NPC_SUPERCLASS = "npcSuperclass";
+  @jakarta.annotation.Nullable
   private CompoundClass npcSuperclass;
 
   public static final String JSON_PROPERTY_NPC_CLASS = "npcClass";
+  @jakarta.annotation.Nullable
   private CompoundClass npcClass;
 
   public static final String JSON_PROPERTY_CLASSY_FIRE_LINEAGE = "classyFireLineage";
+  @jakarta.annotation.Nullable
   private List<CompoundClass> classyFireLineage;
 
   public static final String JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES = "classyFireAlternatives";
+  @jakarta.annotation.Nullable
   private List<CompoundClass> classyFireAlternatives;
 
   public CompoundClasses() {
   }
 
-  public CompoundClasses npcPathway(CompoundClass npcPathway) {
+  public CompoundClasses npcPathway(@jakarta.annotation.Nullable CompoundClass npcPathway) {
     
     this.npcPathway = npcPathway;
     return this;
   }
 
-   /**
+  /**
    * Get npcPathway
    * @return npcPathway
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NPC_PATHWAY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -88,20 +93,20 @@ public class CompoundClasses {
 
   @JsonProperty(JSON_PROPERTY_NPC_PATHWAY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNpcPathway(CompoundClass npcPathway) {
+  public void setNpcPathway(@jakarta.annotation.Nullable CompoundClass npcPathway) {
     this.npcPathway = npcPathway;
   }
 
-  public CompoundClasses npcSuperclass(CompoundClass npcSuperclass) {
+  public CompoundClasses npcSuperclass(@jakarta.annotation.Nullable CompoundClass npcSuperclass) {
     
     this.npcSuperclass = npcSuperclass;
     return this;
   }
 
-   /**
+  /**
    * Get npcSuperclass
    * @return npcSuperclass
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NPC_SUPERCLASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -113,20 +118,20 @@ public class CompoundClasses {
 
   @JsonProperty(JSON_PROPERTY_NPC_SUPERCLASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNpcSuperclass(CompoundClass npcSuperclass) {
+  public void setNpcSuperclass(@jakarta.annotation.Nullable CompoundClass npcSuperclass) {
     this.npcSuperclass = npcSuperclass;
   }
 
-  public CompoundClasses npcClass(CompoundClass npcClass) {
+  public CompoundClasses npcClass(@jakarta.annotation.Nullable CompoundClass npcClass) {
     
     this.npcClass = npcClass;
     return this;
   }
 
-   /**
+  /**
    * Get npcClass
    * @return npcClass
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NPC_CLASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -138,11 +143,11 @@ public class CompoundClasses {
 
   @JsonProperty(JSON_PROPERTY_NPC_CLASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNpcClass(CompoundClass npcClass) {
+  public void setNpcClass(@jakarta.annotation.Nullable CompoundClass npcClass) {
     this.npcClass = npcClass;
   }
 
-  public CompoundClasses classyFireLineage(List<CompoundClass> classyFireLineage) {
+  public CompoundClasses classyFireLineage(@jakarta.annotation.Nullable List<CompoundClass> classyFireLineage) {
     
     this.classyFireLineage = classyFireLineage;
     return this;
@@ -156,10 +161,10 @@ public class CompoundClasses {
     return this;
   }
 
-   /**
+  /**
    * Most likely ClassyFire lineage from ordered from least specific to most specific class  classyFireLineage.get(classyFireLineage.size() - 1) gives the most specific ClassyFire compound class annotation
    * @return classyFireLineage
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_LINEAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -171,11 +176,11 @@ public class CompoundClasses {
 
   @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_LINEAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setClassyFireLineage(List<CompoundClass> classyFireLineage) {
+  public void setClassyFireLineage(@jakarta.annotation.Nullable List<CompoundClass> classyFireLineage) {
     this.classyFireLineage = classyFireLineage;
   }
 
-  public CompoundClasses classyFireAlternatives(List<CompoundClass> classyFireAlternatives) {
+  public CompoundClasses classyFireAlternatives(@jakarta.annotation.Nullable List<CompoundClass> classyFireAlternatives) {
     
     this.classyFireAlternatives = classyFireAlternatives;
     return this;
@@ -189,10 +194,10 @@ public class CompoundClasses {
     return this;
   }
 
-   /**
+  /**
    * Alternative ClassyFire classes with high probability that do not fit into the linage
    * @return classyFireAlternatives
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -204,9 +209,10 @@ public class CompoundClasses {
 
   @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setClassyFireAlternatives(List<CompoundClass> classyFireAlternatives) {
+  public void setClassyFireAlternatives(@jakarta.annotation.Nullable List<CompoundClass> classyFireAlternatives) {
     this.classyFireAlternatives = classyFireAlternatives;
   }
+
 
   @Override
   public boolean equals(Object o) {

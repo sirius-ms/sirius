@@ -13,6 +13,7 @@ docs/AllowedFeatures.md
 docs/AnnotatedMsMsData.md
 docs/AnnotatedPeak.md
 docs/AnnotatedSpectrum.md
+docs/ApiVersion.md
 docs/Axes.md
 docs/BackgroundComputationsStateEvent.md
 docs/BasicSpectrum.md
@@ -110,6 +111,8 @@ docs/SampleTypeFoldChangeRequest.md
 docs/SearchableDatabase.md
 docs/SearchableDatabaseParameters.md
 docs/SearchableDatabasesApi.md
+docs/SecurityContext.md
+docs/SecurityContextPrincipal.md
 docs/SimplePeak.md
 docs/Sirius.md
 docs/Solver.md
@@ -144,6 +147,7 @@ docs/TraceExperimental.md
 docs/TraceSetExperimental.md
 docs/UseHeuristic.md
 docs/ValueType.md
+docs/WebServerNamespace.md
 docs/Zodiac.md
 docs/ZodiacAnalogueNodes.md
 docs/ZodiacEdgeFilterThresholds.md
@@ -163,6 +167,8 @@ src/main/java/io/sirius/ms/sdk/api/SearchableDatabasesApi.java
 src/main/java/io/sirius/ms/sdk/api/TagsApi.java
 src/main/java/io/sirius/ms/sdk/client/ApiClient.java
 src/main/java/io/sirius/ms/sdk/client/RFC3339DateFormat.java
+src/main/java/io/sirius/ms/sdk/client/RFC3339InstantDeserializer.java
+src/main/java/io/sirius/ms/sdk/client/RFC3339JavaTimeModule.java
 src/main/java/io/sirius/ms/sdk/client/ServerConfiguration.java
 src/main/java/io/sirius/ms/sdk/client/ServerVariable.java
 src/main/java/io/sirius/ms/sdk/client/StringUtil.java
@@ -183,6 +189,7 @@ src/main/java/io/sirius/ms/sdk/model/AllowedFeatures.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedMsMsData.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedPeak.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedSpectrum.java
+src/main/java/io/sirius/ms/sdk/model/ApiVersion.java
 src/main/java/io/sirius/ms/sdk/model/Axes.java
 src/main/java/io/sirius/ms/sdk/model/BackgroundComputationsStateEvent.java
 src/main/java/io/sirius/ms/sdk/model/BasicSpectrum.java
@@ -268,6 +275,8 @@ src/main/java/io/sirius/ms/sdk/model/Run.java
 src/main/java/io/sirius/ms/sdk/model/RunOptField.java
 src/main/java/io/sirius/ms/sdk/model/SampleTypeFoldChangeRequest.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabaseParameters.java
+src/main/java/io/sirius/ms/sdk/model/SecurityContext.java
+src/main/java/io/sirius/ms/sdk/model/SecurityContextPrincipal.java
 src/main/java/io/sirius/ms/sdk/model/SimplePeak.java
 src/main/java/io/sirius/ms/sdk/model/Sirius.java
 src/main/java/io/sirius/ms/sdk/model/Solver.java
@@ -300,6 +309,7 @@ src/main/java/io/sirius/ms/sdk/model/TraceAnnotationTypeExperimental.java
 src/main/java/io/sirius/ms/sdk/model/TraceSetExperimental.java
 src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/ValueType.java
+src/main/java/io/sirius/ms/sdk/model/WebServerNamespace.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacAnalogueNodes.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java

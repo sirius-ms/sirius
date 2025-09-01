@@ -1,3 +1,6 @@
+import java.nio.file.Files
+import java.util.stream.Collectors
+
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
@@ -18,6 +21,7 @@ apply plugin: 'application'
 ext['jna.version'] = '5.4.0' //force correct jna version -> springs is not compatible with ilp solver
 ext['slf4j.version'] = slf4j_version
 ext['okhttp.version'] = okhttp_version
+ext['junit-jupiter.version'] = junit_version
 
 version = siriusFrontendVersion
 
@@ -97,6 +101,8 @@ configurations.each { Configuration conf ->
     conf.exclude group: "com.gurobi", module: "gurobi-jar"
     conf.exclude group: "cplex", module: "cplex"
 //    conf.exclude group: "org.slf4j", module: "slf4j-jdk14"
+    //remove reflection scanner because we use prebuilt default config (see below)
+    conf.exclude group: 'net.oneandone.reflections8', module: 'reflections8'
 }
 
 jar {
@@ -151,6 +157,100 @@ tasks.register("generateOpenApiDocsAdvancedEnumsAsString") {
     }
     finalizedBy "generateOpenApiDocs"
 }
+
+//###################################### Start Default values ##########################################
+tasks.register('collectProfiles', Copy) {
+    group = 'properties'
+
+    // Find ALL (direct and transitive) project dependencies
+    def allProjectDeps = configurations.runtimeClasspath.incoming.resolutionResult.allComponents
+            .findAll { it.id instanceof org.gradle.api.artifacts.component.ProjectComponentIdentifier }
+            .collect { project(it.id.projectPath) } // Get the Project object for each dependency
+            .findAll { it != project }
+
+    // Use the full list of project dependencies found above.
+    def projectResources = allProjectDeps.collect { projectDep ->
+        def resourcesDir = projectDep.sourceSets.main.output.resourcesDir
+        fileTree(resourcesDir) {
+            include 'de.unijena.bioinf.ms.defaults/*.auto.config'
+            include 'de.unijena.bioinf.ms.defaults/*.class.map'
+        }
+    }
+    //todo we might want to add config files from the current project as well if needed in the future
+
+    // Use the full list of projects to depend on their 'processResources' tasks.
+    dependsOn(allProjectDeps.collect { it.tasks.named('processResources') })
+
+    from projectResources
+    into("$buildDir/tmp/profiles")
+    includeEmptyDirs = false
+}
+
+tasks.register('makeProfileTemplates') {
+    group = 'properties'
+    dependsOn(tasks.named('collectProfiles'))
+
+    def input = tasks.named('collectProfiles').map {it.outputs.files.singleFile}
+    inputs.dir(input)
+
+    outputs.dir("$buildDir/tmp/profiles_concat/")
+
+    doLast {
+        delete(outputs.files.singleFile.listFiles())
+        def defaultsDir = outputs.files.singleFile.toPath().resolve("de.unijena.bioinf.ms.defaults")
+        Files.createDirectories(defaultsDir)
+
+        [".auto.config", ".class.map"].each { ext ->
+            defaultsDir.resolve("concat$ext").withWriter { w ->
+                inputs.files.asFileTree.filter {it.getName().endsWith(ext)}.each { f ->
+                    // Get a reader for the input file
+                    f.withReader { r ->
+                        // And write data from the input into the output
+                        w << r << '\n'
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.register('checkDefaultProfile') {
+    group = 'properties'
+    dependsOn(tasks.named('makeProfileTemplates'))
+
+    def input = tasks.named('makeProfileTemplates').map {it.outputs.files.singleFile}
+    inputs.dir(input)
+
+    doLast {
+        def inp = inputs.files.asFileTree.filter {it.toString().endsWith("de.unijena.bioinf.ms.defaults/concat.auto.config")}.singleFile
+        Properties defaultProfile = new Properties()
+        inp.withReader("UTF8", {
+                    defaultProfile.load(it)
+                })
+
+        def errorCount = 0
+        logger.lifecycle(System.lineSeparator() + "Checking for NULL values in Profile...")
+        defaultProfile.keys().each { e ->
+            def v = defaultProfile.getProperty(e)
+            if (v == null || ((String) v).isEmpty()) {
+                logger.warn("${e} is NULL!")
+                errorCount++
+            }
+        }
+        if (errorCount > 0) {
+            logger.error("FAILED: $errorCount NULL values found!" + System.lineSeparator())
+            throw new GradleException("Error: There are NULL values in at least one auto.config files. See Warnings for more detailed information")
+        }
+        logger.lifecycle("DONE: No NULL values found!" + System.lineSeparator())
+    }
+}
+
+tasks.named('processResources', ProcessResources) {
+    dependsOn tasks.named('checkDefaultProfile')
+    from(tasks.named('makeProfileTemplates'))
+}
+
+//###################################### END Default values ##########################################
 
 /*################### JAVASCRIPT DEV MANAGEMENT ################### */
 

@@ -45,27 +45,29 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ConnectionCheck.JSON_PROPERTY_LICENSE_INFO,
   ConnectionCheck.JSON_PROPERTY_ERRORS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ConnectionCheck {
   public static final String JSON_PROPERTY_LICENSE_INFO = "licenseInfo";
+  @jakarta.annotation.Nonnull
   private LicenseInfo licenseInfo;
 
   public static final String JSON_PROPERTY_ERRORS = "errors";
+  @jakarta.annotation.Nonnull
   private List<ConnectionError> errors = new ArrayList<>();
 
   public ConnectionCheck() {
   }
 
-  public ConnectionCheck licenseInfo(LicenseInfo licenseInfo) {
+  public ConnectionCheck licenseInfo(@jakarta.annotation.Nonnull LicenseInfo licenseInfo) {
     
     this.licenseInfo = licenseInfo;
     return this;
   }
 
-   /**
+  /**
    * Get licenseInfo
    * @return licenseInfo
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_LICENSE_INFO)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -77,11 +79,11 @@ public class ConnectionCheck {
 
   @JsonProperty(JSON_PROPERTY_LICENSE_INFO)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setLicenseInfo(LicenseInfo licenseInfo) {
+  public void setLicenseInfo(@jakarta.annotation.Nonnull LicenseInfo licenseInfo) {
     this.licenseInfo = licenseInfo;
   }
 
-  public ConnectionCheck errors(List<ConnectionError> errors) {
+  public ConnectionCheck errors(@jakarta.annotation.Nonnull List<ConnectionError> errors) {
     
     this.errors = errors;
     return this;
@@ -95,10 +97,10 @@ public class ConnectionCheck {
     return this;
   }
 
-   /**
+  /**
    * List of errors ordered by significance. first error should be reported and addressed first.  Following errors might just be follow-up errors
    * @return errors
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_ERRORS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -110,9 +112,10 @@ public class ConnectionCheck {
 
   @JsonProperty(JSON_PROPERTY_ERRORS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setErrors(List<ConnectionError> errors) {
+  public void setErrors(@jakarta.annotation.Nonnull List<ConnectionError> errors) {
     this.errors = errors;
   }
+
 
   @Override
   public boolean equals(Object o) {

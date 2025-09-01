@@ -45,18 +45,20 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AdductNetworkExperimental.JSON_PROPERTY_NODES,
   AdductNetworkExperimental.JSON_PROPERTY_EDGES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class AdductNetworkExperimental {
   public static final String JSON_PROPERTY_NODES = "nodes";
+  @jakarta.annotation.Nullable
   private List<AdductNodeExperimental> nodes = new ArrayList<>();
 
   public static final String JSON_PROPERTY_EDGES = "edges";
+  @jakarta.annotation.Nullable
   private List<AdductEdgeExperimental> edges = new ArrayList<>();
 
   public AdductNetworkExperimental() {
   }
 
-  public AdductNetworkExperimental nodes(List<AdductNodeExperimental> nodes) {
+  public AdductNetworkExperimental nodes(@jakarta.annotation.Nullable List<AdductNodeExperimental> nodes) {
     
     this.nodes = nodes;
     return this;
@@ -70,10 +72,10 @@ public class AdductNetworkExperimental {
     return this;
   }
 
-   /**
+  /**
    * Get nodes
    * @return nodes
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NODES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -85,11 +87,11 @@ public class AdductNetworkExperimental {
 
   @JsonProperty(JSON_PROPERTY_NODES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNodes(List<AdductNodeExperimental> nodes) {
+  public void setNodes(@jakarta.annotation.Nullable List<AdductNodeExperimental> nodes) {
     this.nodes = nodes;
   }
 
-  public AdductNetworkExperimental edges(List<AdductEdgeExperimental> edges) {
+  public AdductNetworkExperimental edges(@jakarta.annotation.Nullable List<AdductEdgeExperimental> edges) {
     
     this.edges = edges;
     return this;
@@ -103,10 +105,10 @@ public class AdductNetworkExperimental {
     return this;
   }
 
-   /**
+  /**
    * Get edges
    * @return edges
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_EDGES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -118,9 +120,10 @@ public class AdductNetworkExperimental {
 
   @JsonProperty(JSON_PROPERTY_EDGES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEdges(List<AdductEdgeExperimental> edges) {
+  public void setEdges(@jakarta.annotation.Nullable List<AdductEdgeExperimental> edges) {
     this.edges = edges;
   }
+
 
   @Override
   public boolean equals(Object o) {

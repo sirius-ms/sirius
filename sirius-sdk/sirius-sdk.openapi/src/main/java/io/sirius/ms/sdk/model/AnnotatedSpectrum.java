@@ -59,66 +59,81 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AnnotatedSpectrum.JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR,
   AnnotatedSpectrum.JSON_PROPERTY_SPECTRUM_ANNOTATION
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class AnnotatedSpectrum {
   public static final String JSON_PROPERTY_NAME = "name";
+  @jakarta.annotation.Nullable
   private String name;
 
   public static final String JSON_PROPERTY_MS_LEVEL = "msLevel";
+  @jakarta.annotation.Nullable
   private Integer msLevel;
 
   public static final String JSON_PROPERTY_COLLISION_ENERGY = "collisionEnergy";
+  @jakarta.annotation.Nullable
   private String collisionEnergy;
 
   public static final String JSON_PROPERTY_INSTRUMENT = "instrument";
+  @jakarta.annotation.Nullable
   private String instrument;
 
   public static final String JSON_PROPERTY_PRECURSOR_MZ = "precursorMz";
+  @jakarta.annotation.Nullable
   private Double precursorMz;
 
   public static final String JSON_PROPERTY_SCAN_NUMBER = "scanNumber";
+  @jakarta.annotation.Nullable
   private Integer scanNumber;
 
   public static final String JSON_PROPERTY_COSINE_QUERY = "cosineQuery";
+  @jakarta.annotation.Nonnull
   private Boolean cosineQuery = false;
 
   public static final String JSON_PROPERTY_PRECURSOR_PEAK = "precursorPeak";
+  @jakarta.annotation.Nullable
   private SimplePeak precursorPeak;
 
   public static final String JSON_PROPERTY_PEAKS = "peaks";
+  @jakarta.annotation.Nonnull
   private List<AnnotatedPeak> peaks = new ArrayList<>();
 
   public static final String JSON_PROPERTY_ABS_INTENSITY_FACTOR = "absIntensityFactor";
+  @jakarta.annotation.Nullable
   private Double absIntensityFactor;
 
   public static final String JSON_PROPERTY_MAX_NORM_FACTOR = "maxNormFactor";
+  @jakarta.annotation.Nullable
   private Double maxNormFactor;
 
   public static final String JSON_PROPERTY_SUM_NORM_FACTOR = "sumNormFactor";
+  @jakarta.annotation.Nullable
   private Double sumNormFactor;
 
   public static final String JSON_PROPERTY_L2_NORM_FACTOR = "l2NormFactor";
+  @jakarta.annotation.Nullable
   private Double l2NormFactor;
 
   public static final String JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR = "firstPeakNormFactor";
+  @jakarta.annotation.Nullable
   private Double firstPeakNormFactor;
 
   public static final String JSON_PROPERTY_SPECTRUM_ANNOTATION = "spectrumAnnotation";
+  @jakarta.annotation.Nullable
   private SpectrumAnnotation spectrumAnnotation;
 
   public AnnotatedSpectrum() {
   }
 
-  public AnnotatedSpectrum name(String name) {
+  public AnnotatedSpectrum name(@jakarta.annotation.Nullable String name) {
     
     this.name = name;
     return this;
   }
 
-   /**
+  /**
    * Optional Displayable name of this spectrum.
    * @return name
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -130,20 +145,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
+  public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
   }
 
-  public AnnotatedSpectrum msLevel(Integer msLevel) {
+  public AnnotatedSpectrum msLevel(@jakarta.annotation.Nullable Integer msLevel) {
     
     this.msLevel = msLevel;
     return this;
   }
 
-   /**
+  /**
    * MS level of the measured spectrum.  Artificial spectra with no msLevel (e.g. Simulated Isotope patterns) use null or zero
    * @return msLevel
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS_LEVEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -155,20 +170,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_MS_LEVEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMsLevel(Integer msLevel) {
+  public void setMsLevel(@jakarta.annotation.Nullable Integer msLevel) {
     this.msLevel = msLevel;
   }
 
-  public AnnotatedSpectrum collisionEnergy(String collisionEnergy) {
+  public AnnotatedSpectrum collisionEnergy(@jakarta.annotation.Nullable String collisionEnergy) {
     
     this.collisionEnergy = collisionEnergy;
     return this;
   }
 
-   /**
+  /**
    * Collision energy used for MS/MS spectra  Null for spectra where collision energy is not applicable
    * @return collisionEnergy
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COLLISION_ENERGY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -180,20 +195,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_COLLISION_ENERGY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCollisionEnergy(String collisionEnergy) {
+  public void setCollisionEnergy(@jakarta.annotation.Nullable String collisionEnergy) {
     this.collisionEnergy = collisionEnergy;
   }
 
-  public AnnotatedSpectrum instrument(String instrument) {
+  public AnnotatedSpectrum instrument(@jakarta.annotation.Nullable String instrument) {
     
     this.instrument = instrument;
     return this;
   }
 
-   /**
+  /**
    * Instrument information.
    * @return instrument
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INSTRUMENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -205,20 +220,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_INSTRUMENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setInstrument(String instrument) {
+  public void setInstrument(@jakarta.annotation.Nullable String instrument) {
     this.instrument = instrument;
   }
 
-  public AnnotatedSpectrum precursorMz(Double precursorMz) {
+  public AnnotatedSpectrum precursorMz(@jakarta.annotation.Nullable Double precursorMz) {
     
     this.precursorMz = precursorMz;
     return this;
   }
 
-   /**
+  /**
    * Precursor m/z of the MS/MS spectrum  Null for spectra where precursor m/z is not applicable
    * @return precursorMz
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PRECURSOR_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -230,20 +245,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_PRECURSOR_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPrecursorMz(Double precursorMz) {
+  public void setPrecursorMz(@jakarta.annotation.Nullable Double precursorMz) {
     this.precursorMz = precursorMz;
   }
 
-  public AnnotatedSpectrum scanNumber(Integer scanNumber) {
+  public AnnotatedSpectrum scanNumber(@jakarta.annotation.Nullable Integer scanNumber) {
     
     this.scanNumber = scanNumber;
     return this;
   }
 
-   /**
+  /**
    * Scan number of the spectrum.  Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)
    * @return scanNumber
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SCAN_NUMBER)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -255,20 +270,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_SCAN_NUMBER)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setScanNumber(Integer scanNumber) {
+  public void setScanNumber(@jakarta.annotation.Nullable Integer scanNumber) {
     this.scanNumber = scanNumber;
   }
 
-  public AnnotatedSpectrum cosineQuery(Boolean cosineQuery) {
+  public AnnotatedSpectrum cosineQuery(@jakarta.annotation.Nonnull Boolean cosineQuery) {
     
     this.cosineQuery = cosineQuery;
     return this;
   }
 
-   /**
+  /**
    * True if spectrum is in cosine query normalized format.  Such spectrum is compatible with SpectralLibraryMatch peak assignments to reference spectra.
    * @return cosineQuery
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_COSINE_QUERY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -280,20 +295,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_COSINE_QUERY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setCosineQuery(Boolean cosineQuery) {
+  public void setCosineQuery(@jakarta.annotation.Nonnull Boolean cosineQuery) {
     this.cosineQuery = cosineQuery;
   }
 
-  public AnnotatedSpectrum precursorPeak(SimplePeak precursorPeak) {
+  public AnnotatedSpectrum precursorPeak(@jakarta.annotation.Nullable SimplePeak precursorPeak) {
     
     this.precursorPeak = precursorPeak;
     return this;
   }
 
-   /**
+  /**
    * Get precursorPeak
    * @return precursorPeak
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PRECURSOR_PEAK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -305,11 +320,11 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_PRECURSOR_PEAK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPrecursorPeak(SimplePeak precursorPeak) {
+  public void setPrecursorPeak(@jakarta.annotation.Nullable SimplePeak precursorPeak) {
     this.precursorPeak = precursorPeak;
   }
 
-  public AnnotatedSpectrum peaks(List<AnnotatedPeak> peaks) {
+  public AnnotatedSpectrum peaks(@jakarta.annotation.Nonnull List<AnnotatedPeak> peaks) {
     
     this.peaks = peaks;
     return this;
@@ -323,10 +338,10 @@ public class AnnotatedSpectrum {
     return this;
   }
 
-   /**
+  /**
    * The peaks of this spectrum which might contain additional annotations such as molecular formulas.
    * @return peaks
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_PEAKS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -338,21 +353,21 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_PEAKS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setPeaks(List<AnnotatedPeak> peaks) {
+  public void setPeaks(@jakarta.annotation.Nonnull List<AnnotatedPeak> peaks) {
     this.peaks = peaks;
   }
 
-  public AnnotatedSpectrum absIntensityFactor(Double absIntensityFactor) {
+  public AnnotatedSpectrum absIntensityFactor(@jakarta.annotation.Nullable Double absIntensityFactor) {
     
     this.absIntensityFactor = absIntensityFactor;
     return this;
   }
 
-   /**
+  /**
    * Factor to convert relative intensities to absolute intensities.  Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)  &lt;p&gt;  DEPRECATED: Spectra are always returned with raw intensities.  Use provided normalization factors to normalize on the fly.
    * @return absIntensityFactor
    * @deprecated
-  **/
+   */
   @Deprecated
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ABS_INTENSITY_FACTOR)
@@ -365,20 +380,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_ABS_INTENSITY_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAbsIntensityFactor(Double absIntensityFactor) {
+  public void setAbsIntensityFactor(@jakarta.annotation.Nullable Double absIntensityFactor) {
     this.absIntensityFactor = absIntensityFactor;
   }
 
-  public AnnotatedSpectrum maxNormFactor(Double maxNormFactor) {
+  public AnnotatedSpectrum maxNormFactor(@jakarta.annotation.Nullable Double maxNormFactor) {
     
     this.maxNormFactor = maxNormFactor;
     return this;
   }
 
-   /**
+  /**
    * Factor to convert absolute intensities to MAX norm.
    * @return maxNormFactor
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MAX_NORM_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -390,20 +405,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_MAX_NORM_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMaxNormFactor(Double maxNormFactor) {
+  public void setMaxNormFactor(@jakarta.annotation.Nullable Double maxNormFactor) {
     this.maxNormFactor = maxNormFactor;
   }
 
-  public AnnotatedSpectrum sumNormFactor(Double sumNormFactor) {
+  public AnnotatedSpectrum sumNormFactor(@jakarta.annotation.Nullable Double sumNormFactor) {
     
     this.sumNormFactor = sumNormFactor;
     return this;
   }
 
-   /**
+  /**
    * Factor to convert absolute intensities to SUM norm.
    * @return sumNormFactor
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SUM_NORM_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -415,20 +430,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_SUM_NORM_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSumNormFactor(Double sumNormFactor) {
+  public void setSumNormFactor(@jakarta.annotation.Nullable Double sumNormFactor) {
     this.sumNormFactor = sumNormFactor;
   }
 
-  public AnnotatedSpectrum l2NormFactor(Double l2NormFactor) {
+  public AnnotatedSpectrum l2NormFactor(@jakarta.annotation.Nullable Double l2NormFactor) {
     
     this.l2NormFactor = l2NormFactor;
     return this;
   }
 
-   /**
+  /**
    * Factor to convert absolute intensities to L2 (Euclidean) norm.
    * @return l2NormFactor
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_L2_NORM_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -440,20 +455,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_L2_NORM_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setL2NormFactor(Double l2NormFactor) {
+  public void setL2NormFactor(@jakarta.annotation.Nullable Double l2NormFactor) {
     this.l2NormFactor = l2NormFactor;
   }
 
-  public AnnotatedSpectrum firstPeakNormFactor(Double firstPeakNormFactor) {
+  public AnnotatedSpectrum firstPeakNormFactor(@jakarta.annotation.Nullable Double firstPeakNormFactor) {
     
     this.firstPeakNormFactor = firstPeakNormFactor;
     return this;
   }
 
-   /**
+  /**
    * Factor to convert absolute intensities to normalize intensities by first peak intensity.
    * @return firstPeakNormFactor
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -465,20 +480,20 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFirstPeakNormFactor(Double firstPeakNormFactor) {
+  public void setFirstPeakNormFactor(@jakarta.annotation.Nullable Double firstPeakNormFactor) {
     this.firstPeakNormFactor = firstPeakNormFactor;
   }
 
-  public AnnotatedSpectrum spectrumAnnotation(SpectrumAnnotation spectrumAnnotation) {
+  public AnnotatedSpectrum spectrumAnnotation(@jakarta.annotation.Nullable SpectrumAnnotation spectrumAnnotation) {
     
     this.spectrumAnnotation = spectrumAnnotation;
     return this;
   }
 
-   /**
+  /**
    * Get spectrumAnnotation
    * @return spectrumAnnotation
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SPECTRUM_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -490,9 +505,10 @@ public class AnnotatedSpectrum {
 
   @JsonProperty(JSON_PROPERTY_SPECTRUM_ANNOTATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSpectrumAnnotation(SpectrumAnnotation spectrumAnnotation) {
+  public void setSpectrumAnnotation(@jakarta.annotation.Nullable SpectrumAnnotation spectrumAnnotation) {
     this.spectrumAnnotation = spectrumAnnotation;
   }
+
 
   @Override
   public boolean equals(Object o) {

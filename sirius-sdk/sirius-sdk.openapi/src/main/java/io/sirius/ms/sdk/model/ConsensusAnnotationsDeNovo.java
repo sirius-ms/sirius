@@ -47,33 +47,37 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ConsensusAnnotationsDeNovo.JSON_PROPERTY_SUPPORTING_FEATURE_IDS,
   ConsensusAnnotationsDeNovo.JSON_PROPERTY_SELECTION_CRITERION
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ConsensusAnnotationsDeNovo {
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  @jakarta.annotation.Nullable
   private String molecularFormula;
 
   public static final String JSON_PROPERTY_COMPOUND_CLASSES = "compoundClasses";
+  @jakarta.annotation.Nullable
   private CompoundClasses compoundClasses;
 
   public static final String JSON_PROPERTY_SUPPORTING_FEATURE_IDS = "supportingFeatureIds";
+  @jakarta.annotation.Nullable
   private List<String> supportingFeatureIds;
 
   public static final String JSON_PROPERTY_SELECTION_CRITERION = "selectionCriterion";
+  @jakarta.annotation.Nullable
   private ConsensusCriterionDeNovo selectionCriterion;
 
   public ConsensusAnnotationsDeNovo() {
   }
 
-  public ConsensusAnnotationsDeNovo molecularFormula(String molecularFormula) {
+  public ConsensusAnnotationsDeNovo molecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     
     this.molecularFormula = molecularFormula;
     return this;
   }
 
-   /**
+  /**
    * Molecular formula of the consensus annotation  Might be null if no consensus formula is available.
    * @return molecularFormula
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -85,20 +89,20 @@ public class ConsensusAnnotationsDeNovo {
 
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMolecularFormula(String molecularFormula) {
+  public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
   }
 
-  public ConsensusAnnotationsDeNovo compoundClasses(CompoundClasses compoundClasses) {
+  public ConsensusAnnotationsDeNovo compoundClasses(@jakarta.annotation.Nullable CompoundClasses compoundClasses) {
     
     this.compoundClasses = compoundClasses;
     return this;
   }
 
-   /**
+  /**
    * Get compoundClasses
    * @return compoundClasses
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -110,11 +114,11 @@ public class ConsensusAnnotationsDeNovo {
 
   @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCompoundClasses(CompoundClasses compoundClasses) {
+  public void setCompoundClasses(@jakarta.annotation.Nullable CompoundClasses compoundClasses) {
     this.compoundClasses = compoundClasses;
   }
 
-  public ConsensusAnnotationsDeNovo supportingFeatureIds(List<String> supportingFeatureIds) {
+  public ConsensusAnnotationsDeNovo supportingFeatureIds(@jakarta.annotation.Nullable List<String> supportingFeatureIds) {
     
     this.supportingFeatureIds = supportingFeatureIds;
     return this;
@@ -128,10 +132,10 @@ public class ConsensusAnnotationsDeNovo {
     return this;
   }
 
-   /**
+  /**
    * FeatureIds where the topAnnotation supports this annotation.
    * @return supportingFeatureIds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -143,20 +147,20 @@ public class ConsensusAnnotationsDeNovo {
 
   @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSupportingFeatureIds(List<String> supportingFeatureIds) {
+  public void setSupportingFeatureIds(@jakarta.annotation.Nullable List<String> supportingFeatureIds) {
     this.supportingFeatureIds = supportingFeatureIds;
   }
 
-  public ConsensusAnnotationsDeNovo selectionCriterion(ConsensusCriterionDeNovo selectionCriterion) {
+  public ConsensusAnnotationsDeNovo selectionCriterion(@jakarta.annotation.Nullable ConsensusCriterionDeNovo selectionCriterion) {
     
     this.selectionCriterion = selectionCriterion;
     return this;
   }
 
-   /**
+  /**
    * Get selectionCriterion
    * @return selectionCriterion
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -168,9 +172,10 @@ public class ConsensusAnnotationsDeNovo {
 
   @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSelectionCriterion(ConsensusCriterionDeNovo selectionCriterion) {
+  public void setSelectionCriterion(@jakarta.annotation.Nullable ConsensusCriterionDeNovo selectionCriterion) {
     this.selectionCriterion = selectionCriterion;
   }
+
 
   @Override
   public boolean equals(Object o) {

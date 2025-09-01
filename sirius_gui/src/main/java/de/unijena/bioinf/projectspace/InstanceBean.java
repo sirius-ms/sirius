@@ -218,7 +218,7 @@ public class InstanceBean implements SiriusPCS {
         return Optional.ofNullable(sourceFeature);
     }
 
-    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(AlignedFeatureOptField.COMPUTEDTOOLS, AlignedFeatureOptField.TOPANNOTATIONSSUMMARY);
+    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(AlignedFeatureOptField.COMPUTED_TOOLS, AlignedFeatureOptField.TOP_ANNOTATIONS_SUMMARY);
 
     @NotNull
     public AlignedFeature getSourceFeature(@Nullable List<AlignedFeatureOptField> optFields) {
@@ -469,7 +469,7 @@ public class InstanceBean implements SiriusPCS {
             return null;
         return withIdsCatched((pid, fid) -> getClient().features()
                 .getStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
-                        fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DBLINKS)));
+                        fp ? List.of(StructureCandidateOptField.DB_LINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DB_LINKS)));
     }
 
 
@@ -490,7 +490,7 @@ public class InstanceBean implements SiriusPCS {
             return null;
         return withIdsCatched((pid, fid) -> getClient().features()
                 .getDeNovoStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
-                        fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DBLINKS)));
+                        fp ? List.of(StructureCandidateOptField.DB_LINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DB_LINKS)));
     }
 
     @NotNull

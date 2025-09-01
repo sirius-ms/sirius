@@ -53,54 +53,65 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   TraceExperimental.JSON_PROPERTY_NORMALIZATION_FACTOR,
   TraceExperimental.JSON_PROPERTY_NOISE_LEVEL
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class TraceExperimental {
   public static final String JSON_PROPERTY_ID = "id";
+  @jakarta.annotation.Nullable
   private String id;
 
   public static final String JSON_PROPERTY_SAMPLE_ID = "sampleId";
+  @jakarta.annotation.Nullable
   private String sampleId;
 
   public static final String JSON_PROPERTY_SAMPLE_NAME = "sampleName";
+  @jakarta.annotation.Nullable
   private String sampleName;
 
   public static final String JSON_PROPERTY_LABEL = "label";
+  @jakarta.annotation.Nullable
   private String label;
 
   public static final String JSON_PROPERTY_COLOR = "color";
+  @jakarta.annotation.Nullable
   private String color;
 
   public static final String JSON_PROPERTY_INTENSITIES = "intensities";
-  private List<Double> intensities = new ArrayList<>();
+  @jakarta.annotation.Nullable
+  private List<Double> intensities;
 
   public static final String JSON_PROPERTY_ANNOTATIONS = "annotations";
-  private List<TraceAnnotationExperimental> annotations = new ArrayList<>();
+  @jakarta.annotation.Nullable
+  private List<TraceAnnotationExperimental> annotations;
 
   public static final String JSON_PROPERTY_MZ = "mz";
+  @jakarta.annotation.Nullable
   private Double mz;
 
   public static final String JSON_PROPERTY_MERGED = "merged";
+  @jakarta.annotation.Nullable
   private Boolean merged;
 
   public static final String JSON_PROPERTY_NORMALIZATION_FACTOR = "normalizationFactor";
+  @jakarta.annotation.Nullable
   private Double normalizationFactor;
 
   public static final String JSON_PROPERTY_NOISE_LEVEL = "noiseLevel";
+  @jakarta.annotation.Nullable
   private Double noiseLevel;
 
   public TraceExperimental() {
   }
 
-  public TraceExperimental id(String id) {
+  public TraceExperimental id(@jakarta.annotation.Nullable String id) {
     
     this.id = id;
     return this;
   }
 
-   /**
+  /**
    * Get id
    * @return id
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -112,20 +123,20 @@ public class TraceExperimental {
 
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setId(String id) {
+  public void setId(@jakarta.annotation.Nullable String id) {
     this.id = id;
   }
 
-  public TraceExperimental sampleId(String sampleId) {
+  public TraceExperimental sampleId(@jakarta.annotation.Nullable String sampleId) {
     
     this.sampleId = sampleId;
     return this;
   }
 
-   /**
+  /**
    * Get sampleId
    * @return sampleId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SAMPLE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -137,20 +148,20 @@ public class TraceExperimental {
 
   @JsonProperty(JSON_PROPERTY_SAMPLE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSampleId(String sampleId) {
+  public void setSampleId(@jakarta.annotation.Nullable String sampleId) {
     this.sampleId = sampleId;
   }
 
-  public TraceExperimental sampleName(String sampleName) {
+  public TraceExperimental sampleName(@jakarta.annotation.Nullable String sampleName) {
     
     this.sampleName = sampleName;
     return this;
   }
 
-   /**
+  /**
    * Get sampleName
    * @return sampleName
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SAMPLE_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -162,20 +173,20 @@ public class TraceExperimental {
 
   @JsonProperty(JSON_PROPERTY_SAMPLE_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSampleName(String sampleName) {
+  public void setSampleName(@jakarta.annotation.Nullable String sampleName) {
     this.sampleName = sampleName;
   }
 
-  public TraceExperimental label(String label) {
+  public TraceExperimental label(@jakarta.annotation.Nullable String label) {
     
     this.label = label;
     return this;
   }
 
-   /**
+  /**
    * Get label
    * @return label
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LABEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -187,20 +198,20 @@ public class TraceExperimental {
 
   @JsonProperty(JSON_PROPERTY_LABEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLabel(String label) {
+  public void setLabel(@jakarta.annotation.Nullable String label) {
     this.label = label;
   }
 
-  public TraceExperimental color(String color) {
+  public TraceExperimental color(@jakarta.annotation.Nullable String color) {
     
     this.color = color;
     return this;
   }
 
-   /**
+  /**
    * Get color
    * @return color
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COLOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -212,11 +223,11 @@ public class TraceExperimental {
 
   @JsonProperty(JSON_PROPERTY_COLOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setColor(String color) {
+  public void setColor(@jakarta.annotation.Nullable String color) {
     this.color = color;
   }
 
-  public TraceExperimental intensities(List<Double> intensities) {
+  public TraceExperimental intensities(@jakarta.annotation.Nullable List<Double> intensities) {
     
     this.intensities = intensities;
     return this;
@@ -230,10 +241,10 @@ public class TraceExperimental {
     return this;
   }
 
-   /**
+  /**
    * Get intensities
    * @return intensities
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INTENSITIES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -245,11 +256,11 @@ public class TraceExperimental {
 
   @JsonProperty(JSON_PROPERTY_INTENSITIES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIntensities(List<Double> intensities) {
+  public void setIntensities(@jakarta.annotation.Nullable List<Double> intensities) {
     this.intensities = intensities;
   }
 
-  public TraceExperimental annotations(List<TraceAnnotationExperimental> annotations) {
+  public TraceExperimental annotations(@jakarta.annotation.Nullable List<TraceAnnotationExperimental> annotations) {
     
     this.annotations = annotations;
     return this;
@@ -263,10 +274,10 @@ public class TraceExperimental {
     return this;
   }
 
-   /**
+  /**
    * Get annotations
    * @return annotations
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -278,20 +289,20 @@ public class TraceExperimental {
 
   @JsonProperty(JSON_PROPERTY_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAnnotations(List<TraceAnnotationExperimental> annotations) {
+  public void setAnnotations(@jakarta.annotation.Nullable List<TraceAnnotationExperimental> annotations) {
     this.annotations = annotations;
   }
 
-  public TraceExperimental mz(Double mz) {
+  public TraceExperimental mz(@jakarta.annotation.Nullable Double mz) {
     
     this.mz = mz;
     return this;
   }
 
-   /**
+  /**
    * Get mz
    * @return mz
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -303,20 +314,20 @@ public class TraceExperimental {
 
   @JsonProperty(JSON_PROPERTY_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMz(Double mz) {
+  public void setMz(@jakarta.annotation.Nullable Double mz) {
     this.mz = mz;
   }
 
-  public TraceExperimental merged(Boolean merged) {
+  public TraceExperimental merged(@jakarta.annotation.Nullable Boolean merged) {
     
     this.merged = merged;
     return this;
   }
 
-   /**
+  /**
    * Get merged
    * @return merged
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MERGED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -328,20 +339,20 @@ public class TraceExperimental {
 
   @JsonProperty(JSON_PROPERTY_MERGED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMerged(Boolean merged) {
+  public void setMerged(@jakarta.annotation.Nullable Boolean merged) {
     this.merged = merged;
   }
 
-  public TraceExperimental normalizationFactor(Double normalizationFactor) {
+  public TraceExperimental normalizationFactor(@jakarta.annotation.Nullable Double normalizationFactor) {
     
     this.normalizationFactor = normalizationFactor;
     return this;
   }
 
-   /**
+  /**
    * Traces are stored with raw intensity values. The normalization factor maps them to relative intensities,  such that traces from different samples can be compared.
    * @return normalizationFactor
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NORMALIZATION_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -353,20 +364,20 @@ public class TraceExperimental {
 
   @JsonProperty(JSON_PROPERTY_NORMALIZATION_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNormalizationFactor(Double normalizationFactor) {
+  public void setNormalizationFactor(@jakarta.annotation.Nullable Double normalizationFactor) {
     this.normalizationFactor = normalizationFactor;
   }
 
-  public TraceExperimental noiseLevel(Double noiseLevel) {
+  public TraceExperimental noiseLevel(@jakarta.annotation.Nullable Double noiseLevel) {
     
     this.noiseLevel = noiseLevel;
     return this;
   }
 
-   /**
+  /**
    * The noise level is estimated from the median noise in the surrounding scans. It can be used to  calculate signal-to-noise ratios.
    * @return noiseLevel
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NOISE_LEVEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -378,9 +389,10 @@ public class TraceExperimental {
 
   @JsonProperty(JSON_PROPERTY_NOISE_LEVEL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNoiseLevel(Double noiseLevel) {
+  public void setNoiseLevel(@jakarta.annotation.Nullable Double noiseLevel) {
     this.noiseLevel = noiseLevel;
   }
+
 
   @Override
   public boolean equals(Object o) {

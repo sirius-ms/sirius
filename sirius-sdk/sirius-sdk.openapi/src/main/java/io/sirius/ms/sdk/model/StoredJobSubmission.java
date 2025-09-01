@@ -42,30 +42,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StoredJobSubmission.JSON_PROPERTY_EDITABLE,
   StoredJobSubmission.JSON_PROPERTY_JOB_SUBMISSION
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class StoredJobSubmission {
   public static final String JSON_PROPERTY_NAME = "name";
+  @jakarta.annotation.Nonnull
   private String name;
 
   public static final String JSON_PROPERTY_EDITABLE = "editable";
+  @jakarta.annotation.Nonnull
   private Boolean editable;
 
   public static final String JSON_PROPERTY_JOB_SUBMISSION = "jobSubmission";
+  @jakarta.annotation.Nonnull
   private JobSubmission jobSubmission;
 
   public StoredJobSubmission() {
   }
 
-  public StoredJobSubmission name(String name) {
+  public StoredJobSubmission name(@jakarta.annotation.Nonnull String name) {
     
     this.name = name;
     return this;
   }
 
-   /**
+  /**
    * Unique name to identify this JobSubmission (job config).
    * @return name
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -77,20 +80,20 @@ public class StoredJobSubmission {
 
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setName(String name) {
+  public void setName(@jakarta.annotation.Nonnull String name) {
     this.name = name;
   }
 
-  public StoredJobSubmission editable(Boolean editable) {
+  public StoredJobSubmission editable(@jakarta.annotation.Nonnull Boolean editable) {
     
     this.editable = editable;
     return this;
   }
 
-   /**
+  /**
    * False for predefined configs which are not editable and not removable.
    * @return editable
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_EDITABLE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -102,20 +105,20 @@ public class StoredJobSubmission {
 
   @JsonProperty(JSON_PROPERTY_EDITABLE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setEditable(Boolean editable) {
+  public void setEditable(@jakarta.annotation.Nonnull Boolean editable) {
     this.editable = editable;
   }
 
-  public StoredJobSubmission jobSubmission(JobSubmission jobSubmission) {
+  public StoredJobSubmission jobSubmission(@jakarta.annotation.Nonnull JobSubmission jobSubmission) {
     
     this.jobSubmission = jobSubmission;
     return this;
   }
 
-   /**
+  /**
    * Get jobSubmission
    * @return jobSubmission
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_JOB_SUBMISSION)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -127,9 +130,10 @@ public class StoredJobSubmission {
 
   @JsonProperty(JSON_PROPERTY_JOB_SUBMISSION)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setJobSubmission(JobSubmission jobSubmission) {
+  public void setJobSubmission(@jakarta.annotation.Nonnull JobSubmission jobSubmission) {
     this.jobSubmission = jobSubmission;
   }
+
 
   @Override
   public boolean equals(Object o) {
