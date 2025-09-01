@@ -21,7 +21,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static io.sirius.ms.sdk.model.ProjectInfoOptField.SIZEINFORMATION;
+import static io.sirius.ms.sdk.model.ProjectInfoOptField.SIZE_INFORMATION;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -180,9 +180,9 @@ public class ProjectsApiTest {
         featureApiInstance.deleteAlignedFeatures(projectId, allFeatureIds);
 
         instance.closeProject(projectId, false);
-        ProjectInfo beforeCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZEINFORMATION));
+        ProjectInfo beforeCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZE_INFORMATION));
         instance.closeProject(projectId, true);
-        ProjectInfo afterCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZEINFORMATION));
+        ProjectInfo afterCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZE_INFORMATION));
 
         assertTrue(Objects.requireNonNull(afterCompacting.getNumOfBytes()) < Objects.requireNonNull(beforeCompacting.getNumOfBytes()));
     }

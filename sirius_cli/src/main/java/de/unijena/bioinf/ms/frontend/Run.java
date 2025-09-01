@@ -98,7 +98,7 @@ public class Run extends ApplicationCore {
             return result;
 
         String message = null;
-        WebAPI webApi = ApplicationCore.WEB_API;
+        WebAPI webApi = ApplicationCore.WEB_API();
         if (!webApi.getAuthService().isLoggedIn()) {
             message = "Login ERROR: Please Login to use the SIRIUS command line tool!";
 

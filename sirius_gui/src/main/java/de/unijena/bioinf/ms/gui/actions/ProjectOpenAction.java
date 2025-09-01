@@ -148,8 +148,6 @@ public class ProjectOpenAction extends AbstractGuiAction {
 
 
         }).getResult();
-        if (!close) // it would be better to bring the new gui to front via the API
-            Jobs.runEDTLater(() -> gui.getMainFrame().toBack());
     }
 
     protected String dontAskKey() {

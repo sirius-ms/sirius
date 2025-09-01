@@ -105,9 +105,9 @@ public class SiriusCLIApplication {
                 e.printStackTrace();
             } finally {
                 try {
-                    AuthService as = ApplicationCore.WEB_API.getAuthService();
+                    AuthService as = ApplicationCore.WEB_API().getAuthService();
                     if (as.isLoggedIn())
-                        AuthServices.writeRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE, true);
+                        AuthServices.writeRefreshToken(ApplicationCore.WEB_API().getAuthService(), ApplicationCore.TOKEN_FILE, true);
                     else
                         Files.deleteIfExists(ApplicationCore.TOKEN_FILE);
                 } catch (IOException e) {
@@ -125,7 +125,7 @@ public class SiriusCLIApplication {
     public static Runnable shutdownWebservice() {
         return () -> {
             try {
-                ApplicationCore.WEB_API.shutdown();
+                ApplicationCore.WEB_API().shutdown();
             } catch (IOException e) {
                 LoggerFactory.getLogger(SiriusCLIApplication.class).warn("Could not clean up Server data! " + e.getMessage());
                 LoggerFactory.getLogger(SiriusCLIApplication.class).debug("Could not clean up Server data!", e);

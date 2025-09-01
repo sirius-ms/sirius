@@ -48,33 +48,37 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BioTransformerParameters.JSON_PROPERTY_USE_D_B,
   BioTransformerParameters.JSON_PROPERTY_BIO_TRANSFORMER_SEQUENCE_STEPS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class BioTransformerParameters {
   public static final String JSON_PROPERTY_CYP450_MODE = "cyp450Mode";
+  @jakarta.annotation.Nullable
   private Cyp450Mode cyp450Mode = Cyp450Mode.COMBINED;
 
   public static final String JSON_PROPERTY_P2_MODE = "p2Mode";
+  @jakarta.annotation.Nullable
   private P2Mode p2Mode = P2Mode.BT_RULE_BASED;
 
   public static final String JSON_PROPERTY_USE_D_B = "useDB";
+  @jakarta.annotation.Nullable
   private Boolean useDB = true;
 
   public static final String JSON_PROPERTY_BIO_TRANSFORMER_SEQUENCE_STEPS = "bioTransformerSequenceSteps";
+  @jakarta.annotation.Nonnull
   private List<BioTransformerSequenceStep> bioTransformerSequenceSteps = new ArrayList<>();
 
   public BioTransformerParameters() {
   }
 
-  public BioTransformerParameters cyp450Mode(Cyp450Mode cyp450Mode) {
+  public BioTransformerParameters cyp450Mode(@jakarta.annotation.Nullable Cyp450Mode cyp450Mode) {
     
     this.cyp450Mode = cyp450Mode;
     return this;
   }
 
-   /**
+  /**
    * Get cyp450Mode
    * @return cyp450Mode
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CYP450_MODE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -86,20 +90,20 @@ public class BioTransformerParameters {
 
   @JsonProperty(JSON_PROPERTY_CYP450_MODE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setCyp450Mode(Cyp450Mode cyp450Mode) {
+  public void setCyp450Mode(@jakarta.annotation.Nullable Cyp450Mode cyp450Mode) {
     this.cyp450Mode = cyp450Mode;
   }
 
-  public BioTransformerParameters p2Mode(P2Mode p2Mode) {
+  public BioTransformerParameters p2Mode(@jakarta.annotation.Nullable P2Mode p2Mode) {
     
     this.p2Mode = p2Mode;
     return this;
   }
 
-   /**
+  /**
    * Get p2Mode
    * @return p2Mode
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_P2_MODE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -111,20 +115,20 @@ public class BioTransformerParameters {
 
   @JsonProperty(JSON_PROPERTY_P2_MODE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setP2Mode(P2Mode p2Mode) {
+  public void setP2Mode(@jakarta.annotation.Nullable P2Mode p2Mode) {
     this.p2Mode = p2Mode;
   }
 
-  public BioTransformerParameters useDB(Boolean useDB) {
+  public BioTransformerParameters useDB(@jakarta.annotation.Nullable Boolean useDB) {
     
     this.useDB = useDB;
     return this;
   }
 
-   /**
+  /**
    * \&quot;Specify if you want to enable the retrieving from database (HMDB) feature.\&quot;
    * @return useDB
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_USE_D_B)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -136,11 +140,11 @@ public class BioTransformerParameters {
 
   @JsonProperty(JSON_PROPERTY_USE_D_B)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUseDB(Boolean useDB) {
+  public void setUseDB(@jakarta.annotation.Nullable Boolean useDB) {
     this.useDB = useDB;
   }
 
-  public BioTransformerParameters bioTransformerSequenceSteps(List<BioTransformerSequenceStep> bioTransformerSequenceSteps) {
+  public BioTransformerParameters bioTransformerSequenceSteps(@jakarta.annotation.Nonnull List<BioTransformerSequenceStep> bioTransformerSequenceSteps) {
     
     this.bioTransformerSequenceSteps = bioTransformerSequenceSteps;
     return this;
@@ -154,10 +158,10 @@ public class BioTransformerParameters {
     return this;
   }
 
-   /**
+  /**
    * Specify BioTransformerSequenceSteps to be applied to input structures. MultiStep MetabolicTransformations can  only be used as singletons (list size of one).
    * @return bioTransformerSequenceSteps
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_BIO_TRANSFORMER_SEQUENCE_STEPS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -169,9 +173,10 @@ public class BioTransformerParameters {
 
   @JsonProperty(JSON_PROPERTY_BIO_TRANSFORMER_SEQUENCE_STEPS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setBioTransformerSequenceSteps(List<BioTransformerSequenceStep> bioTransformerSequenceSteps) {
+  public void setBioTransformerSequenceSteps(@jakarta.annotation.Nonnull List<BioTransformerSequenceStep> bioTransformerSequenceSteps) {
     this.bioTransformerSequenceSteps = bioTransformerSequenceSteps;
   }
+
 
   @Override
   public boolean equals(Object o) {

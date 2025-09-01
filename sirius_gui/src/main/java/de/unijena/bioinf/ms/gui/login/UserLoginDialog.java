@@ -93,13 +93,13 @@ public class UserLoginDialog extends JDialog {
                         ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
                             service.login(username.getText(), new String(password.getPassword()));
                             AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
-                            ApplicationCore.WEB_API.changeActiveSubscription(ACCESS_TOKENS.getActiveSubscription(service.getToken().orElse(null)));
+                            ApplicationCore.WEB_API().changeActiveSubscription(ACCESS_TOKENS.getActiveSubscription(service.getToken().orElse(null)));
                             ProxyManager.reconnect();
                         });
                         performedLogin = true;
                         Jobs.runEDTLater(UserLoginDialog.this::dispose);
                         if (boxAcceptTerms.isSelected())
-                            ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
+                            ApplicationCore.WEB_API().acceptTermsAndRefreshToken();
                     } catch (Throwable ex) {
                         LoggerFactory.getLogger(getClass()).error("Error during Login.", ex);
                         new ExceptionDialog(UserLoginDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse) ? ((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
@@ -168,7 +168,7 @@ public class UserLoginDialog extends JDialog {
     }
 
     public void addTermsPanel(@NotNull TwoColumnPanel center) {
-        List<Term> terms = ApplicationCore.WEB_API.getAuthService().getToken()
+        List<Term> terms = ApplicationCore.WEB_API().getAuthService().getToken()
                 .map(ACCESS_TOKENS::getActiveSubscriptionTerms).orElse(List.of());
 
         if (!terms.isEmpty()) {

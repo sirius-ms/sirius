@@ -38,9 +38,9 @@ public enum ProjectInfoOptField {
   
   NONE("none"),
   
-  COMPATIBILITYINFO("compatibilityInfo"),
+  COMPATIBILITY_INFO("compatibilityInfo"),
   
-  SIZEINFORMATION("sizeInformation");
+  SIZE_INFORMATION("sizeInformation");
 
   private String value;
 

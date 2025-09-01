@@ -38,15 +38,15 @@ public enum AlignedFeatureOptField {
   
   NONE("none"),
   
-  MSDATA("msData"),
+  MS_DATA("msData"),
   
-  TOPANNOTATIONSSUMMARY("topAnnotationsSummary"),
+  TOP_ANNOTATIONS_SUMMARY("topAnnotationsSummary"),
   
-  TOPANNOTATIONS("topAnnotations"),
+  TOP_ANNOTATIONS("topAnnotations"),
   
-  TOPANNOTATIONSDENOVO("topAnnotationsDeNovo"),
+  TOP_ANNOTATIONS_DE_NOVO("topAnnotationsDeNovo"),
   
-  COMPUTEDTOOLS("computedTools"),
+  COMPUTED_TOOLS("computedTools"),
   
   TAGS("tags");
 
@@ -73,7 +73,7 @@ public enum AlignedFeatureOptField {
         return b;
       }
     }
-    throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    return null;
   }
 }
 

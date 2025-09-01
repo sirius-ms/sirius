@@ -36,6 +36,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum ProjectType {
   
+  UNIMPORTED("UNIMPORTED"),
+  
   DIRECT_IMPORT("DIRECT_IMPORT"),
   
   PEAKLISTS("PEAKLISTS"),

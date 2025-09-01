@@ -84,7 +84,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // add CSIClientData to PS if it is not already there
-        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeFingerIdDataIfMissing(ApplicationCore.WEB_API), this::checkForInterruption);
+        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeFingerIdDataIfMissing(ApplicationCore.WEB_API()), this::checkForInterruption);
 
         updateProgress(10);
         checkForInterruption();
@@ -118,7 +118,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
         //needed to create bayes net scoring... better solution possible
         //todo msnovelist does just need a scorer so no need for the predictor if the scring function is initialized manually in MSNovelist job
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor)
-                        ApplicationCore.WEB_API.getStructurePredictor(inst.getCharge()),
+                        ApplicationCore.WEB_API().getStructurePredictor(inst.getCharge()),
                 this::checkForInterruption);
 
         updateProgress(45);
@@ -130,7 +130,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
         for (FCandidate<?> formRes : msnJobResults.keySet()) {
             final MsNovelistFingerblastJJob job = new MsNovelistFingerblastJJob(
                     csi,
-                    ApplicationCore.WEB_API,
+                    ApplicationCore.WEB_API(),
                     ApplicationCore.IFP_CACHE(),
                     formRes.getAnnotationOrThrow(FingerIdResult.class),
                     msnJobResults.get(formRes).getCandidates());
@@ -200,7 +200,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
 
     private WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?> buildAndSubmitRemote(@NotNull final FCandidate<?> ir, int specHash) {
         try {
-            return ApplicationCore.WEB_API.submitMsNovelistJob(
+            return ApplicationCore.WEB_API().submitMsNovelistJob(
                     ir.getMolecularFormula(), ir.getAdduct().getCharge(),
                     ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint, specHash
             );

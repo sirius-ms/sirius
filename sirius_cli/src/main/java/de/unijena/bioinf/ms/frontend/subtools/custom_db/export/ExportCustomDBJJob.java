@@ -31,7 +31,7 @@ public class ExportCustomDBJJob extends BasicJJob<Boolean> implements Workflow {
 
     @Override
     protected Boolean compute() throws Exception {
-        final CdkFingerprintVersion version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
+        final CdkFingerprintVersion version = ApplicationCore.WEB_API().getCDKChemDBFingerprintVersion();
         String dbLocation = CustomDBPropertyUtils.getLocationByName(dbName).orElseThrow(() -> new RuntimeException("Database " + dbName + " not found."));
         CustomDatabase db = CustomDatabases.open(dbLocation, version, true);
 

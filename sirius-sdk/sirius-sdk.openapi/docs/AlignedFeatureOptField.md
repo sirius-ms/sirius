@@ -7,15 +7,15 @@
 
 * `NONE` (value: `"none"`)
 
-* `MSDATA` (value: `"msData"`)
+* `MS_DATA` (value: `"msData"`)
 
-* `TOPANNOTATIONSSUMMARY` (value: `"topAnnotationsSummary"`)
+* `TOP_ANNOTATIONS_SUMMARY` (value: `"topAnnotationsSummary"`)
 
-* `TOPANNOTATIONS` (value: `"topAnnotations"`)
+* `TOP_ANNOTATIONS` (value: `"topAnnotations"`)
 
-* `TOPANNOTATIONSDENOVO` (value: `"topAnnotationsDeNovo"`)
+* `TOP_ANNOTATIONS_DE_NOVO` (value: `"topAnnotationsDeNovo"`)
 
-* `COMPUTEDTOOLS` (value: `"computedTools"`)
+* `COMPUTED_TOOLS` (value: `"computedTools"`)
 
 * `TAGS` (value: `"tags"`)
 

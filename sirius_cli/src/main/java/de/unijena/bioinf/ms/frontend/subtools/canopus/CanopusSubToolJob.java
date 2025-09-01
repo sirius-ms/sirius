@@ -70,7 +70,7 @@ public class CanopusSubToolJob extends InstanceJob {
         updateProgress(10);
         checkForInterruption();
 
-        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeCanopusDataIfMissing(ApplicationCore.WEB_API), this::checkForInterruption);
+        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeCanopusDataIfMissing(ApplicationCore.WEB_API()), this::checkForInterruption);
 
         updateProgress(20);
         checkForInterruption();
@@ -94,7 +94,7 @@ public class CanopusSubToolJob extends InstanceJob {
 
     private WebJJob<CanopusJobInput, ?, CanopusResult, ?> buildAndSubmitRemote(@NotNull final FCandidate<?> ir, int specHash)  {
         try {
-            return ApplicationCore.WEB_API.submitCanopusJob(
+            return ApplicationCore.WEB_API().submitCanopusJob(
                     ir.getMolecularFormula(), ir.getAdduct().getCharge(),
                     ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint, specHash
             );

@@ -7,7 +7,7 @@
 
 * `NONE` (value: `"none"`)
 
-* `REFERENCESPECTRUM` (value: `"referenceSpectrum"`)
+* `REFERENCE_SPECTRUM` (value: `"referenceSpectrum"`)
 
 
 

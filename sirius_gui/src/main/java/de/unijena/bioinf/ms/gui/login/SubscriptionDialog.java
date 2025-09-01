@@ -77,7 +77,7 @@ public class SubscriptionDialog extends JDialog {
                         ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
                             Subscription sub = (Subscription) comboBox.getSelectedItem();
                             SiriusProperties.setAndStoreInBackground(ACTIVE_SUBSCRIPTION_KEY, sub.getSid());
-                            ApplicationCore.WEB_API.changeActiveSubscription(sub);
+                            ApplicationCore.WEB_API().changeActiveSubscription(sub);
 
                             ProxyManager.reconnect();
                         });

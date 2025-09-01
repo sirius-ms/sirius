@@ -342,9 +342,9 @@ public class SiriusProjectSpaceManager extends AbstractProjectSpaceManager {
         synchronized (dataCompatibilityCache) {
             try {
 
-                checkFingerprintData(FingerIdDataProperty.class, FingerIdData.class, ApplicationCore.WEB_API::getFingerIdData, interrupted);
-                checkFingerprintData(CanopusCfDataProperty.class, CanopusCfData.class, ApplicationCore.WEB_API::getCanopusCfData, interrupted);
-                checkFingerprintData(CanopusNpcDataProperty.class, CanopusNpcData.class, ApplicationCore.WEB_API::getCanopusNpcData, interrupted);
+                checkFingerprintData(FingerIdDataProperty.class, FingerIdData.class, ApplicationCore.WEB_API()::getFingerIdData, interrupted);
+                checkFingerprintData(CanopusCfDataProperty.class, CanopusCfData.class, ApplicationCore.WEB_API()::getCanopusCfData, interrupted);
+                checkFingerprintData(CanopusNpcDataProperty.class, CanopusNpcData.class, ApplicationCore.WEB_API()::getCanopusNpcData, interrupted);
 
                 return dataCompatibilityCache.values().stream().reduce((a, b) -> a && b).orElse(true);
             } catch (Exception e) {
