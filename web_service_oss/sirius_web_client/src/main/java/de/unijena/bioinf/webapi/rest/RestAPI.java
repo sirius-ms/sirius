@@ -493,8 +493,8 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     }
 
     @Override
-    public void downloadLibrary(Path path, String libId) throws IOException {
-        ProxyManager.consumeClient(client -> librariesClient.downloadToFile(libId, path, client));
+    public LibrariesClient.DownloadJJob downloadLibrary(Path path, String libId) throws IOException {
+        return ProxyManager.applyClient(client -> librariesClient.downloadToFile(libId, path, client));
     }
 
     //endregion

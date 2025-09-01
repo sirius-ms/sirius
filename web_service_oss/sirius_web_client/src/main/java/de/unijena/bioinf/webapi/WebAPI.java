@@ -38,6 +38,7 @@ import de.unijena.bioinf.fingerid.StructurePredictor;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
+import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
@@ -278,9 +279,10 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
      *
      * @param path path to the file for the newly created database.
      * @param libId remote library id
+     * @return a JJob that would download the library when executed.
      * @throws IOException if connection or file write error happens
      */
-    void downloadLibrary(Path path, String libId) throws IOException;
+    ProgressJJob<Void> downloadLibrary(Path path, String libId) throws IOException;
 
     //endregion
 
