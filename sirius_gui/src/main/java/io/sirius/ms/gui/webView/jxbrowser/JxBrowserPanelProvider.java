@@ -7,6 +7,7 @@ import com.teamdev.jxbrowser.net.HttpHeader;
 import com.teamdev.jxbrowser.net.callback.BeforeStartTransactionCallback;
 import com.teamdev.jxbrowser.permission.PermissionType;
 import com.teamdev.jxbrowser.permission.callback.RequestPermissionCallback;
+import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import io.sirius.ms.gui.webView.LinkInterception;
@@ -43,6 +44,7 @@ public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel>
                 .newBuilder(OFF_SCREEN)
                 .licenseKey(new String(Base64.getDecoder().decode(System.getProperty("jxbrowser.license.key")), StandardCharsets.UTF_8))
                 .disableTouchMenu()
+                .userDataDir(Workspace.jxBrowserDir)
                 .enableIncognito() // no storage dir, all in memory, fresh state after every start.
                 .build();
 

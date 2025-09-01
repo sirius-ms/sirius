@@ -48,27 +48,32 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FragmentationTree.JSON_PROPERTY_MOLECULAR_FORMULA,
   FragmentationTree.JSON_PROPERTY_ADDUCT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class FragmentationTree {
   public static final String JSON_PROPERTY_FRAGMENTS = "fragments";
+  @jakarta.annotation.Nullable
   private List<FragmentNode> fragments = new ArrayList<>();
 
   public static final String JSON_PROPERTY_LOSSES = "losses";
+  @jakarta.annotation.Nullable
   private List<LossEdge> losses = new ArrayList<>();
 
   public static final String JSON_PROPERTY_TREE_SCORE = "treeScore";
+  @jakarta.annotation.Nullable
   private Double treeScore;
 
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  @jakarta.annotation.Nullable
   private String molecularFormula;
 
   public static final String JSON_PROPERTY_ADDUCT = "adduct";
+  @jakarta.annotation.Nullable
   private String adduct;
 
   public FragmentationTree() {
   }
 
-  public FragmentationTree fragments(List<FragmentNode> fragments) {
+  public FragmentationTree fragments(@jakarta.annotation.Nullable List<FragmentNode> fragments) {
     
     this.fragments = fragments;
     return this;
@@ -82,10 +87,10 @@ public class FragmentationTree {
     return this;
   }
 
-   /**
+  /**
    * Get fragments
    * @return fragments
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FRAGMENTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -97,11 +102,11 @@ public class FragmentationTree {
 
   @JsonProperty(JSON_PROPERTY_FRAGMENTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFragments(List<FragmentNode> fragments) {
+  public void setFragments(@jakarta.annotation.Nullable List<FragmentNode> fragments) {
     this.fragments = fragments;
   }
 
-  public FragmentationTree losses(List<LossEdge> losses) {
+  public FragmentationTree losses(@jakarta.annotation.Nullable List<LossEdge> losses) {
     
     this.losses = losses;
     return this;
@@ -115,10 +120,10 @@ public class FragmentationTree {
     return this;
   }
 
-   /**
+  /**
    * Get losses
    * @return losses
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LOSSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -130,20 +135,20 @@ public class FragmentationTree {
 
   @JsonProperty(JSON_PROPERTY_LOSSES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLosses(List<LossEdge> losses) {
+  public void setLosses(@jakarta.annotation.Nullable List<LossEdge> losses) {
     this.losses = losses;
   }
 
-  public FragmentationTree treeScore(Double treeScore) {
+  public FragmentationTree treeScore(@jakarta.annotation.Nullable Double treeScore) {
     
     this.treeScore = treeScore;
     return this;
   }
 
-   /**
+  /**
    * Get treeScore
    * @return treeScore
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TREE_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -155,20 +160,20 @@ public class FragmentationTree {
 
   @JsonProperty(JSON_PROPERTY_TREE_SCORE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTreeScore(Double treeScore) {
+  public void setTreeScore(@jakarta.annotation.Nullable Double treeScore) {
     this.treeScore = treeScore;
   }
 
-  public FragmentationTree molecularFormula(String molecularFormula) {
+  public FragmentationTree molecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     
     this.molecularFormula = molecularFormula;
     return this;
   }
 
-   /**
+  /**
    * Get molecularFormula
    * @return molecularFormula
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -180,20 +185,20 @@ public class FragmentationTree {
 
   @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMolecularFormula(String molecularFormula) {
+  public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
   }
 
-  public FragmentationTree adduct(String adduct) {
+  public FragmentationTree adduct(@jakarta.annotation.Nullable String adduct) {
     
     this.adduct = adduct;
     return this;
   }
 
-   /**
+  /**
    * Get adduct
    * @return adduct
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -205,9 +210,10 @@ public class FragmentationTree {
 
   @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAdduct(String adduct) {
+  public void setAdduct(@jakarta.annotation.Nullable String adduct) {
     this.adduct = adduct;
   }
+
 
   @Override
   public boolean equals(Object o) {

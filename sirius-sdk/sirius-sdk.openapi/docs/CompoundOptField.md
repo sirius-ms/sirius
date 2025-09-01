@@ -7,11 +7,11 @@
 
 * `NONE` (value: `"none"`)
 
-* `CONSENSUSANNOTATIONS` (value: `"consensusAnnotations"`)
+* `CONSENSUS_ANNOTATIONS` (value: `"consensusAnnotations"`)
 
-* `CONSENSUSANNOTATIONSDENOVO` (value: `"consensusAnnotationsDeNovo"`)
+* `CONSENSUS_ANNOTATIONS_DE_NOVO` (value: `"consensusAnnotationsDeNovo"`)
 
-* `CUSTOMANNOTATIONS` (value: `"customAnnotations"`)
+* `CUSTOM_ANNOTATIONS` (value: `"customAnnotations"`)
 
 * `TAGS` (value: `"tags"`)
 

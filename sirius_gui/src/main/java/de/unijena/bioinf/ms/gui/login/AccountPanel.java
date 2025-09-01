@@ -83,9 +83,9 @@ public class AccountPanel extends LoadablePanel implements PropertyChangeListene
                 runInBackgroundAndLoad(() -> {
                     try {
                         ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
-                            ApplicationCore.WEB_API.changeActiveSubscription(null);
-                            AuthService.Token t = ApplicationCore.WEB_API.getAuthService().refreshIfNeeded(true);
-                            ApplicationCore.WEB_API.changeActiveSubscription(AccessTokens.ACCESS_TOKENS.getActiveSubscription(t));
+                            ApplicationCore.WEB_API().changeActiveSubscription(null);
+                            AuthService.Token t = ApplicationCore.WEB_API().getAuthService().refreshIfNeeded(true);
+                            ApplicationCore.WEB_API().changeActiveSubscription(AccessTokens.ACCESS_TOKENS.getActiveSubscription(t));
                             ProxyManager.reconnect();
                         });
                     } catch (LoginException ex) {

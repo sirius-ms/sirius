@@ -37,24 +37,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class FeaturesApi {
     private ApiClient apiClient;
 
@@ -62,7 +63,6 @@ public class FeaturesApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public FeaturesApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
@@ -75,6 +75,7 @@ public class FeaturesApi {
         this.apiClient = apiClient;
     }
 
+    
     /**
      * Import (aligned) features into the project.
      * Import (aligned) features into the project. Features must not exist in the project.  Otherwise, they will exist twice.
@@ -86,7 +87,7 @@ public class FeaturesApi {
      * @return List&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addAlignedFeaturesRequestCreation(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec addAlignedFeaturesRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<FeatureImport> featureImport, @jakarta.annotation.Nullable InstrumentProfile profile, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = featureImport;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -135,7 +136,7 @@ public class FeaturesApi {
      * @return List&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<AlignedFeature> addAlignedFeatures(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public List<AlignedFeature> addAlignedFeatures(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<FeatureImport> featureImport, @jakarta.annotation.Nullable InstrumentProfile profile, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
         return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -151,7 +152,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;AlignedFeature&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<AlignedFeature>> addAlignedFeaturesWithHttpInfo(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<AlignedFeature>> addAlignedFeaturesWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<FeatureImport> featureImport, @jakarta.annotation.Nullable InstrumentProfile profile, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
         return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields).toEntityList(localVarReturnType).block();
     }
@@ -167,9 +168,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addAlignedFeaturesWithResponseSpec(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec addAlignedFeaturesWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<FeatureImport> featureImport, @jakarta.annotation.Nullable InstrumentProfile profile, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields);
     }
+
     /**
      * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
      * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
@@ -180,7 +182,7 @@ public class FeaturesApi {
      * @return List&lt;StructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addDeNovoStructureCandidateRequestCreation(String projectId, String alignedFeatureId, String smiles) throws WebClientResponseException {
+    private ResponseSpec addDeNovoStructureCandidateRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -226,7 +228,7 @@ public class FeaturesApi {
      * @return List&lt;StructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<StructureCandidateFormula> addDeNovoStructureCandidate(String projectId, String alignedFeatureId, String smiles) throws WebClientResponseException {
+    public List<StructureCandidateFormula> addDeNovoStructureCandidate(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
         return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -241,7 +243,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;StructureCandidateFormula&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<StructureCandidateFormula>> addDeNovoStructureCandidateWithHttpInfo(String projectId, String alignedFeatureId, String smiles) throws WebClientResponseException {
+    public ResponseEntity<List<StructureCandidateFormula>> addDeNovoStructureCandidateWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
         return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles).toEntityList(localVarReturnType).block();
     }
@@ -256,9 +258,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addDeNovoStructureCandidateWithResponseSpec(String projectId, String alignedFeatureId, String smiles) throws WebClientResponseException {
+    public ResponseSpec addDeNovoStructureCandidateWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles) throws WebClientResponseException {
         return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles);
     }
+
     /**
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -269,7 +272,7 @@ public class FeaturesApi {
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addTagsToAlignedFeatureExperimentalRequestCreation(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
+    private ResponseSpec addTagsToAlignedFeatureExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull List<Tag> tag) throws WebClientResponseException {
         Object postBody = tag;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -319,7 +322,7 @@ public class FeaturesApi {
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Tag> addTagsToAlignedFeatureExperimental(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
+    public List<Tag> addTagsToAlignedFeatureExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull List<Tag> tag) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
         return addTagsToAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tag).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -334,7 +337,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Tag>> addTagsToAlignedFeatureExperimentalWithHttpInfo(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
+    public ResponseEntity<List<Tag>> addTagsToAlignedFeatureExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull List<Tag> tag) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
         return addTagsToAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tag).toEntityList(localVarReturnType).block();
     }
@@ -349,9 +352,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addTagsToAlignedFeatureExperimentalWithResponseSpec(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
+    public ResponseSpec addTagsToAlignedFeatureExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull List<Tag> tag) throws WebClientResponseException {
         return addTagsToAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tag);
     }
+
     /**
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -360,7 +364,7 @@ public class FeaturesApi {
      * @param alignedFeatureId identifier of feature (aligned over runs) to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteAlignedFeatureRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    private ResponseSpec deleteAlignedFeatureRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -400,7 +404,7 @@ public class FeaturesApi {
      * @param alignedFeatureId identifier of feature (aligned over runs) to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteAlignedFeature(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public void deleteAlignedFeature(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         deleteAlignedFeatureRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
     }
@@ -413,7 +417,7 @@ public class FeaturesApi {
      * @param alignedFeatureId identifier of feature (aligned over runs) to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteAlignedFeatureWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteAlignedFeatureWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return deleteAlignedFeatureRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
     }
@@ -427,9 +431,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteAlignedFeatureWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public ResponseSpec deleteAlignedFeatureWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         return deleteAlignedFeatureRequestCreation(projectId, alignedFeatureId);
     }
+
     /**
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -438,7 +443,7 @@ public class FeaturesApi {
      * @param requestBody The requestBody parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteAlignedFeaturesRequestCreation(String projectId, List<String> requestBody) throws WebClientResponseException {
+    private ResponseSpec deleteAlignedFeaturesRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         Object postBody = requestBody;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -479,7 +484,7 @@ public class FeaturesApi {
      * @param requestBody The requestBody parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteAlignedFeatures(String projectId, List<String> requestBody) throws WebClientResponseException {
+    public void deleteAlignedFeatures(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         deleteAlignedFeaturesRequestCreation(projectId, requestBody).bodyToMono(localVarReturnType).block();
     }
@@ -492,7 +497,7 @@ public class FeaturesApi {
      * @param requestBody The requestBody parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteAlignedFeaturesWithHttpInfo(String projectId, List<String> requestBody) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteAlignedFeaturesWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return deleteAlignedFeaturesRequestCreation(projectId, requestBody).toEntity(localVarReturnType).block();
     }
@@ -506,9 +511,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteAlignedFeaturesWithResponseSpec(String projectId, List<String> requestBody) throws WebClientResponseException {
+    public ResponseSpec deleteAlignedFeaturesWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<String> requestBody) throws WebClientResponseException {
         return deleteAlignedFeaturesRequestCreation(projectId, requestBody);
     }
+
     /**
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -518,7 +524,7 @@ public class FeaturesApi {
      * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAdductNetworkWithMergedTracesExperimentalRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    private ResponseSpec getAdductNetworkWithMergedTracesExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -561,7 +567,7 @@ public class FeaturesApi {
      * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TraceSetExperimental getAdductNetworkWithMergedTracesExperimental(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public TraceSetExperimental getAdductNetworkWithMergedTracesExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return getAdductNetworkWithMergedTracesExperimentalRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
     }
@@ -575,7 +581,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;TraceSetExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TraceSetExperimental> getAdductNetworkWithMergedTracesExperimentalWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public ResponseEntity<TraceSetExperimental> getAdductNetworkWithMergedTracesExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return getAdductNetworkWithMergedTracesExperimentalRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
     }
@@ -589,9 +595,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAdductNetworkWithMergedTracesExperimentalWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public ResponseSpec getAdductNetworkWithMergedTracesExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         return getAdductNetworkWithMergedTracesExperimentalRequestCreation(projectId, alignedFeatureId);
     }
+
     /**
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
@@ -603,7 +610,7 @@ public class FeaturesApi {
      * @return AlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAlignedFeatureRequestCreation(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getAlignedFeatureRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -651,7 +658,7 @@ public class FeaturesApi {
      * @return AlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AlignedFeature getAlignedFeature(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public AlignedFeature getAlignedFeature(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
         return getAlignedFeatureRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -667,7 +674,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AlignedFeature> getAlignedFeatureWithHttpInfo(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<AlignedFeature> getAlignedFeatureWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
         return getAlignedFeatureRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields).toEntity(localVarReturnType).block();
     }
@@ -683,9 +690,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAlignedFeatureWithResponseSpec(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getAlignedFeatureWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         return getAlignedFeatureRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields);
     }
+
     /**
      * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
      * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  &lt;p&gt;  Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -695,7 +703,7 @@ public class FeaturesApi {
      * @return AlignedFeatureQualityExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAlignedFeatureQualityExperimentalRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    private ResponseSpec getAlignedFeatureQualityExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -738,7 +746,7 @@ public class FeaturesApi {
      * @return AlignedFeatureQualityExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AlignedFeatureQualityExperimental getAlignedFeatureQualityExperimental(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public AlignedFeatureQualityExperimental getAlignedFeatureQualityExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeatureQualityExperimental> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQualityExperimental>() {};
         return getAlignedFeatureQualityExperimentalRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
     }
@@ -752,7 +760,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;AlignedFeatureQualityExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AlignedFeatureQualityExperimental> getAlignedFeatureQualityExperimentalWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public ResponseEntity<AlignedFeatureQualityExperimental> getAlignedFeatureQualityExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeatureQualityExperimental> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQualityExperimental>() {};
         return getAlignedFeatureQualityExperimentalRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
     }
@@ -766,9 +774,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAlignedFeatureQualityExperimentalWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public ResponseSpec getAlignedFeatureQualityExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
         return getAlignedFeatureQualityExperimentalRequestCreation(projectId, alignedFeatureId);
     }
+
     /**
      * Get all available features (aligned over runs) in the given project-space.
      * Get all available features (aligned over runs) in the given project-space.
@@ -779,7 +788,7 @@ public class FeaturesApi {
      * @return List&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAlignedFeaturesRequestCreation(String projectId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getAlignedFeaturesRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -821,7 +830,7 @@ public class FeaturesApi {
      * @return List&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<AlignedFeature> getAlignedFeatures(String projectId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public List<AlignedFeature> getAlignedFeatures(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
         return getAlignedFeaturesRequestCreation(projectId, msDataSearchPrepared, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -836,7 +845,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;AlignedFeature&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<AlignedFeature>> getAlignedFeaturesWithHttpInfo(String projectId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<AlignedFeature>> getAlignedFeaturesWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
         return getAlignedFeaturesRequestCreation(projectId, msDataSearchPrepared, optFields).toEntityList(localVarReturnType).block();
     }
@@ -851,9 +860,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAlignedFeaturesWithResponseSpec(String projectId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getAlignedFeaturesWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         return getAlignedFeaturesRequestCreation(projectId, msDataSearchPrepared, optFields);
     }
+
     /**
      * [EXPERIMENTAL] Get features (aligned over runs) by tag group
      * [EXPERIMENTAL] Get features (aligned over runs) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -867,7 +877,7 @@ public class FeaturesApi {
      * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAlignedFeaturesByGroupExperimentalRequestCreation(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getAlignedFeaturesByGroupExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -919,7 +929,7 @@ public class FeaturesApi {
      * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelAlignedFeature getAlignedFeaturesByGroupExperimental(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public PagedModelAlignedFeature getAlignedFeaturesByGroupExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
         return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -937,7 +947,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;PagedModelAlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesByGroupExperimentalWithHttpInfo(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesByGroupExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
         return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
@@ -955,9 +965,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAlignedFeaturesByGroupExperimentalWithResponseSpec(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getAlignedFeaturesByGroupExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields);
     }
+
     /**
      * [EXPERIMENTAL] Get features (aligned over runs) by tag
      * [EXPERIMENTAL] Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -971,7 +982,7 @@ public class FeaturesApi {
      * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAlignedFeaturesByTagExperimentalRequestCreation(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getAlignedFeaturesByTagExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String filter, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1019,7 +1030,7 @@ public class FeaturesApi {
      * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelAlignedFeature getAlignedFeaturesByTagExperimental(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public PagedModelAlignedFeature getAlignedFeaturesByTagExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String filter, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
         return getAlignedFeaturesByTagExperimentalRequestCreation(projectId, filter, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -1037,7 +1048,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;PagedModelAlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesByTagExperimentalWithHttpInfo(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesByTagExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String filter, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
         return getAlignedFeaturesByTagExperimentalRequestCreation(projectId, filter, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
@@ -1055,9 +1066,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAlignedFeaturesByTagExperimentalWithResponseSpec(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getAlignedFeaturesByTagExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String filter, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         return getAlignedFeaturesByTagExperimentalRequestCreation(projectId, filter, page, size, sort, optFields);
     }
+
     /**
      * Get all available features (aligned over runs) in the given project-space.
      * Get all available features (aligned over runs) in the given project-space.
@@ -1071,7 +1083,7 @@ public class FeaturesApi {
      * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAlignedFeaturesPagedRequestCreation(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getAlignedFeaturesPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1119,7 +1131,7 @@ public class FeaturesApi {
      * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelAlignedFeature getAlignedFeaturesPaged(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public PagedModelAlignedFeature getAlignedFeaturesPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
         return getAlignedFeaturesPagedRequestCreation(projectId, page, size, sort, msDataSearchPrepared, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -1137,7 +1149,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;PagedModelAlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
         return getAlignedFeaturesPagedRequestCreation(projectId, page, size, sort, msDataSearchPrepared, optFields).toEntity(localVarReturnType).block();
     }
@@ -1155,9 +1167,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAlignedFeaturesPagedWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getAlignedFeaturesPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         return getAlignedFeaturesPagedRequestCreation(projectId, page, size, sort, msDataSearchPrepared, optFields);
     }
+
     /**
      * Return Best matching compound classes for given formulaId
      * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
@@ -1168,7 +1181,7 @@ public class FeaturesApi {
      * @return CompoundClasses
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getBestMatchingCompoundClassesRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    private ResponseSpec getBestMatchingCompoundClassesRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1217,7 +1230,7 @@ public class FeaturesApi {
      * @return CompoundClasses
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public CompoundClasses getBestMatchingCompoundClasses(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public CompoundClasses getBestMatchingCompoundClasses(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<CompoundClasses> localVarReturnType = new ParameterizedTypeReference<CompoundClasses>() {};
         return getBestMatchingCompoundClassesRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
     }
@@ -1232,7 +1245,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;CompoundClasses&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<CompoundClasses> getBestMatchingCompoundClassesWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseEntity<CompoundClasses> getBestMatchingCompoundClassesWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<CompoundClasses> localVarReturnType = new ParameterizedTypeReference<CompoundClasses>() {};
         return getBestMatchingCompoundClassesRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
     }
@@ -1247,9 +1260,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getBestMatchingCompoundClassesWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseSpec getBestMatchingCompoundClassesWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         return getBestMatchingCompoundClassesRequestCreation(projectId, alignedFeatureId, formulaId);
     }
+
     /**
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
@@ -1260,7 +1274,7 @@ public class FeaturesApi {
      * @return CanopusPrediction
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCanopusPredictionRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    private ResponseSpec getCanopusPredictionRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1309,7 +1323,7 @@ public class FeaturesApi {
      * @return CanopusPrediction
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public CanopusPrediction getCanopusPrediction(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public CanopusPrediction getCanopusPrediction(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<CanopusPrediction> localVarReturnType = new ParameterizedTypeReference<CanopusPrediction>() {};
         return getCanopusPredictionRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
     }
@@ -1324,7 +1338,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;CanopusPrediction&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<CanopusPrediction> getCanopusPredictionWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseEntity<CanopusPrediction> getCanopusPredictionWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<CanopusPrediction> localVarReturnType = new ParameterizedTypeReference<CanopusPrediction>() {};
         return getCanopusPredictionRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
     }
@@ -1339,9 +1353,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCanopusPredictionWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseSpec getCanopusPredictionWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         return getCanopusPredictionRequestCreation(projectId, alignedFeatureId, formulaId);
     }
+
     /**
      * List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
@@ -1352,7 +1367,7 @@ public class FeaturesApi {
      * @return List&lt;StructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getDeNovoStructureCandidatesRequestCreation(String projectId, String alignedFeatureId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getDeNovoStructureCandidatesRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1398,7 +1413,7 @@ public class FeaturesApi {
      * @return List&lt;StructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<StructureCandidateFormula> getDeNovoStructureCandidates(String projectId, String alignedFeatureId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public List<StructureCandidateFormula> getDeNovoStructureCandidates(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
         return getDeNovoStructureCandidatesRequestCreation(projectId, alignedFeatureId, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -1413,7 +1428,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;StructureCandidateFormula&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<StructureCandidateFormula>> getDeNovoStructureCandidatesWithHttpInfo(String projectId, String alignedFeatureId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<StructureCandidateFormula>> getDeNovoStructureCandidatesWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
         return getDeNovoStructureCandidatesRequestCreation(projectId, alignedFeatureId, optFields).toEntityList(localVarReturnType).block();
     }
@@ -1428,9 +1443,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getDeNovoStructureCandidatesWithResponseSpec(String projectId, String alignedFeatureId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getDeNovoStructureCandidatesWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         return getDeNovoStructureCandidatesRequestCreation(projectId, alignedFeatureId, optFields);
     }
+
     /**
      * List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
@@ -1442,7 +1458,7 @@ public class FeaturesApi {
      * @return List&lt;StructureCandidateScored&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getDeNovoStructureCandidatesByFormulaRequestCreation(String projectId, String alignedFeatureId, String formulaId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getDeNovoStructureCandidatesByFormulaRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1494,7 +1510,7 @@ public class FeaturesApi {
      * @return List&lt;StructureCandidateScored&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<StructureCandidateScored> getDeNovoStructureCandidatesByFormula(String projectId, String alignedFeatureId, String formulaId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public List<StructureCandidateScored> getDeNovoStructureCandidatesByFormula(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<StructureCandidateScored>() {};
         return getDeNovoStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -1510,7 +1526,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;StructureCandidateScored&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<StructureCandidateScored>> getDeNovoStructureCandidatesByFormulaWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<StructureCandidateScored>> getDeNovoStructureCandidatesByFormulaWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<StructureCandidateScored>() {};
         return getDeNovoStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, optFields).toEntityList(localVarReturnType).block();
     }
@@ -1526,9 +1542,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getDeNovoStructureCandidatesByFormulaWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getDeNovoStructureCandidatesByFormulaWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         return getDeNovoStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, optFields);
     }
+
     /**
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
@@ -1543,7 +1560,7 @@ public class FeaturesApi {
      * @return PagedModelStructureCandidateScored
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getDeNovoStructureCandidatesByFormulaPagedRequestCreation(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getDeNovoStructureCandidatesByFormulaPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1601,7 +1618,7 @@ public class FeaturesApi {
      * @return PagedModelStructureCandidateScored
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelStructureCandidateScored getDeNovoStructureCandidatesByFormulaPaged(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public PagedModelStructureCandidateScored getDeNovoStructureCandidatesByFormulaPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateScored>() {};
         return getDeNovoStructureCandidatesByFormulaPagedRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -1620,7 +1637,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;PagedModelStructureCandidateScored&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelStructureCandidateScored> getDeNovoStructureCandidatesByFormulaPagedWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelStructureCandidateScored> getDeNovoStructureCandidatesByFormulaPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateScored>() {};
         return getDeNovoStructureCandidatesByFormulaPagedRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
@@ -1639,9 +1656,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getDeNovoStructureCandidatesByFormulaPagedWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getDeNovoStructureCandidatesByFormulaPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         return getDeNovoStructureCandidatesByFormulaPagedRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields);
     }
+
     /**
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
@@ -1655,7 +1673,7 @@ public class FeaturesApi {
      * @return PagedModelStructureCandidateFormula
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getDeNovoStructureCandidatesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getDeNovoStructureCandidatesPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1707,7 +1725,7 @@ public class FeaturesApi {
      * @return PagedModelStructureCandidateFormula
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelStructureCandidateFormula getDeNovoStructureCandidatesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public PagedModelStructureCandidateFormula getDeNovoStructureCandidatesPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateFormula>() {};
         return getDeNovoStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -1725,7 +1743,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;PagedModelStructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelStructureCandidateFormula> getDeNovoStructureCandidatesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelStructureCandidateFormula> getDeNovoStructureCandidatesPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateFormula>() {};
         return getDeNovoStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
@@ -1743,9 +1761,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getDeNovoStructureCandidatesPagedWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getDeNovoStructureCandidatesPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         return getDeNovoStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
     }
+
     /**
      * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)
      * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).  &lt;p&gt;  Returns the full quantification table. The quantification table contains a quantities of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -1755,7 +1774,7 @@ public class FeaturesApi {
      * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFeatureQuantTableExperimentalRequestCreation(String projectId, QuantMeasure type) throws WebClientResponseException {
+    private ResponseSpec getFeatureQuantTableExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1795,7 +1814,7 @@ public class FeaturesApi {
      * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantTableExperimental getFeatureQuantTableExperimental(String projectId, QuantMeasure type) throws WebClientResponseException {
+    public QuantTableExperimental getFeatureQuantTableExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getFeatureQuantTableExperimentalRequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
     }
@@ -1809,7 +1828,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;QuantTableExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantTableExperimental> getFeatureQuantTableExperimentalWithHttpInfo(String projectId, QuantMeasure type) throws WebClientResponseException {
+    public ResponseEntity<QuantTableExperimental> getFeatureQuantTableExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getFeatureQuantTableExperimentalRequestCreation(projectId, type).toEntity(localVarReturnType).block();
     }
@@ -1823,9 +1842,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFeatureQuantTableExperimentalWithResponseSpec(String projectId, QuantMeasure type) throws WebClientResponseException {
+    public ResponseSpec getFeatureQuantTableExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         return getFeatureQuantTableExperimentalRequestCreation(projectId, type);
     }
+
     /**
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  &lt;p&gt;  This fingerprint is used to perform structure database search and predict compound classes.
@@ -1836,7 +1856,7 @@ public class FeaturesApi {
      * @return List&lt;Double&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFingerprintPredictionRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    private ResponseSpec getFingerprintPredictionRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1885,7 +1905,7 @@ public class FeaturesApi {
      * @return List&lt;Double&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Double> getFingerprintPrediction(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public List<Double> getFingerprintPrediction(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<Double> localVarReturnType = new ParameterizedTypeReference<Double>() {};
         return getFingerprintPredictionRequestCreation(projectId, alignedFeatureId, formulaId).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -1900,7 +1920,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;Double&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Double>> getFingerprintPredictionWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseEntity<List<Double>> getFingerprintPredictionWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<Double> localVarReturnType = new ParameterizedTypeReference<Double>() {};
         return getFingerprintPredictionRequestCreation(projectId, alignedFeatureId, formulaId).toEntityList(localVarReturnType).block();
     }
@@ -1915,9 +1935,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFingerprintPredictionWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseSpec getFingerprintPredictionWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         return getFingerprintPredictionRequestCreation(projectId, alignedFeatureId, formulaId);
     }
+
     /**
      * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
      * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
@@ -1929,7 +1950,7 @@ public class FeaturesApi {
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFormulaAnnotatedMsMsDataRequestCreation(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    private ResponseSpec getFormulaAnnotatedMsMsDataRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1981,7 +2002,7 @@ public class FeaturesApi {
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedMsMsData getFormulaAnnotatedMsMsData(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    public AnnotatedMsMsData getFormulaAnnotatedMsMsData(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
         return getFormulaAnnotatedMsMsDataRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared).bodyToMono(localVarReturnType).block();
     }
@@ -1997,7 +2018,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;AnnotatedMsMsData&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedMsMsData> getFormulaAnnotatedMsMsDataWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedMsMsData> getFormulaAnnotatedMsMsDataWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
         return getFormulaAnnotatedMsMsDataRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared).toEntity(localVarReturnType).block();
     }
@@ -2013,9 +2034,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFormulaAnnotatedMsMsDataWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    public ResponseSpec getFormulaAnnotatedMsMsDataWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         return getFormulaAnnotatedMsMsDataRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared);
     }
+
     /**
      * Returns a fragmentation spectrum (e
      * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  &lt;p&gt;  These annotations are only available if a fragmentation tree is available.
@@ -2028,7 +2050,7 @@ public class FeaturesApi {
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFormulaAnnotatedSpectrumRequestCreation(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
+    private ResponseSpec getFormulaAnnotatedSpectrumRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer spectrumIndex, @jakarta.annotation.Nullable Boolean searchPrepared) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2082,7 +2104,7 @@ public class FeaturesApi {
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedSpectrum getFormulaAnnotatedSpectrum(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
+    public AnnotatedSpectrum getFormulaAnnotatedSpectrum(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer spectrumIndex, @jakarta.annotation.Nullable Boolean searchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
         return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, spectrumIndex, searchPrepared).bodyToMono(localVarReturnType).block();
     }
@@ -2099,7 +2121,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;AnnotatedSpectrum&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedSpectrum> getFormulaAnnotatedSpectrumWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedSpectrum> getFormulaAnnotatedSpectrumWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer spectrumIndex, @jakarta.annotation.Nullable Boolean searchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
         return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, spectrumIndex, searchPrepared).toEntity(localVarReturnType).block();
     }
@@ -2116,9 +2138,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFormulaAnnotatedSpectrumWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
+    public ResponseSpec getFormulaAnnotatedSpectrumWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer spectrumIndex, @jakarta.annotation.Nullable Boolean searchPrepared) throws WebClientResponseException {
         return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, spectrumIndex, searchPrepared);
     }
+
     /**
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.  Can be enriched with an optional results overview and formula candidate information.
@@ -2131,7 +2154,7 @@ public class FeaturesApi {
      * @return FormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFormulaCandidateRequestCreation(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getFormulaCandidateRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2185,7 +2208,7 @@ public class FeaturesApi {
      * @return FormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public FormulaCandidate getFormulaCandidate(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public FormulaCandidate getFormulaCandidate(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<FormulaCandidate> localVarReturnType = new ParameterizedTypeReference<FormulaCandidate>() {};
         return getFormulaCandidateRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -2202,7 +2225,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;FormulaCandidate&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<FormulaCandidate> getFormulaCandidateWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<FormulaCandidate> getFormulaCandidateWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<FormulaCandidate> localVarReturnType = new ParameterizedTypeReference<FormulaCandidate>() {};
         return getFormulaCandidateRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared, optFields).toEntity(localVarReturnType).block();
     }
@@ -2219,9 +2242,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFormulaCandidateWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getFormulaCandidateWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         return getFormulaCandidateRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared, optFields);
     }
+
     /**
      * List of FormulaResultContainers available for this feature with minimal information.
      * List of FormulaResultContainers available for this feature with minimal information.  Can be enriched with an optional results overview.
@@ -2233,7 +2257,7 @@ public class FeaturesApi {
      * @return List&lt;FormulaCandidate&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFormulaCandidatesRequestCreation(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getFormulaCandidatesRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2281,7 +2305,7 @@ public class FeaturesApi {
      * @return List&lt;FormulaCandidate&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<FormulaCandidate> getFormulaCandidates(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public List<FormulaCandidate> getFormulaCandidates(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<FormulaCandidate> localVarReturnType = new ParameterizedTypeReference<FormulaCandidate>() {};
         return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -2297,7 +2321,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;FormulaCandidate&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<FormulaCandidate>> getFormulaCandidatesWithHttpInfo(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<FormulaCandidate>> getFormulaCandidatesWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<FormulaCandidate> localVarReturnType = new ParameterizedTypeReference<FormulaCandidate>() {};
         return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields).toEntityList(localVarReturnType).block();
     }
@@ -2313,9 +2337,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFormulaCandidatesWithResponseSpec(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getFormulaCandidatesWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields);
     }
+
     /**
      * Page of FormulaResultContainers available for this feature with minimal information.
      * Page of FormulaResultContainers available for this feature with minimal information.  Can be enriched with an optional results overview.
@@ -2330,7 +2355,7 @@ public class FeaturesApi {
      * @return PagedModelFormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFormulaCandidatesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getFormulaCandidatesPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2384,7 +2409,7 @@ public class FeaturesApi {
      * @return PagedModelFormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelFormulaCandidate getFormulaCandidatesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public PagedModelFormulaCandidate getFormulaCandidatesPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PagedModelFormulaCandidate>() {};
         return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, msDataSearchPrepared, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -2403,7 +2428,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;PagedModelFormulaCandidate&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelFormulaCandidate> getFormulaCandidatesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelFormulaCandidate> getFormulaCandidatesPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PagedModelFormulaCandidate>() {};
         return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, msDataSearchPrepared, optFields).toEntity(localVarReturnType).block();
     }
@@ -2422,9 +2447,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFormulaCandidatesPagedWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getFormulaCandidatesPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Boolean msDataSearchPrepared, @jakarta.annotation.Nullable List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, msDataSearchPrepared, optFields);
     }
+
     /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  &lt;p&gt;  This tree is used to rank formula candidates (treeScore).
@@ -2435,7 +2461,7 @@ public class FeaturesApi {
      * @return FragmentationTree
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFragTreeRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    private ResponseSpec getFragTreeRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2484,7 +2510,7 @@ public class FeaturesApi {
      * @return FragmentationTree
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public FragmentationTree getFragTree(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public FragmentationTree getFragTree(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<FragmentationTree> localVarReturnType = new ParameterizedTypeReference<FragmentationTree>() {};
         return getFragTreeRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
     }
@@ -2499,7 +2525,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;FragmentationTree&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<FragmentationTree> getFragTreeWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseEntity<FragmentationTree> getFragTreeWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<FragmentationTree> localVarReturnType = new ParameterizedTypeReference<FragmentationTree>() {};
         return getFragTreeRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
     }
@@ -2514,9 +2540,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFragTreeWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseSpec getFragTreeWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         return getFragTreeRequestCreation(projectId, alignedFeatureId, formulaId);
     }
+
     /**
      * Returns Isotope pattern information for given formulaId  
      * Returns Isotope pattern information for given formulaId  &lt;p&gt;  Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
@@ -2527,7 +2554,7 @@ public class FeaturesApi {
      * @return IsotopePatternAnnotation
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getIsotopePatternAnnotationRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    private ResponseSpec getIsotopePatternAnnotationRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2576,7 +2603,7 @@ public class FeaturesApi {
      * @return IsotopePatternAnnotation
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public IsotopePatternAnnotation getIsotopePatternAnnotation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public IsotopePatternAnnotation getIsotopePatternAnnotation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<IsotopePatternAnnotation> localVarReturnType = new ParameterizedTypeReference<IsotopePatternAnnotation>() {};
         return getIsotopePatternAnnotationRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
     }
@@ -2591,7 +2618,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;IsotopePatternAnnotation&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<IsotopePatternAnnotation> getIsotopePatternAnnotationWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseEntity<IsotopePatternAnnotation> getIsotopePatternAnnotationWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<IsotopePatternAnnotation> localVarReturnType = new ParameterizedTypeReference<IsotopePatternAnnotation>() {};
         return getIsotopePatternAnnotationRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
     }
@@ -2606,9 +2633,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getIsotopePatternAnnotationWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseSpec getIsotopePatternAnnotationWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         return getIsotopePatternAnnotationRequestCreation(projectId, alignedFeatureId, formulaId);
     }
+
     /**
      * Returns Lipid annotation (ElGordo) for the given formulaId
      * Returns Lipid annotation (ElGordo) for the given formulaId.  &lt;p&gt;  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
@@ -2619,7 +2647,7 @@ public class FeaturesApi {
      * @return LipidAnnotation
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getLipidAnnotationRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    private ResponseSpec getLipidAnnotationRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2668,7 +2696,7 @@ public class FeaturesApi {
      * @return LipidAnnotation
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public LipidAnnotation getLipidAnnotation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public LipidAnnotation getLipidAnnotation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<LipidAnnotation> localVarReturnType = new ParameterizedTypeReference<LipidAnnotation>() {};
         return getLipidAnnotationRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
     }
@@ -2683,7 +2711,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;LipidAnnotation&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<LipidAnnotation> getLipidAnnotationWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseEntity<LipidAnnotation> getLipidAnnotationWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<LipidAnnotation> localVarReturnType = new ParameterizedTypeReference<LipidAnnotation>() {};
         return getLipidAnnotationRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
     }
@@ -2698,9 +2726,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getLipidAnnotationWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseSpec getLipidAnnotationWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         return getLipidAnnotationRequestCreation(projectId, alignedFeatureId, formulaId);
     }
+
     /**
      * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
      * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
@@ -2711,7 +2740,7 @@ public class FeaturesApi {
      * @return MsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getMsDataRequestCreation(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    private ResponseSpec getMsDataRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2757,7 +2786,7 @@ public class FeaturesApi {
      * @return MsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public MsData getMsData(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    public MsData getMsData(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<MsData> localVarReturnType = new ParameterizedTypeReference<MsData>() {};
         return getMsDataRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared).bodyToMono(localVarReturnType).block();
     }
@@ -2772,7 +2801,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;MsData&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<MsData> getMsDataWithHttpInfo(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    public ResponseEntity<MsData> getMsDataWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<MsData> localVarReturnType = new ParameterizedTypeReference<MsData>() {};
         return getMsDataRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared).toEntity(localVarReturnType).block();
     }
@@ -2787,9 +2816,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getMsDataWithResponseSpec(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    public ResponseSpec getMsDataWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         return getMsDataRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared);
     }
+
     /**
      * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
      * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).  &lt;p&gt;  The quantification table contains a quantity of the feature within all samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -2800,7 +2830,7 @@ public class FeaturesApi {
      * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getQuantTableRowExperimentalRequestCreation(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
+    private ResponseSpec getQuantTableRowExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2846,7 +2876,7 @@ public class FeaturesApi {
      * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantTableExperimental getQuantTableRowExperimental(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
+    public QuantTableExperimental getQuantTableRowExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getQuantTableRowExperimentalRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
     }
@@ -2861,7 +2891,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;QuantTableExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantTableExperimental> getQuantTableRowExperimentalWithHttpInfo(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
+    public ResponseEntity<QuantTableExperimental> getQuantTableRowExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getQuantTableRowExperimentalRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
     }
@@ -2876,9 +2906,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getQuantTableRowExperimentalWithResponseSpec(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
+    public ResponseSpec getQuantTableRowExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         return getQuantTableRowExperimentalRequestCreation(projectId, alignedFeatureId, type);
     }
+
     /**
      * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format
      * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.  &lt;p&gt;  [INTERNAL]: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time.
@@ -2889,7 +2920,7 @@ public class FeaturesApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSiriusFragTreeInternalRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    private ResponseSpec getSiriusFragTreeInternalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2938,7 +2969,7 @@ public class FeaturesApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public String getSiriusFragTreeInternal(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public String getSiriusFragTreeInternal(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return getSiriusFragTreeInternalRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
     }
@@ -2953,7 +2984,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<String> getSiriusFragTreeInternalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseEntity<String> getSiriusFragTreeInternalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
         return getSiriusFragTreeInternalRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
     }
@@ -2968,9 +2999,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSiriusFragTreeInternalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseSpec getSiriusFragTreeInternalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId) throws WebClientResponseException {
         return getSiriusFragTreeInternalRequestCreation(projectId, alignedFeatureId, formulaId);
     }
+
     /**
      * Spectral library match for the given &#39;alignedFeatureId&#39;.
      * Spectral library match for the given &#39;alignedFeatureId&#39;.
@@ -2982,7 +3014,7 @@ public class FeaturesApi {
      * @return SpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSpectralLibraryMatchRequestCreation(String projectId, String alignedFeatureId, String matchId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getSpectralLibraryMatchRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String matchId, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3034,7 +3066,7 @@ public class FeaturesApi {
      * @return SpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public SpectralLibraryMatch getSpectralLibraryMatch(String projectId, String alignedFeatureId, String matchId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public SpectralLibraryMatch getSpectralLibraryMatch(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String matchId, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatch>() {};
         return getSpectralLibraryMatchRequestCreation(projectId, alignedFeatureId, matchId, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -3050,7 +3082,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;SpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<SpectralLibraryMatch> getSpectralLibraryMatchWithHttpInfo(String projectId, String alignedFeatureId, String matchId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<SpectralLibraryMatch> getSpectralLibraryMatchWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String matchId, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatch>() {};
         return getSpectralLibraryMatchRequestCreation(projectId, alignedFeatureId, matchId, optFields).toEntity(localVarReturnType).block();
     }
@@ -3066,9 +3098,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSpectralLibraryMatchWithResponseSpec(String projectId, String alignedFeatureId, String matchId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getSpectralLibraryMatchWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String matchId, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         return getSpectralLibraryMatchRequestCreation(projectId, alignedFeatureId, matchId, optFields);
     }
+
     /**
      * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
      * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
@@ -3082,7 +3115,7 @@ public class FeaturesApi {
      * @return List&lt;SpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSpectralLibraryMatchesRequestCreation(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getSpectralLibraryMatchesRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3134,7 +3167,7 @@ public class FeaturesApi {
      * @return List&lt;SpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<SpectralLibraryMatch> getSpectralLibraryMatches(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public List<SpectralLibraryMatch> getSpectralLibraryMatches(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatch>() {};
         return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -3152,7 +3185,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;SpectralLibraryMatch&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<SpectralLibraryMatch>> getSpectralLibraryMatchesWithHttpInfo(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<SpectralLibraryMatch>> getSpectralLibraryMatchesWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatch>() {};
         return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey, optFields).toEntityList(localVarReturnType).block();
     }
@@ -3170,9 +3203,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSpectralLibraryMatchesWithResponseSpec(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getSpectralLibraryMatchesWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey, optFields);
     }
+
     /**
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, returns only matches for the database compound with the given InChI key.
@@ -3189,7 +3223,7 @@ public class FeaturesApi {
      * @return PagedModelSpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSpectralLibraryMatchesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getSpectralLibraryMatchesPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3247,7 +3281,7 @@ public class FeaturesApi {
      * @return PagedModelSpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelSpectralLibraryMatch getSpectralLibraryMatchesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public PagedModelSpectralLibraryMatch getSpectralLibraryMatchesPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PagedModelSpectralLibraryMatch>() {};
         return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, inchiKey, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -3268,7 +3302,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;PagedModelSpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelSpectralLibraryMatch> getSpectralLibraryMatchesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelSpectralLibraryMatch> getSpectralLibraryMatchesPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PagedModelSpectralLibraryMatch>() {};
         return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, inchiKey, optFields).toEntity(localVarReturnType).block();
     }
@@ -3289,9 +3323,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSpectralLibraryMatchesPagedWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getSpectralLibraryMatchesPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey, @jakarta.annotation.Nullable List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, inchiKey, optFields);
     }
+
     /**
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
@@ -3304,7 +3339,7 @@ public class FeaturesApi {
      * @return SpectralLibraryMatchSummary
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSpectralLibraryMatchesSummaryRequestCreation(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey) throws WebClientResponseException {
+    private ResponseSpec getSpectralLibraryMatchesSummaryRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3354,7 +3389,7 @@ public class FeaturesApi {
      * @return SpectralLibraryMatchSummary
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public SpectralLibraryMatchSummary getSpectralLibraryMatchesSummary(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey) throws WebClientResponseException {
+    public SpectralLibraryMatchSummary getSpectralLibraryMatchesSummary(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatchSummary> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatchSummary>() {};
         return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey).bodyToMono(localVarReturnType).block();
     }
@@ -3371,7 +3406,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;SpectralLibraryMatchSummary&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<SpectralLibraryMatchSummary> getSpectralLibraryMatchesSummaryWithHttpInfo(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey) throws WebClientResponseException {
+    public ResponseEntity<SpectralLibraryMatchSummary> getSpectralLibraryMatchesSummaryWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatchSummary> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatchSummary>() {};
         return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey).toEntity(localVarReturnType).block();
     }
@@ -3388,9 +3423,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSpectralLibraryMatchesSummaryWithResponseSpec(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey) throws WebClientResponseException {
+    public ResponseSpec getSpectralLibraryMatchesSummaryWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer minSharedPeaks, @jakarta.annotation.Nullable Double minSimilarity, @jakarta.annotation.Nullable String inchiKey) throws WebClientResponseException {
         return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey);
     }
+
     /**
      * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
      * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey.  &lt;p&gt;  Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -3403,7 +3439,7 @@ public class FeaturesApi {
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureAnnotatedMsDataExperimentalRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    private ResponseSpec getStructureAnnotatedMsDataExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nonnull String inchiKey, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3461,7 +3497,7 @@ public class FeaturesApi {
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedMsMsData getStructureAnnotatedMsDataExperimental(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    public AnnotatedMsMsData getStructureAnnotatedMsDataExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nonnull String inchiKey, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
         return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, msDataSearchPrepared).bodyToMono(localVarReturnType).block();
     }
@@ -3478,7 +3514,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;AnnotatedMsMsData&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedMsMsData> getStructureAnnotatedMsDataExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedMsMsData> getStructureAnnotatedMsDataExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nonnull String inchiKey, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
         return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, msDataSearchPrepared).toEntity(localVarReturnType).block();
     }
@@ -3495,9 +3531,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureAnnotatedMsDataExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean msDataSearchPrepared) throws WebClientResponseException {
+    public ResponseSpec getStructureAnnotatedMsDataExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nonnull String inchiKey, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, msDataSearchPrepared);
     }
+
     /**
      * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations
      * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -3508,7 +3545,7 @@ public class FeaturesApi {
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureAnnotatedSpectralLibraryMatchExperimentalRequestCreation(String projectId, String alignedFeatureId, String matchId) throws WebClientResponseException {
+    private ResponseSpec getStructureAnnotatedSpectralLibraryMatchExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String matchId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3557,7 +3594,7 @@ public class FeaturesApi {
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedSpectrum getStructureAnnotatedSpectralLibraryMatchExperimental(String projectId, String alignedFeatureId, String matchId) throws WebClientResponseException {
+    public AnnotatedSpectrum getStructureAnnotatedSpectralLibraryMatchExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String matchId) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
         return getStructureAnnotatedSpectralLibraryMatchExperimentalRequestCreation(projectId, alignedFeatureId, matchId).bodyToMono(localVarReturnType).block();
     }
@@ -3572,7 +3609,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;AnnotatedSpectrum&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectralLibraryMatchExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String matchId) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectralLibraryMatchExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String matchId) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
         return getStructureAnnotatedSpectralLibraryMatchExperimentalRequestCreation(projectId, alignedFeatureId, matchId).toEntity(localVarReturnType).block();
     }
@@ -3587,9 +3624,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureAnnotatedSpectralLibraryMatchExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String matchId) throws WebClientResponseException {
+    public ResponseSpec getStructureAnnotatedSpectralLibraryMatchExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String matchId) throws WebClientResponseException {
         return getStructureAnnotatedSpectralLibraryMatchExperimentalRequestCreation(projectId, alignedFeatureId, matchId);
     }
+
     /**
      * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
      * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -3603,7 +3641,7 @@ public class FeaturesApi {
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureAnnotatedSpectrumExperimentalRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
+    private ResponseSpec getStructureAnnotatedSpectrumExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nonnull String inchiKey, @jakarta.annotation.Nullable Integer spectrumIndex, @jakarta.annotation.Nullable Boolean searchPrepared) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3663,7 +3701,7 @@ public class FeaturesApi {
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedSpectrum getStructureAnnotatedSpectrumExperimental(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
+    public AnnotatedSpectrum getStructureAnnotatedSpectrumExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nonnull String inchiKey, @jakarta.annotation.Nullable Integer spectrumIndex, @jakarta.annotation.Nullable Boolean searchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
         return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, searchPrepared).bodyToMono(localVarReturnType).block();
     }
@@ -3681,7 +3719,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;AnnotatedSpectrum&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectrumExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectrumExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nonnull String inchiKey, @jakarta.annotation.Nullable Integer spectrumIndex, @jakarta.annotation.Nullable Boolean searchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
         return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, searchPrepared).toEntity(localVarReturnType).block();
     }
@@ -3699,9 +3737,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureAnnotatedSpectrumExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
+    public ResponseSpec getStructureAnnotatedSpectrumExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nonnull String inchiKey, @jakarta.annotation.Nullable Integer spectrumIndex, @jakarta.annotation.Nullable Boolean searchPrepared) throws WebClientResponseException {
         return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, searchPrepared);
     }
+
     /**
      * List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
      * List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
@@ -3712,7 +3751,7 @@ public class FeaturesApi {
      * @return List&lt;StructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureCandidatesRequestCreation(String projectId, String alignedFeatureId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getStructureCandidatesRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3758,7 +3797,7 @@ public class FeaturesApi {
      * @return List&lt;StructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<StructureCandidateFormula> getStructureCandidates(String projectId, String alignedFeatureId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public List<StructureCandidateFormula> getStructureCandidates(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
         return getStructureCandidatesRequestCreation(projectId, alignedFeatureId, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -3773,7 +3812,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;StructureCandidateFormula&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<StructureCandidateFormula>> getStructureCandidatesWithHttpInfo(String projectId, String alignedFeatureId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<StructureCandidateFormula>> getStructureCandidatesWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
         return getStructureCandidatesRequestCreation(projectId, alignedFeatureId, optFields).toEntityList(localVarReturnType).block();
     }
@@ -3788,9 +3827,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureCandidatesWithResponseSpec(String projectId, String alignedFeatureId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getStructureCandidatesWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         return getStructureCandidatesRequestCreation(projectId, alignedFeatureId, optFields);
     }
+
     /**
      * List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
      * List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
@@ -3802,7 +3842,7 @@ public class FeaturesApi {
      * @return List&lt;StructureCandidateScored&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureCandidatesByFormulaRequestCreation(String projectId, String alignedFeatureId, String formulaId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getStructureCandidatesByFormulaRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3854,7 +3894,7 @@ public class FeaturesApi {
      * @return List&lt;StructureCandidateScored&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<StructureCandidateScored> getStructureCandidatesByFormula(String projectId, String alignedFeatureId, String formulaId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public List<StructureCandidateScored> getStructureCandidatesByFormula(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<StructureCandidateScored>() {};
         return getStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -3870,7 +3910,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;StructureCandidateScored&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<StructureCandidateScored>> getStructureCandidatesByFormulaWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<StructureCandidateScored>> getStructureCandidatesByFormulaWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<StructureCandidateScored>() {};
         return getStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, optFields).toEntityList(localVarReturnType).block();
     }
@@ -3886,9 +3926,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureCandidatesByFormulaWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getStructureCandidatesByFormulaWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         return getStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, optFields);
     }
+
     /**
      * Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
      * Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
@@ -3903,7 +3944,7 @@ public class FeaturesApi {
      * @return PagedModelStructureCandidateScored
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureCandidatesByFormulaPagedRequestCreation(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getStructureCandidatesByFormulaPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3961,7 +4002,7 @@ public class FeaturesApi {
      * @return PagedModelStructureCandidateScored
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelStructureCandidateScored getStructureCandidatesByFormulaPaged(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public PagedModelStructureCandidateScored getStructureCandidatesByFormulaPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateScored>() {};
         return getStructureCandidatesByFormulaPagedRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -3980,7 +4021,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;PagedModelStructureCandidateScored&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelStructureCandidateScored> getStructureCandidatesByFormulaPagedWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelStructureCandidateScored> getStructureCandidatesByFormulaPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateScored>() {};
         return getStructureCandidatesByFormulaPagedRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
@@ -3999,9 +4040,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureCandidatesByFormulaPagedWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getStructureCandidatesByFormulaPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String formulaId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         return getStructureCandidatesByFormulaPagedRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields);
     }
+
     /**
      * Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
      * Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
@@ -4015,7 +4057,7 @@ public class FeaturesApi {
      * @return PagedModelStructureCandidateFormula
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureCandidatesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getStructureCandidatesPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -4067,7 +4109,7 @@ public class FeaturesApi {
      * @return PagedModelStructureCandidateFormula
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelStructureCandidateFormula getStructureCandidatesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public PagedModelStructureCandidateFormula getStructureCandidatesPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateFormula>() {};
         return getStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -4085,7 +4127,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;PagedModelStructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelStructureCandidateFormula> getStructureCandidatesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelStructureCandidateFormula> getStructureCandidatesPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateFormula>() {};
         return getStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
@@ -4103,9 +4145,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureCandidatesPagedWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec getStructureCandidatesPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         return getStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
     }
+
     /**
      * [EXPERIMENTAL] Get all tags associated with this Object
      * [EXPERIMENTAL] Get all tags associated with this Object
@@ -4115,7 +4158,7 @@ public class FeaturesApi {
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getTagsForAlignedFeaturesExperimentalRequestCreation(String projectId, String objectId) throws WebClientResponseException {
+    private ResponseSpec getTagsForAlignedFeaturesExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -4158,7 +4201,7 @@ public class FeaturesApi {
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Tag> getTagsForAlignedFeaturesExperimental(String projectId, String objectId) throws WebClientResponseException {
+    public List<Tag> getTagsForAlignedFeaturesExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
         return getTagsForAlignedFeaturesExperimentalRequestCreation(projectId, objectId).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -4172,7 +4215,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Tag>> getTagsForAlignedFeaturesExperimentalWithHttpInfo(String projectId, String objectId) throws WebClientResponseException {
+    public ResponseEntity<List<Tag>> getTagsForAlignedFeaturesExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
         return getTagsForAlignedFeaturesExperimentalRequestCreation(projectId, objectId).toEntityList(localVarReturnType).block();
     }
@@ -4186,9 +4229,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getTagsForAlignedFeaturesExperimentalWithResponseSpec(String projectId, String objectId) throws WebClientResponseException {
+    public ResponseSpec getTagsForAlignedFeaturesExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String objectId) throws WebClientResponseException {
         return getTagsForAlignedFeaturesExperimentalRequestCreation(projectId, objectId);
     }
+
     /**
      * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
      * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).  &lt;p&gt;  Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -4199,7 +4243,7 @@ public class FeaturesApi {
      * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getTracesExperimentalRequestCreation(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+    private ResponseSpec getTracesExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean includeAll) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -4245,7 +4289,7 @@ public class FeaturesApi {
      * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TraceSetExperimental getTracesExperimental(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+    public TraceSetExperimental getTracesExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean includeAll) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return getTracesExperimentalRequestCreation(projectId, alignedFeatureId, includeAll).bodyToMono(localVarReturnType).block();
     }
@@ -4260,7 +4304,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;TraceSetExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TraceSetExperimental> getTracesExperimentalWithHttpInfo(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+    public ResponseEntity<TraceSetExperimental> getTracesExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean includeAll) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return getTracesExperimentalRequestCreation(projectId, alignedFeatureId, includeAll).toEntity(localVarReturnType).block();
     }
@@ -4275,9 +4319,10 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getTracesExperimentalWithResponseSpec(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+    public ResponseSpec getTracesExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean includeAll) throws WebClientResponseException {
         return getTracesExperimentalRequestCreation(projectId, alignedFeatureId, includeAll);
     }
+
     /**
      * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
      * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -4287,7 +4332,7 @@ public class FeaturesApi {
      * @param tagName name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec removeTagFromAlignedFeatureExperimentalRequestCreation(String projectId, String alignedFeatureId, String tagName) throws WebClientResponseException {
+    private ResponseSpec removeTagFromAlignedFeatureExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -4333,7 +4378,7 @@ public class FeaturesApi {
      * @param tagName name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void removeTagFromAlignedFeatureExperimental(String projectId, String alignedFeatureId, String tagName) throws WebClientResponseException {
+    public void removeTagFromAlignedFeatureExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         removeTagFromAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tagName).bodyToMono(localVarReturnType).block();
     }
@@ -4347,7 +4392,7 @@ public class FeaturesApi {
      * @param tagName name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> removeTagFromAlignedFeatureExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String tagName) throws WebClientResponseException {
+    public ResponseEntity<Void> removeTagFromAlignedFeatureExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return removeTagFromAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tagName).toEntity(localVarReturnType).block();
     }
@@ -4362,7 +4407,7 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec removeTagFromAlignedFeatureExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String tagName) throws WebClientResponseException {
+    public ResponseSpec removeTagFromAlignedFeatureExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         return removeTagFromAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tagName);
     }
 }

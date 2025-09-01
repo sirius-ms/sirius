@@ -43,30 +43,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AdductNodeExperimental.JSON_PROPERTY_MZ,
   AdductNodeExperimental.JSON_PROPERTY_ADDUCT_ANNOTATIONS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class AdductNodeExperimental {
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_ID = "alignedFeatureId";
+  @jakarta.annotation.Nullable
   private String alignedFeatureId;
 
   public static final String JSON_PROPERTY_MZ = "mz";
+  @jakarta.annotation.Nullable
   private Double mz;
 
   public static final String JSON_PROPERTY_ADDUCT_ANNOTATIONS = "adductAnnotations";
+  @jakarta.annotation.Nullable
   private Map<String, Double> adductAnnotations = new HashMap<>();
 
   public AdductNodeExperimental() {
   }
 
-  public AdductNodeExperimental alignedFeatureId(String alignedFeatureId) {
+  public AdductNodeExperimental alignedFeatureId(@jakarta.annotation.Nullable String alignedFeatureId) {
     
     this.alignedFeatureId = alignedFeatureId;
     return this;
   }
 
-   /**
+  /**
    * Get alignedFeatureId
    * @return alignedFeatureId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -78,20 +81,20 @@ public class AdductNodeExperimental {
 
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAlignedFeatureId(String alignedFeatureId) {
+  public void setAlignedFeatureId(@jakarta.annotation.Nullable String alignedFeatureId) {
     this.alignedFeatureId = alignedFeatureId;
   }
 
-  public AdductNodeExperimental mz(Double mz) {
+  public AdductNodeExperimental mz(@jakarta.annotation.Nullable Double mz) {
     
     this.mz = mz;
     return this;
   }
 
-   /**
+  /**
    * Get mz
    * @return mz
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -103,11 +106,11 @@ public class AdductNodeExperimental {
 
   @JsonProperty(JSON_PROPERTY_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMz(Double mz) {
+  public void setMz(@jakarta.annotation.Nullable Double mz) {
     this.mz = mz;
   }
 
-  public AdductNodeExperimental adductAnnotations(Map<String, Double> adductAnnotations) {
+  public AdductNodeExperimental adductAnnotations(@jakarta.annotation.Nullable Map<String, Double> adductAnnotations) {
     
     this.adductAnnotations = adductAnnotations;
     return this;
@@ -121,10 +124,10 @@ public class AdductNodeExperimental {
     return this;
   }
 
-   /**
+  /**
    * Get adductAnnotations
    * @return adductAnnotations
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ADDUCT_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -136,9 +139,10 @@ public class AdductNodeExperimental {
 
   @JsonProperty(JSON_PROPERTY_ADDUCT_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAdductAnnotations(Map<String, Double> adductAnnotations) {
+  public void setAdductAnnotations(@jakarta.annotation.Nullable Map<String, Double> adductAnnotations) {
     this.adductAnnotations = adductAnnotations;
   }
+
 
   @Override
   public boolean equals(Object o) {

@@ -38,6 +38,7 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.LandingPage;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
+import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 import de.unijena.bioinf.ms.gui.utils.loading.SiriusCardLayout;
@@ -91,8 +92,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return compoundList.getCompoundListSelectionModel();
     }
 
-    @Getter
-    private ResultPanel resultsPanel;
+    private LazyLoadingPanel<ResultPanel> resultsPanelProvider;
 
     //toolbar
     @Getter
@@ -116,9 +116,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
         this.gui = gui;
-        // workaround to ensure gui (especially JCEF components) are still correctly positioned after screen change.
-        if (System.getProperty("os.name").toLowerCase().contains("linux"))
-            new LinuxScreenChangeDetector(this);
     }
 
     @Override
@@ -153,19 +150,20 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         // Global feature list.
         compoundList = new CompoundList(gui);
-
         //CREATE RESULT VIEWS
         // results Panel
-        resultsPanel = new ResultPanel(compoundList, gui);
+        resultsPanelProvider = new LazyLoadingPanel<>(() -> new ResultPanel(compoundList, gui));
+        compoundList.initializedSelectionListener(resultsPanelProvider);
+
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
-        resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);
+        resultPanelContainer.add(resultsPanelProvider, BorderLayout.CENTER);
         if (SiriusProperties.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
             resultPanelContainer.add(new WebServiceInfoPanel(gui.getConnectionMonitor()), BorderLayout.SOUTH);
 
         SiriusCardLayout layout = new SiriusCardLayout();
         JPanel landingPanelSwitcher = new JPanel(layout);
-        landingPage = new LandingPage(gui, ApplicationCore.WEB_API.getAuthService());
+        landingPage = new LandingPage(gui, ApplicationCore.WEB_API().getAuthService());
 
         landingPanelSwitcher.add("landing", landingPage);
         landingPanelSwitcher.add("results", resultPanelContainer);

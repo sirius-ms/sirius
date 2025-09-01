@@ -45,39 +45,45 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   JobProgress.JSON_PROPERTY_MESSAGE,
   JobProgress.JSON_PROPERTY_ERROR_MESSAGE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class JobProgress {
   public static final String JSON_PROPERTY_INDETERMINATE = "indeterminate";
+  @jakarta.annotation.Nullable
   private Boolean indeterminate;
 
   public static final String JSON_PROPERTY_STATE = "state";
+  @jakarta.annotation.Nullable
   private JobState state;
 
   public static final String JSON_PROPERTY_CURRENT_PROGRESS = "currentProgress";
+  @jakarta.annotation.Nullable
   private Long currentProgress;
 
   public static final String JSON_PROPERTY_MAX_PROGRESS = "maxProgress";
+  @jakarta.annotation.Nullable
   private Long maxProgress;
 
   public static final String JSON_PROPERTY_MESSAGE = "message";
+  @jakarta.annotation.Nullable
   private String message;
 
   public static final String JSON_PROPERTY_ERROR_MESSAGE = "errorMessage";
+  @jakarta.annotation.Nullable
   private String errorMessage;
 
   public JobProgress() {
   }
 
-  public JobProgress indeterminate(Boolean indeterminate) {
+  public JobProgress indeterminate(@jakarta.annotation.Nullable Boolean indeterminate) {
     
     this.indeterminate = indeterminate;
     return this;
   }
 
-   /**
+  /**
    * Is the progress indeterminate or not
    * @return indeterminate
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INDETERMINATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -89,20 +95,20 @@ public class JobProgress {
 
   @JsonProperty(JSON_PROPERTY_INDETERMINATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIndeterminate(Boolean indeterminate) {
+  public void setIndeterminate(@jakarta.annotation.Nullable Boolean indeterminate) {
     this.indeterminate = indeterminate;
   }
 
-  public JobProgress state(JobState state) {
+  public JobProgress state(@jakarta.annotation.Nullable JobState state) {
     
     this.state = state;
     return this;
   }
 
-   /**
+  /**
    * Get state
    * @return state
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -114,20 +120,20 @@ public class JobProgress {
 
   @JsonProperty(JSON_PROPERTY_STATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setState(JobState state) {
+  public void setState(@jakarta.annotation.Nullable JobState state) {
     this.state = state;
   }
 
-  public JobProgress currentProgress(Long currentProgress) {
+  public JobProgress currentProgress(@jakarta.annotation.Nullable Long currentProgress) {
     
     this.currentProgress = currentProgress;
     return this;
   }
 
-   /**
+  /**
    * Current progress value of the job.
    * @return currentProgress
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CURRENT_PROGRESS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -139,20 +145,20 @@ public class JobProgress {
 
   @JsonProperty(JSON_PROPERTY_CURRENT_PROGRESS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCurrentProgress(Long currentProgress) {
+  public void setCurrentProgress(@jakarta.annotation.Nullable Long currentProgress) {
     this.currentProgress = currentProgress;
   }
 
-  public JobProgress maxProgress(Long maxProgress) {
+  public JobProgress maxProgress(@jakarta.annotation.Nullable Long maxProgress) {
     
     this.maxProgress = maxProgress;
     return this;
   }
 
-   /**
+  /**
    * Progress value to reach (might also change during execution)
    * @return maxProgress
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MAX_PROGRESS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -164,20 +170,20 @@ public class JobProgress {
 
   @JsonProperty(JSON_PROPERTY_MAX_PROGRESS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMaxProgress(Long maxProgress) {
+  public void setMaxProgress(@jakarta.annotation.Nullable Long maxProgress) {
     this.maxProgress = maxProgress;
   }
 
-  public JobProgress message(String message) {
+  public JobProgress message(@jakarta.annotation.Nullable String message) {
     
     this.message = message;
     return this;
   }
 
-   /**
+  /**
    * Progress information and warnings.
    * @return message
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -189,20 +195,20 @@ public class JobProgress {
 
   @JsonProperty(JSON_PROPERTY_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMessage(String message) {
+  public void setMessage(@jakarta.annotation.Nullable String message) {
     this.message = message;
   }
 
-  public JobProgress errorMessage(String errorMessage) {
+  public JobProgress errorMessage(@jakarta.annotation.Nullable String errorMessage) {
     
     this.errorMessage = errorMessage;
     return this;
   }
 
-   /**
+  /**
    * Error message if the job did not finish successfully failed.
    * @return errorMessage
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ERROR_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -214,9 +220,10 @@ public class JobProgress {
 
   @JsonProperty(JSON_PROPERTY_ERROR_MESSAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setErrorMessage(String errorMessage) {
+  public void setErrorMessage(@jakarta.annotation.Nullable String errorMessage) {
     this.errorMessage = errorMessage;
   }
+
 
   @Override
   public boolean equals(Object o) {

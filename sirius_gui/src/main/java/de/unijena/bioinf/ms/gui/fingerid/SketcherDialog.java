@@ -23,12 +23,14 @@ public class SketcherDialog extends LoadablePanelDialog {
     private final JButton doneButton;
     private final JButton reloadButton;
     private final SiriusGui siriusGui;
+    private final ResultPanel resultsPanel;
     private FingerprintCandidateBean originalStructure;
 
-    public SketcherDialog(Window owner, SiriusGui siriusGui, @Nullable FingerprintCandidateBean structureCandidate) {
+    public SketcherDialog(Window owner, ResultPanel resultsPanel, SiriusGui siriusGui, @Nullable FingerprintCandidateBean structureCandidate) {
         super(owner, "Structure Sketcher");
         setModalityType(ModalityType.MODELESS);
         this.siriusGui = siriusGui;
+        this.resultsPanel = resultsPanel;
         originalStructure = structureCandidate;
 
         JPanel southPanel = new JPanel();
@@ -82,8 +84,7 @@ public class SketcherDialog extends LoadablePanelDialog {
     }
 
     private void scrollToStructure(String inchiKey) {
-        ResultPanel resultsPanel = siriusGui.getMainFrame().getResultsPanel();
-        EventList<InstanceBean> selection = resultsPanel.getCompoundList().getCompoundListSelectionModel().getSelected();
+        EventList<InstanceBean> selection = siriusGui.getMainFrame().getCompoundList().getCompoundListSelectionModel().getSelected();
         if (!selection.isEmpty() && originalStructure.getParentFeatureId().equals(selection.getFirst().getFeatureId())) {
             resultsPanel.selectDeNovoTab();
             DeNovoStructureListDetailViewPanel deNovoTab = resultsPanel.getDeNovoStructuresTab();
