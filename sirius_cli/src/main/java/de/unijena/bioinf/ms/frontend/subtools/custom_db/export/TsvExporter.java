@@ -27,8 +27,8 @@ public class TsvExporter extends DbExporter {
         return List.of(
                 c.getName(),
                 c.getSmiles(),
-                c.getInchikey(),
-                c.getInchi().in3D,
+                c.getInchiKey2D(),
+                c.getInchi().in2D,
                 cw.getFormula(),
                 cw.getMass()
         );
