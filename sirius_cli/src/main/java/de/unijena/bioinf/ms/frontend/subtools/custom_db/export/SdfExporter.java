@@ -26,8 +26,8 @@ public class SdfExporter extends DbExporter {
             molecule.setTitle(c.getName());
             molecule.setProperty("NAME", c.getName());
             molecule.setProperty("SMILES", c.getSmiles());
-            molecule.setProperty("INCHIKEY", c.getInchikey());
-            molecule.setProperty("INCHI", c.getInchi().in3D);
+            molecule.setProperty("INCHIKEY2D", c.getInchiKey2D());
+            molecule.setProperty("INCHI", c.getInchi().in2D);
             molecule.setProperty("FORMULA", candidateWrapper.getFormula());
             molecule.setProperty("EXACT MASS", candidateWrapper.getMass());
             sdfWriter.write(molecule);
