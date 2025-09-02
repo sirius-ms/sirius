@@ -109,8 +109,8 @@ public class SearchableDatabaseController {
      *
      * @param databaseId database to import into
      * @param inputFiles files to be imported
-     * @param bioTransformerParameters configuration for biotransformer execution. If null BioTransformer will not be applied.
-     * @return Meta-Infomation of the affected database after the import has been performed.
+     * @param bioTransformerParameters configuration for biotransformer execution. If null, BioTransformer is not applied.
+     * @return Meta-Information of the affected database after the import has been performed.
      */
     @PostMapping(value = "/{databaseId}/import/from-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public SearchableDatabase importIntoDatabase(@PathVariable String databaseId,
