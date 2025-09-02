@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
 import de.unijena.bioinf.ms.gui.table.SiriusListCellRenderer;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
@@ -80,6 +81,7 @@ public class DatabaseDialog extends JDialog {
         JButton deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
         JButton editDB = Buttons.getEditButton16("Edit Custom Database");
         JButton openDB = Buttons.getFileChooserButton16("Add existing Database");
+        JButton exportDB = Buttons.getExportButton16("Export Database");
 
         loadDatabaseList();
 
@@ -126,6 +128,19 @@ public class DatabaseDialog extends JDialog {
             }
         };
 
+        Action exportSelectedDb = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (dbList.getSelectedIndex() != -1) {
+                    SearchableDatabase db = dbList.getSelectedValue();
+
+                    ExecutionDialog<DatabaseExportConfigPanel> d = new ExecutionDialog<>(gui, new DatabaseExportConfigPanel(db), null, DatabaseDialog.this, "Export " + db.getDisplayName(), true, false);
+                    d.setIndeterminateProgress(false);
+                    d.start();
+                }
+            }
+        };
+
         dbList.addListSelectionListener(e -> {
             SearchableDatabase db = dbList.getSelectedValue();
             dbView.updateContent(db);
@@ -138,6 +153,7 @@ public class DatabaseDialog extends JDialog {
             }
             editDB.setEnabled(editSelectedDb.isEnabled());
             deleteDB.setEnabled(deleteSelectedDb.isEnabled());
+            exportDB.setEnabled(deleteSelectedDb.isEnabled());
         });
 
         JScrollPane scroll = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -148,10 +164,12 @@ public class DatabaseDialog extends JDialog {
         but.add(Box.createHorizontalGlue());
         but.add(deleteDB);
         but.add(editDB);
+        but.add(exportDB);
         but.add(openDB);
         but.add(addCustomDb);
         editDB.setEnabled(false);
         deleteDB.setEnabled(false);
+        exportDB.setEnabled(false);
 
         add(but, BorderLayout.SOUTH);
         add(pane, BorderLayout.CENTER);
@@ -160,6 +178,7 @@ public class DatabaseDialog extends JDialog {
         addCustomDb.addActionListener(e -> new ImportDatabaseDialog(this));
         editDB.addActionListener(editSelectedDb);
         deleteDB.addActionListener(deleteSelectedDb);
+        exportDB.addActionListener(exportSelectedDb);
 
         JFileChooser openDbFileChooser = new JFileChooser();
         openDbFileChooser.setFileFilter(new FileNameExtensionFilter("SIRIUS custom database files", CustomDatabases.CUSTOM_DB_SUFFIX.replace(".", "")));

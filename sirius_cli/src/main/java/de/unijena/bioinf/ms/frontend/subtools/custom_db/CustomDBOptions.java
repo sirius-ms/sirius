@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.export.ExportDBOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import picocli.CommandLine;
@@ -37,7 +38,8 @@ subcommands = {
         CreateDBOptions.class,
         ShowDBOptions.class,
         ImportDBOptions.class,
-        RemoveDBOptions.class})
+        RemoveDBOptions.class,
+        ExportDBOptions.class})
 public class CustomDBOptions implements StandaloneTool<Workflow> {
 
     @CommandLine.Spec
