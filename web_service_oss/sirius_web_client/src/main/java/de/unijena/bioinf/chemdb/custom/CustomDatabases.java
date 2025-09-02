@@ -119,12 +119,14 @@ public class CustomDatabases {
         return db;
     }
 
-    public static CustomDatabase create(String location, CustomDatabaseSettings config, CdkFingerprintVersion version, boolean readOnly) throws IOException {
+    public static CustomDatabase create(
+            String location, CustomDatabaseSettings config, CdkFingerprintVersion version, boolean readOnly
+    ) throws IOException, UnsupportedDatabaseNameException, DatabaseNameAlreadyExistsException {
         //sanitize db name:
         if (!config.getName().equals(sanitizeDbName(config.getName())))
-            throw new IllegalArgumentException("Unsupported database name '" + config.getName() + "'. Allowed would be: " + sanitizeDbName(config.getName()));
+            throw new UnsupportedDatabaseNameException(config.getName(), sanitizeDbName(config.getName()));
         if (CustomDataSources.containsDB(config.getName())) {
-            throw new RuntimeException("Datasource with name " + config.getName() + " already exists.");
+            throw new DatabaseNameAlreadyExistsException(config.getName());
         }
 
         CustomDatabase db;
