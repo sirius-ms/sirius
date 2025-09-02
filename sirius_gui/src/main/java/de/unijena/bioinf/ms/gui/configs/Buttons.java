@@ -77,4 +77,12 @@ public abstract class Buttons {
     public static ToolbarButton getFileChooserButton16(String tootip) {
         return new ToolbarButton(FOLDER_FILE.derive(16,16), tootip);
     }
+
+    public static ToolbarButton getDownloadButton16(String tootip) {
+        return new ToolbarButton(PLAIN_DOWNLOAD.derive(16,16), tootip);
+    }
+
+    public static ToolbarButton getPlainFolderButton16(String tootip) {
+        return new ToolbarButton(PLAIN_FOLDER.derive(16,16), tootip);
+    }
 }
