@@ -58,6 +58,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.LogManager;
 
 import static de.unijena.bioinf.ms.frontend.SiriusCLIApplication.APP_TYPE_PROPERTY_KEY;
@@ -96,9 +97,11 @@ public abstract class ApplicationCore {
                         StopWatch stopWatch = StopWatch.createStarted();
                         AuthService service = ProxyManager.applyClient(c -> AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, c));
                         WEB_API = new RestAPI(service, (Subscription) null);
+                        final CountDownLatch waiter = new CountDownLatch(1);
 
                         SiriusJobs.runInBackground((Callable<Void>) () -> {
-                            ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
+                            synchronized (WEB_API) {
+                                waiter.countDown();
                                 Subscription sub = null; //web connection
                                 try {
                                     sub = NetUtils.tryAndWait(() -> WEB_API.getAuthService().getToken().map(AccessTokens.ACCESS_TOKENS::getActiveSubscription).orElse(null),
@@ -109,15 +112,19 @@ public abstract class ApplicationCore {
                                     DEFAULT_LOGGER.warn("Error when refreshing token: {} Cleaning login information. Please re-login!", e.getMessage());
                                     AuthServices.clearRefreshToken(WEB_API.getAuthService(), TOKEN_FILE); // in case the token is corrupted or the account has been deleted
                                 }
-                            });
+                            }
 
                             CustomDBPropertyUtils.loadAllCustomDBs(WEB_API.getCDKChemDBFingerprintVersion());
                             DEFAULT_LOGGER.info("Custom databases loaded.");
                             return null;
                         });
+                        waiter.await();
+
                         DEFAULT_LOGGER.info("Web API initialized in {}. Started loading active subscription in background...", stopWatch);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
+                    } catch (InterruptedException e) {
+                        //ignore
                     }
                 }
             }
