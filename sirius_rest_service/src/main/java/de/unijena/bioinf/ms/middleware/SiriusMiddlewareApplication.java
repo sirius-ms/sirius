@@ -42,7 +42,6 @@ import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.webapi.WebAPI;
 import io.sirius.ms.sdk.SiriusSDK;
 import io.sirius.ms.sdk.model.GuiInfo;
 import io.sirius.ms.sdk.model.ProjectInfo;
@@ -274,7 +273,6 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     @Override
     public void run(String... args) {
         middlewareOpts.setProjectsProvider(appContext.getBean(ProjectsProvider.class));
-        middlewareOpts.setWebAPI(appContext.getBean(WebAPI.class));
         if (appContext.containsBean("guiService"))
             middlewareOpts.setGuiService(appContext.getBean(GuiService.class));
         rootOptions.setSpaceManagerFactory(appContext.getBean(ProjectSpaceManagerFactory.class));
