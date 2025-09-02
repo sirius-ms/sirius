@@ -167,7 +167,10 @@ public class ChemDbServiceImpl implements ChemDbService {
             if (Files.isDirectory(location))
                 location = location.resolve(databaseId + CustomDatabases.CUSTOM_DB_SUFFIX);
             else if (!location.getFileName().toString().endsWith(CustomDatabases.CUSTOM_DB_SUFFIX))
-                location = location.getParent().resolve(location.getFileName() + CustomDatabases.CUSTOM_DB_SUFFIX); //add correct file extension to db.
+                location = location.getParent().resolve(location.getFileName() + CustomDatabases.CUSTOM_DB_SUFFIX); //add the correct file extension to db.
+
+            if (Files.exists(location.toAbsolutePath()))
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "File to create the database already exists: " + location.toAbsolutePath());
 
             CustomDatabaseSettings.CustomDatabaseSettingsBuilder configBuilder = CustomDatabaseSettings.builder()
                     .name(databaseId)
@@ -184,6 +187,10 @@ public class ChemDbServiceImpl implements ChemDbService {
             CustomDatabase newDb = CustomDatabases.create(location.toAbsolutePath().toString(), configBuilder.build(), version(), true);
             CustomDBPropertyUtils.addDB(location.toAbsolutePath().toString(), databaseId);
             return SearchableDatabases.of(newDb);
+        } catch (DatabaseNameAlreadyExistsException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage(), e);
+        } catch (UnsupportedDatabaseNameException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when creating user database at: " + location, e);
         }
