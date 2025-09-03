@@ -44,7 +44,7 @@ public class MostIntensivePeakInIsolationWindowAssignmentStrategy implements Ms2
         // for simplicity we assume gaussian shape of the isolation window with 3*sigma = window radius
         final double sigma = window.getWindowWidth()/6d;
         Optional<ContiguousTrace> tr = contigousTraces.stream().max(Comparator.comparingDouble(x -> x.apexIntensity() * Math.exp(-Math.pow(x.averagedMz() - pmz, 2) / (2 * sigma * sigma))));
-        return tr.isPresent() ? Optional.of(new MsMsTraceReference(ms2.getUid(), tr.get().getUid(), parentId)) : Optional.empty();
+        return tr.isPresent() ? Optional.of(new MsMsTraceReference(ms2.getUid(), tr.get().getUid(), parentId, ms2.getScanId())) : Optional.empty();
 
     }
 }
