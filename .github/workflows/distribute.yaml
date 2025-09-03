@@ -15,10 +15,10 @@ jobs:
   distGUI:
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ ubuntu-latest, windows-2022, macos-latest ]
         targetArchitecture: [amd64, arm64]
         exclude:
-          - os: windows-latest
+          - os: windows-2022
             targetArchitecture: arm64
     runs-on: ${{ matrix.os }}
     env:
@@ -84,7 +84,7 @@ jobs:
             -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}" \
             -P "de.unijena.bioinf.build.MACOS_TEAM_ID=${{ secrets.MACOS_TEAM_ID }}"
 
-      - if: matrix.os == 'windows-latest'
+      - if: matrix.os == 'windows-2022'
         name: Azure Trusted Signing for Widows MSI
         uses: azure/trusted-signing-action@v0.3.16
         with:
