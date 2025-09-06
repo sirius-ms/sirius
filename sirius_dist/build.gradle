@@ -609,7 +609,7 @@ abstract class AppImage extends DefaultTask {
     public String[] args
     public String version
     public String mainClass
-    public String mainJarName
+    public Provider<String> mainJarName
     public File runtimeImageDirectory
     public boolean winConsole
     public Map<String, File> launchers = [:]
@@ -662,6 +662,7 @@ abstract class AppImage extends DefaultTask {
     }
 
     String[] createParameters() {
+        println("++++++++++ mainJar: $mainJarName")
         def paras = [
                 '--runtime-image', runtimeImageDirectory.absolutePath,
                 '-i', inputDir.absolutePath,
@@ -669,7 +670,7 @@ abstract class AppImage extends DefaultTask {
                 '--name', imageName,
                 '--app-version', version,
                 '--main-class', mainClass,
-                '--main-jar', mainJarName
+                '--main-jar', mainJarName.get()
         ]
 
         if (jvmArgs != null)
