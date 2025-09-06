@@ -70,6 +70,7 @@ public class Ms2ReferenceSpectrum implements ReferenceSpectrum {
      */
     private double exactMass;
 
+    @Builder.Default
     private int msLevel = 0;
 
     /**
