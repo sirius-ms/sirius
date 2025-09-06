@@ -88,7 +88,6 @@ public interface Project<PSM extends ProjectSpaceManager> {
                 EnumSet.of(AlignedFeature.OptField.topAnnotations));
     }
 
-    @SneakyThrows
     Compound findCompoundById(String compoundId, boolean msDataSearchPrepared, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
 
     void deleteCompoundById(String compoundId);
