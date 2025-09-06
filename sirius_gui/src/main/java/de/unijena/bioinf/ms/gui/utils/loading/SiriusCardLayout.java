@@ -179,10 +179,6 @@ public class SiriusCardLayout implements LayoutManager2,
         }
     }
 
-    /**
-     * @deprecated   replaced by
-     *      {@code addLayoutComponent(Component, Object)}.
-     */
     public void addLayoutComponent(String name, Component comp) {
         synchronized (comp.getTreeLock()) {
             if (!vector.isEmpty()) {
