@@ -172,8 +172,8 @@ tasks.register('collectProfiles', Copy) {
     def projectResources = allProjectDeps.collect { projectDep ->
         def resourcesDir = projectDep.sourceSets.main.output.resourcesDir
         fileTree(resourcesDir) {
-            include 'de.unijena.bioinf.ms.defaults/*.auto.config'
-            include 'de.unijena.bioinf.ms.defaults/*.class.map'
+            include '**/de.unijena.bioinf.ms.defaults/*.auto.config'
+            include '**/de.unijena.bioinf.ms.defaults/*.class.map'
         }
     }
     //todo we might want to add config files from the current project as well if needed in the future
@@ -222,7 +222,10 @@ tasks.register('checkDefaultProfile') {
     inputs.dir(input)
 
     doLast {
-        def inp = inputs.files.asFileTree.filter {it.toString().endsWith("de.unijena.bioinf.ms.defaults/concat.auto.config")}.singleFile
+        def inp = inputs.files.asFileTree.matching{
+            include "**/de.unijena.bioinf.ms.defaults/concat.auto.config"
+        }.singleFile
+
         Properties defaultProfile = new Properties()
         inp.withReader("UTF8", {
                     defaultProfile.load(it)
