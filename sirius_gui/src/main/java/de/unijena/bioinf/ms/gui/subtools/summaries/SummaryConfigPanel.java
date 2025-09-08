@@ -93,8 +93,10 @@ public class SummaryConfigPanel extends SubToolConfigPanel<SummaryOptions> {
 
         JComboBox<SummaryOptions.Format> formatComboBox = makeGenericOptionComboBox("format", SummaryOptions.Format.class);
         JCheckBox quoteCheckbox = makeGenericOptionCheckBox("Quote strings", "quote-strings");
+        JCheckBox prefixCheckbox = makeGenericOptionCheckBox("SIRIUS prefix", "column-prefix");
 
         paras.addNamed("Format", formatComboBox);
+        paras.addNamed("", prefixCheckbox);
         paras.addNamed("", quoteCheckbox);
 
         formatComboBox.addItemListener(e -> {
