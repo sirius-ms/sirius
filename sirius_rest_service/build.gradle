@@ -178,6 +178,13 @@ tasks.register('collectProfiles', Copy) {
     }
     //todo we might want to add config files from the current project as well if needed in the future
 
+    // Use the full list of projects to depend on their 'processResources' tasks.
+    dependsOn(allProjectDeps.collect { it.tasks.named('processResources') })
+
+    from projectResources
+    into("$buildDir/tmp/profiles")
+    includeEmptyDirs = false
+}
 
 tasks.register('makeProfileTemplates') {
     group = 'properties'
