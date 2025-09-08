@@ -88,8 +88,10 @@ public class SliderWithTextField extends JPanel {
             });
         }
 
-        slider.setMajorTickSpacing(5);
-        slider.setMinorTickSpacing(1);
+        int range = Math.abs(max - min);
+
+        slider.setMajorTickSpacing(range / 4);
+        slider.setMinorTickSpacing(range / 20);
         slider.setPaintTicks(true);
         slider.setPreferredSize(new Dimension(slider.getPreferredSize().width/2, slider.getPreferredSize().height));
 
