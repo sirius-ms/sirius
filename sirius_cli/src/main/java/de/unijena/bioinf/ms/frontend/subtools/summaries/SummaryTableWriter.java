@@ -19,5 +19,4 @@ public interface SummaryTableWriter extends AutoCloseable {
      * Finalize writing the summary file and flush the underlying stream
      */
     void flush() throws IOException;
-
 }
