@@ -79,7 +79,10 @@ public class DatabaseDialog extends JDialog {
         JButton addCustomDb = Buttons.getAddButton16("Create custom Database");
         JButton deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
         JButton editDB = Buttons.getEditButton16("Edit Custom Database");
-        JButton openDB = Buttons.getFileChooserButton16("Add existing Database");
+        JButton openDB = Buttons.getPlainFolderButton16("Add existing Database");
+        JButton libraries = Buttons.getDownloadButton16("Get SIRIUS Libraries");
+
+        libraries.addActionListener(e -> new LibrariesDialog(owner, gui));
 
         loadDatabaseList();
 
@@ -149,6 +152,7 @@ public class DatabaseDialog extends JDialog {
         but.add(deleteDB);
         but.add(editDB);
         but.add(openDB);
+        but.add(libraries);
         but.add(addCustomDb);
         editDB.setEnabled(false);
         deleteDB.setEnabled(false);
