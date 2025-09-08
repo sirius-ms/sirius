@@ -35,7 +35,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -75,7 +75,8 @@ public class AgilentCefCompoundParserTest {
     public void testReadFMEStore() throws IOException {
         StopWatch watch = new StopWatch();
         watch.start();
-        try (SiriusProjectDatabaseImpl<?> ps = new NitriteSirirusProject(Path.of("/tmp/NITRITE-Project-" + UUID.randomUUID() + SiriusProjectDatabaseImpl.SIRIUS_PROJECT_SUFFIX))) {
+
+        try (SiriusProjectDatabaseImpl<?> ps = new NitriteSirirusProject(Files.createTempFile("NITRITE-Project-" + UUID.randomUUID(), SiriusProjectDatabaseImpl.SIRIUS_PROJECT_SUFFIX))) {
             final List<Compound> compounds = new ArrayList<>();
             final List<String> locations = provideParameters().map(arguments -> (String)arguments.get()[0]).toList();
 
