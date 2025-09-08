@@ -502,18 +502,24 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
     }
 
     ChemVistaSummaryWriter initChemVistaWriter(Path location, String filename) throws IOException {
-        ChemVistaSummaryWriter writer = new ChemVistaSummaryWriter(new CsvTableWriter(location, filename, options.quoteStrings));
+        CsvTableWriter csvWriter = new CsvTableWriter(location, filename, options.quoteStrings);
+        csvWriter.setSiriusPrefix(options.siriusPrefix);
+        ChemVistaSummaryWriter writer = new ChemVistaSummaryWriter(csvWriter);
         writer.writeHeader();
         return writer;
     }
 
     private SummaryTableWriter makeTableWriter(Path location, String filename) throws IOException {
-        return switch (options.format) {
+        SummaryTableWriter writer =  switch (options.format) {
             case TSV -> new TsvTableWriter(location, filename, options.quoteStrings);
-            case ZIP -> new ZipTableWriter(location, filename, options.quoteStrings);
+            case ZIP -> new ZipTableWriter(location, filename, options.quoteStrings, options.siriusPrefix);
             case CSV -> new CsvTableWriter(location, filename, options.quoteStrings);
             case XLSX -> new XlsxTableWriter(location, filename);
         };
+        if (writer instanceof PrefixingSummaryWriter pw) {
+            pw.setSiriusPrefix(options.siriusPrefix);
+        }
+        return writer;
     }
 
 

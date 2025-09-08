@@ -31,6 +31,8 @@ import picocli.CommandLine;
 
 import java.nio.file.Path;
 
+import static de.unijena.bioinf.ms.frontend.subtools.summaries.PrefixingSummaryWriter.SIRIUS_COLUMN_PREFIX;
+
 @CommandLine.Command(name = "summaries", aliases = {"write-summaries", "W"}, description = "@|bold <STANDALONE, POSTPROCESSING>|@ Write Summary files from a given project-space into the given project-space or a custom location. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob>, StandaloneTool<Workflow> {
 
@@ -75,9 +77,11 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
     @CommandLine.Option(names = {"--format"}, description = {"Output format for summaries. Valid values: ${COMPLETION-CANDIDATES}.", "ZIP produces zipped TSV files."}, defaultValue = "tsv")
     protected Format format;
 
-    @CommandLine.Option(names = {"--quote-strings"}, description = {"Enclose all strings in quotation marks (for TSV and CSV)."})
+    @CommandLine.Option(names = {"--quote-strings"}, description = "Enclose all strings in quotation marks (for TSV and CSV).", defaultValue = "false")
     protected boolean quoteStrings;
 
+    @CommandLine.Option(names = {"--column-prefix"}, description = "All column names will be prefixed with '" + SIRIUS_COLUMN_PREFIX + "'.", defaultValue = "false")
+    protected boolean siriusPrefix;
 
 
     @Override
