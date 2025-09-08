@@ -86,6 +86,19 @@ public class ProjectsApiTest {
     }
 
     @Test
+    public void createNullPathProjectTest() {
+        String projectId = UUID.randomUUID().toString();
+               ProjectInfo response = instance.createProject(projectId, null, null);
+        assertNotNull(response);
+        assertEquals(projectId, response.getProjectId());
+
+        List<AlignedFeature> cids = featureApiInstance.getAlignedFeatures(projectId, false, null);
+        assertEquals(0, cids.size());
+
+        TestSetup.getInstance().deleteTestProject(response);
+    }
+
+    @Test
     public void getProjectTest() {
         try {
             String projectId = project.getProjectId();
