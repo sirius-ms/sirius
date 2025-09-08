@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-public class XlsxTableWriter implements SummaryTableWriter {
+public class XlsxTableWriter extends PrefixingSummaryWriter {
 
     public final static String DOUBLE_PATTERN = "0.###";
     public final static String INTEGER_PATTERN = "0";
@@ -38,7 +38,7 @@ public class XlsxTableWriter implements SummaryTableWriter {
     }
 
     @Override
-    public void writeHeader(List<String> columns) throws IOException {
+    public void writeColumnNames(List<String> columns) {
         CellStyle style = createHeaderStyle();
         sheet.trackAllColumnsForAutoSizing();
         Row r = sheet.createRow(0);
