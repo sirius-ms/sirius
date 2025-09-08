@@ -9,7 +9,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class DelimitedTableWriter implements SummaryTableWriter {
+public class DelimitedTableWriter extends PrefixingSummaryWriter {
 
     private final static Locale LOCALE = Locale.US;
     private final static String DOUBLE_FORMAT = "%.3f";
@@ -20,6 +20,7 @@ public class DelimitedTableWriter implements SummaryTableWriter {
     private final String delimiter;
     private final boolean quoteStrings;
 
+
     public DelimitedTableWriter(BufferedWriter writer, String delimiter, boolean quoteStrings) {
         this.w = writer;
         this.delimiter = delimiter;
@@ -27,7 +28,7 @@ public class DelimitedTableWriter implements SummaryTableWriter {
     }
 
     @Override
-    public void writeHeader(List<String> columns) throws IOException {
+    public void writeColumnNames(List<String> columns) throws IOException {
         w.write(columns.stream().map(this::formatString).collect(Collectors.joining(delimiter)));
         w.newLine();
     }
