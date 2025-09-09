@@ -103,7 +103,7 @@ public class LibrariesDialog extends JDialog {
             String htmlDescription = Objects.requireNonNullElse(lib.getDescription(), "no description").replaceAll("\n", "<br>");
             String path = getDatabasePath(lib);
             text = "<html><body>" +
-                    "<p>" + htmlDescription + "</p><hr>" +
+                    "<p>" + htmlDescription + "</p>" +
                     "<p><b>Size: </b>" + (lib.getSize() == null ? "unknown" : FileUtils.sizeToReadableString(lib.getSize())) + "</p>" +
                     (path != null ? "<p><b>Downloaded to: </b>" + path + "</p>" : "") +
                     "</body></html>";
