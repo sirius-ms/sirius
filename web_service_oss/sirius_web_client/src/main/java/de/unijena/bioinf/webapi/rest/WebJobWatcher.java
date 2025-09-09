@@ -21,7 +21,6 @@
 package de.unijena.bioinf.webapi.rest;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.WaiterJJob;
 import de.unijena.bioinf.ms.rest.model.*;
@@ -34,7 +33,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -98,21 +96,11 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
     public void awaitShutdown() {
         shutdown();
 
-        if (submitterJob != null) {
-            try {
-                submitterJob.awaitResult();
-            } catch (ExecutionException e) {
-                LoggerFactory.getLogger(getClass()).warn("Error when cancelling SubmitterSJob!", e);
-            }
-        }
+        if (submitterJob != null)
+            submitterJob.getResult();
 
-        if (watcherJob != null) {
-            try {
-                watcherJob.awaitResult();
-            } catch (ExecutionException e) {
-                LoggerFactory.getLogger(getClass()).warn("Error when cancelling WatcherJob!", e);
-            }
-        }
+        if (watcherJob != null)
+            watcherJob.getResult();
     }
 
 
@@ -165,6 +153,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                             synchronized (jobsToSubmit) {
                                 if (jobsToSubmit.isEmpty()) {
                                     jobsToSubmit.wait(10000);
+                                    checkForInterruption();
                                 }
                             }
                         }
@@ -206,7 +195,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                                         restJJ.submissionAck(j.getID());
                                         if (j.getStateEnum().ordinal() < de.unijena.bioinf.ms.rest.model.JobState.CRASHED.ordinal()) {
                                             waitingJobs.put(j.getID(), restJJ);
-                                        }else {
+                                        } else {
                                             restJJ.update(j);
                                         }
                                     });
@@ -252,7 +241,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
             jobsToSubmit.stream().map(Pair::getSecond).forEach(WaiterJJob::cancel); //this jobs are not submitted to the job manager and need no be canceled manually
             try {
                 NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet(), Collections.emptyMap()),
-                        this::checkForInterruption, 25000);
+                        NetUtils.checkThreadInterrupt(Thread.currentThread()), 5000);
             } catch (InterruptedException | TimeoutException e) {
                 logWarn("Failed to delete remote jobs from server!", e);
             }
@@ -281,6 +270,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                         synchronized (waitingJobs) {
                             if (waitingJobs.isEmpty()) {
                                 waitingJobs.wait(10000);
+                                checkForInterruption();
                             }
                         }
                     }
@@ -382,8 +372,7 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
             waitingJobs.values().forEach(WaiterJJob::cancel);
             logDebug("Try to delete leftover jobs on web server...");
             try {
-                NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet(), Collections.emptyMap()),
-                        this::checkForInterruption, 10000);
+                NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet(), Collections.emptyMap()), NetUtils.checkThreadInterrupt(Thread.currentThread()), 5000);
                 logDebug("Job deletion Done!");
             } catch (InterruptedException | TimeoutException e) {
                 logWarn("Failed to delete remote jobs from server!", e);

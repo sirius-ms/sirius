@@ -70,6 +70,7 @@ public class Ms2ReferenceSpectrum implements ReferenceSpectrum {
      */
     private double exactMass;
 
+    @Builder.Default
     private int msLevel = 0;
 
     /**
@@ -140,6 +141,11 @@ public class Ms2ReferenceSpectrum implements ReferenceSpectrum {
      * Original spectrum
      */
     private SimpleSpectrum spectrum;
+
+    /**
+     * Link to spectrum in an online repository
+     */
+    private String url;
 
     /**
      * Processed spectrum for fast cosine calculation

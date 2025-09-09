@@ -41,30 +41,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ZodiacEdgeFilterThresholds.JSON_PROPERTY_MIN_LOCAL_CANDIDATES,
   ZodiacEdgeFilterThresholds.JSON_PROPERTY_MIN_LOCAL_CONNECTIONS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ZodiacEdgeFilterThresholds {
   public static final String JSON_PROPERTY_THRESHOLD_FILTER = "thresholdFilter";
+  @jakarta.annotation.Nullable
   private Double thresholdFilter;
 
   public static final String JSON_PROPERTY_MIN_LOCAL_CANDIDATES = "minLocalCandidates";
+  @jakarta.annotation.Nullable
   private Integer minLocalCandidates;
 
   public static final String JSON_PROPERTY_MIN_LOCAL_CONNECTIONS = "minLocalConnections";
+  @jakarta.annotation.Nullable
   private Integer minLocalConnections;
 
   public ZodiacEdgeFilterThresholds() {
   }
 
-  public ZodiacEdgeFilterThresholds thresholdFilter(Double thresholdFilter) {
+  public ZodiacEdgeFilterThresholds thresholdFilter(@jakarta.annotation.Nullable Double thresholdFilter) {
     
     this.thresholdFilter = thresholdFilter;
     return this;
   }
 
-   /**
+  /**
    * Get thresholdFilter
    * @return thresholdFilter
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_THRESHOLD_FILTER)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -76,20 +79,20 @@ public class ZodiacEdgeFilterThresholds {
 
   @JsonProperty(JSON_PROPERTY_THRESHOLD_FILTER)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setThresholdFilter(Double thresholdFilter) {
+  public void setThresholdFilter(@jakarta.annotation.Nullable Double thresholdFilter) {
     this.thresholdFilter = thresholdFilter;
   }
 
-  public ZodiacEdgeFilterThresholds minLocalCandidates(Integer minLocalCandidates) {
+  public ZodiacEdgeFilterThresholds minLocalCandidates(@jakarta.annotation.Nullable Integer minLocalCandidates) {
     
     this.minLocalCandidates = minLocalCandidates;
     return this;
   }
 
-   /**
+  /**
    * Get minLocalCandidates
    * @return minLocalCandidates
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_LOCAL_CANDIDATES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -101,20 +104,20 @@ public class ZodiacEdgeFilterThresholds {
 
   @JsonProperty(JSON_PROPERTY_MIN_LOCAL_CANDIDATES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinLocalCandidates(Integer minLocalCandidates) {
+  public void setMinLocalCandidates(@jakarta.annotation.Nullable Integer minLocalCandidates) {
     this.minLocalCandidates = minLocalCandidates;
   }
 
-  public ZodiacEdgeFilterThresholds minLocalConnections(Integer minLocalConnections) {
+  public ZodiacEdgeFilterThresholds minLocalConnections(@jakarta.annotation.Nullable Integer minLocalConnections) {
     
     this.minLocalConnections = minLocalConnections;
     return this;
   }
 
-   /**
+  /**
    * Get minLocalConnections
    * @return minLocalConnections
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_LOCAL_CONNECTIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -126,9 +129,10 @@ public class ZodiacEdgeFilterThresholds {
 
   @JsonProperty(JSON_PROPERTY_MIN_LOCAL_CONNECTIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinLocalConnections(Integer minLocalConnections) {
+  public void setMinLocalConnections(@jakarta.annotation.Nullable Integer minLocalConnections) {
     this.minLocalConnections = minLocalConnections;
   }
+
 
   @Override
   public boolean equals(Object o) {

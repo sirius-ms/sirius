@@ -21,7 +21,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static io.sirius.ms.sdk.model.ProjectInfoOptField.SIZEINFORMATION;
+import static io.sirius.ms.sdk.model.ProjectInfoOptField.SIZE_INFORMATION;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -76,6 +76,19 @@ public class ProjectsApiTest {
         String projectId = UUID.randomUUID().toString();
         String pathToProject = TestSetup.getInstance().getTempDir().resolve(projectId + ".sirius").toString();
         ProjectInfo response = instance.createProject(projectId, pathToProject, null);
+        assertNotNull(response);
+        assertEquals(projectId, response.getProjectId());
+
+        List<AlignedFeature> cids = featureApiInstance.getAlignedFeatures(projectId, false, null);
+        assertEquals(0, cids.size());
+
+        TestSetup.getInstance().deleteTestProject(response);
+    }
+
+    @Test
+    public void createNullPathProjectTest() {
+        String projectId = UUID.randomUUID().toString();
+               ProjectInfo response = instance.createProject(projectId, null, null);
         assertNotNull(response);
         assertEquals(projectId, response.getProjectId());
 
@@ -180,9 +193,9 @@ public class ProjectsApiTest {
         featureApiInstance.deleteAlignedFeatures(projectId, allFeatureIds);
 
         instance.closeProject(projectId, false);
-        ProjectInfo beforeCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZEINFORMATION));
+        ProjectInfo beforeCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZE_INFORMATION));
         instance.closeProject(projectId, true);
-        ProjectInfo afterCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZEINFORMATION));
+        ProjectInfo afterCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZE_INFORMATION));
 
         assertTrue(Objects.requireNonNull(afterCompacting.getNumOfBytes()) < Objects.requireNonNull(beforeCompacting.getNumOfBytes()));
     }

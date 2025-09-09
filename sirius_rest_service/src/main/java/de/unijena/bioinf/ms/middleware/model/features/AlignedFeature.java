@@ -45,7 +45,7 @@ import java.util.Set;
 public class AlignedFeature {
 
     @Schema(name = "AlignedFeatureOptField", nullable = true)
-    public enum OptField {none, msData, topAnnotations, topAnnotationsDeNovo, computedTools, tags}
+    public enum OptField {none, msData, topAnnotationsSummary, topAnnotations, topAnnotationsDeNovo, computedTools, tags}
 
     // identifier
     @NotNull
