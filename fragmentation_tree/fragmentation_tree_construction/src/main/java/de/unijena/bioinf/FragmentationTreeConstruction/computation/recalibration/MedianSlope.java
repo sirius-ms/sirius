@@ -97,7 +97,7 @@ public class MedianSlope extends AbstractRecalibrationStrategy {
             Collections.sort(chosenPeaks[k], new Comparator<Integer>() {
                 @Override
                 public int compare(Integer o1, Integer o2) {
-                    return new Double(measured.getIntensityAt(o2)).compareTo(measured.getIntensityAt(o1));
+                    return Double.compare(measured.getIntensityAt(o2), measured.getIntensityAt(o1));
                 }
             });
         }

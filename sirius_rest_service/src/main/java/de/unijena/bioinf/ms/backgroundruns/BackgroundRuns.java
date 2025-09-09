@@ -296,7 +296,7 @@ public final class BackgroundRuns {
     private BackgroundRunJob makeBackgroundRun(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance(ConfigType.BATCH_COMPUTE.name()));
         final WorkflowBuilder wfBuilder = new WorkflowBuilder(new ComputeRootOption(instances), configOptionLoader, null, false);
-        final Run computation = new Run(wfBuilder);
+        final Run computation = new Run(wfBuilder, false);
         CommandLine.ParseResult pr = computation.parseArgs(command.toArray(String[]::new));
 
         return new BackgroundRunJob(

@@ -4,7 +4,7 @@ SIRIUS Nightsky API
 
 - API version: 3.1
 
-- Generator version: 7.6.0
+- Generator version: 7.14.0
 
 REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
 
@@ -49,7 +49,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
-  <version>3.1+sirius6.2.0-SNAPSHOT</version>
+  <version>3.1+sirius6.4.0-SNAPSHOT</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -66,7 +66,7 @@ Add this dependency to your project's build file:
   }
 
   dependencies {
-     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.2.0-SNAPSHOT"
+     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.4.0-SNAPSHOT"
   }
 ```
 
@@ -80,7 +80,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius-sdk.openapi-3.1.0+sirius6.2.5-SNAPSHOT.jar`
+- `target/sirius-sdk.openapi-3.1+sirius6.4.0-SNAPSHOT.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
@@ -146,6 +146,7 @@ Class | Method | HTTP request | Description
 *FeatureStatisticsApi* | [**getAlignedFeatureFoldChangeTableExperimental**](docs/FeatureStatisticsApi.md#getAlignedFeatureFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
 *FeatureStatisticsApi* | [**getFoldChangesByAlignedFeatureExperimental**](docs/FeatureStatisticsApi.md#getFoldChangesByAlignedFeatureExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges/{objectId} | [EXPERIMENTAL] List all fold changes that are associated with an object
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
+*FeaturesApi* | [**addDeNovoStructureCandidate**](docs/FeaturesApi.md#addDeNovoStructureCandidate) | **PUT** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
 *FeaturesApi* | [**addTagsToAlignedFeatureExperimental**](docs/FeaturesApi.md#addTagsToAlignedFeatureExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**deleteAlignedFeatures**](docs/FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -219,7 +220,7 @@ Class | Method | HTTP request | Description
 *LoginAndAccountApi* | [**openPortal**](docs/LoginAndAccountApi.md#openPortal) | **GET** /api/account/openPortal | Open User portal in browser.
 *LoginAndAccountApi* | [**selectSubscription**](docs/LoginAndAccountApi.md#selectSubscription) | **PUT** /api/account/subscriptions/select-active | Select a subscription as active subscription to be used for computations.
 *LoginAndAccountApi* | [**signUp**](docs/LoginAndAccountApi.md#signUp) | **GET** /api/account/signUp | Open SignUp window in system browser and return signUp link.
-*ProjectsApi* | [**closeProject**](docs/ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application
+*ProjectsApi* | [**closeProject**](docs/ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from the application
 *ProjectsApi* | [**copyProject**](docs/ProjectsApi.md#copyProject) | **PUT** /api/projects/{projectId}/copy | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 *ProjectsApi* | [**createProject**](docs/ProjectsApi.md#createProject) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId.
 *ProjectsApi* | [**getCanopusClassyFireData**](docs/ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes
@@ -275,9 +276,11 @@ Class | Method | HTTP request | Description
  - [AlignedFeature](docs/AlignedFeature.md)
  - [AlignedFeatureOptField](docs/AlignedFeatureOptField.md)
  - [AlignedFeatureQualityExperimental](docs/AlignedFeatureQualityExperimental.md)
+ - [AllowedFeatures](docs/AllowedFeatures.md)
  - [AnnotatedMsMsData](docs/AnnotatedMsMsData.md)
  - [AnnotatedPeak](docs/AnnotatedPeak.md)
  - [AnnotatedSpectrum](docs/AnnotatedSpectrum.md)
+ - [ApiVersion](docs/ApiVersion.md)
  - [Axes](docs/Axes.md)
  - [BackgroundComputationsStateEvent](docs/BackgroundComputationsStateEvent.md)
  - [BasicSpectrum](docs/BasicSpectrum.md)
@@ -364,6 +367,8 @@ Class | Method | HTTP request | Description
  - [SampleTypeFoldChangeRequest](docs/SampleTypeFoldChangeRequest.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
  - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)
+ - [SecurityContext](docs/SecurityContext.md)
+ - [SecurityContextPrincipal](docs/SecurityContextPrincipal.md)
  - [SimplePeak](docs/SimplePeak.md)
  - [Sirius](docs/Sirius.md)
  - [Solver](docs/Solver.md)
@@ -397,6 +402,7 @@ Class | Method | HTTP request | Description
  - [TraceSetExperimental](docs/TraceSetExperimental.md)
  - [UseHeuristic](docs/UseHeuristic.md)
  - [ValueType](docs/ValueType.md)
+ - [WebServerNamespace](docs/WebServerNamespace.md)
  - [Zodiac](docs/Zodiac.md)
  - [ZodiacAnalogueNodes](docs/ZodiacAnalogueNodes.md)
  - [ZodiacEdgeFilterThresholds](docs/ZodiacEdgeFilterThresholds.md)

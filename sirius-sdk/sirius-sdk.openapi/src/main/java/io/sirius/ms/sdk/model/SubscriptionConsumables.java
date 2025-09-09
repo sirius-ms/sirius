@@ -40,27 +40,29 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SubscriptionConsumables.JSON_PROPERTY_PENDING_JOBS,
   SubscriptionConsumables.JSON_PROPERTY_COUNTED_COMPOUNDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class SubscriptionConsumables {
   public static final String JSON_PROPERTY_PENDING_JOBS = "pendingJobs";
+  @jakarta.annotation.Nullable
   private Integer pendingJobs;
 
   public static final String JSON_PROPERTY_COUNTED_COMPOUNDS = "countedCompounds";
+  @jakarta.annotation.Nullable
   private Integer countedCompounds;
 
   public SubscriptionConsumables() {
   }
 
-  public SubscriptionConsumables pendingJobs(Integer pendingJobs) {
+  public SubscriptionConsumables pendingJobs(@jakarta.annotation.Nullable Integer pendingJobs) {
     
     this.pendingJobs = pendingJobs;
     return this;
   }
 
-   /**
+  /**
    * Get pendingJobs
    * @return pendingJobs
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PENDING_JOBS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -72,20 +74,20 @@ public class SubscriptionConsumables {
 
   @JsonProperty(JSON_PROPERTY_PENDING_JOBS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPendingJobs(Integer pendingJobs) {
+  public void setPendingJobs(@jakarta.annotation.Nullable Integer pendingJobs) {
     this.pendingJobs = pendingJobs;
   }
 
-  public SubscriptionConsumables countedCompounds(Integer countedCompounds) {
+  public SubscriptionConsumables countedCompounds(@jakarta.annotation.Nullable Integer countedCompounds) {
     
     this.countedCompounds = countedCompounds;
     return this;
   }
 
-   /**
+  /**
    * Get countedCompounds
    * @return countedCompounds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COUNTED_COMPOUNDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -97,9 +99,10 @@ public class SubscriptionConsumables {
 
   @JsonProperty(JSON_PROPERTY_COUNTED_COMPOUNDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCountedCompounds(Integer countedCompounds) {
+  public void setCountedCompounds(@jakarta.annotation.Nullable Integer countedCompounds) {
     this.countedCompounds = countedCompounds;
   }
+
 
   @Override
   public boolean equals(Object o) {

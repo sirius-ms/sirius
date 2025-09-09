@@ -46,33 +46,37 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureDbSearch.JSON_PROPERTY_TAG_STRUCTURES_WITH_LIPID_CLASS,
   StructureDbSearch.JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class StructureDbSearch {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
+  @jakarta.annotation.Nullable
   private Boolean enabled;
 
   public static final String JSON_PROPERTY_STRUCTURE_SEARCH_D_BS = "structureSearchDBs";
+  @jakarta.annotation.Nullable
   private List<String> structureSearchDBs;
 
   public static final String JSON_PROPERTY_TAG_STRUCTURES_WITH_LIPID_CLASS = "tagStructuresWithLipidClass";
+  @jakarta.annotation.Nullable
   private Boolean tagStructuresWithLipidClass;
 
   public static final String JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE = "expansiveSearchConfidenceMode";
+  @jakarta.annotation.Nullable
   private ConfidenceMode expansiveSearchConfidenceMode;
 
   public StructureDbSearch() {
   }
 
-  public StructureDbSearch enabled(Boolean enabled) {
+  public StructureDbSearch enabled(@jakarta.annotation.Nullable Boolean enabled) {
     
     this.enabled = enabled;
     return this;
   }
 
-   /**
+  /**
    * tags whether the tool is enabled
    * @return enabled
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -84,11 +88,11 @@ public class StructureDbSearch {
 
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnabled(Boolean enabled) {
+  public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
   }
 
-  public StructureDbSearch structureSearchDBs(List<String> structureSearchDBs) {
+  public StructureDbSearch structureSearchDBs(@jakarta.annotation.Nullable List<String> structureSearchDBs) {
     
     this.structureSearchDBs = structureSearchDBs;
     return this;
@@ -102,10 +106,10 @@ public class StructureDbSearch {
     return this;
   }
 
-   /**
+  /**
    * Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem  if not high confidence hit was found in the selected databases.  &lt;p&gt;  Defaults to BIO + Custom Databases. Possible values are available to Database API.
    * @return structureSearchDBs
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_SEARCH_D_BS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -117,20 +121,20 @@ public class StructureDbSearch {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_SEARCH_D_BS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureSearchDBs(List<String> structureSearchDBs) {
+  public void setStructureSearchDBs(@jakarta.annotation.Nullable List<String> structureSearchDBs) {
     this.structureSearchDBs = structureSearchDBs;
   }
 
-  public StructureDbSearch tagStructuresWithLipidClass(Boolean tagStructuresWithLipidClass) {
+  public StructureDbSearch tagStructuresWithLipidClass(@jakarta.annotation.Nullable Boolean tagStructuresWithLipidClass) {
     
     this.tagStructuresWithLipidClass = tagStructuresWithLipidClass;
     return this;
   }
 
-   /**
+  /**
    * Candidates matching the lipid class estimated by El Gordo will be tagged.  The lipid class will only be available if El Gordo predicts that the MS/MS is a lipid spectrum.  If this parameter is set to &#39;false&#39; El Gordo will still be executed and e.g. improve the fragmentation  tree, but the matching structure candidates will not be tagged if they match lipid class.
    * @return tagStructuresWithLipidClass
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TAG_STRUCTURES_WITH_LIPID_CLASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -142,20 +146,20 @@ public class StructureDbSearch {
 
   @JsonProperty(JSON_PROPERTY_TAG_STRUCTURES_WITH_LIPID_CLASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTagStructuresWithLipidClass(Boolean tagStructuresWithLipidClass) {
+  public void setTagStructuresWithLipidClass(@jakarta.annotation.Nullable Boolean tagStructuresWithLipidClass) {
     this.tagStructuresWithLipidClass = tagStructuresWithLipidClass;
   }
 
-  public StructureDbSearch expansiveSearchConfidenceMode(ConfidenceMode expansiveSearchConfidenceMode) {
+  public StructureDbSearch expansiveSearchConfidenceMode(@jakarta.annotation.Nullable ConfidenceMode expansiveSearchConfidenceMode) {
     
     this.expansiveSearchConfidenceMode = expansiveSearchConfidenceMode;
     return this;
   }
 
-   /**
+  /**
    * Get expansiveSearchConfidenceMode
    * @return expansiveSearchConfidenceMode
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -167,9 +171,10 @@ public class StructureDbSearch {
 
   @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExpansiveSearchConfidenceMode(ConfidenceMode expansiveSearchConfidenceMode) {
+  public void setExpansiveSearchConfidenceMode(@jakarta.annotation.Nullable ConfidenceMode expansiveSearchConfidenceMode) {
     this.expansiveSearchConfidenceMode = expansiveSearchConfidenceMode;
   }
+
 
   @Override
   public boolean equals(Object o) {

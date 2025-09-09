@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
-import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedWriter;
@@ -10,7 +9,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class DelimitedTableWriter implements SummaryTableWriter {
+public class DelimitedTableWriter extends PrefixingSummaryWriter {
 
     private final static Locale LOCALE = Locale.US;
     private final static String DOUBLE_FORMAT = "%.3f";
@@ -21,6 +20,7 @@ public class DelimitedTableWriter implements SummaryTableWriter {
     private final String delimiter;
     private final boolean quoteStrings;
 
+
     public DelimitedTableWriter(BufferedWriter writer, String delimiter, boolean quoteStrings) {
         this.w = writer;
         this.delimiter = delimiter;
@@ -28,7 +28,7 @@ public class DelimitedTableWriter implements SummaryTableWriter {
     }
 
     @Override
-    public void writeHeader(List<String> columns) throws IOException {
+    public void writeColumnNames(List<String> columns) throws IOException {
         w.write(columns.stream().map(this::formatString).collect(Collectors.joining(delimiter)));
         w.newLine();
     }
@@ -48,11 +48,11 @@ public class DelimitedTableWriter implements SummaryTableWriter {
 
     private String getString(Object val) {
         if (val == null || val.equals(Double.NaN)) return "";
-        if (val instanceof String || val instanceof DataQuality) return formatString(val.toString());
+        if (val instanceof String || val instanceof Boolean || val instanceof Enum<?>) return formatString(val.toString());
         if (val instanceof Double) return String.format(LOCALE, DOUBLE_FORMAT, val);
         if (val instanceof Integer) return String.format(LOCALE, LONG_FORMAT, val);
         if (val instanceof Long) return String.format(LOCALE, LONG_FORMAT, val);
-        log.warn("TSV writer encountered a value of an unexpected type {} {}", val, val.getClass());
+        log.warn("Delimited writer encountered a value of an unexpected type {} {}", val, val.getClass());
         return String.valueOf(val);
     }
 

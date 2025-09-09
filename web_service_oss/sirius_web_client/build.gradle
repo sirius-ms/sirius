@@ -23,6 +23,7 @@ version =  fingeridVersion
 dependencies {
     annotationProcessor project(':default_properties:processor')
     api project(":web_service_oss:rest_client_oss")
+    api project(':web_service_oss:jwt_utils')
     api project(':chemical_db_oss:chemdb_rest_oss')
     api project(':chemical_db_oss:chemdb_nitrite_oss')
     api project(':chemical_db_oss:chemdb_blob_oss')
