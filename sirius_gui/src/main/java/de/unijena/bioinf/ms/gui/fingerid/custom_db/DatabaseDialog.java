@@ -82,7 +82,7 @@ public class DatabaseDialog extends JDialog {
         JButton openDB = Buttons.getPlainFolderButton16("Add existing Database");
         JButton libraries = Buttons.getDownloadButton16("Get SIRIUS Libraries");
 
-        libraries.addActionListener(e -> new LibrariesDialog(owner, gui));
+        libraries.addActionListener(e -> new LibrariesDialog(owner, this, gui));
 
         loadDatabaseList();
 
@@ -236,7 +236,7 @@ public class DatabaseDialog extends JDialog {
         loadDatabaseList();
         // try to scroll to the newly added Database.
         Optional<SearchableDatabase> dbOpt =dbIdToSelect == null ? Optional.empty() : customDatabases.stream()
-                .filter(db -> dbIdToSelect.equals(db.getLocation())).findFirst();
+                .filter(db -> dbIdToSelect.equals(db.getDatabaseId())).findFirst();
 
         dbOpt.ifPresent(db -> {
             dbList.setSelectedValue(db, true);

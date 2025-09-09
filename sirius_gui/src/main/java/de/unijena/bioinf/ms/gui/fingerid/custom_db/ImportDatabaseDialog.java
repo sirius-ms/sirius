@@ -154,14 +154,14 @@ class ImportDatabaseDialog extends JDialog {
                     databaseDialog.gui.getMainFrame(),
                     "Do you want to keep the incompletely imported database?").isCancel()) {
 
-                databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath()).map(SearchableDatabase::getDatabaseId)
+                databaseDialog.whenCustomDbIsAdded(configPanel.getDBBaseFileName()).map(SearchableDatabase::getDatabaseId)
                         .ifPresent(dbId -> Jobs.runInBackgroundAndLoad(databaseDialog.gui.getMainFrame(),
                                 "Deleting database '" + dbId + "'...", () ->
                                         databaseDialog.gui.acceptSiriusClient((c, pid) -> c.databases().removeDatabase(dbId, true))
                         ).getResult());
             }
         } finally {
-            databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath());
+            databaseDialog.whenCustomDbIsAdded(configPanel.getDBBaseFileName());
         }
     }
 }

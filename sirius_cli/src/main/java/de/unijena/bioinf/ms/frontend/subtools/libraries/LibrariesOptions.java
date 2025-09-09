@@ -7,5 +7,5 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "libraries", aliases = {"libs"}, description = "<STANDALONE> List and download default libraries.%n%n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false,
         subcommands = {
                 ListLibraries.class,
-                DownloadLibrary.class})
+                DownloadLibraryOptions.class})
 public class LibrariesOptions extends ParentCommand { }
