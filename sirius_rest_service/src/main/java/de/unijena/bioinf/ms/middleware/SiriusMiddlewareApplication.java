@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware;
 
+import com.brightgiant.jxsupport.JxSupport;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
@@ -41,7 +42,6 @@ import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.rest.ProxyManager;
 import io.sirius.ms.sdk.SiriusSDK;
 import io.sirius.ms.sdk.model.GuiInfo;
 import io.sirius.ms.sdk.model.ProjectInfo;
@@ -117,6 +117,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     Thread.currentThread().getContextClassLoader()
             ));
         } else {
+            JxSupport.activate();
             // SwingJobManager is needed to show loading screens in GUI
             SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
                     cpuThreads,
@@ -227,7 +228,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 middlewareOpts = new MiddlewareAppOptions<>(splashScreen);
                 rootOptions = new CLIRootOptions(new DefaultParameterConfigLoader(), null);
                 measureTime("init Run");
-                RUN = new Run(new WorkflowBuilder(rootOptions, List.of(middlewareOpts)));
+                RUN = new Run(new WorkflowBuilder(rootOptions, List.of(middlewareOpts)), false);
                 measureTime("Start Parse args");
                 RUN.parseArgs(args);
                 measureTime("Parse args Done");
@@ -291,15 +292,13 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         log.info("SIRIUS is cleaning up threads and shuts down...");
         // ensure that token is not in bad state after shut down.
         try {
-            AuthService as = ApplicationCore.WEB_API.getAuthService();
+            AuthService as = ApplicationCore.WEB_API().getAuthService();
             if (as.isLoggedIn())
-                AuthServices.writeRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE, true);
+                AuthServices.writeRefreshToken(ApplicationCore.WEB_API().getAuthService(), ApplicationCore.TOKEN_FILE, true);
             else
                 Files.deleteIfExists(ApplicationCore.TOKEN_FILE);
         } catch (IOException e) {
             log.error("Error in clean up", e);
-        } finally {
-            ProxyManager.disconnect();
         }
 
         ApplicationCore.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");

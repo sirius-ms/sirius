@@ -119,7 +119,8 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                         submission.getMinSNR(),
                         thresholds,
                         submission.getTraceMaxMassDeviation(),
-                        saveImportedCompounds
+                        saveImportedCompounds,
+                        null
                 );
                 importerJJob.addJobProgressListener(progressSupport);
                 SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();

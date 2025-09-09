@@ -40,27 +40,29 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Deviation.JSON_PROPERTY_PPM,
   Deviation.JSON_PROPERTY_ABSOLUTE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class Deviation {
   public static final String JSON_PROPERTY_PPM = "ppm";
+  @jakarta.annotation.Nullable
   private Double ppm;
 
   public static final String JSON_PROPERTY_ABSOLUTE = "absolute";
+  @jakarta.annotation.Nullable
   private Double absolute;
 
   public Deviation() {
   }
 
-  public Deviation ppm(Double ppm) {
+  public Deviation ppm(@jakarta.annotation.Nullable Double ppm) {
     
     this.ppm = ppm;
     return this;
   }
 
-   /**
+  /**
    * Get ppm
    * @return ppm
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -72,20 +74,20 @@ public class Deviation {
 
   @JsonProperty(JSON_PROPERTY_PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPpm(Double ppm) {
+  public void setPpm(@jakarta.annotation.Nullable Double ppm) {
     this.ppm = ppm;
   }
 
-  public Deviation absolute(Double absolute) {
+  public Deviation absolute(@jakarta.annotation.Nullable Double absolute) {
     
     this.absolute = absolute;
     return this;
   }
 
-   /**
+  /**
    * Get absolute
    * @return absolute
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ABSOLUTE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -97,9 +99,10 @@ public class Deviation {
 
   @JsonProperty(JSON_PROPERTY_ABSOLUTE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAbsolute(Double absolute) {
+  public void setAbsolute(@jakarta.annotation.Nullable Double absolute) {
     this.absolute = absolute;
   }
+
 
   @Override
   public boolean equals(Object o) {

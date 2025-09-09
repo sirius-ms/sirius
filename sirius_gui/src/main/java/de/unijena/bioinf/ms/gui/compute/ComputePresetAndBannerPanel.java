@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.MessageBanner;
@@ -294,7 +294,7 @@ public class ComputePresetAndBannerPanel extends JPanel {
         try {
             return gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(newPresetName, js, finalOverwrite, false));
         } catch (Exception ex) {
-            Jobs.runEDTLater(() -> new StacktraceDialog(SwingUtilities.getWindowAncestor(this), gui.getSiriusClient().unwrapErrorMessage(ex), ex));
+            Jobs.runEDTLater(() -> new ErrorWithDetailsDialog(SwingUtilities.getWindowAncestor(this), gui.getSiriusClient().unwrapErrorMessage(ex), ex));
             return null;
         }
     }

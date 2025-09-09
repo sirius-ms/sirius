@@ -44,36 +44,41 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   TraceAnnotationExperimental.JSON_PROPERTY_FROM,
   TraceAnnotationExperimental.JSON_PROPERTY_TO
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class TraceAnnotationExperimental {
   public static final String JSON_PROPERTY_TYPE = "type";
+  @jakarta.annotation.Nullable
   private TraceAnnotationTypeExperimental type;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
+  @jakarta.annotation.Nullable
   private String description;
 
   public static final String JSON_PROPERTY_INDEX = "index";
+  @jakarta.annotation.Nullable
   private Integer index;
 
   public static final String JSON_PROPERTY_FROM = "from";
+  @jakarta.annotation.Nullable
   private Integer from;
 
   public static final String JSON_PROPERTY_TO = "to";
+  @jakarta.annotation.Nullable
   private Integer to;
 
   public TraceAnnotationExperimental() {
   }
 
-  public TraceAnnotationExperimental type(TraceAnnotationTypeExperimental type) {
+  public TraceAnnotationExperimental type(@jakarta.annotation.Nullable TraceAnnotationTypeExperimental type) {
     
     this.type = type;
     return this;
   }
 
-   /**
+  /**
    * Get type
    * @return type
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -85,20 +90,20 @@ public class TraceAnnotationExperimental {
 
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setType(TraceAnnotationTypeExperimental type) {
+  public void setType(@jakarta.annotation.Nullable TraceAnnotationTypeExperimental type) {
     this.type = type;
   }
 
-  public TraceAnnotationExperimental description(String description) {
+  public TraceAnnotationExperimental description(@jakarta.annotation.Nullable String description) {
     
     this.description = description;
     return this;
   }
 
-   /**
+  /**
    * Get description
    * @return description
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -110,20 +115,20 @@ public class TraceAnnotationExperimental {
 
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDescription(String description) {
+  public void setDescription(@jakarta.annotation.Nullable String description) {
     this.description = description;
   }
 
-  public TraceAnnotationExperimental index(Integer index) {
+  public TraceAnnotationExperimental index(@jakarta.annotation.Nullable Integer index) {
     
     this.index = index;
     return this;
   }
 
-   /**
+  /**
    * Get index
    * @return index
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INDEX)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -135,20 +140,20 @@ public class TraceAnnotationExperimental {
 
   @JsonProperty(JSON_PROPERTY_INDEX)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIndex(Integer index) {
+  public void setIndex(@jakarta.annotation.Nullable Integer index) {
     this.index = index;
   }
 
-  public TraceAnnotationExperimental from(Integer from) {
+  public TraceAnnotationExperimental from(@jakarta.annotation.Nullable Integer from) {
     
     this.from = from;
     return this;
   }
 
-   /**
+  /**
    * Get from
    * @return from
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FROM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -160,20 +165,20 @@ public class TraceAnnotationExperimental {
 
   @JsonProperty(JSON_PROPERTY_FROM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFrom(Integer from) {
+  public void setFrom(@jakarta.annotation.Nullable Integer from) {
     this.from = from;
   }
 
-  public TraceAnnotationExperimental to(Integer to) {
+  public TraceAnnotationExperimental to(@jakarta.annotation.Nullable Integer to) {
     
     this.to = to;
     return this;
   }
 
-   /**
+  /**
    * Get to
    * @return to
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -185,9 +190,10 @@ public class TraceAnnotationExperimental {
 
   @JsonProperty(JSON_PROPERTY_TO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTo(Integer to) {
+  public void setTo(@jakarta.annotation.Nullable Integer to) {
     this.to = to;
   }
+
 
   @Override
   public boolean equals(Object o) {

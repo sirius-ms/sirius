@@ -50,42 +50,49 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidate.JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES,
   StructureCandidate.JSON_PROPERTY_XLOG_P
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class StructureCandidate {
   public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
+  @jakarta.annotation.Nullable
   private String inchiKey;
 
   public static final String JSON_PROPERTY_SMILES = "smiles";
+  @jakarta.annotation.Nullable
   private String smiles;
 
   public static final String JSON_PROPERTY_STRUCTURE_NAME = "structureName";
+  @jakarta.annotation.Nullable
   private String structureName;
 
   public static final String JSON_PROPERTY_STRUCTURE_SVG = "structureSvg";
+  @jakarta.annotation.Nullable
   private String structureSvg;
 
   public static final String JSON_PROPERTY_DB_LINKS = "dbLinks";
+  @jakarta.annotation.Nullable
   private List<DBLink> dbLinks;
 
   public static final String JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES = "spectralLibraryMatches";
+  @jakarta.annotation.Nullable
   private List<SpectralLibraryMatch> spectralLibraryMatches;
 
   public static final String JSON_PROPERTY_XLOG_P = "xlogP";
+  @jakarta.annotation.Nullable
   private Double xlogP;
 
   public StructureCandidate() {
   }
 
-  public StructureCandidate inchiKey(String inchiKey) {
+  public StructureCandidate inchiKey(@jakarta.annotation.Nullable String inchiKey) {
     
     this.inchiKey = inchiKey;
     return this;
   }
 
-   /**
+  /**
    * Get inchiKey
    * @return inchiKey
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INCHI_KEY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -97,20 +104,20 @@ public class StructureCandidate {
 
   @JsonProperty(JSON_PROPERTY_INCHI_KEY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setInchiKey(String inchiKey) {
+  public void setInchiKey(@jakarta.annotation.Nullable String inchiKey) {
     this.inchiKey = inchiKey;
   }
 
-  public StructureCandidate smiles(String smiles) {
+  public StructureCandidate smiles(@jakarta.annotation.Nullable String smiles) {
     
     this.smiles = smiles;
     return this;
   }
 
-   /**
+  /**
    * Get smiles
    * @return smiles
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SMILES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -122,20 +129,20 @@ public class StructureCandidate {
 
   @JsonProperty(JSON_PROPERTY_SMILES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSmiles(String smiles) {
+  public void setSmiles(@jakarta.annotation.Nullable String smiles) {
     this.smiles = smiles;
   }
 
-  public StructureCandidate structureName(String structureName) {
+  public StructureCandidate structureName(@jakarta.annotation.Nullable String structureName) {
     
     this.structureName = structureName;
     return this;
   }
 
-   /**
+  /**
    * Get structureName
    * @return structureName
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -147,20 +154,20 @@ public class StructureCandidate {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureName(String structureName) {
+  public void setStructureName(@jakarta.annotation.Nullable String structureName) {
     this.structureName = structureName;
   }
 
-  public StructureCandidate structureSvg(String structureSvg) {
+  public StructureCandidate structureSvg(@jakarta.annotation.Nullable String structureSvg) {
     
     this.structureSvg = structureSvg;
     return this;
   }
 
-   /**
+  /**
    * SVG graphics of the structure candidate  OPTIONAL: needs to be added by parameter
    * @return structureSvg
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_SVG)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -172,11 +179,11 @@ public class StructureCandidate {
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_SVG)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStructureSvg(String structureSvg) {
+  public void setStructureSvg(@jakarta.annotation.Nullable String structureSvg) {
     this.structureSvg = structureSvg;
   }
 
-  public StructureCandidate dbLinks(List<DBLink> dbLinks) {
+  public StructureCandidate dbLinks(@jakarta.annotation.Nullable List<DBLink> dbLinks) {
     
     this.dbLinks = dbLinks;
     return this;
@@ -190,10 +197,10 @@ public class StructureCandidate {
     return this;
   }
 
-   /**
+  /**
    * List of structure database links belonging to this structure candidate  OPTIONAL: needs to be added by parameter
    * @return dbLinks
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DB_LINKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -205,11 +212,11 @@ public class StructureCandidate {
 
   @JsonProperty(JSON_PROPERTY_DB_LINKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDbLinks(List<DBLink> dbLinks) {
+  public void setDbLinks(@jakarta.annotation.Nullable List<DBLink> dbLinks) {
     this.dbLinks = dbLinks;
   }
 
-  public StructureCandidate spectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
+  public StructureCandidate spectralLibraryMatches(@jakarta.annotation.Nullable List<SpectralLibraryMatch> spectralLibraryMatches) {
     
     this.spectralLibraryMatches = spectralLibraryMatches;
     return this;
@@ -223,10 +230,10 @@ public class StructureCandidate {
     return this;
   }
 
-   /**
+  /**
    * List of spectral library matches belonging to this structure candidate  OPTIONAL: needs to be added by parameter
    * @return spectralLibraryMatches
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -238,20 +245,20 @@ public class StructureCandidate {
 
   @JsonProperty(JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSpectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
+  public void setSpectralLibraryMatches(@jakarta.annotation.Nullable List<SpectralLibraryMatch> spectralLibraryMatches) {
     this.spectralLibraryMatches = spectralLibraryMatches;
   }
 
-  public StructureCandidate xlogP(Double xlogP) {
+  public StructureCandidate xlogP(@jakarta.annotation.Nullable Double xlogP) {
     
     this.xlogP = xlogP;
     return this;
   }
 
-   /**
+  /**
    * Get xlogP
    * @return xlogP
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_XLOG_P)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -263,9 +270,10 @@ public class StructureCandidate {
 
   @JsonProperty(JSON_PROPERTY_XLOG_P)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setXlogP(Double xlogP) {
+  public void setXlogP(@jakarta.annotation.Nullable Double xlogP) {
     this.xlogP = xlogP;
   }
+
 
   @Override
   public boolean equals(Object o) {

@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.openapitools:openapi-generator-gradle-plugin:7.6.0") {
+        classpath("org.openapitools:openapi-generator-gradle-plugin:7.14.0") {
             exclude group: "com.fasterxml.jackson.core"
             exclude group: "com.fasterxml.jackson.dataformat"
             exclude group: "com.fasterxml.jackson.datatype"

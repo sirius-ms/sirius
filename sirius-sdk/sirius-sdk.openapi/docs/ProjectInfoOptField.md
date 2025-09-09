@@ -7,9 +7,9 @@
 
 * `NONE` (value: `"none"`)
 
-* `COMPATIBILITYINFO` (value: `"compatibilityInfo"`)
+* `COMPATIBILITY_INFO` (value: `"compatibilityInfo"`)
 
-* `SIZEINFORMATION` (value: `"sizeInformation"`)
+* `SIZE_INFORMATION` (value: `"sizeInformation"`)
 
 
 

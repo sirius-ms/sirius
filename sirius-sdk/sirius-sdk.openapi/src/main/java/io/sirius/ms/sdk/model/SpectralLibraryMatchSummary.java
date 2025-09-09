@@ -43,33 +43,37 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibraryMatchSummary.JSON_PROPERTY_REFERENCE_SPECTRA_COUNT,
   SpectralLibraryMatchSummary.JSON_PROPERTY_DATABASE_COMPOUND_COUNT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class SpectralLibraryMatchSummary {
   public static final String JSON_PROPERTY_BEST_MATCH = "bestMatch";
+  @jakarta.annotation.Nullable
   private SpectralLibraryMatch bestMatch;
 
   public static final String JSON_PROPERTY_SPECTRAL_MATCH_COUNT = "spectralMatchCount";
+  @jakarta.annotation.Nonnull
   private Long spectralMatchCount;
 
   public static final String JSON_PROPERTY_REFERENCE_SPECTRA_COUNT = "referenceSpectraCount";
+  @jakarta.annotation.Nonnull
   private Integer referenceSpectraCount;
 
   public static final String JSON_PROPERTY_DATABASE_COMPOUND_COUNT = "databaseCompoundCount";
+  @jakarta.annotation.Nonnull
   private Integer databaseCompoundCount;
 
   public SpectralLibraryMatchSummary() {
   }
 
-  public SpectralLibraryMatchSummary bestMatch(SpectralLibraryMatch bestMatch) {
+  public SpectralLibraryMatchSummary bestMatch(@jakarta.annotation.Nullable SpectralLibraryMatch bestMatch) {
     
     this.bestMatch = bestMatch;
     return this;
   }
 
-   /**
+  /**
    * Get bestMatch
    * @return bestMatch
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_BEST_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -81,20 +85,20 @@ public class SpectralLibraryMatchSummary {
 
   @JsonProperty(JSON_PROPERTY_BEST_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setBestMatch(SpectralLibraryMatch bestMatch) {
+  public void setBestMatch(@jakarta.annotation.Nullable SpectralLibraryMatch bestMatch) {
     this.bestMatch = bestMatch;
   }
 
-  public SpectralLibraryMatchSummary spectralMatchCount(Long spectralMatchCount) {
+  public SpectralLibraryMatchSummary spectralMatchCount(@jakarta.annotation.Nonnull Long spectralMatchCount) {
     
     this.spectralMatchCount = spectralMatchCount;
     return this;
   }
 
-   /**
+  /**
    * Get spectralMatchCount
    * @return spectralMatchCount
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_SPECTRAL_MATCH_COUNT)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -106,20 +110,20 @@ public class SpectralLibraryMatchSummary {
 
   @JsonProperty(JSON_PROPERTY_SPECTRAL_MATCH_COUNT)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSpectralMatchCount(Long spectralMatchCount) {
+  public void setSpectralMatchCount(@jakarta.annotation.Nonnull Long spectralMatchCount) {
     this.spectralMatchCount = spectralMatchCount;
   }
 
-  public SpectralLibraryMatchSummary referenceSpectraCount(Integer referenceSpectraCount) {
+  public SpectralLibraryMatchSummary referenceSpectraCount(@jakarta.annotation.Nonnull Integer referenceSpectraCount) {
     
     this.referenceSpectraCount = referenceSpectraCount;
     return this;
   }
 
-   /**
+  /**
    * Get referenceSpectraCount
    * @return referenceSpectraCount
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRA_COUNT)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -131,20 +135,20 @@ public class SpectralLibraryMatchSummary {
 
   @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRA_COUNT)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setReferenceSpectraCount(Integer referenceSpectraCount) {
+  public void setReferenceSpectraCount(@jakarta.annotation.Nonnull Integer referenceSpectraCount) {
     this.referenceSpectraCount = referenceSpectraCount;
   }
 
-  public SpectralLibraryMatchSummary databaseCompoundCount(Integer databaseCompoundCount) {
+  public SpectralLibraryMatchSummary databaseCompoundCount(@jakarta.annotation.Nonnull Integer databaseCompoundCount) {
     
     this.databaseCompoundCount = databaseCompoundCount;
     return this;
   }
 
-   /**
+  /**
    * Get databaseCompoundCount
    * @return databaseCompoundCount
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_DATABASE_COMPOUND_COUNT)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -156,9 +160,10 @@ public class SpectralLibraryMatchSummary {
 
   @JsonProperty(JSON_PROPERTY_DATABASE_COMPOUND_COUNT)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setDatabaseCompoundCount(Integer databaseCompoundCount) {
+  public void setDatabaseCompoundCount(@jakarta.annotation.Nonnull Integer databaseCompoundCount) {
     this.databaseCompoundCount = databaseCompoundCount;
   }
+
 
   @Override
   public boolean equals(Object o) {

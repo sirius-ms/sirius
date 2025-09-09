@@ -41,30 +41,33 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ZodiacAnalogueNodes.JSON_PROPERTY_MIN_SIMILARITY,
   ZodiacAnalogueNodes.JSON_PROPERTY_MIN_SHARED_PEAKS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ZodiacAnalogueNodes {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
+  @jakarta.annotation.Nullable
   private Boolean enabled;
 
   public static final String JSON_PROPERTY_MIN_SIMILARITY = "minSimilarity";
+  @jakarta.annotation.Nullable
   private Double minSimilarity;
 
   public static final String JSON_PROPERTY_MIN_SHARED_PEAKS = "minSharedPeaks";
+  @jakarta.annotation.Nullable
   private Integer minSharedPeaks;
 
   public ZodiacAnalogueNodes() {
   }
 
-  public ZodiacAnalogueNodes enabled(Boolean enabled) {
+  public ZodiacAnalogueNodes enabled(@jakarta.annotation.Nullable Boolean enabled) {
     
     this.enabled = enabled;
     return this;
   }
 
-   /**
+  /**
    * Get enabled
    * @return enabled
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -76,20 +79,20 @@ public class ZodiacAnalogueNodes {
 
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnabled(Boolean enabled) {
+  public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
   }
 
-  public ZodiacAnalogueNodes minSimilarity(Double minSimilarity) {
+  public ZodiacAnalogueNodes minSimilarity(@jakarta.annotation.Nullable Double minSimilarity) {
     
     this.minSimilarity = minSimilarity;
     return this;
   }
 
-   /**
+  /**
    * Get minSimilarity
    * @return minSimilarity
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -101,20 +104,20 @@ public class ZodiacAnalogueNodes {
 
   @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinSimilarity(Double minSimilarity) {
+  public void setMinSimilarity(@jakarta.annotation.Nullable Double minSimilarity) {
     this.minSimilarity = minSimilarity;
   }
 
-  public ZodiacAnalogueNodes minSharedPeaks(Integer minSharedPeaks) {
+  public ZodiacAnalogueNodes minSharedPeaks(@jakarta.annotation.Nullable Integer minSharedPeaks) {
     
     this.minSharedPeaks = minSharedPeaks;
     return this;
   }
 
-   /**
+  /**
    * Get minSharedPeaks
    * @return minSharedPeaks
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_SHARED_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -126,9 +129,10 @@ public class ZodiacAnalogueNodes {
 
   @JsonProperty(JSON_PROPERTY_MIN_SHARED_PEAKS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinSharedPeaks(Integer minSharedPeaks) {
+  public void setMinSharedPeaks(@jakarta.annotation.Nullable Integer minSharedPeaks) {
     this.minSharedPeaks = minSharedPeaks;
   }
+
 
   @Override
   public boolean equals(Object o) {

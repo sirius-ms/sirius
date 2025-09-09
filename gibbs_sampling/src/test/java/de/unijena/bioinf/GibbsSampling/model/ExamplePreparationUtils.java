@@ -35,6 +35,7 @@ import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.annotations.NoiseThresholdSettings;
 import gnu.trove.map.hash.TIntIntHashMap;
+import lombok.SneakyThrows;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -47,8 +48,9 @@ import java.util.stream.Collectors;
 
 public class ExamplePreparationUtils {
 
+    @SneakyThrows
     public static Map<Ms2Experiment, List<FTree>> getData(String resource, double ppm, boolean disableNoiseIntensityThreshold) throws IOException {
-        final Path exampleDir = Paths.get(ExamplePreparationUtils.class.getResource(resource).getFile());
+        final Path exampleDir = Paths.get(ExamplePreparationUtils.class.getResource(resource).toURI());
 
         LoggerFactory.getLogger(GraphBuilderTest.class).warn("test");
         Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.readData(exampleDir);

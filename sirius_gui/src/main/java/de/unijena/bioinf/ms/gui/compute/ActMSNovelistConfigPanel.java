@@ -26,19 +26,17 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
-import io.sirius.ms.sdk.model.AccountInfo;
+import io.sirius.ms.sdk.model.AllowedFeatures;
 import io.sirius.ms.sdk.model.ConnectionCheck;
-import io.sirius.ms.sdk.model.Subscription;
 
 import java.util.Map;
-import java.util.Optional;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 
 public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<MsNovelistOptions>> {
 
     public ActMSNovelistConfigPanel(SiriusGui gui) {
-        super(gui, "MSNovelist", null, Icons.DENOVO.derive(32,32), true, () -> new SubToolConfigPanel<>(MsNovelistOptions.class) {},
+        super(gui, "MSNovelist", null, Icons.DENOVO.derive(32,32), true, () -> new SubToolConfigPanel<>(MsNovelistOptions.class),
                 SoftwareTourInfoStore.BatchCompute_MsNovelist);
         notConnectedMessage = "Can't connect to prediction server!";
     }
@@ -53,16 +51,9 @@ public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConf
             return;
         }
 
-        AccountInfo info = gui.getSiriusClient().account().getAccountInfo(true);
 
-        Subscription sub = info.getSubscriptions() == null ? null : info.getSubscriptions()
-                .stream()
-                .filter(s -> s.getSid() != null)
-                .filter(s -> s.getSid().equals(info.getActiveSubscriptionId())).findFirst()
-                .orElse(null);
-        boolean isExplorerLic = sub != null && Optional.ofNullable(sub.getServiceUrl()).map(s -> s.contains("agilent")).orElse(false) && !"sub|888983e6-da01-4af7-b431-921c59f0028f".equals(sub.getSid());
-
-        setButtonEnabled(!isExplorerLic, "Your Subscription does not contain the de novo structure generation feature.");
+        boolean hasDenovoFeature = gui.getAllowedFeatures().map(AllowedFeatures::isDeNovo).orElse(false);
+        setButtonEnabled(hasDenovoFeature, "Your Subscription does not contain the de novo structure generation feature (or you are not logged in).");
         setButtonEnabled(true, notConnectedMessage);
     }
 

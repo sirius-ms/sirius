@@ -29,6 +29,7 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
@@ -42,10 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -117,7 +115,19 @@ public class InstanceImporter {
                 setProjectTypeOrThrow(noSQLProject.getProject());
 
             prog = new JobProgressMerger(pcs);
-            return importMultipleSources();
+            List<Instance> instances = importMultipleSources();
+
+            if (msInput != null && importTarget instanceof NoSQLProjectSpaceManager nsql){
+                SiriusProjectDatabaseImpl<? extends Database<?>> project = nsql.getProject();
+                ProjectSourceFormats projectSources = project.findProjectSourceFormats().orElseGet(ProjectSourceFormats::new);
+                msInput.stream().map(InputResource::getFilename)
+                        .map(FileUtils::getFileExt)
+                        .filter(MsExperimentParser::isSupportedEnding)
+                        .filter(Objects::nonNull).forEach(projectSources::addFormat);
+                project.upsertProjectSourceFormats(projectSources);
+            }
+
+            return instances;
         }
 
         private void setProjectTypeOrThrow(SiriusProjectDatabaseImpl<? extends Database<?>> ps) {

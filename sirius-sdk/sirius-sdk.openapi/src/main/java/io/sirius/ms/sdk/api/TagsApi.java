@@ -10,24 +10,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class TagsApi {
     private ApiClient apiClient;
 
@@ -35,7 +36,6 @@ public class TagsApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public TagsApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
@@ -48,6 +48,7 @@ public class TagsApi {
         this.apiClient = apiClient;
     }
 
+    
     /**
      * [EXPERIMENTAL] Group tags in the project
      * [EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -59,7 +60,7 @@ public class TagsApi {
      * @return TagGroup
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addGroupRequestCreation(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
+    private ResponseSpec addGroupRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nonnull String filter, @jakarta.annotation.Nonnull String type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -115,7 +116,7 @@ public class TagsApi {
      * @return TagGroup
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TagGroup addGroup(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
+    public TagGroup addGroup(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nonnull String filter, @jakarta.annotation.Nonnull String type) throws WebClientResponseException {
         ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
         return addGroupRequestCreation(projectId, groupName, filter, type).bodyToMono(localVarReturnType).block();
     }
@@ -131,7 +132,7 @@ public class TagsApi {
      * @return ResponseEntity&lt;TagGroup&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TagGroup> addGroupWithHttpInfo(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
+    public ResponseEntity<TagGroup> addGroupWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nonnull String filter, @jakarta.annotation.Nonnull String type) throws WebClientResponseException {
         ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
         return addGroupRequestCreation(projectId, groupName, filter, type).toEntity(localVarReturnType).block();
     }
@@ -147,9 +148,10 @@ public class TagsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addGroupWithResponseSpec(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
+    public ResponseSpec addGroupWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName, @jakarta.annotation.Nonnull String filter, @jakarta.annotation.Nonnull String type) throws WebClientResponseException {
         return addGroupRequestCreation(projectId, groupName, filter, type);
     }
+
     /**
      * [EXPERIMENTAL] Add a possible value to the tag definition in the project
      * [EXPERIMENTAL] Add a possible value to the tag definition in the project.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -160,7 +162,7 @@ public class TagsApi {
      * @return TagDefinition
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addPossibleValuesToTagDefinitionRequestCreation(String projectId, String tagName, List<Object> requestBody) throws WebClientResponseException {
+    private ResponseSpec addPossibleValuesToTagDefinitionRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName, @jakarta.annotation.Nonnull List<Object> requestBody) throws WebClientResponseException {
         Object postBody = requestBody;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -210,7 +212,7 @@ public class TagsApi {
      * @return TagDefinition
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TagDefinition addPossibleValuesToTagDefinition(String projectId, String tagName, List<Object> requestBody) throws WebClientResponseException {
+    public TagDefinition addPossibleValuesToTagDefinition(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName, @jakarta.annotation.Nonnull List<Object> requestBody) throws WebClientResponseException {
         ParameterizedTypeReference<TagDefinition> localVarReturnType = new ParameterizedTypeReference<TagDefinition>() {};
         return addPossibleValuesToTagDefinitionRequestCreation(projectId, tagName, requestBody).bodyToMono(localVarReturnType).block();
     }
@@ -225,7 +227,7 @@ public class TagsApi {
      * @return ResponseEntity&lt;TagDefinition&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TagDefinition> addPossibleValuesToTagDefinitionWithHttpInfo(String projectId, String tagName, List<Object> requestBody) throws WebClientResponseException {
+    public ResponseEntity<TagDefinition> addPossibleValuesToTagDefinitionWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName, @jakarta.annotation.Nonnull List<Object> requestBody) throws WebClientResponseException {
         ParameterizedTypeReference<TagDefinition> localVarReturnType = new ParameterizedTypeReference<TagDefinition>() {};
         return addPossibleValuesToTagDefinitionRequestCreation(projectId, tagName, requestBody).toEntity(localVarReturnType).block();
     }
@@ -240,9 +242,10 @@ public class TagsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addPossibleValuesToTagDefinitionWithResponseSpec(String projectId, String tagName, List<Object> requestBody) throws WebClientResponseException {
+    public ResponseSpec addPossibleValuesToTagDefinitionWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName, @jakarta.annotation.Nonnull List<Object> requestBody) throws WebClientResponseException {
         return addPossibleValuesToTagDefinitionRequestCreation(projectId, tagName, requestBody);
     }
+
     /**
      * [EXPERIMENTAL] Add tags to the project
      * [EXPERIMENTAL] Add tags to the project. Tag names must not exist in the project.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -252,7 +255,7 @@ public class TagsApi {
      * @return List&lt;TagDefinition&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec createTagsRequestCreation(String projectId, List<TagDefinitionImport> tagDefinitionImport) throws WebClientResponseException {
+    private ResponseSpec createTagsRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<TagDefinitionImport> tagDefinitionImport) throws WebClientResponseException {
         Object postBody = tagDefinitionImport;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -296,7 +299,7 @@ public class TagsApi {
      * @return List&lt;TagDefinition&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<TagDefinition> createTags(String projectId, List<TagDefinitionImport> tagDefinitionImport) throws WebClientResponseException {
+    public List<TagDefinition> createTags(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<TagDefinitionImport> tagDefinitionImport) throws WebClientResponseException {
         ParameterizedTypeReference<TagDefinition> localVarReturnType = new ParameterizedTypeReference<TagDefinition>() {};
         return createTagsRequestCreation(projectId, tagDefinitionImport).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -310,7 +313,7 @@ public class TagsApi {
      * @return ResponseEntity&lt;List&lt;TagDefinition&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<TagDefinition>> createTagsWithHttpInfo(String projectId, List<TagDefinitionImport> tagDefinitionImport) throws WebClientResponseException {
+    public ResponseEntity<List<TagDefinition>> createTagsWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<TagDefinitionImport> tagDefinitionImport) throws WebClientResponseException {
         ParameterizedTypeReference<TagDefinition> localVarReturnType = new ParameterizedTypeReference<TagDefinition>() {};
         return createTagsRequestCreation(projectId, tagDefinitionImport).toEntityList(localVarReturnType).block();
     }
@@ -324,9 +327,10 @@ public class TagsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec createTagsWithResponseSpec(String projectId, List<TagDefinitionImport> tagDefinitionImport) throws WebClientResponseException {
+    public ResponseSpec createTagsWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull List<TagDefinitionImport> tagDefinitionImport) throws WebClientResponseException {
         return createTagsRequestCreation(projectId, tagDefinitionImport);
     }
+
     /**
      * [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space
      * [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -335,7 +339,7 @@ public class TagsApi {
      * @param groupName name of group to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteGroupRequestCreation(String projectId, String groupName) throws WebClientResponseException {
+    private ResponseSpec deleteGroupRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -375,7 +379,7 @@ public class TagsApi {
      * @param groupName name of group to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteGroup(String projectId, String groupName) throws WebClientResponseException {
+    public void deleteGroup(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         deleteGroupRequestCreation(projectId, groupName).bodyToMono(localVarReturnType).block();
     }
@@ -388,7 +392,7 @@ public class TagsApi {
      * @param groupName name of group to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteGroupWithHttpInfo(String projectId, String groupName) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteGroupWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return deleteGroupRequestCreation(projectId, groupName).toEntity(localVarReturnType).block();
     }
@@ -402,9 +406,10 @@ public class TagsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteGroupWithResponseSpec(String projectId, String groupName) throws WebClientResponseException {
+    public ResponseSpec deleteGroupWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName) throws WebClientResponseException {
         return deleteGroupRequestCreation(projectId, groupName);
     }
+
     /**
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  This will also remove all tags belonging to this definition from every tagged entity.  &lt;/p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -413,7 +418,7 @@ public class TagsApi {
      * @param tagName name of the tag definition to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteTagRequestCreation(String projectId, String tagName) throws WebClientResponseException {
+    private ResponseSpec deleteTagRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -453,7 +458,7 @@ public class TagsApi {
      * @param tagName name of the tag definition to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteTag(String projectId, String tagName) throws WebClientResponseException {
+    public void deleteTag(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         deleteTagRequestCreation(projectId, tagName).bodyToMono(localVarReturnType).block();
     }
@@ -466,7 +471,7 @@ public class TagsApi {
      * @param tagName name of the tag definition to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteTagWithHttpInfo(String projectId, String tagName) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteTagWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return deleteTagRequestCreation(projectId, tagName).toEntity(localVarReturnType).block();
     }
@@ -480,9 +485,10 @@ public class TagsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteTagWithResponseSpec(String projectId, String tagName) throws WebClientResponseException {
+    public ResponseSpec deleteTagWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         return deleteTagRequestCreation(projectId, tagName);
     }
+
     /**
      * [EXPERIMENTAL] Get tag group by name in the given project-space
      * [EXPERIMENTAL] Get tag group by name in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -492,7 +498,7 @@ public class TagsApi {
      * @return TagGroup
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getGroupByNameRequestCreation(String projectId, String groupName) throws WebClientResponseException {
+    private ResponseSpec getGroupByNameRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -535,7 +541,7 @@ public class TagsApi {
      * @return TagGroup
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TagGroup getGroupByName(String projectId, String groupName) throws WebClientResponseException {
+    public TagGroup getGroupByName(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName) throws WebClientResponseException {
         ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
         return getGroupByNameRequestCreation(projectId, groupName).bodyToMono(localVarReturnType).block();
     }
@@ -549,7 +555,7 @@ public class TagsApi {
      * @return ResponseEntity&lt;TagGroup&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TagGroup> getGroupByNameWithHttpInfo(String projectId, String groupName) throws WebClientResponseException {
+    public ResponseEntity<TagGroup> getGroupByNameWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName) throws WebClientResponseException {
         ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
         return getGroupByNameRequestCreation(projectId, groupName).toEntity(localVarReturnType).block();
     }
@@ -563,9 +569,10 @@ public class TagsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getGroupByNameWithResponseSpec(String projectId, String groupName) throws WebClientResponseException {
+    public ResponseSpec getGroupByNameWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String groupName) throws WebClientResponseException {
         return getGroupByNameRequestCreation(projectId, groupName);
     }
+
     /**
      * [EXPERIMENTAL] Get all tag based groups in the given project-space
      * [EXPERIMENTAL] Get all tag based groups in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -575,7 +582,7 @@ public class TagsApi {
      * @return List&lt;TagGroup&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getGroupsRequestCreation(String projectId, String groupType) throws WebClientResponseException {
+    private ResponseSpec getGroupsRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String groupType) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -615,7 +622,7 @@ public class TagsApi {
      * @return List&lt;TagGroup&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<TagGroup> getGroups(String projectId, String groupType) throws WebClientResponseException {
+    public List<TagGroup> getGroups(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String groupType) throws WebClientResponseException {
         ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
         return getGroupsRequestCreation(projectId, groupType).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -629,7 +636,7 @@ public class TagsApi {
      * @return ResponseEntity&lt;List&lt;TagGroup&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<TagGroup>> getGroupsWithHttpInfo(String projectId, String groupType) throws WebClientResponseException {
+    public ResponseEntity<List<TagGroup>> getGroupsWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String groupType) throws WebClientResponseException {
         ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
         return getGroupsRequestCreation(projectId, groupType).toEntityList(localVarReturnType).block();
     }
@@ -643,9 +650,10 @@ public class TagsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getGroupsWithResponseSpec(String projectId, String groupType) throws WebClientResponseException {
+    public ResponseSpec getGroupsWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String groupType) throws WebClientResponseException {
         return getGroupsRequestCreation(projectId, groupType);
     }
+
     /**
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -655,7 +663,7 @@ public class TagsApi {
      * @return TagDefinition
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getTagRequestCreation(String projectId, String tagName) throws WebClientResponseException {
+    private ResponseSpec getTagRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -698,7 +706,7 @@ public class TagsApi {
      * @return TagDefinition
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TagDefinition getTag(String projectId, String tagName) throws WebClientResponseException {
+    public TagDefinition getTag(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         ParameterizedTypeReference<TagDefinition> localVarReturnType = new ParameterizedTypeReference<TagDefinition>() {};
         return getTagRequestCreation(projectId, tagName).bodyToMono(localVarReturnType).block();
     }
@@ -712,7 +720,7 @@ public class TagsApi {
      * @return ResponseEntity&lt;TagDefinition&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TagDefinition> getTagWithHttpInfo(String projectId, String tagName) throws WebClientResponseException {
+    public ResponseEntity<TagDefinition> getTagWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         ParameterizedTypeReference<TagDefinition> localVarReturnType = new ParameterizedTypeReference<TagDefinition>() {};
         return getTagRequestCreation(projectId, tagName).toEntity(localVarReturnType).block();
     }
@@ -726,9 +734,10 @@ public class TagsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getTagWithResponseSpec(String projectId, String tagName) throws WebClientResponseException {
+    public ResponseSpec getTagWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String tagName) throws WebClientResponseException {
         return getTagRequestCreation(projectId, tagName);
     }
+
     /**
      * [EXPERIMENTAL] Get all tag definitions in the given project-space
      * [EXPERIMENTAL] Get all tag definitions in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -738,7 +747,7 @@ public class TagsApi {
      * @return List&lt;TagDefinition&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getTagsRequestCreation(String projectId, String tagType) throws WebClientResponseException {
+    private ResponseSpec getTagsRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String tagType) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -778,7 +787,7 @@ public class TagsApi {
      * @return List&lt;TagDefinition&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<TagDefinition> getTags(String projectId, String tagType) throws WebClientResponseException {
+    public List<TagDefinition> getTags(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String tagType) throws WebClientResponseException {
         ParameterizedTypeReference<TagDefinition> localVarReturnType = new ParameterizedTypeReference<TagDefinition>() {};
         return getTagsRequestCreation(projectId, tagType).bodyToFlux(localVarReturnType).collectList().block();
     }
@@ -792,7 +801,7 @@ public class TagsApi {
      * @return ResponseEntity&lt;List&lt;TagDefinition&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<TagDefinition>> getTagsWithHttpInfo(String projectId, String tagType) throws WebClientResponseException {
+    public ResponseEntity<List<TagDefinition>> getTagsWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String tagType) throws WebClientResponseException {
         ParameterizedTypeReference<TagDefinition> localVarReturnType = new ParameterizedTypeReference<TagDefinition>() {};
         return getTagsRequestCreation(projectId, tagType).toEntityList(localVarReturnType).block();
     }
@@ -806,7 +815,7 @@ public class TagsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getTagsWithResponseSpec(String projectId, String tagType) throws WebClientResponseException {
+    public ResponseSpec getTagsWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String tagType) throws WebClientResponseException {
         return getTagsRequestCreation(projectId, tagType);
     }
 }

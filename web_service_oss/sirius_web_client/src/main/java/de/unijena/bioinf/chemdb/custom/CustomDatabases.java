@@ -21,7 +21,9 @@
 package de.unijena.bioinf.chemdb.custom;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
+import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.BlobStorages;
 import de.unijena.bioinf.storage.blob.Compressible;
@@ -36,6 +38,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import static de.unijena.bioinf.storage.blob.Compressible.TAG_COMPRESSION;
 
@@ -119,12 +122,14 @@ public class CustomDatabases {
         return db;
     }
 
-    public static CustomDatabase create(String location, CustomDatabaseSettings config, CdkFingerprintVersion version, boolean readOnly) throws IOException {
+    public static CustomDatabase create(
+            String location, CustomDatabaseSettings config, CdkFingerprintVersion version, boolean readOnly
+    ) throws IOException, UnsupportedDatabaseNameException, DatabaseNameAlreadyExistsException {
         //sanitize db name:
         if (!config.getName().equals(sanitizeDbName(config.getName())))
-            throw new IllegalArgumentException("Unsupported database name '" + config.getName() + "'. Allowed would be: " + sanitizeDbName(config.getName()));
+            throw new UnsupportedDatabaseNameException(config.getName(), sanitizeDbName(config.getName()));
         if (CustomDataSources.containsDB(config.getName())) {
-            throw new RuntimeException("Datasource with name " + config.getName() + " already exists.");
+            throw new DatabaseNameAlreadyExistsException(config.getName());
         }
 
         CustomDatabase db;
@@ -160,6 +165,15 @@ public class CustomDatabases {
         db.close();
         if (delete) {
             db.deleteDatabase();
+        }
+    }
+
+    public static Stream<FingerprintCandidateWrapper> getContents(CustomDatabase db) throws IOException {
+        AbstractChemicalDatabase chemDb = db.toChemDB().orElseThrow();
+        if (chemDb instanceof ChemicalNitriteDatabase nitriteDb) {
+            return nitriteDb.getAll();
+        } else {
+            throw new RuntimeException("Unsupported database type.");
         }
     }
 }

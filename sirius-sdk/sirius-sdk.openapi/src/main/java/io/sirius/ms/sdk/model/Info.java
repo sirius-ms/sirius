@@ -56,57 +56,69 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Info.JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS,
   Info.JSON_PROPERTY_SUPPORTED_I_L_P_SOLVERS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class Info {
   public static final String JSON_PROPERTY_NIGHT_SKY_API_VERSION = "nightSkyApiVersion";
+  @jakarta.annotation.Nullable
   private String nightSkyApiVersion;
 
   public static final String JSON_PROPERTY_SIRIUS_VERSION = "siriusVersion";
+  @jakarta.annotation.Nullable
   private String siriusVersion;
 
   public static final String JSON_PROPERTY_LATEST_SIRIUS_VERSION = "latestSiriusVersion";
+  @jakarta.annotation.Nullable
   private String latestSiriusVersion;
 
   public static final String JSON_PROPERTY_LATEST_SIRIUS_LINK = "latestSiriusLink";
+  @jakarta.annotation.Nullable
   private String latestSiriusLink;
 
   public static final String JSON_PROPERTY_UPDATE_AVAILABLE = "updateAvailable";
+  @jakarta.annotation.Nullable
   private Boolean updateAvailable;
 
   public static final String JSON_PROPERTY_SIRIUS_LIB_VERSION = "siriusLibVersion";
+  @jakarta.annotation.Nullable
   private String siriusLibVersion;
 
   public static final String JSON_PROPERTY_FINGER_ID_LIB_VERSION = "fingerIdLibVersion";
+  @jakarta.annotation.Nullable
   private String fingerIdLibVersion;
 
   public static final String JSON_PROPERTY_CHEM_DB_VERSION = "chemDbVersion";
+  @jakarta.annotation.Nullable
   private String chemDbVersion;
 
   public static final String JSON_PROPERTY_FINGER_ID_MODEL_VERSION = "fingerIdModelVersion";
+  @jakarta.annotation.Nullable
   private String fingerIdModelVersion;
 
   public static final String JSON_PROPERTY_FINGERPRINT_ID = "fingerprintId";
+  @jakarta.annotation.Nullable
   private String fingerprintId;
 
   public static final String JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS = "availableILPSolvers";
+  @jakarta.annotation.Nonnull
   private List<Solver> availableILPSolvers = new ArrayList<>();
 
   public static final String JSON_PROPERTY_SUPPORTED_I_L_P_SOLVERS = "supportedILPSolvers";
+  @jakarta.annotation.Nonnull
   private Map<String, String> supportedILPSolvers = new HashMap<>();
 
   public Info() {
   }
 
-  public Info nightSkyApiVersion(String nightSkyApiVersion) {
+  public Info nightSkyApiVersion(@jakarta.annotation.Nullable String nightSkyApiVersion) {
     
     this.nightSkyApiVersion = nightSkyApiVersion;
     return this;
   }
 
-   /**
+  /**
    * API version of the SIRIUS Nightsky API
    * @return nightSkyApiVersion
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NIGHT_SKY_API_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -118,20 +130,20 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_NIGHT_SKY_API_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNightSkyApiVersion(String nightSkyApiVersion) {
+  public void setNightSkyApiVersion(@jakarta.annotation.Nullable String nightSkyApiVersion) {
     this.nightSkyApiVersion = nightSkyApiVersion;
   }
 
-  public Info siriusVersion(String siriusVersion) {
+  public Info siriusVersion(@jakarta.annotation.Nullable String siriusVersion) {
     
     this.siriusVersion = siriusVersion;
     return this;
   }
 
-   /**
+  /**
    * Version of the SIRIUS application
    * @return siriusVersion
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SIRIUS_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -143,20 +155,20 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_SIRIUS_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSiriusVersion(String siriusVersion) {
+  public void setSiriusVersion(@jakarta.annotation.Nullable String siriusVersion) {
     this.siriusVersion = siriusVersion;
   }
 
-  public Info latestSiriusVersion(String latestSiriusVersion) {
+  public Info latestSiriusVersion(@jakarta.annotation.Nullable String latestSiriusVersion) {
     
     this.latestSiriusVersion = latestSiriusVersion;
     return this;
   }
 
-   /**
+  /**
    * Latest available Version of the SIRIUS application
    * @return latestSiriusVersion
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LATEST_SIRIUS_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -168,20 +180,20 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_LATEST_SIRIUS_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLatestSiriusVersion(String latestSiriusVersion) {
+  public void setLatestSiriusVersion(@jakarta.annotation.Nullable String latestSiriusVersion) {
     this.latestSiriusVersion = latestSiriusVersion;
   }
 
-  public Info latestSiriusLink(String latestSiriusLink) {
+  public Info latestSiriusLink(@jakarta.annotation.Nullable String latestSiriusLink) {
     
     this.latestSiriusLink = latestSiriusLink;
     return this;
   }
 
-   /**
+  /**
    * Link to the latest available Version of the SIRIUS application
    * @return latestSiriusLink
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_LATEST_SIRIUS_LINK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -193,20 +205,20 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_LATEST_SIRIUS_LINK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLatestSiriusLink(String latestSiriusLink) {
+  public void setLatestSiriusLink(@jakarta.annotation.Nullable String latestSiriusLink) {
     this.latestSiriusLink = latestSiriusLink;
   }
 
-  public Info updateAvailable(Boolean updateAvailable) {
+  public Info updateAvailable(@jakarta.annotation.Nullable Boolean updateAvailable) {
     
     this.updateAvailable = updateAvailable;
     return this;
   }
 
-   /**
+  /**
    * true if newer SIRIUS version is available
    * @return updateAvailable
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_UPDATE_AVAILABLE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -218,20 +230,20 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_UPDATE_AVAILABLE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUpdateAvailable(Boolean updateAvailable) {
+  public void setUpdateAvailable(@jakarta.annotation.Nullable Boolean updateAvailable) {
     this.updateAvailable = updateAvailable;
   }
 
-  public Info siriusLibVersion(String siriusLibVersion) {
+  public Info siriusLibVersion(@jakarta.annotation.Nullable String siriusLibVersion) {
     
     this.siriusLibVersion = siriusLibVersion;
     return this;
   }
 
-   /**
+  /**
    * Version of the SIRIUS libraries
    * @return siriusLibVersion
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SIRIUS_LIB_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -243,20 +255,20 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_SIRIUS_LIB_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSiriusLibVersion(String siriusLibVersion) {
+  public void setSiriusLibVersion(@jakarta.annotation.Nullable String siriusLibVersion) {
     this.siriusLibVersion = siriusLibVersion;
   }
 
-  public Info fingerIdLibVersion(String fingerIdLibVersion) {
+  public Info fingerIdLibVersion(@jakarta.annotation.Nullable String fingerIdLibVersion) {
     
     this.fingerIdLibVersion = fingerIdLibVersion;
     return this;
   }
 
-   /**
+  /**
    * Version of the CSI:FingerID libraries
    * @return fingerIdLibVersion
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FINGER_ID_LIB_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -268,20 +280,20 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_FINGER_ID_LIB_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFingerIdLibVersion(String fingerIdLibVersion) {
+  public void setFingerIdLibVersion(@jakarta.annotation.Nullable String fingerIdLibVersion) {
     this.fingerIdLibVersion = fingerIdLibVersion;
   }
 
-  public Info chemDbVersion(String chemDbVersion) {
+  public Info chemDbVersion(@jakarta.annotation.Nullable String chemDbVersion) {
     
     this.chemDbVersion = chemDbVersion;
     return this;
   }
 
-   /**
+  /**
    * Version of the Chemical Database available via SIRIUS web services
    * @return chemDbVersion
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CHEM_DB_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -293,20 +305,20 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_CHEM_DB_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setChemDbVersion(String chemDbVersion) {
+  public void setChemDbVersion(@jakarta.annotation.Nullable String chemDbVersion) {
     this.chemDbVersion = chemDbVersion;
   }
 
-  public Info fingerIdModelVersion(String fingerIdModelVersion) {
+  public Info fingerIdModelVersion(@jakarta.annotation.Nullable String fingerIdModelVersion) {
     
     this.fingerIdModelVersion = fingerIdModelVersion;
     return this;
   }
 
-   /**
+  /**
    * Version of the Machine learning models used for Fingerprint, Compound Class and Structure Prediction  Not available if web service is not reachable.
    * @return fingerIdModelVersion
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FINGER_ID_MODEL_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -318,20 +330,20 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_FINGER_ID_MODEL_VERSION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFingerIdModelVersion(String fingerIdModelVersion) {
+  public void setFingerIdModelVersion(@jakarta.annotation.Nullable String fingerIdModelVersion) {
     this.fingerIdModelVersion = fingerIdModelVersion;
   }
 
-  public Info fingerprintId(String fingerprintId) {
+  public Info fingerprintId(@jakarta.annotation.Nullable String fingerprintId) {
     
     this.fingerprintId = fingerprintId;
     return this;
   }
 
-   /**
+  /**
    * Version of the Molecular Fingerprint used by SIRIUS
    * @return fingerprintId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FINGERPRINT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -343,11 +355,11 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_FINGERPRINT_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFingerprintId(String fingerprintId) {
+  public void setFingerprintId(@jakarta.annotation.Nullable String fingerprintId) {
     this.fingerprintId = fingerprintId;
   }
 
-  public Info availableILPSolvers(List<Solver> availableILPSolvers) {
+  public Info availableILPSolvers(@jakarta.annotation.Nonnull List<Solver> availableILPSolvers) {
     
     this.availableILPSolvers = availableILPSolvers;
     return this;
@@ -361,10 +373,10 @@ public class Info {
     return this;
   }
 
-   /**
+  /**
    * Set of solvers that are configured correctly and can be loaded
    * @return availableILPSolvers
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -376,11 +388,11 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setAvailableILPSolvers(List<Solver> availableILPSolvers) {
+  public void setAvailableILPSolvers(@jakarta.annotation.Nonnull List<Solver> availableILPSolvers) {
     this.availableILPSolvers = availableILPSolvers;
   }
 
-  public Info supportedILPSolvers(Map<String, String> supportedILPSolvers) {
+  public Info supportedILPSolvers(@jakarta.annotation.Nonnull Map<String, String> supportedILPSolvers) {
     
     this.supportedILPSolvers = supportedILPSolvers;
     return this;
@@ -391,10 +403,10 @@ public class Info {
     return this;
   }
 
-   /**
+  /**
    * Set of ILP Solvers that are Supported and their version information
    * @return supportedILPSolvers
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_SUPPORTED_I_L_P_SOLVERS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -406,9 +418,10 @@ public class Info {
 
   @JsonProperty(JSON_PROPERTY_SUPPORTED_I_L_P_SOLVERS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSupportedILPSolvers(Map<String, String> supportedILPSolvers) {
+  public void setSupportedILPSolvers(@jakarta.annotation.Nonnull Map<String, String> supportedILPSolvers) {
     this.supportedILPSolvers = supportedILPSolvers;
   }
+
 
   @Override
   public boolean equals(Object o) {

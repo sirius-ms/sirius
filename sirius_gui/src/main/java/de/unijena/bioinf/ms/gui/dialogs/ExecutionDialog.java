@@ -23,12 +23,12 @@ package de.unijena.bioinf.ms.gui.dialogs;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.jjobs.SseProgressJJob;
 import io.sirius.ms.sdk.model.CommandSubmission;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
-import de.unijena.bioinf.projectspace.InstanceBean;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -46,19 +46,16 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
     protected final boolean executeInBackground;
 
-    public ExecutionDialog(SiriusGui gui, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, MainFrame owner, String title, boolean modal, boolean executeInBackground) {
-        super(owner, title, modal);
+    public ExecutionDialog(SiriusGui gui, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, Window owner, String title, boolean modal, boolean executeInBackground) {
+        super(owner, title, modal ? ModalityType.APPLICATION_MODAL : ModalityType.MODELESS);
         this.gui = gui;
         this.executeInBackground = executeInBackground;
         init(configPanel, compounds);
     }
 
-    private MainFrame mf() {
-        return (MainFrame) getOwner();
-    }
-
     protected JButton execute, cancel;
     protected P configPanel;
+    @Setter
     protected boolean indeterminateProgress = true;
 
     @Nullable
@@ -91,14 +88,6 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
         setVisible(true);
     }
 
-    public void setIndeterminateProgress(boolean indeterminateProgress) {
-        this.indeterminateProgress = indeterminateProgress;
-    }
-
-    public boolean isIndeterminateProgress() {
-        return indeterminateProgress;
-    }
-
     public void setCompounds(@Nullable List<InstanceBean> compounds) {
         this.compounds = compounds;
     }
@@ -121,7 +110,7 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
             LoadingBackroundTask<Job> bt = gui.applySiriusClient((c, pid) -> {
                 Job j = c.jobs().startCommand(pid, sub, List.of(JobOptField.PROGRESS));
                 if (!executeInBackground)
-                    return LoadingBackroundTask.runInBackground(mf(),
+                    return LoadingBackroundTask.runInBackground(getOwner(),
                             "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, null,
                             new SseProgressJJob(gui.getSiriusClient(), pid, j)
                     );
@@ -133,8 +122,8 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
         } catch (Exception e) {
             if (!(e.getCause() instanceof CancellationException)) {
                 //Handle error because it was not just cancellation.
-                LoggerFactory.getLogger(getClass()).error("Error when running '" + configPanel.toolCommand() + "'.", e);
-                new ExceptionDialog(mf(), e.getMessage());
+                LoggerFactory.getLogger(getClass()).error("Error when running '{}'.", configPanel.toolCommand(), e);
+                new ExceptionDialog(getOwner(), e.getMessage());
             }
 
         }

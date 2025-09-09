@@ -20,7 +20,7 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
@@ -77,7 +77,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
         //this is the selection refresh, element changes are detected by eventlist
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+            public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {
                 if (!selection.isSelectionEmpty()) {
                     while (event.next()) {
                         if (selection.isSelectedIndex(event.getIndex())) {
@@ -89,7 +89,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+            public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
                 if (!selected.isEmpty())
                     changeData(selected.getFirst());
                 else
@@ -98,7 +98,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
         });
 
         //set initial state because listeners are called on change and not on creation
-        DefaultEventSelectionModel<InstanceBean> m = compoundList.getCompoundListSelectionModel();
+        AdvancedListSelectionModel<InstanceBean> m = compoundList.getCompoundListSelectionModel();
         if (!m.isSelectionEmpty()) {
             changeData(m.getSelected().get(0));
         } else {
@@ -132,17 +132,21 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                     checkForInterruption();
 
                     Jobs.runEDTAndWait(() -> {
-                            csiScoreStats.reset();
-                            logPStats.reset();
-                            tanimotoStats.reset();
-                            loadAll.set(loadAllCandidates);
-                            loadDatabaseHitsAtom.set(loadDatabaseHits);
-                            loadDenovoAtom.set(loadDenovo);
+                        setDataEDT(ec);
+                        csiScoreStats.reset();
+                        logPStats.reset();
+                        tanimotoStats.reset();
+                        loadAll.set(loadAllCandidates);
+                        loadDatabaseHitsAtom.set(loadDatabaseHits);
+                        loadDenovoAtom.set(loadDenovo);
                     });
 
                     checkForInterruption();
 
                     if (ec != null) {
+                        //preload data so data can be accessed in EDT without UI blocking.
+                        ec.getFormulaAnnotation();
+
                         final List<FingerprintCandidateBean> fpcChache = dataExtractor.apply(ec, loadAllCandidates ? Integer.MAX_VALUE : 100, loadDatabaseHits, loadDenovo);
                         //prepare stats for filters and views before setting data
                         fpcChache.forEach(fpc ->{

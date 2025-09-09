@@ -46,8 +46,8 @@ public class SignOutAction extends AbstractGuiAction {
         boolean r = Jobs.runInBackgroundAndLoad(mainFrame, "Logging out...", () -> {
             try {
                 ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
-                    ApplicationCore.WEB_API.changeActiveSubscription(null);
-                    AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
+                    ApplicationCore.WEB_API().changeActiveSubscription(null);
+                    AuthServices.clearRefreshToken(ApplicationCore.WEB_API().getAuthService(), ApplicationCore.TOKEN_FILE);
                     ProxyManager.reconnect();
                 });
                 return true;

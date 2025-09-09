@@ -207,8 +207,4 @@ public class Utils {
     public static <T> Optional<Set<T>> getIfIdentical(Collection<T>... sets) {
         return Optional.ofNullable(getIfIdenticalOrNull(sets));
     }
-
-
-
-
 }

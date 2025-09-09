@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 public class SiriusProperties extends PropertyManager {
     private static final String USER_PROPERTIES_FILE_HAEDER = "This is the default Sirius properties file containing default values for all sirius properties that can be set";
     private static PersistentProperties SIRIUS_PROPERTIES_FILE;
+    public static final String ACTIVE_SUBSCRIPTION_KEY = "de.unijena.bioinf.sirius.security.subscription";
 
     public static PersistentProperties SIRIUS_PROPERTIES_FILE() {
         if (SIRIUS_PROPERTIES_FILE == null)

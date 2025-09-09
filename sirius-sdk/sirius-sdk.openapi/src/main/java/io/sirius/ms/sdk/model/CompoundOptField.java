@@ -38,11 +38,11 @@ public enum CompoundOptField {
   
   NONE("none"),
   
-  CONSENSUSANNOTATIONS("consensusAnnotations"),
+  CONSENSUS_ANNOTATIONS("consensusAnnotations"),
   
-  CONSENSUSANNOTATIONSDENOVO("consensusAnnotationsDeNovo"),
+  CONSENSUS_ANNOTATIONS_DE_NOVO("consensusAnnotationsDeNovo"),
   
-  CUSTOMANNOTATIONS("customAnnotations"),
+  CUSTOM_ANNOTATIONS("customAnnotations"),
   
   TAGS("tags");
 

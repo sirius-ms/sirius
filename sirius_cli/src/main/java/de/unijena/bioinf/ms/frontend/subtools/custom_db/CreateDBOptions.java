@@ -50,7 +50,7 @@ public class CreateDBOptions implements StandaloneTool<Workflow> {
         return () -> {
             CdkFingerprintVersion version;
             try {
-                version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
+                version = ApplicationCore.WEB_API().getCDKChemDBFingerprintVersion();
 
                 CustomDatabaseSettings settings = CustomDatabaseSettings.builder()
                         .usedFingerprints(List.of(version.getUsedFingerprints()))

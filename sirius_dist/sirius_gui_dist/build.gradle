@@ -23,6 +23,8 @@ apply plugin: 'io.spring.dependency-management'
 
 version = siriusFrontendVersion
 
+evaluationDependsOn(':sirius_rest_service')
+
 licenseReport {
     // Set output directory for the report data.
     // Defaults to ${project.buildDir}/reports/dependency-license.
@@ -70,8 +72,7 @@ dependencies {
 }
 
 mainClassName = 'org.springframework.boot.loader.launch.JarLauncher'
-//mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
-def mainJar = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
+def bootJarTask = project(':sirius_rest_service').tasks.named('bootJar')
 
 application {
     mainClass = project.mainClassName
@@ -82,7 +83,7 @@ application {
 
 launch4j {
     mainClassName = project.mainClassName
-    jar = getLibraryDir() + "\\$mainJar"
+    jar = bootJarTask.map { getLibraryDir() + File.separator + it.archiveFileName.get() }
     jvmOptions = project.siriusJvmArgs as Set
 }
 
@@ -153,7 +154,7 @@ distributions {
     sirius {
         contents {
             into('app') {
-                from(getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile)
+                from(bootJarTask)
             }
             if (siriusTargetPlatform.isWin()) {
                 from startScripts
@@ -186,9 +187,9 @@ distributions {
     }
 }
 
-installSiriusDist.dependsOn ':sirius_rest_service:bootJar'
-siriusDistZip.dependsOn ':sirius_rest_service:bootJar'
-siriusDistTar.dependsOn ':sirius_rest_service:bootJar'
+installSiriusDist.dependsOn bootJarTask
+siriusDistZip.dependsOn bootJarTask
+siriusDistTar.dependsOn bootJarTask
 
 installSiriusDist.dependsOn('generateLicenseReport')
 siriusDistZip.dependsOn 'generateLicenseReport'
@@ -232,7 +233,7 @@ distImage {
     imageName = 'sirius'
     mainClass = project.mainClassName
     jvmArgs = application.applicationDefaultJvmArgs
-    mainJarName = mainJar
+    mainJarName =  bootJarTask.flatMap { it.archiveFileName }
     winConsole = true
     macPackageName = 'SIRIUS'
     if (siriusTargetPlatform.isWin()) {

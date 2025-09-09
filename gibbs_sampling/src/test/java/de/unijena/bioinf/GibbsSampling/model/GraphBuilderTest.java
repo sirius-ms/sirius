@@ -46,7 +46,7 @@ public class GraphBuilderTest {
 
     @Test
     public void testGraphConstructionExample() throws Exception {
-        final Path exampleDir = Paths.get(getClass().getResource("/tiny-example").getFile());
+        final Path exampleDir = Paths.get(getClass().getResource("/tiny-example").toURI());
 
         LoggerFactory.getLogger(GraphBuilderTest.class).warn("test");
         Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.readData(exampleDir);

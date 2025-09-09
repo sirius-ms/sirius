@@ -40,19 +40,19 @@ public enum FormulaCandidateOptField {
   
   STATISTICS("statistics"),
   
-  FRAGMENTATIONTREE("fragmentationTree"),
+  FRAGMENTATION_TREE("fragmentationTree"),
   
-  ANNOTATEDSPECTRUM("annotatedSpectrum"),
+  ANNOTATED_SPECTRUM("annotatedSpectrum"),
   
-  ISOTOPEPATTERN("isotopePattern"),
+  ISOTOPE_PATTERN("isotopePattern"),
   
-  LIPIDANNOTATION("lipidAnnotation"),
+  LIPID_ANNOTATION("lipidAnnotation"),
   
-  PREDICTEDFINGERPRINT("predictedFingerprint"),
+  PREDICTED_FINGERPRINT("predictedFingerprint"),
   
-  COMPOUNDCLASSES("compoundClasses"),
+  COMPOUND_CLASSES("compoundClasses"),
   
-  CANOPUSPREDICTIONS("canopusPredictions");
+  CANOPUS_PREDICTIONS("canopusPredictions");
 
   private String value;
 

@@ -67,78 +67,97 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_COMPUTED_TOOLS,
   AlignedFeature.JSON_PROPERTY_TAGS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class AlignedFeature {
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_ID = "alignedFeatureId";
+  @jakarta.annotation.Nullable
   private String alignedFeatureId;
 
   public static final String JSON_PROPERTY_COMPOUND_ID = "compoundId";
+  @jakarta.annotation.Nullable
   private String compoundId;
 
   public static final String JSON_PROPERTY_NAME = "name";
+  @jakarta.annotation.Nullable
   private String name;
 
   public static final String JSON_PROPERTY_EXTERNAL_FEATURE_ID = "externalFeatureId";
+  @jakarta.annotation.Nullable
   private String externalFeatureId;
 
   public static final String JSON_PROPERTY_ION_MASS = "ionMass";
+  @jakarta.annotation.Nullable
   private Double ionMass;
 
   public static final String JSON_PROPERTY_CHARGE = "charge";
+  @jakarta.annotation.Nonnull
   private Integer charge;
 
   public static final String JSON_PROPERTY_DETECTED_ADDUCTS = "detectedAdducts";
+  @jakarta.annotation.Nonnull
   private Set<String> detectedAdducts = new LinkedHashSet<>();
 
   public static final String JSON_PROPERTY_RT_START_SECONDS = "rtStartSeconds";
+  @jakarta.annotation.Nullable
   private Double rtStartSeconds;
 
   public static final String JSON_PROPERTY_RT_END_SECONDS = "rtEndSeconds";
+  @jakarta.annotation.Nullable
   private Double rtEndSeconds;
 
   public static final String JSON_PROPERTY_RT_APEX_SECONDS = "rtApexSeconds";
+  @jakarta.annotation.Nullable
   private Double rtApexSeconds;
 
   public static final String JSON_PROPERTY_QUALITY = "quality";
+  @jakarta.annotation.Nullable
   private DataQuality quality;
 
   public static final String JSON_PROPERTY_HAS_MS1 = "hasMs1";
+  @jakarta.annotation.Nullable
   private Boolean hasMs1;
 
   public static final String JSON_PROPERTY_HAS_MS_MS = "hasMsMs";
+  @jakarta.annotation.Nullable
   private Boolean hasMsMs;
 
   public static final String JSON_PROPERTY_MS_DATA = "msData";
+  @jakarta.annotation.Nullable
   private MsData msData;
 
   public static final String JSON_PROPERTY_TOP_ANNOTATIONS = "topAnnotations";
+  @jakarta.annotation.Nullable
   private FeatureAnnotations topAnnotations;
 
   public static final String JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO = "topAnnotationsDeNovo";
+  @jakarta.annotation.Nullable
   private FeatureAnnotations topAnnotationsDeNovo;
 
   public static final String JSON_PROPERTY_COMPUTING = "computing";
+  @jakarta.annotation.Nullable
   private Boolean computing;
 
   public static final String JSON_PROPERTY_COMPUTED_TOOLS = "computedTools";
+  @jakarta.annotation.Nullable
   private ComputedSubtools computedTools;
 
   public static final String JSON_PROPERTY_TAGS = "tags";
+  @jakarta.annotation.Nullable
   private Map<String, Tag> tags;
 
   public AlignedFeature() {
   }
 
-  public AlignedFeature alignedFeatureId(String alignedFeatureId) {
+  public AlignedFeature alignedFeatureId(@jakarta.annotation.Nullable String alignedFeatureId) {
     
     this.alignedFeatureId = alignedFeatureId;
     return this;
   }
 
-   /**
+  /**
    * Get alignedFeatureId
    * @return alignedFeatureId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -150,20 +169,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAlignedFeatureId(String alignedFeatureId) {
+  public void setAlignedFeatureId(@jakarta.annotation.Nullable String alignedFeatureId) {
     this.alignedFeatureId = alignedFeatureId;
   }
 
-  public AlignedFeature compoundId(String compoundId) {
+  public AlignedFeature compoundId(@jakarta.annotation.Nullable String compoundId) {
     
     this.compoundId = compoundId;
     return this;
   }
 
-   /**
+  /**
    * Get compoundId
    * @return compoundId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -175,20 +194,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCompoundId(String compoundId) {
+  public void setCompoundId(@jakarta.annotation.Nullable String compoundId) {
     this.compoundId = compoundId;
   }
 
-  public AlignedFeature name(String name) {
+  public AlignedFeature name(@jakarta.annotation.Nullable String name) {
     
     this.name = name;
     return this;
   }
 
-   /**
+  /**
    * Get name
    * @return name
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -200,20 +219,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
+  public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
   }
 
-  public AlignedFeature externalFeatureId(String externalFeatureId) {
+  public AlignedFeature externalFeatureId(@jakarta.annotation.Nullable String externalFeatureId) {
     
     this.externalFeatureId = externalFeatureId;
     return this;
   }
 
-   /**
+  /**
    * Externally provided FeatureId (e.g. by some preprocessing tool).  This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source.
    * @return externalFeatureId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_EXTERNAL_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -225,20 +244,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_EXTERNAL_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExternalFeatureId(String externalFeatureId) {
+  public void setExternalFeatureId(@jakarta.annotation.Nullable String externalFeatureId) {
     this.externalFeatureId = externalFeatureId;
   }
 
-  public AlignedFeature ionMass(Double ionMass) {
+  public AlignedFeature ionMass(@jakarta.annotation.Nullable Double ionMass) {
     
     this.ionMass = ionMass;
     return this;
   }
 
-   /**
+  /**
    * Get ionMass
    * @return ionMass
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ION_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -250,20 +269,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_ION_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIonMass(Double ionMass) {
+  public void setIonMass(@jakarta.annotation.Nullable Double ionMass) {
     this.ionMass = ionMass;
   }
 
-  public AlignedFeature charge(Integer charge) {
+  public AlignedFeature charge(@jakarta.annotation.Nonnull Integer charge) {
     
     this.charge = charge;
     return this;
   }
 
-   /**
+  /**
    * Ion mode (charge) this feature has been measured in.
    * @return charge
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_CHARGE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -275,11 +294,11 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_CHARGE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setCharge(Integer charge) {
+  public void setCharge(@jakarta.annotation.Nonnull Integer charge) {
     this.charge = charge;
   }
 
-  public AlignedFeature detectedAdducts(Set<String> detectedAdducts) {
+  public AlignedFeature detectedAdducts(@jakarta.annotation.Nonnull Set<String> detectedAdducts) {
     
     this.detectedAdducts = detectedAdducts;
     return this;
@@ -293,10 +312,10 @@ public class AlignedFeature {
     return this;
   }
 
-   /**
+  /**
    * Adducts of this feature that have been detected during preprocessing.
    * @return detectedAdducts
-  **/
+   */
   @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
@@ -309,20 +328,20 @@ public class AlignedFeature {
   @JsonDeserialize(as = LinkedHashSet.class)
   @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setDetectedAdducts(Set<String> detectedAdducts) {
+  public void setDetectedAdducts(@jakarta.annotation.Nonnull Set<String> detectedAdducts) {
     this.detectedAdducts = detectedAdducts;
   }
 
-  public AlignedFeature rtStartSeconds(Double rtStartSeconds) {
+  public AlignedFeature rtStartSeconds(@jakarta.annotation.Nullable Double rtStartSeconds) {
     
     this.rtStartSeconds = rtStartSeconds;
     return this;
   }
 
-   /**
+  /**
    * Get rtStartSeconds
    * @return rtStartSeconds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -334,20 +353,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRtStartSeconds(Double rtStartSeconds) {
+  public void setRtStartSeconds(@jakarta.annotation.Nullable Double rtStartSeconds) {
     this.rtStartSeconds = rtStartSeconds;
   }
 
-  public AlignedFeature rtEndSeconds(Double rtEndSeconds) {
+  public AlignedFeature rtEndSeconds(@jakarta.annotation.Nullable Double rtEndSeconds) {
     
     this.rtEndSeconds = rtEndSeconds;
     return this;
   }
 
-   /**
+  /**
    * Get rtEndSeconds
    * @return rtEndSeconds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -359,20 +378,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRtEndSeconds(Double rtEndSeconds) {
+  public void setRtEndSeconds(@jakarta.annotation.Nullable Double rtEndSeconds) {
     this.rtEndSeconds = rtEndSeconds;
   }
 
-  public AlignedFeature rtApexSeconds(Double rtApexSeconds) {
+  public AlignedFeature rtApexSeconds(@jakarta.annotation.Nullable Double rtApexSeconds) {
     
     this.rtApexSeconds = rtApexSeconds;
     return this;
   }
 
-   /**
+  /**
    * Get rtApexSeconds
    * @return rtApexSeconds
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_RT_APEX_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -384,20 +403,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_RT_APEX_SECONDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRtApexSeconds(Double rtApexSeconds) {
+  public void setRtApexSeconds(@jakarta.annotation.Nullable Double rtApexSeconds) {
     this.rtApexSeconds = rtApexSeconds;
   }
 
-  public AlignedFeature quality(DataQuality quality) {
+  public AlignedFeature quality(@jakarta.annotation.Nullable DataQuality quality) {
     
     this.quality = quality;
     return this;
   }
 
-   /**
+  /**
    * Get quality
    * @return quality
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -409,20 +428,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setQuality(DataQuality quality) {
+  public void setQuality(@jakarta.annotation.Nullable DataQuality quality) {
     this.quality = quality;
   }
 
-  public AlignedFeature hasMs1(Boolean hasMs1) {
+  public AlignedFeature hasMs1(@jakarta.annotation.Nullable Boolean hasMs1) {
     
     this.hasMs1 = hasMs1;
     return this;
   }
 
-   /**
+  /**
    * If true, the feature has at lease one MS1 spectrum
    * @return hasMs1
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_HAS_MS1)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -434,20 +453,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_HAS_MS1)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setHasMs1(Boolean hasMs1) {
+  public void setHasMs1(@jakarta.annotation.Nullable Boolean hasMs1) {
     this.hasMs1 = hasMs1;
   }
 
-  public AlignedFeature hasMsMs(Boolean hasMsMs) {
+  public AlignedFeature hasMsMs(@jakarta.annotation.Nullable Boolean hasMsMs) {
     
     this.hasMsMs = hasMsMs;
     return this;
   }
 
-   /**
+  /**
    * If true, the feature has at lease one MS/MS spectrum
    * @return hasMsMs
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_HAS_MS_MS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -459,20 +478,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_HAS_MS_MS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setHasMsMs(Boolean hasMsMs) {
+  public void setHasMsMs(@jakarta.annotation.Nullable Boolean hasMsMs) {
     this.hasMsMs = hasMsMs;
   }
 
-  public AlignedFeature msData(MsData msData) {
+  public AlignedFeature msData(@jakarta.annotation.Nullable MsData msData) {
     
     this.msData = msData;
     return this;
   }
 
-   /**
+  /**
    * Get msData
    * @return msData
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS_DATA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -484,20 +503,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_MS_DATA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMsData(MsData msData) {
+  public void setMsData(@jakarta.annotation.Nullable MsData msData) {
     this.msData = msData;
   }
 
-  public AlignedFeature topAnnotations(FeatureAnnotations topAnnotations) {
+  public AlignedFeature topAnnotations(@jakarta.annotation.Nullable FeatureAnnotations topAnnotations) {
     
     this.topAnnotations = topAnnotations;
     return this;
   }
 
-   /**
+  /**
    * Get topAnnotations
    * @return topAnnotations
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TOP_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -509,20 +528,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_TOP_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTopAnnotations(FeatureAnnotations topAnnotations) {
+  public void setTopAnnotations(@jakarta.annotation.Nullable FeatureAnnotations topAnnotations) {
     this.topAnnotations = topAnnotations;
   }
 
-  public AlignedFeature topAnnotationsDeNovo(FeatureAnnotations topAnnotationsDeNovo) {
+  public AlignedFeature topAnnotationsDeNovo(@jakarta.annotation.Nullable FeatureAnnotations topAnnotationsDeNovo) {
     
     this.topAnnotationsDeNovo = topAnnotationsDeNovo;
     return this;
   }
 
-   /**
+  /**
    * Get topAnnotationsDeNovo
    * @return topAnnotationsDeNovo
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -534,20 +553,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTopAnnotationsDeNovo(FeatureAnnotations topAnnotationsDeNovo) {
+  public void setTopAnnotationsDeNovo(@jakarta.annotation.Nullable FeatureAnnotations topAnnotationsDeNovo) {
     this.topAnnotationsDeNovo = topAnnotationsDeNovo;
   }
 
-  public AlignedFeature computing(Boolean computing) {
+  public AlignedFeature computing(@jakarta.annotation.Nullable Boolean computing) {
     
     this.computing = computing;
     return this;
   }
 
-   /**
+  /**
    * Write lock for this feature. If the feature is locked no write operations are possible.  True if any computation is modifying this feature or its results
    * @return computing
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COMPUTING)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -559,20 +578,20 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_COMPUTING)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setComputing(Boolean computing) {
+  public void setComputing(@jakarta.annotation.Nullable Boolean computing) {
     this.computing = computing;
   }
 
-  public AlignedFeature computedTools(ComputedSubtools computedTools) {
+  public AlignedFeature computedTools(@jakarta.annotation.Nullable ComputedSubtools computedTools) {
     
     this.computedTools = computedTools;
     return this;
   }
 
-   /**
+  /**
    * Get computedTools
    * @return computedTools
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_COMPUTED_TOOLS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -584,11 +603,11 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_COMPUTED_TOOLS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setComputedTools(ComputedSubtools computedTools) {
+  public void setComputedTools(@jakarta.annotation.Nullable ComputedSubtools computedTools) {
     this.computedTools = computedTools;
   }
 
-  public AlignedFeature tags(Map<String, Tag> tags) {
+  public AlignedFeature tags(@jakarta.annotation.Nullable Map<String, Tag> tags) {
     
     this.tags = tags;
     return this;
@@ -602,10 +621,10 @@ public class AlignedFeature {
     return this;
   }
 
-   /**
+  /**
    * Key: tagName, value: tag
    * @return tags
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TAGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -617,9 +636,10 @@ public class AlignedFeature {
 
   @JsonProperty(JSON_PROPERTY_TAGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTags(Map<String, Tag> tags) {
+  public void setTags(@jakarta.annotation.Nullable Map<String, Tag> tags) {
     this.tags = tags;
   }
+
 
   @Override
   public boolean equals(Object o) {

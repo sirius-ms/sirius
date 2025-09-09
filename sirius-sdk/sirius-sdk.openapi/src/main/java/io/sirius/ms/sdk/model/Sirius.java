@@ -65,81 +65,101 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Sirius.JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH,
   Sirius.JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class Sirius {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
+  @jakarta.annotation.Nullable
   private Boolean enabled;
 
   public static final String JSON_PROPERTY_PROFILE = "profile";
+  @jakarta.annotation.Nullable
   private InstrumentProfile profile;
 
   public static final String JSON_PROPERTY_NUMBER_OF_CANDIDATES = "numberOfCandidates";
+  @jakarta.annotation.Nullable
   private Integer numberOfCandidates;
 
   public static final String JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION = "numberOfCandidatesPerIonization";
+  @jakarta.annotation.Nullable
   private Integer numberOfCandidatesPerIonization;
 
   public static final String JSON_PROPERTY_MASS_ACCURACY_M_S2PPM = "massAccuracyMS2ppm";
+  @jakarta.annotation.Nullable
   private Double massAccuracyMS2ppm;
 
   public static final String JSON_PROPERTY_ISOTOPE_MS2_SETTINGS = "isotopeMs2Settings";
+  @jakarta.annotation.Nullable
   private IsotopeMs2Strategy isotopeMs2Settings;
 
   public static final String JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN = "filterByIsotopePattern";
+  @jakarta.annotation.Nullable
   private Boolean filterByIsotopePattern;
 
   public static final String JSON_PROPERTY_ENFORCE_EL_GORDO_FORMULA = "enforceElGordoFormula";
+  @jakarta.annotation.Nullable
   private Boolean enforceElGordoFormula;
 
   public static final String JSON_PROPERTY_PERFORM_BOTTOM_UP_SEARCH = "performBottomUpSearch";
+  @jakarta.annotation.Nullable
   private Boolean performBottomUpSearch;
 
   public static final String JSON_PROPERTY_PERFORM_DENOVO_BELOW_MZ = "performDenovoBelowMz";
+  @jakarta.annotation.Nullable
   private Double performDenovoBelowMz;
 
   public static final String JSON_PROPERTY_FORMULA_SEARCH_D_BS = "formulaSearchDBs";
+  @jakarta.annotation.Nullable
   private List<String> formulaSearchDBs;
 
   public static final String JSON_PROPERTY_APPLY_FORMULA_CONSTRAINTS_TO_D_B_AND_BOTTOM_UP_SEARCH = "applyFormulaConstraintsToDBAndBottomUpSearch";
+  @jakarta.annotation.Nullable
   private Boolean applyFormulaConstraintsToDBAndBottomUpSearch;
 
   public static final String JSON_PROPERTY_ENFORCED_FORMULA_CONSTRAINTS = "enforcedFormulaConstraints";
+  @jakarta.annotation.Nullable
   private String enforcedFormulaConstraints;
 
   public static final String JSON_PROPERTY_FALLBACK_FORMULA_CONSTRAINTS = "fallbackFormulaConstraints";
+  @jakarta.annotation.Nullable
   private String fallbackFormulaConstraints;
 
   public static final String JSON_PROPERTY_DETECTABLE_ELEMENTS = "detectableElements";
+  @jakarta.annotation.Nullable
   private List<String> detectableElements;
 
   public static final String JSON_PROPERTY_ILP_TIMEOUT = "ilpTimeout";
+  @jakarta.annotation.Nullable
   private Timeout ilpTimeout;
 
   public static final String JSON_PROPERTY_USE_HEURISTIC = "useHeuristic";
+  @jakarta.annotation.Nullable
   private UseHeuristic useHeuristic;
 
   public static final String JSON_PROPERTY_INJECT_SPEC_LIB_MATCH_FORMULAS = "injectSpecLibMatchFormulas";
+  @jakarta.annotation.Nullable
   private Boolean injectSpecLibMatchFormulas;
 
   public static final String JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH = "minScoreToInjectSpecLibMatch";
+  @jakarta.annotation.Nullable
   private Double minScoreToInjectSpecLibMatch;
 
   public static final String JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH = "minPeaksToInjectSpecLibMatch";
+  @jakarta.annotation.Nullable
   private Integer minPeaksToInjectSpecLibMatch;
 
   public Sirius() {
   }
 
-  public Sirius enabled(Boolean enabled) {
+  public Sirius enabled(@jakarta.annotation.Nullable Boolean enabled) {
     
     this.enabled = enabled;
     return this;
   }
 
-   /**
+  /**
    * tags whether the tool is enabled
    * @return enabled
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -151,20 +171,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_ENABLED)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnabled(Boolean enabled) {
+  public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
   }
 
-  public Sirius profile(InstrumentProfile profile) {
+  public Sirius profile(@jakarta.annotation.Nullable InstrumentProfile profile) {
     
     this.profile = profile;
     return this;
   }
 
-   /**
+  /**
    * Get profile
    * @return profile
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PROFILE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -176,20 +196,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_PROFILE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setProfile(InstrumentProfile profile) {
+  public void setProfile(@jakarta.annotation.Nullable InstrumentProfile profile) {
     this.profile = profile;
   }
 
-  public Sirius numberOfCandidates(Integer numberOfCandidates) {
+  public Sirius numberOfCandidates(@jakarta.annotation.Nullable Integer numberOfCandidates) {
     
     this.numberOfCandidates = numberOfCandidates;
     return this;
   }
 
-   /**
+  /**
    * Number of formula candidates to keep as result list (Formula Candidates).
    * @return numberOfCandidates
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -201,20 +221,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumberOfCandidates(Integer numberOfCandidates) {
+  public void setNumberOfCandidates(@jakarta.annotation.Nullable Integer numberOfCandidates) {
     this.numberOfCandidates = numberOfCandidates;
   }
 
-  public Sirius numberOfCandidatesPerIonization(Integer numberOfCandidatesPerIonization) {
+  public Sirius numberOfCandidatesPerIonization(@jakarta.annotation.Nullable Integer numberOfCandidatesPerIonization) {
     
     this.numberOfCandidatesPerIonization = numberOfCandidatesPerIonization;
     return this;
   }
 
-   /**
+  /**
    * Use this parameter if you want to force SIRIUS to report at least  NumberOfCandidatesPerIonization results per ionization.  if &lt;&#x3D; 0, this parameter will have no effect and just the top  NumberOfCandidates results will be reported.
    * @return numberOfCandidatesPerIonization
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -226,20 +246,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumberOfCandidatesPerIonization(Integer numberOfCandidatesPerIonization) {
+  public void setNumberOfCandidatesPerIonization(@jakarta.annotation.Nullable Integer numberOfCandidatesPerIonization) {
     this.numberOfCandidatesPerIonization = numberOfCandidatesPerIonization;
   }
 
-  public Sirius massAccuracyMS2ppm(Double massAccuracyMS2ppm) {
+  public Sirius massAccuracyMS2ppm(@jakarta.annotation.Nullable Double massAccuracyMS2ppm) {
     
     this.massAccuracyMS2ppm = massAccuracyMS2ppm;
     return this;
   }
 
-   /**
+  /**
    * Maximum allowed mass deviation. Only molecular formulas within this mass window are considered.
    * @return massAccuracyMS2ppm
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MASS_ACCURACY_M_S2PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -251,20 +271,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_MASS_ACCURACY_M_S2PPM)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMassAccuracyMS2ppm(Double massAccuracyMS2ppm) {
+  public void setMassAccuracyMS2ppm(@jakarta.annotation.Nullable Double massAccuracyMS2ppm) {
     this.massAccuracyMS2ppm = massAccuracyMS2ppm;
   }
 
-  public Sirius isotopeMs2Settings(IsotopeMs2Strategy isotopeMs2Settings) {
+  public Sirius isotopeMs2Settings(@jakarta.annotation.Nullable IsotopeMs2Strategy isotopeMs2Settings) {
     
     this.isotopeMs2Settings = isotopeMs2Settings;
     return this;
   }
 
-   /**
+  /**
    * Get isotopeMs2Settings
    * @return isotopeMs2Settings
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ISOTOPE_MS2_SETTINGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -276,20 +296,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_ISOTOPE_MS2_SETTINGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIsotopeMs2Settings(IsotopeMs2Strategy isotopeMs2Settings) {
+  public void setIsotopeMs2Settings(@jakarta.annotation.Nullable IsotopeMs2Strategy isotopeMs2Settings) {
     this.isotopeMs2Settings = isotopeMs2Settings;
   }
 
-  public Sirius filterByIsotopePattern(Boolean filterByIsotopePattern) {
+  public Sirius filterByIsotopePattern(@jakarta.annotation.Nullable Boolean filterByIsotopePattern) {
     
     this.filterByIsotopePattern = filterByIsotopePattern;
     return this;
   }
 
-   /**
+  /**
    * When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.
    * @return filterByIsotopePattern
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -301,20 +321,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFilterByIsotopePattern(Boolean filterByIsotopePattern) {
+  public void setFilterByIsotopePattern(@jakarta.annotation.Nullable Boolean filterByIsotopePattern) {
     this.filterByIsotopePattern = filterByIsotopePattern;
   }
 
-  public Sirius enforceElGordoFormula(Boolean enforceElGordoFormula) {
+  public Sirius enforceElGordoFormula(@jakarta.annotation.Nullable Boolean enforceElGordoFormula) {
     
     this.enforceElGordoFormula = enforceElGordoFormula;
     return this;
   }
 
-   /**
+  /**
    * El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforeced as molecular formula candidate.
    * @return enforceElGordoFormula
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ENFORCE_EL_GORDO_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -326,20 +346,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_ENFORCE_EL_GORDO_FORMULA)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnforceElGordoFormula(Boolean enforceElGordoFormula) {
+  public void setEnforceElGordoFormula(@jakarta.annotation.Nullable Boolean enforceElGordoFormula) {
     this.enforceElGordoFormula = enforceElGordoFormula;
   }
 
-  public Sirius performBottomUpSearch(Boolean performBottomUpSearch) {
+  public Sirius performBottomUpSearch(@jakarta.annotation.Nullable Boolean performBottomUpSearch) {
     
     this.performBottomUpSearch = performBottomUpSearch;
     return this;
   }
 
-   /**
+  /**
    * If true, molecular formula generation via bottom up search is enabled.
    * @return performBottomUpSearch
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PERFORM_BOTTOM_UP_SEARCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -351,20 +371,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_PERFORM_BOTTOM_UP_SEARCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPerformBottomUpSearch(Boolean performBottomUpSearch) {
+  public void setPerformBottomUpSearch(@jakarta.annotation.Nullable Boolean performBottomUpSearch) {
     this.performBottomUpSearch = performBottomUpSearch;
   }
 
-  public Sirius performDenovoBelowMz(Double performDenovoBelowMz) {
+  public Sirius performDenovoBelowMz(@jakarta.annotation.Nullable Double performDenovoBelowMz) {
     
     this.performDenovoBelowMz = performDenovoBelowMz;
     return this;
   }
 
-   /**
+  /**
    * Specifies the m/z below which de novo molecular formula generation is enabled. Set to 0 to disable de novo molecular formula generation.
    * @return performDenovoBelowMz
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_PERFORM_DENOVO_BELOW_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -376,11 +396,11 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_PERFORM_DENOVO_BELOW_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPerformDenovoBelowMz(Double performDenovoBelowMz) {
+  public void setPerformDenovoBelowMz(@jakarta.annotation.Nullable Double performDenovoBelowMz) {
     this.performDenovoBelowMz = performDenovoBelowMz;
   }
 
-  public Sirius formulaSearchDBs(List<String> formulaSearchDBs) {
+  public Sirius formulaSearchDBs(@jakarta.annotation.Nullable List<String> formulaSearchDBs) {
     
     this.formulaSearchDBs = formulaSearchDBs;
     return this;
@@ -394,10 +414,10 @@ public class Sirius {
     return this;
   }
 
-   /**
+  /**
    * List Structure database to extract molecular formulas from to reduce formula search space.  SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.
    * @return formulaSearchDBs
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FORMULA_SEARCH_D_BS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -409,20 +429,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_FORMULA_SEARCH_D_BS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFormulaSearchDBs(List<String> formulaSearchDBs) {
+  public void setFormulaSearchDBs(@jakarta.annotation.Nullable List<String> formulaSearchDBs) {
     this.formulaSearchDBs = formulaSearchDBs;
   }
 
-  public Sirius applyFormulaConstraintsToDBAndBottomUpSearch(Boolean applyFormulaConstraintsToDBAndBottomUpSearch) {
+  public Sirius applyFormulaConstraintsToDBAndBottomUpSearch(@jakarta.annotation.Nullable Boolean applyFormulaConstraintsToDBAndBottomUpSearch) {
     
     this.applyFormulaConstraintsToDBAndBottomUpSearch = applyFormulaConstraintsToDBAndBottomUpSearch;
     return this;
   }
 
-   /**
+  /**
    * By default, the formula (element) constraints are only applied to de novo molecular formula generation.  If true, the constraints are as well applied to database search and bottom up search.
    * @return applyFormulaConstraintsToDBAndBottomUpSearch
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_APPLY_FORMULA_CONSTRAINTS_TO_D_B_AND_BOTTOM_UP_SEARCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -434,20 +454,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_APPLY_FORMULA_CONSTRAINTS_TO_D_B_AND_BOTTOM_UP_SEARCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setApplyFormulaConstraintsToDBAndBottomUpSearch(Boolean applyFormulaConstraintsToDBAndBottomUpSearch) {
+  public void setApplyFormulaConstraintsToDBAndBottomUpSearch(@jakarta.annotation.Nullable Boolean applyFormulaConstraintsToDBAndBottomUpSearch) {
     this.applyFormulaConstraintsToDBAndBottomUpSearch = applyFormulaConstraintsToDBAndBottomUpSearch;
   }
 
-  public Sirius enforcedFormulaConstraints(String enforcedFormulaConstraints) {
+  public Sirius enforcedFormulaConstraints(@jakarta.annotation.Nullable String enforcedFormulaConstraints) {
     
     this.enforcedFormulaConstraints = enforcedFormulaConstraints;
     return this;
   }
 
-   /**
+  /**
    * These configurations hold the information how to autodetect elements based on the given formula constraints.  Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.  &lt;p&gt;  Enforced: Enforced elements are always considered
    * @return enforcedFormulaConstraints
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ENFORCED_FORMULA_CONSTRAINTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -459,20 +479,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_ENFORCED_FORMULA_CONSTRAINTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEnforcedFormulaConstraints(String enforcedFormulaConstraints) {
+  public void setEnforcedFormulaConstraints(@jakarta.annotation.Nullable String enforcedFormulaConstraints) {
     this.enforcedFormulaConstraints = enforcedFormulaConstraints;
   }
 
-  public Sirius fallbackFormulaConstraints(String fallbackFormulaConstraints) {
+  public Sirius fallbackFormulaConstraints(@jakarta.annotation.Nullable String fallbackFormulaConstraints) {
     
     this.fallbackFormulaConstraints = fallbackFormulaConstraints;
     return this;
   }
 
-   /**
+  /**
    * These configurations hold the information how to autodetect elements based on the given formula constraints.  Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.  &lt;p&gt;  Fallback: Fallback elements are used, if the auto-detection fails (e.g. no isotope pattern available)
    * @return fallbackFormulaConstraints
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_FALLBACK_FORMULA_CONSTRAINTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -484,11 +504,11 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_FALLBACK_FORMULA_CONSTRAINTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFallbackFormulaConstraints(String fallbackFormulaConstraints) {
+  public void setFallbackFormulaConstraints(@jakarta.annotation.Nullable String fallbackFormulaConstraints) {
     this.fallbackFormulaConstraints = fallbackFormulaConstraints;
   }
 
-  public Sirius detectableElements(List<String> detectableElements) {
+  public Sirius detectableElements(@jakarta.annotation.Nullable List<String> detectableElements) {
     
     this.detectableElements = detectableElements;
     return this;
@@ -502,10 +522,10 @@ public class Sirius {
     return this;
   }
 
-   /**
+  /**
    * These configurations hold the information how to autodetect elements based on the given formula constraints.  Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.  &lt;p&gt;  Detectable: Detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)
    * @return detectableElements
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DETECTABLE_ELEMENTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -517,20 +537,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_DETECTABLE_ELEMENTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDetectableElements(List<String> detectableElements) {
+  public void setDetectableElements(@jakarta.annotation.Nullable List<String> detectableElements) {
     this.detectableElements = detectableElements;
   }
 
-  public Sirius ilpTimeout(Timeout ilpTimeout) {
+  public Sirius ilpTimeout(@jakarta.annotation.Nullable Timeout ilpTimeout) {
     
     this.ilpTimeout = ilpTimeout;
     return this;
   }
 
-   /**
+  /**
    * Get ilpTimeout
    * @return ilpTimeout
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ILP_TIMEOUT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -542,20 +562,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_ILP_TIMEOUT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIlpTimeout(Timeout ilpTimeout) {
+  public void setIlpTimeout(@jakarta.annotation.Nullable Timeout ilpTimeout) {
     this.ilpTimeout = ilpTimeout;
   }
 
-  public Sirius useHeuristic(UseHeuristic useHeuristic) {
+  public Sirius useHeuristic(@jakarta.annotation.Nullable UseHeuristic useHeuristic) {
     
     this.useHeuristic = useHeuristic;
     return this;
   }
 
-   /**
+  /**
    * Get useHeuristic
    * @return useHeuristic
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_USE_HEURISTIC)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -567,20 +587,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_USE_HEURISTIC)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUseHeuristic(UseHeuristic useHeuristic) {
+  public void setUseHeuristic(@jakarta.annotation.Nullable UseHeuristic useHeuristic) {
     this.useHeuristic = useHeuristic;
   }
 
-  public Sirius injectSpecLibMatchFormulas(Boolean injectSpecLibMatchFormulas) {
+  public Sirius injectSpecLibMatchFormulas(@jakarta.annotation.Nullable Boolean injectSpecLibMatchFormulas) {
     
     this.injectSpecLibMatchFormulas = injectSpecLibMatchFormulas;
     return this;
   }
 
-   /**
+  /**
    * If true formula candidates that belong to spectral library matches above a certain threshold will  we inject/preserved for further analyses no matter which score they have or which filter is applied
    * @return injectSpecLibMatchFormulas
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_INJECT_SPEC_LIB_MATCH_FORMULAS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -592,20 +612,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_INJECT_SPEC_LIB_MATCH_FORMULAS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setInjectSpecLibMatchFormulas(Boolean injectSpecLibMatchFormulas) {
+  public void setInjectSpecLibMatchFormulas(@jakarta.annotation.Nullable Boolean injectSpecLibMatchFormulas) {
     this.injectSpecLibMatchFormulas = injectSpecLibMatchFormulas;
   }
 
-  public Sirius minScoreToInjectSpecLibMatch(Double minScoreToInjectSpecLibMatch) {
+  public Sirius minScoreToInjectSpecLibMatch(@jakarta.annotation.Nullable Double minScoreToInjectSpecLibMatch) {
     
     this.minScoreToInjectSpecLibMatch = minScoreToInjectSpecLibMatch;
     return this;
   }
 
-   /**
+  /**
    * Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.  If threshold &gt;&#x3D; 0 formulas candidates with reference spectrum similarity above the threshold will be injected.
    * @return minScoreToInjectSpecLibMatch
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -617,20 +637,20 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinScoreToInjectSpecLibMatch(Double minScoreToInjectSpecLibMatch) {
+  public void setMinScoreToInjectSpecLibMatch(@jakarta.annotation.Nullable Double minScoreToInjectSpecLibMatch) {
     this.minScoreToInjectSpecLibMatch = minScoreToInjectSpecLibMatch;
   }
 
-  public Sirius minPeaksToInjectSpecLibMatch(Integer minPeaksToInjectSpecLibMatch) {
+  public Sirius minPeaksToInjectSpecLibMatch(@jakarta.annotation.Nullable Integer minPeaksToInjectSpecLibMatch) {
     
     this.minPeaksToInjectSpecLibMatch = minPeaksToInjectSpecLibMatch;
     return this;
   }
 
-   /**
+  /**
    * Matching peaks threshold to inject formula candidates no matter which score they have or which filter is applied.
    * @return minPeaksToInjectSpecLibMatch
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -642,9 +662,10 @@ public class Sirius {
 
   @JsonProperty(JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinPeaksToInjectSpecLibMatch(Integer minPeaksToInjectSpecLibMatch) {
+  public void setMinPeaksToInjectSpecLibMatch(@jakarta.annotation.Nullable Integer minPeaksToInjectSpecLibMatch) {
     this.minPeaksToInjectSpecLibMatch = minPeaksToInjectSpecLibMatch;
   }
+
 
   @Override
   public boolean equals(Object o) {

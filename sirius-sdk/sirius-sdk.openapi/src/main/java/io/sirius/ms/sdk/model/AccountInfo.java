@@ -48,39 +48,45 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AccountInfo.JSON_PROPERTY_SUBSCRIPTIONS,
   AccountInfo.JSON_PROPERTY_ACTIVE_SUBSCRIPTION_ID
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class AccountInfo {
   public static final String JSON_PROPERTY_USER_I_D = "userID";
+  @jakarta.annotation.Nullable
   private String userID;
 
   public static final String JSON_PROPERTY_USERNAME = "username";
+  @jakarta.annotation.Nullable
   private String username;
 
   public static final String JSON_PROPERTY_USER_EMAIL = "userEmail";
+  @jakarta.annotation.Nullable
   private String userEmail;
 
   public static final String JSON_PROPERTY_GRAVATAR_U_R_L = "gravatarURL";
+  @jakarta.annotation.Nullable
   private String gravatarURL;
 
   public static final String JSON_PROPERTY_SUBSCRIPTIONS = "subscriptions";
+  @jakarta.annotation.Nullable
   private List<Subscription> subscriptions = new ArrayList<>();
 
   public static final String JSON_PROPERTY_ACTIVE_SUBSCRIPTION_ID = "activeSubscriptionId";
+  @jakarta.annotation.Nullable
   private String activeSubscriptionId;
 
   public AccountInfo() {
   }
 
-  public AccountInfo userID(String userID) {
+  public AccountInfo userID(@jakarta.annotation.Nullable String userID) {
     
     this.userID = userID;
     return this;
   }
 
-   /**
+  /**
    * Get userID
    * @return userID
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_USER_I_D)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -92,20 +98,20 @@ public class AccountInfo {
 
   @JsonProperty(JSON_PROPERTY_USER_I_D)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUserID(String userID) {
+  public void setUserID(@jakarta.annotation.Nullable String userID) {
     this.userID = userID;
   }
 
-  public AccountInfo username(String username) {
+  public AccountInfo username(@jakarta.annotation.Nullable String username) {
     
     this.username = username;
     return this;
   }
 
-   /**
+  /**
    * Get username
    * @return username
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_USERNAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -117,20 +123,20 @@ public class AccountInfo {
 
   @JsonProperty(JSON_PROPERTY_USERNAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUsername(String username) {
+  public void setUsername(@jakarta.annotation.Nullable String username) {
     this.username = username;
   }
 
-  public AccountInfo userEmail(String userEmail) {
+  public AccountInfo userEmail(@jakarta.annotation.Nullable String userEmail) {
     
     this.userEmail = userEmail;
     return this;
   }
 
-   /**
+  /**
    * Get userEmail
    * @return userEmail
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_USER_EMAIL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -142,20 +148,20 @@ public class AccountInfo {
 
   @JsonProperty(JSON_PROPERTY_USER_EMAIL)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUserEmail(String userEmail) {
+  public void setUserEmail(@jakarta.annotation.Nullable String userEmail) {
     this.userEmail = userEmail;
   }
 
-  public AccountInfo gravatarURL(String gravatarURL) {
+  public AccountInfo gravatarURL(@jakarta.annotation.Nullable String gravatarURL) {
     
     this.gravatarURL = gravatarURL;
     return this;
   }
 
-   /**
+  /**
    * Get gravatarURL
    * @return gravatarURL
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_GRAVATAR_U_R_L)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -167,11 +173,11 @@ public class AccountInfo {
 
   @JsonProperty(JSON_PROPERTY_GRAVATAR_U_R_L)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setGravatarURL(String gravatarURL) {
+  public void setGravatarURL(@jakarta.annotation.Nullable String gravatarURL) {
     this.gravatarURL = gravatarURL;
   }
 
-  public AccountInfo subscriptions(List<Subscription> subscriptions) {
+  public AccountInfo subscriptions(@jakarta.annotation.Nullable List<Subscription> subscriptions) {
     
     this.subscriptions = subscriptions;
     return this;
@@ -185,10 +191,10 @@ public class AccountInfo {
     return this;
   }
 
-   /**
+  /**
    * Get subscriptions
    * @return subscriptions
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SUBSCRIPTIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -200,20 +206,20 @@ public class AccountInfo {
 
   @JsonProperty(JSON_PROPERTY_SUBSCRIPTIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSubscriptions(List<Subscription> subscriptions) {
+  public void setSubscriptions(@jakarta.annotation.Nullable List<Subscription> subscriptions) {
     this.subscriptions = subscriptions;
   }
 
-  public AccountInfo activeSubscriptionId(String activeSubscriptionId) {
+  public AccountInfo activeSubscriptionId(@jakarta.annotation.Nullable String activeSubscriptionId) {
     
     this.activeSubscriptionId = activeSubscriptionId;
     return this;
   }
 
-   /**
+  /**
    * Get activeSubscriptionId
    * @return activeSubscriptionId
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ACTIVE_SUBSCRIPTION_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -225,9 +231,10 @@ public class AccountInfo {
 
   @JsonProperty(JSON_PROPERTY_ACTIVE_SUBSCRIPTION_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setActiveSubscriptionId(String activeSubscriptionId) {
+  public void setActiveSubscriptionId(@jakarta.annotation.Nullable String activeSubscriptionId) {
     this.activeSubscriptionId = activeSubscriptionId;
   }
+
 
   @Override
   public boolean equals(Object o) {
