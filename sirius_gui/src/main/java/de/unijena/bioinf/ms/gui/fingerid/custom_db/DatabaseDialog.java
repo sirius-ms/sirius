@@ -202,7 +202,7 @@ public class DatabaseDialog extends JDialog {
                             }).awaitResult();
                 } catch (ExecutionException ex) {
                     getGui().getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
-                            err -> JOptionPane.showMessageDialog(this, err.getMessage(), "Error " + err.getStatus() + ": " + err.getError(), JOptionPane.ERROR_MESSAGE),
+                            err -> JOptionPane.showMessageDialog(this, err.getDetail(), "Error " + err.getStatus() + ": " + err.getTitle(), JOptionPane.ERROR_MESSAGE),
                             () -> JOptionPane.showMessageDialog(this, ex.getCause().getMessage(), "Unexpected Error", JOptionPane.ERROR_MESSAGE)
                     );
                     loadDatabaseList();
