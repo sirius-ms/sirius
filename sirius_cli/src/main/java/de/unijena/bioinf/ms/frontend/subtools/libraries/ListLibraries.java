@@ -21,7 +21,7 @@ public class ListLibraries implements StandaloneTool<Workflow> {
     public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return () -> {
             try {
-                ApplicationCore.WEB_API.listLibraries().forEach(this::printLibraryInfo);
+                ApplicationCore.WEB_API().listLibraries().forEach(this::printLibraryInfo);
             } catch (IOException e) {
                 log.error("Error getting remote libraries info.", e);
             }
