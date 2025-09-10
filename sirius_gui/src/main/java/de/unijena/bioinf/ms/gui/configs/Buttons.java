@@ -35,7 +35,7 @@ public abstract class Buttons {
     }
 
     public static ToolbarButton getExportButton16(String tootip) {
-        return new ToolbarButton(EXPORT.derive(16,16), tootip);
+        return new ToolbarButton(PLAIN_EXPORT.derive(16,16), tootip);
     }
 
     public static ToolbarButton getZoomInButton24() {
