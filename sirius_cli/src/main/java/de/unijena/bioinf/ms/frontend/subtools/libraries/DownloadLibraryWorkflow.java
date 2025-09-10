@@ -43,7 +43,7 @@ public class DownloadLibraryWorkflow extends BasicJJob<Boolean> implements Workf
 
         log.info("Downloading {} into {}", libId, path);
         try {
-            downloadJob = ApplicationCore.WEB_API.downloadLibrary(path, libId);
+            downloadJob = ApplicationCore.WEB_API().downloadLibrary(path, libId);
             downloadJob.addJobProgressListener(new ProgressBarListener());
             downloadJob.addJobProgressListener(this::updateProgress);
             SiriusJobs.getGlobalJobManager().submitJob(downloadJob).takeResult();
