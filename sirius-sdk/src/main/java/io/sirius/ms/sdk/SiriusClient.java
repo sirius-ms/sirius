@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.Disposable;
@@ -321,7 +322,7 @@ public class SiriusClient implements AutoCloseable {
         void check() throws InterruptedException;
     }
 
-    public Optional<SiriusSDKErrorResponse> unwrapErrorResponse(Throwable ex) {
+    public Optional<ProblemDetail> unwrapErrorResponse(Throwable ex) {
         WebClientResponseException webEx = null;
 
         while (ex != null) {
@@ -334,7 +335,8 @@ public class SiriusClient implements AutoCloseable {
 
         if (webEx != null) {
             try {
-                return Optional.of(new ObjectMapper().readValue(webEx.getResponseBodyAsByteArray(), SiriusSDKErrorResponse.class));
+                ProblemDetail problemDetail = new ObjectMapper().readValue(webEx.getResponseBodyAsByteArray(), ProblemDetail.class);
+                return Optional.of(problemDetail);
             } catch (IOException e) {
                 LOG.error("Error when parsing Error response!", e);
             }
@@ -347,7 +349,7 @@ public class SiriusClient implements AutoCloseable {
      */
     public String unwrapErrorMessage(Throwable ex) {
         return unwrapErrorResponse(ex)
-                .map(SiriusSDKErrorResponse::getMessage)
+                .map(pd -> pd.getTitle() + "\n" + pd.getDetail())
                 .orElse(ex.getMessage());
     }
 }

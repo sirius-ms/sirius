@@ -85,7 +85,7 @@ public class LibrariesDialog extends JDialog {
             ).awaitResult();
         } catch (Exception ex) {
             SwingUtilities.invokeLater(() -> gui.getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
-                    err -> JOptionPane.showMessageDialog(this, err.getMessage(), "Error " + err.getStatus() + ": " + err.getError(), JOptionPane.ERROR_MESSAGE),
+                    err -> JOptionPane.showMessageDialog(this, err.getDetail(), "Error " + err.getStatus() + ": " + err.getTitle(), JOptionPane.ERROR_MESSAGE),
                     () -> JOptionPane.showMessageDialog(this, ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE)
             ));
             updateDescription(null);
@@ -156,7 +156,7 @@ public class LibrariesDialog extends JDialog {
             databaseDialog.whenCustomDbIsAdded(lib.getId());
         } catch (Exception ex) {
             SwingUtilities.invokeLater(() -> gui.getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
-                    err -> JOptionPane.showMessageDialog(this, err.getMessage(), "Error " + err.getStatus() + ": " + err.getError(), JOptionPane.ERROR_MESSAGE),
+                    err -> JOptionPane.showMessageDialog(this, err.getDetail(), "Error " + err.getStatus() + ": " + err.getTitle(), JOptionPane.ERROR_MESSAGE),
                     () -> JOptionPane.showMessageDialog(this, ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE)
             ));
         }
