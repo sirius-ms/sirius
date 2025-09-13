@@ -162,7 +162,7 @@ allprojects {
     group = 'io.sirius-ms'
 
     jxbrowser {
-        version='8.8.0'
+        version='8.12.0'
     }
 
     repositories {
