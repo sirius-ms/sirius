@@ -38,6 +38,7 @@ import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -200,21 +201,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 Splash splashScreen = null;
                 if (!headless) { // ignore gui option if headless is enabled
                     if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui") || it.equalsIgnoreCase("-g"))) {
-                        Path propsFile = Workspace.siriusPropsFile;
-                        //override VM defaults from OS
-                        if (!System.getProperties().containsKey("sun.java2d.uiScale"))
-                            System.setProperty("sun.java2d.uiScale", "1");
-                        //override with stored value if available
-                        if (Files.exists(propsFile)) {
-                            Properties props = new Properties();
-                            try (BufferedReader r = Files.newBufferedReader(propsFile)) {
-                                props.load(r);
-                                if (props.containsKey("sun.java2d.uiScale"))
-                                    System.setProperty("sun.java2d.uiScale", props.getProperty("sun.java2d.uiScale"));
-                            } catch (IOException e) {
-                                log.error("Error when initializing Splash.", e);
-                            }
-                        }
+                        GuiUtils.initUI();
                         splashScreen = new Splash(true, false);
                     } else {
                         splashScreen = new Splash(true, true);
