@@ -13,12 +13,29 @@ jobs:
   distGUI:
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
-        targetArchitecture: [amd64, arm64]
-        exclude:
-          - os: windows-latest
-            targetArchitecture: arm64
-    runs-on: ${{ matrix.os }}
+        include:
+          - runner: ubuntu-latest
+            platform: linux
+            arch: amd64
+            os_name: linux-x64
+          - runner: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+            os_name: linux-arm64
+          - runner: windows-latest
+            platform: windows
+            arch: amd64
+            os_name: windows-x64
+          - runner: macos-latest # Native ARM64 (Apple Silicon)
+            platform: macos
+            arch: arm64
+            os_name: macos-arm64
+          - runner: macos-13 # Native x64 (Intel)
+            platform: macos
+            arch: amd64
+            os_name: macos-x64
+
+    runs-on: ${{ matrix.runner }}
     env:
       GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
       MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
@@ -33,16 +50,12 @@ jobs:
           lfs: true
       - name: Git LFS Pull
         run: git lfs pull
-      - name: Set up QEMU
-        if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v3
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'adopt'
           java-version: '21' # The JDK version to make available on the path.
           java-package: 'jdk' # (jre, jdk, or jdk+fx) - defaults to jdk
-          architecture: 'x64' # (x64 or x86N) - defaults to x64
       - name: Load Build properties
         uses: Reedyuk/read-properties@v1.0.1
         id: sirius_version
@@ -50,7 +63,7 @@ jobs:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
 
-      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_APP_IDENTITY_ID != '') }}
+      - if: ${{ (matrix.platform == 'macos') && (env.MACOS_APP_IDENTITY_ID != '') }}
         name: Import Apple APP Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
@@ -58,7 +71,7 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
 
-      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_IDENTITY_ID != '') }}
+      - if: ${{ (matrix.platform == 'macos') && (env.MACOS_IDENTITY_ID != '') }}
         name: Import Apple Installer Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
@@ -67,7 +80,7 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
 
-      - if: matrix.os == 'macos-latest'
+      - if: matrix.platform == 'macos'
         name: Check Identities
         run: /usr/bin/security find-identity
 
@@ -76,7 +89,6 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon --stacktrace printJvmArgs clean sirius_dist:sirius_gui_dist:buildJpDists \
-            -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" \
             -P "build.sirius.starter.jdk.include=true" \
             -P "jxbrowser.license.key=${{ secrets.JXBROWSER_LICENCE_KEY }}" \
             -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" \
@@ -85,7 +97,7 @@ jobs:
             -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}" \
             -P "de.unijena.bioinf.build.MACOS_TEAM_ID=${{ secrets.MACOS_TEAM_ID }}"
 
-      - if: matrix.os == 'windows-latest'
+      - if: matrix.platform == 'windows'
         name: Azure Trusted Signing for Widows MSI
         uses: azure/trusted-signing-action@v0.3.16
         with:
@@ -102,18 +114,11 @@ jobs:
           file-digest: SHA256
           description: 'SIRIUS'
 
-      - name: Install ARM64 Libraries for Emulation
-        if: runner.os == 'Linux' && matrix.targetArchitecture == 'arm64'
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo apt-get install -y libc6:arm64
-
       - name: Run Self-Test on Built Artifact
         id: selftest
         shell: bash
         run: |
-          echo "Preparing to run self-test for ${{ matrix.os }}-${{ matrix.targetArchitecture }}"
+          echo "Preparing to run self-test for ${{ matrix.os_name }}"
 
           # Define a temporary directory for the test
           TEST_DIR="selftest_temp"
@@ -132,7 +137,7 @@ jobs:
           EXECUTABLE="$APP_DIR/bin/sirius"
 
           # Add execute permissions for Linux and macOS
-          if [[ "${{ runner.os }}" != "Windows" ]]; then
+          if [[ "${{ matrix.platform }}" != "windows" ]]; then
             echo "Setting execute permissions on $EXECUTABLE"
             chmod +x "$EXECUTABLE"
           fi
@@ -147,7 +152,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           retention-days: 3
-          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ matrix.os }}-${{ matrix.targetArchitecture }}"
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ matrix.os_name }}"
           path: |
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.zip
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.msi
