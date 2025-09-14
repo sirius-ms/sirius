@@ -45,17 +45,16 @@ jobs:
       SIRIUS_USER: ${{ secrets.SIRIUS_USER }}
       SIRIUS_PW: ${{ secrets.SIRIUS_PW }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           lfs: true
       - name: Git LFS Pull
         run: git lfs pull
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: '21' # The JDK version to make available on the path.
-          java-package: 'jdk' # (jre, jdk, or jdk+fx) - defaults to jdk
       - name: Load Build properties
         uses: Reedyuk/read-properties@v1.0.1
         id: sirius_version
