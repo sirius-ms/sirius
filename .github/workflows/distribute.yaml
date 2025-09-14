@@ -102,39 +102,39 @@ jobs:
           file-digest: SHA256
           description: 'SIRIUS'
 
-#      - name: Run Self-Test on Built Artifact
-#        id: selftest
-#        shell: bash
-#        run: |
-#          echo "Preparing to run self-test for ${{ matrix.os }}-${{ matrix.targetArchitecture }}"
-#
-#          # Define a temporary directory for the test
-#          TEST_DIR="selftest_temp"
-#          mkdir -p $TEST_DIR
-#
-#          # Unzip the generic .zip artifact. We test this one as it's universal.
-#          echo "Unzipping artifact..."
-#          unzip ./sirius_dist/sirius_gui_dist/build/jpDists/*.zip -d $TEST_DIR
-#
-#          # Find the main application directory created by the unzip command
-#          APP_DIR=$(find $TEST_DIR -mindepth 1 -maxdepth 1 -type d)
-#          echo "Application extracted to: $APP_DIR"
-#
-#          # Define the path to the executable. On Windows, the shell is bash (Git Bash),
-#          # so we don't need to add a '.exe' or other suffix.
-#          EXECUTABLE="$APP_DIR/bin/sirius"
-#
-#          # Add execute permissions for Linux and macOS
-#          if [[ "${{ runner.os }}" != "Windows" ]]; then
-#            echo "Setting execute permissions on $EXECUTABLE"
-#            chmod +x "$EXECUTABLE"
-#          fi
-#
-#          # Run the self-test command
-#          echo "Executing: $EXECUTABLE selftest"
-#          "$EXECUTABLE" selftest
-#
-#          echo "✅ Self-test passed successfully!"
+      - name: Run Self-Test on Built Artifact
+        id: selftest
+        shell: bash
+        run: |
+          echo "Preparing to run self-test for ${{ matrix.os }}-${{ matrix.targetArchitecture }}"
+
+          # Define a temporary directory for the test
+          TEST_DIR="selftest_temp"
+          mkdir -p $TEST_DIR
+
+          # Unzip the generic .zip artifact. We test this one as it's universal.
+          echo "Unzipping artifact..."
+          unzip ./sirius_dist/sirius_gui_dist/build/jpDists/*.zip -d $TEST_DIR
+
+          # Find the main application directory created by the unzip command
+          APP_DIR=$(find $TEST_DIR -mindepth 1 -maxdepth 1 -type d)
+          echo "Application extracted to: $APP_DIR"
+
+          # Define the path to the executable. On Windows, the shell is bash (Git Bash),
+          # so we don't need to add a '.exe' or other suffix.
+          EXECUTABLE="$APP_DIR/bin/sirius"
+
+          # Add execute permissions for Linux and macOS
+          if [[ "${{ runner.os }}" != "Windows" ]]; then
+            echo "Setting execute permissions on $EXECUTABLE"
+            chmod +x "$EXECUTABLE"
+          fi
+
+          # Run the self-test command
+          echo "Executing: $EXECUTABLE selftest"
+          "$EXECUTABLE" selftest
+
+          echo "✅ Self-test passed successfully!"
 
       - name: Upload Distributions
         uses: actions/upload-artifact@v4
