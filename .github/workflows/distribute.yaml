@@ -134,14 +134,26 @@ jobs:
 
           # Define the path to the executable. On Windows, the shell is bash (Git Bash),
           # so we don't need to add a '.exe' or other suffix.
+          if
+          
+          # Declare a variable for the executable path
+          EXECUTABLE=""
+      
+          # Correctly determine the executable path for each platform
+          if [[ "${{ matrix.platform }}" == "windows" ]]; then
+          EXECUTABLE="$APP_DIR/sirius.exe"
+          elif [[ "${{ matrix.platform }}" == "macos" ]]; then
+          # Standard path for an executable inside a macOS .app bundle
+          EXECUTABLE="$APP_DIR/sirius.app/Contents/MacOS/sirius"
+          else # This covers the "linux" platform
           EXECUTABLE="$APP_DIR/bin/sirius"
-
-          # Add execute permissions for Linux and macOS
-          if [[ "${{ matrix.platform }}" != "windows" ]]; then
-            echo "Setting execute permissions on $EXECUTABLE"
-            chmod +x "$EXECUTABLE"
           fi
-
+      
+          # Add execute permissions for non-Windows platforms
+          if [[ "${{ matrix.platform }}" != "windows" ]]; then
+          echo "Setting execute permissions on $EXECUTABLE"
+          chmod +x "$EXECUTABLE"
+          fi
           # Run the self-test command
           echo "Executing: $EXECUTABLE selftest"
           "$EXECUTABLE" selftest
