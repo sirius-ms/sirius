@@ -131,10 +131,6 @@ jobs:
           APP_DIR=$(find $TEST_DIR -mindepth 1 -maxdepth 1 -type d)
           echo "Application extracted to: $APP_DIR"
 
-          # Define the path to the executable. On Windows, the shell is bash (Git Bash),
-          # so we don't need to add a '.exe' or other suffix.
-          if
-          
           # Declare a variable for the executable path
           EXECUTABLE=""
       
