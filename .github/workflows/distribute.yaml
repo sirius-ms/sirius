@@ -34,6 +34,7 @@ jobs:
       - name: Git LFS Pull
         run: git lfs pull
       - name: Set up QEMU
+        if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v3
       - name: Set up JDK
         uses: actions/setup-java@v4
