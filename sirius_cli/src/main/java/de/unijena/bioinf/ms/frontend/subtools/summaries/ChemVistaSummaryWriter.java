@@ -24,6 +24,8 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureMatch;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -64,21 +66,21 @@ class ChemVistaSummaryWriter extends SummaryTable {
         writer.writeHeader(HEADER);
     }
 
-    public void writeStructureCandidate(AlignedFeatures f, FormulaCandidate fc, CsiStructureMatch match, CsiStructureSearchResult searchResult) throws IOException {
+    public void writeStructureCandidate(@NotNull AlignedFeatures f, @NotNull FormulaCandidate fc, @Nullable CsiStructureMatch match, @Nullable CsiStructureSearchResult searchResult) throws IOException {
         List<Object> row = new ArrayList<>();
 
-        row.add(match.getCandidate().getName());
+        row.add(match == null ? null : match.getCandidate().getName());
         row.add(fc.getMolecularFormula().toString());
         row.add(fc.getMolecularFormula().getMass());
         row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
-        row.add(match.getCandidate().getSmiles());
-        row.add(match.getCandidate().getInchi().in2D);
-        row.add(match.getCandidateInChiKey());
-        row.add(match.getStructureRank());
+        row.add(match == null ? null : match.getCandidate().getSmiles());
+        row.add(match == null ? null : match.getCandidate().getInchi().in2D);
+        row.add(match == null ? null : match.getCandidateInChiKey());
+        row.add(match == null ? null : match.getStructureRank());
         row.add(fc.getFormulaRank());
-        row.add(searchResult.getConfidenceExact());
-        row.add(searchResult.getConfidenceApprox());
-        row.add(match.getCsiScore());
+        row.add(searchResult == null ? null : searchResult.getConfidenceExact());
+        row.add(searchResult == null ? null : searchResult.getConfidenceApprox());
+        row.add(match == null ? null : match.getCsiScore());
         row.add(fc.getZodiacScore());
         row.add(fc.getSiriusScoreNormalized());
         row.add(fc.getAdduct().toString());
@@ -90,5 +92,9 @@ class ChemVistaSummaryWriter extends SummaryTable {
         row.add(getMappingIdOrFallback(f));
 
         writer.writeRow(row);
+    }
+
+    public void writeFormulaCandidate(AlignedFeatures f, FormulaCandidate fc) throws IOException {
+        writeStructureCandidate(f, fc, null, null);
     }
 }
