@@ -139,7 +139,7 @@ jobs:
           EXECUTABLE="$APP_DIR/sirius.exe"
           elif [[ "${{ matrix.platform }}" == "macos" ]]; then
           # Standard path for an executable inside a macOS .app bundle
-          EXECUTABLE="$APP_DIR/sirius.app/Contents/MacOS/sirius"
+          EXECUTABLE="$APP_DIR/Contents/MacOS/sirius"
           else # This covers the "linux" platform
           EXECUTABLE="$APP_DIR/bin/sirius"
           fi
