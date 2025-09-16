@@ -46,6 +46,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.ms.gui.utils.GuiUtils.MEDIUM_GAP;
+
 /**
  * Dialog allows to adjust filter criteria of the {@link CompoundFilterModel} which is used to filter compound list.
  */
@@ -85,22 +87,27 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         setLayout(new BorderLayout());
         setResizable(false);
 
-        TwoColumnPanel centerPanel = new TwoColumnPanel();
-        add(centerPanel, BorderLayout.CENTER);
+
+        JPanel optionsPanel = new JPanel(new BorderLayout());
+        optionsPanel.setBorder(BorderFactory.createEmptyBorder(0, MEDIUM_GAP, 0, MEDIUM_GAP));
+        add(optionsPanel, BorderLayout.CENTER);
 
         //text search
         {
+            TwoColumnPanel searchPanel = new TwoColumnPanel();
+            optionsPanel.add(searchPanel, BorderLayout.NORTH);
             searchFieldDialogCopy = new JTextField(searchField.getText());
-            centerPanel.addNamed("Fulltext search", searchFieldDialogCopy);
+            searchPanel.addNamed("Fulltext search", searchFieldDialogCopy);
+            searchPanel.add(Box.createVerticalStrut(10));
         }
 
-        centerPanel.add(Box.createVerticalStrut(10));
         final JTabbedPane centerTab = new JTabbedPane();
-        centerPanel.add(centerTab);
+        optionsPanel.add(centerTab, BorderLayout.CENTER);
 
         // filter modifiers
         {
-            centerPanel.add(new JXTitledSeparator("Filter modifiers"));
+            Box filterModifiers = Box.createVerticalBox();
+            filterModifiers.add(new JXTitledSeparator("Filter modifiers"));
 
             invertFilter = new JCheckBox("Invert Filter");
             invertFilter.setSelected(compoundList.isFilterInverted());
@@ -113,14 +120,13 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             group.add(Box.createHorizontalStrut(25));
             group.add(deleteSelection);
             group.add(Box.createHorizontalGlue());
-            centerPanel.add(group);
-
-//            centerPanel.addVerticalGlue();
+            filterModifiers.add(group);
+            optionsPanel.add(filterModifiers, BorderLayout.SOUTH);
         }
 
         //input data filters
         {
-            final TwoColumnPanel inputParameters = new TwoColumnPanel();
+            final Box inputParameters = Box.createVerticalBox();
             centerTab.addTab("Input", inputParameters);
 
             inputParameters.add(Box.createVerticalStrut(3));
@@ -158,6 +164,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 inputParameters.add(Box.createVerticalStrut(5));
                 adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to  filter by. Selecting all or none mean every adducts can pass"));
                 adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
+                adductOptions.checkBoxList.setVisibleRowCount(5);
 
                 List<PrecursorIonType> ionizations = new ArrayList<>(filterModel.getPossibleAdducts());
                 Collections.sort(ionizations);
@@ -169,8 +176,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 adductOptions.checkBoxList.checkAll(filterModel.getSelectedAdducts());
                 inputParameters.add(adductOptions);
             }
-
-            inputParameters.addVerticalGlue();
+            inputParameters.add(Box.createVerticalGlue());
         }
 
         {
@@ -246,9 +252,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             dataParameters.addVerticalGlue();
         }
 
-        final JPanel resultParameters = new JPanel();
-        resultParameters.setLayout(new BoxLayout(resultParameters, BoxLayout.Y_AXIS));
-        resultParameters.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
+        final Box resultParameters = Box.createVerticalBox();
+        resultParameters.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
         centerTab.addTab("Results", resultParameters);
 
         // Confidence score filter
@@ -331,6 +336,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         {
             resultParameters.add(Box.createVerticalStrut(10));
             searchDBList = new JCheckboxListPanel<>(DBSelectionList.fromSearchableDatabases(gui.getSiriusClient()), "Hit in structure DB");
+            searchDBList.checkBoxList.setVisibleRowCount(5);
             searchDBList.remove(searchDBList.buttons);
             searchDBList.checkBoxList.uncheckAll();
 
