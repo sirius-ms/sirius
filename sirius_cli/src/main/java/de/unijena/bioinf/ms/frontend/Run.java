@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
+import de.unijena.bioinf.ms.frontend.subtools.selftest.SelfTestOptions;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
@@ -95,6 +96,8 @@ public class Run extends ApplicationCore {
         if (result.isUsageHelpRequested() || result.isVersionHelpRequested())
             return result;
         if (result.hasSubcommand() && result.subcommand().commandSpec().commandLine().getCommand() instanceof LoginOptions)
+            return result;
+        if (result.hasSubcommand() && result.subcommand().commandSpec().commandLine().getCommand() instanceof SelfTestOptions)
             return result;
 
         String message = null;
