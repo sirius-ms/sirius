@@ -31,10 +31,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -44,13 +42,14 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ms.middleware.security.Authorities.*;
 
@@ -58,7 +57,8 @@ import static de.unijena.bioinf.ms.middleware.security.Authorities.*;
 @Configuration
 public class SecurityConfig {
     @Bean
-    public WebMvcConfigurer corsConfigurer() {
+    @Profile("local")
+    public WebMvcConfigurer corsConfigurerLocal() {
         return new WebMvcConfigurer() {
             @Override
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -69,7 +69,19 @@ public class SecurityConfig {
                 registry.addResourceHandler("/sirius_java_integrated/**")
                         .addResourceLocations("classpath:/templates/sirius_java_integrated/");
             }
+            //disable Cross-Origin Resource Sharing (CORS) checks
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**").allowedOriginPatterns("http://localhost:[*]", "http://127.0.0.1:[*]");
+            }
         };
+    }
+
+    @Bean
+    @Profile("web")
+    public WebMvcConfigurer corsConfigurerWeb() {
+        // todo implement to use as real web api.
+        throw new UnsupportedOperationException("Not supported yet!");
     }
 
     @Bean
@@ -77,7 +89,8 @@ public class SecurityConfig {
                                             SiriusGuiHandshake siriusGuiHandshake, ExplorerHandshake explorerHandshake,
                                             HttpSecurity http) throws Exception
     {
-        // disable CSRF
+        // todo review to use as real web api!
+        // disable CSRF (Cross-Site Request Forgery) checks
         http.csrf(AbstractHttpConfigurer::disable)
                  // This is the line that disables anonymous authentication
                 .anonymous(AbstractHttpConfigurer::disable)
