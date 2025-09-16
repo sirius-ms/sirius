@@ -62,7 +62,7 @@ public class GuiUtils {
     public final static int MEDIUM_GAP = 10;
     public final static int LARGE_GAP = 20;
 
-    public static void initUI() {
+    public static synchronized void initUI() {
         //override with stored value if available
         if (SiriusProperties.getBoolean("de.unijena.bioinf.sirius.customUiScale", false)) {
             String scale = SiriusProperties.getProperty("sun.java2d.uiScale");
