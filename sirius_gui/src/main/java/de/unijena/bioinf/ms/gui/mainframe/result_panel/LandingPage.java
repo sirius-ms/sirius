@@ -129,7 +129,7 @@ public class LandingPage extends JPanel {
         button.setBorderPainted(false);
         button.setHideActionText(true);
         button.setBackground(Colors.BACKGROUND);
-        button.addActionListener(evt -> GuiUtils.openURLInSystemBrowserOrError(gui.getMainFrame(), URI.create("https://www.youtube.com/playlist?list=PL8R4DKiWsw-tIG8w3hZWJunWZyy-qnIZM"), gui));
+        button.addActionListener(evt -> GuiUtils.openURLInSystemBrowserOrError(gui.getMainFrame(), URI.create("https://www.youtube.com/playlist?list=PL8R4DKiWsw-vBpvrhtKaZT8UX5Zt08x9h"), gui));
         return button;
     }
 
