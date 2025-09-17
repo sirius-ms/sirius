@@ -110,7 +110,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private final double minSNR;
 
-    private Tracker tracker;
+    private final Tracker tracker;
 
     private UserSpecifiedThresholds userSpecifiedThresholds = new UserSpecifiedThresholds();
 
@@ -158,10 +158,11 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
         if (options.logMass!=null || options.logRt!=null) {
             this.tracker = new TrackFeatureToFile(options.logFile, options.logMass, options.logRt);
-        } else if (options.logFile != null && !options.logFile.equals(new File("lcms_log.txt"))) {
-            log.warn("The --log-file option is only effective when a --log-mass or --log-rt option is specified, too.");
+        } else {
+            this.tracker = new Tracker.NOOP();
+            if (options.logFile != null && !options.logFile.equals(new File("lcms_log.txt")))
+                log.warn("The --log-file option is only effective when a --log-mass or --log-rt option is specified, too.");
         }
-
     }
 
     public LcmsAlignSubToolJobNoSql(
@@ -176,7 +177,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             @Nullable AlignmentThresholds alignmentThresholds,
             @Nullable Deviation ms1Massdev,
             boolean saveImportedCompounds,
-            @Nullable Tracker tracker
+            @NotNull Tracker tracker
     ) {
         super();
         this.inputFiles = inputFiles;
