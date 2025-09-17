@@ -169,14 +169,13 @@ public class DatabaseDialog extends JDialog {
                 List<File> files = Arrays.stream(openDbFileChooser.getSelectedFiles()).toList();
                 // error handling and duplicate checking is performed on the server side
                 try {
-                    Jobs.runInBackgroundAndLoad(gui.getMainFrame(),
-                            "Adding '" + files.size() + "' database(s) ...", () -> {
-                                List<SearchableDatabase> newDbs = gui.applySiriusClient((c, pid) ->
-                                        c.databases().addDatabases(files.stream().map(File::getAbsolutePath).toList()));
-                                if (newDbs == null || newDbs.isEmpty())
-                                    throw new RuntimeException("Not Database returned from Job. Open Databases probably failed.");
-                                whenCustomDbIsAdded(newDbs.getFirst().getDatabaseId());
-                            }).awaitResult();
+                    List<SearchableDatabase> newDbs = Jobs.runInBackgroundAndLoad(gui.getMainFrame(),
+                            "Adding '" + files.size() + "' database(s) ...", () ->
+                                    gui.applySiriusClient((c, pid) ->
+                                        c.databases().addDatabases(files.stream().map(File::getAbsolutePath).toList()))).awaitResult();
+                    if (newDbs == null || newDbs.isEmpty())
+                        throw new RuntimeException("Not Database returned from Job. Open Databases probably failed.");
+                    whenCustomDbIsAdded(newDbs.getFirst().getDatabaseId());
                 } catch (ExecutionException ex) {
                     getGui().getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
                             err -> JOptionPane.showMessageDialog(this, err.getMessage(), "Error " + err.getStatus() + ": " + err.getError(), JOptionPane.ERROR_MESSAGE),
