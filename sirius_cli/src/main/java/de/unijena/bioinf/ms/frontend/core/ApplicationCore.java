@@ -20,7 +20,7 @@
 package de.unijena.bioinf.ms.frontend.core;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
@@ -162,18 +162,18 @@ public abstract class ApplicationCore {
                 if (Files.exists(versionFile)) {
                     List<String> lines = Files.readAllLines(versionFile);
                     if (lines == null || lines.isEmpty() || !lines.getFirst().equals(version)) {
-                        deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile);
+                        deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile, jxBrowserDir);
                         Files.write(versionFile, version.getBytes(), StandardOpenOption.CREATE);
                     }
                 } else {
-                    deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile);
+                    deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile, jxBrowserDir);
                     Files.write(versionFile, version.getBytes(), StandardOpenOption.CREATE);
                 }
 
             } catch (IOException e) {
                 System.err.println("Error while reading/writing workspace version file!");
                 e.printStackTrace();
-                deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile);
+                deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile, jxBrowserDir);
                 try {
                     Files.write(versionFile, version.getBytes(), StandardOpenOption.CREATE);
                 } catch (IOException e1) {
@@ -319,7 +319,11 @@ public abstract class ApplicationCore {
     private static void deleteFromWorkspace(final Path... files) {
         for (Path file : files) {
             try {
-                Files.deleteIfExists(file);
+                if (Files.isDirectory(file)) {
+                    FileUtils.deleteRecursively(file);
+                } else {
+                    Files.deleteIfExists(file);
+                }
             } catch (IOException e) {
                 System.err.println("Could NOT delete " + file.toAbsolutePath());
                 e.printStackTrace();
