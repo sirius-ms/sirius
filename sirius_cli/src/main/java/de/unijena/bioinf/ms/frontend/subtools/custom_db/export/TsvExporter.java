@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.frontend.subtools.custom_db.export;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.ms.frontend.subtools.summaries.TsvTableWriter;
+import de.unijena.bioinf.ms.frontend.utils.DatabaseLinkUtil;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -14,7 +15,7 @@ public class TsvExporter extends DbExporter {
 
     public TsvExporter(BufferedWriter writer) throws IOException {
         tsvWriter = new TsvTableWriter(writer, false);
-        tsvWriter.writeHeader(List.of("name", "SMILES", "InChIkey2D", "InChI", "formula", "mass"));
+        tsvWriter.writeHeader(List.of("name", "SMILES", "InChIkey2D", "InChI", "formula", "mass", "links"));
     }
 
     @Override
@@ -22,7 +23,7 @@ public class TsvExporter extends DbExporter {
         tsvWriter.writeRow(extractValues(candidateWrapper));
     }
 
-    private List<Object> extractValues(FingerprintCandidateWrapper cw) {
+    private List<Object> extractValues(FingerprintCandidateWrapper cw) throws IOException {
         CompoundCandidate c = cw.getCandidate(null, null);
         return List.of(
                 c.getName(),
@@ -30,7 +31,8 @@ public class TsvExporter extends DbExporter {
                 c.getInchiKey2D(),
                 c.getInchi().in2D,
                 cw.getFormula(),
-                cw.getMass()
+                cw.getMass(),
+                DatabaseLinkUtil.links(c.getLinkedDatabases())
         );
     }
 
