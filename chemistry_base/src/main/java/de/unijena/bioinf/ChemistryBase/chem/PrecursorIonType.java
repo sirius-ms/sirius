@@ -103,6 +103,12 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
 
     private final byte multimere;
 
+    /**
+     * The "isotopic" shift (integer mass delta between the isotopologue with lowest mass and the isotopologue represented
+     * by this precursor ion type)
+     */
+    private final byte isotopes;
+
 
     public boolean hasNeitherAdductNorInsource() {
         return inSourceFragmentation.isEmpty() && adduct.isEmpty();
@@ -148,10 +154,13 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
         return PeriodicTable.getInstance().unknownNegativePrecursorIonType();
     }
 
-    PrecursorIonType(Ionization ion, MolecularFormula insource, MolecularFormula adduct, int multimere, final SPECIAL_TYPES special) {
+    PrecursorIonType(Ionization ion, MolecularFormula insource, MolecularFormula adduct, int multimere, int isotopes, final SPECIAL_TYPES special) {
         this.ionization = ion;
         this.inSourceFragmentation = insource == null ? MolecularFormula.emptyFormula() : insource;
         this.adduct = adduct == null ? MolecularFormula.emptyFormula() : adduct;
+        if (isotopes<0) throw new IllegalArgumentException("Isotopic shift has to be a positive number.");
+        if (isotopes>=Byte.MAX_VALUE) throw new IllegalArgumentException("Isotopic shift too large.");
+        this.isotopes = (byte)isotopes;
         if (!this.inSourceFragmentation.isAllPositiveOrZero())
             throw new IllegalArgumentException("Negative element amounts are not allowed in in-source fragments.");
         if (!this.adduct.isAllPositiveOrZero())
@@ -200,7 +209,20 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
     }
 
     private String multimereStr() {
-        return multimere == 1 ? "" : String.valueOf(multimere);
+        return multimere == 1 ? "M" : String.valueOf(multimere)+"M";
+    }
+    private String isoString() {
+        return isotopes==0 ? "" : " + " + isotopes + "i";
+    }
+    private String chargeString() {
+        int c = getCharge();
+        if (c > 0) {
+            if (c==1) return "+";
+            else return c + "+";
+        } else {
+            if (c==-1) return "-";
+            else return c + "-";
+        }
     }
 
     public boolean equals(PrecursorIonType other) {
@@ -216,23 +238,26 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
     }
 
     public PrecursorIonType withoutAdduct() {
-        return new PrecursorIonType(getIonization(), inSourceFragmentation, MolecularFormula.emptyFormula(), multimere, special);
+        return new PrecursorIonType(getIonization(), inSourceFragmentation, MolecularFormula.emptyFormula(), multimere, isotopes, special);
     }
 
     public PrecursorIonType withMultimere(int count) {
-        return new PrecursorIonType(getIonization(), inSourceFragmentation, MolecularFormula.emptyFormula(), count, special);
+        return new PrecursorIonType(getIonization(), inSourceFragmentation, MolecularFormula.emptyFormula(), count,isotopes, special);
+    }
+    public PrecursorIonType withIsotopes(int count) {
+        return new PrecursorIonType(getIonization(), inSourceFragmentation, MolecularFormula.emptyFormula(), multimere,count, special);
     }
 
     public PrecursorIonType withoutInsource() {
-        return new PrecursorIonType(getIonization(), MolecularFormula.emptyFormula(), adduct, multimere, special);
+        return new PrecursorIonType(getIonization(), MolecularFormula.emptyFormula(), adduct, multimere,isotopes, special);
     }
 
     public PrecursorIonType substituteAdduct(MolecularFormula newAdduct) {
-        return new PrecursorIonType(getIonization(), inSourceFragmentation, newAdduct, multimere, special);
+        return new PrecursorIonType(getIonization(), inSourceFragmentation, newAdduct, multimere,isotopes, special);
     }
 
     public PrecursorIonType substituteInsource(MolecularFormula newInsource) {
-        return new PrecursorIonType(getIonization(), newInsource, adduct, multimere, special);
+        return new PrecursorIonType(getIonization(), newInsource, adduct, multimere,isotopes, special);
     }
 
     @Override
@@ -247,13 +272,14 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
 
     private String formatToString() {
         if (isIonizationUnknown()) {
-            return ionization.toString();
+            //return ionization.toString();
+            return "[" + multimereStr() + isoString() + " + ?]" +  chargeString();
         }
         if (isIntrinsicalCharged()) {
-            return "[" + multimereStr() + "M]" + (getCharge() > 0 ? "+" : "-");
+            return "[" + multimereStr() +isoString() + "M]" + chargeString();
         }
         final StringBuilder buf = new StringBuilder(128);
-        buf.append("[").append(multimereStr()).append("M");
+        buf.append("[").append(multimereStr());
         if (!inSourceFragmentation.isEmpty()) {
             buf.append(" - ");
             buf.append(inSourceFragmentation);
@@ -271,13 +297,9 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
                 buf.append(ionization.getAtoms().negate().toString());
             }
         }
+        buf.append(isoString());
         buf.append("]");
-        if (ionization.getCharge() == 1) buf.append("+");
-        else if (ionization.getCharge() == -1) buf.append("-");
-        else {
-            buf.append(getCharge());
-            buf.append(getCharge() > 0 ? "+" : "-");
-        }
+        buf.append(chargeString());
         return buf.toString();
     }
 

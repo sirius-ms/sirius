@@ -16,6 +16,7 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.adducts.assignment.AdductAssignment;
 import de.unijena.bioinf.lcms.adducts.assignment.SubnetworkResolver;
+import de.unijena.bioinf.lcms.isotopes.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
@@ -139,7 +140,7 @@ public class AdductNetwork {
                                         if (!ms2Right.isEmpty()) {
                                             List<MergedMSnSpectrum> ms2Left = provider.getMs2SpectraOf(leftNode.getFeatures());
                                             if (!ms2Left.isEmpty()) {
-                                                if (preparedRight==null) {
+                                                if (preparedRight == null) {
                                                     preparedRight = scorer.prepareForCosine(rightNode, ms2Right);
                                                     ms2rightGood = scorer.hasMinimumMs2Quality(preparedRight);
                                                 }
@@ -154,11 +155,21 @@ public class AdductNetwork {
 
                                         realEdges.add(adductEdge);
                                     }
-                                } else if (rt.getStartTime() > voidVolumeEnd && rt.getEndTime() < endOfLc && decoyEdges.size() < 10 && adductManager.hasDecoy(massDelta)) {
-                                    final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, new KnownMassDelta[0]);
-                                    scorer.computeScore(provider, adductEdge);
-                                    if (adductEdge.isValid()) {
-                                        decoyEdges.add(adductEdge);
+                                    // CHECK FOR ISOTOPES
+                                } else {
+                                    int isotopeShift = maybeIsotope(massDelta, leftNode, rightNode);
+                                    if (isotopeShift>=0) {
+                                        final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, new KnownMassDelta[]{new IsotopeRelationship(isotopeShift+1)});
+                                        scorer.computeScore(provider, adductEdge);
+                                        if (adductEdge.isValid()) {
+                                            realEdges.add(adductEdge);
+                                        }
+                                    } else if (rt.getStartTime() > voidVolumeEnd && rt.getEndTime() < endOfLc && decoyEdges.size() < 10 && adductManager.hasDecoy(massDelta)) {
+                                        final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, new KnownMassDelta[0]);
+                                        scorer.computeScore(provider, adductEdge);
+                                        if (adductEdge.isValid()) {
+                                            decoyEdges.add(adductEdge);
+                                        }
                                     }
                                 }
                             }
@@ -197,6 +208,28 @@ public class AdductNetwork {
                 }
             }
         }
+    }
+
+    private int maybeIsotope(double massDelta, AdductNode leftNode, AdductNode rightNode) {
+        if (massDelta > IsotopePattern.ISO_RANGES.length+1) return -1;
+        Deviation dev = new Deviation(10);
+        int charge = leftNode.getFeature().getCharge();
+        if (rightNode.getFeature().getCharge()!=charge) return -1;
+        for (int i=0; i < IsotopePattern.ISO_RANGES.length; ++i) {
+            if (IsotopePattern.ISO_RANGES[i].contains(massDelta*Math.abs(charge))) {
+                // we should check if the isotope peak corresponds to the isotope pattern
+                Optional<SimpleSpectrum> l = provider.getIsotopes(leftNode.getFeature());
+                if (l.isPresent()) {
+                    SimpleSpectrum s = l.get();
+                    int li = Spectrums.indexOfPeakClosestToMassWithin(s, leftNode.getMass(), dev);
+                    int ri = Spectrums.indexOfPeakClosestToMassWithin(s, rightNode.getMass(), dev);
+                    if (li>=0 && ri>=0 && Math.abs(s.getMzAt(ri)-s.getMzAt(li)-massDelta)<5e-4) {
+                        return i;
+                    }
+                }
+            }
+        }
+        return -1;
     }
 
     private MassMap<Peak> getPotentialInsourceFragments(List<MergedMSnSpectrum> data, AdductNode rightNode) {
@@ -598,10 +631,14 @@ public class AdductNetwork {
     }
 
     private CorrelatedIonPair.Type typeFor(KnownMassDelta D) {
-        if (D instanceof AdductRelationship) return CorrelatedIonPair.Type.ADDUCT;
+        if (D instanceof AdductRelationship) {
+            if (((AdductRelationship)D).isMultimere()) return CorrelatedIonPair.Type.MULTIMERE;
+            else if (((AdductRelationship)D).isInSource()) return CorrelatedIonPair.Type.INSOURCE;
+            else return CorrelatedIonPair.Type.ADDUCT;
+        }
         if (D instanceof LossRelationship) return CorrelatedIonPair.Type.INSOURCE;
         if (D instanceof UnknownLossRelationship) return CorrelatedIonPair.Type.INSOURCE;
-        if (D instanceof MultimereRelationship) return CorrelatedIonPair.Type.MULTIMERE;
+        if (D instanceof IsotopeRelationship) return CorrelatedIonPair.Type.ISOTOPE;
         return CorrelatedIonPair.Type.UNKNOWN;
     }
 
@@ -739,7 +776,7 @@ public class AdductNetwork {
         public int getBinFor(double score) {
             int index = Arrays.binarySearch(corbins, score);
             if (index >= 0) return index;
-            else return -index +1;
+            else return -(index +1);
         }
     }
 
