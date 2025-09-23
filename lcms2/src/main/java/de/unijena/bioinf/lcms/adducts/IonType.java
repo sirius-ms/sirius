@@ -17,6 +17,10 @@ public class IonType {
             PrecursorIonType.getPrecursorIonType("[M-H2O+H]+")
     );
 
+    public IonType withIsotope(int iso) {
+        return new IonType(ionType.withIsotopes(iso), getMultimere(), getInsource());
+    }
+
 
     /**
      * I have to think more about this, but for the moment, we just use some rule of thumb.
