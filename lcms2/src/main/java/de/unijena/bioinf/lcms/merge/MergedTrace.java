@@ -2,9 +2,7 @@ package de.unijena.bioinf.lcms.merge;
 
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.lcms.ScanPointMapping;
-import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.NormalizationStrategy;
-import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.ProjectedTrace;
 import de.unijena.bioinf.lcms.trace.Trace;
@@ -14,11 +12,11 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import jakarta.annotation.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -29,7 +27,8 @@ public class MergedTrace implements Trace {
     private final float[] intensity;
     private final ScanPointMapping mapping;
     private int startId, endId, apexId;
-    private final MergedTrace[] isotopes;
+    @Nullable private final MergedTrace[] isotopes;
+    @Nullable private final byte[] validIsotopes;
     private final ProcessedSample[] samples;
     private final ProjectedTrace[] traces;
 
@@ -86,7 +85,7 @@ public class MergedTrace implements Trace {
 
     private final int minMz, maxMz;
 
-    private MergedTrace(double[] mz, double avgMz, float[] intensity, ScanPointMapping mapping, int startId, int endId, int apexId, MergedTrace[] isotopes, ProcessedSample[] samples, ProjectedTrace[] traces) {
+    private MergedTrace(double[] mz, double avgMz, float[] intensity, ScanPointMapping mapping, int startId, int endId, int apexId, @Nullable MergedTrace[] isotopes, ProcessedSample[] samples, ProjectedTrace[] traces) {
         this.mz = mz;
         this.avgMz = avgMz;
         this.intensity = intensity;
@@ -104,6 +103,26 @@ public class MergedTrace implements Trace {
         }
         this.minMz=mindex;
         this.maxMz=maxdex;
+        this.validIsotopes = isotopes==null ? null : new byte[isotopes.length];
+    }
+
+    public boolean isValidIsotope(int k) {
+        return validIsotopes[k]>0;
+    }
+    public boolean isHighQualityIsotope(int k) {
+        return validIsotopes[k]>1;
+    }
+    public void setValidIsotopes(int k, int quality) {
+        validIsotopes[k]= (byte)quality;
+    }
+    public int numberOfValidIsotopes() {
+        int c=0;
+        for (int i=0; i < validIsotopes.length; ++i) {
+            if (validIsotopes[i]>0) {
+                ++c;
+            }
+        }
+        return c;
     }
 
     @Override
