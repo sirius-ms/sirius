@@ -110,7 +110,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private final double minSNR;
 
-    private final Tracker tracker;
+    private Tracker tracker;
 
     private UserSpecifiedThresholds userSpecifiedThresholds = new UserSpecifiedThresholds();
 
@@ -198,7 +198,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.saveImportedCompounds = saveImportedCompounds;
         if (alignmentThresholds!=null) this.alignmentThresholds = alignmentThresholds;
         else this.alignmentThresholds = new AlignmentThresholds();
-        this.tracker = tracker;
+        this.tracker = tracker==null ? new Tracker.NOOP() : tracker;
     }
 
     private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, List<Path> files) throws IOException {
@@ -219,7 +219,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         processing.setTracker(tracker);
         if (userSpecifiedThresholds.hasUserInput()) {
             processing.setStatisticsCollector(userSpecifiedThresholds);
-        }
+        } else this.tracker = new Tracker.NOOP();
 
         try {
             {

@@ -6,9 +6,14 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.lcms.adducts.*;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.apache.commons.math3.analysis.function.Add;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
 
@@ -63,9 +68,32 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
         AdductAssignment[] array = Arrays.stream(subnetwork).map(x -> new AdductAssignment(new IonType[]{assignments.get(x.getIndex())}, new double[]{1d})).toArray(AdductAssignment[]::new);
         addMissingIonTypesByTransitiveEdges(manager, array, subnetwork, assignments);
         addFallbackIonsForUnlikelyAdducts(manager, array, subnetwork, assignments);
+        treatIsotopes(manager, array, subnetwork, assignments);
 //        debugPrint(subnetwork, array, score);
         return array;
 
+    }
+
+    private void treatIsotopes(AdductManager manager, AdductAssignment[] array, AdductNode[] subnetwork, Int2ObjectOpenHashMap<IonType> assignments) {
+        for (int i=0; i < subnetwork.length; ++i) {
+            final AdductNode I = subnetwork[i];
+            for (AdductEdge e : I.getEdges()) {
+                boolean compatible=false;
+                int iso=-1;
+                for (KnownMassDelta d : e.getExplanations()) {
+                    if (d instanceof IsotopeRelationship && e.getRight()==I) {
+                        iso=((IsotopeRelationship)d).getIsotopicShift();
+                    } else if (d.isCompatible(assignments.get(e.getLeft().getIndex()), assignments.get(e.getRight().getIndex()))) {
+                        compatible=true;
+                    }
+                }
+                if (!compatible && iso>=0) {
+                    // the only explanation for this edge is an isotope peak
+                    assignments.put(I.getIndex(), assignments.get(I.getIndex()).withIsotope(iso));
+                    array[i] = new AdductAssignment(new IonType[]{assignments.get(I.getIndex())}, new double[]{1});
+                }
+            }
+        }
     }
 
     private void addFallbackIonsForUnlikelyAdducts(AdductManager manager, AdductAssignment[] array, AdductNode[] subnetwork, Int2ObjectOpenHashMap<IonType> assignments) {
@@ -110,28 +138,30 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
         final Deviation dev = new Deviation(10);
         for (int i=0; i < subnetwork.length; ++i) {
             for (int j=0; j < subnetwork.length; ++j) {
-                List<KnownMassDelta> knownMassDeltas = manager.retrieveMassDeltas(subnetwork[j].getMass() - subnetwork[i].getMass(), dev);
-                if (knownMassDeltas.stream().noneMatch(x->x instanceof LossRelationship)) continue;
+                final AdductNode I = subnetwork[i];
+                final AdductNode J = subnetwork[j];
+                List<KnownMassDelta> knownMassDeltas = manager.retrieveMassDeltas(J.getMass() - I.getMass(), dev).stream().filter(x->
+                        assignments.get(I.getIndex()).getIonType().getIonization().equals(assignments.get(J.getIndex()).getIonType().getIonization())).toList();
                 for (KnownMassDelta delta : knownMassDeltas) {
                     if (delta instanceof AdductRelationship) {
-                        IonType leftType = assignments.get(subnetwork[i].getIndex());
-                        IonType rightType = assignments.get(subnetwork[j].getIndex());
+                        IonType leftType = assignments.get(I.getIndex());
+                        IonType rightType = assignments.get(J.getIndex());
                         if (leftType.getIonType().equals(rightType.getIonType())) {
                             PrecursorIonType ionTypeLeft = ((AdductRelationship) delta).getLeft();
                             PrecursorIonType ionTypeRight = ((AdductRelationship) delta).getRight();
-                            if (!assignments.get(subnetwork[i].getIndex()).getIonType().equals(ionTypeLeft)) {
+                            if (!assignments.get(I.getIndex()).getIonType().equals(ionTypeLeft)        && assignments.get(J.getIndex()).getIonType().equals(ionTypeRight)) {
                                 array[i] = array[i].withAdded(new IonType(ionTypeLeft, 1, MolecularFormula.emptyFormula()));
                                 // add fallback ionization
                                 PrecursorIonType ionization = PrecursorIonType.getPrecursorIonType(ionTypeLeft.getIonization());
-                                if (!assignments.get(subnetwork[i].getIndex()).getIonType().equals(ionization)) {
+                                if (!assignments.get(I.getIndex()).getIonType().equals(ionization)) {
                                     array[i] = array[i].withAdded(new IonType(ionization, 1, MolecularFormula.emptyFormula()));
                                 }
                             }
-                            if (!assignments.get(subnetwork[j].getIndex()).getIonType().equals(ionTypeRight)) {
+                            if (!assignments.get(J.getIndex()).getIonType().equals(ionTypeRight)                  && assignments.get(I.getIndex()).getIonType().equals(ionTypeLeft)) {
                                 array[j] = array[j].withAdded(new IonType(ionTypeRight, 1, MolecularFormula.emptyFormula()));
                                 // add fallback ionization
                                 PrecursorIonType ionization = PrecursorIonType.getPrecursorIonType(ionTypeRight.getIonization());
-                                if (!assignments.get(subnetwork[j].getIndex()).getIonType().equals(ionization)) {
+                                if (!assignments.get(J.getIndex()).getIonType().equals(ionization)) {
                                     array[j] = array[j].withAdded(new IonType(ionization, 1, MolecularFormula.emptyFormula()));
                                 }
                             }
@@ -139,6 +169,9 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
                     }
                 }
             }
+        }
+        for (int i=0; i < array.length; ++i) {
+            array[i] = array[i].uniform();
         }
     }
 
@@ -318,7 +351,7 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
         return merged;
     }
 
-
+/*
     private CompatibilityNode[] transformGraphIntoCompatibilityGraph(AdductNode[] network) {
         final Int2IntOpenHashMap nodecoloring = new Int2IntOpenHashMap();
         nodecoloring.defaultReturnValue(-1);
@@ -385,11 +418,12 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
             for (int i = 0; i < u.edgesPerIonType.length; ++i) u.edgesPerIonType[i] = new ArrayList<>();
             allIontypes[color] = ionTypes;
         }
+
         // add edges
+        BitSet noAdductEdgeColors = new BitSet(currentColor+1);
         for (int color = 0; color <= currentColor; ++color) {
             HashSet<AdductEdge> adductEdges = edgesPerColor.get(color);
             for (AdductEdge edge : adductEdges) {
-
                 if (nodecoloring.get(edge.getLeft().getIndex()) == color) {
                     // edge goes from left to right
                     for (KnownMassDelta explanation : edge.getExplanations()) {
@@ -401,9 +435,10 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
                                     allIontypes[toIndex].getInt(((AdductRelationship) explanation).getRight()),
                                     edge);
                             nodes[color].edgesPerIonType[fromType].add(cedge);
+                        } else {
+                            noAdductEdgeColors.set(nodecoloring.get(edge.getRight().getIndex()));
                         }
                     }
-
                 } else {
                     // edge goes from right to left
                     for (KnownMassDelta explanation : edge.getExplanations()) {
@@ -415,13 +450,130 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
                                     allIontypes[toIndex].getInt(((AdductRelationship) explanation).getLeft()),
                                     edge);
                             nodes[color].edgesPerIonType[fromType].add(cedge);
+                        } else {
+                            noAdductEdgeColors.set(nodecoloring.get(edge.getLeft().getIndex()));
                         }
                     }
 
                 }
             }
+            // check if we have to add additional edges for the special case that two node sets are connected via
+            // a loss (e.g. H2O). In this case we have to add a special edge with same ion type on both ends
+            for (int otherColor=noAdductEdgeColors.nextSetBit(0); otherColor >= 0; otherColor=noAdductEdgeColors.nextSetBit(otherColor+1)) {
+                Set<>
+                CompatibilityEdge cedge = new CompatibilityEdge(nodes[color], nodes[otherColor],
+                        ,
+                        allIontypes[toIndex].getInt(((AdductRelationship) explanation).getLeft()),
+                        edge);
+                nodes[color].edgesPerIonType[fromType].add(cedge);
+            }
         }
         return nodes;
+    }
+
+ */
+
+    private CompatibilityNode[] transformGraphIntoCompatibilityGraph(AdductNode[] subNetwork) {
+        Int2ObjectOpenHashMap<AdductNode> nodes = new Int2ObjectOpenHashMap<>();
+        for (AdductNode u : subNetwork) {
+            nodes.put(u.getIndex(), u);
+        }
+        // first we get the supernodes that are connected via adduct edges
+        int[][] superNodes = getConncectivityComponents(nodes, edge->!edge.isAdductEdge());
+        // for each of these nodes we can generate a compability node
+        CompatibilityNode[] cnodes = new CompatibilityNode[superNodes.length];
+        Int2IntOpenHashMap nodeColoring = new Int2IntOpenHashMap();
+        Set<PrecursorIonType>[] adductTypes = new Set[superNodes.length];
+        for (int i=0; i < cnodes.length; ++i) {
+            final int index = i;
+            adductTypes[index] = new HashSet<>();
+            cnodes[i] = new CompatibilityNode(i, Arrays.stream(superNodes[i]).mapToObj(nodes::get).toArray(AdductNode[]::new));
+            Arrays.stream(superNodes[i]).forEach(c->nodeColoring.put(c,index));
+        }
+        // we now collect potential ion types by collecting all adduct types in edges that are between two supernodes
+        for (AdductNode n : subNetwork) {
+            for (AdductEdge e : n.getEdges()) {
+                if (e.isAdductEdge()) {
+                    AdductNode u = e.getLeft(), v = e.getRight();
+                    int c1 = nodeColoring.get(u.getIndex());
+                    int c2 = nodeColoring.get(v.getIndex());
+                    adductTypes[c1].addAll(Arrays.stream(e.getExplanations()).filter(x->x instanceof AdductRelationship).map(x->((AdductRelationship)x).getLeft()).toList());
+                    adductTypes[c2].addAll(Arrays.stream(e.getExplanations()).filter(x->x instanceof AdductRelationship).map(x->((AdductRelationship)x).getRight()).toList());
+                }
+            }
+        }
+        // there is an edge case though: two nodes X and Y have an adduct edge a->b AND an in-source edge. Currently,
+        // we have adduct types {a} in X and {b} in Y, but we have to expand this to {a,b} in X and {a,b} in Y, because
+        // the in-source edge is only compatible if both ends have the same adduct.
+        int[][] superNodesInSource = getConncectivityComponents(nodes, AdductEdge::isModificationEdge);
+        Set<PrecursorIonType>[] additionalIonTypes = new Set[cnodes.length];
+        for (int[] components : superNodesInSource) {
+            int[] componentColors = Arrays.stream(components).map(nodeColoring::get).distinct().toArray();
+            if (componentColors.length>1) {
+                HashSet<PrecursorIonType> allIonTypes = new HashSet<>();
+                for (int color : componentColors) {
+                    allIonTypes.addAll(adductTypes[color]);
+                }
+                for (int color : componentColors) {
+                    if (additionalIonTypes[color]==null) additionalIonTypes[color] = allIonTypes;
+                    else additionalIonTypes[color].addAll(allIonTypes);
+                }
+            }
+        }
+        for (int color=0; color < additionalIonTypes.length; ++color) {
+            if (additionalIonTypes[color]!=null) {
+                adductTypes[color].addAll(additionalIonTypes[color]);
+            }
+            cnodes[color].specifyIonTypes(adductTypes[color].toArray(PrecursorIonType[]::new));
+        }
+
+        // now we have all compatibility nodes done and can add the compatibility edges
+        for (AdductNode n : subNetwork) {
+            for (AdductEdge e : n.getEdges()) {
+                final AdductNode u = e.getLeft(), v = e.getRight();
+                if (v==n) continue; // count each edge only once!
+                final int cu = nodeColoring.get(u.getIndex()), cv = nodeColoring.get(v.getIndex());
+                if (cu!=cv) {
+                    cnodes[cu].addCompatibilityEdge(cnodes[cv], e);
+                }
+            }
+        }
+        return cnodes;
+    }
+
+    /**
+     * Given a network of adducts, output all connectivity components (by node indices) using only edges
+     * that pass the given predicate
+     */
+    protected static int[][] getConncectivityComponents(Int2ObjectOpenHashMap<AdductNode> nodes, Predicate<AdductEdge> predicate) {
+
+        ArrayList<int[]> components = new ArrayList<>();
+        IntArrayList stack = new IntArrayList();
+        Int2IntOpenHashMap coloring = new Int2IntOpenHashMap(nodes.size());
+        coloring.defaultReturnValue(-1);
+        IntArrayList buffer = new IntArrayList();
+        nodes.keySet().intStream().forEach((index) -> {
+            if (coloring.get(index)<0) {
+                coloring.put(index, components.size());
+                stack.add(index);
+                buffer.add(index);
+                while (!stack.isEmpty()) {
+                    int u = stack.popInt();
+                    AdductNode U = nodes.get(u);
+                    for (AdductEdge e : U.getEdges()) {
+                        AdductNode V = e.getOther(U);
+                        if (coloring.get(V.getIndex())<0 && predicate.test(e)) {
+                            coloring.put(V.getIndex(), components.size());
+                            stack.add(V.getIndex());
+                            buffer.add(V.getIndex());
+                        }
+                    }
+                }
+                components.add(buffer.toIntArray());
+                buffer.clear();
+            }
+        });
+        return components.toArray(int[][]::new);
     }
 
 
@@ -439,6 +591,48 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
         @Override
         public String toString() {
             return Arrays.toString(subnodes) + " with modes: " + Arrays.toString(ionTypes);
+        }
+
+        public void specifyIonTypes(PrecursorIonType[] array) {
+            this.ionTypes = array;
+            this.edgesPerIonType = new List[array.length];
+            for (int i=0; i < edgesPerIonType.length; ++i) edgesPerIonType[i] = new ArrayList<CompatibilityEdge>();
+        }
+
+        public void addCompatibilityEdge(CompatibilityNode v, AdductEdge uv) {
+            int fromType=0, toType=0;
+            boolean addAllsame=false;
+            for (KnownMassDelta d : uv.getExplanations()) {
+                PrecursorIonType l,r;
+                if (d instanceof AdductRelationship) {
+                    l = ((AdductRelationship) d).getLeft();
+                    r = ((AdductRelationship) d).getRight();
+                    for (fromType=0; fromType < ionTypes.length; ++fromType) {
+                        if (l.equals(ionTypes[fromType])) break;
+                    }
+                    for (toType=0; toType < v.ionTypes.length; ++toType) {
+                        if (r.equals(v.ionTypes[toType])) break;
+                    }
+                    if (fromType>=ionTypes.length || toType>=v.ionTypes.length) {
+                        throw new RuntimeException("Ion type not specified");
+                    }
+                    this.edgesPerIonType[fromType].add(new CompatibilityEdge(this, v, fromType, toType, uv));
+                    v.edgesPerIonType[toType].add(new CompatibilityEdge(v, this, toType, fromType, uv));
+                }else {
+                    addAllsame=true;
+                }
+            }
+            if (addAllsame) {
+                for (int i=0; i < ionTypes.length; ++i) {
+                    for (int j=0; j < v.ionTypes.length; ++j) {
+                        if (ionTypes[i].equals(v.ionTypes[j])) {
+                            this.edgesPerIonType[i].add(new CompatibilityEdge(this, v, i, j, uv));
+                            v.edgesPerIonType[j].add(new CompatibilityEdge(v, this, j, i, uv));
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 

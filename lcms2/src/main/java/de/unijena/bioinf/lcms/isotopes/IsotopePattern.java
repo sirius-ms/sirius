@@ -13,7 +13,7 @@ public class IsotopePattern extends SimpleSpectrum {
 
 
     protected static final double MZ_ISO_ERRT = 0.002;
-    protected static final Range<Double>[] ISO_RANGES = new Range[]{
+    public static final Range<Double>[] ISO_RANGES = new Range[]{
             Range.of(0.99664664 - MZ_ISO_ERRT, 1.00342764 + MZ_ISO_ERRT),
             Range.of(1.99653883209004 - MZ_ISO_ERRT, 2.0067426280592295 + MZ_ISO_ERRT),
             Range.of(2.9950584 - MZ_ISO_ERRT, 3.00995027 + MZ_ISO_ERRT),
