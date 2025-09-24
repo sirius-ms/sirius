@@ -45,7 +45,8 @@ ext {
     }
 
     // configure infos for bundled JRE
-    def distJre = DistJRE.JBR_FT
+    def distJre = siriusTargetPlatform.isLinux() ? DistJRE.JBR_FT :
+            (siriusTargetPlatform.isWin() ? DistJRE.MICROSOFT : DistJRE.TEMURIN)
     jre_version = '21.0.8'
     jre_major = jre_version.split("[.]")[0]
 
