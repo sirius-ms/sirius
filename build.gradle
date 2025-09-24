@@ -1,3 +1,4 @@
+import groovy.json.JsonSlurper
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 import java.nio.file.Files
@@ -17,7 +18,7 @@ buildscript {
 }
 
 plugins {
-    id "de.undercouch.download" version "4.1.1"
+    id "de.undercouch.download" version "5.6.0"
 }
 
 //this task is used to update the gradle wrapper properties to a new version
@@ -394,6 +395,198 @@ subprojects {
             }
         }
     }
+
+    /**
+     * Task for collecting the dependencies of all subprojects
+     */
+    tasks.register("allDeps", DependencyReportTask) {}
+}
+
+/**
+ * Date helper function, returns dates in UTC timezone
+ * @return [today, now - 1 day]
+ */
+static def dates() {
+    TimeZone.setDefault(TimeZone.getTimeZone('UTC'))
+    var today = new Date()
+    var yesterday = today - 1
+    var published = ">${yesterday.format('Y-MM-dd')}T${yesterday.format('HH:mm:ss')}+00:00"
+    return [today.format('Y-MM-dd'), published]
+}
+
+var packageLockFile = getLayout().getBuildDirectory().file("package-lock.json").get().asFile
+var npmDepFile = getLayout().getBuildDirectory().file("npmDeps.txt").get().asFile
+var mavenDepFile = getLayout().getBuildDirectory().file("mavenDeps.txt").get().asFile
+var npmAdvDir = getLayout().getBuildDirectory().dir("npmAdv").get().asFile
+var mavenAdvDir = getLayout().getBuildDirectory().dir("mavenAdv").get().asFile
+var today
+var published
+(today, published) = dates()
+
+/**
+ * SecOps pipeline step 1: download package-lock.json from sirius-js-monorepo main branch
+ */
+tasks.register("downloadNpmFile", Download) {
+    src 'https://gitlab.com/api/v4/projects/66409917/repository/files/package-lock.json/raw?ref=main'
+    dest packageLockFile
+    header 'PRIVATE-TOKEN', System.getenv('CI_JOB_TOKEN')
+    onlyIfModified true
+    quiet true
+}
+
+/**
+ * SecOps pipeline step 2: Extract all sirius-js-monorepo dependencies from package-lock.json
+ */
+tasks.register("parseNpmFile") {
+    dependsOn "downloadNpmFile"
+    doLast {
+        var json = new JsonSlurper().parse(packageLockFile)
+
+        var deps = [] as Set
+
+        // collect all dependencies, dev dependencies and peer dependencies
+        json['packages'].keySet().each { p ->
+            ['dependencies', 'devDependencies', 'peerDependencies'].each { t ->
+                if (json['packages'][p].keySet().contains(t)) {
+                    json['packages'][p][t].keySet().each { dep ->
+                        if (!json['packages'][p][t][dep].startsWith('file')) {
+                            deps.add(dep)
+                        }
+                    }
+                }
+            }
+        }
+
+        npmDepFile.write(deps.join('\n'))
+    }
+}
+
+/**
+ * SecOps pipeline step 3a: download GitHub security advisories related to the sirius-js-monorepo dependencies
+ */
+tasks.register("getNpmAdvisories") {
+    dependsOn "parseNpmFile"
+    doLast {
+        var urls = new HashSet(npmDepFile.readLines()).collate(200).collect {
+            return "https://api.github.com/advisories?ecosystem=npm&published=${URLEncoder.encode(published, 'UTF-8')}&affects=${URLEncoder.encode(it.join(','), 'UTF-8')}"
+        }
+        urls.eachWithIndex{ url, i ->
+            download.run {
+                src url
+                header 'Authorization', "Bearer ${System.getenv('GITHUB_TOKEN')}"
+                header 'Accept', 'application/vnd.github+json'
+                dest new File(npmAdvDir, "adv_${i}.txt")
+                quiet true
+            }
+        }
+    }
+}
+
+/**
+ * SecOps pipeline step 3b: download GitHub security advisories related to the dependencies of this project
+ * CAUTION: depends on running the "collect_deps" gitlab CI/CD pipeline!
+ */
+tasks.register("getMavenAdvisories") {
+    doLast {
+        var urls = new HashSet(mavenDepFile.readLines().collect({p -> p.trim()})).collate(200).collect {
+            return "https://api.github.com/advisories?ecosystem=maven&published=${URLEncoder.encode(published, 'UTF-8')}&affects=${URLEncoder.encode(it.join(','), 'UTF-8')}"
+        }
+        urls.eachWithIndex{ url, i ->
+            download.run {
+                src url
+                header 'Authorization', "Bearer ${System.getenv('GITHUB_TOKEN')}"
+                header 'Accept', 'application/vnd.github+json'
+                dest new File(mavenAdvDir, "adv_${i}.txt")
+                quiet true
+            }
+        }
+    }
+}
+
+/**
+ * Helper function to parse GitHub security advisories and format a Google Chat message
+ *
+ * @param files Each file has a list of security advisories
+ * @return Google Chat message
+ */
+static def formatAdvisories(File[] files) {
+    var advisories = [:]
+    var severities = ["unknown", "low", "medium", "high", "critical"]
+    files.each { f ->
+        new JsonSlurper().parse(f).each { a ->
+            if (!advisories.containsKey(a['ghsa_id']) && severities.indexOf(a['severity']) >= 3) {
+                var vul
+                if (a['vulnerabilities'].size() > 3) {
+                    vul = a['vulnerabilities'].subList(0, 3).collect({ v ->
+                        return "- ${v['package']['name']} ${v['vulnerable_version_range']}"
+                    }).join('\n')
+                    vul += '\n- ...'
+                } else {
+                    vul = a['vulnerabilities'].collect({ v ->
+                        return "- ${v['package']['name']} ${v['vulnerable_version_range']}"
+                    }).join('\n')
+                }
+                advisories[a["ghsa_id"]] = "*${a['severity'].toUpperCase()}*: <${a['html_url']}|${a['summary']}>\n${vul}"
+            }
+        }
+    }
+    return advisories
+}
+
+/**
+ * SecOps pipeline step 4a: post Google Chat message with GitHub security advisories related to sirius-js-monorepo dependencies
+ */
+tasks.register("postNpmAdvisories") {
+    dependsOn "getNpmAdvisories"
+    doLast {
+        var advisories = formatAdvisories(npmAdvDir.listFiles())
+        if (advisories.size() > 0) {
+            var message = "{'text': '*${today}: New npm Security Advisories Found!*\n${advisories.values().join('\n')}'}"
+            System.getenv('GOOGLE_CHAT_WEBHOOK_URL').toURL().openConnection().with({
+                requestMethod = 'POST'
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+                outputStream.withPrintWriter({printWriter ->
+                    printWriter.write(message)
+                })
+                if (responseCode != 200) {
+                    throw new Exception("Request returned error code ${responseCode}")
+                }
+            })
+        }
+    }
+}
+
+/**
+ * SecOps pipeline step 4b: post Google Chat message with GitHub security advisories related to the dependencies of this project
+ */
+tasks.register("postMavenAdvisories") {
+    dependsOn "getMavenAdvisories"
+    doLast {
+        var advisories = formatAdvisories(mavenAdvDir.listFiles())
+        if (advisories.size() > 0) {
+            var message = "{'text': '*2025-09-24: New maven Security Advisories Found!*\n${advisories.values().join('\n')}'}"
+            'https://chat.googleapis.com/v1/spaces/AAQAoKDL0dc/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=FhFwwRgCQX_5p4HQJz3ZxFCeJEoJXlXILUtaXRDNY3E'.toURL().openConnection().with({
+                requestMethod = 'POST'
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+                outputStream.withPrintWriter({printWriter ->
+                    printWriter.write(message)
+                })
+                if (responseCode != 200) {
+                    throw new Exception("Request returned error code ${responseCode}")
+                }
+            })
+        }
+    }
+}
+
+/**
+ * SecOps pipeline step 5: post Google Chat message with GitHub security advisories related to the dependencies of sirius-js-monorop and this project
+ */
+tasks.register("postAdvisories") {
+    dependsOn "postNpmAdvisories"
+    dependsOn "postMavenAdvisories"
 }
 
 tasks.register('refreshDownloadLinks') {
