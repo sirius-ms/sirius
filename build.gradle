@@ -164,7 +164,8 @@ allprojects {
     group = 'io.sirius-ms'
 
     jxbrowser {
-        version='8.11.0'
+        //there is a rendering bug in 8.12 on linux. until this is fixed we use the switch.
+        version= siriusTargetPlatform.isLinux() ? '8.11.0' : '8.12.1'
     }
 
     repositories {
