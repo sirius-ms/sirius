@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +64,12 @@ public class GuiUtils {
     public final static int LARGE_GAP = 20;
 
     public static synchronized void initUI() {
-        //override with stored value if available
+        // disable custom scaling on Mac because Mac is preventing it anyway.
+        if (SystemUtils.IS_OS_MAC) {
+            SiriusProperties.setProperty("de.unijena.bioinf.sirius.customUiScale", "false");
+            SiriusProperties.setProperty("sun.java2d.uiScale", "1.0");
+        }
+        //override with custom scaling if enabled
         if (SiriusProperties.getBoolean("de.unijena.bioinf.sirius.customUiScale", false)) {
             String scale = SiriusProperties.getProperty("sun.java2d.uiScale");
             if (Utils.notNullOrBlank(scale))
