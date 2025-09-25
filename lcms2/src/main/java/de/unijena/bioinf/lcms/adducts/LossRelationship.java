@@ -22,7 +22,7 @@ public class LossRelationship implements KnownMassDelta{
 
     @Override
     public boolean isCompatible(IonType left, IonType right) {
-        return left.ionType.getIonization().equals(right.ionType.getIonization()) && (int)(left.multimere)==(int)(right.multimere);
+        return left.ionType.getIonization().equals(right.ionType.getIonization());
     }
 
     /**

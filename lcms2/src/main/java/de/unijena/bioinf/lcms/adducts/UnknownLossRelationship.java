@@ -4,7 +4,7 @@ public class UnknownLossRelationship implements KnownMassDelta {
 
     @Override
     public boolean isCompatible(IonType left, IonType right) {
-        if (!(left.ionType.equals(right.ionType) && (int)left.multimere==(int)right.multimere))
+        if (!(left.ionType.equals(right.ionType)))
             return false;
         return true;
     }

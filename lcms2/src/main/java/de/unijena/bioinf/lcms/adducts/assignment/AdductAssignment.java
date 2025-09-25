@@ -16,7 +16,7 @@ public class AdductAssignment {
 
     public static AdductAssignment merge(int charge, AdductAssignment[] assignments, double[] probabilities) {
         Object2DoubleOpenHashMap<IonType> map = new Object2DoubleOpenHashMap<>();
-        IonType unknown = new IonType(PrecursorIonType.unknown(charge), 1f, MolecularFormula.emptyFormula());
+        IonType unknown = new IonType(PrecursorIonType.unknown(charge));
         for (int k=0; k < assignments.length; ++k) {
             final double prob = probabilities[k];
             if (assignments[k].isUnknown()) {
