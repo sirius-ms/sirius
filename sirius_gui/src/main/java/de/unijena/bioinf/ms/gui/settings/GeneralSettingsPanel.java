@@ -46,16 +46,20 @@ import java.util.Properties;
 import java.util.Vector;
 
 import static de.unijena.bioinf.ms.gui.properties.GuiProperties.*;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_LINUX;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPanel {
+public class GeneralSettingsPanel extends TwoColumnPanel implements SettingsPanel {
     public static final String DO_NOT_SHOW_AGAIN_ACTIVATE_LIBRARY_TAB = "de.unijena.bioinf.sirius.settings.activateSpectralLibraryTab.dontAskAgain";
 
     private Properties props;
+    private final boolean scalingEnable;
+    private final JCheckBox scalingEnableBox;
     final JSpinner scalingSpinner;
-    final int scaling;
+    final double scaling;
     private boolean enableAllSoftwareTours = false;
 
     final String theme;
@@ -71,7 +75,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     private boolean restartRequired = false;
     private SiriusGui gui;
 
-    public GerneralSettingsPanel(Properties properties, SiriusGui gui) {
+    public GeneralSettingsPanel(Properties properties, SiriusGui gui) {
         super();
         this.props = properties;
         this.gui = gui;
@@ -84,11 +88,26 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         themeBox.setToolTipText("Set theme of the Graphical User Interface");
         addNamed("UI Theme", themeBox);
 
-        scaling = Integer.parseInt(props.getProperty("sun.java2d.uiScale", System.getProperty("sun.java2d.uiScale", "1")));
+        double currentScalingFactor = GuiUtils.getScaleFactor(gui.getMainFrame());
+        scaling = Double.parseDouble(props.getProperty("sun.java2d.uiScale", System.getProperty("sun.java2d.uiScale", String.valueOf(currentScalingFactor))));
 
-        SpinnerNumberModel model = new SpinnerNumberModel(scaling, 1, 5, 1);
+        SpinnerNumberModel model = new SpinnerNumberModel(scaling, 1d, 5d, IS_OS_LINUX ? 1 : .25);
         scalingSpinner = new JSpinner(model);
         scalingSpinner.setToolTipText(GuiUtils.formatToolTip("Set scaling factor of the Graphical User Interface"));
+        scalingEnable = Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.customUiScale", "false"));
+        scalingEnableBox = new JCheckBox("(Current Scaling: " + currentScalingFactor + ")");
+        scalingEnableBox.setSelected(scalingEnable);
+        scalingEnableBox.addActionListener(evt -> scalingSpinner.setEnabled(scalingEnableBox.isSelected()));
+        scalingSpinner.setEnabled(scalingEnableBox.isSelected());
+
+        // disable on Mac because macOS prevents the scaling anyway
+        if(IS_OS_MAC) {
+            scalingSpinner.setEnabled(false);
+            scalingEnableBox.setEnabled(false);
+        }
+
+
+        addNamed("Enable custom scaling", scalingEnableBox);
         addNamed("Scaling Factor", scalingSpinner);
 
         add(new JXTitledSeparator("Display settings"));
@@ -102,7 +121,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         }
         JLabel confLabel = new JLabel("Confidence score display mode");
         confLabel.setToolTipText("The default confidence score display mode used after every new program start.");
-        add(confLabel,confidenceDisplayMode);
+        add(confLabel, confidenceDisplayMode);
 
         //molecularStructuresDisplayColors uses the current settings and also stores it persistently
         molecularStructuresDisplayColors = GuiUtils.makeParameterComboBoxFromDescriptiveValues(MolecularStructuresDisplayColors.values());
@@ -227,7 +246,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         props.setProperty(CONFIDENCE_DISPLAY_MODE_KEY, ((ConfidenceDisplayMode) confidenceDisplayMode.getSelectedItem()).name());
         gui.getProperties().setConfidenceDisplayMode((ConfidenceDisplayMode) confidenceDisplayMode.getSelectedItem());
 
-        props.setProperty(MOLECULAR_STRUCTURES_DISPLAY_COLORS_KEY,((MolecularStructuresDisplayColors) molecularStructuresDisplayColors.getSelectedItem()).name());
+        props.setProperty(MOLECULAR_STRUCTURES_DISPLAY_COLORS_KEY, ((MolecularStructuresDisplayColors) molecularStructuresDisplayColors.getSelectedItem()).name());
         gui.getProperties().setMolecularStructureDisplayColors((MolecularStructuresDisplayColors) molecularStructuresDisplayColors.getSelectedItem());
 
         final Path dir = Paths.get(db.getFilePath());
@@ -236,8 +255,14 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         } else {
             LoggerFactory.getLogger(this.getClass()).warn("Specified path is not a directory ({}). Directory not Changed!", dir);
         }
-        if (scaling != (int) scalingSpinner.getValue()) {
-            props.setProperty("sun.java2d.uiScale", String.valueOf((int) scalingSpinner.getValue()));
+
+        if (scalingEnable != scalingEnableBox.isSelected()) {
+            props.setProperty("de.unijena.bioinf.sirius.customUiScale", String.valueOf(scalingEnableBox.isSelected()));
+            restartRequired = true;
+        }
+
+        if (scaling != (double) scalingSpinner.getValue()) {
+            props.setProperty("sun.java2d.uiScale", String.valueOf((double) scalingSpinner.getValue()));
             restartRequired = true;
         }
 

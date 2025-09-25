@@ -125,8 +125,7 @@ public class LCMSProcessing {
     private LongList importedFeatureIds = new LongArrayList();
 
     @Getter @Setter
-    private Tracker tracker = //new TrackFeatureToFile(new File("/home/kaidu/Downloads/debug_lcms/log.txt"),            Range.of(193.0341,193.0348), Range.of(180d,220d));
-            new Tracker.NOOP();
+    private Tracker tracker = new Tracker.NOOP();
 
     public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds) {
         this(siriusDatabaseAdapter, saveFeatureIds, null, false);
@@ -474,5 +473,7 @@ public class LCMSProcessing {
     public void closeStorages(){
         storageFactory.close();
     }
+
+
 
 }

@@ -20,21 +20,25 @@
 package de.unijena.bioinf.ms.frontend.core;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.fingerid.fingerprints.cache.NonBlockingIFingerprinterCache;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBPropertyUtils;
 import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.sirius.SiriusFactory;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.webapi.rest.RestAPI;
+import io.sirius.ms.utils.jwt.AccessTokens;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.time.StopWatch;
@@ -53,6 +57,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.LogManager;
 
 import static de.unijena.bioinf.ms.frontend.SiriusCLIApplication.APP_TYPE_PROPERTY_KEY;
@@ -91,9 +97,34 @@ public abstract class ApplicationCore {
                         StopWatch stopWatch = StopWatch.createStarted();
                         AuthService service = ProxyManager.applyClient(c -> AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, c));
                         WEB_API = new RestAPI(service, (Subscription) null);
-                        DEFAULT_LOGGER.info("Web API initialized in {}", stopWatch);
+                        final CountDownLatch waiter = new CountDownLatch(1);
+
+                        SiriusJobs.runInBackground((Callable<Void>) () -> {
+                            synchronized (WEB_API) {
+                                waiter.countDown();
+                                Subscription sub = null; //web connection
+                                try {
+                                    sub = NetUtils.tryAndWait(() -> WEB_API.getAuthService().getToken().map(AccessTokens.ACCESS_TOKENS::getActiveSubscription).orElse(null),
+                                            () -> NetUtils.checkThreadInterrupt(Thread.currentThread()), 5000) ;
+                                    WEB_API.changeActiveSubscription(sub);
+                                } catch (Exception e) {
+                                    DEFAULT_LOGGER.debug("Error when refreshing token", e);
+                                    DEFAULT_LOGGER.warn("Error when refreshing token: {} Cleaning login information. Please re-login!", e.getMessage());
+                                    AuthServices.clearRefreshToken(WEB_API.getAuthService(), TOKEN_FILE); // in case the token is corrupted or the account has been deleted
+                                }
+                            }
+
+                            CustomDBPropertyUtils.loadAllCustomDBs(WEB_API.getCDKChemDBFingerprintVersion());
+                            DEFAULT_LOGGER.info("Custom databases loaded.");
+                            return null;
+                        });
+                        waiter.await();
+
+                        DEFAULT_LOGGER.info("Web API initialized in {}. Started loading active subscription in background...", stopWatch);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
+                    } catch (InterruptedException e) {
+                        //ignore
                     }
                 }
             }
@@ -131,18 +162,18 @@ public abstract class ApplicationCore {
                 if (Files.exists(versionFile)) {
                     List<String> lines = Files.readAllLines(versionFile);
                     if (lines == null || lines.isEmpty() || !lines.getFirst().equals(version)) {
-                        deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile);
+                        deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile, jxBrowserDir);
                         Files.write(versionFile, version.getBytes(), StandardOpenOption.CREATE);
                     }
                 } else {
-                    deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile);
+                    deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile, jxBrowserDir);
                     Files.write(versionFile, version.getBytes(), StandardOpenOption.CREATE);
                 }
 
             } catch (IOException e) {
                 System.err.println("Error while reading/writing workspace version file!");
                 e.printStackTrace();
-                deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile);
+                deleteFromWorkspace(loggingPropFile, siriusPropsFile, versionFile, jxBrowserDir);
                 try {
                     Files.write(versionFile, version.getBytes(), StandardOpenOption.CREATE);
                 } catch (IOException e1) {
@@ -288,7 +319,11 @@ public abstract class ApplicationCore {
     private static void deleteFromWorkspace(final Path... files) {
         for (Path file : files) {
             try {
-                Files.deleteIfExists(file);
+                if (Files.isDirectory(file)) {
+                    FileUtils.deleteRecursively(file);
+                } else {
+                    Files.deleteIfExists(file);
+                }
             } catch (IOException e) {
                 System.err.println("Could NOT delete " + file.toAbsolutePath());
                 e.printStackTrace();

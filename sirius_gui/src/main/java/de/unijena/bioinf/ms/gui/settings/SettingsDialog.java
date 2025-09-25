@@ -47,7 +47,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private final Properties nuProps;
     private AdductSettingsPanel addSettings;
     private NetworkSettingsPanel proxSettings;
-    private GerneralSettingsPanel genSettings;
+    private GeneralSettingsPanel genSettings;
     private ProjectSettingsPanel projectSettings;
     private JTabbedPane settingsPane;
 
@@ -70,7 +70,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
 
 //============= CENTER =================
         settingsPane = new JTabbedPane();
-        genSettings = new GerneralSettingsPanel(nuProps, gui);
+        genSettings = new GeneralSettingsPanel(nuProps, gui);
         genSettings.addVerticalGlue();
         settingsPane.add(genSettings.name(), genSettings);
 
