@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms.isotopes;
 
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import org.apache.commons.lang3.Range;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.ChemistryBase.ms.utils.BasicSpectrum;
@@ -21,10 +22,34 @@ public class IsotopePattern extends SimpleSpectrum {
             Range.of(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
     };
 
+
+
+    public static final Range<Double>[] ISO_RANGES_NOSTD = new Range[]{
+            Range.of(0.99664664, 1.00342764),
+            Range.of(1.99653883209004, 2.0067426280592295),
+            Range.of(2.9950584, 3.00995027),
+            Range.of(3.99359037, 4.01300058),
+            Range.of(4.9937908, 5.01572941)
+    };
+
     protected static double maxStd = 0.0027340053758699856;
     protected static double avg = 1.00069363462413;
 
     public final static int MINIMUM_ION_SIZE = 100;
+    private static final Deviation MASSDEV = new Deviation(10);
+    public static int getPossibleIsotopeShift(double peak0, double peak1) {
+        return getPossibleIsotopeShift(peak0, peak1, 1);
+    }
+    public static int getPossibleIsotopeShift(double peak0, double peak1, int charge) {
+        double delta = (peak1-peak0)*Math.abs(charge);
+        int deltaInt = (int)Math.round(delta) - 1;
+        if (deltaInt<0 || deltaInt >= ISO_RANGES_NOSTD.length) return -1;
+        Range<Double> r = ISO_RANGES_NOSTD[deltaInt];
+        final double epsilon = MASSDEV.absoluteFor(peak0);
+        final double from = r.getMinimum()-epsilon, to = r.getMaximum()+epsilon;
+        if (delta >= from && delta <= to) return deltaInt;
+        else return -1;
+    }
 
     /**
      * returns the minimal m/z for an isotope peak
@@ -65,6 +90,7 @@ public class IsotopePattern extends SimpleSpectrum {
         final DoubleArrayList mzs = new DoubleArrayList(), intensities = new DoubleArrayList();
         final double mz = spectrum.getMzAt(peakIdx);
         final double intens = spectrum.getIntensityAt(peakIdx);
+        final double epsilon = MASSDEV.absoluteFor(mz);
         for (int chargeState=1; chargeState <= 3; ++chargeState) {
             if (chargeState > 1 && mz / chargeState < MINIMUM_ION_SIZE)
                 continue; // we do not believe in too low-mass peaks with multiple charges
@@ -75,8 +101,8 @@ public class IsotopePattern extends SimpleSpectrum {
             forEachIsotopePeak:
             for (int k = 0; k < ISO_RANGES.length; ++k) {
                 // do not use ISO_RANGES directly, but just maximum range, as we do not know the start point here
-                final double maxMz = mz - ((avg - maxStd) * (k + 1)) / chargeState;
-                final double minMz = mz - ((avg + maxStd) * (k + 1)) / chargeState;
+                final double maxMz = mz - ((avg - maxStd) * (k + 1)) / chargeState + epsilon;
+                final double minMz = mz - ((avg + maxStd) * (k + 1)) / chargeState - epsilon;
                 double mergedIntensity = 0d;
                 double mergedMass = 0d;
                 final int a = Spectrums.indexOfFirstPeakWithin(spectrum, minMz, maxMz);
@@ -106,13 +132,14 @@ public class IsotopePattern extends SimpleSpectrum {
 
     private static void expandPattern(SimpleSpectrum spectrum, DoubleArrayList mzs, DoubleArrayList intensities, int chargeState) {
         final double mz = mzs.getDouble(0);
+        final double epsilon = MASSDEV.absoluteFor(mz);
         forEachIsotopePeak:
         for (int k = mzs.size()-1; k < ISO_RANGES.length; ++k) {
             // try to detect +k isotope peak
-            final double maxMz = mz + ISO_RANGES[k].getMaximum() / chargeState;
+            final double maxMz = mz + ISO_RANGES[k].getMaximum() / chargeState + epsilon;
             double mergedIntensity = 0d;
             double mergedMass = 0d;
-            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].getMinimum() / chargeState, maxMz);
+            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].getMinimum() / chargeState - epsilon, maxMz);
             if (a < 0) break forEachIsotopePeak;
             for (int i = a; i < spectrum.size(); ++i) {
                 if (spectrum.getMzAt(i) > maxMz)
@@ -145,6 +172,7 @@ public class IsotopePattern extends SimpleSpectrum {
         List<IsotopePattern> patterns = new ArrayList<>();
         final DoubleArrayList mzs = new DoubleArrayList(), intensities = new DoubleArrayList();
         final double mz = spectrum.getMzAt(peakIdx);
+        final double epsilon = MASSDEV.absoluteFor(mz);
         final double intens = spectrum.getIntensityAt(peakIdx);
         for (int chargeState=1; chargeState <= 3; ++chargeState) {
             if (chargeState > 1 && mz / chargeState < MINIMUM_ION_SIZE)
@@ -154,10 +182,10 @@ public class IsotopePattern extends SimpleSpectrum {
             forEachIsotopePeak:
             for (int k = 0; k < ISO_RANGES.length; ++k) {
                 // try to detect +k isotope peak
-                final double maxMz = mz + ISO_RANGES[k].getMaximum() / chargeState;
+                final double maxMz = mz + ISO_RANGES[k].getMaximum() / chargeState + epsilon;
                 double mergedIntensity = 0d;
                 double mergedMass = 0d;
-                final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].getMinimum() / chargeState, maxMz);
+                final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].getMinimum() / chargeState - epsilon, maxMz);
                 if (a < 0) break forEachIsotopePeak;
                 for (int i = a; i < spectrum.size(); ++i) {
                     if (spectrum.getMzAt(i) > maxMz)
