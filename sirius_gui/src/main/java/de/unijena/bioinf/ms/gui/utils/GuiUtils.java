@@ -22,17 +22,20 @@ package de.unijena.bioinf.ms.gui.utils;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import it.unimi.dsi.fastutil.Pair;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,8 +44,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,13 +56,25 @@ import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrBlank;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
+@Slf4j
 public class GuiUtils {
 
     public final static int SMALL_GAP = 5;
     public final static int MEDIUM_GAP = 10;
     public final static int LARGE_GAP = 20;
 
-    public static void initUI() {
+    public static synchronized void initUI() {
+        // disable custom scaling on Mac because Mac is preventing it anyway.
+        if (SystemUtils.IS_OS_MAC) {
+            SiriusProperties.setProperty("de.unijena.bioinf.sirius.customUiScale", "false");
+            SiriusProperties.setProperty("sun.java2d.uiScale", "1.0");
+        }
+        //override with custom scaling if enabled
+        if (SiriusProperties.getBoolean("de.unijena.bioinf.sirius.customUiScale", false)) {
+            String scale = SiriusProperties.getProperty("sun.java2d.uiScale");
+            if (Utils.notNullOrBlank(scale))
+                System.setProperty("sun.java2d.uiScale", scale);
+        }
 
         switch (Colors.THEME()) {
             case DARK:
@@ -67,7 +82,7 @@ public class GuiUtils {
                     UIManager.setLookAndFeel(new FlatDarculaLaf());
                     break;
                 } catch (UnsupportedLookAndFeelException e) {
-                    e.printStackTrace();
+                    log.error("Unsupported look and feel!", e);
                 }
             case LIGHT:
             default:
@@ -75,8 +90,7 @@ public class GuiUtils {
                     UIManager.setLookAndFeel(new FlatIntelliJLaf());
                     break;
                 } catch (UnsupportedLookAndFeelException e) {
-                    LoggerFactory.getLogger(GuiUtils.class).error("Error when configuring look and feel!", e);
-                    e.printStackTrace();
+                    log.error("Error when configuring look and feel!", e);
                 }
         }
 
@@ -87,6 +101,22 @@ public class GuiUtils {
         //nicer times for tooltips
         ToolTipManager.sharedInstance().setInitialDelay(500);
         ToolTipManager.sharedInstance().setDismissDelay(60000);
+    }
+
+    /**
+     * Gets the current UI scale factor for a given component.
+     * This method should be called after the component has been added to a frame and displayed.
+     *
+     * @param component The component to check the scale factor for.
+     * @return The scale factor (e.g., 1.0 for 100%, 2.0 for 200%). Returns 1.0 if undetected.
+     */
+    public static double getScaleFactor(Component component) {
+        GraphicsConfiguration gc = component.getGraphicsConfiguration();
+        if (gc != null) {
+            // The default transform contains the scaling information
+            return gc.getDefaultTransform().getScaleX();
+        }
+        return 1.0;
     }
 
     public static void drawListStatusElement(boolean isComputing, Graphics2D g2, Component c) {
@@ -263,11 +293,11 @@ public class GuiUtils {
                     Desktop.getDesktop().browse(url);
                     return;
                 } else {
-                    LoggerFactory.getLogger(GuiUtils.class).error(
+                    log.error(
                             "Could not Open URL in System Browser. Trying SIRIUS WebView or  try visit page manually: {}", url);
                 }
             } catch (Exception e) {
-                LoggerFactory.getLogger(GuiUtils.class).error(
+                log.error(
                         "Unexpected Error when opening URL in System Browser. Trying SIRIUS WebView or  try visit page manually: {}", url, e);
             }
         }

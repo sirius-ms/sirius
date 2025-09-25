@@ -31,6 +31,7 @@ import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import lombok.Getter;
+import org.apache.commons.lang3.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,8 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @CommandLine.Command(name = "lcms-align", aliases = {"A"}, description = "@|bold <PREPROCESSING>|@ Align and merge compounds of multiple LCMS Runs. Use this tool if you want to import from mzML/mzXml. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? extends ProjectSpaceManager>> {
@@ -106,6 +109,76 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
             }, required = false
     )
     public Double ppmMax;
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // logging   ///////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    public static class MassRangeOrValue implements CommandLine.ITypeConverter<Range<Double>> {
+
+        private static Pattern REGEX = Pattern.compile("(\\d+(?:\\.\\d+)?)(?:\\s*(?:\\.\\.\\.?|-)\\s*(\\d+(\\.\\d+)?))?");
+        @Override
+        public Range<Double> convert(String value) throws Exception {
+            Matcher matcher = REGEX.matcher(value);
+            if (matcher.find()) {
+                String from = matcher.group(1);
+                String to = matcher.group(2);
+                if (to!=null && !to.isEmpty()) {
+                    return Range.of(Double.parseDouble(from), Double.parseDouble(to));
+                } else {
+                    Deviation dev = new Deviation(10);
+                    double mz = Double.parseDouble(from);
+                    double delta = dev.absoluteFor(mz);
+                    return Range.of(mz-delta, mz+delta);
+                }
+            } else {
+                throw new IllegalArgumentException("expect value in format \"FROM-TO\" or just \"VALUE\" (e.g. \"300.04-300.08\")");
+            }
+        }
+    }
+    public static class TimeRangeOrValue implements CommandLine.ITypeConverter<Range<Double>> {
+
+        private static Pattern REGEX = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*(?:\\s*(?:\\.\\.\\.?|-)\\s*(\\d+(?:\\.\\d+)?))?(\\s*m(?:in)?|s(?:ec)?)");
+        @Override
+        public Range<Double> convert(String value) throws Exception {
+            Matcher matcher = REGEX.matcher(value);
+            if (matcher.find()) {
+                String from = matcher.group(1);
+                String to = matcher.group(2);
+                String unit = matcher.group(3);
+
+                double convFactor;
+                if (unit.startsWith("s")) {
+                    convFactor = 1;
+                } else if (unit.startsWith("m")) {
+                    convFactor = 60;
+                } else {
+                    throw new IllegalArgumentException("Unknown unit \"" + unit + "\". Expect min or s.");
+                }
+
+                if (to!=null && !to.isEmpty()) {
+                    return Range.of(Double.parseDouble(from)*convFactor, Double.parseDouble(to)*convFactor);
+                } else {
+                    // use 10 seconds as tolerance
+                    double val = Double.parseDouble(from)*convFactor;
+                    return Range.of(val - 10, val + 10);
+                }
+            } else {
+                throw new IllegalArgumentException("expect value in format \"FROM-TO\" or just \"VALUE\" (e.g. \"300.04-300.08\")");
+            }
+        }
+    }
+
+    @CommandLine.Option(names={"--log-file"}, defaultValue = "lcms_log.txt", description = "Path to a filename that is used to log detected mass traces. Either --log-mass or --log-rt (or both) have to be specified to enable the logging.")
+    public File logFile;
+
+    @CommandLine.Option(names={"--log-mz"}, description = "A target mass (range) for which logging should be enabled.", converter = MassRangeOrValue.class)
+    public Range<Double> logMass;
+
+    @CommandLine.Option(names={"--log-rt"}, description = "A target retention time (range) for which logging should be enabled", converter = TimeRangeOrValue.class)
+    public Range<Double> logRt;
+
+
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //hidden options   ///////////////////////////////////////////////////////////////////////

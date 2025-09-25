@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.ms.frontend.subtools.project.ProjectOptions;
+import de.unijena.bioinf.ms.frontend.subtools.selftest.SelfTestOptions;
 import de.unijena.bioinf.ms.frontend.subtools.settings.SettingsOptions;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
@@ -86,6 +87,7 @@ public class WorkflowBuilder {
     DefaultParameterConfigLoader configOptionLoader;
 
     //standalone tools
+    public final SelfTestOptions selfTestOptions;
     public final CustomDBOptions customDBOptions;
     public final ProjectOptions projectOptions;
 
@@ -149,6 +151,7 @@ public class WorkflowBuilder {
                 MsNovelistOptions.class, new MsNovelistOptions(configOptionLoader)
         );
 
+        selfTestOptions = new SelfTestOptions();
         customDBOptions = new CustomDBOptions();
         projectOptions = new ProjectOptions();
 //        similarityMatrixOptions = new SimilarityMatrixOptions(spaceManagerFactory);
@@ -188,7 +191,7 @@ public class WorkflowBuilder {
     protected Object[] standaloneTools() {
         return Stream.concat(
                 Stream.concat(
-                        Stream.of(customDBOptions, projectOptions, /*similarityMatrixOptions,*/ decompOptions, mgfExporterOptions, /*exportPredictions,*/ fingerprinterOptions/*, updateFingerprintOptions*/),
+                        Stream.of(customDBOptions, projectOptions, /*similarityMatrixOptions,*/ decompOptions, mgfExporterOptions, /*exportPredictions,*/ fingerprinterOptions/*, updateFingerprintOptions*/, selfTestOptions),
                         additionalTools.stream()
                 ), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);

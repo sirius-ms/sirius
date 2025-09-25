@@ -30,6 +30,7 @@ import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.subtools.foldchange.AlignedFeaturesFoldChangeJob;
 import de.unijena.bioinf.lcms.align.AlignmentThresholds;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
@@ -134,7 +135,8 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                         submission.getMinSNR(),
                         thresholds,
                         submission.getTraceMaxMassDeviation(),
-                        saveImportedCompounds
+                        saveImportedCompounds,
+                        new Tracker.NOOP()
                 );
                 importerJJob.addJobProgressListener(progressSupport);
                 SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();

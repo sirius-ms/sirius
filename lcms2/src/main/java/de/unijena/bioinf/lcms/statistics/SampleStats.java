@@ -50,6 +50,7 @@ public class SampleStats {
         return ms2NoiseLevel;
     }
 
+    @Builder.Default
     private double expectedPeakWidth = -1;
 
     public Optional<Double> getExpectedPeakWidth() {

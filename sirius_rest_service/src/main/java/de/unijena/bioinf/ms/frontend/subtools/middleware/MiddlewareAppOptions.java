@@ -19,27 +19,19 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.middleware;
 
-import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.splash.Splash;
 import de.unijena.bioinf.ms.frontend.subtools.OutputOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
-import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBPropertyUtils;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.projectspace.SiriusProjectSpaceInstance;
-import de.unijena.bioinf.rest.NetUtils;
-import de.unijena.bioinf.rest.ProxyManager;
-import de.unijena.bioinf.webapi.WebAPI;
-import io.sirius.ms.utils.jwt.AccessTokens;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -51,11 +43,9 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static de.unijena.bioinf.ms.frontend.core.ApplicationCore.TOKEN_FILE;
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
 @Slf4j
@@ -65,9 +55,6 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
     private ProjectsProvider<?> projectsProvider;
     @Setter
     private GuiService guiService;
-
-    @Setter
-    private WebAPI<?> webAPI;
 
     private Splash splash;
 
@@ -176,25 +163,6 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
         @Override
         public void run() {
-            Jobs.runInBackground((Callable<Void>) () -> {
-                ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
-                    Subscription sub = null; //web connection
-                    try {
-                        sub = NetUtils.tryAndWait(() -> webAPI.getAuthService().getToken().map(AccessTokens.ACCESS_TOKENS::getActiveSubscription).orElse(null),
-                                () -> NetUtils.checkThreadInterrupt(Thread.currentThread()), 5000) ;
-                        webAPI.changeActiveSubscription(sub);
-                    } catch (Exception e) {
-                        log.debug("Error when refreshing token", e);
-                        log.warn("Error when refreshing token: {} Cleaning login information. Please re-login!", e.getMessage());
-                        AuthServices.clearRefreshToken(webAPI.getAuthService(), TOKEN_FILE); // in case token is corrupted or the account has been deleted
-                    }
-                });
-
-                CustomDBPropertyUtils.loadAllCustomDBs(webAPI.getCDKChemDBFingerprintVersion());
-                log.info("Custom databases loaded.");
-                return null;
-            });
-
             //do the project importing from the commandline
             Optional<Path> location = Optional.ofNullable(output).map(OutputOptions::getOutputProjectLocation);
             if (location.isPresent() || MiddlewareAppOptions.this.isStartGui()) {

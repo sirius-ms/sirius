@@ -7,12 +7,15 @@ import com.teamdev.jxbrowser.navigation.callback.StartNavigationCallback;
 import com.teamdev.jxbrowser.navigation.event.FrameLoadFinished;
 import com.teamdev.jxbrowser.view.swing.BrowserView;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.gui.webView.BrowserPanel;
 import io.sirius.ms.gui.webView.LinkInterception;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.net.URI;
 
 @Slf4j
@@ -26,6 +29,7 @@ public class JxBrowserPanel extends BrowserPanel {
         this.browser = browser;
         this.linkInterception = linkInterception;
         initialize(url);
+        addDevToolsKeybinding();
     }
 
     private void initialize(@NotNull String url) {
@@ -126,5 +130,35 @@ public class JxBrowserPanel extends BrowserPanel {
     public void cleanupResources() {
         if (browser != null && !browser.isClosed())
             browser.close();
+    }
+
+    @Override
+    public void showDevTools() {
+        browser.devTools().show();
+    }
+
+    private void addDevToolsKeybinding() {
+        if (PropertyManager.getBoolean("io.sirius-ms.browser.devtools.allow", false)) {
+            // Create the action to be performed
+            Action f12Action = new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    showDevTools();
+                }
+            };
+
+            // Get the InputMap and ActionMap for the panel
+            InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+            ActionMap actionMap = getActionMap();
+
+            // Define a name for the action
+            String actionKey = "doF12Action";
+
+            // Link the KeyStroke to the action name in the InputMap
+            inputMap.put(KeyStroke.getKeyStroke("F12"), actionKey);
+
+            // Link the action name to the actual Action in the ActionMap
+            actionMap.put(actionKey, f12Action);
+        }
     }
 }

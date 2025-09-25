@@ -45,6 +45,8 @@ import de.unijena.bioinf.lcms.trace.filter.SavitzkyGolayFilter;
 import de.unijena.bioinf.lcms.trace.filter.WaveletFilter;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
+import de.unijena.bioinf.lcms.utils.TrackFeatureToFile;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
@@ -80,6 +82,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -118,6 +121,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     private long progress;
 
     private final double minSNR;
+
+    private final Tracker tracker;
 
     private UserSpecifiedThresholds userSpecifiedThresholds = new UserSpecifiedThresholds();
 
@@ -163,6 +168,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         }
 
         this.mergedTraceSegmenter = new PersistentHomology(this.filter, this.minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
+
+        if (options.logMass!=null || options.logRt!=null) {
+            this.tracker = new TrackFeatureToFile(options.logFile, options.logMass, options.logRt);
+        } else {
+            this.tracker = new Tracker.NOOP();
+            if (options.logFile != null && !options.logFile.equals(new File("lcms_log.txt")))
+                log.warn("The --log-file option is only effective when a --log-mass or --log-rt option is specified, too.");
+        }
     }
 
     public LcmsAlignSubToolJobNoSql(
@@ -177,7 +190,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             double minSNR,
             @Nullable AlignmentThresholds alignmentThresholds,
             @Nullable Deviation ms1Massdev,
-            boolean saveImportedCompounds
+            boolean saveImportedCompounds,
+            @NotNull Tracker tracker
     ) {
         super();
         this.inputFiles = runFiles;
@@ -199,6 +213,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.saveImportedCompounds = saveImportedCompounds;
         if (alignmentThresholds!=null) this.alignmentThresholds = alignmentThresholds;
         else this.alignmentThresholds = new AlignmentThresholds();
+        this.tracker = tracker;
     }
 
     private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, List<Path> files) throws IOException {
@@ -216,6 +231,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         //
         processing.setSegmentationStrategy(new PersistentHomology(this.filter, Math.min(2, this.minSNR), PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT));
         processing.setAlignmentThresholds(this.alignmentThresholds);
+        processing.setTracker(tracker);
         if (userSpecifiedThresholds.hasUserInput()) {
             processing.setStatisticsCollector(userSpecifiedThresholds);
         }
@@ -230,7 +246,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                     jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
                         @Override
                         protected ProcessedSample compute() throws Exception {
-                            ProcessedSample sample = processing.processSample(f);
+                            ProcessedSample sample;
+                            try {
+                                sample = processing.processSample(f);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                LoggerFactory.getLogger(LCMSProcessing.class).warn("Ignore input file " + f);
+                                return null;
+                            }
                             int hasIsotopes = 0, hasNoIsotopes = 0;
                             for (MoI m : sample.getStorage().getAlignmentStorage()) {
                                 if (m.hasIsotopes()) ++hasIsotopes;
@@ -245,7 +268,9 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
                 int count = 0;
                 for (BasicJJob<ProcessedSample> job : jobs) {
-                    System.out.println(job.takeResult().getUid() + " (" + ++count + " / " + jobs.size() + ")");
+                    ProcessedSample processedSample = job.takeResult();
+                    if (processedSample==null) continue;
+                    System.out.println(processedSample.getUid() + " (" + ++count + " / " + jobs.size() + ")");
                     updateProgress(totalProgress, ++progress, "Processing Runs");
                 }
 
