@@ -38,6 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -189,7 +190,8 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
                         (errors.stream().map(ConnectionError::getErrorKlass).noneMatch(e -> e == LOGIN_SERVER)
                     || errors.stream().map(ConnectionError::getErrorKlass).noneMatch(e -> e == LICENSE_SERVER))
                 ){
-                    err = errors.stream().filter(e -> e.getErrorKlass() != INTERNET).sorted().findFirst().get();
+                    err = errors.stream().filter(e -> e.getErrorKlass() != INTERNET)
+                            .min(Comparator.comparing(ConnectionError::getErrorKlass)).get();
                     mainError = err.getErrorKlass();
                 }
             }
