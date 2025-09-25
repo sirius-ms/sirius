@@ -25,7 +25,7 @@ public class AdductEdge {
     }
 
 
-    private static enum EdgeType {ION(-1f), ADDUCT(-3f), MULTIMERE(-2), OTHER(-4f);
+    private static enum EdgeType {ION(-1f), ADDUCT(-3f), MULTIMERE(-2), OTHER(-4f), ISOTOPE(-1f);
         private float scoreBonus;
 
         EdgeType(float scoreBonus) {
@@ -72,6 +72,8 @@ public class AdductEdge {
                 if (((LossRelationship) m).coversPotentialAdduct()) {
                     if (this.edgeType.ordinal()>EdgeType.ADDUCT.ordinal()) this.edgeType = EdgeType.ADDUCT;
                 }
+            } else if (m instanceof IsotopeRelationship) {
+                this.edgeType = EdgeType.ISOTOPE;
             }
         }
     }

@@ -329,8 +329,9 @@ public class LCMSProcessing {
         DoubleList ms2NoiseLevel = new DoubleArrayList();
         for (ProcessedSample sample : alignmentBackbone.getSamples()) {
             SampleStats statistics = sample.getStorage().getStatistics();
-            ms2NoiseLevel.add(statistics.getMs2NoiseLevel());
+           if (statistics.getMs2NoiseLevel()>0) ms2NoiseLevel.add(statistics.getMs2NoiseLevel());
         }
+        double ms2NoiseLevelAvg = Statistics.robustAverage(ms2NoiseLevel.toDoubleArray());
         return new SampleStatistics(
                 st.getMs1MassDeviationWithinTraces(),
                 alignmentBackbone.getStatistics().getExpectedMassDeviationBetweenSamples(),
@@ -338,7 +339,7 @@ public class LCMSProcessing {
                 !fwhms.isEmpty() ? fwhms.getDouble(fwhms.size()/2) : 0,
                 !heightDividedByfwhms.isEmpty() ? heightDividedByfwhms.getDouble(heightDividedByfwhms.size()/2) : 0,
                 (int)alignmentBackbone.getStatistics().getMedianNumberOfAlignments(),
-                st.ms2NoiseLevel()
+                Double.isFinite(ms2NoiseLevelAvg) ? ms2NoiseLevelAvg : 0d
         );
 
     }

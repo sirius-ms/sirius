@@ -109,6 +109,12 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
      */
     private final byte isotopes;
 
+    public boolean isIsotope() {
+        return isotopes>0;
+    }
+    public int getIsotopicShift() {
+        return isotopes;
+    }
 
     public boolean hasNeitherAdductNorInsource() {
         return inSourceFragmentation.isEmpty() && adduct.isEmpty();

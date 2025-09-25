@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.adducts;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.BinarySearch;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class AdductNetwork {
 
@@ -119,18 +121,18 @@ public class AdductNetwork {
                             final Range<Double> threshold2 = Range.of(thresholdStart2, thresholdEnd2);
                             if (rightNode.getMass() > leftNode.getMass() && Math.abs(rightNode.getRetentionTime() - leftNode.getRetentionTime()) < retentionTimeTolerance &&  threshold2.contains(rightNode.getRetentionTime())) {
                                 final double massDelta = rightNode.getMass() - leftNode.getMass();
-                                List<KnownMassDelta> knownMassDeltas = adductManager.retrieveMassDeltasWithNoAmbiguity(massDelta, deviation);
+                                List<KnownMassDelta> knownMassDeltas = new ArrayList<>();
+                                List<Peak> potentialInsourcePeaks = potentialInsourceFragments == null ? Collections.emptyList() : potentialInsourceFragments.retrieveAll(massDelta, deviation);
+                                if (!potentialInsourcePeaks.isEmpty()) {
+                                    UnknownLossRelationship insourceFragment = new UnknownLossRelationship();
+                                    knownMassDeltas.add(insourceFragment);
+                                } else {
+                                    knownMassDeltas.addAll(adductManager.retrieveMassDeltasWithNoAmbiguity(massDelta, deviation));
+                                }
 
                                 // add multimere edge if present
                                 adductManager.checkForMultimere(rightNode.getMass(), leftNode.getMass(), deviation).ifPresent(knownMassDeltas::add);
 
-                                if (knownMassDeltas.isEmpty()) {
-                                    List<Peak> potentialInsourcePeaks = potentialInsourceFragments == null ? Collections.emptyList() : potentialInsourceFragments.retrieveAll(massDelta, deviation);
-                                    if (!potentialInsourcePeaks.isEmpty()) {
-                                        UnknownLossRelationship insourceFragment = new UnknownLossRelationship();
-                                        knownMassDeltas.add(insourceFragment);
-                                    }
-                                }
                                 if (!knownMassDeltas.isEmpty()) {
                                     final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, knownMassDeltas.toArray(KnownMassDelta[]::new));
                                     scorer.computeScore(provider, adductEdge);
@@ -211,22 +213,18 @@ public class AdductNetwork {
     }
 
     private int maybeIsotope(double massDelta, AdductNode leftNode, AdductNode rightNode) {
-        if (massDelta > IsotopePattern.ISO_RANGES.length+1) return -1;
-        Deviation dev = new Deviation(10);
         int charge = leftNode.getFeature().getCharge();
         if (rightNode.getFeature().getCharge()!=charge) return -1;
-        for (int i=0; i < IsotopePattern.ISO_RANGES.length; ++i) {
-            if (IsotopePattern.ISO_RANGES[i].contains(massDelta*Math.abs(charge))) {
-                // we should check if the isotope peak corresponds to the isotope pattern
-                Optional<SimpleSpectrum> l = provider.getIsotopes(leftNode.getFeature());
-                if (l.isPresent()) {
-                    SimpleSpectrum s = l.get();
-                    int li = Spectrums.indexOfPeakClosestToMassWithin(s, leftNode.getMass(), dev);
-                    int ri = Spectrums.indexOfPeakClosestToMassWithin(s, rightNode.getMass(), dev);
-                    if (li>=0 && ri>=0 && Math.abs(s.getMzAt(ri)-s.getMzAt(li)-massDelta)<5e-4) {
-                        return i;
-                    }
-                }
+        final int isotopeShift = IsotopePattern.getPossibleIsotopeShift(leftNode.getMass(), rightNode.getMass(),charge);
+        if (isotopeShift<0) return -1;
+        Deviation dev = new Deviation(10);
+        Optional<SimpleSpectrum> l = provider.getIsotopes(leftNode.getFeature());
+        if (l.isPresent()) {
+            SimpleSpectrum s = l.get();
+            int li = Spectrums.indexOfPeakClosestToMassWithin(s, leftNode.getMass(), dev);
+            int ri = Spectrums.indexOfPeakClosestToMassWithin(s, rightNode.getMass(), dev);
+            if (li>=0 && ri>=0 && dev.inErrorWindow(s.getMzAt(ri)-s.getMzAt(li),massDelta)) {
+                return isotopeShift;
             }
         }
         return -1;
@@ -238,7 +236,7 @@ public class AdductNetwork {
             MergedMSnSpectrum mergedMSnSpectrum = data.stream().min(Comparator.comparingDouble(x->x.getMergedCollisionEnergy().getMaxEnergy(false))).get();
             SimpleSpectrum ms2 = mergedMSnSpectrum.getPeaks();
             double maximalIntensity = Spectrums.getMaximalIntensity(ms2);
-            double intensityThreshold = 0.1*maximalIntensity;
+            double intensityThreshold = 0.05*maximalIntensity;
             for (int k=0; k < ms2.size(); ++k) {
                 if (ms2.getMzAt(k) < (rightNode.getMass()-4) && ms2.getIntensityAt(k)>=intensityThreshold) {
                     potentialInsourceFragments.put(ms2.getMzAt(k), ms2.getPeakAt(k));
@@ -269,6 +267,11 @@ public class AdductNetwork {
                 }
             }));
         }
+
+        // DEBUG
+        HashMap<String, Integer> uniqueIonModeCounter = new HashMap<>();
+        HashMap<String, Double> adductCounter = new HashMap<>();
+        int ambigous = 0; int networkNodes=0; int unambigous=0;
         ListIterator<BasicJJob<HashMap<AdductNode, AdductAssignment>>> iter = jobs.listIterator();
         while (iter.hasNext()) {
             HashMap<AdductNode, AdductAssignment> map = iter.next().takeResult();
@@ -292,6 +295,21 @@ public class AdductNetwork {
             for (AdductNode node : map.keySet()) {
                 updateRoutineForFeatures.accept(node.features);
             }
+
+            // DEBUG
+            for (AdductNode node : map.keySet()) {
+                List<PrecursorIonType> allAdducts = node.features.getDetectedAdducts().getAllAdducts();
+                allAdducts.forEach(x -> adductCounter.put(x.toString(), adductCounter.getOrDefault(x.toString(), 0d) + 1d / allAdducts.size()));
+                List<Ionization> list = allAdducts.stream().filter(x -> x.hasNeitherAdductNorInsource()).map(x -> x.getIonization()).distinct().toList();
+                if (list.size() == 1) {
+                    ++unambigous;
+                    uniqueIonModeCounter.put(list.get(0).toString(), uniqueIonModeCounter.getOrDefault(list.get(0).toString(),0)+1);
+                } else {
+                    ++ambigous;
+                }
+                ++networkNodes;
+            }
+
             iter.set(null); // free memory
         }
         // also process all singleton nodes
@@ -306,6 +324,17 @@ public class AdductNetwork {
             feature2compoundRoutine.apply(f);
             updateRoutineForFeatures.accept(f);
         }
+
+        // DEBUG
+        System.out.println("##########################################");
+        System.out.println("Of " + (singletons.size() + networkNodes) + " features, " + singletons.size() + " are singletons and " + networkNodes +
+                " features are part of an adduct network. " + ambigous + " nodes have ambigous annotations, " +  unambigous + " have unambigous annotation.");
+        System.out.println(uniqueIonModeCounter);
+        System.out.println("------");
+        System.out.println(adductCounter);
+        System.out.println("##########################################");
+
+
     }
 
     /*
