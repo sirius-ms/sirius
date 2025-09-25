@@ -180,6 +180,8 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                     updateProgress(maxProgress, instanceCounter++, "Writing Feature '" + inst.getExternalFeatureId().orElseGet(inst::getName) + "'...");
                     AlignedFeatures feature = ((NoSQLInstance) inst).getAlignedFeatures(true);
 
+                    CsiStructureSearchResult ssr = project.getProject().findByFeatureIdStr(feature.getAlignedFeatureId(), CsiStructureSearchResult.class).findFirst().orElse(null);
+
                     { //formula summary
                         boolean first = true;
                         MolecularFormula lastPrecursorFormula = null;
@@ -240,6 +242,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                                 nothingWritten = false;
                             }
 
+                            if (ssr == null && chemVistaWriter != null && first) {
+                                chemVistaWriter.writeFormulaCandidate(feature, fc);
+                                nothingWritten = false;
+                            }
 
                             if (nothingWritten)
                                 break;
@@ -250,54 +256,53 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                         }
                     }
 
-                    {// structure summary
-                        CsiStructureSearchResult ssr = project.getProject().findByFeatureIdStr(feature.getAlignedFeatureId(), CsiStructureSearchResult.class).findFirst().orElse(null);
-                        if (ssr != null) {
-                            boolean first = true;
-                            int rank = 1;
-                            FormulaCandidate lastFc = null;
-                            Filter.FilterClause sortingFilter = Filter.and(
-                                    Filter.where("alignedFeatureId").eq(feature.getAlignedFeatureId()),
-                                    Filter.where("structureRank").gt(0));
+                    // structure summary
+                    if (ssr != null) {
+                        boolean first = true;
+                        int rank = 1;
+                        FormulaCandidate lastFc = null;
+                        Filter.FilterClause sortingFilter = Filter.and(
+                                Filter.where("alignedFeatureId").eq(feature.getAlignedFeatureId()),
+                                Filter.where("structureRank").gt(0));
 
-                            for (CsiStructureMatch sc : project.getProject().getStorage().find(sortingFilter, CsiStructureMatch.class)) {
-                                project.getProject().fetchFingerprintCandidate(sc, false);
-                                boolean nothingWritten = true;
-                                FormulaCandidate fc = (lastFc != null && lastFc.getFormulaId() == sc.getFormulaId())
-                                        ? lastFc : project.getProject().findByFormulaIdStr(sc.getFormulaId(), FormulaCandidate.class).findFirst().orElseThrow();
+                        for (CsiStructureMatch sc : project.getProject().getStorage().find(sortingFilter, CsiStructureMatch.class)) {
+                            project.getProject().fetchFingerprintCandidate(sc, false);
+                            boolean nothingWritten = true;
+                            FormulaCandidate fc = (lastFc != null && lastFc.getFormulaId() == sc.getFormulaId())
+                                    ? lastFc : project.getProject().findByFormulaIdStr(sc.getFormulaId(), FormulaCandidate.class).findFirst().orElseThrow();
 
-                                if (structureTopHit != null && first) {
-                                    structureTopHit.writeStructureCandidate(feature, fc, sc, ssr);
-                                    nothingWritten = false;
-                                }
-                                if (canopusStructure != null && first) {
-                                    CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
-                                    if (cp != null)
-                                        canopusStructure.writeCanopusPredictions(feature, fc, cp);
-                                    nothingWritten = false;
-                                }
-                                if (chemVistaWriter != null && first) {
-                                    chemVistaWriter.writeStructureCandidate(feature, fc, sc, ssr);
-                                    nothingWritten = false;
-                                }
-                                if (formulaTopK != null && rank <= options.getTopK()) {
-                                    structureTopK.writeStructureCandidate(feature, fc, sc, ssr);
-                                    nothingWritten = false;
-                                }
-                                if (structureAll != null) {
-                                    structureAll.writeStructureCandidate(feature, fc, sc, ssr);
-                                    nothingWritten = false;
-                                }
-                                if (nothingWritten)
-                                    break;
-
-                                //iterating
-                                lastFc = fc;
-                                rank++;
-                                first = false;
+                            if (structureTopHit != null && first) {
+                                structureTopHit.writeStructureCandidate(feature, fc, sc, ssr);
+                                nothingWritten = false;
                             }
+                            if (canopusStructure != null && first) {
+                                CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
+                                if (cp != null)
+                                    canopusStructure.writeCanopusPredictions(feature, fc, cp);
+                                nothingWritten = false;
+                            }
+                            if (chemVistaWriter != null && first) {
+                                chemVistaWriter.writeStructureCandidate(feature, fc, sc, ssr);
+                                nothingWritten = false;
+                            }
+                            if (formulaTopK != null && rank <= options.getTopK()) {
+                                structureTopK.writeStructureCandidate(feature, fc, sc, ssr);
+                                nothingWritten = false;
+                            }
+                            if (structureAll != null) {
+                                structureAll.writeStructureCandidate(feature, fc, sc, ssr);
+                                nothingWritten = false;
+                            }
+                            if (nothingWritten)
+                                break;
+
+                            //iterating
+                            lastFc = fc;
+                            rank++;
+                            first = false;
                         }
                     }
+
                     {// Denovo summary
                         boolean first = true;
                         int rank = 1;
@@ -502,18 +507,24 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
     }
 
     ChemVistaSummaryWriter initChemVistaWriter(Path location, String filename) throws IOException {
-        ChemVistaSummaryWriter writer = new ChemVistaSummaryWriter(new CsvTableWriter(location, filename, options.quoteStrings));
+        CsvTableWriter csvWriter = new CsvTableWriter(location, filename, options.quoteStrings);
+        csvWriter.setSiriusPrefix(options.siriusPrefix);
+        ChemVistaSummaryWriter writer = new ChemVistaSummaryWriter(csvWriter);
         writer.writeHeader();
         return writer;
     }
 
     private SummaryTableWriter makeTableWriter(Path location, String filename) throws IOException {
-        return switch (options.format) {
+        SummaryTableWriter writer =  switch (options.format) {
             case TSV -> new TsvTableWriter(location, filename, options.quoteStrings);
-            case ZIP -> new ZipTableWriter(location, filename, options.quoteStrings);
+            case ZIP -> new ZipTableWriter(location, filename, options.quoteStrings, options.siriusPrefix);
             case CSV -> new CsvTableWriter(location, filename, options.quoteStrings);
             case XLSX -> new XlsxTableWriter(location, filename);
         };
+        if (writer instanceof PrefixingSummaryWriter pw) {
+            pw.setSiriusPrefix(options.siriusPrefix);
+        }
+        return writer;
     }
 
 
