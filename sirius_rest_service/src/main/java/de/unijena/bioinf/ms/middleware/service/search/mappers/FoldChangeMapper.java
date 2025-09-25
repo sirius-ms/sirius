@@ -58,7 +58,6 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
     public @Nullable List<Statistics> toPojo(@NotNull String rootFieldName, @NotNull Iterable<IndexableField> document) {
         String prefix = rootFieldName + ".foldChange";
 
-        List<Statistics> stats = new ArrayList<>();
 
         String objectId = null;
         for (IndexableField storedField : document)
@@ -70,10 +69,13 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
         if (objectId == null)
             throw new IllegalStateException("Could not find objectId field: " + getObjectIdFieldName());
 
+        List<Statistics> stats = null;
         for (IndexableField storedField : document) {
             String name = storedField.name();
             if (name.startsWith(prefix)) {
-               // fold change only case add more if needed
+                if (stats == null)
+                    stats = new ArrayList<>();
+                // fold change only case add more if needed
                 String[] split = name.split("[.]");
 
                 FoldChange fc = FoldChange.builder()
