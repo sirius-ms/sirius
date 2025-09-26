@@ -508,7 +508,7 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
+     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
      * @param databaseId database to import into
      * @param inputFiles files to be imported
      * @param bufferSize The bufferSize parameter
@@ -561,7 +561,7 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
+     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
      * @param databaseId database to import into
      * @param inputFiles files to be imported
      * @param bufferSize The bufferSize parameter
@@ -577,7 +577,7 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
+     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
      * @param databaseId database to import into
      * @param inputFiles files to be imported
      * @param bufferSize The bufferSize parameter
@@ -593,7 +593,7 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
+     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
      * @param databaseId database to import into
      * @param inputFiles files to be imported
      * @param bufferSize The bufferSize parameter

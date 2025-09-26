@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**closeProject**](ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application |
+| [**closeProject**](ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from the application |
 | [**copyProject**](ProjectsApi.md#copyProject) | **PUT** /api/projects/{projectId}/copy | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
 | [**createProject**](ProjectsApi.md#createProject) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId. |
 | [**getCanopusClassyFireData**](ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes |
@@ -28,9 +28,9 @@ All URIs are relative to *http://localhost:8888*
 
 > closeProject(projectId, compact)
 
-Close project-space and remove it from application
+Close project-space and remove it from the application
 
-Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
 
 ### Example
 

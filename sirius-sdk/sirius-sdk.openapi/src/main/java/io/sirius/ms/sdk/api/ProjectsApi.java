@@ -53,8 +53,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Close project-space and remove it from application
-     * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application
+     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
@@ -90,8 +90,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Close project-space and remove it from application
-     * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application
+     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
@@ -103,8 +103,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Close project-space and remove it from application
-     * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application
+     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
@@ -116,8 +116,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Close project-space and remove it from application
-     * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application
+     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
