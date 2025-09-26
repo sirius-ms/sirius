@@ -27,6 +27,8 @@ import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParamet
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -112,6 +114,19 @@ public class SearchableDatabaseController {
      * @param bioTransformerParameters configuration for biotransformer execution. If null, BioTransformer is not applied.
      * @return Meta-Information of the affected database after the import has been performed.
      */
+    @Operation(
+            summary = "Start import of structure and spectra files into the specified database.",
+            description = "Start import of structure and spectra files into the specified database.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            encoding = {
+                                    @Encoding(name = "bioTransformerParameters", contentType = MediaType.APPLICATION_JSON_VALUE),
+                                    @Encoding(name = "inputFiles", contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                            }
+                    )
+            )
+    )
     @PostMapping(value = "/{databaseId}/import/from-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public SearchableDatabase importIntoDatabase(@PathVariable String databaseId,
                                                  @RequestPart MultipartFile[] inputFiles,
