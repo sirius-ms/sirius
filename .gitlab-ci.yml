@@ -83,8 +83,6 @@ build_test_publish_libs:
       fi
 
   artifacts:
-    rules:
-      - if: $CI_PIPELINE_SOURCE != "schedule"
     when: on_failure
     reports:
       junit:
