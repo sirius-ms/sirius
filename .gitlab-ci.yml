@@ -39,7 +39,7 @@ before_script:
   - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
   - echo "Using Gradle user home at $GRADLE_USER_HOME"
 
-collect_deps::on-schedule:
+collect_deps:on-schedule:
   stage: secops
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -50,7 +50,7 @@ collect_deps::on-schedule:
     paths:
       - ./build/mavenDeps.txt
 
-post_advisories::on-schedule:
+post_advisories:on-schedule:
   stage: secops
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
