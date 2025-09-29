@@ -39,8 +39,10 @@ before_script:
   - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
   - echo "Using Gradle user home at $GRADLE_USER_HOME"
 
-collect_deps:
+collect_deps::on-schedule:
   stage: secops
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
   script:
     - mkdir build
     - gradle dependencies allDeps | grep -oE '[-]--\s+[^:]+:[^:]+:' | grep -oE '\s[^:]+:[^:]+' >> ./build/mavenDeps.txt
@@ -48,9 +50,10 @@ collect_deps:
     paths:
       - ./build/mavenDeps.txt
 
-post_advisories:
+post_advisories::on-schedule:
   stage: secops
-  when: manual
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
   needs:
     - job: collect_deps
       artifacts: true
@@ -59,6 +62,8 @@ post_advisories:
 
 build_test_publish_libs:
   stage: libs
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "schedule"
   script:
     - |
       echo "===> Running Unit Tests"
@@ -78,6 +83,8 @@ build_test_publish_libs:
       fi
 
   artifacts:
+    rules:
+      - if: $CI_PIPELINE_SOURCE != "schedule"
     when: on_failure
     reports:
       junit:
@@ -107,6 +114,8 @@ build_test_publish_libs:
 
 acceptanceTests:
   stage: test-app
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "schedule"
   when: manual
   script:
     - gradle acceptanceTest --stacktrace
