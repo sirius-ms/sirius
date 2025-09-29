@@ -26,8 +26,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.jjobs.Partition;
-import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
@@ -50,7 +48,7 @@ public class RESTDatabase implements FilterableChemicalDatabase {
     private final OkHttpClient client;
     private final boolean closeCLient;
 
-    private StructureSearchClient chemDBClient;
+    private final StructureSearchClient chemDBClient;
     protected final ChemDBFileCache cache;
 
 
@@ -70,12 +68,12 @@ public class RESTDatabase implements FilterableChemicalDatabase {
     }
 
     @Override
-    public long countAllFingerprints() throws ChemicalDatabaseException {
+    public long countAllFingerprints() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public long countAllFormulas() throws ChemicalDatabaseException {
+    public long countAllFormulas() {
         throw new UnsupportedOperationException();
     }
 
@@ -112,11 +110,11 @@ public class RESTDatabase implements FilterableChemicalDatabase {
     }
 
     public RESTDatabase(@NotNull URI serverURL, @Nullable String contextPath) {
-        this(RESTDatabase.defaultCache(), new ChemDBClient(serverURL, contextPath), new OkHttpClient.Builder().build(), true);
+        this(RESTDatabase.defaultCache(), new StructureSearchClient(serverURL, contextPath), new OkHttpClient.Builder().build(), true);
     }
 
     public RESTDatabase(@NotNull URI serverURL, @Nullable String contextPath, @NotNull AuthService authService) {
-        this(RESTDatabase.defaultCache(), new ChemDBClient(serverURL, contextPath, authService), new OkHttpClient.Builder().build(), true);
+        this(RESTDatabase.defaultCache(), new StructureSearchClient(serverURL, contextPath, authService), new OkHttpClient.Builder().build(), true);
     }
 
     public RESTDatabase(@NotNull StructureSearchClient chemDBClient) {
@@ -149,50 +147,32 @@ public class RESTDatabase implements FilterableChemicalDatabase {
     }
 
     @Override
-    public CompoundCandidate lookupStructuresByInChI(String inchiKey2d) throws ChemicalDatabaseException {
+    public CompoundCandidate lookupStructuresByInChI(String inchiKey2d) {
         return lookupFingerprintsByInchis(List.of(inchiKey2d)).getFirst();
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        if (chemDBClient instanceof ChemDBClient) {
-            final Partition<String> keyParts = Partition.ofSize(inchi_keys, ChemDBClient.MAX_NUM_OF_INCHIS);
-            final ArrayList<FingerprintCandidate> compounds = new ArrayList<>(keyParts.numberOfElements());
-
-            try {
-                for (List<String> inchiKeys : keyParts)
-                    compounds.addAll(((ChemDBClient) chemDBClient).postCompounds(inchiKeys, client));
-            } catch (IOException e) {
-                throw new ChemicalDatabaseException(e);
-            }
-            return compounds;
-        }
-        throw new UnsupportedOperationException();
-    }
-
-
-    public Iterable<? extends FingerprintCandidate> lookupManyFingerprintsBy2dInchis(Collection<String> inchis2d) throws ChemicalDatabaseException {
-        return lookupFingerprintsByInchis(inchis2d);
-    }
-
-
-    @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchiKeys2d) throws ChemicalDatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchiKeys2d) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
+    public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void annotateCompounds(List<? extends CompoundCandidate> sublist) {
         // already annotated
     }
 
     @Override
-    public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
+    public List<InChI> findInchiByNames(List<String> names) {
         throw new UnsupportedOperationException();
     }
 
@@ -202,12 +182,12 @@ public class RESTDatabase implements FilterableChemicalDatabase {
     }
 
     @Override
-    public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
+    public boolean containsFormula(MolecularFormula formula) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean containsFormula(long filter, MolecularFormula formula) throws ChemicalDatabaseException {
+    public boolean containsFormula(long filter, MolecularFormula formula) {
         throw new UnsupportedOperationException();
     }
 
