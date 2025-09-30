@@ -22,10 +22,8 @@ plugins {
 
 //this task is used to update the gradle wrapper properties to a new version
 // it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
-if (rootProject == project) {
-    wrapper {
-        gradleVersion = '8.14'
-    }
+wrapper {
+    gradleVersion = '8.14'
 }
 
 ossIndexAudit {

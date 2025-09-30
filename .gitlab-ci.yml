@@ -14,7 +14,6 @@ default:
 stages:
 #  - test-libs
 #  - build-publish-libs
-  - secops
   - libs
   - build-app
   - test-app
