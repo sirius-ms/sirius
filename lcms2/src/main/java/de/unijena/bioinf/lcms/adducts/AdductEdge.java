@@ -25,7 +25,7 @@ public class AdductEdge {
     }
 
 
-    private static enum EdgeType {ION(-1f), ADDUCT(-3f), MULTIMERE(-2), OTHER(-4f), ISOTOPE(-1f);
+    private static enum EdgeType {ION(-1f), ADDUCT(-3f), MULTIMERE(-2), OTHER(-4f), ISOTOPE(-2f);
         private float scoreBonus;
 
         EdgeType(float scoreBonus) {
