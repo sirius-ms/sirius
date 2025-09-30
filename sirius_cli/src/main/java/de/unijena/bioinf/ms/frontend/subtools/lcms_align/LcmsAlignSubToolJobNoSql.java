@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -30,7 +29,6 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.LCMSProcessing;
 import de.unijena.bioinf.lcms.adducts.AdductManager;
 import de.unijena.bioinf.lcms.adducts.AdductNetwork;
-import de.unijena.bioinf.lcms.adducts.AdductNode;
 import de.unijena.bioinf.lcms.adducts.ProjectSpaceTraceProvider;
 import de.unijena.bioinf.lcms.adducts.assignment.OptimalAssignmentViaBeamSearch;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
@@ -41,7 +39,7 @@ import de.unijena.bioinf.lcms.quality.*;
 import de.unijena.bioinf.lcms.statistics.UserSpecifiedThresholds;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.filter.GaussFilter;
-import de.unijena.bioinf.lcms.trace.filter.NoFilter;
+import de.unijena.bioinf.lcms.trace.filter.AutoFilter;
 import de.unijena.bioinf.lcms.trace.filter.SavitzkyGolayFilter;
 import de.unijena.bioinf.lcms.trace.filter.WaveletFilter;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
@@ -135,8 +133,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.inMemoryOnMerged = options.inMemory;
 
         this.filter = switch (options.smoothing) {
-            case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
-            case NOFILTER -> new NoFilter();
+            case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new AutoFilter();
+            case NOFILTER -> new AutoFilter();
             case GAUSSIAN -> new GaussFilter(options.sigma);
             case WAVELET -> new WaveletFilter(options.scaleLevel);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
@@ -189,8 +187,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         if (ms1Massdev!=null) userSpecifiedThresholds.setAllowedMassDeviationInMs1(ms1Massdev);
         if (noiseIntensity>=0) userSpecifiedThresholds.setMs1NoiseLevel(noiseIntensity);
         this.filter = switch (filter) {
-            case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
-            case NOFILTER -> new NoFilter();
+            case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new AutoFilter();
+            case NOFILTER -> new AutoFilter();
             case GAUSSIAN -> new GaussFilter(sigma);
             case WAVELET -> new WaveletFilter(scale);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
@@ -324,18 +322,15 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
                 long TIME2 = System.currentTimeMillis();
                 System.out.printf("Building adduct network took %f seconds\n", (TIME2-TIME1)/1000d);
+                network.deisotope(x->{
+                    deleteIsotopicPeak(ps, x);
+                    importedFeatureIds.rem(x.getAlignedFeatureId());
+                });
                 network.assignNetworksAndAdductsToFeatures(
                         SiriusJobs.getGlobalJobManager(),
                         new OptimalAssignmentViaBeamSearch(),
                         merged.getPolarity(),
-                        x->{
-                            if (x.getDetectedAdducts().getAllAdducts().stream().allMatch(PrecursorIonType::isIsotope)) {
-                                deleteIsotopicPeak(ps, x);
-                                importedFeatureIds.rem(x.getAlignedFeatureId());
-                            } else {
-                                ps.getStorage().upsert(x);
-                            }
-                        },
+                        x->ps.getStorage().upsert(x),
                         (net)->{ps.getStorage().insert(net); return net.getNetworkId();},
                         (feature)->{Compound c = Compound.singleton(feature); ps.getStorage().insert(c); return c.getCompoundId();}
                 );

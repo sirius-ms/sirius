@@ -98,6 +98,10 @@ public class MergeTracesWithoutGapFilling {
         TraceRectangleMap rectangleMap = mergeStorage.getRectangleMap();
         for (MoI m : merged.getStorage().getAlignmentStorage()) {
             final AlignedMoI moi = (AlignedMoI)m;
+            if (moi.majorityIsIsotopeOrMulticharge()) {
+                tracker.moiDeleted(moi);
+                continue;
+            }
             Rect r = new Rect(moi.getRect());
             r.minMz = (float)moi.getMz();
             r.maxMz = (float)moi.getMz();
@@ -130,20 +134,33 @@ public class MergeTracesWithoutGapFilling {
 
 
     ////////////////////////////////////////////////////////////////
-
+    // if true, we check in the original data for each sample if we missed a trace
+    // this is quite expensive and should not be necessary if
+    // the alignment did its job
+    private static final boolean GAP_FILLING = false;
 
     private void mergeAllMoIsForSampleWithinRect(Rect r, ProcessedSample merged, ProcessedSample sample, Tracker tracker) {
         // get all mois in this rectangle
-        MoI[] mois = merged.getStorage().getAlignmentStorage().getMoIWithin(r.minMz, r.maxMz).stream().filter(x -> r.contains(x.getMz(), x.getRetentionTime())).toArray(MoI[]::new);
+        MoI[] mois = merged.getStorage().getAlignmentStorage().getMoIWithin(r.minMz, r.maxMz).stream().filter(x -> !(((AlignedMoI)x).majorityIsIsotopeOrMulticharge()) && r.contains(x.getMz(), x.getRetentionTime())).toArray(MoI[]::new);
         MoI[] moisForSample = Arrays.stream(mois).flatMap(a->((AlignedMoI) a).forSampleIdx(sample.getUid()).stream()).toArray(MoI[]::new);
         // we want to merge them into the MergedTrace corresponding to this rectangle
         IntOpenHashSet traceIds = new IntOpenHashSet(Arrays.stream(moisForSample).mapToInt(MoI::getTraceId).toArray());
+        ContiguousTrace[] traces;
         if (traceIds.isEmpty()) {
-            tracker.emptyRect(sample, r);
-            return; // nothing to merge for this sample
+            // can we find the moi in the original traces ("GapFilling"-like)?
+            if (GAP_FILLING) {
+                List<ContiguousTrace> contigousTraces = sample.getStorage().getTraceStorage().getContigousTraces(r.minMz, r.maxMz, sample.getMapping().idForRetentionTime(r.minRt),
+                        sample.getMapping().idForRetentionTime(r.maxMz));
+                LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).warn("Cannot find MOI for " + r + ", use Gap Filling approach instead and found " + contigousTraces.size() + " traces that fit.");
+                traces = contigousTraces.stream().filter(x->r.containsRt(sample.getRtRecalibration().value(x.retentionTime(x.apex())))).toArray(ContiguousTrace[]::new);
+            } else {
+                tracker.emptyRect(sample, r);
+                return; // nothing to merge for this sample
+            }
+        } else {
+            // get all traces in the sample that can be merged into the mergedTrace
+            traces = traceIds.intStream().mapToObj(x -> sample.getStorage().getTraceStorage().getContigousTrace(x)).toArray(ContiguousTrace[]::new);
         }
-        // get all traces in the sample that can be merged into the mergedTrace
-        ContiguousTrace[] traces = traceIds.intStream().mapToObj(x -> sample.getStorage().getTraceStorage().getContigousTrace(x)).toArray(ContiguousTrace[]::new);
 
         // basically there are two merge operations:
         // 1.) We want to merge Traces along different samples

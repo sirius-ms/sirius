@@ -27,26 +27,18 @@
 package de.unijena.bioinf.lcms.trace.segmentation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Quickselect;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
-import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.filter.Filter;
 import de.unijena.bioinf.lcms.trace.filter.GaussFilter;
-import de.unijena.bioinf.lcms.trace.filter.NoFilter;
-import de.unijena.bioinf.lcms.trace.filter.WaveletFilter;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import de.unijena.bioinf.lcms.trace.filter.AutoFilter;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -58,7 +50,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -216,7 +207,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
 
         private float[] filter() {
             float[] vec;
-            if (filter instanceof NoFilter) {
+            if (filter instanceof AutoFilter) {
                 final float[] ints = new float[size()];
                 for (int k=0; k < size(); ++k) ints[k] = trace.intensity(k+offset);
                 vec=ints;
@@ -630,7 +621,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
                 TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
         ).toList();
         */
-        Filter f = (filter==null) ? getGaussianFilter(trace, expectedPeakWidth) : filter;
+        Filter f = (filter==null || filter instanceof AutoFilter) ? getGaussianFilter(trace, expectedPeakWidth) : filter;
         return computePersistentHomologyHierarchical(trace, f, noiseLevel, expectedPeakWidth, pointsOfInterest, features).stream().map(seg->
                 TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
         ).toList();
@@ -638,13 +629,16 @@ public class PersistentHomology implements TraceSegmentationStrategy {
     }
 
     public static Filter getGaussianFilter(Trace t, double w) {
-        if (w<=0) return new NoFilter();
-        if (t.length()<=250) return new NoFilter();
+        if (t.length()<=256) return new AutoFilter();
+        if (w<=0) return getGaussianFilterWithBins(t,1);
         double binwidth = (t.retentionTime(t.endId())-t.retentionTime(t.startId()))/(t.endId()-t.startId());
-        int bins = (int)Math.round(w/binwidth);
-        if (bins<=1) return new NoFilter();
+        int bins = (int)Math.round(w/(2*binwidth));
+        if (bins<=0) return new AutoFilter();
         else return new GaussFilter(bins);
-
+    }
+    public static Filter getGaussianFilterWithBins(Trace t, int bins) {
+        if (bins<=1) return new AutoFilter();
+        else return new GaussFilter(bins);
     }
 
     public List<TraceSegment> detectSegmentsOld(Trace trace, double noiseLevel, double expectedPeakWidth, int[] pointsOfInterest, int[] features) {
@@ -672,7 +666,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         ObjectMapper m = new ObjectMapper();
         try {
             DebugModel debugModel = m.readValue(json, DebugModel.class);
-            return new PersistentHomology(new NoFilter(), debugModel.noiseCoefficient, debugModel.persistenceCoefficient, debugModel.mergeCoefficient).detectSegments(
+            return new PersistentHomology(new AutoFilter(), debugModel.noiseCoefficient, debugModel.persistenceCoefficient, debugModel.mergeCoefficient).detectSegments(
                     debugModel, debugModel.noiseLevel, debugModel.expectedPeakWidth, debugModel.pointsOfInterest
             );
         } catch (JsonProcessingException e) {
@@ -918,7 +912,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             setPreferredSize(new Dimension(width+4*margin,height+4*margin));
             int scale = (int)Math.ceil(m.expectedPeakWidth / (m.retentionTime(m.apexId)-m.retentionTime(m.apexId-1)));
             if (m.features==null) m.features=new int[0];
-            Filter F = filter ? new GaussFilter(3) : new NoFilter();
+            Filter F = filter ? new GaussFilter(3) : new AutoFilter();
             if (filter) {
                 filtered = MatrixUtils.float2double(m.intensity);
                 filtered = F.apply(filtered);
