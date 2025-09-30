@@ -25,6 +25,9 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
+import de.unijena.bioinf.sirius.elementdetection.TransformerElementDetector;
+import de.unijena.bioinf.sirius.elementdetection.transformer.TransformerBasedPredictor;
+import de.unijena.bioinf.sirius.elementdetection.transformer.TransformerPrediction;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.apache.commons.lang3.Range;
@@ -212,6 +215,7 @@ public class AdductNetwork {
         }
     }
 
+    private TransformerBasedPredictor predictor = new TransformerElementDetector().getPredictor();
     private int maybeIsotope(double massDelta, AdductNode leftNode, AdductNode rightNode) {
         int charge = leftNode.getFeature().getCharge();
         if (rightNode.getFeature().getCharge()!=charge) return -1;
@@ -224,7 +228,13 @@ public class AdductNetwork {
             int li = Spectrums.indexOfPeakClosestToMassWithin(s, leftNode.getMass(), dev);
             int ri = Spectrums.indexOfPeakClosestToMassWithin(s, rightNode.getMass(), dev);
             if (li>=0 && ri>=0 && dev.inErrorWindow(s.getMzAt(ri)-s.getMzAt(li),massDelta)) {
-                return isotopeShift;
+                // if peak is ms1-only, and has lower intensity than the peak before, we can safely
+                // check if peak is non-monoisotopic
+                Optional<TransformerPrediction> predict = predictor.predict(s, ri);
+                if (predict.isEmpty()) return isotopeShift;
+                else {
+                    return -1;
+                }
             }
         }
         return -1;
@@ -244,6 +254,57 @@ public class AdductNetwork {
             }
             return potentialInsourceFragments;
         } else return null;
+    }
+
+    /**
+     * Call the given delete function for all isotopic peaks in the network. Delete these peaks from the network afterwards.
+     */
+    public void deisotope(IOFunctions.IOConsumer<AlignedFeatures> deleteFunctionForFeatures) throws IOException {
+        {
+            // collect all isotopes
+            final HashSet<AdductNode> toDel = new HashSet<>();
+            final ListIterator<AdductNode> singletonIter = singletons.listIterator();
+            for (AdductNode u : singletons) {
+                u.collectIsotopes(toDel);
+            }
+            for (List<AdductNode> us : subgraphs) {
+                us.forEach(u->u.collectIsotopes(toDel));
+            }
+            // delete all isotopes
+            {
+                toDel.forEach(this::deleteNode);
+                singletons.removeAll(toDel);
+                for (List<AdductNode> sub : subgraphs) {
+                    sub.removeAll(toDel);
+                }
+            }
+            // call appropiate functions
+            for (AdductNode u : toDel) {
+                deleteFunctionForFeatures.accept(u.features);
+            }
+
+        }
+        // repeat the same thing on networks
+        {
+            final ListIterator<List<AdductNode>> singletonIter = subgraphs.listIterator();
+            while (singletonIter.hasNext()) {
+                List<AdductNode> vs = singletonIter.next();
+                Iterator<AdductNode> vi = vs.iterator();
+                while (vi.hasNext()) {
+                    AdductNode v = vi.next();
+                    if (v.isIsotopeNode()) {
+                        deleteNode(v);
+                        deleteFunctionForFeatures.accept(v.features);
+                        vi.remove();
+                    }
+                }
+            }
+        }
+    }
+
+    private void deleteNode(AdductNode v) {
+        final Iterator<AdductEdge> e = v.getEdges().iterator();
+        while (e.hasNext()) e.next().getOther(v).removeEdgeTo(v);
     }
 
     public void assignNetworksAndAdductsToFeatures(JobManager manager, SubnetworkResolver resolver, int charge, IOFunctions.IOConsumer<AlignedFeatures> updateRoutineForFeatures,
