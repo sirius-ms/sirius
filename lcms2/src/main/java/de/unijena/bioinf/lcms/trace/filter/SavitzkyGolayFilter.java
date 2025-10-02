@@ -24,9 +24,22 @@ import de.unijena.bioinf.lcms.Extrema;
 
 public class SavitzkyGolayFilter implements Filter {
 
+    de.unijena.bioinf.lcms.SavitzkyGolayFilter f;
+
+    public SavitzkyGolayFilter() {
+        this(8);
+    }
+
+    public SavitzkyGolayFilter(int preferredWindowSize) {
+        if (preferredWindowSize>=32) f= de.unijena.bioinf.lcms.SavitzkyGolayFilter.Window32Polynomial2;
+        else if (preferredWindowSize>=16)  f= de.unijena.bioinf.lcms.SavitzkyGolayFilter.Window16Polynomial2;
+        else if (preferredWindowSize>=8) f= de.unijena.bioinf.lcms.SavitzkyGolayFilter.Window8Polynomial2;
+        else if (preferredWindowSize>=4) f= de.unijena.bioinf.lcms.SavitzkyGolayFilter.Window4Polynomial2;
+        else f = null;
+    }
+
     @Override
     public double[] apply(double[] src) {
-        de.unijena.bioinf.lcms.SavitzkyGolayFilter f = Extrema.getProposedFilter3(src);
         if (f == null) {
             return src;
         } else {

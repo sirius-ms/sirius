@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -28,6 +29,7 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import de.unijena.bioinf.sirius.elementdetection.TransformerElementDetector;
 import de.unijena.bioinf.sirius.elementdetection.transformer.TransformerBasedPredictor;
 import de.unijena.bioinf.sirius.elementdetection.transformer.TransformerPrediction;
+import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.apache.commons.lang3.Range;
@@ -95,8 +97,7 @@ public class AdductNetwork {
                     // obtain potential fragment peaks
                     List<MergedMSnSpectrum> ms2Right = provider.getMs2SpectraOf(rightNode.getFeatures());
                     if (!ms2Right.isEmpty()) rightNode.hasMsMs = true;
-                    SimpleSpectrum preparedRight = null;
-                    boolean ms2rightGood = false;
+                    Optional<SearchPreparedSpectrum> preparedRight = null;
                     MassMap<Peak> potentialInsourceFragments = getPotentialInsourceFragments(ms2Right, rightNode);
 
                     int rStart=r;
@@ -125,7 +126,7 @@ public class AdductNetwork {
                             if (rightNode.getMass() > leftNode.getMass() && Math.abs(rightNode.getRetentionTime() - leftNode.getRetentionTime()) < retentionTimeTolerance &&  threshold2.contains(rightNode.getRetentionTime())) {
                                 final double massDelta = rightNode.getMass() - leftNode.getMass();
                                 List<KnownMassDelta> knownMassDeltas = new ArrayList<>();
-                                List<Peak> potentialInsourcePeaks = potentialInsourceFragments == null ? Collections.emptyList() : potentialInsourceFragments.retrieveAll(massDelta, deviation);
+                                List<Peak> potentialInsourcePeaks = potentialInsourceFragments == null ? Collections.emptyList() : potentialInsourceFragments.retrieveAll(leftNode.getMass(), deviation);
                                 if (!potentialInsourcePeaks.isEmpty()) {
                                     UnknownLossRelationship insourceFragment = new UnknownLossRelationship();
                                     knownMassDeltas.add(insourceFragment);
@@ -147,12 +148,11 @@ public class AdductNetwork {
                                             if (!ms2Left.isEmpty()) {
                                                 if (preparedRight == null) {
                                                     preparedRight = scorer.prepareForCosine(rightNode, ms2Right);
-                                                    ms2rightGood = scorer.hasMinimumMs2Quality(preparedRight);
                                                 }
-                                                if (ms2rightGood) {
-                                                    SimpleSpectrum ms2left = scorer.prepareForCosine(leftNode, ms2Left);
-                                                    if (scorer.hasMinimumMs2Quality(ms2left)) {
-                                                        scorer.computeMs2Score(adductEdge, ms2left, preparedRight);
+                                                if (preparedRight.isPresent()) {
+                                                    Optional<SearchPreparedSpectrum> ms2left =scorer.prepareForCosine(leftNode, ms2Left);
+                                                    if (ms2left.isPresent()) {
+                                                        scorer.computeMs2Score(adductEdge, ms2left.get(), preparedRight.get());
                                                     }
                                                 }
                                             }
@@ -243,13 +243,15 @@ public class AdductNetwork {
     private MassMap<Peak> getPotentialInsourceFragments(List<MergedMSnSpectrum> data, AdductNode rightNode) {
         if (!data.isEmpty()) {
             MassMap<Peak> potentialInsourceFragments = new MassMap<>(500);
-            MergedMSnSpectrum mergedMSnSpectrum = data.stream().min(Comparator.comparingDouble(x->x.getMergedCollisionEnergy().getMaxEnergy(false))).get();
-            SimpleSpectrum ms2 = mergedMSnSpectrum.getPeaks();
-            double maximalIntensity = Spectrums.getMaximalIntensity(ms2);
+            CollisionEnergy lowestCe = data.stream().map(MergedMSnSpectrum::getMergedCollisionEnergy).min(Comparator.comparingDouble(x->x.getMaxEnergy(false))).orElse(null);
+            List<SimpleSpectrum> spectra = data.stream().filter(x->lowestCe==null || !(x.getMergedCollisionEnergy().greaterThan(lowestCe))).map(x->x.getPeaks()).toList();
+            SimpleSpectrum peaks = Spectrums.mergeSpectra(deviation, true, false, spectra);
+
+            double maximalIntensity = Spectrums.getMaximalIntensity(peaks);
             double intensityThreshold = 0.05*maximalIntensity;
-            for (int k=0; k < ms2.size(); ++k) {
-                if (ms2.getMzAt(k) < (rightNode.getMass()-4) && ms2.getIntensityAt(k)>=intensityThreshold) {
-                    potentialInsourceFragments.put(ms2.getMzAt(k), ms2.getPeakAt(k));
+            for (int k=0; k < peaks.size(); ++k) {
+                if (peaks.getMzAt(k) < (rightNode.getMass()-4) && peaks.getIntensityAt(k)>=intensityThreshold) {
+                    potentialInsourceFragments.put(peaks.getMzAt(k), peaks.getPeakAt(k));
                 }
             }
             return potentialInsourceFragments;
@@ -387,6 +389,7 @@ public class AdductNetwork {
         }
 
         // DEBUG
+        /*
         System.out.println("##########################################");
         System.out.println("Of " + (singletons.size() + networkNodes) + " features, " + singletons.size() + " are singletons and " + networkNodes +
                 " features are part of an adduct network. " + ambigous + " nodes have ambigous annotations, " +  unambigous + " have unambigous annotation.");
@@ -394,7 +397,7 @@ public class AdductNetwork {
         System.out.println("------");
         System.out.println(adductCounter);
         System.out.println("##########################################");
-
+        */
 
     }
 
