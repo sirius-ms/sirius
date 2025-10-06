@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ms.frontend.utils.DatabaseLinkUtil;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
@@ -137,9 +138,7 @@ public class NoSqlSpectrumSummaryWriter extends SummaryTable {
 
             row.add(reference.getName());
 
-            Map<String, List<String>> dbMap = new HashMap<>();
-            dbMap.computeIfAbsent(reference.getLibraryName(), k -> new ArrayList<>()).add(reference.getLibraryId());
-            row.add(NoSqlStructureSummaryWriter.links(dbMap)); //this ensures same output format as for 'links' in NoSqlStructureSummaryWriter. However, currently, there is only 1 link.
+            row.add(DatabaseLinkUtil.links(Map.of(reference.getLibraryName(), List.of(reference.getLibraryId())))); //this ensures same output format as for 'links' in NoSqlStructureSummaryWriter. However, currently, there is only 1 link.
 
             row.add(reference.getCandidateInChiKey());
         }

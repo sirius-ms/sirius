@@ -38,6 +38,8 @@ public class DatabaseExportConfigPanel extends SubToolConfigPanel<ExportDBOption
         JComboBox<Format> formatComboBox = makeGenericOptionComboBox("format", Format.class);
         params.addNamed("Format", formatComboBox);
 
+        params.addNamed("", makeGenericOptionCheckBox("External links", "links"));
+
         add(params);
     }
 
