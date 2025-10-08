@@ -79,8 +79,9 @@ public class AdductEdge {
     }
 
     public float getScore() {
-        if (edgeType==EdgeType.OTHER) return 0f;
-        else return -pvalue + edgeType.scoreBonus;
+        return -pvalue + edgeType.scoreBonus;
+        //if (edgeType==EdgeType.OTHER) return 0f;
+        //else return -pvalue + edgeType.scoreBonus;
     }
 
     public AdductNode getOther(AdductNode u) {
