@@ -619,11 +619,20 @@ public class PersistentHomology implements TraceSegmentationStrategy {
                 TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
         ).toList();
         */
-        Filter f = filter==null ? new NoFilter() : filter;
+        Filter f = getGaussianFilterForVeryLargeTraces(trace,expectedPeakWidth);//filter==null ? new NoFilter() : filter;
         return computePersistentHomologyHierarchical(trace, f, noiseLevel, expectedPeakWidth, pointsOfInterest, features).stream().map(seg->
                 TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
         ).toList();
 
+    }
+
+    public static Filter getGaussianFilterForVeryLargeTraces(Trace t, double w) {
+        if (w<=0) return new NoFilter();
+        if (t.length()<=4000 || (t.retentionTime(t.endId())-t.retentionTime(t.startId()))/w < 200) return new NoFilter();
+        double binwidth = (t.retentionTime(t.endId())-t.retentionTime(t.startId()))/(t.endId()-t.startId());
+        int bins = (int)Math.round(w/(4*binwidth));
+        if (bins<=1) return new NoFilter();
+        else return new GaussFilter(bins);
     }
 
     public static Filter getGaussianFilter(Trace t, double w) {
@@ -633,7 +642,6 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         int bins = (int)Math.round(w/binwidth);
         if (bins<=1) return new NoFilter();
         else return new GaussFilter(bins);
-
     }
 
     public List<TraceSegment> detectSegmentsOld(Trace trace, double noiseLevel, double expectedPeakWidth, int[] pointsOfInterest, int[] features) {
