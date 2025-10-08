@@ -2,9 +2,7 @@ package de.unijena.bioinf.lcms.merge;
 
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.lcms.ScanPointMapping;
-import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.NormalizationStrategy;
-import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.ProjectedTrace;
 import de.unijena.bioinf.lcms.trace.Trace;
@@ -19,7 +17,6 @@ import jakarta.annotation.Nullable;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 

@@ -98,6 +98,19 @@ if [ ! -f "$JAVACMD" ]; then
   JAVACMD="java"
 fi
 
+## Check the session type ->  enalble if native wayland in jbr is more stable
+#if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+#  # Check if it's a JetBrains Runtime by searching for "JBR" in the version string
+#  IS_JBR=$("$JAVACMD" -version 2>&1 | grep "JBR")
+#  # If it's a Wayland session, ALSO check if it's a JBR
+#  if [ -n "$IS_JBR" ]; then
+#    echo "INFO: Wayland session and JBR detected. Enabling native Wayland rendering."
+#    DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -Dawt.toolkit.name=WLToolkit"
+#  else
+#    echo "WARNING: Wayland session detected, but the Java runtime is not a JBR. Using default X11 toolkit."
+#  fi
+#fi
+
 # Main class to run the app
 MAIN_CLASS="#mainClass#"
 
