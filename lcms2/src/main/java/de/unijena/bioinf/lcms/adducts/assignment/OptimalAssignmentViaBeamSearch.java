@@ -50,6 +50,7 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
         addMissingIonTypesByTransitiveEdges(manager, array, subnetwork, assignments);
         addFallbackIonsForUnlikelyAdducts(manager, array, subnetwork, assignments);
         treatIsotopesAndInsource(manager, array, subnetwork, assignments);
+        resetAdductAnnotationIfScoreIsTooLow(manager, array, subnetwork, assignments, 3);
 //        debugPrint(subnetwork, array, score);
         return array;
 
@@ -107,6 +108,45 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
             System.out.println(nodes[i] + "\t" + array[i]);
         }
         System.out.println("------------------");
+    }
+
+    private void resetAdductAnnotationIfScoreIsTooLow(AdductManager manager, AdductAssignment[] array, AdductNode[] subnetwork, Int2ObjectOpenHashMap<IonType> assignments, float threshold) {
+        Int2ObjectOpenHashMap<AdductNode> map = new Int2ObjectOpenHashMap<>();
+        Int2IntOpenHashMap indexes = new Int2IntOpenHashMap();
+        int charge=0;
+        for (int i=0; i < subnetwork.length; ++i) {
+            int indx = subnetwork[i].getIndex();
+            map.put(indx,subnetwork[i]);
+            indexes.put(indx,i);
+            if (assignments.get(indx)!=null) charge = assignments.get(indx).getIonType().getCharge();
+        }
+        if (charge==0) return; // no adduct assignment in this network
+        int[][] conncectivityComponents = getConncectivityComponents(map, edge -> edge.getScore() >= threshold);
+        for (int[] component : conncectivityComponents) {
+            boolean validComponent = false;
+            // check if there is at least one valid adduct edge
+            check:
+            for (int i : component) {
+                AdductNode u = map.get(i);
+                for (AdductEdge e : u.getEdges()) {
+                    if (e.getScore()>=threshold && e.isAdductEdge()) {
+                        for (KnownMassDelta m : e.getExplanations()) {
+                            if (m instanceof AdductRelationship && m.isCompatible(assignments.get(e.getLeft().getIndex()), assignments.get(e.getRight().getIndex()))) {
+                                validComponent = true;
+                                break check;
+                            }
+                        }
+                    }
+                }
+            }
+            if (!validComponent) {
+                // set adduct annotation of all nodes in the component to unknown
+                for (int indx : component) {
+                    int index = indexes.get(indx);
+                    array[index] = array[index].withAdded(new IonType(PrecursorIonType.unknown(charge)));
+                }
+            }
+        }
     }
 
     /**
