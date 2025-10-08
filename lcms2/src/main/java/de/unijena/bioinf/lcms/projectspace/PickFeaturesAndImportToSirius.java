@@ -847,7 +847,6 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                             if (scanId < startId || scanId > endId) {
                                 LoggerFactory.getLogger(PickFeaturesAndImportToSirius.class).warn("MS2 outside of feature! mz = " + mergedTrace.averagedMz() + ", rt = " + mergedTrace.getMapping().getRetentionTimeAt(feature.getTraceRef().absoluteApexId()));
                                 if (features.length <= 3 && (scanId - endId) > 10) {
-                                    System.err.println("Gotcha!");
                                     ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, rawSegments);
                                     segmentationStrategy.featureFinding(new PersistentHomology(), mergedSample, mergedTrace);
                                 }
@@ -856,9 +855,6 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                                 RawTraceRef ref = subFeature.getTraceReference().get();
                                 if (scanId < ref.getStart() + ref.getScanIndexOffsetOfTrace() || scanId > ref.getEnd() + ref.getScanIndexOffsetOfTrace()) {
                                     LoggerFactory.getLogger(PickFeaturesAndImportToSirius.class).warn("MS2 also outside of its subfeature!");
-                                    if (features.length <= 3) {
-                                        System.err.println("Gotcha!");
-                                    }
                                 }
 
                             }
