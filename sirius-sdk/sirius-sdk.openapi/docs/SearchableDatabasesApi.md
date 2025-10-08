@@ -477,7 +477,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Meta-Infomation of the affected database after the import has been performed. |  -  |
+| **200** | Meta-Information of the affected database after the import has been performed. |  -  |
 
 
 ## removeDatabase
