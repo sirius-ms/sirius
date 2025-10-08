@@ -3,6 +3,7 @@ package de.unijena.bioinf.lcms.align;
 import de.unijena.bioinf.lcms.datatypes.CustomDataType;
 import de.unijena.bioinf.lcms.isotopes.IsotopeResult;
 import de.unijena.bioinf.lcms.trace.Rect;
+import de.unijena.bioinf.lcms.traceextractor.MassOfInterestConfidenceEstimatorStrategy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.With;
@@ -17,7 +18,7 @@ import java.util.Locale;
  */
 public class MoI {
 
-    private static final byte ISOTOPE_FLAG = 1, MULTIPLE_CHARGED = 2, SINGLE_APEX = 4;
+    private static final byte ISOTOPE_FLAG = 1, MULTIPLE_CHARGED = 2, SINGLE_APEX = 4, ULTRA_LARGE_TRACE = 8;
 
     @Getter private final Rect rect;
     @Getter @With private final double retentionTime;
@@ -64,6 +65,17 @@ public class MoI {
         this.state = state;
     }
 
+    public boolean isSuitableForAlignmentBackbone() {
+        return confidence>= MassOfInterestConfidenceEstimatorStrategy.CONFIDENT && (this.state&ULTRA_LARGE_TRACE)==0;
+    }
+    public boolean isSuitableForAlignment() {
+        return confidence>=0 && (this.state&ULTRA_LARGE_TRACE)==0;
+    }
+
+    public boolean isUltraLargeTrace() {
+        return (this.state & ULTRA_LARGE_TRACE) != 0;
+    }
+
     public boolean isIsotopePeak() {
         return (this.state & ISOTOPE_FLAG) != 0;
     }
@@ -83,6 +95,11 @@ public class MoI {
     public void setMultiChargeFlag(boolean value) {
         if (value) this.state |= MULTIPLE_CHARGED;
         else this.state &= ~MULTIPLE_CHARGED;
+    }
+
+    public void setUltraLargeTraceFlag(boolean value) {
+        if (value) this.state |= ULTRA_LARGE_TRACE;
+        else this.state &= ~ULTRA_LARGE_TRACE;
     }
 
     public void setSingleApex(boolean value) {

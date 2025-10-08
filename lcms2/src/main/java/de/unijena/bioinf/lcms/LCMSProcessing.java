@@ -436,6 +436,9 @@ public class LCMSProcessing {
                         (float) normalizer.normalize(trace.intensity(segment.apex)), sample.getUid());
 
                 if (trace.getSegments().length==1 && !trace.isNoisyTrace()) moi.setSingleApex(true);
+                if (trace.getSegments().length>=20 && (trace.endId()-trace.startId()) >= sample.getMapping().length()/4) {
+                    moi.setUltraLargeTraceFlag(true);
+                }
                 detectIsotopesForMoI(sample, trace, segment, moi);
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample, trace, moi, null));
                 if (trace.isNoisyTrace()) moi.setConfidence(Math.min(0f, moi.getConfidence()));
