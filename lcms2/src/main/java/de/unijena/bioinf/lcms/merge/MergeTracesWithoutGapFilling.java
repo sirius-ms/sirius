@@ -280,9 +280,9 @@ public class MergeTracesWithoutGapFilling {
         final double width50 = mapping.getRetentionTimeAt(fwhmRight+offset)-mapping.getRetentionTimeAt(fwhmLeft+offset);
         final double width20 = mapping.getRetentionTimeAt(r+offset)-mapping.getRetentionTimeAt(l+offset);
         // assuming a perfect Gaussian shape, we would expect the fwhm at a sigma of 1.18 and the 20% height at a sigma of 1.8
-        if (width50<=0) return (float)(width20/1.8);
-        final double expectedSigma = Math.sqrt((width50/1.18)*(width20/1.8));
-        return (float)(expectedSigma*1.18);
+        if (width50<=0) return (float)(width20/3.6);
+        final double expectedSigma = Math.sqrt((width50/2.36)*(width20/3.6));
+        return (float)(expectedSigma*2);
     }
 
     private void createIsotopeProjectedTraces(ProcessedSample merged, ProcessedSample sample, Rect r, ProjectedTrace projectedTrace, MoI[] mois, Tracker tracker) {
