@@ -73,7 +73,7 @@ public class IonType {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IonType ionType1 = (IonType) o;
-        return ionType1.equals(ionType);
+        return ionType1.ionType.equals(ionType);
     }
 
     @Override

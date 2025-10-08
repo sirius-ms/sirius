@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Set;
 
 import static de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType.getPrecursorIonType;
@@ -50,6 +51,15 @@ public class AdductAssignmentTest {
         assertTrue(result[6].hasAdducts(getPrecursorIonType("[M+H]+"), getPrecursorIonType("[M-H2O+H]+")));
         assertTrue(result[7].hasAdducts(getPrecursorIonType("[M+H]+"), getPrecursorIonType("[M-H2O+H]+"),getPrecursorIonType("[M-H4O2+H]+")));
         assertTrue(result[8].hasAdducts(getPrecursorIonType("[M+Na]+"), getPrecursorIonType("[M-H2O+Na]+")));
+
+        // every ion type is supposed to exist once
+        for (int k=0; k < result.length; ++k) {
+            for (int i=0; i < result[k].getIonTypes().length; ++i) {
+                IonType ionType = result[k].getIonTypes()[i];
+                assertEquals(1L, Arrays.stream(result[k].getIonTypes()).filter(x->x.equals(ionType)).count());
+            }
+        }
+
     }
 
     @Test
