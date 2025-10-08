@@ -1,9 +1,7 @@
 package de.unijena.bioinf.lcms.adducts;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.BinarySearch;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -137,11 +135,13 @@ public class AdductNetwork {
                                 // add multimere edge if present
                                 adductManager.checkForMultimere(rightNode.getMass(), leftNode.getMass(), deviation).ifPresent(knownMassDeltas::add);
 
+                                // remove adduct edges that require a non-matching isotope pattern
+                                removeIsotopePatternMissmatchInAdductEdges(knownMassDeltas, leftNode, rightNode, provider);
+
                                 if (!knownMassDeltas.isEmpty()) {
                                     final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, knownMassDeltas.toArray(KnownMassDelta[]::new));
                                     scorer.computeScore(provider, adductEdge);
                                     if (adductEdge.isValid()) {
-
                                         // add MS/MS score
                                         if (!ms2Right.isEmpty()) {
                                             List<MergedMSnSpectrum> ms2Left = provider.getMs2SpectraOf(leftNode.getFeatures());
@@ -213,6 +213,49 @@ public class AdductNetwork {
                 }
             }
         }
+    }
+
+    private void removeIsotopePatternMissmatchInAdductEdges(List<KnownMassDelta> knownMassDeltas, AdductNode leftNode, AdductNode rightNode, ProjectSpaceTraceProvider provider) {
+        ListIterator<KnownMassDelta> iter = knownMassDeltas.listIterator();
+        while (iter.hasNext()) {
+            KnownMassDelta m = iter.next();
+            if (m instanceof AdductRelationship) {
+                PrecursorIonType left = ((AdductRelationship) m).left;
+                PrecursorIonType right = ((AdductRelationship) m).right;
+                if (checkIsotopePatternForAdduct(leftNode, left, provider) && checkIsotopePatternForAdduct(rightNode,right,provider)) {
+                    // isotope pattern not existing or okay
+                } else {
+                    // isotope pattern missmatches adduct type
+                    iter.remove();
+                }
+            }
+        }
+    }
+    private final Element Cl = PeriodicTable.getInstance().getByName("Cl");
+    private final Element Br = PeriodicTable.getInstance().getByName("Br");
+    private boolean checkIsotopePatternForAdduct(AdductNode u, PrecursorIonType ionType, ProjectSpaceTraceProvider provider) {
+        if (ionType.getIonization().getAtoms().numberOf(Cl)>0 || ionType.getAdduct().numberOf(Cl)>0) {
+            return checkIsotopePatternForAdduct(u, provider, Cl);
+        } else if (ionType.getIonization().getAtoms().numberOf(Br)>0 || ionType.getAdduct().numberOf(Br)>0) {
+            return checkIsotopePatternForAdduct(u, provider, Br);
+        } else return true;
+    }
+    private boolean checkIsotopePatternForAdduct(AdductNode u, ProjectSpaceTraceProvider provider, Element e) {
+        final Optional<SimpleSpectrum> iso = provider.getIsotopes(u.getFeatures());
+        if (iso.isPresent() && iso.get().size()>=2) {
+            SimpleSpectrum patter = iso.get();
+            Optional<TransformerPrediction> predict = predictor.predict(patter, 0);
+            if (predict.isPresent()) {
+                float[] logits = predict.get().getLogits();
+                Element[] elems = predict.get().getDetectableElements();
+                for (int k=0; k < elems.length; ++k) {
+                    if (elems[k].equals(e) && logits[k] < -5) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     private TransformerBasedPredictor predictor = new TransformerElementDetector().getPredictor();
