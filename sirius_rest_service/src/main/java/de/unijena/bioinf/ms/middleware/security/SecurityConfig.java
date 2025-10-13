@@ -72,7 +72,9 @@ public class SecurityConfig {
             //disable Cross-Origin Resource Sharing (CORS) checks
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**").allowedOriginPatterns("http://localhost:[*]", "http://127.0.0.1:[*]");
+                registry.addMapping("/**")
+                        .allowedOriginPatterns("http://localhost:[*]", "http://127.0.0.1:[*]")
+                        .allowedMethods("*");
             }
         };
     }
