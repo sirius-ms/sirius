@@ -13,7 +13,7 @@ public class IsotopePattern extends SimpleSpectrum {
 
 
     protected static final double MZ_ISO_ERRT = 0.002;
-    protected static final Range<Double>[] ISO_RANGES = new Range[]{
+    public static final Range<Double>[] ISO_RANGES = new Range[]{
             Range.of(0.99664664 - MZ_ISO_ERRT, 1.00342764 + MZ_ISO_ERRT),
             Range.of(1.99653883209004 - MZ_ISO_ERRT, 2.0067426280592295 + MZ_ISO_ERRT),
             Range.of(2.9950584 - MZ_ISO_ERRT, 3.00995027 + MZ_ISO_ERRT),
@@ -126,6 +126,18 @@ public class IsotopePattern extends SimpleSpectrum {
         }
     }
 
+    public IsotopePattern deleteGaps(int maximumAllowedGapLength) {
+        // we allow only a gap of 1 between isotope peaks. The reason is that currently our DNN predictor is only trained
+        // on small gaps.
+        for (int i=1; i < size(); ++i) {
+            final int gap = (int)Math.round(getMzAt(i)-getMzAt(i-1)*chargeState)-1;
+            if (gap > maximumAllowedGapLength) {
+                return new IsotopePattern(Arrays.copyOf(masses, i), Arrays.copyOf(intensities, i), chargeState);
+            }
+        }
+        return this;
+    }
+
     private static void revert(DoubleArrayList xs) {
         for (int k=0, n= xs.size()>>1; k < n; ++k) {
             int mir = xs.size()-(k+1);
@@ -188,6 +200,18 @@ public class IsotopePattern extends SimpleSpectrum {
         return xs;
     }
 
+    public static int getPossibleIsotopeShift(double peak0, double peak1) {
+        return getPossibleIsotopeShift(peak0, peak1, 1);
+    }
+    public static int getPossibleIsotopeShift(double peak0, double peak1, int charge) {
+        double delta = (peak1-peak0)*Math.abs(charge);
+        int deltaInt = (int)Math.round(delta) - 1;
+        if (deltaInt<0 || deltaInt >= ISO_RANGES.length) return -1;
+        Range<Double> r = ISO_RANGES[deltaInt];
+        final double from = r.getMinimum(), to = r.getMaximum();
+        if (delta >= from && delta <= to) return deltaInt;
+        else return -1;
+    }
     public float[] floatIntensityArray() {
         return MatrixUtils.double2float(intensities);
     }

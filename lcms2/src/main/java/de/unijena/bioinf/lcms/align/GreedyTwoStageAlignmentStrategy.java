@@ -136,7 +136,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         first.active();
         // copy all MoIs into storage
         for (MoI moi : first.getStorage().getAlignmentStorage()) {
-            if (moi.getConfidence()>= MassOfInterestConfidenceEstimatorStrategy.CONFIDENT) {
+            if (moi.isSuitableForAlignmentBackbone()) {
                 storage.addMoI(moi);
             }
         }
@@ -407,7 +407,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                 if (m instanceof AlignedMoI) {
                     if (((AlignedMoI) m).getAligned().length >= 2) {
                         storage.addMoI(((AlignedMoI) m).finishMerging());
-                        backboneMoisList.add(m.getUid());
+                        if (m.isSuitableForAlignment()) backboneMoisList.add(m.getUid());
                         /// DEBUG
                         boolean hasIso=false;
                         for (MoI n : ((AlignedMoI) m).getAligned()) {
