@@ -27,38 +27,27 @@
 package de.unijena.bioinf.lcms.trace.segmentation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Quickselect;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
-import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.lcms.statistics.SampleStats;
+import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.trace.Trace;
-import de.unijena.bioinf.lcms.trace.filter.Filter;
-import de.unijena.bioinf.lcms.trace.filter.GaussFilter;
-import de.unijena.bioinf.lcms.trace.filter.NoFilter;
-import de.unijena.bioinf.lcms.trace.filter.WaveletFilter;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import de.unijena.bioinf.lcms.trace.filter.*;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -630,11 +619,20 @@ public class PersistentHomology implements TraceSegmentationStrategy {
                 TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
         ).toList();
         */
-        Filter f = (filter==null) ? getGaussianFilter(trace, expectedPeakWidth) : filter;
+        Filter f = getGaussianFilterForVeryLargeTraces(trace,expectedPeakWidth);//filter==null ? new NoFilter() : filter;
         return computePersistentHomologyHierarchical(trace, f, noiseLevel, expectedPeakWidth, pointsOfInterest, features).stream().map(seg->
                 TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
         ).toList();
 
+    }
+
+    public static Filter getGaussianFilterForVeryLargeTraces(Trace t, double w) {
+        if (w<=0) return new NoFilter();
+        if (t.length()<=4000 || (t.retentionTime(t.endId())-t.retentionTime(t.startId()))/w < 200) return new NoFilter();
+        double binwidth = (t.retentionTime(t.endId())-t.retentionTime(t.startId()))/(t.endId()-t.startId());
+        int bins = (int)Math.round(w/(4*binwidth));
+        if (bins<=1) return new NoFilter();
+        else return new GaussFilter(bins);
     }
 
     public static Filter getGaussianFilter(Trace t, double w) {
@@ -644,7 +642,6 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         int bins = (int)Math.round(w/binwidth);
         if (bins<=1) return new NoFilter();
         else return new GaussFilter(bins);
-
     }
 
     public List<TraceSegment> detectSegmentsOld(Trace trace, double noiseLevel, double expectedPeakWidth, int[] pointsOfInterest, int[] features) {
@@ -789,11 +786,11 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         int pos;
         boolean newMode=false;
         File[] files;
-        boolean dofilter = false;
+        int dofilter = 0;
         JLabel title;
         GraphCanvas inner;
         public Container() {
-            this.files  = Arrays.stream(new File("/home/kaidu/analysis/debug/many").listFiles()).filter(x->x.getName().endsWith(".json")/* && x.getName().contains("merged")*/).toArray(File[]::new);
+            this.files  = Arrays.stream(new File("/home/kaidu/work/test/debug").listFiles()).filter(x->x.getName().endsWith(".json")/* && x.getName().contains("merged")*/).toArray(File[]::new);
             setLayout(new BorderLayout());
             JButton before = new JButton(new AbstractAction("<") {
                 @Override
@@ -827,14 +824,23 @@ public class PersistentHomology implements TraceSegmentationStrategy {
                     updateCanvas();
                 }
             });
-            JCheckBox filter = new JCheckBox("filter,", dofilter);
-            filter.addChangeListener(new ChangeListener() {
+            JRadioButton nofilter=new JRadioButton("None"), gaussian=new JRadioButton("Gaussian"),
+                    sawitzky=new JRadioButton("Polynomial"), wh = new JRadioButton("WH");
+            ButtonGroup group = new ButtonGroup();
+            group.add(nofilter); group.add(gaussian); group.add(sawitzky); group.add(wh);
+
+            ActionListener ac = new ActionListener() {
                 @Override
-                public void stateChanged(ChangeEvent e) {
-                    dofilter = filter.isSelected();
+                public void actionPerformed(ActionEvent e) {
+                    if (nofilter.isSelected()) dofilter=0;
+                    else if (gaussian.isSelected()) dofilter=1;
+                    else if (sawitzky.isSelected()) dofilter=2;
+                    else if (wh.isSelected()) dofilter=3;
                     updateCanvas();
                 }
-            });
+            };
+            nofilter.addActionListener(ac); gaussian.addActionListener(ac); sawitzky.addActionListener(ac); wh.addActionListener(ac);
+
             add(before, BorderLayout.WEST);
             add(next, BorderLayout.EAST);
             title = new JLabel("");
@@ -842,7 +848,10 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             Box horizontalBox = Box.createHorizontalBox();
             horizontalBox.add(old);
             horizontalBox.add(newmode);
-            horizontalBox.add(filter);
+            horizontalBox.add(nofilter);
+            horizontalBox.add(gaussian);
+            horizontalBox.add(sawitzky);
+            horizontalBox.add(wh);
             add(horizontalBox, BorderLayout.SOUTH);
             pos=0;
             KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -900,13 +909,13 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         double[] filtered;
         int margin;
         int width, height;
-        boolean filter;
+        int filter=0;
         List<TraceSegment> segments;
         List<Segment> pers;
         Color[] pastelColors;
-        public GraphCanvas(DebugModel m, boolean newMode, boolean filter) {
+        public GraphCanvas(DebugModel m, boolean newMode, int filter) {
             this.m = m;
-            m.expectedPeakWidth = 4;
+            //m.expectedPeakWidth = 4;
             this.filter=filter;
             intEnd = 0d;
             for (float f : m.intensity) intEnd = Math.max(intEnd, f);
@@ -918,8 +927,8 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             setPreferredSize(new Dimension(width+4*margin,height+4*margin));
             int scale = (int)Math.ceil(m.expectedPeakWidth / (m.retentionTime(m.apexId)-m.retentionTime(m.apexId-1)));
             if (m.features==null) m.features=new int[0];
-            Filter F = filter ? new GaussFilter(3) : new NoFilter();
-            if (filter) {
+            Filter F = filter==1 ? getGaussianFilter(m, m.expectedPeakWidth) : (filter==2 ? new SavitzkyGolayFilter() : (filter==3 ? new NoFilter() : new NoFilter()));
+            if (filter>0) {
                 filtered = MatrixUtils.float2double(m.intensity);
                 filtered = F.apply(filtered);
             } else {
@@ -1296,6 +1305,8 @@ public class PersistentHomology implements TraceSegmentationStrategy {
 
 
                 merge = !differentFeatures && (relativeValleyIntensity<0.1 || (!properValley && !gap));
+                //merge = !differentFeatures && !properValley  && !gap;
+
                 //System.out.println((merge ? "merge " : "split ") + v.left.born + "\t" + v.right.born + ": valley intensity = " + valleyintensity + ", relative = " + relativeValleyIntensity + ", noise estimate = "+ noiseEstimate + ", " + (gap ? "with gap" : "no gap") + peakWidthInfo);
             } else {
                 merge=true;

@@ -20,7 +20,12 @@ public class AdductEdge {
 
     }
 
-    private static enum EdgeType {ION(-1f), ADDUCT(-3f), MULTIMERE(-2), OTHER(-4f);
+    public boolean isIsotopeEdge() {
+        return explanations.length==1 && explanations[0] instanceof IsotopeRelationship;
+    }
+
+
+    private static enum EdgeType {ION(-1f), ADDUCT(-3f), MULTIMERE(-2), OTHER(-4f), ISOTOPE(-2f);
         private float scoreBonus;
 
         EdgeType(float scoreBonus) {
@@ -67,13 +72,16 @@ public class AdductEdge {
                 if (((LossRelationship) m).coversPotentialAdduct()) {
                     if (this.edgeType.ordinal()>EdgeType.ADDUCT.ordinal()) this.edgeType = EdgeType.ADDUCT;
                 }
+            } else if (m instanceof IsotopeRelationship) {
+                this.edgeType = EdgeType.ISOTOPE;
             }
         }
     }
 
     public float getScore() {
-        if (edgeType==EdgeType.OTHER) return 0f;
-        else return -pvalue + edgeType.scoreBonus;
+        return -pvalue + edgeType.scoreBonus;
+        //if (edgeType==EdgeType.OTHER) return 0f;
+        //else return -pvalue + edgeType.scoreBonus;
     }
 
     public AdductNode getOther(AdductNode u) {
@@ -95,6 +103,11 @@ public class AdductEdge {
 
     public boolean isAdductEdge() {
         return Arrays.stream(explanations).anyMatch(x->x instanceof AdductRelationship);
+    }
+
+
+    public boolean isModificationEdge() {
+        return Arrays.stream(explanations).anyMatch(x->!(x instanceof AdductRelationship));
     }
 
     @Override

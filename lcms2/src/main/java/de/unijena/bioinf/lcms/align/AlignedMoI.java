@@ -18,6 +18,15 @@ public class AlignedMoI extends MoI {
         this.aligned = aligned;
     }
 
+    public boolean majorityIsIsotopeOrMulticharge() {
+        int vote=0;
+        for (MoI m : aligned) {
+            if (m.isIsotopePeak() || m.isMultiCharged()) ++vote;
+            else --vote;
+        }
+        return vote>0;
+    }
+
     @Override
     public String toString() {
         return String.format(Locale.US, "MoI(mz = %.4f, rt = %.1f, %d alignments)", getRect().avgMz, getRetentionTime(), aligned.length);
