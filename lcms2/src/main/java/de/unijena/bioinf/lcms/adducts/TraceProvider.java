@@ -1,7 +1,9 @@
 package de.unijena.bioinf.lcms.adducts;
 
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractAlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
@@ -28,5 +30,7 @@ public interface TraceProvider {
     public Optional<Pair<TraceRef, SourceTrace>> getSourceTrace(AbstractAlignedFeatures features, long runId);
 
     public List<MergedMSnSpectrum> getMs2SpectraOf(AbstractAlignedFeatures features);
+
+    public Optional<SimpleSpectrum> getIsotopes(AbstractAlignedFeatures features);
 
 }

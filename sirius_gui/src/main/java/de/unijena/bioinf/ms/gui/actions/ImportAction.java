@@ -49,10 +49,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ms.rest.model.ProblemResponses.ERROR_TYPE_IMPORT_VALIDATION;
@@ -134,6 +132,14 @@ public class ImportAction extends AbstractGuiAction {
                     ParameterBinding binding = dialog.getParamterBinding();
                     binding.getOptBoolean("align").ifPresent(parameters::setAlignLCMSRuns);
                     binding.getOptBoolean("sensitiveMode").filter(x -> x).ifPresent(x -> parameters.setMinSNR(2d));
+                    Optional<Boolean> autoNoiseDetection = binding.getOptBoolean("autoNoiseDetection");
+                    autoNoiseDetection.filter(x -> x).ifPresent(x -> parameters.setNoiseIntensity(-1d));
+                    Optional<Double> noiseLevel = binding.getOptDouble("noiseLevel");
+                    if (autoNoiseDetection.isEmpty() || !(autoNoiseDetection.get())) {
+                        noiseLevel.ifPresent(parameters::setNoiseIntensity);
+                    }
+
+
                 }
             }
 
