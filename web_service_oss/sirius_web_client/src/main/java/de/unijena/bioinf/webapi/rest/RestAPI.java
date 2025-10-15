@@ -116,18 +116,6 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
 
     private WebWithCustomDatabase chemDb;
 
-    public RestAPI(@Nullable AuthService authService, @NotNull AccountClient accountClient, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient, @NotNull LibrariesClient librariesClient) {
-        super(authService);
-        this.accountClient = accountClient;
-        this.serverInfoClient = infoClient;
-        this.jobsClient = jobsClient;
-        this.chemDBClient = chemDBClient;
-        this.fingerprintClient = fingerIdClient;
-        this.canopusClient = canopusClient;
-        this.librariesClient = librariesClient;
-    }
-
-
     public RestAPI(@NotNull AuthService authService, @Nullable Subscription activeSubscription) {
         this(FingerIDProperties.siriusFallbackWebHostContextPath(), authService, activeSubscription);
     }
