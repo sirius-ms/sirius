@@ -70,8 +70,6 @@ public class ResultPanel extends JTabbedPane {
     private final EpimetheusPanel structureAnnoTab;
     private final FingerprintPanel fingerprintTab;
     private final CompoundClassPanel canopusTab;
-    private SpectralMatchingPanel spectralMatchingTab;
-    private KendrickMassDefectPanel massDefectTab;
 
     private final String spectralMatchingTabName = "Library Matches";
     private final String massDefectTabName = "Homologue Series";
@@ -96,7 +94,7 @@ public class ResultPanel extends JTabbedPane {
         //lcms tab
         //Not need to clean up the listener since compoundlist will be invalidated together with ResultPanel
         compoundList.getSortedSource().addListEventListener(evt -> {
-            if (type == null && !evt.getSourceList().isEmpty()) {
+            if ((type == null || type == ProjectType.UNIMPORTED) && !evt.getSourceList().isEmpty()) {
                 type = gui.applySiriusClient((c, pid) ->
                         c.projects().getProject(pid, List.of(ProjectInfoOptField.NONE))).getType();
                 showLcmsTab(EnumSet.of(ProjectType.ALIGNED_RUNS, ProjectType.UNALIGNED_RUNS).contains(type));
