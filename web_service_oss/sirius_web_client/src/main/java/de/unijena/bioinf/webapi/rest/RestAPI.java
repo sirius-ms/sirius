@@ -46,7 +46,6 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.account.AccountClient;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
-import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
 import de.unijena.bioinf.ms.rest.client.info.InfoClient;
@@ -145,7 +144,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
                 authService, authService, subsDeco);
         this.serverInfoClient = new InfoClient(null, contextPath, authService, subsDeco);
         this.jobsClient = new JobsClient(null, contextPath, authService, subsDeco);
-        this.chemDBClient = new ChemDBClient(null, contextPath, authService, subsDeco);
+        this.chemDBClient = new StructureSearchClient(null, contextPath, authService, subsDeco);
         this.fingerprintClient = new FingerIdClient(null, contextPath, authService, subsDeco);
         this.canopusClient = new CanopusClient(null, contextPath, authService, subsDeco);
         this.librariesClient = new LibrariesClient(null, contextPath, authService, subsDeco);
@@ -177,7 +176,6 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         this.chemDBClient.setServerUrl(hostSupplier);
         this.fingerprintClient.setServerUrl(hostSupplier);
         this.canopusClient.setServerUrl(hostSupplier);
-        this.librariesClient.setServerUrl(hostSupplier);
     }
 
     @Override

@@ -16,7 +16,7 @@ public class AdductAssignment {
 
     public static AdductAssignment merge(int charge, AdductAssignment[] assignments, double[] probabilities) {
         Object2DoubleOpenHashMap<IonType> map = new Object2DoubleOpenHashMap<>();
-        IonType unknown = new IonType(PrecursorIonType.unknown(charge), 1f, MolecularFormula.emptyFormula());
+        IonType unknown = new IonType(PrecursorIonType.unknown(charge));
         for (int k=0; k < assignments.length; ++k) {
             final double prob = probabilities[k];
             if (assignments[k].isUnknown()) {
@@ -37,6 +37,20 @@ public class AdductAssignment {
     public AdductAssignment(IonType[] ionTypes, double[] probabilities) {
         this.ionTypes = ionTypes;
         this.probabilities = probabilities;
+    }
+
+    public boolean hasAdduct(PrecursorIonType ionType) {
+        for (int i=0; i < ionTypes.length; ++i) {
+            if (ionTypes[i].getIonType().equals(ionType) &&  probabilities[i]>0) return true;
+        }
+        return false;
+    }
+    public boolean hasAdducts(PrecursorIonType... ionTypes) {
+        Set<PrecursorIonType> ionTypeSet = new HashSet<>(Arrays.asList(ionTypes));
+        for (int i=0; i < this.ionTypes.length; ++i) {
+            ionTypeSet.remove(this.ionTypes[i].getIonType());
+        }
+        return ionTypeSet.isEmpty();
     }
 
     public IonType[] getIonTypes() {
@@ -96,5 +110,11 @@ public class AdductAssignment {
         for (double prob : newProbs) sum += prob;
         for (int i=0; i < newProbs.length; ++i) newProbs[i] /= sum;
         return new AdductAssignment(newIonTypes, newProbs);
+    }
+
+    public AdductAssignment uniform() {
+        final double[] newProbs = probabilities.clone();
+        for (int i=0; i < newProbs.length; ++i) newProbs[i] = 1d / newProbs.length;
+        return new AdductAssignment(ionTypes, newProbs);
     }
 }
