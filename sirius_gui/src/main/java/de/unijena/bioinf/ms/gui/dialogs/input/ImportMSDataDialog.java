@@ -32,7 +32,10 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
 
 import javax.swing.*;
+import javax.swing.text.NumberFormatter;
 import java.awt.*;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 public class ImportMSDataDialog extends DoNotShowAgainDialog {
 
@@ -48,6 +51,9 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
         private final JCheckBox sensitiveMode;
 
         private final JCheckBox ignoreFormulas;
+
+        private final JCheckBox autoNoiseDetection;
+        private final JFormattedTextField noiseLevel;
 
         public LCMSConfigPanel(TwoColumnPanel paras) {
             super(LcmsAlignOptions.class);
@@ -69,9 +75,37 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
             sensitiveMode.setToolTipText(GuiUtils.formatToolTip("If checked, min-snr is set to 2 instead of 3. Use this to pick very low intensity features. Features with good MS/MS are always picked, so use this option only if you are interested in low intensive MS-only features."));
             paras.add(sensitiveMode);
 
+            JLabel label = new JLabel("Noise level: ");
+            autoNoiseDetection = makeGenericOptionCheckBox("Auto", "autoNoiseDetection");
+            autoNoiseDetection.setSelected(Boolean.parseBoolean(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.autoNoiseDetection", null, "true")));
+            noiseLevel = getNoiseLevelInput();
+            parameterBindings.put("noiseLevel", ()->String.valueOf(noiseLevel.getValue()));
+            noiseLevel.setValue(Double.parseDouble(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.noiseLevel", null, "1000")));
+            noiseLevel.setEnabled(!autoNoiseDetection.isSelected());
+            autoNoiseDetection.addActionListener((a)->noiseLevel.setEnabled(!autoNoiseDetection.isSelected()));
+
+            Box box = Box.createHorizontalBox();
+            box.add(label);
+            box.add(autoNoiseDetection);
+            box.add(noiseLevel);
+            paras.add(box);
+
             paras.addVerticalGlue();
         }
 
+    }
+
+    private static JFormattedTextField getNoiseLevelInput() {
+        NumberFormat numberFormat = NumberFormat.getNumberInstance(Locale.US);
+        numberFormat.setGroupingUsed(false);
+        NumberFormatter numberFormatter = new NumberFormatter(numberFormat);
+        numberFormatter.setValueClass(Double.class);
+        numberFormatter.setAllowsInvalid(true);
+        numberFormatter.setCommitsOnValidEdit(true);
+        numberFormatter.setMinimum(0.0);
+        JFormattedTextField textField = new JFormattedTextField(numberFormatter);
+        textField.setColumns(10);
+        return textField;
     }
 
     public ImportMSDataDialog(Window owner, boolean showLCMSOptions, boolean alignAllowed, boolean showPeakListOptions) {
@@ -79,11 +113,19 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
 
         if (showLCMSOptions && alignAllowed) {
             panel.alignCheckBox.setSelected(true);
-            panel.sensitiveMode.setVisible(true);
         } else {
             panel.alignCheckBox.setSelected(false);
             panel.alignCheckBox.setVisible(false);
-            panel.sensitiveMode.setVisible(showLCMSOptions);
+        }
+
+        if (showLCMSOptions) {
+            panel.sensitiveMode.setVisible(true);
+            panel.noiseLevel.setVisible(true);
+            panel.autoNoiseDetection.setVisible(true);
+        } else {
+            panel.sensitiveMode.setVisible(false);
+            panel.noiseLevel.setVisible(false);
+            panel.autoNoiseDetection.setVisible(false);
         }
 
         panel.ignoreFormulas.setVisible(showPeakListOptions);

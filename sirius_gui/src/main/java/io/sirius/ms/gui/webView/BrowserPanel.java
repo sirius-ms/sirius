@@ -59,4 +59,7 @@ public abstract class BrowserPanel extends JPanel {
     public Dimension getMinimumSize() {
         return new Dimension(50,20);
     }
+
+    public abstract void showDevTools();
+
 }
