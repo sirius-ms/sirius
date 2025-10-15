@@ -23,8 +23,11 @@ public class ExportDBOptions implements StandaloneTool<Workflow> {
     @CommandLine.Option(names = {"--format"}, description = {"Output format for exported file: ${COMPLETION-CANDIDATES}."}, defaultValue = "tsv")
     protected Format format;
 
+    @CommandLine.Option(names = {"--links"}, description = {"Include links to other databases containing exported compounds", "(only in TSV).", "WARNING: Significantly longer export."}, defaultValue = "false")
+    protected boolean withLinks;
+
     @Override
     public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
-        return new ExportCustomDBJJob(name, location, format);
+        return new ExportCustomDBJJob(name, location, format, withLinks);
     }
 }

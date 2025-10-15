@@ -18,6 +18,10 @@ public class AdductRelationship implements KnownMassDelta{
         } else return false;
     }
 
+    public boolean isMultimere() {
+        return left.getMultimereCount()!=right.getMultimereCount();
+    }
+
     public PrecursorIonType getLeft() {
         return left;
     }
@@ -29,5 +33,9 @@ public class AdductRelationship implements KnownMassDelta{
     @Override
     public String toString() {
         return left.toString() + " -> " + right.toString();
+    }
+
+    public boolean isInSource() {
+        return !(left.getInSourceFragmentation().equals(right.getInSourceFragmentation()));
     }
 }

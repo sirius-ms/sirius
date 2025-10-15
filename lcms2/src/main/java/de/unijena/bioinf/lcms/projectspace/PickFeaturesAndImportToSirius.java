@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -34,9 +35,12 @@ import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import org.apache.commons.lang3.Range;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -151,31 +155,8 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
     }
 
     private @NotNull FeaturesAndSegment findFeaturesForTraces(ProcessedSample mergedSample, MergedTrace mergedTrace, MergeTraceId dbId, MergeTraceId[] dbIsotopeIds, MergedFeatureExtractionStrategy.Result pickedFeatures) {
-        /*
-        TraceSegment[][] rawSegments;
-        if (mergedTrace.getSamples().length == 1) {
-            // do not project if samples.size == 1! -> just copy the trace segments
-            rawSegments = new TraceSegment[1][];
-            rawSegments[0] = Arrays.copyOf(traceSegments, traceSegments.length);
-        } else {
-            // now project these segments onto the raw sources
-            rawSegments = segmentationStrategy.extractProjectedSegments(mergedSample, mergedTrace, traceSegments);
-            // remove merged segments that do not have a single supported segment
-            for (int i = 0; i < traceSegments.length; ++i) {
-                int count = 0;
-                for (int j = 0; j < rawSegments.length; ++j) {
-                    if (rawSegments[j][i] != null) ++count;
-                }
-                if (count <= 0) {
-                    // delete trace segment
-                    // todo: better join them instead of deleting them
-                    traceSegments[i] = null;
-                }
-            }
-        }
-         */
-
-        final int charge = estimateChargeFromIsotopes(mergedSample, mergedTrace);
+        checkIsotopesForMinimumCorrelation(mergedSample,mergedTrace,pickedFeatures);
+        final int chargeForTrace = estimateChargeFromIsotopes(mergedSample, mergedTrace,pickedFeatures );
         final TraceSegment[] traceSegments = pickedFeatures.traceSegmentsForMergedTrace();
         final TraceSegment[][] rawSegments = pickedFeatures.traceSegmentsForIndividualTraces();
         // generatate monoisotopic features for each segment
@@ -191,7 +172,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
             TraceSegment traceSegment = traceSegments[fid];
             features[fid].setTraceRef(new TraceRef(dbId.mergeTrace, o, traceSegment.leftEdge-o, traceSegment.apex-o, traceSegment.rightEdge-o));
             features[fid].setMsData(new MSData());
-            setGenericAttributes(mergedTrace, traceSegment, traceSegment.apex,  features[fid], charge, mergedSample, mergedSample);
+            setGenericAttributes(mergedTrace, traceSegment, traceSegment.apex,  features[fid], chargeForTrace, mergedSample, mergedSample);
             features[fid].setIsotopicFeatures(new ArrayList<>());
             // set features
             for (int j=0; j < rawSegments.length; ++j) {
@@ -205,7 +186,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                 int ra = Math.max(subTrace.getRawStartId(), S.getScanPointInterpolator().reverseMapLowerIndex(r.leftEdge));
                 int rb = Math.min(subTrace.getRawEndId(), S.getScanPointInterpolator().reverseMapLargerIndex(r.rightEdge));
                 int rapex = getAdjustedApex(subTrace.raw(S.getMapping()), ra, rb);
-                setGenericAttributes(subTrace.projected(mergedSample.getMapping()), r, rapex, sub, charge, S, mergedSample);
+                setGenericAttributes(subTrace.projected(mergedSample.getMapping()), r, rapex, sub, chargeForTrace, S, mergedSample);
                 sub.setTraceRef(new RawTraceRef(dbId.rawTraces[j], o1, r.leftEdge-o1, r.apex-o1, r.rightEdge-o1, ra-o2, rapex-o2, rb-o2, o2));
 
                 features[fid].getFeatures().get().add(sub);
@@ -483,11 +464,69 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         }));
     }
 
-    private int estimateChargeFromIsotopes(ProcessedSample sample, MergedTrace mergedTrace) {
+    private void checkIsotopesForMinimumCorrelation(ProcessedSample sample, MergedTrace mergedTrace, MergedFeatureExtractionStrategy.Result features) {
+        if (mergedTrace.getIsotopes().length==0) return;
+        // relevant apexes
+        float noiseLevel = sample.getStorage().getStatistics().noiseLevel(mergedTrace.apex());
+        TraceSegment[] segs = features.traceSegmentsForMergedTrace();
+        Integer[] orderedByIntensity = new Integer[segs.length];
+        for (int i=0; i < orderedByIntensity.length; ++i) orderedByIntensity[i]=i;
+        Arrays.sort(orderedByIntensity, Comparator.comparingDouble(i->-mergedTrace.intensity(segs[i].apex)));
+        final double intensityThreshold = mergedTrace.intensity(segs[orderedByIntensity[0]].apex)*2/3d;
+        final int numberOfHighIntensiveFeatures;
+        {
+            int j; for (j=0; j < orderedByIntensity.length && mergedTrace.intensity(segs[orderedByIntensity[j]].apex) >= intensityThreshold; ++j) {
+        }
+            numberOfHighIntensiveFeatures = j;
+        }
+
+
+        /*
+        To check if a isotope is valid, we go over all intensive apexes and correlate their neighbouring peaks with the
+        isotope trace
+         */
+        DoubleArrayList intensities = new DoubleArrayList();
+        DoubleArrayList[] isotopeIntensities = new DoubleArrayList[mergedTrace.getIsotopes().length];
+        for (int i=0; i < isotopeIntensities.length; ++i) isotopeIntensities[i] = new DoubleArrayList();
+        for (int i=0; i < numberOfHighIntensiveFeatures; ++i) {
+            TraceSegment seg = segs[orderedByIntensity[i]];
+            int left=seg.apex, right=seg.apex;
+            double fwhm = mergedTrace.intensity(seg.apex)/2d;
+            for (; left >= seg.leftEdge && mergedTrace.intensity(left)>=fwhm; --left);
+            ++left;
+            for (; right <= seg.rightEdge && mergedTrace.intensity(right)>=fwhm; ++right);
+            ++right;
+            if (left==seg.apex && left > seg.leftEdge) --left;
+            if (right==seg.apex && right < seg.rightEdge) ++right;
+            for (int j=left; j <= right; ++j) {
+                intensities.add(mergedTrace.inRange(j) ? mergedTrace.intensity(j) : 0f);
+            }
+            for (int k=0; k < isotopeIntensities.length; ++k) {
+                for (int j=left; j <= right; ++j) {
+                    isotopeIntensities[k].add(mergedTrace.getIsotopes()[k].inRange(j) ? mergedTrace.getIsotopes()[k].intensity(j) : 0f);
+                }
+            }
+        }
+
+        // compute correlations!
+        final double[] mainIntensities = intensities.toDoubleArray();
+        for (int k=0; k < isotopeIntensities.length; ++k) {
+            final double correlation = Statistics.pearson(mainIntensities, isotopeIntensities[k].toDoubleArray());
+            if (correlation>=0.75) {
+                mergedTrace.setValidIsotopes(k, 2);
+            } else if (correlation > (isotopeIntensities[k].doubleStream().max().orElse(noiseLevel)/noiseLevel)*0.6) {
+                mergedTrace.setValidIsotopes(k, 1);
+            } else mergedTrace.setValidIsotopes(k, 0);
+        }
+        //System.out.println(mergedTrace.numberOfValidIsotopes() + "/ " + mergedTrace.getIsotopes().length + " of the isotopes are valid.");
+    }
+
+    private int estimateChargeFromIsotopes(ProcessedSample sample, MergedTrace mergedTrace, MergedFeatureExtractionStrategy.Result features) {
         double mz = mergedTrace.averagedMz();
         double minDist = 1d;
         double maxDist = 1d;
         for (int k=0; k < mergedTrace.getIsotopes().length; ++k) {
+            if (!mergedTrace.isHighQualityIsotope(k)) continue;
             double delta = mergedTrace.getIsotopes()[k].averagedMz() - mz;
             minDist = Math.min(delta, minDist);
             maxDist = Math.max(delta, maxDist);
@@ -522,6 +561,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
 
 
         for (int isotopePeak = 0; isotopePeak < mergedTraceParent.getIsotopes().length; ++isotopePeak) {
+            if (!mergedTraceParent.isValidIsotope(isotopePeak)) continue;
             MergedTrace isotope = mergedTraceParent.getIsotopes()[isotopePeak];
             // we have multiple options here, we can just keep the segments we have from monoisotopic, or we again
             // use microalignments. I would first go for keeping the segments and see how it goes.
@@ -807,7 +847,6 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                             if (scanId < startId || scanId > endId) {
                                 LoggerFactory.getLogger(PickFeaturesAndImportToSirius.class).warn("MS2 outside of feature! mz = " + mergedTrace.averagedMz() + ", rt = " + mergedTrace.getMapping().getRetentionTimeAt(feature.getTraceRef().absoluteApexId()));
                                 if (features.length <= 3 && (scanId - endId) > 10) {
-                                    System.err.println("Gotcha!");
                                     ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, rawSegments);
                                     segmentationStrategy.featureFinding(new PersistentHomology(), mergedSample, mergedTrace);
                                 }
@@ -816,9 +855,6 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                                 RawTraceRef ref = subFeature.getTraceReference().get();
                                 if (scanId < ref.getStart() + ref.getScanIndexOffsetOfTrace() || scanId > ref.getEnd() + ref.getScanIndexOffsetOfTrace()) {
                                     LoggerFactory.getLogger(PickFeaturesAndImportToSirius.class).warn("MS2 also outside of its subfeature!");
-                                    if (features.length <= 3) {
-                                        System.err.println("Gotcha!");
-                                    }
                                 }
 
                             }

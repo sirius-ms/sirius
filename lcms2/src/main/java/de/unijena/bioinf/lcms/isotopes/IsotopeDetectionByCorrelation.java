@@ -34,14 +34,16 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
             LoggerFactory.getLogger(IsotopeDetectionStrategy.class).warn("Cannot find peak for " + moi);
             return Result.nothingFound();
         }
-        final List<IsotopePattern> monoisotopicPatterns = IsotopePattern.extractPatterns(spectrum, peakIdx);
-        final List<IsotopePattern> nonMonoisotopicPatterns = IsotopePattern.getPatternsForNonMonoisotopicPeak(spectrum, peakIdx);
+        final int maximumAllowedGap = 1;
+        final List<IsotopePattern> monoisotopicPatterns = IsotopePattern.extractPatterns(spectrum, peakIdx).stream().map(x->x.deleteGaps(maximumAllowedGap)).toList();
+        final List<IsotopePattern> nonMonoisotopicPatterns = IsotopePattern.getPatternsForNonMonoisotopicPeak(spectrum, peakIdx).stream().map(x->x.deleteGaps(maximumAllowedGap)).toList();;
         final List<IsotopePattern> allPatterns = new ArrayList<>();
         allPatterns.addAll(monoisotopicPatterns);
         allPatterns.addAll(nonMonoisotopicPatterns);
         // we now calculate scores based on correlation to find the best matching isotope pattern
         double bestScore=0;
         IsotopePattern bestPattern = null; int[] bestTraceIds=null;
+        double lastPeakMz = -1;
         for (IsotopePattern p : allPatterns) {
             double scoresum=0;
             boolean[] iso = new boolean[p.size()];
@@ -51,7 +53,11 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
                 if (Math.abs(mz-spectrum.getMzAt(peakIdx))<1e-3) {
                     iso[i]=true;
                     traceIdsAll[i] = trace.getUid();
+                    lastPeakMz = mz;
                     continue;
+                }
+                if (lastPeakMz>=0 && Math.round((mz-lastPeakMz)*p.chargeState - 1) > maximumAllowedGap) {
+                    break; // do not trust too large gaps in isotope patterns
                 }
                 int isotopePeakIdx = Spectrums.mostIntensivePeakWithin(spectrum, mz, smallDev);
                 if (isotopePeakIdx<0) isotopePeakIdx = Spectrums.mostIntensivePeakWithin(spectrum, mz, largeDev);
@@ -62,6 +68,7 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
                     scoresum+=score;
                     traceIdsAll[i] =isotope.get().getUid();
                     iso[i] = true;
+                    lastPeakMz=mz;
                 }
             }
             if (scoresum<=bestScore) continue;

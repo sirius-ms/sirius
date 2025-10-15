@@ -22,6 +22,7 @@ Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jen
 ### Documentation
 - [Online Documentation](https://v6.docs.sirius-ms.io/)
 - [Video tutorials](https://www.youtube.com/playlist?list=PL8R4DKiWsw-vBpvrhtKaZT8UX5Zt08x9h)
+- [Videos - Behind the scenes](https://www.youtube.com/playlist?list=PL57Jv_39fTddhuGqIlX6OIfzhtMBabrGi)
 - [Demo data](https://github.com/sirius-ms/sirius/raw/refs/heads/stable/data/demo-data.zip?download=)
 - [Logos for publications and presentations](https://bio.informatik.uni-jena.de/software/sirius/sirius-logos/)
 
