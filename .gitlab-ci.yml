@@ -38,7 +38,6 @@ before_script:
   - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
   - echo "Using Gradle user home at $GRADLE_USER_HOME"
 
-
 build_test_publish_libs:
   stage: libs
   script:
