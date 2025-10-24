@@ -50,8 +50,8 @@ import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
 import de.unijena.bioinf.ms.rest.client.info.InfoClient;
 import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
-import de.unijena.bioinf.ms.rest.client.libraries.LibrariesClient;
-import de.unijena.bioinf.ms.rest.client.libraries.LibraryInfo;
+import de.unijena.bioinf.ms.rest.client.databases.DownloadableDBsClient;
+import de.unijena.bioinf.ms.rest.client.databases.DownloadableDatabase;
 import de.unijena.bioinf.ms.rest.model.*;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
@@ -109,7 +109,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     private final StructureSearchClient chemDBClient;
     private final FingerIdClient fingerprintClient;
     private final CanopusClient canopusClient;
-    private final LibrariesClient librariesClient;
+    private final DownloadableDBsClient downloadableDBsClient;
 
     @Nullable
     private Subscription activeSubscription;
@@ -135,7 +135,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         this.chemDBClient = new StructureSearchClient(null, contextPath, authService, subsDeco);
         this.fingerprintClient = new FingerIdClient(null, contextPath, authService, subsDeco);
         this.canopusClient = new CanopusClient(null, contextPath, authService, subsDeco);
-        this.librariesClient = new LibrariesClient(null, contextPath, authService, subsDeco);
+        this.downloadableDBsClient = new DownloadableDBsClient(null, contextPath, authService, subsDeco);
 
         if (activeSubscription != null)
             changeActiveSubscription(activeSubscription);
@@ -475,16 +475,16 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     }
     //endregion
 
-    //region Libraries
+    //region Downloadable Databases
 
     @Override
-    public List<LibraryInfo> listLibraries() throws IOException {
-        return ProxyManager.applyClient(librariesClient::listLibraries);
+    public List<DownloadableDatabase> listDownloadableDatabases() throws IOException {
+        return ProxyManager.applyClient(downloadableDBsClient::listDatabases);
     }
 
     @Override
-    public LibrariesClient.DownloadJJob downloadLibrary(Path path, String libId) throws IOException {
-        return ProxyManager.applyClient(client -> librariesClient.downloadToFile(libId, path, client));
+    public DownloadableDBsClient.DownloadJJob downloadDatabase(Path path, String dbId) throws IOException {
+        return ProxyManager.applyClient(client -> downloadableDBsClient.downloadToFile(dbId, path, client));
     }
 
     //endregion
@@ -524,8 +524,8 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
                 }
 
                 @Override
-                public LibrariesClient librariesClient() {
-                    return librariesClient;
+                public DownloadableDBsClient downloadableDBsClient() {
+                    return downloadableDBsClient;
                 }
             }, client);
         });

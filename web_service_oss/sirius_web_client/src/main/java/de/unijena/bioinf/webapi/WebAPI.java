@@ -44,8 +44,8 @@ import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
 import de.unijena.bioinf.ms.rest.client.info.InfoClient;
 import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
-import de.unijena.bioinf.ms.rest.client.libraries.LibrariesClient;
-import de.unijena.bioinf.ms.rest.client.libraries.LibraryInfo;
+import de.unijena.bioinf.ms.rest.client.databases.DownloadableDBsClient;
+import de.unijena.bioinf.ms.rest.client.databases.DownloadableDatabase;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -269,22 +269,22 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     //endregion
 
-    //region Libraries
+    //region Downloadable Databases
 
     /**
-     * @return list of available remote libraries.
+     * @return list of available downloadable databases.
      * @throws IOException if connection error happens
      */
-    List<LibraryInfo> listLibraries() throws IOException;
+    List<DownloadableDatabase> listDownloadableDatabases() throws IOException;
 
     /**
      *
      * @param path path to the file for the newly created database.
-     * @param libId remote library id
-     * @return a JJob that would download the library when executed.
+     * @param dbId database id
+     * @return a JJob that would download the database when executed.
      * @throws IOException if connection or file write error happens
      */
-    ProgressJJob<Void> downloadLibrary(Path path, String libId) throws IOException;
+    ProgressJJob<Void> downloadDatabase(Path path, String dbId) throws IOException;
 
     //endregion
 
@@ -295,6 +295,6 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
         StructureSearchClient chemDBClient();
         FingerIdClient fingerprintClient();
         CanopusClient canopusClient();
-        LibrariesClient librariesClient();
+        DownloadableDBsClient downloadableDBsClient();
     }
 }
