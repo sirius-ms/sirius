@@ -49,10 +49,6 @@
       "description": "[EXPERIMENTAL] This API allows managing tags and tag based data groupings. All endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
     },
     {
-      "name": "Libraries",
-      "description": "List remote libraries"
-    },
-    {
       "name": "Login and Account",
       "description": "Perform signIn, signOut and signUp. Get tokens and account information."
     },
@@ -7216,31 +7212,6 @@
         }
       }
     },
-    "/api/libraries": {
-      "get": {
-        "tags": [
-          "Libraries"
-        ],
-        "summary": "Get SIRIUS libraries.",
-        "description": "Get SIRIUS libraries.",
-        "operationId": "getLibraries",
-        "responses": {
-          "200": {
-            "description": "list of libraries available for downloading.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LibraryInfo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/job-configs": {
       "get": {
         "tags": [
@@ -7437,6 +7408,39 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/SearchableDatabase"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/databases/downloadable": {
+      "get": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "summary": "Get SIRIUS downloadable databases.",
+        "description": "Get SIRIUS downloadable databases.",
+        "operationId": "getDownloadableDatabases",
+        "responses": {
+          "200": {
+            "description": "list of databases available for downloading.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DownloadableDatabase"
+                  }
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DownloadableDatabase"
                   }
                 }
               }
@@ -11563,21 +11567,6 @@
           }
         }
       },
-      "LibraryInfo": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
       "Info": {
         "required": [
           "availableILPSolvers",
@@ -11665,6 +11654,21 @@
           "projectId": {
             "type": "string",
             "description": "The project this instance is running on"
+          }
+        }
+      },
+      "DownloadableDatabase": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
