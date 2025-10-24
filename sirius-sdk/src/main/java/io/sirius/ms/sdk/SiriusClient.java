@@ -86,9 +86,6 @@ public class SiriusClient implements AutoCloseable {
 
     protected final InfoApi infos;
 
-    @Getter
-    protected final LibrariesApi libraries;
-
     private final ExecutorService asyncExecutor;
     private EnumSet<DataEventType> sseEventsToListenOn = null;
     private Disposable sseConnection;
@@ -121,7 +118,6 @@ public class SiriusClient implements AutoCloseable {
         databases = new SearchableDatabasesApi(apiClient);
         tags = new TagsApi(apiClient);
         infos = new InfoApi(apiClient);
-        libraries = new LibrariesApi(apiClient);
     }
 
     public String getBasePath() {
