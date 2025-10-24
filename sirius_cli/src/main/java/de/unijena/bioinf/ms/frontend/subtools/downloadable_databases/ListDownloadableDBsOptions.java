@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.frontend.subtools.libraries;
+package de.unijena.bioinf.ms.frontend.subtools.downloadable_databases;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -14,26 +14,26 @@ import picocli.CommandLine;
 import java.io.IOException;
 
 @Slf4j
-@CommandLine.Command(name = "list", description = "Print information about all available default libraries.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
-public class ListLibraries implements StandaloneTool<Workflow> {
+@CommandLine.Command(name = "list", description = "Print information about all downloadable databases.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
+public class ListDownloadableDBsOptions implements StandaloneTool<Workflow> {
 
     @Override
     public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return () -> {
             try {
-                ApplicationCore.WEB_API().listDownloadableDatabases().forEach(this::printLibraryInfo);
+                ApplicationCore.WEB_API().listDownloadableDatabases().forEach(this::printDatabaseInfo);
             } catch (IOException e) {
-                log.error("Error getting remote libraries info.", e);
+                log.error("Error getting downloadable databases.", e);
             }
         };
     }
 
-    private void printLibraryInfo(DownloadableDatabase lib) {
-        System.out.println("##########  BEGIN LIBRARY INFO  ##########");
-        System.out.println("ID: " + lib.id());
-        System.out.println("Size: " + FileUtils.sizeToReadableString(lib.size()));
+    private void printDatabaseInfo(DownloadableDatabase db) {
+        System.out.println("##########  BEGIN DATABASE INFO  ##########");
+        System.out.println("ID: " + db.id());
+        System.out.println("Size: " + FileUtils.sizeToReadableString(db.size()));
         System.out.println("Description:");
-        System.out.println(lib.description());
+        System.out.println(db.description());
         System.out.println("#################  END  ##################");
         System.out.println();
     }
