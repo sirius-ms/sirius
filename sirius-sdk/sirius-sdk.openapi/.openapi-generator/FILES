@@ -47,6 +47,7 @@ docs/DBLink.md
 docs/DataImportEvent.md
 docs/DataQuality.md
 docs/Deviation.md
+docs/DownloadableDatabase.md
 docs/FeatureAnnotations.md
 docs/FeatureImport.md
 docs/FeatureStatisticsApi.md
@@ -73,8 +74,6 @@ docs/JobState.md
 docs/JobSubmission.md
 docs/JobsApi.md
 docs/LcmsSubmissionParameters.md
-docs/LibrariesApi.md
-docs/LibraryInfo.md
 docs/LicenseInfo.md
 docs/LipidAnnotation.md
 docs/LoginAndAccountApi.md
@@ -162,7 +161,6 @@ src/main/java/io/sirius/ms/sdk/api/FeaturesApi.java
 src/main/java/io/sirius/ms/sdk/api/GuiApi.java
 src/main/java/io/sirius/ms/sdk/api/InfoApi.java
 src/main/java/io/sirius/ms/sdk/api/JobsApi.java
-src/main/java/io/sirius/ms/sdk/api/LibrariesApi.java
 src/main/java/io/sirius/ms/sdk/api/LoginAndAccountApi.java
 src/main/java/io/sirius/ms/sdk/api/ProjectsApi.java
 src/main/java/io/sirius/ms/sdk/api/RunsApi.java
@@ -224,6 +222,7 @@ src/main/java/io/sirius/ms/sdk/model/DBLink.java
 src/main/java/io/sirius/ms/sdk/model/DataImportEvent.java
 src/main/java/io/sirius/ms/sdk/model/DataQuality.java
 src/main/java/io/sirius/ms/sdk/model/Deviation.java
+src/main/java/io/sirius/ms/sdk/model/DownloadableDatabase.java
 src/main/java/io/sirius/ms/sdk/model/FeatureAnnotations.java
 src/main/java/io/sirius/ms/sdk/model/FeatureImport.java
 src/main/java/io/sirius/ms/sdk/model/FingerprintPrediction.java
@@ -245,7 +244,6 @@ src/main/java/io/sirius/ms/sdk/model/JobProgress.java
 src/main/java/io/sirius/ms/sdk/model/JobState.java
 src/main/java/io/sirius/ms/sdk/model/JobSubmission.java
 src/main/java/io/sirius/ms/sdk/model/LcmsSubmissionParameters.java
-src/main/java/io/sirius/ms/sdk/model/LibraryInfo.java
 src/main/java/io/sirius/ms/sdk/model/LicenseInfo.java
 src/main/java/io/sirius/ms/sdk/model/LipidAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/LossEdge.java
@@ -319,4 +317,3 @@ src/main/java/io/sirius/ms/sdk/model/ZodiacAnalogueNodes.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacLibraryScoring.java
-src/test/java/io/sirius/ms/sdk/api/LibrariesApiTest.java

@@ -39,13 +39,6 @@ Refer to the [OSSRH Guide](http://central.sonatype.org/pages/ossrh-guide.html) f
 Add this dependency to your project's POM:
 
 ```xml
-<repositories>
-  <repository>
-    <id>gitlab-maven</id>
-    <url>https://gitlab.com/api/v4/projects/66031889/packages/maven</url>
-  </repository>
-</repositories>
-
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
@@ -60,9 +53,8 @@ Add this dependency to your project's build file:
 
 ```groovy
   repositories {
-    maven {
-      url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
-    }
+    mavenCentral()     // Needed if the 'sirius-sdk.openapi' jar has been published to maven central.
+    mavenLocal()       // Needed if the 'sirius-sdk.openapi' jar has been published to the local maven repo.
   }
 
   dependencies {
@@ -250,6 +242,7 @@ Class | Method | HTTP request | Description
 *SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | 
 *SearchableDatabasesApi* | [**getDatabase**](docs/SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getDatabases**](docs/SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases | 
+*SearchableDatabasesApi* | [**getDownloadableDatabases**](docs/SearchableDatabasesApi.md#getDownloadableDatabases) | **GET** /api/databases/downloadable | Get SIRIUS downloadable databases.
 *SearchableDatabasesApi* | [**getIncludedDatabases**](docs/SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included | 
 *SearchableDatabasesApi* | [**importIntoDatabase**](docs/SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database.
 *SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
@@ -312,6 +305,7 @@ Class | Method | HTTP request | Description
  - [DataImportEvent](docs/DataImportEvent.md)
  - [DataQuality](docs/DataQuality.md)
  - [Deviation](docs/Deviation.md)
+ - [DownloadableDatabase](docs/DownloadableDatabase.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
  - [FeatureImport](docs/FeatureImport.md)
  - [FingerprintPrediction](docs/FingerprintPrediction.md)

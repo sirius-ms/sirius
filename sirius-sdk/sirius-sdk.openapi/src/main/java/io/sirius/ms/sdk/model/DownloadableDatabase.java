@@ -34,37 +34,40 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * LibraryInfo
+ * DownloadableDatabase
  */
 @JsonPropertyOrder({
-  LibraryInfo.JSON_PROPERTY_ID,
-  LibraryInfo.JSON_PROPERTY_DESCRIPTION,
-  LibraryInfo.JSON_PROPERTY_SIZE
+  DownloadableDatabase.JSON_PROPERTY_ID,
+  DownloadableDatabase.JSON_PROPERTY_DESCRIPTION,
+  DownloadableDatabase.JSON_PROPERTY_SIZE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class LibraryInfo {
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+public class DownloadableDatabase {
   public static final String JSON_PROPERTY_ID = "id";
+  @jakarta.annotation.Nullable
   private String id;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
+  @jakarta.annotation.Nullable
   private String description;
 
   public static final String JSON_PROPERTY_SIZE = "size";
+  @jakarta.annotation.Nullable
   private Long size;
 
-  public LibraryInfo() {
+  public DownloadableDatabase() {
   }
 
-  public LibraryInfo id(String id) {
+  public DownloadableDatabase id(@jakarta.annotation.Nullable String id) {
     
     this.id = id;
     return this;
   }
 
-   /**
+  /**
    * Get id
    * @return id
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -76,20 +79,20 @@ public class LibraryInfo {
 
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setId(String id) {
+  public void setId(@jakarta.annotation.Nullable String id) {
     this.id = id;
   }
 
-  public LibraryInfo description(String description) {
+  public DownloadableDatabase description(@jakarta.annotation.Nullable String description) {
     
     this.description = description;
     return this;
   }
 
-   /**
+  /**
    * Get description
    * @return description
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -101,20 +104,20 @@ public class LibraryInfo {
 
   @JsonProperty(JSON_PROPERTY_DESCRIPTION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDescription(String description) {
+  public void setDescription(@jakarta.annotation.Nullable String description) {
     this.description = description;
   }
 
-  public LibraryInfo size(Long size) {
+  public DownloadableDatabase size(@jakarta.annotation.Nullable Long size) {
     
     this.size = size;
     return this;
   }
 
-   /**
+  /**
    * Get size
    * @return size
-  **/
+   */
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SIZE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -126,9 +129,10 @@ public class LibraryInfo {
 
   @JsonProperty(JSON_PROPERTY_SIZE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSize(Long size) {
+  public void setSize(@jakarta.annotation.Nullable Long size) {
     this.size = size;
   }
+
 
   @Override
   public boolean equals(Object o) {
@@ -138,10 +142,10 @@ public class LibraryInfo {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    LibraryInfo libraryInfo = (LibraryInfo) o;
-    return Objects.equals(this.id, libraryInfo.id) &&
-        Objects.equals(this.description, libraryInfo.description) &&
-        Objects.equals(this.size, libraryInfo.size);
+    DownloadableDatabase downloadableDatabase = (DownloadableDatabase) o;
+    return Objects.equals(this.id, downloadableDatabase.id) &&
+        Objects.equals(this.description, downloadableDatabase.description) &&
+        Objects.equals(this.size, downloadableDatabase.size);
   }
 
   @Override
@@ -152,7 +156,7 @@ public class LibraryInfo {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class LibraryInfo {\n");
+    sb.append("class DownloadableDatabase {\n");
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    size: ").append(toIndentedString(size)).append("\n");
