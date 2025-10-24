@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.rest.client.libraries;
+package de.unijena.bioinf.ms.rest.client.databases;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
@@ -20,35 +20,35 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
-public class LibrariesClient extends AbstractCsiClient {
+public class DownloadableDBsClient extends AbstractCsiClient {
 
-    public final static String LIBRARIES_ENDPOINT = "/libraries";
+    public final static String DATABASES_ENDPOINT = "/databases";
 
     @SafeVarargs
-    public LibrariesClient(@Nullable URI serverUrl, @Nullable String contextPath, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
+    public DownloadableDBsClient(@Nullable URI serverUrl, @Nullable String contextPath, @NotNull IOFunctions.IOConsumer<Request.Builder>... requestDecorators) {
         super(serverUrl, contextPath, requestDecorators);
     }
 
-    public List<LibraryInfo> listLibraries(final OkHttpClient client) throws IOException {
+    public List<DownloadableDatabase> listDatabases(final OkHttpClient client) throws IOException {
         Request.Builder request = new Request.Builder()
-                .url(buildVersionSpecificWebapiURI(LIBRARIES_ENDPOINT).build())
+                .url(buildVersionSpecificWebapiURI(DATABASES_ENDPOINT).build())
                 .get();
         return executeFromJson(client, request, new TypeReference<>() {});
     }
 
-    public DownloadJJob downloadToFile(String libId, Path destination, final OkHttpClient client) {
-        return new DownloadJJob(libId, destination, client);
+    public DownloadJJob downloadToFile(String dbId, Path destination, final OkHttpClient client) {
+        return new DownloadJJob(dbId, destination, client);
     }
 
     public class DownloadJJob extends BasicJJob<Void> {
 
-        private final String libId;
+        private final String dbId;
         private final Path destination;
         private final OkHttpClient client;
 
-        public DownloadJJob(String libId, Path destination, OkHttpClient client) {
+        public DownloadJJob(String dbId, Path destination, OkHttpClient client) {
             super(JobType.IO);
-            this.libId = libId;
+            this.dbId = dbId;
             this.destination = destination;
             this.client = client;
         }
@@ -56,8 +56,8 @@ public class LibrariesClient extends AbstractCsiClient {
         @Override
         protected Void compute() throws Exception {
             Request.Builder request = new Request.Builder()
-                    .url(buildVersionSpecificWebapiURI(LIBRARIES_ENDPOINT)
-                            .addPathSegment(libId)
+                    .url(buildVersionSpecificWebapiURI(DATABASES_ENDPOINT)
+                            .addPathSegment(dbId)
                             .build())
                     .get();
             decorateRequest(request);
