@@ -7,7 +7,7 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.ms.rest.client.libraries.LibraryInfo;
+import de.unijena.bioinf.ms.rest.client.databases.DownloadableDatabase;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -21,14 +21,14 @@ public class ListLibraries implements StandaloneTool<Workflow> {
     public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return () -> {
             try {
-                ApplicationCore.WEB_API().listLibraries().forEach(this::printLibraryInfo);
+                ApplicationCore.WEB_API().listDownloadableDatabases().forEach(this::printLibraryInfo);
             } catch (IOException e) {
                 log.error("Error getting remote libraries info.", e);
             }
         };
     }
 
-    private void printLibraryInfo(LibraryInfo lib) {
+    private void printLibraryInfo(DownloadableDatabase lib) {
         System.out.println("##########  BEGIN LIBRARY INFO  ##########");
         System.out.println("ID: " + lib.id());
         System.out.println("Size: " + FileUtils.sizeToReadableString(lib.size()));
