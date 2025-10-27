@@ -402,6 +402,8 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
                         final Matcher numm = IONTYPE_NUM_PATTERN_LEFT.matcher(token);
                         if (numm.find()) {
                             prefixNumber = Integer.parseInt(numm.group());
+                            // this exception is thrown if we have two prefix numbers after each other, e.g. 2(4H2O)
+                            if (number != 1) throw new IllegalArgumentException("Do not support nested groups in formula string: '" + name + "'");;
                             number = prefixNumber; // not sure about this...?
                             formulaString = token.substring(numm.group().length());
                         } else {
@@ -427,12 +429,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
                             if (replacement.containsKey(formulaString.toUpperCase())) {
                                 f = MolecularFormula.parse(replacement.get(formulaString.toUpperCase())).multiply(number);;
                             } else {
-                                f = MolecularFormula.parse(formulaString);
-                                if (f.atomCount()==1) {
-                                    f=f.multiply(number);
-                                } else if (prefixNumber != 1) {
-                                    throw new IllegalArgumentException("Do not support nested groups in formula string: '" + name + "'");
-                                }
+                                f = MolecularFormula.parse(formulaString).multiply(number);;
                             }
 
                             possibleNewIonTypes.add(f);
