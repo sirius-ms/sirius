@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.ms.frontend.subtools.libraries.DownloadLibraryOptions;
-import de.unijena.bioinf.ms.frontend.subtools.libraries.LibrariesOptions;
+import de.unijena.bioinf.ms.frontend.subtools.downloadable_databases.DownloadDatabaseOptions;
+import de.unijena.bioinf.ms.frontend.subtools.downloadable_databases.DownloadableDBsOptions;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -20,33 +20,33 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
-public class LibrariesDialog extends JDialog {
+public class DownloadableDBsDialog extends JDialog {
 
     private final SiriusGui gui;
     private final DatabaseDialog databaseDialog;
-    private final JList<LibraryInfo> libraryList;
+    private final JList<DownloadableDatabase> databaseList;
     private final JTextPane descriptionPane;
     private final JButton downloadButton;
 
 
-    public LibrariesDialog(Frame owner, DatabaseDialog databaseDialog, SiriusGui gui) {
-        super(owner, "SIRIUS Libraries", true);
+    public DownloadableDBsDialog(Frame owner, DatabaseDialog databaseDialog, SiriusGui gui) {
+        super(owner, "SIRIUS Databases", true);
         this.databaseDialog = databaseDialog;
         this.gui = gui;
         setLayout(new BorderLayout());
 
-        libraryList = new JList<>();
-        libraryList.setCellRenderer(new SiriusListCellRenderer(lib -> ((LibraryInfo) lib).getId()));
-        libraryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        libraryList.addListSelectionListener(e -> {
-            LibraryInfo lib = libraryList.getSelectedValue();
-            if (lib != null) {
-                updateDescription(lib);
+        databaseList = new JList<>();
+        databaseList.setCellRenderer(new SiriusListCellRenderer(db -> ((DownloadableDatabase) db).getId()));
+        databaseList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        databaseList.addListSelectionListener(e -> {
+            DownloadableDatabase db = databaseList.getSelectedValue();
+            if (db != null) {
+                updateDescription(db);
             }
         });
 
-        JScrollPane scroll = new JScrollPane(libraryList);
-        TextHeaderBoxPanel pane = new TextHeaderBoxPanel("Libraries", scroll);
+        JScrollPane scroll = new JScrollPane(databaseList);
+        TextHeaderBoxPanel pane = new TextHeaderBoxPanel("Downloadable Databases", scroll);
         pane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, 0, 0));
 
 
@@ -61,10 +61,10 @@ public class LibrariesDialog extends JDialog {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         downloadButton = new JButton("Download");
         buttonPanel.add(downloadButton);
-        downloadButton.addActionListener(e -> download(libraryList.getSelectedValue()));
+        downloadButton.addActionListener(e -> download(databaseList.getSelectedValue()));
 
-        loadLibraries();
-        libraryList.setSelectedIndex(0);
+        loadDatabases();
+        databaseList.setSelectedIndex(0);
 
         add(pane, BorderLayout.WEST);
         add(descriptionScrollPane, BorderLayout.CENTER);
@@ -77,11 +77,11 @@ public class LibrariesDialog extends JDialog {
         setVisible(true);
     }
 
-    private void loadLibraries() {
-        List<LibraryInfo> libraries = List.of();
+    private void loadDatabases() {
+        List<DownloadableDatabase> databases = List.of();
         try {
-            libraries = Jobs.runInBackgroundAndLoad(getOwner(), "Loading Libraries...",
-                    () -> gui.applySiriusClient((c, pid) -> c.getLibraries().getLibraries())
+            databases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading Databases...",
+                    () -> gui.applySiriusClient((c, pid) -> c.databases().getDownloadableDatabases())
             ).awaitResult();
         } catch (Exception ex) {
             SwingUtilities.invokeLater(() -> gui.getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
@@ -90,21 +90,21 @@ public class LibrariesDialog extends JDialog {
             ));
             updateDescription(null);
         }
-        libraryList.setListData(libraries.toArray(LibraryInfo[]::new));
+        databaseList.setListData(databases.toArray(DownloadableDatabase[]::new));
     }
 
-    private void updateDescription(LibraryInfo lib) {
+    private void updateDescription(DownloadableDatabase db) {
         String text;
-        if (lib == null) {
+        if (db == null) {
             downloadButton.setEnabled(false);
-            text = "No library selected.";
+            text = "No database selected.";
         } else {
             downloadButton.setEnabled(true);
-            String htmlDescription = Objects.requireNonNullElse(lib.getDescription(), "no description").replaceAll("\n", "<br>");
-            String path = getDatabasePath(lib);
+            String htmlDescription = Objects.requireNonNullElse(db.getDescription(), "no description").replaceAll("\n", "<br>");
+            String path = getDatabasePath(db);
             text = "<html><body>" +
                     "<p>" + htmlDescription + "</p>" +
-                    "<p><b>Size: </b>" + (lib.getSize() == null ? "unknown" : FileUtils.sizeToReadableString(lib.getSize())) + "</p>" +
+                    "<p><b>Size: </b>" + (db.getSize() == null ? "unknown" : FileUtils.sizeToReadableString(db.getSize())) + "</p>" +
                     (path != null ? "<p><b>Downloaded to: </b>" + path + "</p>" : "") +
                     "</body></html>";
         }
@@ -112,48 +112,48 @@ public class LibrariesDialog extends JDialog {
     }
 
     @Nullable
-    private String getDatabasePath(LibraryInfo lib) {
+    private String getDatabasePath(DownloadableDatabase db) {
         try {
-            SearchableDatabase db = gui.applySiriusClient((c, pid) -> c.databases().getDatabase(lib.getId(), false));
-            String path = db.getLocation();
-            if (path != null && lib.getSize() != null
-                && Files.size(Path.of(path)) == lib.getSize()) {
+            SearchableDatabase localDb = gui.applySiriusClient((c, pid) -> c.databases().getDatabase(db.getId(), false));
+            String path = localDb.getLocation();
+            if (path != null && db.getSize() != null
+                && Files.size(Path.of(path)) == db.getSize()) {
                 return path;
             }
         } catch (Exception ignore) {}
         return null;
     }
 
-    private void download(LibraryInfo lib) {
+    private void download(DownloadableDatabase db) {
         try {
-            if (getDatabasePath(lib) != null) {
-                if (JOptionPane.showConfirmDialog(this, "Library " + lib.getId() + " is already downloaded to " + getDatabasePath(lib) + "\nDownload anyway?", null, JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+            if (getDatabasePath(db) != null) {
+                if (JOptionPane.showConfirmDialog(this, "Database " + db.getId() + " is already downloaded to " + getDatabasePath(db) + "\nDownload anyway?", null, JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
                     return;
                 }
             }
 
             JFileChooser destinationChooser = new JFileChooser();
             destinationChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            destinationChooser.setDialogTitle("Destination for the library file");
+            destinationChooser.setDialogTitle("Destination for the database file");
 
             if (destinationChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
             String destination = destinationChooser.getSelectedFile().getAbsolutePath();
 
             CommandSubmission command = new CommandSubmission();
-            command.addCommandItem(PicoUtils.getCommand(LibrariesOptions.class).name());
-            command.addCommandItem(PicoUtils.getCommand(DownloadLibraryOptions.class).name());
-            command.addCommandItem("--library=" + lib.getId());
+            command.addCommandItem(PicoUtils.getCommand(DownloadableDBsOptions.class).name());
+            command.addCommandItem(PicoUtils.getCommand(DownloadDatabaseOptions.class).name());
+            command.addCommandItem("--db=" + db.getId());
             command.addCommandItem("--destination=" + destination);
 
             gui.applySiriusClient((c, pid) -> {
                 Job j = c.jobs().startCommand(pid, command, List.of(JobOptField.PROGRESS));
                 return LoadingBackroundTask.runInBackground(gui.getMainFrame(),
-                        "Downloading " + lib.getId() + "...", null,
+                        "Downloading " + db.getId() + "...", null,
                         new io.sirius.ms.sdk.jjobs.SseProgressJJob(gui.getSiriusClient(), pid, j));
             }).awaitResult();
 
             dispose();
-            databaseDialog.whenCustomDbIsAdded(lib.getId());
+            databaseDialog.whenCustomDbIsAdded(db.getId());
         } catch (Exception ex) {
             SwingUtilities.invokeLater(() -> gui.getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
                     err -> JOptionPane.showMessageDialog(this, err.getDetail(), "Error " + err.getStatus() + ": " + err.getTitle(), JOptionPane.ERROR_MESSAGE),
