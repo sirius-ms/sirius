@@ -54,12 +54,10 @@ import static java.util.function.Predicate.not;
 public class SearchableDatabaseController {
 
     private final ChemDbService chemDbService;
-    private final ComputeService computeService;
     private final WebAPI<?> webAPI;
 
-    public SearchableDatabaseController(ChemDbService chemDbService, ComputeService computeService, WebAPI<?> webAPI) {
+    public SearchableDatabaseController(ChemDbService chemDbService, WebAPI<?> webAPI) {
         this.chemDbService = chemDbService;
-        this.computeService = computeService;
         this.webAPI = webAPI;
     }
 
@@ -149,8 +147,13 @@ public class SearchableDatabaseController {
 
     /**
      * Get SIRIUS downloadable databases.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [DEPRECATED] This endpoint will likely be removed in future versions of this API in favor of remote library search.
+     *
      * @return list of databases available for downloading.
      */
+    @Deprecated(forRemoval = true)
     @GetMapping(value = "/downloadable", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_PROBLEM_JSON_VALUE})
     public List<DownloadableDatabase> getDownloadableDatabases() {
         try {

@@ -164,6 +164,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         this.chemDBClient.setServerUrl(hostSupplier);
         this.fingerprintClient.setServerUrl(hostSupplier);
         this.canopusClient.setServerUrl(hostSupplier);
+        this.downloadableDBsClient.setServerUrl(hostSupplier);
     }
 
     @Override

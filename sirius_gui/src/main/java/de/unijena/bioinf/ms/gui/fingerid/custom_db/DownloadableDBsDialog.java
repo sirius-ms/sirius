@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.ms.frontend.subtools.downloadable_databases.DownloadDatabaseOptions;
-import de.unijena.bioinf.ms.frontend.subtools.downloadable_databases.DownloadableDBsOptions;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db_downloader.DownloadDatabaseOptions;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db_downloader.DownloadableDBsOptions;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
