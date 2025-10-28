@@ -7873,8 +7873,8 @@
         "tags": [
           "Searchable Databases"
         ],
-        "summary": "Get SIRIUS downloadable databases.",
-        "description": "Get SIRIUS downloadable databases.",
+        "summary": "Get SIRIUS downloadable databases",
+        "description": "Get SIRIUS downloadable databases.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\n [DEPRECATED] This endpoint will likely be removed in future versions of this API in favor of remote library search.",
         "operationId": "getDownloadableDatabases",
         "responses": {
           "200": {
@@ -7898,7 +7898,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/databases/custom": {
