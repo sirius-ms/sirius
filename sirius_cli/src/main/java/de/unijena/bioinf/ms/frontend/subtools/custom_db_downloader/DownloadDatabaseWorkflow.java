@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.frontend.subtools.downloadable_databases;
+package de.unijena.bioinf.ms.frontend.subtools.custom_db_downloader;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicJJob;
