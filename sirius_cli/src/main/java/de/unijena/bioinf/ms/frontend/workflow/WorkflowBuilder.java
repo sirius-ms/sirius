@@ -30,7 +30,7 @@ import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprinter.FingerprinterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
-import de.unijena.bioinf.ms.frontend.subtools.downloadable_databases.DownloadableDBsOptions;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db_downloader.DownloadableDBsOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.ms.frontend.subtools.project.ProjectOptions;
