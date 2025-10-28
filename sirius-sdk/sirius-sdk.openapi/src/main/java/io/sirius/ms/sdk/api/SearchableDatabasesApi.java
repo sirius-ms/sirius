@@ -443,12 +443,14 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * Get SIRIUS downloadable databases.
-     * Get SIRIUS downloadable databases.
+     * Get SIRIUS downloadable databases
+     * Get SIRIUS downloadable databases.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed in future versions of this API in favor of remote library search.
      * <p><b>200</b> - list of databases available for downloading.
      * @return List&lt;DownloadableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
      */
+    @Deprecated
     private ResponseSpec getDownloadableDatabasesRequestCreation() throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
@@ -473,8 +475,8 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * Get SIRIUS downloadable databases.
-     * Get SIRIUS downloadable databases.
+     * Get SIRIUS downloadable databases
+     * Get SIRIUS downloadable databases.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed in future versions of this API in favor of remote library search.
      * <p><b>200</b> - list of databases available for downloading.
      * @return List&lt;DownloadableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -485,8 +487,8 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * Get SIRIUS downloadable databases.
-     * Get SIRIUS downloadable databases.
+     * Get SIRIUS downloadable databases
+     * Get SIRIUS downloadable databases.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed in future versions of this API in favor of remote library search.
      * <p><b>200</b> - list of databases available for downloading.
      * @return ResponseEntity&lt;List&lt;DownloadableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -497,8 +499,8 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * Get SIRIUS downloadable databases.
-     * Get SIRIUS downloadable databases.
+     * Get SIRIUS downloadable databases
+     * Get SIRIUS downloadable databases.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed in future versions of this API in favor of remote library search.
      * <p><b>200</b> - list of databases available for downloading.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
