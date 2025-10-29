@@ -303,27 +303,31 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     /**
      * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
      *
-     * @param projectId        project-space to read from.
-     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param smiles        smiles
+     * @param projectId           project-space to read from.
+     * @param alignedFeatureId    feature (aligned over runs) the structure candidates belong to.
+     * @param smiles              smiles
+     * @param skipExistenceCheck  if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return StructureCandidate of this feature candidate with specified optional fields.
      */
     @Operation(operationId = "addDeNovoStructureCandidate")
     @PutMapping(value = "/{alignedFeatureId}/denovo-structures", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<StructureCandidateFormula> addDeNovoStructureCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
-            @RequestParam(defaultValue = "none") String smiles
+            @RequestParam(defaultValue = "none") String smiles,
+            @RequestParam(defaultValue = "false") boolean skipExistenceCheck
     ) {
         Project<?> project = projectsProvider.getProjectOrThrow(projectId);
         Instance instance = project.getProjectSpaceManager().findInstance(alignedFeatureId).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance with ID " + alignedFeatureId + " not found in project + " + projectId + "."));
 
-        try {
-            if (existingStructureCandidate(project, alignedFeatureId, smiles)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Structure candidate already exists.");
+        if (!skipExistenceCheck) {
+            try {
+                if (existingStructureCandidate(project, alignedFeatureId, smiles)) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Structure candidate already exists.");
+                }
+            } catch (CDKException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid SMILES.");
             }
-        } catch (CDKException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid SMILES.");
         }
 
         List<FCandidate<?>> inputData = instance.getMsNovelistInput().stream()
