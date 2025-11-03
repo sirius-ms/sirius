@@ -776,6 +776,16 @@
               "type": "string",
               "default": "none"
             }
+          },
+          {
+            "name": "skipExistenceCheck",
+            "in": "query",
+            "description": "if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {

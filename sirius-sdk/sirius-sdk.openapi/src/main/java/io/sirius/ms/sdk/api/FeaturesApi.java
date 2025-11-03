@@ -179,10 +179,11 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param smiles smiles
+     * @param skipExistenceCheck if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return List&lt;StructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addDeNovoStructureCandidateRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles) throws WebClientResponseException {
+    private ResponseSpec addDeNovoStructureCandidateRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles, @jakarta.annotation.Nullable Boolean skipExistenceCheck) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -204,6 +205,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "smiles", smiles));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "skipExistenceCheck", skipExistenceCheck));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -225,12 +227,13 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param smiles smiles
+     * @param skipExistenceCheck if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return List&lt;StructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<StructureCandidateFormula> addDeNovoStructureCandidate(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles) throws WebClientResponseException {
+    public List<StructureCandidateFormula> addDeNovoStructureCandidate(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles, @jakarta.annotation.Nullable Boolean skipExistenceCheck) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
-        return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles).bodyToFlux(localVarReturnType).collectList().block();
+        return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles, skipExistenceCheck).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -240,12 +243,13 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param smiles smiles
+     * @param skipExistenceCheck if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return ResponseEntity&lt;List&lt;StructureCandidateFormula&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<StructureCandidateFormula>> addDeNovoStructureCandidateWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles) throws WebClientResponseException {
+    public ResponseEntity<List<StructureCandidateFormula>> addDeNovoStructureCandidateWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles, @jakarta.annotation.Nullable Boolean skipExistenceCheck) throws WebClientResponseException {
         ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
-        return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles).toEntityList(localVarReturnType).block();
+        return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles, skipExistenceCheck).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -255,11 +259,12 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param smiles smiles
+     * @param skipExistenceCheck if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addDeNovoStructureCandidateWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles) throws WebClientResponseException {
-        return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles);
+    public ResponseSpec addDeNovoStructureCandidateWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable String smiles, @jakarta.annotation.Nullable Boolean skipExistenceCheck) throws WebClientResponseException {
+        return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles, skipExistenceCheck);
     }
 
     /**
