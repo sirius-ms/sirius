@@ -39,8 +39,7 @@ public class DownloadDatabaseWorkflow extends BasicJJob<Boolean> implements Work
         if (Files.exists(path) & Files.isDirectory(path)) {
             String fileName = dbId + CUSTOM_DB_SUFFIX;
             path = path.resolve(fileName);
-        }
-        if (!path.endsWith(CUSTOM_DB_SUFFIX)) {
+        } else if (!path.toString().toLowerCase().endsWith(CUSTOM_DB_SUFFIX)) {
             throw new RuntimeException("Destination should be either a directory or end with " + CUSTOM_DB_SUFFIX + " (" + destination + ").");
         }
 
