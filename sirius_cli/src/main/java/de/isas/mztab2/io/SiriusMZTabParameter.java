@@ -31,6 +31,7 @@ import uk.ac.ebi.pride.jmztab2.model.OptColumnMappingBuilder;
 public enum SiriusMZTabParameter {
     //SIRIUS
     SIRIUS_SCORE("SIRIUS:sirius_score"),
+    SIRIUS_SCORE_NORM("SIRIUS:sirius_score_normalized"),
     SIRIUS_ISOTOPE_SCORE("SIRIUS:isotope_score"),
     SIRIUS_TREE_SCORE("SIRIUS:tree_score"),
     ZODIAC_SCORE("SIRIUS:zodiac_score"),
@@ -46,6 +47,7 @@ public enum SiriusMZTabParameter {
     //FingerID
     FINGERID_SCORE("CSI:FingerID:score"),
     FINGERID_CONFIDENCE("CSI:FingerID:confidence"),
+    FINGERID_CONFIDENCE_APPROX("CSI:FingerID:confidence_approx"),
     FINGERID_TANIMOTO_SIMILARITY("CSI:FingerID:tanimoto"),
 
     FINGERID_CANDIDATE_LOCATION("CSI:FingerID:candidate_location"),
@@ -87,7 +89,7 @@ public enum SiriusMZTabParameter {
 
     public final static Parameter SOFTWARE_SIRIUS = new Parameter()
             .name(PropertyManager.getProperty("de.unijena.bioinf.utils.errorReport.softwareName", null, "SIRIUS"))
-            .value(PropertyManager.getProperty("de.unijena.bioinf.sirius.version"));
+            .value(PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version"));
 
     public final static Parameter SOFTWARE_FINGER_ID = new Parameter()
             .name("CSI:FingerID")
@@ -110,9 +112,12 @@ public enum SiriusMZTabParameter {
     public final static Parameter SCAN_POLARITY_ITEM_NEGATIVE = new Parameter().cvLabel("MS").cvAccession("MS:1000129").name("negative scan");
 
     public static Parameter getScanPolarity(@NotNull PrecursorIonType precursorIonType) {
-        if (precursorIonType.getCharge() > 0) {
+        return getScanPolarity(precursorIonType.getCharge());
+    }
+    public static Parameter getScanPolarity(int charge) {
+        if (charge > 0) {
             return SCAN_POLARITY_ITEM_POSITIVE;
-        } else if (precursorIonType.getCharge() < 0) {
+        } else if (charge < 0) {
             return SCAN_POLARITY_ITEM_NEGATIVE;
         }
         throw new IllegalArgumentException("Uncharged Ions do not exist!");
