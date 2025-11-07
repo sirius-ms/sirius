@@ -19,12 +19,9 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
+import de.unijena.bioinf.ms.frontend.subtools.ParentCommand;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
-import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.export.ExportDBOptions;
-import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.ms.properties.ParameterConfig;
 import picocli.CommandLine;
 
 /**
@@ -32,7 +29,7 @@ import picocli.CommandLine;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "<STANDALONE> Operations with custom searchable structure/spectral databases. See subcommands help for more info.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false,
+@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "<STANDALONE> Operations with custom searchable structure/spectral databases. See subcommands help for more info.%n%n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false,
 subcommands = {
         AddDBOptions.class,
         CreateDBOptions.class,
@@ -40,16 +37,4 @@ subcommands = {
         ImportDBOptions.class,
         RemoveDBOptions.class,
         ExportDBOptions.class})
-public class CustomDBOptions implements StandaloneTool<Workflow> {
-
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec ownSpec;
-
-    @Override
-    public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
-        return () -> {
-            String subtools = String.join(",", ownSpec.subcommands().keySet());
-            System.out.printf("Please specify one of the subcommands for %s: [%s]%n", ownSpec.name(), subtools);
-        };
-    }
-}
+public class CustomDBOptions extends ParentCommand { }
