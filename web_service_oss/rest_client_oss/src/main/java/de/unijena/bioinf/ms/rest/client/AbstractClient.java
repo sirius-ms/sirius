@@ -98,6 +98,11 @@ public abstract class AbstractClient {
         return Collections.unmodifiableList(requestDecorators);
     }
 
+    protected void decorateRequest(Request.Builder request) throws IOException {
+        for (IOFunctions.IOConsumer<Request.Builder> requestDecorator : requestDecorators)
+            requestDecorator.accept(request);
+    }
+
     public URI getServerUrl() {
         return serverUrl.get();
     }
@@ -129,15 +134,14 @@ public abstract class AbstractClient {
         }
     }
 
-    public <T> T executeWithResponse(@NotNull OkHttpClient client, @NotNull final Request.Builder request, IOFunctions.IOFunction<Response, T> respHandling) throws IOException {
+    protected <T> T executeWithResponse(@NotNull OkHttpClient client, @NotNull final Request.Builder request, IOFunctions.IOFunction<Response, T> respHandling) throws IOException {
         try (Response resp = client.newCall(request.build()).execute()) {
             return respHandling.apply(resp);
         }
     }
 
     public <T> T execute(@NotNull OkHttpClient client, @NotNull final Request.Builder request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
-        for (IOFunctions.IOConsumer<Request.Builder> requestDecorator : requestDecorators)
-            requestDecorator.accept(request);
+        decorateRequest(request);
         return executeWithResponse(client, request, response -> {
             isSuccessful(response);
             try (ResponseBody body = response.body()) {
@@ -184,9 +188,7 @@ public abstract class AbstractClient {
     }
 
     public <T> T executeFromStream(@NotNull OkHttpClient client, @NotNull final Request.Builder request, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
-        for (IOFunctions.IOConsumer<Request.Builder> requestDecorator : requestDecorators)
-            requestDecorator.accept(request);
-
+        decorateRequest(request);
         try (Response response = client.newCall(request.build()).execute()) {
             isSuccessful(response);
             try (ResponseBody body = response.body()) {

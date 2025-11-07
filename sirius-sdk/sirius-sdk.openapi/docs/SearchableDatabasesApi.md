@@ -9,6 +9,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getCustomDatabases**](SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom |  |
 | [**getDatabase**](SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} |  |
 | [**getDatabases**](SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases |  |
+| [**getDownloadableDatabases**](SearchableDatabasesApi.md#getDownloadableDatabases) | **GET** /api/databases/downloadable | Get list of curated custom databases downloadable from the SIRIUS web service for local use |
 | [**getIncludedDatabases**](SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included |  |
 | [**importIntoDatabase**](SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database. |
 | [**removeDatabase**](SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} |  |
@@ -342,6 +343,68 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+
+
+## getDownloadableDatabases
+
+> List&lt;DownloadableDatabase&gt; getDownloadableDatabases()
+
+Get list of curated custom databases downloadable from the SIRIUS web service for local use
+
+Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.SearchableDatabasesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
+        try {
+            List<DownloadableDatabase> result = apiInstance.getDownloadableDatabases();
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling SearchableDatabasesApi#getDownloadableDatabases");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**List&lt;DownloadableDatabase&gt;**](DownloadableDatabase.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json, application/problem+json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | list of databases available for downloading. |  -  |
 
 
 ## getIncludedDatabases

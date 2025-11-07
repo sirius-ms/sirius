@@ -7426,6 +7426,40 @@
         }
       }
     },
+    "/api/databases/downloadable": {
+      "get": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "summary": "Get list of curated custom databases downloadable from the SIRIUS web service for local use",
+        "description": "Get list of curated custom databases downloadable from the SIRIUS web service for local use.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\n [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.",
+        "operationId": "getDownloadableDatabases",
+        "responses": {
+          "200": {
+            "description": "list of databases available for downloading.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DownloadableDatabase"
+                  }
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DownloadableDatabase"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
     "/api/databases/custom": {
       "get": {
         "tags": [
@@ -11631,6 +11665,21 @@
           "projectId": {
             "type": "string",
             "description": "The project this instance is running on"
+          }
+        }
+      },
+      "DownloadableDatabase": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
