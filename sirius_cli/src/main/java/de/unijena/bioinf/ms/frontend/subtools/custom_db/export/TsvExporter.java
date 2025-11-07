@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class TsvExporter extends DbExporter {
 
@@ -39,7 +40,7 @@ public class TsvExporter extends DbExporter {
         CompoundCandidate c = cw.getCandidate(null, null);
 
         List<Object> values = new ArrayList<>(List.of(
-                c.getName(),
+                Optional.ofNullable(c.getName()).orElse(""),
                 c.getSmiles(),
                 c.getInchiKey2D(),
                 c.getInchi().in2D,
