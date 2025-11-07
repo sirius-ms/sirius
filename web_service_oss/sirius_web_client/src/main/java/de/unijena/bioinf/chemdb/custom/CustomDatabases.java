@@ -54,7 +54,8 @@ public class CustomDatabases {
         return inputName.replaceAll("[^a-zA-Z0-9-_]", "_");
     }
 
-    private final static Map<String, CustomDatabase> CUSTOM_DATABASES = new ConcurrentHashMap<>();
+    private static final Map<String, CustomDatabase> CUSTOM_DATABASES = new ConcurrentHashMap<>();
+    private static final Map<String, Object> LOCATION_OPEN_MONITORS = new ConcurrentHashMap<>();
 
     @NotNull
     public static Optional<CustomDatabase> getCustomDatabaseByName(@NotNull String name) {
@@ -86,40 +87,45 @@ public class CustomDatabases {
     }
 
     public static CustomDatabase open(String location, CdkFingerprintVersion version, boolean readOnly) throws IOException {
-        CustomDatabase cached = CUSTOM_DATABASES.get(location);
-        if (cached != null) {
-            return cached;
-        }
+        Object monitor = LOCATION_OPEN_MONITORS.computeIfAbsent(location, k -> new Object());
+        synchronized (monitor) {
 
-        if (!Files.exists(Path.of(location))) {
-            throw new FileNotFoundException("Trying to open a custom DB at non-existing location " + location);
-        }
+            CustomDatabase cached = CUSTOM_DATABASES.get(location);
+            if (cached != null) {
+                return cached;
+            }
 
-        CustomDatabase db;
-        if (location.endsWith(CUSTOM_DB_SUFFIX)) {
-            ChemicalNitriteDatabase nitriteDb = new ChemicalNitriteDatabase(Path.of(location), version, readOnly);
-            db = new NoSQLCustomDatabase<>(nitriteDb);
-        } else {
-            CompressibleBlobStorage<BlobStorage> blobDb = CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location));
-            db = new BlobCustomDatabase<>(blobDb, version);
-        }
+            if (!Files.exists(Path.of(location))) {
+                throw new FileNotFoundException("Trying to open a custom DB at non-existing location " + location);
+            }
 
-        try {
-            db.getSettings();
-        } catch (Exception e) {
-            db.close();
-            throw new RuntimeException(e);
-        }
+            CustomDatabase db;
+            if (location.endsWith(CUSTOM_DB_SUFFIX)) {
+                ChemicalNitriteDatabase nitriteDb = new ChemicalNitriteDatabase(Path.of(location), version, readOnly);
+                db = new NoSQLCustomDatabase<>(nitriteDb);
+            } else {
+                CompressibleBlobStorage<BlobStorage> blobDb = CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location));
+                db = new BlobCustomDatabase<>(blobDb, version);
+            }
 
-        String dbName = db.name();
-        if (CustomDataSources.containsDB(dbName)) {
-            db.close();
-            throw new RuntimeException("Datasource with name " + dbName + " already exists.");
-        }
+            try {
+                db.getSettings();
+            } catch (Exception e) {
+                db.close();
+                throw new RuntimeException(e);
+            }
 
-        CustomDataSources.addCustomSourceIfAbsent(db);
-        CUSTOM_DATABASES.put(location, db);
-        return db;
+            String dbName = db.name();
+            if (CustomDataSources.containsDB(dbName)) {
+                db.close();
+                throw new RuntimeException("Datasource with name " + dbName + " already exists.");
+            }
+
+            CustomDataSources.addCustomSourceIfAbsent(db);
+            CUSTOM_DATABASES.put(location, db);
+
+            return db;
+        }
     }
 
     public static CustomDatabase create(

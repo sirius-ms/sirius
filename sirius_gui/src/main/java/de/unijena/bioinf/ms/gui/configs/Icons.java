@@ -131,6 +131,9 @@ public abstract class Icons {
     public static final FlatSVGIcon FILTER_DOWN =  new FlatSVGIcon( Icons.class.getResource("/icons/circular-icons-svg/c-filter-down.svg"));
     public static final FlatSVGIcon MOLECULAR_PROPERTY = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-molecularProperty.svg"));
     public static final FlatSVGIcon SAMPLE = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-sample.svg"));
+    public static final FlatSVGIcon PLAIN_DOWNLOAD = new FlatSVGIcon(MainFrame.class.getResource("/icons/plain/download.svg"));
+    public static final FlatSVGIcon PLAIN_FOLDER = new FlatSVGIcon(MainFrame.class.getResource("/icons/plain/folder-file.svg"));
+    public static final FlatSVGIcon PLAIN_EXPORT = new FlatSVGIcon(MainFrame.class.getResource("/icons/plain/export.svg"));
 
     public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.png"));
     public static final Icon SIRIUS_APP_ICON = new ImageIcon(Icons.class.getResource("/icons/sirius_icon.png"));

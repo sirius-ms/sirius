@@ -242,6 +242,7 @@ Class | Method | HTTP request | Description
 *SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | 
 *SearchableDatabasesApi* | [**getDatabase**](docs/SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getDatabases**](docs/SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases | 
+*SearchableDatabasesApi* | [**getDownloadableDatabases**](docs/SearchableDatabasesApi.md#getDownloadableDatabases) | **GET** /api/databases/downloadable | Get list of curated custom databases downloadable from the SIRIUS web service for local use
 *SearchableDatabasesApi* | [**getIncludedDatabases**](docs/SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included | 
 *SearchableDatabasesApi* | [**importIntoDatabase**](docs/SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database.
 *SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
@@ -304,6 +305,7 @@ Class | Method | HTTP request | Description
  - [DataImportEvent](docs/DataImportEvent.md)
  - [DataQuality](docs/DataQuality.md)
  - [Deviation](docs/Deviation.md)
+ - [DownloadableDatabase](docs/DownloadableDatabase.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
  - [FeatureImport](docs/FeatureImport.md)
  - [FingerprintPrediction](docs/FingerprintPrediction.md)
