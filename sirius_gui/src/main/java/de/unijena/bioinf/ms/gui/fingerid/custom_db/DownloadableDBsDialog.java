@@ -30,7 +30,7 @@ public class DownloadableDBsDialog extends JDialog {
 
 
     public DownloadableDBsDialog(Frame owner, DatabaseDialog databaseDialog, SiriusGui gui) {
-        super(owner, "SIRIUS Databases", true);
+        super(owner, "Curated Custom Databases for Download", true);
         this.databaseDialog = databaseDialog;
         this.gui = gui;
         setLayout(new BorderLayout());
@@ -46,7 +46,7 @@ public class DownloadableDBsDialog extends JDialog {
         });
 
         JScrollPane scroll = new JScrollPane(databaseList);
-        TextHeaderBoxPanel pane = new TextHeaderBoxPanel("Downloadable Databases", scroll);
+        TextHeaderBoxPanel pane = new TextHeaderBoxPanel("Custom Databases", scroll);
         pane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, 0, 0));
 
 
