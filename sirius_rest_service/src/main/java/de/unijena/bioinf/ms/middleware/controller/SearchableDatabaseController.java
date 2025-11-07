@@ -146,10 +146,10 @@ public class SearchableDatabaseController {
     }
 
     /**
-     * Get SIRIUS downloadable databases.
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * [DEPRECATED] This endpoint will likely be removed in future versions of this API in favor of remote library search.
+     * [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
      *
      * @return list of databases available for downloading.
      */
