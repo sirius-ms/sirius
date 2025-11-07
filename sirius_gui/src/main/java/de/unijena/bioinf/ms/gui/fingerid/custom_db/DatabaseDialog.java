@@ -77,12 +77,12 @@ public class DatabaseDialog extends JDialog {
         dbList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         dbView = new DatabaseView();
 
-        JButton addCustomDb = Buttons.getAddButton16("Create custom Database");
-        JButton deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
-        JButton editDB = Buttons.getEditButton16("Edit Custom Database");
-        JButton openDB = Buttons.getPlainFolderButton16("Add existing Database");
-        JButton exportDB = Buttons.getExportButton16("Export Database");
-        JButton downloadableDBs = Buttons.getDownloadButton16("Get SIRIUS Downloadable Databases");
+        JButton addCustomDb = Buttons.getAddButton16("Create custom database");
+        JButton deleteDB = Buttons.getRemoveButton16("Delete custom database");
+        JButton editDB = Buttons.getEditButton16("Edit custom database");
+        JButton openDB = Buttons.getPlainFolderButton16("Add existing database");
+        JButton exportDB = Buttons.getExportButton16("Export database");
+        JButton downloadableDBs = Buttons.getDownloadButton16("Download curated custom databases for local use");
 
         downloadableDBs.addActionListener(e -> new DownloadableDBsDialog(owner, this, gui));
 
