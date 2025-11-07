@@ -9,7 +9,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getCustomDatabases**](SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom |  |
 | [**getDatabase**](SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} |  |
 | [**getDatabases**](SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases |  |
-| [**getDownloadableDatabases**](SearchableDatabasesApi.md#getDownloadableDatabases) | **GET** /api/databases/downloadable | Get SIRIUS downloadable databases |
+| [**getDownloadableDatabases**](SearchableDatabasesApi.md#getDownloadableDatabases) | **GET** /api/databases/downloadable | Get list of curated custom databases downloadable from the SIRIUS web service for local use |
 | [**getIncludedDatabases**](SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included |  |
 | [**importIntoDatabase**](SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database. |
 | [**removeDatabase**](SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} |  |
@@ -349,9 +349,9 @@ No authorization required
 
 > List&lt;DownloadableDatabase&gt; getDownloadableDatabases()
 
-Get SIRIUS downloadable databases
+Get list of curated custom databases downloadable from the SIRIUS web service for local use
 
-Get SIRIUS downloadable databases.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed in future versions of this API in favor of remote library search.
+Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
 
 ### Example
 
