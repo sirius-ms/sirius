@@ -251,7 +251,7 @@ sync_api_to_monorepo:
 
     - cd ../$(basename ${MONOREPO_PROJECT_PATH})
     - npm install
-    - npx nx run -no-cloud sirius-client:generate
+    - npx nx run --no-cloud sirius-client:generate
 
     - git config --global user.name "BG GitLab CI Bot"
     - git config --global user.email "${GITLAB_BG_BOT_USERNAME}@${CI_SERVER_HOST}"
