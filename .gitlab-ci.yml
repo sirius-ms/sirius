@@ -18,6 +18,7 @@ stages:
   - build-app
   - test-app
   - publish-app
+  - sync
 
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
@@ -232,3 +233,39 @@ acceptanceTests:
 #    refs:
 #      - stable
 #      - master
+
+sync_api_to_monorepo:
+  stage: sync
+  variables:
+    MONOREPO_PROJECT_PATH: "bright-giant/sirius/sirius-js-monorepo"
+
+  script:
+    - curl -fsSL https://deb.nodesource.com/setup_current.x | bash -  # latest nodejs
+    - apt install nodejs -y
+    - cd ..
+    - git clone "https://${GITLAB_BG_BOT_USERNAME}:${BG_PUBLIC_PUSH_API_TOKEN}@${CI_SERVER_HOST}/${MONOREPO_PROJECT_PATH}.git"
+    - cd ${CI_PROJECT_NAME}
+
+    - gradle generateOpenApiDocsAdvancedEnumsAsString
+    - gradle copyOpenApiDocsToMonorepo
+
+    - cd ../$(basename ${MONOREPO_PROJECT_PATH})
+    - npm install
+    - npx nx run sirius-client:generate
+
+    - git config --global user.name "BG GitLab CI Bot"
+    - git config --global user.email "${GITLAB_BG_BOT_USERNAME}@${CI_SERVER_HOST}"
+
+    - NEW_BRANCH_NAME="sync/api-update-${CI_COMMIT_SHORT_SHA}"
+    - git checkout -b "$NEW_BRANCH_NAME"
+
+    - git add -A
+    - git commit -m "Auto:update openapi client"
+    - git push origin "$NEW_BRANCH_NAME"
+
+  rules:
+    - changes:
+        - "sirius_rest_service/openapi-spec-enums-as-ref.json"
+        - "sirius_rest_service/openapi-spec-enums-as-string.json"
+      when: manual
+      allow_failure: true
