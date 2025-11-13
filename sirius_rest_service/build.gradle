@@ -151,7 +151,7 @@ tasks.register("generateOpenApiDocsAdvancedEnumsAsString") {
         openApi {
             outputFileName = "openapi-spec-advanced-enums-as-string.json"
             customBootRun {
-                args = ["rest", "-s", "-p", "8888", "--api-mode", "ADVANCED", "--no-headless"]
+                args = ["rest", "-s", "-p", "8888", "--api-mode", "ADVANCED"]
             }
         }
     }

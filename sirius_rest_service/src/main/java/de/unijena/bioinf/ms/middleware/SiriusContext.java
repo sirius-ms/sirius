@@ -69,7 +69,7 @@ public class SiriusContext{
     }
 
     @Bean(destroyMethod = "shutdown")
-    @ConditionalOnExpression("!${de.unijena.bioinf.sirius.headless:false}")
+    @ConditionalOnExpression("!${de.unijena.bioinf.sirius.headless:false} || ${sirius.middleware.force-all-endpoints:false}")
     public GuiService guiService(SiriusGuiHandshake siriusGuiHandshake, EventService<?> eventService, WebServerApplicationContext applicationContext){
         return new GuiServiceImpl(siriusGuiHandshake, eventService, applicationContext);
     }
