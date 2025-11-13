@@ -24,9 +24,12 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDConfigPanel> {
 
-    public ActFormulaIDConfigPanel(SiriusGui gui, java.util.List<InstanceBean> ecs, GlobalConfigPanel globalConfigPanel, boolean ms2) {
-        super(gui, "SIRIUS", Icons.SIRIUS.derive(32,32), () -> new FormulaIDConfigPanel(gui, ecs, globalConfigPanel, ms2), SoftwareTourInfoStore.BatchCompute_Formula);
+    public ActFormulaIDConfigPanel(SiriusGui gui, List<InstanceBean> ecs, GlobalConfigPanel globalConfigPanel, boolean ms2, AtomicBoolean upstreamToolWasAutomaticallyEnabled) {
+        super(gui, "SIRIUS", Icons.SIRIUS.derive(32,32), () -> new FormulaIDConfigPanel(gui, ecs, globalConfigPanel, ms2), SoftwareTourInfoStore.BatchCompute_Formula, upstreamToolWasAutomaticallyEnabled);
     }
 }

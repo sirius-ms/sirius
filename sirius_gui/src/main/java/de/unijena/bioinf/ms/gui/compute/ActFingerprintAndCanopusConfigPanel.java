@@ -24,11 +24,13 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<FingerprintAndCanopusConfigPanel> {
-    public ActFingerprintAndCanopusConfigPanel(@NotNull SiriusGui gui) {
+    public ActFingerprintAndCanopusConfigPanel(@NotNull SiriusGui gui, AtomicBoolean upstreamToolWasAutomaticallyEnabled) {
         super(gui, "Predict", FingerprintAndCanopusConfigPanel.description,
                 Icons.FINGER.derive(32,32), true, FingerprintAndCanopusConfigPanel::new,
-                SoftwareTourInfoStore.BatchCompute_FingerprintCanopus);
+                SoftwareTourInfoStore.BatchCompute_FingerprintCanopus, upstreamToolWasAutomaticallyEnabled);
         notConnectedMessage = "Can't connect to prediction server!";
     }
 }

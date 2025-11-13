@@ -15,6 +15,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 
@@ -31,6 +32,11 @@ public class ComputeToolPanel extends JPanel {
     private final ActFingerblastConfigPanel csiSearchConfigs; //CSI:FingerID search configs
     private final ActMSNovelistConfigPanel msNovelistConfigs; //MsNovelist configs
 
+    /**
+     * tracks if the last tool activation was triggered by automatically enabling an upstream tool
+     */
+    private final AtomicBoolean upstreamToolWasAutomaticallyEnabled = new AtomicBoolean(false);
+
     private Stream<ActivatableConfigPanel<?>> getToolStream(){
         return Stream.of(spectraSearchConfigPanel, formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs);
     }
@@ -44,12 +50,12 @@ public class ComputeToolPanel extends JPanel {
 
         // make subtool config panels
         globalConfigPanel = new GlobalConfigPanel(gui, compoundsToProcess, hasMs2);
-        spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, globalConfigPanel);
-        formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, compoundsToProcess, globalConfigPanel, hasMs2);
-        zodiacConfigs = new ActZodiacConfigPanel(gui, compoundsToProcess.size());
-        fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
-        csiSearchConfigs = new ActFingerblastConfigPanel(gui, globalConfigPanel);
-        msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
+        spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, globalConfigPanel, upstreamToolWasAutomaticallyEnabled);
+        formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, compoundsToProcess, globalConfigPanel, hasMs2, upstreamToolWasAutomaticallyEnabled);
+        zodiacConfigs = new ActZodiacConfigPanel(gui, compoundsToProcess.size(), upstreamToolWasAutomaticallyEnabled);
+        fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui, upstreamToolWasAutomaticallyEnabled);
+        csiSearchConfigs = new ActFingerblastConfigPanel(gui, globalConfigPanel, upstreamToolWasAutomaticallyEnabled);
+        msNovelistConfigs = new ActMSNovelistConfigPanel(gui, upstreamToolWasAutomaticallyEnabled);
 
         JXTitledSeparator sep = new JXTitledSeparator("Global Configuration");
         //just to prevent resizing of toplevel separators
@@ -84,9 +90,9 @@ public class ComputeToolPanel extends JPanel {
             add(msNovelistConfigs, "cell 1 9, aligny top, wrap");
 
 
-            fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
-            csiSearchConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
-            msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
+            fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable, upstreamToolWasAutomaticallyEnabled);
+            csiSearchConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected(), upstreamToolWasAutomaticallyEnabled);
+            msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected(), upstreamToolWasAutomaticallyEnabled);
             // computing formulaId will discard fingerprints, so we need to enable it for structure search
             formulaIDConfigPanel.addToolDependencyListener((c, enabled) -> {
                 if (enabled && !fingerprintAndCanopusConfigPanel.isToolSelected() && (csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected())) {
