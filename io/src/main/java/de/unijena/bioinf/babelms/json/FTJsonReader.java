@@ -99,7 +99,7 @@ public class FTJsonReader implements Parser<FTree> {
     }
 
     public FTree treeFromJson(@NotNull final JsonNode docRoot, @Nullable URI source) {
-        return treeFromJson(docRoot, source);
+        return treeFromJson(docRoot, source, false);
     }
 
     public FTree treeFromJson(@NotNull final JsonNode docRoot, @Nullable URI source, boolean slimReader) {
