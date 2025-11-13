@@ -58,7 +58,7 @@ public class JobsClient extends AbstractCsiClient {
         postJobMapper = new ObjectMapper();
         postJobMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         SimpleModule m = new SimpleModule();
-        m.addSerializer(FTree.class, new FTreeSerializer());
+        m.addSerializer(FTree.class, new FTreeSerializer(true));
         m.addDeserializer(FTree.class, new FTreeDeserializer());
         postJobMapper.registerModule(m);
     }
