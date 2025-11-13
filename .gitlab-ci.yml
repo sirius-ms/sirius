@@ -257,12 +257,9 @@ sync_api_to_monorepo:
     - git config --global user.name "BG GitLab CI Bot"
     - git config --global user.email "${GITLAB_BG_BOT_USERNAME}@${CI_SERVER_HOST}"
 
-    - NEW_BRANCH_NAME="sync/api-update-${CI_COMMIT_SHORT_SHA}"
-    - git checkout -b "$NEW_BRANCH_NAME"
-
     - git add -A
-    - git commit -m "Auto:update openapi client"
-    - git push origin "$NEW_BRANCH_NAME"
+    - "git commit -m \"Auto: update openapi client ${CI_COMMIT_SHORT_SHA}\""
+    - git push
 
   rules:
     - changes:
