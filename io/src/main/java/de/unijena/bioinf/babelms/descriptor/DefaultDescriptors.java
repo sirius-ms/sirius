@@ -231,14 +231,14 @@ class DefaultDescriptors {
 
     protected static class ImplicitAdductDescriptor implements Descriptor<ImplicitAdduct> {
 
-        private final boolean writeOriginalPeaks;
+        private final boolean readOrWriteOriginalPeaks;
 
         public ImplicitAdductDescriptor(){
             this(true);
         }
 
-        public ImplicitAdductDescriptor(boolean writeOriginalPeaks) {
-            this.writeOriginalPeaks = writeOriginalPeaks;
+        public ImplicitAdductDescriptor(boolean readOrWriteOriginalPeaks) {
+            this.readOrWriteOriginalPeaks = readOrWriteOriginalPeaks;
         }
 
         @Override
@@ -262,7 +262,7 @@ class DefaultDescriptors {
                         score = document.getDoubleFromDictionary(dict, "score");
                     AnnotatedPeak peak = null;
                     if (document.hasKeyInDictionary(dict, "mz")) {
-                        peak = new AnnotatedPeakDescriptor().read(document, dict);
+                        peak = new AnnotatedPeakDescriptor(readOrWriteOriginalPeaks).read(document, dict);
                     }
                     return new ImplicitAdduct(f, Optional.ofNullable(peak), score);
                 } else if (document.hasKeyInDictionary(dictionary,"implicitAdduct")) {
@@ -277,7 +277,7 @@ class DefaultDescriptors {
                 document.addToDictionary(impl, "adductFormula", annotation.getAdductFormula().toString());
                 if (annotation.getImplicitPeak().isPresent()) {
                     document.addToDictionary(impl, "score", annotation.getScore());
-                    new AnnotatedPeakDescriptor(writeOriginalPeaks).write(document, impl, annotation.getImplicitPeak().get());
+                    new AnnotatedPeakDescriptor(readOrWriteOriginalPeaks).write(document, impl, annotation.getImplicitPeak().get());
                 } else {
                     //legacy
                     //document.addToDictionary(dictionary, "implicitAdduct", annotation.getAdductFormula().toString());
@@ -678,14 +678,14 @@ class DefaultDescriptors {
 
     protected static class AnnotatedPeakDescriptor implements Descriptor<AnnotatedPeak> {
 
-        private final boolean writeOriginalPeaks;
+        private final boolean readOrWriteOriginalPeaks;
 
         protected AnnotatedPeakDescriptor() {
             this(true);
         }
 
-        protected AnnotatedPeakDescriptor(boolean writeOriginalPeaks) {
-            this.writeOriginalPeaks = writeOriginalPeaks;
+        protected AnnotatedPeakDescriptor(boolean readOrWriteOriginalPeaks) {
+            this.readOrWriteOriginalPeaks = readOrWriteOriginalPeaks;
         }
 
         @Override
@@ -715,7 +715,7 @@ class DefaultDescriptors {
 
             final ArrayList<Peak> originalPeaks = new ArrayList<Peak>();
             final TIntArrayList specIds = new TIntArrayList();
-            if (document.hasKeyInDictionary(dictionary, "peaks")) {
+            if (readOrWriteOriginalPeaks && document.hasKeyInDictionary(dictionary, "peaks")) {
                 final L peakList = document.getListFromDictionary(dictionary, "peaks");
                 for (int i=0, n=document.sizeOfList(peakList); i < n; ++i) {
                     final D peakData = document.getDictionaryFromList(peakList, i);
@@ -764,7 +764,7 @@ class DefaultDescriptors {
             //document.addToDictionary(dictionary, "ion", annotation.getIonization().toString());
 
             final L peaklist = document.newList();
-            if (writeOriginalPeaks) {
+            if (readOrWriteOriginalPeaks) {
                 final Peak[] peaks = annotation.getOriginalPeaks();
                 for (int k=0; k < peaks.length; ++k) {
                     final D dic = document.newDictionary();
