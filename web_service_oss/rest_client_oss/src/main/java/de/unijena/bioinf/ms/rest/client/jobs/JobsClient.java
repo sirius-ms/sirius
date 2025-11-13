@@ -101,7 +101,7 @@ public class JobsClient extends AbstractCsiClient {
             );
         } catch (HttpErrorResponseException e) {
             ProblemResponse errorJson = e.getErrorResponse();
-            if (errorJson != null && errorJson.getStatus() == 403) {
+            if (errorJson != null && (errorJson.getStatus() >= 400 && errorJson.getStatus() < 500)) {
                 EnumMap<JobTable, List<JobUpdate<?>>> response = new EnumMap<>(JobTable.class);
                 if (!submission.hasJobs())
                     return response;
