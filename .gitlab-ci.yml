@@ -238,6 +238,7 @@ sync_api_to_monorepo:
   stage: sync
   variables:
     MONOREPO_PROJECT_PATH: "bright-giant/sirius/sirius-js-monorepo"
+    SIRIUS_MIDDLEWARE_FORCE_GUI_ENDPOINTS: "true"
 
   script:
     - curl -fsSL https://deb.nodesource.com/setup_current.x | bash -  # latest nodejs
