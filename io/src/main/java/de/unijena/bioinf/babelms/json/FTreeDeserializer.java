@@ -31,9 +31,20 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import java.io.IOException;
 
 public class FTreeDeserializer extends JsonDeserializer<FTree> {
+
+    private final boolean slimDeserializer;
+
+    public FTreeDeserializer() {
+        this(false);
+    }
+
+    public FTreeDeserializer(boolean slimDeserializer) {
+        this.slimDeserializer = slimDeserializer;
+    }
+
     @Override
-    public FTree deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+    public FTree deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         final JsonNode rootNode = new ObjectMapper().readTree(jsonParser);
-        return new FTJsonReader().treeFromJson(rootNode, null);
+        return new FTJsonReader().treeFromJson(rootNode, null, slimDeserializer);
     }
 }
