@@ -245,9 +245,9 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         this.NEUTRAL_IONIZATION_DUMMY = new IonMode(0, 1, "NEUTRAL_IONIZATION", MolecularFormula.emptyFormula());
         PROTONATION = new IonMode(1, "[M + H]+", MolecularFormula.parseOrThrow("H"));
         DEPROTONATION = new IonMode(-1, "[M - H]-", MolecularFormula.parseOrThrow("H").negate());
-        this.UNKNOWN_NEGATIVE_IONTYPE = new PrecursorIonType(NEGATIVE_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(),1, PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
-        this.UNKNOWN_POSITIVE_IONTYPE = new PrecursorIonType(POSITIVE_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), 1, PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
-        this.UNKNOWN_IONTYPE = new PrecursorIonType(UNKNOWN_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), 1, PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
+        this.UNKNOWN_NEGATIVE_IONTYPE = new PrecursorIonType(NEGATIVE_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(),1,0, PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
+        this.UNKNOWN_POSITIVE_IONTYPE = new PrecursorIonType(POSITIVE_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), 1,0, PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
+        this.UNKNOWN_IONTYPE = new PrecursorIonType(UNKNOWN_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), 1,0, PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
 
         this.POSITIVE_ION_MODES = new IonMode[]{
                 new IonMode(1, "[M + K]+", MolecularFormula.parseOrThrow("K")),
@@ -261,8 +261,8 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
                 new IonMode(-1, "[M + Br]-", MolecularFormula.parseOrThrow("Br")),
                 DEPROTONATION
         };
-        this.INTRINSICALLY_CHARGED_NEGATIVE = new PrecursorIonType(DEPROTONATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), 1, PrecursorIonType.SPECIAL_TYPES.INTRINSICAL_CHARGED);
-        this.INTRINSICALLY_CHARGED_POSITIVE = new PrecursorIonType(PROTONATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), 1, PrecursorIonType.SPECIAL_TYPES.INTRINSICAL_CHARGED);
+        this.INTRINSICALLY_CHARGED_NEGATIVE = new PrecursorIonType(DEPROTONATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), 1,0, PrecursorIonType.SPECIAL_TYPES.INTRINSICAL_CHARGED);
+        this.INTRINSICALLY_CHARGED_POSITIVE = new PrecursorIonType(PROTONATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), 1,0, PrecursorIonType.SPECIAL_TYPES.INTRINSICAL_CHARGED);
         loadKnownIonTypes();
     }
 
@@ -358,6 +358,9 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         final ArrayList<MolecularFormula> adducts = new ArrayList<>();
         final ArrayList<MolecularFormula> insourceFrags = new ArrayList<MolecularFormula>();
 
+        int isotopes = 0;
+        int fpos = 0;
+
         boolean isAdd = true;
         int number = 1;
 
@@ -389,57 +392,68 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
                         isAdd = false;
                         break;
                     }
-                case 'M':
-                    if (token.length() <= 1 || !(Character.isDigit(token.charAt(1)) || Character.isAlphabetic(token.charAt(1)))) {
-                        if (number != 1) {
-                            throw new IllegalArgumentException("Do not support multimeres: '" + name + "'");
-                        } else if (!isAdd) {
-                            throw new IllegalArgumentException("Invalid format of ion type: '" + name + "'");
-                        } else break;
-                    }
                 default: {
                     if (IONTYPE_NUM_PATTERN.matcher(token).find()) {
                         // is a number
                         number = Integer.parseInt(token);
                     } else {
+                        final int prefixNumber;
                         final String formulaString;
                         final Matcher numm = IONTYPE_NUM_PATTERN_LEFT.matcher(token);
                         if (numm.find()) {
-                            if (number != 1) {
-                                throw new IllegalArgumentException("Do not support nested groups in formula string: '" + name + "'");
-                            }
-                            number = Integer.parseInt(numm.group());
+                            prefixNumber = Integer.parseInt(numm.group());
+                            // this exception is thrown if we have two prefix numbers after each other, e.g. 2(4H2O)
+                            if (number != 1) throw new IllegalArgumentException("Do not support nested groups in formula string: '" + name + "'");;
+                            number = prefixNumber; // not sure about this...?
                             formulaString = token.substring(numm.group().length());
                         } else {
+                            prefixNumber=1;
                             formulaString = token;
                         }
-                        // should be a molecular formula
-                        MolecularFormula f;
-                        if (replacement.containsKey(formulaString.toUpperCase())) {
-                            f = MolecularFormula.parse(replacement.get(formulaString.toUpperCase()));
+                        ++fpos;
+                        // could be isotope count
+                        if (formulaString.equals("i")) {
+                            if (!isAdd)
+                                throw new IllegalArgumentException("Cannot subtract isotopes from precursor ion type.");
+                            isotopes += number;
+                            number = 1;
+                            isAdd = true;
+                        } else if (formulaString.equals("M")) {
+                            // we already checked multimere count above
+                            if (!isAdd) throw new IllegalArgumentException("Cannot subtract neutral formula.");
+                            if (fpos>1) throw new IllegalArgumentException("Neutral formula M should be specified first in adduct string");
+                            isAdd=true; number=1;
                         } else {
-                            f = MolecularFormula.parse(formulaString);
-                        }
-                        if (number != 1) {
-                            f = f.multiply(number);
-                        }
+                            // should be a molecular formula
+                            MolecularFormula f;
+                            if (replacement.containsKey(formulaString.toUpperCase())) {
+                                f = MolecularFormula.parse(replacement.get(formulaString.toUpperCase())).multiply(number);;
+                            } else {
+                                f = MolecularFormula.parse(formulaString).multiply(number);;
+                            }
 
-                        possibleNewIonTypes.add(f);
+                            possibleNewIonTypes.add(f);
 
-                        if (isAdd) {
-                            adducts.add(f);
-                        } else {
-                            insourceFrags.add(f);
+                            if (isAdd) {
+                                adducts.add(f);
+                            } else {
+                                insourceFrags.add(f);
+                            }
+                            isAdd = true;
+                            number = 1;
                         }
-                        isAdd = true;
-                        number = 1;
-
                     }
                 }
             }
         }
 
         final int charge = (isAdd ? 1 : -1);
+
+        /*
+        Given an ion type [M + X + Y]+ we do not know which of X or Y is the adduct or the charge. This is because we distinguish between modifications that carry the charge and cannot be removed but only
+        swapped with another adduct (e.g. Na+, K+, H+...) and modifications that can easily fragment off (e.g. NH3). Probably, the cleanest way would be to write adduct formulas like this:
+        [M + X + Y+] but this is just not the convention. So we instead check if we find X or Y in our predefined list of ions.
+         */
 
         // find ionization mode
         Ionization usedIonMode = null;
@@ -536,7 +550,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
             throw new RuntimeException("Cannot parse " + name);
         } else return new
 
-                PrecursorIonType(usedIonMode, insource, adduct, multimereCount, PrecursorIonType.SPECIAL_TYPES.REGULAR);
+                PrecursorIonType(usedIonMode, insource, adduct, multimereCount,isotopes, PrecursorIonType.SPECIAL_TYPES.REGULAR);
     }
 
 
@@ -571,7 +585,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
             if (!i.isIntrinsicalCharged() && i.getIonization().equals(ion) && i.getAdduct().atomCount() == 0 && i.getInSourceFragmentation().atomCount() == 0 && !i.isMultimere())
                 return i;
         }
-        return new PrecursorIonType(ion, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), 1, PrecursorIonType.SPECIAL_TYPES.REGULAR);
+        return new PrecursorIonType(ion, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), 1, 0,PrecursorIonType.SPECIAL_TYPES.REGULAR);
     }
 
     public PrecursorIonType unknownPositivePrecursorIonType() {

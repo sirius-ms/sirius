@@ -55,7 +55,6 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
             double[] xs = Spectrums.copyIntensities(ms2Spectrum);
             if (xs.length==0) {
                 LoggerFactory.getLogger(MedianNoiseCollectionStrategy.class).warn("Empty MS2 spectrum found.");
-                noise.add((float)noise.doubleStream().average().orElse(0d));
                 return;
             }
             if (xs.length <= 10) {
@@ -72,7 +71,7 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
 
         @Override
         public SampleStats done() {
-            final float ms2NoiseAvg = (float)Statistics.robustAverage(ms2Noise.toFloatArray());
+            final float ms2NoiseAvg = ms2Noise.isEmpty() ? 0 : (float)Statistics.robustAverage(ms2Noise.toFloatArray());
             final float[] ms1Noises = noise.toFloatArray();
             if (ms1Noises.length <= 20) {
                 Arrays.sort(ms1Noises);

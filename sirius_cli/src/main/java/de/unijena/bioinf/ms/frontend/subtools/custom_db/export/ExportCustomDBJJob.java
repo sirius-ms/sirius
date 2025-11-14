@@ -22,11 +22,13 @@ public class ExportCustomDBJJob extends BasicJJob<Boolean> implements Workflow {
     private final String dbName;
     private Path location;
     private final Format format;
+    private final boolean withLinks;
 
-    public ExportCustomDBJJob(String dbName, Path location, Format format) {
+    public ExportCustomDBJJob(String dbName, Path location, Format format, boolean withLinks) {
         this.dbName = dbName;
         this.location = location;
         this.format = format;
+        this.withLinks = withLinks;
     }
 
     @Override
@@ -48,13 +50,14 @@ public class ExportCustomDBJJob extends BasicJJob<Boolean> implements Workflow {
         log.info("Exporting DB {} to {}", dbName, location.toAbsolutePath());
 
         DbExporter exporter = switch (format) {
-            case TSV -> new TsvExporter(fileWriter);
+            case TSV -> new TsvExporter(fileWriter, ApplicationCore.WEB_API(), withLinks);
             case SDF -> new SdfExporter(fileWriter);
         };
 
         AtomicLong progress = new AtomicLong(0);
         CustomDatabases.getContents(db).forEach(cw -> {
             try {
+                if (getState() == JobState.CANCELED) throw new RuntimeException(getClass().getName() + " canceled.");
                 exporter.write(cw);
             } catch (IOException e) {
                 log.error("Error exporting molecule {}", cw.getFormula(), e);

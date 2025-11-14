@@ -31,6 +31,10 @@ import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.StringToClassMapItem;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -140,6 +144,18 @@ public class ProjectController {
      * @param optFields    Set of optional fields to be included. Use 'none' only to override defaults.
      * @return the import job.
      */
+    @Operation(summary = "Import and Align full MS-Runs from various formats into the specified project as background job.",
+            description = "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            encoding = {
+                                    @Encoding(name = "parameters", contentType = MediaType.APPLICATION_JSON_VALUE),
+                                    @Encoding(name = "inputFiles", contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                            }
+                    )
+            )
+    )
     @PostMapping(value = "/{projectId}/import/ms-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Job importMsRunDataAsJob(HttpServletRequest request,
                                     @PathVariable String projectId,
@@ -168,6 +184,17 @@ public class ProjectController {
      * @param inputFiles   Files to import into project.
      * @param parameters   Parameters for feature alignment and feature finding.
      */
+    @Operation(summary = "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            encoding = {
+                                    @Encoding(name = "parameters", contentType = MediaType.APPLICATION_JSON_VALUE),
+                                    @Encoding(name = "inputFiles", contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                            }
+                    )
+            )
+    )
     @PostMapping(value = "/{projectId}/import/ms-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImportResult importMsRunData(HttpServletRequest request,
                                         @PathVariable String projectId,

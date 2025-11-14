@@ -129,6 +129,8 @@ public class ImportAction extends AbstractGuiAction {
                 if(dialog.isSensitiveMode())
                     parameters.setMinSNR(2d);
 
+                parameters.setNoiseIntensity(dialog.getNoiseLevel());
+
                 // Import LC/MS files with sample type information
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importMsRunDataAsJobLocally(pid,
