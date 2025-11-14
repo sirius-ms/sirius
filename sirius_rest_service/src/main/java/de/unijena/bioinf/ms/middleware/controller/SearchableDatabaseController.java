@@ -26,14 +26,20 @@ import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
+import de.unijena.bioinf.ms.rest.client.databases.DownloadableDatabase;
+import de.unijena.bioinf.webapi.WebAPI;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -48,11 +54,11 @@ import static java.util.function.Predicate.not;
 public class SearchableDatabaseController {
 
     private final ChemDbService chemDbService;
-    private final ComputeService computeService;
+    private final WebAPI<?> webAPI;
 
-    public SearchableDatabaseController(ChemDbService chemDbService, ComputeService computeService) {
+    public SearchableDatabaseController(ChemDbService chemDbService, WebAPI<?> webAPI) {
         this.chemDbService = chemDbService;
-        this.computeService = computeService;
+        this.webAPI = webAPI;
     }
 
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -112,6 +118,19 @@ public class SearchableDatabaseController {
      * @param bioTransformerParameters configuration for biotransformer execution. If null, BioTransformer is not applied.
      * @return Meta-Information of the affected database after the import has been performed.
      */
+    @Operation(
+            summary = "Start import of structure and spectra files into the specified database.",
+            description = "Start import of structure and spectra files into the specified database.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            encoding = {
+                                    @Encoding(name = "bioTransformerParameters", contentType = MediaType.APPLICATION_JSON_VALUE),
+                                    @Encoding(name = "inputFiles", contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                            }
+                    )
+            )
+    )
     @PostMapping(value = "/{databaseId}/import/from-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public SearchableDatabase importIntoDatabase(@PathVariable String databaseId,
                                                  @RequestPart MultipartFile[] inputFiles,
@@ -124,6 +143,25 @@ public class SearchableDatabaseController {
                 bioTransformerParameters,
                 bufferSize
         );
+    }
+
+    /**
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+     *
+     * @return list of databases available for downloading.
+     */
+    @Deprecated(forRemoval = true)
+    @GetMapping(value = "/downloadable", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_PROBLEM_JSON_VALUE})
+    public List<DownloadableDatabase> getDownloadableDatabases() {
+        try {
+            return webAPI.listDownloadableDatabases();
+        } catch (Exception e) {
+            log.error("Error getting downloadable databases", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error getting downloadable databases: " + e.getMessage(), e);
+        }
     }
 
     //todo TBD whether we want to implement this endpoint

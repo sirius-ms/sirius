@@ -126,7 +126,7 @@ No authorization required
 
 ## addDeNovoStructureCandidate
 
-> List&lt;StructureCandidateFormula&gt; addDeNovoStructureCandidate(projectId, alignedFeatureId, smiles)
+> List&lt;StructureCandidateFormula&gt; addDeNovoStructureCandidate(projectId, alignedFeatureId, smiles, skipExistenceCheck)
 
 [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
 
@@ -151,8 +151,9 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
         String smiles = "none"; // String | smiles
+        Boolean skipExistenceCheck = false; // Boolean | if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
         try {
-            List<StructureCandidateFormula> result = apiInstance.addDeNovoStructureCandidate(projectId, alignedFeatureId, smiles);
+            List<StructureCandidateFormula> result = apiInstance.addDeNovoStructureCandidate(projectId, alignedFeatureId, smiles, skipExistenceCheck);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#addDeNovoStructureCandidate");
@@ -173,6 +174,7 @@ public class Example {
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
 | **smiles** | **String**| smiles | [optional] [default to none] |
+| **skipExistenceCheck** | **Boolean**| if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures. | [optional] [default to false] |
 
 ### Return type
 

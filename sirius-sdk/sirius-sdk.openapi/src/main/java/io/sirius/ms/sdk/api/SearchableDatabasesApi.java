@@ -3,6 +3,7 @@ package io.sirius.ms.sdk.api;
 import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.BioTransformerParameters;
+import io.sirius.ms.sdk.model.DownloadableDatabase;
 import java.io.File;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import io.sirius.ms.sdk.model.SearchableDatabaseParameters;
@@ -442,6 +443,73 @@ public class SearchableDatabasesApi {
     }
 
     /**
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+     * <p><b>200</b> - list of databases available for downloading.
+     * @return List&lt;DownloadableDatabase&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
+     */
+    @Deprecated
+    private ResponseSpec getDownloadableDatabasesRequestCreation() throws WebClientResponseException {
+        Object postBody = null;
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json", "application/problem+json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<DownloadableDatabase> localVarReturnType = new ParameterizedTypeReference<DownloadableDatabase>() {};
+        return apiClient.invokeAPI("/api/databases/downloadable", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+     * <p><b>200</b> - list of databases available for downloading.
+     * @return List&lt;DownloadableDatabase&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<DownloadableDatabase> getDownloadableDatabases() throws WebClientResponseException {
+        ParameterizedTypeReference<DownloadableDatabase> localVarReturnType = new ParameterizedTypeReference<DownloadableDatabase>() {};
+        return getDownloadableDatabasesRequestCreation().bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+     * <p><b>200</b> - list of databases available for downloading.
+     * @return ResponseEntity&lt;List&lt;DownloadableDatabase&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<DownloadableDatabase>> getDownloadableDatabasesWithHttpInfo() throws WebClientResponseException {
+        ParameterizedTypeReference<DownloadableDatabase> localVarReturnType = new ParameterizedTypeReference<DownloadableDatabase>() {};
+        return getDownloadableDatabasesRequestCreation().toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+     * <p><b>200</b> - list of databases available for downloading.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getDownloadableDatabasesWithResponseSpec() throws WebClientResponseException {
+        return getDownloadableDatabasesRequestCreation();
+    }
+
+    /**
      * 
      * 
      * <p><b>200</b> - OK
@@ -515,7 +583,7 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
+     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
      * @param databaseId database to import into
      * @param inputFiles files to import into project
      * @param bufferSize The bufferSize parameter
@@ -568,7 +636,7 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
+     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
      * @param databaseId database to import into
      * @param inputFiles files to import into project
      * @param bufferSize The bufferSize parameter
@@ -584,7 +652,7 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
+     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
      * @param databaseId database to import into
      * @param inputFiles files to import into project
      * @param bufferSize The bufferSize parameter
@@ -600,7 +668,7 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
+     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
      * @param databaseId database to import into
      * @param inputFiles files to import into project
      * @param bufferSize The bufferSize parameter

@@ -110,7 +110,7 @@ public class TrackFeatureToFile implements Tracker{
     @Override
     public void unalignedMoI(ProcessedSample s, MoI moI) {
         if (tracked(moI.getMz(), moI.getRetentionTime())) {
-            this.out.println(String.format(Locale.US,"cannot align a potential feature with m/z = %f and rt = %f s in sample %s", moI.getMz(), moI.getRetentionTime(), moI.getRetentionTime(), s.getRun().getName()));
+            this.out.println(String.format(Locale.US,"cannot align a potential feature with m/z = %f and rt = %f s in sample %s", moI.getMz(), moI.getRetentionTime(), s.getRun().getName()));
         }
     }
 

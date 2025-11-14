@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.ms.frontend.utils.DatabaseLinkUtil;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureMatch;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
@@ -94,7 +95,7 @@ class NoSqlStructureSummaryWriter extends SummaryTable {
 
         final Map<String, List<String>> dbMap = match.getCandidate().getLinkedDatabases();
         row.add(dbMap.getOrDefault(DataSource.PUBCHEM.name(), List.of("")).stream().filter(Objects::nonNull).collect(Collectors.joining(";")));
-        row.add(links(dbMap));
+        row.add(DatabaseLinkUtil.links(dbMap));
         row.add(String.valueOf(match.getCandidate().getBitset()));
         row.add(f.getAverageMass());
         row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> Math.round(rt.getMiddleTime())).orElse(null));
@@ -107,14 +108,5 @@ class NoSqlStructureSummaryWriter extends SummaryTable {
         row.add(f.getDataQuality());
 
         writer.writeRow(row);
-    }
-
-    public static String links(Map<String, List<String>> databases) throws IOException {
-        return databases.entrySet().stream().map(e -> e.getKey() + joinDBLinks(e.getValue())).collect(Collectors.joining(";"));
-    }
-
-    private static String joinDBLinks(List<String> links) {
-        String joined = links.stream().filter(s -> s != null && !s.isBlank()).collect(Collectors.joining(" "));
-        return joined.isEmpty() ? "" : ":(" + joined + ")";
     }
 }

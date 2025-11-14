@@ -22,7 +22,6 @@ package de.unijena.bioinf.babelms.descriptor;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.data.TypeError;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.elgordo.LipidSpecies;
@@ -230,7 +229,17 @@ class DefaultDescriptors {
     }
 
 
-    private static class ImplicitAdductDescriptor implements Descriptor<ImplicitAdduct> {
+    protected static class ImplicitAdductDescriptor implements Descriptor<ImplicitAdduct> {
+
+        private final boolean readOrWriteOriginalPeaks;
+
+        public ImplicitAdductDescriptor(){
+            this(true);
+        }
+
+        public ImplicitAdductDescriptor(boolean readOrWriteOriginalPeaks) {
+            this.readOrWriteOriginalPeaks = readOrWriteOriginalPeaks;
+        }
 
         @Override
         public String[] getKeywords() {
@@ -253,7 +262,7 @@ class DefaultDescriptors {
                         score = document.getDoubleFromDictionary(dict, "score");
                     AnnotatedPeak peak = null;
                     if (document.hasKeyInDictionary(dict, "mz")) {
-                        peak = new AnnotatedPeakDescriptor().read(document, dict);
+                        peak = new AnnotatedPeakDescriptor(readOrWriteOriginalPeaks).read(document, dict);
                     }
                     return new ImplicitAdduct(f, Optional.ofNullable(peak), score);
                 } else if (document.hasKeyInDictionary(dictionary,"implicitAdduct")) {
@@ -268,7 +277,7 @@ class DefaultDescriptors {
                 document.addToDictionary(impl, "adductFormula", annotation.getAdductFormula().toString());
                 if (annotation.getImplicitPeak().isPresent()) {
                     document.addToDictionary(impl, "score", annotation.getScore());
-                    new AnnotatedPeakDescriptor().write(document, impl, annotation.getImplicitPeak().get());
+                    new AnnotatedPeakDescriptor(readOrWriteOriginalPeaks).write(document, impl, annotation.getImplicitPeak().get());
                 } else {
                     //legacy
                     //document.addToDictionary(dictionary, "implicitAdduct", annotation.getAdductFormula().toString());
@@ -667,7 +676,17 @@ class DefaultDescriptors {
         }
     }
 
-    private static class AnnotatedPeakDescriptor implements Descriptor<AnnotatedPeak> {
+    protected static class AnnotatedPeakDescriptor implements Descriptor<AnnotatedPeak> {
+
+        private final boolean readOrWriteOriginalPeaks;
+
+        protected AnnotatedPeakDescriptor() {
+            this(true);
+        }
+
+        protected AnnotatedPeakDescriptor(boolean readOrWriteOriginalPeaks) {
+            this.readOrWriteOriginalPeaks = readOrWriteOriginalPeaks;
+        }
 
         @Override
         public String[] getKeywords() {
@@ -696,7 +715,7 @@ class DefaultDescriptors {
 
             final ArrayList<Peak> originalPeaks = new ArrayList<Peak>();
             final TIntArrayList specIds = new TIntArrayList();
-            if (document.hasKeyInDictionary(dictionary, "peaks")) {
+            if (readOrWriteOriginalPeaks && document.hasKeyInDictionary(dictionary, "peaks")) {
                 final L peakList = document.getListFromDictionary(dictionary, "peaks");
                 for (int i=0, n=document.sizeOfList(peakList); i < n; ++i) {
                     final D peakData = document.getDictionaryFromList(peakList, i);
@@ -744,17 +763,19 @@ class DefaultDescriptors {
             document.addToDictionary(dictionary, "recalibratedMass", annotation.getRecalibratedMass());
             //document.addToDictionary(dictionary, "ion", annotation.getIonization().toString());
 
-            final Peak[] peaks = annotation.getOriginalPeaks();
             final L peaklist = document.newList();
-            for (int k=0; k < peaks.length; ++k) {
-                final D dic = document.newDictionary();
-                document.addToDictionary(dic, "mz", peaks[k].getMass());
-                document.addToDictionary(dic, "intensity", peaks[k].getIntensity());
-                if (annotation.getCollisionEnergies()[k]!=null) {
-                    document.addToDictionary(dic, "ce", annotation.getCollisionEnergies()[k].toString());
+            if (readOrWriteOriginalPeaks) {
+                final Peak[] peaks = annotation.getOriginalPeaks();
+                for (int k=0; k < peaks.length; ++k) {
+                    final D dic = document.newDictionary();
+                    document.addToDictionary(dic, "mz", peaks[k].getMass());
+                    document.addToDictionary(dic, "intensity", peaks[k].getIntensity());
+                    if (annotation.getCollisionEnergies()[k]!=null) {
+                        document.addToDictionary(dic, "ce", annotation.getCollisionEnergies()[k].toString());
+                    }
+                    document.addToDictionary(dic,"spectrum", annotation.getSpectrumIds()[k]);
+                    document.addDictionaryToList(peaklist, dic);
                 }
-                document.addToDictionary(dic,"spectrum", annotation.getSpectrumIds()[k]);
-                document.addDictionaryToList(peaklist, dic);
             }
             document.addListToDictionary(dictionary, "peaks", peaklist);
 /*

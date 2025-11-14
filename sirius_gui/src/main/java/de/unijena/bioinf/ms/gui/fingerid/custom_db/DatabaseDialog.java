@@ -26,8 +26,8 @@ import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
-import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.table.SiriusListCellRenderer;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
@@ -77,11 +77,14 @@ public class DatabaseDialog extends JDialog {
         dbList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         dbView = new DatabaseView();
 
-        JButton addCustomDb = Buttons.getAddButton16("Create custom Database");
-        JButton deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
-        JButton editDB = Buttons.getEditButton16("Edit Custom Database");
-        JButton openDB = Buttons.getFileChooserButton16("Add existing Database");
-        JButton exportDB = Buttons.getExportButton16("Export Database");
+        JButton addCustomDb = Buttons.getAddButton16("Create custom database");
+        JButton deleteDB = Buttons.getRemoveButton16("Delete custom database");
+        JButton editDB = Buttons.getEditButton16("Edit custom database");
+        JButton openDB = Buttons.getPlainFolderButton16("Add existing database");
+        JButton exportDB = Buttons.getExportButton16("Export database");
+        JButton downloadableDBs = Buttons.getDownloadButton16("Download curated custom databases for local use");
+
+        downloadableDBs.addActionListener(e -> new DownloadableDBsDialog(owner, this, gui));
 
         loadDatabaseList();
 
@@ -166,6 +169,7 @@ public class DatabaseDialog extends JDialog {
         but.add(editDB);
         but.add(exportDB);
         but.add(openDB);
+        but.add(downloadableDBs);
         but.add(addCustomDb);
         editDB.setEnabled(false);
         deleteDB.setEnabled(false);
@@ -197,7 +201,7 @@ public class DatabaseDialog extends JDialog {
                     whenCustomDbIsAdded(newDbs.getFirst().getDatabaseId());
                 } catch (ExecutionException ex) {
                     getGui().getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
-                            err -> JOptionPane.showMessageDialog(this, err.getMessage(), "Error " + err.getStatus() + ": " + err.getError(), JOptionPane.ERROR_MESSAGE),
+                            err -> JOptionPane.showMessageDialog(this, err.getDetail(), "Error " + err.getStatus() + ": " + err.getTitle(), JOptionPane.ERROR_MESSAGE),
                             () -> JOptionPane.showMessageDialog(this, ex.getCause().getMessage(), "Unexpected Error", JOptionPane.ERROR_MESSAGE)
                     );
                     loadDatabaseList();
@@ -250,7 +254,7 @@ public class DatabaseDialog extends JDialog {
         loadDatabaseList();
         // try to scroll to the newly added Database.
         Optional<SearchableDatabase> dbOpt =dbIdToSelect == null ? Optional.empty() : customDatabases.stream()
-                .filter(db -> dbIdToSelect.equals(db.getLocation())).findFirst();
+                .filter(db -> dbIdToSelect.equals(db.getDatabaseId())).findFirst();
 
         dbOpt.ifPresent(db -> {
             dbList.setSelectedValue(db, true);

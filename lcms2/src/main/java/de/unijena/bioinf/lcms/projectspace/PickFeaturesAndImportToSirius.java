@@ -2,9 +2,7 @@ package de.unijena.bioinf.lcms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -25,6 +23,7 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.utils.MultipleCharges;
 import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
@@ -37,12 +36,11 @@ import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import org.apache.commons.lang3.Range;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -157,8 +155,8 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
     }
 
     private @NotNull FeaturesAndSegment findFeaturesForTraces(ProcessedSample mergedSample, MergedTrace mergedTrace, MergeTraceId dbId, MergeTraceId[] dbIsotopeIds, MergedFeatureExtractionStrategy.Result pickedFeatures) {
-        checkIsotopesForMinimumCorrelation(mergedSample,mergedTrace, pickedFeatures);
-        final int chargeForTrace = estimateChargeFromIsotopes(mergedSample, mergedTrace, pickedFeatures );
+        checkIsotopesForMinimumCorrelation(mergedSample,mergedTrace,pickedFeatures);
+        final int chargeForTrace = estimateChargeFromIsotopes(mergedSample, mergedTrace,pickedFeatures );
         final TraceSegment[] traceSegments = pickedFeatures.traceSegmentsForMergedTrace();
         final TraceSegment[][] rawSegments = pickedFeatures.traceSegmentsForIndividualTraces();
         // generatate monoisotopic features for each segment
@@ -484,7 +482,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
 
 
         /*
-        To check if an isotope is valid, we go over all intensive apexes and correlate their neighboring peaks with the
+        To check if a isotope is valid, we go over all intensive apexes and correlate their neighbouring peaks with the
         isotope trace
          */
         DoubleArrayList intensities = new DoubleArrayList();
@@ -849,7 +847,6 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                             if (scanId < startId || scanId > endId) {
                                 LoggerFactory.getLogger(PickFeaturesAndImportToSirius.class).warn("MS2 outside of feature! mz = " + mergedTrace.averagedMz() + ", rt = " + mergedTrace.getMapping().getRetentionTimeAt(feature.getTraceRef().absoluteApexId()));
                                 if (features.length <= 3 && (scanId - endId) > 10) {
-                                    System.err.println("Gotcha!");
                                     ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, rawSegments);
                                     segmentationStrategy.featureFinding(new PersistentHomology(), mergedSample, mergedTrace);
                                 }
@@ -858,9 +855,6 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                                 RawTraceRef ref = subFeature.getTraceReference().get();
                                 if (scanId < ref.getStart() + ref.getScanIndexOffsetOfTrace() || scanId > ref.getEnd() + ref.getScanIndexOffsetOfTrace()) {
                                     LoggerFactory.getLogger(PickFeaturesAndImportToSirius.class).warn("MS2 also outside of its subfeature!");
-                                    if (features.length <= 3) {
-                                        System.err.println("Gotcha!");
-                                    }
                                 }
 
                             }

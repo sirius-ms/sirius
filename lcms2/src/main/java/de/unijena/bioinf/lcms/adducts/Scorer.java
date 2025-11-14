@@ -13,6 +13,8 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
+import de.unijena.bionf.fastcosine.FastCosine;
+import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import de.unijena.bionf.spectral_alignment.ModifiedCosine;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import it.unimi.dsi.fastutil.Pair;
@@ -229,13 +231,20 @@ public class Scorer {
         }
 
     }
-
-    public SimpleSpectrum prepareForCosine(AdductNode node, List<MergedMSnSpectrum> ms2Left) {
+    private final FastCosine fastCosine = new FastCosine();
+    public Optional<SearchPreparedSpectrum> prepareForCosine(AdductNode node, List<MergedMSnSpectrum> ms2Left) {
+        /*
         SimpleSpectrum spec = Spectrums.mergePeaksWithinSpectrum(Spectrums.mergeSpectra(ms2Left.stream().map(MergedMSnSpectrum::getPeaks).toArray(SimpleSpectrum[]::new)),
                 new Deviation(10), true, false);
         final int cut = Spectrums.getFirstPeakGreaterOrEqualThan(spec, node.getMass()-8);
         if (cut < spec.size()) spec = Spectrums.subspectrum(spec, 0, cut);
         return Spectrums.getNormalizedSpectrum(spec, Normalization.L2());
+         */
+        SimpleSpectrum spec = Spectrums.mergePeaksWithinSpectrum(Spectrums.mergeSpectra(ms2Left.stream().map(MergedMSnSpectrum::getPeaks).toArray(SimpleSpectrum[]::new)),
+                new Deviation(10), true, false);
+        if (hasMinimumMs2Quality(spec))
+            return Optional.of(fastCosine.prepareQuery(node.getMass(), spec));
+        else return Optional.empty();
     }
 
     public boolean hasMinimumMs2Quality(SimpleSpectrum spec) {
@@ -251,8 +260,7 @@ public class Scorer {
         return count >= 3 && MAX/MIN >= 10;
     }
 
-    public void computeMs2Score(AdductEdge adductEdge, SimpleSpectrum left, SimpleSpectrum right) {
-        SpectralSimilarity score = new ModifiedCosine(new Deviation(10)).score(left, right, adductEdge.getLeft().getMass(), adductEdge.getRight().getMass(), 1d);
-        adductEdge.ms2score = (float)score.similarity;
+    public void computeMs2Score(AdductEdge adductEdge, SearchPreparedSpectrum left, SearchPreparedSpectrum right) {
+        adductEdge.ms2score = fastCosine.fastModifiedCosine(left, right).similarity;
     }
 }

@@ -29,8 +29,18 @@ import java.io.IOException;
 
 public class FTreeSerializer extends JsonSerializer<FTree> {
 
+    private final boolean slimSerializer;
+
+    public FTreeSerializer() {
+        this(false);
+    }
+
+    public FTreeSerializer(boolean slimSerializer) {
+        this.slimSerializer = slimSerializer;
+    }
+
     @Override
     public void serialize(FTree fragments, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-        new FTJsonWriter().tree2json(fragments, null, jsonGenerator);
+        new FTJsonWriter().tree2json(fragments, null, jsonGenerator, slimSerializer);
     }
 }

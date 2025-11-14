@@ -99,7 +99,11 @@ public class FTJsonReader implements Parser<FTree> {
     }
 
     public FTree treeFromJson(@NotNull final JsonNode docRoot, @Nullable URI source) {
-        final DescriptorRegistry registry = DescriptorRegistry.getInstance();
+        return treeFromJson(docRoot, source, false);
+    }
+
+    public FTree treeFromJson(@NotNull final JsonNode docRoot, @Nullable URI source, boolean slimReader) {
+        final DescriptorRegistry registry = slimReader ? DescriptorRegistry.getInstanceSlimWriter() : DescriptorRegistry.getInstance();
         double score = 0d;
         double scoreBoost = 0d;
 

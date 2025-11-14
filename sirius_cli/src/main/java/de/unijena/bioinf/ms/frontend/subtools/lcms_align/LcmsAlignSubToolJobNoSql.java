@@ -122,7 +122,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private final double minSNR;
 
-    private final Tracker tracker;
+    private Tracker tracker;
 
     private UserSpecifiedThresholds userSpecifiedThresholds = new UserSpecifiedThresholds();
 
@@ -213,7 +213,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.saveImportedCompounds = saveImportedCompounds;
         if (alignmentThresholds!=null) this.alignmentThresholds = alignmentThresholds;
         else this.alignmentThresholds = new AlignmentThresholds();
-        this.tracker = tracker;
+        this.tracker = tracker==null ? new Tracker.NOOP() : tracker;
     }
 
     private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, List<Path> files) throws IOException {
@@ -234,7 +234,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         processing.setTracker(tracker);
         if (userSpecifiedThresholds.hasUserInput()) {
             processing.setStatisticsCollector(userSpecifiedThresholds);
-        }
+        } else this.tracker = new Tracker.NOOP();
 
         try {
             {
@@ -337,7 +337,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             // Multimere in die AductSettings reinpacken, das zu debuggen wird die Hoelle. Machen wir ein andern Mal.
             ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
             {
-                final LongList importedCids = new LongArrayList();
                 AlignedFeatures[] alignedFeatures = ps.getStorage().findAllStr(AlignedFeatures.class)
                         .filter(f -> f.getApexIntensity() != null)
                         .filter(AbstractFeature::isRTInterval)
@@ -347,10 +346,12 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
                 long TIME1 = System.currentTimeMillis();
                 network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
-                //network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
-                //        (compound) -> groupFeaturesToCompound(store, compound, importedCids));
                 long TIME2 = System.currentTimeMillis();
                 System.out.printf("Building adduct network took %f seconds\n", (TIME2-TIME1)/1000d);
+                network.deisotope(x->{
+                    deleteIsotopicPeak(ps, x);
+                    importedFeatureIds.rem(x.getAlignedFeatureId());
+                });
                 Set<PrecursorIonType> detectedAdducts = network.assignNetworksAndAdductsToFeatures(
                         SiriusJobs.getGlobalJobManager(),
                         new OptimalAssignmentViaBeamSearch(),
@@ -364,7 +365,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
                 long TIME3 = System.currentTimeMillis();
                 System.out.printf("Assigning adducts took %f seconds\n", (TIME3-TIME2)/1000d);
-                importedCompoundIds.addAll(importedCids);
             }
 
             updateProgress(totalProgress, ++progress, "Assessing data quality");
@@ -434,6 +434,12 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         } finally {
             processing.closeStorages();
         }
+    }
+
+    private void deleteIsotopicPeak(SiriusProjectDatabaseImpl<? extends Database<?>> ps, AlignedFeatures x) throws IOException {
+        // delete isotopic feature
+        ps.cascadeDeleteAlignedFeatures(x.getAlignedFeatureId());
+
     }
 
     private void setProjectSourceFormats(SiriusProjectDatabaseImpl<? extends Database<?>> ps) {

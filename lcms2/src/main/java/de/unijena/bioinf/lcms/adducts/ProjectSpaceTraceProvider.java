@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms.adducts;
 
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractAlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
@@ -17,6 +18,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -103,10 +105,29 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
         } else return feature.getFeatures().get();
     }
 
+    private Optional<MSData> getMsData(AbstractAlignedFeatures features) throws IOException {
+        if (features.getMSData().isEmpty()) {
+            storage.getStorage().findStr(Filter.where("alignedFeatureId").eq(features.databaseId()), MSData.class).findFirst().ifPresent(features::setMsData);
+        }
+        return features.getMSData();
+    }
+
     @Override
     public List<MergedMSnSpectrum> getMs2SpectraOf(AbstractAlignedFeatures features) {
         try {
-            return storage.getStorage().findStr(Filter.where("alignedFeatureId").eq(features.databaseId()), MSData.class).filter(x->x.getMsnSpectra()!=null).flatMap(x->x.getMsnSpectra().stream()).toList();
+            Optional<MSData> msdata = getMsData(features);
+            if (msdata.isEmpty() || msdata.get().getMsnSpectra()==null || msdata.get().getMsnSpectra().isEmpty()) return Collections.emptyList();
+            return msdata.get().getMsnSpectra();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    @Override
+    public Optional<SimpleSpectrum> getIsotopes(AbstractAlignedFeatures features) {
+        try {
+            Optional<MSData> msdata = getMsData(features);
+            if (msdata.isEmpty() || msdata.get().getIsotopePattern()==null || msdata.get().getIsotopePattern().isEmpty()) return Optional.empty();
+            return Optional.of(msdata.get().getIsotopePattern());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
