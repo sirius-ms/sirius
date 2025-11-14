@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Tag(name = "Gui")
-@ConditionalOnExpression("${sirius.middleware.controller.gui.advanced:false} && !${de.unijena.bioinf.sirius.headless:false}")
+@ConditionalOnExpression("${sirius.middleware.controller.gui.advanced:false} && (!${de.unijena.bioinf.sirius.headless:false} || ${sirius.middleware.force-gui-endpoints:false})")
 @PreAuthorize("hasAuthority('bypass:explorer') or hasAuthority('bypass:gui')")
 public class GuiControllerAdvanced{
 
