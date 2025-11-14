@@ -47,7 +47,6 @@ import io.sirius.ms.sdk.SiriusSDK;
 import io.sirius.ms.sdk.model.GuiInfo;
 import io.sirius.ms.sdk.model.ProjectInfo;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.Banner;
@@ -69,7 +68,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import picocli.CommandLine;
 
 import java.awt.*;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -77,7 +75,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import static de.unijena.bioinf.ms.middleware.service.projects.ProjectSpaceManagerProvider.makeTempProjectData;
 import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
 
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
@@ -168,11 +165,11 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 try (SiriusSDK sdk = SiriusSDK.findAndConnectLocally(SiriusSDK.ShutdownMode.NEVER, true)) {
                     if (sdk != null) {
                         if (startGui) {
-                            Pair<String, String> tmpProject = makeTempProjectData();
                             try {
                                 List<GuiInfo> guis = sdk.gui().getGuis();// just to check for headless mode or other gui issue before creating project.
-                                log.info("SIRIUS ALREADY RUNNING!\nHealthy SIRIUS instance is running at port {}. Starting new gui instance for tmp project '{}' using the running instance,.", sdk.getBasePath(), tmpProject.second());
-                                ProjectInfo pInfo = sdk.projects().createProject(tmpProject.first(), tmpProject.second(), null);
+                                log.info("SIRIUS ALREADY RUNNING!\nHealthy SIRIUS instance is running at port {}.", sdk.getBasePath());
+                                ProjectInfo pInfo = sdk.projects().create(null);
+                                log.info("Starting new gui instance for tmp project '{}' using the running instance.", pInfo.getLocation());
                                 sdk.gui().openGui(pInfo.getProjectId());
                                 System.exit(0);
                             } catch (WebClientResponseException e) {

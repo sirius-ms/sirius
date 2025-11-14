@@ -319,5 +319,3 @@ src/main/java/io/sirius/ms/sdk/model/ZodiacAnalogueNodes.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacLibraryScoring.java
-src/test/java/io/sirius/ms/sdk/api/CompoundStatisticsApiTest.java
-src/test/java/io/sirius/ms/sdk/api/FeatureStatisticsApiTest.java

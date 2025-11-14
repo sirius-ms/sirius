@@ -313,12 +313,4 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
         }
     }
-
-    public static Pair<String,String> makeTempProjectData(){
-        Path p = FileUtils.createTmpProjectSpaceLocation(SIRIUS_PROJECT_SUFFIX);
-        String projectId = p.getFileName().toString();
-        projectId = projectId.substring(0, projectId.length() - SIRIUS_PROJECT_SUFFIX.length());
-        projectId = FileUtils.sanitizeFilename(projectId);
-        return Pair.of(projectId, p.toAbsolutePath().toString());
-    }
 }
