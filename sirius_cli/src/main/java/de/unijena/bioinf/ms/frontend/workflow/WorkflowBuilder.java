@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprinter.FingerprinterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db_downloader.DownloadableDBsOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.ms.frontend.subtools.project.ProjectOptions;
@@ -90,6 +91,7 @@ public class WorkflowBuilder {
     public final SelfTestOptions selfTestOptions;
     public final CustomDBOptions customDBOptions;
     public final ProjectOptions projectOptions;
+    public final DownloadableDBsOptions downloadableDBsOptions;
 
 //    public final SimilarityMatrixOptions similarityMatrixOptions;
     public final DecompOptions decompOptions;
@@ -154,6 +156,7 @@ public class WorkflowBuilder {
         selfTestOptions = new SelfTestOptions();
         customDBOptions = new CustomDBOptions();
         projectOptions = new ProjectOptions();
+        downloadableDBsOptions = new DownloadableDBsOptions();
 //        similarityMatrixOptions = new SimilarityMatrixOptions(spaceManagerFactory);
         decompOptions = new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
@@ -191,7 +194,7 @@ public class WorkflowBuilder {
     protected Object[] standaloneTools() {
         return Stream.concat(
                 Stream.concat(
-                        Stream.of(customDBOptions, projectOptions, /*similarityMatrixOptions,*/ decompOptions, mgfExporterOptions, /*exportPredictions,*/ fingerprinterOptions/*, updateFingerprintOptions*/, selfTestOptions),
+                        Stream.of(customDBOptions, projectOptions, downloadableDBsOptions, /*similarityMatrixOptions,*/ decompOptions, mgfExporterOptions, /*exportPredictions,*/ fingerprinterOptions/*, updateFingerprintOptions*/, selfTestOptions),
                         additionalTools.stream()
                 ), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);

@@ -2,9 +2,7 @@ package de.unijena.bioinf.lcms.adducts;
 
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class AdductNode {
 
@@ -60,5 +58,37 @@ public class AdductNode {
     @Override
     public String toString() {
         return String.format(Locale.US, "<%.4f m/z @ %.2f min>", getMass(), getRetentionTime()/60d);
+    }
+
+    public void removeEdgeTo(AdductNode v) {
+        ListIterator<AdductEdge> e = edges.listIterator();
+        while (e.hasNext()) {
+            if (e.next().getOther(this)==v) {
+                e.remove();
+                return;
+            }
+        }
+    }
+
+    public boolean isIsotopeNode() {
+        for (AdductEdge e : getEdges()) {
+            if (e.getRight()==this && e.isIsotopeEdge()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    HashSet<AdductNode> collectIsotopes(HashSet<AdductNode> buffer) {
+        for (AdductEdge e : getEdges()) {
+            if (e.isIsotopeEdge()) {
+                if (e.getLeft()==this) {
+                    e.getRight().collectIsotopes(buffer);
+                } else {
+                    buffer.add(this);
+                }
+            }
+        }
+        return buffer;
     }
 }

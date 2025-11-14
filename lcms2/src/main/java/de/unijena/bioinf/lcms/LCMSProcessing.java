@@ -326,8 +326,9 @@ public class LCMSProcessing {
         DoubleList ms2NoiseLevel = new DoubleArrayList();
         for (ProcessedSample sample : alignmentBackbone.getSamples()) {
             SampleStats statistics = sample.getStorage().getStatistics();
-            ms2NoiseLevel.add(statistics.getMs2NoiseLevel());
+           if (statistics.getMs2NoiseLevel()>0) ms2NoiseLevel.add(statistics.getMs2NoiseLevel());
         }
+        double ms2NoiseLevelAvg = Statistics.robustAverage(ms2NoiseLevel.toDoubleArray());
         return new SampleStatistics(
                 st.getMs1MassDeviationWithinTraces(),
                 alignmentBackbone.getStatistics().getExpectedMassDeviationBetweenSamples(),
@@ -335,7 +336,7 @@ public class LCMSProcessing {
                 !fwhms.isEmpty() ? fwhms.getDouble(fwhms.size()/2) : 0,
                 !heightDividedByfwhms.isEmpty() ? heightDividedByfwhms.getDouble(heightDividedByfwhms.size()/2) : 0,
                 (int)alignmentBackbone.getStatistics().getMedianNumberOfAlignments(),
-                st.ms2NoiseLevel()
+                Double.isFinite(ms2NoiseLevelAvg) ? ms2NoiseLevelAvg : 0d
         );
 
     }
@@ -435,6 +436,9 @@ public class LCMSProcessing {
                         (float) normalizer.normalize(trace.intensity(segment.apex)), sample.getUid());
 
                 if (trace.getSegments().length==1 && !trace.isNoisyTrace()) moi.setSingleApex(true);
+                if (trace.getSegments().length>=20 && (trace.endId()-trace.startId()) >= sample.getMapping().length()/4) {
+                    moi.setUltraLargeTraceFlag(true);
+                }
                 detectIsotopesForMoI(sample, trace, segment, moi);
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample, trace, moi, null));
                 if (trace.isNoisyTrace()) moi.setConfidence(Math.min(0f, moi.getConfidence()));

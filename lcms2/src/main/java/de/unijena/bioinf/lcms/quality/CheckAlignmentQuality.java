@@ -97,93 +97,6 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
                 ));
             }
 
-            /*
-            // check if alignment is uniformly distributed
-            if (feature.getFeatures().isPresent()) {
-
-                double[] apexTimes = feature.getFeatures().get().stream().mapToDouble(x->x.getRetentionTime().getRetentionTimeInSeconds()).toArray();
-                double[] middleTimes = feature.getFeatures().get().stream().mapToDouble(x->x.getRetentionTime().getStartTime() + (x.getRetentionTime().getEndTime()-x.getRetentionTime().getStartTime())/2d).toArray();
-                final double[] rets;
-                {
-                    int c=0; double a=0, b=0;
-                    for (int i=0; i < apexTimes.length; ++i) {
-                        for (int j=0; j < i; ++j) {
-                            ++c;
-                            a += Math.pow(apexTimes[i]-apexTimes[j], 2);
-                            b += Math.pow(middleTimes[i]-middleTimes[j], 2);
-                        }
-                    }
-                    a/=c;
-                    b/=c;
-                    if (a < b) {
-                        rets = apexTimes;
-                    } else {
-                        rets = middleTimes;
-                    }
-                }
-
-
-                Arrays.sort(rets);
-                double largestGap = 0;
-                int gapPos=0;
-                for (int k=1; k < rets.length; ++k) {
-                    final double gap = (rets[k]-rets[k-1]);
-                    if (gap>largestGap) {
-                        largestGap = gap;
-                        gapPos = k;
-                    }
-                }
-                // divide into two clusters and compute inner-cluster variances
-                double innerClusterStd;
-                if (gapPos >= rets.length/2) {
-                    double dev = 0d; int count=0;
-                    for (int i=0; i < gapPos; ++i) {
-                        for (int j=0; j < i; ++j) {
-                            dev += Math.pow(rets[i]-rets[j],2);
-                            ++count;
-                        }
-                    }
-                    innerClusterStd = Math.sqrt(dev);
-                } else {
-                    double dev = 0d; int count=0;
-                    for (int i=gapPos; i < rets.length; ++i) {
-                        for (int j=gapPos; j < i; ++j) {
-                            dev += Math.pow(rets[i]-rets[j],2);
-                            ++count;
-                        }
-                    }
-                    dev /= count;
-                    innerClusterStd = Math.sqrt(dev);
-                }
-                innerClusterStd = Math.max(innerClusterStd, 2*run.getSampleStats().getRetentionTimeDeviationsInSeconds());
-                if (largestGap > 2*innerClusterStd) {
-                    final int clusterSizeLeft = gapPos;
-                    final int clusterSizeRight = rets.length-gapPos;
-                    final int smallerCluster = Math.min(clusterSizeRight, clusterSizeLeft);
-                    final double smallerClusterRatio = ((double)smallerCluster)/rets.length;
-                    if (smallerCluster <= 1) {
-                        peakQuality.getItems().add(new QualityReport.Item(
-                                "feature alignment with a single outlier.", DataQuality.DECENT, QualityReport.Weight.MAJOR
-                        ));
-                    } else if (smallerClusterRatio <= 0.1) {
-                        peakQuality.getItems().add(new QualityReport.Item(
-                                "feature alignment with some outliers.", DataQuality.DECENT, QualityReport.Weight.MAJOR
-                        ));
-                    } else if (largestGap < 3*innerClusterStd){
-                        peakQuality.getItems().add(new QualityReport.Item(
-                                "no unambigous feature alignment. Could be different features instead.", DataQuality.BAD, QualityReport.Weight.MAJOR
-                        ));
-                    } else {
-                        peakQuality.getItems().add(new QualityReport.Item(
-                                "no unambigous feature alignment. Could be different features instead.", DataQuality.LOWEST, QualityReport.Weight.MAJOR
-                        ));
-                    }
-
-
-
-                }
-            }
-             */
 
             // cosine similarity to consensus trace
             final Optional<MergedTrace> maybeMergedTrace = provider.getMergeTrace(feature);
@@ -199,10 +112,11 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
             // take at least
             if (maybeMergedTrace.isPresent() && feature.getFeatures().isPresent()) {
                 DoubleArrayList correlations = new DoubleArrayList();
+                DoubleArrayList correctedCorrelations = new DoubleArrayList();
                 MergedTrace mergedTrace = maybeMergedTrace.get();
                 final float[] mergedIntensities = mergedTrace.getIntensities().subList(feature.getTraceRef().getStart(),
                         feature.getTraceRef().getEnd()+1).toFloatArray();
-                /*
+
                 {
                     float averageIntensity=0f;
                     for (float value : mergedIntensities) averageIntensity+=value;
@@ -211,7 +125,7 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
                         mergedIntensities[k] -= averageIntensity;
                     }
                 }
-                 */
+
                 double xx=0d;
                 for (int k=0; k < mergedIntensities.length; ++k) {
                     xx += mergedIntensities[k]*mergedIntensities[k];
@@ -222,13 +136,18 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
                     Optional<Pair<TraceRef, SourceTrace>> sourceTrace = provider.getSourceTrace(feature, f.getRunId());
                     if (sourceTrace.isPresent()) {
                         FloatList fls = sourceTrace.get().right().getIntensities();
+                        final double maximumInt = fls.doubleStream().max().orElse(1d);
                         TraceRef r = sourceTrace.get().left();
+                        double avg = 0f;
+                        for (int k=r.getStart(); k < r.getEnd(); ++k) avg+=fls.getFloat(k)/maximumInt;
+                        avg /= (r.getEnd()-r.getStart()+1);
+
                         double correlation = 0d;
                         double yy = 0d;
                         for (int i=r.getStart(); i <= r.getEnd(); ++i) {
-                            final float lv = fls.getFloat(i); //- avg;
+                            final double lv = fls.getFloat(i)/maximumInt - avg;
                             final int shiftedIndex = (i+r.getScanIndexOffsetOfTrace()) - offset;
-                            final float rv = (shiftedIndex >= 0 && shiftedIndex < mergedIntensities.length) ? mergedIntensities[shiftedIndex] : 0f;
+                            final double rv = (shiftedIndex >= 0 && shiftedIndex < mergedIntensities.length) ? mergedIntensities[shiftedIndex] : 0f;
 
                             correlation += lv*rv;
                             yy += lv*lv;
@@ -236,11 +155,36 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
                         correlation = correlation/Math.sqrt(xx*yy);
 
                         correlations.add(correlation);
+                        {
+                            // move the apex of the trace ontop the apex of the merged trace and repeat analysis
+                            // if correlation gets much better, this is a sign that the recalibration did a bad job
+                            double correlation2 = 0d;
+                            double yy2 = 0d;
+                            int sourceOffset = r.getApex() - (feature.getTraceRef().getApex() - feature.getTraceRef().getStart());
+                            double xx2 = 0f;
+                            for (int indexMerged=0; indexMerged < mergedIntensities.length; ++indexMerged) {
+                                final int indexSource = sourceOffset+indexMerged;
+                                final double lv = ((indexSource>=0&&indexSource<fls.size()) ? fls.getFloat(indexSource) : 0f)/maximumInt - avg;
+                                final double rv = mergedIntensities[indexMerged];
+                                correlation2 += lv*rv;
+                                yy2 += lv*lv;
+                                xx2 += rv*rv;
+                            }
+                            for (int indexSource = mergedIntensities.length+sourceOffset; indexSource <= r.getEnd(); ++indexSource) {
+                                final double lv = fls.getFloat(indexSource);
+                                yy2 += lv*lv;
+                            }
+                            correlation2 = correlation2/Math.sqrt(xx2*yy2);
+                            correctedCorrelations.add(correlation2);
+                        }
                     }
                 }
                 correlations.sort(null);
+                correctedCorrelations.sort(null);
                 final double medianCorrelation = correlations.getDouble(correlations.size()/2);
                 final double percentil25 = correlations.getDouble((int)Math.floor(correlations.size()*0.25));
+                final double medianCorrected = correctedCorrelations.getDouble(correctedCorrelations.size()/2);
+                final double medianCorrected25 = correctedCorrelations.getDouble((int)Math.floor(correlations.size()*0.25));
 
                 if (medianCorrelation >= 0.8 && percentil25 >= 0.75) {
                     peakQuality.getItems().add(new QualityReport.Item(
@@ -248,10 +192,16 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
                                     medianCorrelation, percentil25),
                             DataQuality.GOOD, QualityReport.Weight.MAJOR
                     ));
-                } else if (medianCorrelation >= 0.75 && percentil25 >= 0.6)  {
+                } else if (medianCorrelation >= 0.75 && percentil25 >= 0.6) {
                     peakQuality.getItems().add(new QualityReport.Item(
                             String.format("Decent correlation between traces and consensus trace (median = %.2f, 25%% quantile is %.2f)",
                                     medianCorrelation, percentil25),
+                            DataQuality.DECENT, QualityReport.Weight.MAJOR
+                    ));
+                } else if (medianCorrected >= 0.8 && medianCorrected25>=0.75) {
+                    peakQuality.getItems().add(new QualityReport.Item(
+                            String.format("Strong calibration error for some of the samples. After shifting, correlation between traces and consensus trace is quite good (median = %.2f, 25%% quantile is %.2f).",
+                                    medianCorrected,medianCorrected25),
                             DataQuality.DECENT, QualityReport.Weight.MAJOR
                     ));
                 } else if (medianCorrelation >= 0.5 && percentil25 >= 0.5) {

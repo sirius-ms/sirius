@@ -26,6 +26,7 @@ import ca.odell.glazedlists.gui.AbstractTableComparatorChooser;
 import ca.odell.glazedlists.gui.WritableTableFormat;
 import ca.odell.glazedlists.swing.DefaultEventTableModel;
 import ca.odell.glazedlists.swing.TableComparatorChooser;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -40,14 +41,14 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.text.NumberFormat;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions.SAMPLE_TYPE_SAMPLE;
 
@@ -61,7 +62,8 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
             .stream().map(s -> (String) s).toList();
 
     private final JButton cancel, importButton;
-    private JCheckBox ignoreFormulas, alignCheckBox, sensitiveMode;
+    private JCheckBox ignoreFormulas, alignCheckBox, sensitiveMode, autoNoiseDetection;
+    private JFormattedTextField noiseLevel;
     /**
      * -- GETTER --
      * Gets the sample types for each run
@@ -280,6 +282,19 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
         return sensitiveMode.isSelected();
     }
 
+    public boolean isAutoNoiseDetection() {
+        return autoNoiseDetection.isSelected();
+    }
+
+    public double getNoiseLevel() {
+        if (autoNoiseDetection.isSelected())
+            return -1d;
+        String val = noiseLevel.getValue().toString();
+        if (Utils.isNullOrBlank(val))
+            return Double.parseDouble(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.noiseLevel", null, "1000"));
+        return Double.parseDouble(val);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == importButton) {
@@ -322,12 +337,44 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
         sensitiveMode.setToolTipText(GuiUtils.formatToolTip(
                 "If checked, min-snr is set to 2 instead of 3. Use this to pick very low intensity features. Features with good MS/MS are always picked, so use this option only if you are interested in low intensive MS-only features."
         ));
+
+
+        JLabel label = new JLabel("Noise level: ");
+        autoNoiseDetection =  new JCheckBox("Auto");
+        sensitiveMode.setToolTipText(GuiUtils.formatToolTip("If checked, noise level will be autodetected."));
+        autoNoiseDetection.setSelected(Boolean.parseBoolean(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.autoNoiseDetection", null, "true")));
+        noiseLevel = getNoiseLevelInput();
+        noiseLevel.setValue(Double.parseDouble(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.noiseLevel", null, "1000")));
+        noiseLevel.setEnabled(!autoNoiseDetection.isSelected());
+        autoNoiseDetection.addActionListener((a)->noiseLevel.setEnabled(!autoNoiseDetection.isSelected()));
+
         if (showLCMSOptions && alignAllowed) {
             alignCheckBox.setSelected(true);
             sensitiveMode.setSelected(false);
             paras.add(alignCheckBox);
             paras.add(sensitiveMode);
+
+            Box box = Box.createHorizontalBox();
+            box.add(label);
+            box.add(autoNoiseDetection);
+            box.add(noiseLevel);
+            paras.add(box);
+
+            paras.add(Box.createVerticalGlue());
         }
         content.add(paras);
+    }
+
+    private static JFormattedTextField getNoiseLevelInput() {
+        NumberFormat numberFormat = NumberFormat.getNumberInstance(Locale.US);
+        numberFormat.setGroupingUsed(false);
+        NumberFormatter numberFormatter = new NumberFormatter(numberFormat);
+        numberFormatter.setValueClass(Double.class);
+        numberFormatter.setAllowsInvalid(true);
+        numberFormatter.setCommitsOnValidEdit(true);
+        numberFormatter.setMinimum(0.0);
+        JFormattedTextField textField = new JFormattedTextField(numberFormatter);
+        textField.setColumns(10);
+        return textField;
     }
 }

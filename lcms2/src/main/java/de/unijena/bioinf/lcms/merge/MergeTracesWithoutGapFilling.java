@@ -1,15 +1,19 @@
 package de.unijena.bioinf.lcms.merge;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.msms.MsMsTraceReference;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.*;
+import de.unijena.bioinf.lcms.traceextractor.MassOfInterestConfidenceEstimatorStrategy;
 import de.unijena.bioinf.lcms.utils.Tracker;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -39,8 +43,10 @@ public class MergeTracesWithoutGapFilling {
         // TODO: that's not a good place for calculating that...
         float[] mergedNoiseLevelPerScan = new float[merged.getMapping().length()];
         long TIME1 = System.currentTimeMillis();
-        List<BasicJJob<?>> jobs = new ArrayList<>();
+        List<BasicJJob<Float>> jobs = new ArrayList<>();
         double summedUpNoiseLevel = 0f;
+
+        FloatArrayList avgPeakWidths = new FloatArrayList();
         for (int k=0; k < alignment.getSamples().length; ++k) {
             final ProcessedSample sample = alignment.getSamples()[k];
             final ScanPointInterpolator mapper = sample.getScanPointInterpolator();
@@ -56,18 +62,28 @@ public class MergeTracesWithoutGapFilling {
                  */
                 summedUpNoiseLevel += sample.getNormalizer().normalize(sampleStats.getNoiseLevelPerScan()[sampleStats.getNoiseLevelPerScan().length/2]);
             }
+            final int medianNumberOfAlignments = (int)(alignment.getStatistics().getMedianNumberOfAlignments());
             for (Rect r : mergeStorage.getRectangleMap()) {
-                jobs.add(globalJobManager.submitJob(new BasicJJob<Object>() {
+                jobs.add(globalJobManager.submitJob(new BasicJJob<Float>() {
                     @Override
-                    protected Object compute() throws Exception {
-                        mergeAllMoIsForSampleWithinRect(r, merged, sample, tracker);
-                        return true;
+                    protected Float compute() throws Exception {
+                        return mergeAllMoIsForSampleWithinRect(r, merged, sample, tracker, medianNumberOfAlignments);
                     }
                 }));
             }
-            jobs.forEach(JJob::takeResult);
+            for (BasicJJob<Float> job : jobs) {
+                float pw = job.takeResult();
+                if (pw>0) {
+                    avgPeakWidths.add(pw);
+                }
+            }
             jobs.clear();
             sample.inactive();
+        }
+        SampleStats mergedStats = merged.getStorage().getStatistics();
+        if (avgPeakWidths.size()>=20) {
+            double avg = Statistics.robustAverage(avgPeakWidths.toFloatArray());
+            mergedStats.setExpectedPeakWidth(avg);
         }
         long TIME2 = System.currentTimeMillis();
         System.out.printf("Time for merging: %f seconds\n", (TIME2-TIME1)/1000d);
@@ -81,7 +97,7 @@ public class MergeTracesWithoutGapFilling {
         } else {
             Arrays.fill(mergedNoiseLevelPerScan, (float)summedUpNoiseLevel);
         }
-        merged.getStorage().setStatistics(merged.getStorage().getStatistics().withNoiseLevelPerScan(mergedNoiseLevelPerScan));
+        merged.getStorage().setStatistics(mergedStats.withNoiseLevelPerScan(mergedNoiseLevelPerScan));
 
     }
 
@@ -98,6 +114,10 @@ public class MergeTracesWithoutGapFilling {
         TraceRectangleMap rectangleMap = mergeStorage.getRectangleMap();
         for (MoI m : merged.getStorage().getAlignmentStorage()) {
             final AlignedMoI moi = (AlignedMoI)m;
+            if (moi.majorityIsIsotopeOrMulticharge()) {
+                tracker.moiDeleted(moi);
+                continue;
+            }
             Rect r = new Rect(moi.getRect());
             r.minMz = (float)moi.getMz();
             r.maxMz = (float)moi.getMz();
@@ -130,20 +150,34 @@ public class MergeTracesWithoutGapFilling {
 
 
     ////////////////////////////////////////////////////////////////
+    // if true, we check in the original data for each sample if we missed a trace
+    // this is quite expensive and should not be necessary if
+    // the alignment did its job
+    private static final boolean GAP_FILLING = false;
 
-
-    private void mergeAllMoIsForSampleWithinRect(Rect r, ProcessedSample merged, ProcessedSample sample, Tracker tracker) {
+    private float mergeAllMoIsForSampleWithinRect(Rect r, ProcessedSample merged, ProcessedSample sample, Tracker tracker, int medianAlignments) {
+        float avgPeakWidth = 0f;
         // get all mois in this rectangle
-        MoI[] mois = merged.getStorage().getAlignmentStorage().getMoIWithin(r.minMz, r.maxMz).stream().filter(x -> r.contains(x.getMz(), x.getRetentionTime())).toArray(MoI[]::new);
+        MoI[] mois = merged.getStorage().getAlignmentStorage().getMoIWithin(r.minMz, r.maxMz).stream().filter(x -> !(((AlignedMoI)x).majorityIsIsotopeOrMulticharge()) && r.contains(x.getMz(), x.getRetentionTime())).toArray(MoI[]::new);
         MoI[] moisForSample = Arrays.stream(mois).flatMap(a->((AlignedMoI) a).forSampleIdx(sample.getUid()).stream()).toArray(MoI[]::new);
         // we want to merge them into the MergedTrace corresponding to this rectangle
         IntOpenHashSet traceIds = new IntOpenHashSet(Arrays.stream(moisForSample).mapToInt(MoI::getTraceId).toArray());
+        ContiguousTrace[] traces;
         if (traceIds.isEmpty()) {
-            tracker.emptyRect(sample, r);
-            return; // nothing to merge for this sample
+            // can we find the moi in the original traces ("GapFilling"-like)?
+            if (GAP_FILLING) {
+                List<ContiguousTrace> contigousTraces = sample.getStorage().getTraceStorage().getContigousTraces(r.minMz, r.maxMz, sample.getMapping().idForRetentionTime(r.minRt),
+                        sample.getMapping().idForRetentionTime(r.maxMz));
+                LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).warn("Cannot find MOI for " + r + ", use Gap Filling approach instead and found " + contigousTraces.size() + " traces that fit.");
+                traces = contigousTraces.stream().filter(x->r.containsRt(sample.getRtRecalibration().value(x.retentionTime(x.apex())))).toArray(ContiguousTrace[]::new);
+            } else {
+                tracker.emptyRect(sample, r);
+                return 0f; // nothing to merge for this sample
+            }
+        } else {
+            // get all traces in the sample that can be merged into the mergedTrace
+            traces = traceIds.intStream().mapToObj(x -> sample.getStorage().getTraceStorage().getContigousTrace(x)).toArray(ContiguousTrace[]::new);
         }
-        // get all traces in the sample that can be merged into the mergedTrace
-        ContiguousTrace[] traces = traceIds.intStream().mapToObj(x -> sample.getStorage().getTraceStorage().getContigousTrace(x)).toArray(ContiguousTrace[]::new);
 
         // basically there are two merge operations:
         // 1.) We want to merge Traces along different samples
@@ -212,7 +246,43 @@ public class MergeTracesWithoutGapFilling {
         addMs2ToProjectedTrace(sample, traces, projectedTrace, tracker, merged);
         merged.getStorage().getMergeStorage().addProjectedTrace(r.id, sample.getUid(), projectedTrace);
         createIsotopeProjectedTraces(merged, sample, r, projectedTrace, moisForSample, tracker);
+
+        {
+            for (MoI m : mois) {
+                if (((AlignedMoI)m).getAligned().length>medianAlignments && m.getConfidence()>MassOfInterestConfidenceEstimatorStrategy.CONFIDENT) {
+                    final float peakWidth = estimatePeakWidth(merged.getMapping(), newStartId, newApex, intensityP);
+                    if (peakWidth>0) {
+                        avgPeakWidth=peakWidth;
+                        break;
+                    }
+                }
+            }
+        }
+
         tracker.mergedTrace(merged, sample, r, projectedTrace, moisForSample);
+        return avgPeakWidth;
+    }
+
+    private static float estimatePeakWidth(ScanPointMapping mapping, int offset, int apex, float[] intensity) {
+        apex -= offset;
+        int fwhmLeft = apex, fwhmRight = apex;
+        final float threshold50 = intensity[apex]*0.5f;
+        for (; fwhmLeft >= 0 && intensity[fwhmLeft]>=threshold50; --fwhmLeft ) {}
+        ++fwhmLeft;
+        for (; fwhmRight < intensity.length && intensity[fwhmRight]>=threshold50; ++fwhmRight ) {}
+        --fwhmRight;
+        final float threshold20 = intensity[apex]*0.2f;
+        int l=fwhmLeft,r=fwhmRight;
+        for (; l >= 0 && intensity[l]>=threshold20; --l ) {}
+        ++l;
+        for (; r < intensity.length && intensity[r]>=threshold20; ++r ) {}
+        --r;
+        final double width50 = mapping.getRetentionTimeAt(fwhmRight+offset)-mapping.getRetentionTimeAt(fwhmLeft+offset);
+        final double width20 = mapping.getRetentionTimeAt(r+offset)-mapping.getRetentionTimeAt(l+offset);
+        // assuming a perfect Gaussian shape, we would expect the fwhm at a sigma of 1.18 and the 20% height at a sigma of 1.8
+        if (width50<=0) return (float)(width20/3.6);
+        final double expectedSigma = Math.sqrt((width50/2.36)*(width20/3.6));
+        return (float)(expectedSigma*2);
     }
 
     private void createIsotopeProjectedTraces(ProcessedSample merged, ProcessedSample sample, Rect r, ProjectedTrace projectedTrace, MoI[] mois, Tracker tracker) {

@@ -53,13 +53,7 @@ public class ShowJobsDialogAction extends AbstractGuiAction {
 
 
     public void setComputing(boolean compute) {
-        if (compute) {
-            if (getValue(Action.LARGE_ICON_KEY).equals(FB_LOADER_STOP))
-                Jobs.runEDTLater(() -> putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_RUN_32));
-        } else {
-            if (getValue(Action.LARGE_ICON_KEY).equals(Icons.FB_LOADER_RUN_32))
-                Jobs.runEDTLater(() -> putValue(Action.LARGE_ICON_KEY, FB_LOADER_STOP));
-        }
+        Jobs.runEDTLater(() -> putValue(Action.LARGE_ICON_KEY, compute ? Icons.FB_LOADER_RUN_32 : FB_LOADER_STOP));
     }
 
     @Override
