@@ -38,6 +38,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 public interface ProjectSpaceManager extends IterableWithSize<Instance> {
+    boolean isTempProject();
+    void setTempProject(boolean tmpProject);
 
     Pattern PROJECT_FILENAME_VALIDATOR = Pattern.compile("[a-zA-Z0-9_-]+", Pattern.CASE_INSENSITIVE);
 

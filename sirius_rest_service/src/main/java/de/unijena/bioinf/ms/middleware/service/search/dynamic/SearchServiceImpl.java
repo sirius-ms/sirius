@@ -53,7 +53,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
 
-    public void close(){
+    public void close() {
         System.out.println("DESTROYING SEARCH SERVICE!!!");
         projectLock.writeLock().lock();
         try {
@@ -73,12 +73,12 @@ public class SearchServiceImpl implements SearchService {
     public void openOrCreateProjectIndex(Project<?> project) throws IOException {
         projectLock.writeLock().lock();
         try {
-            String projectSystemId = project.getSystemUID(); //used as index name.
             final Path projectDir;
-            if (indexHome != null) {
+            if (!project.isTempProject() && indexHome != null) {
+                String projectSystemId = project.getSystemUID(); //used as index name.
                 projectDir = indexHome.resolve(projectSystemId);
                 Files.createDirectories(projectDir);
-            }else {
+            } else {
                 projectDir = null;
             }
 
@@ -96,8 +96,10 @@ public class SearchServiceImpl implements SearchService {
             ProjectSearchContext projectContext = projectSearchContexts.remove(projectId);
             if (projectContext != null) {
                 projectContext.close();
-                if (indexHome != null && deleteIndexFromDisk)
-                    FileUtils.deleteRecursively(projectContext.getProjectIndexRootDir());
+                if (projectContext.getProjectIndexRootDir() != null){
+                    if (deleteIndexFromDisk || Files.list(projectContext.getProjectIndexRootDir()).findAny().isEmpty())
+                        FileUtils.deleteRecursively(projectContext.getProjectIndexRootDir());
+                }
             }
         } finally {
             projectLock.writeLock().unlock();
@@ -137,7 +139,7 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public <T> void updateDocuments(String projectId, Collection<T> beans) {
-        consumeProjectContext(projectId, ps ->  ps.updateDocuments(beans));
+        consumeProjectContext(projectId, ps -> ps.updateDocuments(beans));
     }
 
     /**
@@ -162,7 +164,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    public <T extends Taggable> void addTagsToDocument(@NotNull String projectId, Object docId, Collection<Tag> tags, @NotNull Class<T> clazz){
+    public <T extends Taggable> void addTagsToDocument(@NotNull String projectId, Object docId, Collection<Tag> tags, @NotNull Class<T> clazz) {
         consumeProjectContext(projectId, ps -> ps.addTagsToDocument(docId, tags, clazz));
     }
 
@@ -172,7 +174,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    public <T extends Taggable> void removeTagsFromDocument(@NotNull String projectId, Object docId, Collection<String> tagName, @NotNull Class<T> clazz){
+    public <T extends Taggable> void removeTagsFromDocument(@NotNull String projectId, Object docId, Collection<String> tagName, @NotNull Class<T> clazz) {
         consumeProjectContext(projectId, ps -> ps.removeTagsFromDocument(docId, tagName, clazz));
     }
 
@@ -183,7 +185,7 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public <T> void removeDocuments(@NotNull String projectId, @NotNull Collection<T> pojos) {
-        consumeProjectContext(projectId, ps ->  ps.removeDocuments(pojos));
+        consumeProjectContext(projectId, ps -> ps.removeDocuments(pojos));
     }
 
     @Override
@@ -193,7 +195,7 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public <T> void removeDocumentsById(@NotNull String projectId, @NotNull Collection<?> docIds, Class<T> pojoClass) {
-        consumeProjectContext(projectId, ps ->  ps.removeDocumentsById(docIds, pojoClass));
+        consumeProjectContext(projectId, ps -> ps.removeDocumentsById(docIds, pojoClass));
     }
 
     @Override
@@ -224,20 +226,20 @@ public class SearchServiceImpl implements SearchService {
 
     // region HELPER
 
-    private <T> T withProjectContext(String projectId, Function<ProjectSearchContext,T> function){
+    private <T> T withProjectContext(String projectId, Function<ProjectSearchContext, T> function) {
         projectLock.readLock().lock();
         try {
             return function.apply(projectSearchContexts.get(projectId));
-        }finally {
+        } finally {
             projectLock.readLock().unlock();
         }
     }
 
-    private void consumeProjectContext(String projectId, Consumer<ProjectSearchContext> consumer){
+    private void consumeProjectContext(String projectId, Consumer<ProjectSearchContext> consumer) {
         projectLock.readLock().lock();
         try {
             consumer.accept(projectSearchContexts.get(projectId));
-        }finally {
+        } finally {
             projectLock.readLock().unlock();
         }
     }
