@@ -76,7 +76,7 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
         projectId = projectId.substring(0, projectId.length() - SIRIUS_PROJECT_SUFFIX.length());
         projectId = FileUtils.sanitizeFilename(projectId);
 
-        return createProject(projectId, p.toAbsolutePath().toString(), optFields, true);
+        return createProject(projectId, p.toAbsolutePath().toString(), optFields, true, true);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
             Path target = copyPath.normalize();
             Files.copy(source, target);
         } finally {
-            openProject(projectId, source.toString(), EnumSet.noneOf(ProjectInfo.OptField.class));
+            openProject(projectId, source.toString(), EnumSet.noneOf(ProjectInfo.OptField.class), instances.isTempProject());
         }
     }
 

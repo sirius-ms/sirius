@@ -46,6 +46,9 @@ import java.util.*;
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
 public interface Project<PSM extends ProjectSpaceManager> {
+    default boolean isTempProject() {
+        return getProjectSpaceManager().isTempProject();
+    }
     @Nullable default SearchService getSearchService(){
         return null;
     }
