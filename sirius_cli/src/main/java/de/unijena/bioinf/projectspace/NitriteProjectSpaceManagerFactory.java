@@ -34,7 +34,6 @@ import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.storage.db.nosql.Database;
-import io.hypersistence.tsid.TSID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
@@ -56,10 +55,10 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
 
     @Override
     public NoSQLProjectSpaceManager createOrOpen(@Nullable Path projectLocation) throws IOException {
-
-        if (projectLocation == null) {
-            projectLocation = FileUtils.newTempFile("sirius-tmp-project-" + TSID.fast(), SIRIUS_PROJECT_SUFFIX);
-            log.warn("No unique output location found. Writing output to Temporary folder: {}", projectLocation.toString());
+        final boolean tmpProject = projectLocation == null;
+        if (tmpProject) {
+            projectLocation = FileUtils.createTmpProjectSpaceLocation(SIRIUS_PROJECT_SUFFIX);
+            log.warn("No unique output location found. Writing output to Temporary folder: {}", projectLocation);
             if (Files.exists(projectLocation)) {
                 throw new IOException("Could not create new Project '" + projectLocation + "' because it already exists");
             }
@@ -75,6 +74,7 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
         }
         boolean exists = Files.exists(projectLocation);
         NoSQLProjectSpaceManager projectSpaceManager = new NoSQLProjectSpaceManager(new NitriteSirirusProject(projectLocation));
+        projectSpaceManager.setTempProject(tmpProject);
         projectSpaceManager.getProject().initDefaultTagDefinitions();
         projectSpaceManager.getProject().initDefaultGroups();
         // new projects get project-type unimported to prevent updates for newly created projects
