@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.model.ComputedSubtools;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,5 +34,10 @@ public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<
                 Icons.FINGER.derive(32,32), true, FingerprintAndCanopusConfigPanel::new,
                 compounds, SoftwareTourInfoStore.BatchCompute_FingerprintCanopus);
         notConnectedMessage = "Can't connect to prediction server!";
+    }
+
+    @Override
+    protected boolean isComputed(@NotNull ComputedSubtools computedSubtools) {
+        return Boolean.TRUE.equals(computedSubtools.isCanopus()) && Boolean.TRUE.equals(computedSubtools.isFingerprint());
     }
 }

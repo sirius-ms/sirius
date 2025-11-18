@@ -28,7 +28,9 @@ import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.AllowedFeatures;
+import io.sirius.ms.sdk.model.ComputedSubtools;
 import io.sirius.ms.sdk.model.ConnectionCheck;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -41,6 +43,11 @@ public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConf
         super(gui, "MSNovelist", null, Icons.DENOVO.derive(32,32), true, () -> new SubToolConfigPanel<>(MsNovelistOptions.class),
                 compounds, SoftwareTourInfoStore.BatchCompute_MsNovelist);
         notConnectedMessage = "Can't connect to prediction server!";
+    }
+
+    @Override
+    protected boolean isComputed(@NotNull ComputedSubtools computedSubtools) {
+        return Boolean.TRUE.equals(computedSubtools.isDeNovoSearch());
     }
 
     @Override
