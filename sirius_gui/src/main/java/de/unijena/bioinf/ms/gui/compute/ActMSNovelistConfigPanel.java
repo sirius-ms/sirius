@@ -30,15 +30,14 @@ import io.sirius.ms.sdk.model.AllowedFeatures;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 
 public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<MsNovelistOptions>> {
 
-    public ActMSNovelistConfigPanel(SiriusGui gui, AtomicBoolean upstreamToolWasAutomaticallyEnabled) {
+    public ActMSNovelistConfigPanel(SiriusGui gui) {
         super(gui, "MSNovelist", null, Icons.DENOVO.derive(32,32), true, () -> new SubToolConfigPanel<>(MsNovelistOptions.class),
-                SoftwareTourInfoStore.BatchCompute_MsNovelist, upstreamToolWasAutomaticallyEnabled);
+                SoftwareTourInfoStore.BatchCompute_MsNovelist);
         notConnectedMessage = "Can't connect to prediction server!";
     }
 

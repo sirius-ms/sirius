@@ -38,7 +38,6 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -63,34 +62,22 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
     protected Set<String> disabledReasons = new HashSet<>();
     protected String notConnectedMessage = "Cannot connect to the server";  // Can be overridden in subclasses
 
-    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo, AtomicBoolean upstreamToolWasAutomaticallyEnabled) {
-        this(gui, toolname, buttonIcon, false, contentSuppl, tourInfo, upstreamToolWasAutomaticallyEnabled);
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo) {
+        this(gui, toolname, buttonIcon, false, contentSuppl, tourInfo);
     }
 
-    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo, AtomicBoolean upstreamToolWasAutomaticallyEnabled) {
-        this(gui, toolname, null, buttonIcon, checkServerConnection, contentSuppl, tourInfo, upstreamToolWasAutomaticallyEnabled);
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo) {
+        this(gui, toolname, null, buttonIcon, checkServerConnection, contentSuppl, tourInfo);
     }
 
-    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo, AtomicBoolean upstreamToolWasAutomaticallyEnabled) {
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo) {
         super(new MigLayout("insets 0", "[left]10[left]","[top]"));
 
         this.toolName = toolname;
         this.content = contentSuppl.get();
         this.gui = gui;
 
-        activationButton = new ToolbarToggleButton(this.toolName, buttonIcon) {
-            @Override
-            public void doClick(int pressTime) {
-                super.doClick(pressTime);
-                upstreamToolWasAutomaticallyEnabled.set(false); //reset
-            }
-
-            @Override
-            public void doClick() {
-                super.doClick();
-                upstreamToolWasAutomaticallyEnabled.set(false); //reset
-            }
-        };
+        activationButton = new ToolbarToggleButton(this.toolName, buttonIcon);
         activationButton.setPreferredSize(new Dimension(110, 60));
         activationButton.setMaximumSize(new Dimension(110, 60));
         activationButton.setMinimumSize(new Dimension(110, 60));
@@ -197,18 +184,14 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
      * @param upstreamTool the tool which produces the data required for this tool
      * @param upstreamResultAvailable function that checks if the existing results of the upstream tool can be used
      */
-    public void addToolDependency(ActivatableConfigPanel<?> upstreamTool, Supplier<Boolean> upstreamResultAvailable, AtomicBoolean upstreamWasAutomaticallyEnabled) {
+    public void addToolDependency(ActivatableConfigPanel<?> upstreamTool, Supplier<Boolean> upstreamResultAvailable) {
         this.addToolDependencyListener((c, enabled) -> {
             if (enabled && !upstreamTool.isToolSelected() && !upstreamResultAvailable.get()) {
                 upstreamTool.activationButton.doClick(0);
-                upstreamWasAutomaticallyEnabled.set(true);
-                showAutoEnableInfoDialog(
-                        "The '" + upstreamTool.toolName + "' tool is enabled because <b>not all</b> selected features contain its results, but the '" + this.toolName + "' tool needs them as input.<br>" +
-                        "You may manually deselect '" + upstreamTool.toolName + "'.");
+                showAutoEnableInfoDialog("The '" + upstreamTool.toolName + "' tool is enabled because not all selected features contain its results, but the '" + this.toolName + "' tool needs them as input.");
             }
         });
         upstreamTool.addToolDependencyListener((c, enabled) -> {
-            if (upstreamWasAutomaticallyEnabled.get()) return; //after automatic upstream tool activation, the user should be allowed to override/revert this manually. So don't set it again.
             if (!enabled && this.isToolSelected() && !upstreamResultAvailable.get()) {
                 this.activationButton.doClick(0);
                 showAutoEnableInfoDialog("The '" + this.toolName + "' tool is also disabled because it needs the results from the '" + upstreamTool.toolName + "' tool as input.");
