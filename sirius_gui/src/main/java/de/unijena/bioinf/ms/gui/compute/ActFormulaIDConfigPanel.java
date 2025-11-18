@@ -27,6 +27,6 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDConfigPanel> {
 
     public ActFormulaIDConfigPanel(SiriusGui gui, java.util.List<InstanceBean> ecs, GlobalConfigPanel globalConfigPanel, boolean ms2) {
-        super(gui, "SIRIUS", Icons.SIRIUS.derive(32,32), () -> new FormulaIDConfigPanel(gui, ecs, globalConfigPanel, ms2), SoftwareTourInfoStore.BatchCompute_Formula);
+        super(gui, "SIRIUS", Icons.SIRIUS.derive(32,32), () -> new FormulaIDConfigPanel(gui, ecs, globalConfigPanel, ms2), ecs, SoftwareTourInfoStore.BatchCompute_Formula);
     }
 }
