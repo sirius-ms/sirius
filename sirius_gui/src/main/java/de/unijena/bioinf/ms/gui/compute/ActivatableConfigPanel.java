@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfo;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.model.ComputedSubtools;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import lombok.Getter;
 import net.miginfocom.swing.MigLayout;
@@ -63,7 +64,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
     protected Set<String> disabledReasons = new HashSet<>();
     protected String notConnectedMessage = "Cannot connect to the server";  // Can be overridden in subclasses
 
-    protected final int totalCompounds;
+    protected final long totalCompounds;
+    protected final long computedCompounds;
 
     protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl, List<InstanceBean> compounds, SoftwareTourInfo tourInfo) {
         this(gui, toolname, null, buttonIcon, false, contentSuppl, compounds, tourInfo);
@@ -98,6 +100,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
         add(content, "cell 1 0, growx, wrap");
 
         totalCompounds = compounds.size();
+        computedCompounds = compounds.stream().map(InstanceBean::getComputedTools).filter(this::isComputed).count();
 
         if (tourInfo != null) {
             activationButton.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, tourInfo);
@@ -116,6 +119,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
         activationButton.setSelected(false);
         setComponentsEnabled(activationButton.isSelected());
     }
+
+    protected abstract boolean isComputed(@NotNull ComputedSubtools computedSubtools);
 
     protected void processConnectionCheck(ConnectionCheck check) {
         setButtonEnabled(isConnected(check), notConnectedMessage);

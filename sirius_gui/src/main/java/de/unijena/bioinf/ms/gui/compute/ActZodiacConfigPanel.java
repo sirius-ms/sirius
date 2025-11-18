@@ -26,6 +26,8 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.model.ComputedSubtools;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -36,6 +38,11 @@ public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPan
 
     public ActZodiacConfigPanel(SiriusGui gui, List<InstanceBean> compounds) {
         super(gui, "ZODIAC", Icons.ZODIAC.derive(32,32), ZodiacConfigPanel::new, compounds, SoftwareTourInfoStore.BatchCompute_ZODIAC);
+    }
+
+    @Override
+    protected boolean isComputed(@NotNull ComputedSubtools computedSubtools) {
+        return Boolean.TRUE.equals(computedSubtools.isZodiac());
     }
 
     @Override
