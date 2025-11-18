@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.model.ComputedSubtools;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,5 +33,10 @@ public class ActFingerblastConfigPanel extends ActivatableConfigPanel<Fingerblas
     public ActFingerblastConfigPanel(@NotNull SiriusGui gui, List<InstanceBean> compounds, @Nullable final GlobalConfigPanel saerchDbSource) {
         super(gui, "Search DBs", Icons.DB_LENS.derive(32,32), true, () -> new FingerblastConfigPanel(gui, saerchDbSource), compounds, SoftwareTourInfoStore.BatchCompute_Fingerblast);
         notConnectedMessage = "Can't connect to structure db server!";
+    }
+
+    @Override
+    protected boolean isComputed(@NotNull ComputedSubtools computedSubtools) {
+        return Boolean.TRUE.equals(computedSubtools.isStructureSearch());
     }
 }
