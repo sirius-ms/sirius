@@ -26,18 +26,20 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.AllowedFeatures;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 
+import java.util.List;
 import java.util.Map;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 
 public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<MsNovelistOptions>> {
 
-    public ActMSNovelistConfigPanel(SiriusGui gui) {
+    public ActMSNovelistConfigPanel(SiriusGui gui, List<InstanceBean> compounds) {
         super(gui, "MSNovelist", null, Icons.DENOVO.derive(32,32), true, () -> new SubToolConfigPanel<>(MsNovelistOptions.class),
-                SoftwareTourInfoStore.BatchCompute_MsNovelist);
+                compounds, SoftwareTourInfoStore.BatchCompute_MsNovelist);
         notConnectedMessage = "Can't connect to prediction server!";
     }
 

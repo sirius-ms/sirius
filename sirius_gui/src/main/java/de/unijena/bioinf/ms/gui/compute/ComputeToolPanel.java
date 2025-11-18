@@ -44,12 +44,12 @@ public class ComputeToolPanel extends JPanel {
 
         // make subtool config panels
         globalConfigPanel = new GlobalConfigPanel(gui, compoundsToProcess, hasMs2);
-        spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, globalConfigPanel);
+        spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, compoundsToProcess, globalConfigPanel);
         formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, compoundsToProcess, globalConfigPanel, hasMs2);
-        zodiacConfigs = new ActZodiacConfigPanel(gui, compoundsToProcess.size());
-        fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
-        csiSearchConfigs = new ActFingerblastConfigPanel(gui, globalConfigPanel);
-        msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
+        zodiacConfigs = new ActZodiacConfigPanel(gui, compoundsToProcess);
+        fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui, compoundsToProcess);
+        csiSearchConfigs = new ActFingerblastConfigPanel(gui, compoundsToProcess, globalConfigPanel);
+        msNovelistConfigs = new ActMSNovelistConfigPanel(gui, compoundsToProcess);
 
         JXTitledSeparator sep = new JXTitledSeparator("Global Configuration");
         //just to prevent resizing of toplevel separators

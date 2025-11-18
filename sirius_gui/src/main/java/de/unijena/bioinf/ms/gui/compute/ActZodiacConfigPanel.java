@@ -25,17 +25,17 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.projectspace.InstanceBean;
+
+import java.util.List;
 
 public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPanel> {
 
     public static final String DO_NOT_SHOW_AGAIN_KEY_Z_COMP = "de.unijena.bioinf.sirius.computeDialog.zodiac.compounds.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_Z_MEM = "de.unijena.bioinf.sirius.computeDialog.zodiac.memory.dontAskAgain";
 
-    private final int compoundsNumber;
-
-    public ActZodiacConfigPanel(SiriusGui gui, int compoundsNumber) {
-        super(gui, "ZODIAC", Icons.ZODIAC.derive(32,32), ZodiacConfigPanel::new, SoftwareTourInfoStore.BatchCompute_ZODIAC);
-        this.compoundsNumber = compoundsNumber;
+    public ActZodiacConfigPanel(SiriusGui gui, List<InstanceBean> compounds) {
+        super(gui, "ZODIAC", Icons.ZODIAC.derive(32,32), ZodiacConfigPanel::new, compounds, SoftwareTourInfoStore.BatchCompute_ZODIAC);
     }
 
     @Override
@@ -48,9 +48,9 @@ public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPan
                 return;
             }
 
-            if ((compoundsNumber > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)) {
+            if ((totalCompounds > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)) {
                 if (new QuestionDialog(gui.getMainFrame(), "High Memory Consumption",
-                        GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsNumber + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
+                        GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + totalCompounds + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
                         DO_NOT_SHOW_AGAIN_KEY_Z_MEM, ReturnValue.Success).isCancel()) {
                     activationButton.setSelected(false);
                     return;
