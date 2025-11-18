@@ -26,8 +26,6 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPanel> {
 
     public static final String DO_NOT_SHOW_AGAIN_KEY_Z_COMP = "de.unijena.bioinf.sirius.computeDialog.zodiac.compounds.dontAskAgain";
@@ -35,8 +33,8 @@ public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPan
 
     private final int compoundsNumber;
 
-    public ActZodiacConfigPanel(SiriusGui gui, int compoundsNumber, AtomicBoolean upstreamToolWasAutomaticallyEnabled) {
-        super(gui, "ZODIAC", Icons.ZODIAC.derive(32,32), ZodiacConfigPanel::new, SoftwareTourInfoStore.BatchCompute_ZODIAC, upstreamToolWasAutomaticallyEnabled);
+    public ActZodiacConfigPanel(SiriusGui gui, int compoundsNumber) {
+        super(gui, "ZODIAC", Icons.ZODIAC.derive(32,32), ZodiacConfigPanel::new, SoftwareTourInfoStore.BatchCompute_ZODIAC);
         this.compoundsNumber = compoundsNumber;
     }
 
