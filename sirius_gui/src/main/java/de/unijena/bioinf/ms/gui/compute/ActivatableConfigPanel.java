@@ -48,8 +48,10 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPanel {
 
     public static final String DO_NOT_SHOW_TOOL_AUTOENABLE = "de.unijena.bioinf.sirius.computeDialog.autoEnable.dontAskAgain";
+    public static final String DO_NOT_SHOW_NO_TOOL_AUTOENABLE_ON_PARTIAL_RESULT = "de.unijena.bioinf.sirius.computeDialog.noAutoEnablePartial.dontAskAgain";
 
     protected ToolbarToggleButton activationButton;
+    protected JLabel countLabel;
     protected final String toolName;
     protected final String[] toolDescription;
     @Getter
@@ -65,6 +67,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
     protected String notConnectedMessage = "Cannot connect to the server";  // Can be overridden in subclasses
 
     protected final long totalCompounds;
+    @Getter
     protected final long computedCompounds;
 
     protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl, List<InstanceBean> compounds, SoftwareTourInfo tourInfo) {
@@ -96,11 +99,17 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
             this.toolDescription = new String[]{};
 
         activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(this.toolDescription));
-        add(activationButton,"cell 0 0");
-        add(content, "cell 1 0, growx, wrap");
 
         totalCompounds = compounds.size();
         computedCompounds = compounds.stream().map(InstanceBean::getComputedTools).filter(this::isComputed).count();
+
+        countLabel = new JLabel();
+        updateCountLabel();
+
+        add(activationButton,"cell 0 0, split 2, flowy, alignx center, aligny top");
+        add(countLabel, "alignx center, gaptop 2");
+
+        add(content, "cell 1 0, growx, wrap");
 
         if (tourInfo != null) {
             activationButton.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, tourInfo);
@@ -120,7 +129,16 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
         setComponentsEnabled(activationButton.isSelected());
     }
 
+    protected void updateCountLabel() {
+        countLabel.setText(String.format("<html>%s / %s</html>", computedCompounds, totalCompounds));
+        countLabel.setToolTipText(String.format("%s of %s selected features already have %s results", computedCompounds, totalCompounds, toolName));
+    }
+
     protected abstract boolean isComputed(@NotNull ComputedSubtools computedSubtools);
+
+    protected boolean allComputed() {
+        return getComputedCompounds() == totalCompounds;
+    }
 
     protected void processConnectionCheck(ConnectionCheck check) {
         setButtonEnabled(isConnected(check), notConnectedMessage);
@@ -192,19 +210,26 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
     /**
      * Add listeners that enable the upstream tool if this gets enabled, and disable this if the upstream gets disabled
      * @param upstreamTool the tool which produces the data required for this tool
-     * @param upstreamResultAvailable function that checks if the existing results of the upstream tool can be used
      */
-    public void addToolDependency(ActivatableConfigPanel<?> upstreamTool, Supplier<Boolean> upstreamResultAvailable) {
+    public void addToolDependency(ActivatableConfigPanel<?> upstreamTool) {
         this.addToolDependencyListener((c, enabled) -> {
-            if (enabled && !upstreamTool.isToolSelected() && !upstreamResultAvailable.get()) {
-                upstreamTool.activationButton.doClick(0);
-                showAutoEnableInfoDialog("The '" + upstreamTool.toolName + "' tool is enabled because not all selected features contain its results, but the '" + this.toolName + "' tool needs them as input.");
+            if (enabled && !upstreamTool.isToolSelected() && !upstreamTool.allComputed()) {
+                if (upstreamTool.getComputedCompounds() == 0) {
+                    upstreamTool.activationButton.doClick(0);
+                    showAutoEnableInfoDialog("The '" + upstreamTool.toolName + "' tool is enabled because not all selected features contain its results, but the '" + this.toolName + "' tool needs them as input.");
+                } else {
+                    // TODO partial - question
+                }
             }
         });
         upstreamTool.addToolDependencyListener((c, enabled) -> {
-            if (!enabled && this.isToolSelected() && !upstreamResultAvailable.get()) {
-                this.activationButton.doClick(0);
-                showAutoEnableInfoDialog("The '" + this.toolName + "' tool is also disabled because it needs the results from the '" + upstreamTool.toolName + "' tool as input.");
+            if (!enabled && this.isToolSelected() && !upstreamTool.allComputed()) {
+                if (upstreamTool.getComputedCompounds() == 0) {
+                    this.activationButton.doClick(0);
+                    showAutoEnableInfoDialog("The '" + this.toolName + "' tool is also disabled because it needs the results from the '" + upstreamTool.toolName + "' tool as input.");
+                } else {
+                    // TODO partial - question
+                }
             }
         });
     }
