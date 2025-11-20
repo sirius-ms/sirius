@@ -47,7 +47,7 @@ public class ComputeToolPanel extends JPanel {
         spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, compoundsToProcess, globalConfigPanel);
         formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, compoundsToProcess, globalConfigPanel, hasMs2);
         zodiacConfigs = new ActZodiacConfigPanel(gui, compoundsToProcess);
-        fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui, compoundsToProcess);
+        fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui, compoundsToProcess, formulaIDConfigPanel);
         csiSearchConfigs = new ActFingerblastConfigPanel(gui, compoundsToProcess, globalConfigPanel);
         msNovelistConfigs = new ActMSNovelistConfigPanel(gui, compoundsToProcess);
 
@@ -63,7 +63,6 @@ public class ComputeToolPanel extends JPanel {
         add(formulaIDConfigPanel, "cell 0 5, aligny top,  wrap");
 
         if (hasMs2) {
-            final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
             final boolean compoundClassesAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isCanopus());
 
             add(new JXTitledSeparator("Spectral Library Search"), "cell 0 2, growx, spanx 2, aligny top, wrap");
@@ -84,9 +83,9 @@ public class ComputeToolPanel extends JPanel {
             add(msNovelistConfigs, "cell 1 9, aligny top, wrap");
 
 
-            fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
-            csiSearchConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
-            msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
+            fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel);
+            csiSearchConfigs.addToolDependency(fingerprintAndCanopusConfigPanel);
+            msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel);
             // computing formulaId will discard fingerprints, so we need to enable it for structure search
             formulaIDConfigPanel.addToolDependencyListener((c, enabled) -> {
                 if (enabled && !fingerprintAndCanopusConfigPanel.isToolSelected() && (csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected())) {
