@@ -29,15 +29,36 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<FingerprintAndCanopusConfigPanel> {
-    public ActFingerprintAndCanopusConfigPanel(@NotNull SiriusGui gui, List<InstanceBean> compounds) {
+
+    private final ActFormulaIDConfigPanel formulaIDConfigPanel;
+
+    public ActFingerprintAndCanopusConfigPanel(@NotNull SiriusGui gui, List<InstanceBean> compounds, ActFormulaIDConfigPanel formulaIdConfigPanel) {
         super(gui, "Predict", FingerprintAndCanopusConfigPanel.description,
                 Icons.FINGER.derive(32,32), true, FingerprintAndCanopusConfigPanel::new,
                 compounds, SoftwareTourInfoStore.BatchCompute_FingerprintCanopus);
         notConnectedMessage = "Can't connect to prediction server!";
+        this.formulaIDConfigPanel = formulaIdConfigPanel;
+
+        this.formulaIDConfigPanel.addEnableChangeListener((c, enabled) -> updateCountLabel());
     }
 
     @Override
     protected boolean isComputed(@NotNull ComputedSubtools computedSubtools) {
         return Boolean.TRUE.equals(computedSubtools.isCanopus()) && Boolean.TRUE.equals(computedSubtools.isFingerprint());
+    }
+
+    @Override
+    public long getComputedCompounds() {
+        return formulaIDConfigPanel.isToolSelected() ? 0 : computedCompounds;
+    }
+
+    @Override
+    protected void updateCountLabel() {
+        if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
+            countLabel.setText(String.format("<html><s>%s</s> / %s</html>", computedCompounds, totalCompounds));
+            countLabel.setToolTipText(String.format("Existing %s results will be deleted after running %s%s", toolName, formulaIDConfigPanel.toolName, isToolSelected() ? " and recomputed" : ""));
+        } else {
+            super.updateCountLabel();
+        }
     }
 }
