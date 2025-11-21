@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
@@ -218,7 +219,17 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
                     upstreamTool.activationButton.doClick(0);
                     showAutoEnableInfoDialog("The '" + upstreamTool.toolName + "' tool is enabled because not all selected features contain its results, but the '" + this.toolName + "' tool needs them as input.");
                 } else {
-                    // TODO partial - question
+                    if (!PropertyManager.getBoolean(DO_NOT_SHOW_NO_TOOL_AUTOENABLE_ON_PARTIAL_RESULT, false)) {
+                        String message = String.format("Results from %s are needed for %s, but they are only available for %s of %s features. Activate %1$s too?", upstreamTool.toolName, toolName, upstreamTool.getComputedCompounds(), upstreamTool.totalCompounds);
+                        Object[] options = {"Activate", "Cancel", "Never (de)activate with partial results"};
+                        int choice = JOptionPane.showOptionDialog(gui.getMainFrame(), message, null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+                        if (choice == 0) {
+                            upstreamTool.activationButton.doClick(0);
+                        }
+                        if (choice == 2) {
+                            SiriusProperties.setAndStoreInBackground(DO_NOT_SHOW_NO_TOOL_AUTOENABLE_ON_PARTIAL_RESULT, "true");
+                        }
+                    }
                 }
             }
         });
@@ -228,7 +239,17 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
                     this.activationButton.doClick(0);
                     showAutoEnableInfoDialog("The '" + this.toolName + "' tool is also disabled because it needs the results from the '" + upstreamTool.toolName + "' tool as input.");
                 } else {
-                    // TODO partial - question
+                    if (!PropertyManager.getBoolean(DO_NOT_SHOW_NO_TOOL_AUTOENABLE_ON_PARTIAL_RESULT, false)) {
+                        String message = String.format("Results from %s are needed for %s, but they are only available for %s of %s features. Deactivate %2$s too?", upstreamTool.toolName, toolName, upstreamTool.getComputedCompounds(), upstreamTool.totalCompounds);
+                        Object[] options = {"Deactivate", "Cancel", "Never (de)activate with partial results"};
+                        int choice = JOptionPane.showOptionDialog(gui.getMainFrame(), message, null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+                        if (choice == 0) {
+                            this.activationButton.doClick(0);
+                        }
+                        if (choice == 2) {
+                            SiriusProperties.setAndStoreInBackground(DO_NOT_SHOW_NO_TOOL_AUTOENABLE_ON_PARTIAL_RESULT, "true");
+                        }
+                    }
                 }
             }
         });
