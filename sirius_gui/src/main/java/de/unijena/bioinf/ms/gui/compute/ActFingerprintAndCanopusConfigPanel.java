@@ -51,14 +51,4 @@ public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<
     public long getComputedCompounds() {
         return formulaIDConfigPanel.isToolSelected() ? 0 : computedCompounds;
     }
-
-    @Override
-    protected void updateCountLabel() {
-        if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
-            countLabel.setText(String.format("<html><s>%s</s> / %s</html>", computedCompounds, totalCompounds));
-            countLabel.setToolTipText(String.format("Existing %s results will be deleted after running %s%s", toolName, formulaIDConfigPanel.toolName, isToolSelected() ? " and recomputed" : ""));
-        } else {
-            super.updateCountLabel();
-        }
-    }
 }
