@@ -49,6 +49,6 @@ public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<
 
     @Override
     public long getComputedCompounds() {
-        return formulaIDConfigPanel.isToolSelected() ? 0 : computedCompounds;
+        return formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected() ? 0 : computedCompounds;
     }
 }
