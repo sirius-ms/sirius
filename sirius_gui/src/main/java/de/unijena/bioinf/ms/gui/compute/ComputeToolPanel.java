@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static de.unijena.bioinf.ms.gui.compute.ActivatableConfigPanel.DO_NOT_SHOW_TOOL_AUTOENABLE;
+
 
 public class ComputeToolPanel extends JPanel {
     public static final String PRESET_FROZEN_MESSAGE = "Could not load preset.";
@@ -90,7 +92,7 @@ public class ComputeToolPanel extends JPanel {
             formulaIDConfigPanel.addToolDependencyListener((c, enabled) -> {
                 if (enabled && !fingerprintAndCanopusConfigPanel.isToolSelected() && (csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected())) {
                     fingerprintAndCanopusConfigPanel.activationButton.doClick(0);
-                    fingerprintAndCanopusConfigPanel.showAutoEnableInfoDialog(fingerprintAndCanopusConfigPanel.toolName + " is activated because a downstream tool needs its input, which would be deleted by running " + formulaIDConfigPanel.toolName + ".");
+                    fingerprintAndCanopusConfigPanel.showAutoEnableInfoDialog(String.format("<html>%s is activated because a downstream tool needs its input, which would be deleted by running %s.</html>", fingerprintAndCanopusConfigPanel.toolName, formulaIDConfigPanel.toolName), DO_NOT_SHOW_TOOL_AUTOENABLE);
                 }
             });
         }
