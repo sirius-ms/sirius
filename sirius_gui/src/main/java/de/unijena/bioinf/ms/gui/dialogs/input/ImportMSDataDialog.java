@@ -52,6 +52,7 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
 
         private final JCheckBox ignoreFormulas;
 
+        private final JLabel noiselabel;
         private final JCheckBox autoNoiseDetection;
         private final JFormattedTextField noiseLevel;
 
@@ -75,7 +76,7 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
             sensitiveMode.setToolTipText(GuiUtils.formatToolTip("If checked, min-snr is set to 2 instead of 3. Use this to pick very low intensity features. Features with good MS/MS are always picked, so use this option only if you are interested in low intensive MS-only features."));
             paras.add(sensitiveMode);
 
-            JLabel label = new JLabel("Noise level: ");
+            noiselabel = new JLabel("Noise level: ");
             autoNoiseDetection = makeGenericOptionCheckBox("Auto", "autoNoiseDetection");
             autoNoiseDetection.setSelected(Boolean.parseBoolean(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.autoNoiseDetection", null, "true")));
             noiseLevel = getNoiseLevelInput();
@@ -85,7 +86,7 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
             autoNoiseDetection.addActionListener((a)->noiseLevel.setEnabled(!autoNoiseDetection.isSelected()));
 
             Box box = Box.createHorizontalBox();
-            box.add(label);
+            box.add(noiselabel);
             box.add(autoNoiseDetection);
             box.add(noiseLevel);
             paras.add(box);
@@ -120,10 +121,12 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
 
         if (showLCMSOptions) {
             panel.sensitiveMode.setVisible(true);
+            panel.noiselabel.setVisible(true);
             panel.noiseLevel.setVisible(true);
             panel.autoNoiseDetection.setVisible(true);
         } else {
             panel.sensitiveMode.setVisible(false);
+            panel.noiselabel.setVisible(false);
             panel.noiseLevel.setVisible(false);
             panel.autoNoiseDetection.setVisible(false);
         }
