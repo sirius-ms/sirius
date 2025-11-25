@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
@@ -39,8 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -132,8 +131,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
     }
 
     protected void updateCountLabel() {
-        countLabel.setText(String.format("<html><small>%s / %s computed</small></html>", computedCompounds, totalCompounds));
-        countLabel.setToolTipText(String.format("%s of %s selected features already have %s results", computedCompounds, totalCompounds, toolName));
+        countLabel.setText(String.format("<html><small>%s / %s computed</small></html>", getComputedCompounds(), totalCompounds));
+        countLabel.setToolTipText(String.format("%s of %s selected features already have %s results", getComputedCompounds(), totalCompounds, toolName));
     }
 
     protected abstract boolean isComputed(@NotNull ComputedSubtools computedSubtools);
@@ -219,7 +218,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
                 if (upstreamTool.getComputedCompounds() == 0) {
                     upstreamTool.activationButton.doClick(0);
                 } else {
-                    showPartialResultsUpstreamInfoDialog(String.format("<html>Results from upstream tool(s) are needed for the tool you selected but are only available for %s of %s features.</html>", upstreamTool.getComputedCompounds(), upstreamTool.totalCompounds));
+                    showAutoEnableInfoDialog(String.format("<html>Results from upstream tool(s) are needed for the tool you selected but are only available for %s of %s features.</html>", upstreamTool.getComputedCompounds(), upstreamTool.totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM);
                 }
             }
         });
@@ -228,39 +227,21 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
                 if (upstreamTool.getComputedCompounds() == 0) {
                     this.activationButton.doClick(0);
                 } else {
-                    showPartialResultsDownstreamInfoDialog(String.format("<html>Results from the tool you deactivated are needed for downstream tool(s) but are only available for %s of %s features.</html>", getComputedCompounds(), totalCompounds));
+                    showAutoEnableInfoDialog(String.format("<html>Results from the tool you deactivated are needed for downstream tool(s) but are only available for %s of %s features.</html>", getComputedCompounds(), totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM);
                 }
             }
         });
     }
 
-    public void showAutoEnableInfoDialog(String message) {
-        if (!PropertyManager.getBoolean(DO_NOT_SHOW_TOOL_AUTOENABLE, false)) {
-            new InfoDialog(gui.getMainFrame(), message, DO_NOT_SHOW_TOOL_AUTOENABLE);
-        }
-    }
-
-    public void showPartialResultsDownstreamInfoDialog(String message) {
+    public void showAutoEnableInfoDialog(String message, String property) {
         //use tutorial info mechanism to not present dialog multiple times in one session.
-        if (gui.getProperties().isAskedTutorialThisSession(DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM))
+        if (gui.getProperties().isAskedTutorialThisSession(property))
             return;
         else
-            gui.getProperties().setTutorialKnownForThisSession(DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM);
+            gui.getProperties().setTutorialKnownForThisSession(property);
 
-        if (!PropertyManager.getBoolean(DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM, false)) {
-            new InfoDialog(gui.getMainFrame(), message, DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM);
-        }
-    }
-
-    public void showPartialResultsUpstreamInfoDialog(String message) {
-        //use tutorial info mechanism to not present dialog multiple times in one session.
-        if (gui.getProperties().isAskedTutorialThisSession(DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM))
-            return;
-        else
-            gui.getProperties().setTutorialKnownForThisSession(DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM);
-
-        if (!PropertyManager.getBoolean(DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM, false)) {
-            new InfoDialog(gui.getMainFrame(), message, DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM);
+        if (!PropertyManager.getBoolean(property, false)) {
+            new InfoDialog(gui.getMainFrame(), message, property);
         }
     }
 
