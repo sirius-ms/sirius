@@ -35,7 +35,8 @@ import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.storage.db.nosql.Filter;
-import it.unimi.dsi.fastutil.longs.*;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
@@ -127,14 +128,18 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                                     .collect(Collectors.groupingBy(de.unijena.bioinf.ms.middleware.model.statistics.FoldChange::getObjectId));
 
                     //update index
-                    project.getSearchService().updateDocumentsFields(project.getProjectId(), foldChanges.keySet(), alf -> {
-                        List<FoldChange> nuFC = foldChanges.get(alf.getAlignedFeatureId());
-                        if (nuFC != null && !nuFC.isEmpty()) {
-                            Set<Statistics> updatedStats = new HashSet<>(alf.getStats());
-                            updatedStats.addAll(nuFC);
-                            alf.setStats(new ArrayList<>(updatedStats));
-                        }
-                    }, AlignedFeature.class);
+                    if (project.getSearchService() != null) {
+                        project.getSearchService().updateDocumentsFields(project.getProjectId(), foldChanges.keySet(), alf -> {
+                            List<FoldChange> nuFC = foldChanges.get(alf.getAlignedFeatureId());
+                            if (nuFC != null && !nuFC.isEmpty()) {
+                                Set<Statistics> updatedStats = new HashSet<>();
+                                if (alf.getStats() != null)
+                                    updatedStats.addAll(alf.getStats());
+                                updatedStats.addAll(nuFC);
+                                alf.setStats(new ArrayList<>(updatedStats));
+                            }
+                        }, AlignedFeature.class);
+                    }
                 });
 
                 case COMPOUNDS -> forEachBatch(project.project().getAllCompounds(), af -> {
@@ -160,14 +165,18 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
                     //update index
                     //todo add if compound index is implemented
-//                    project.getSearchService().updateDocumentsFields(project.getProjectId(), foldChanges.keySet(), c -> {
-//                        List<FoldChange> nuFC = foldChanges.get(c.getCompoundId());
-//                        if (nuFC != null && !nuFC.isEmpty()) {
-//                            Set<Statistics> updatedStats = new HashSet<>(c.getStats());
-//                            updatedStats.addAll(nuFC);
-//                            c.setStats(new ArrayList<>(updatedStats));
-//                        }
-//                    }, Compound.class);
+//                    if (project.getSearchService() != null) {
+//                        project.getSearchService().updateDocumentsFields(project.getProjectId(), foldChanges.keySet(), c -> {
+//                            List<FoldChange> nuFC = foldChanges.get(c.getCompoundId());
+//                            if (nuFC != null && !nuFC.isEmpty()) {
+//                                Set<Statistics> updatedStats = new HashSet<>();
+//                                if (c.getStats() != null)
+//                                    updatedStats.addAll(c.getStats());
+//                                updatedStats.addAll(nuFC);
+//                                c.setStats(new ArrayList<>(updatedStats));
+//                            }
+//                        }, Compound.class);
+//                    }
                 });
             }
         } catch (Exception e) {
