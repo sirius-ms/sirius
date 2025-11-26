@@ -9,9 +9,7 @@ import de.unijena.bioinf.projectspace.IndexField;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.*;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -55,17 +53,6 @@ public class FullTextSearchTest {
         @IndexField(name = "defaultSearchField", fullTextSearch = true, defaultSearchField = true)
         public String defaultSearchField;
 
-      /*  private Map<String, Tag> tags = new HashMap<>();
-
-        @Override
-        public Map<String, Tag> getTags() {
-            return tags;
-        }
-
-        @Override
-        public void setTags(Map<String, Tag> tags) {
-            this.tags = tags;
-        }*/
     }
 
     private SearchService searchService;
@@ -140,9 +127,9 @@ public class FullTextSearchTest {
     }
     
     @Test
-    public void testTokenizationWithStandardAnalyzer() throws IOException {
+    public void testTokenizationWithSiriusStandardAnalyzer() throws IOException {
         // Test how StandardAnalyzer tokenizes our text
-        Analyzer analyzer = new StandardAnalyzer();
+        Analyzer analyzer = new SiriusStandardAnalyzer();
         String text = "G79624_5x_BH4_01_18895";
         
         try (TokenStream stream = analyzer.tokenStream("field", text)) {
@@ -169,7 +156,7 @@ public class FullTextSearchTest {
     public void testDirectLuceneSearching() throws IOException, QueryNodeException {
         // Test directly with Lucene APIs to isolate the issue
         Directory directory = new ByteBuffersDirectory();
-        Analyzer analyzer = new StandardAnalyzer();
+        Analyzer analyzer = new SiriusStandardAnalyzer();
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
         
         try (IndexWriter writer = new IndexWriter(directory, config)) {
@@ -231,7 +218,7 @@ public class FullTextSearchTest {
         // Search with wildcards
         Page<TestPojo> results = searchService.search(
             projectId, 
-            "fulltextField:BH*", 
+            "fulltextField:BH*",
             PageRequest.of(0, 10), 
             TestPojo.class
         );
