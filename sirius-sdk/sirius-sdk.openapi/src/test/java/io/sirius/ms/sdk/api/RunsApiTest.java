@@ -62,22 +62,7 @@ public class RunsApiTest {
 
         // TODO: test validations
     }
-    
-    /**
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
-     *
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     */
-    @Test
-    public void computeFoldChangeForBlankSubtractionTest()  {
-        String projectId = null;
-        SampleTypeFoldChangeRequest sampleTypeFoldChangeRequest = null;
-        List<JobOptField> optFields = null;
-        Job response = api.computeFoldChangeForBlankSubtraction(projectId, sampleTypeFoldChangeRequest, optFields);
 
-        // TODO: test validations
-    }
-    
     /**
      * [EXPERIMENTAL] Get run with the given identifier from the specified project-space
      *

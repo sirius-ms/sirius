@@ -25,21 +25,21 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.middleware.Pages;
 import de.unijena.bioinf.ms.gui.configs.ColorGenerator;
+import de.unijena.bioinf.ms.middleware.Pages;
+import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
-import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
@@ -55,8 +55,8 @@ import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
-import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork;
 import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNode;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
@@ -111,7 +111,8 @@ import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.LARGE_BATCH_SIZE;
 import static de.unijena.bioinf.ms.middleware.Pages.*;
-import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.*;
+import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.convertToFeatureQuality;
+import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.convertToQualityMap;
 import static org.springframework.http.HttpStatus.*;
 
 
@@ -1099,7 +1100,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(f -> convertToProjectFeature(f, profile))
                 .filter(Objects::nonNull).toList();
 
-        if (features.isEmpty()){
+        if (features.isEmpty()) {
             log.warn("Compound named '{}' does not contains a single supported feature. Skipping!", compoundImport.getName());
             return null;
         }
@@ -1130,7 +1131,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @Nullable
-    private AlignedFeatures convertToProjectFeature(FeatureImport featureImport, @Nullable InstrumentProfile profile){
+    private AlignedFeatures convertToProjectFeature(FeatureImport featureImport, @Nullable InstrumentProfile profile) {
         try {
             AlignedFeatures.AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
                     .name(featureImport.getName())
@@ -1355,25 +1356,23 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     public static FoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange foldChange) {
-        return convertToApiFoldChange((de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange) foldChange)
-                .quantType(QuantRowType.FEATURES)
-                .build();
+        return convertToApiFoldChange(foldChange, QuantRowType.FEATURES);
     }
 
     public static FoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange foldChange) {
-        return convertToApiFoldChange((de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange) foldChange)
-                .quantType(QuantRowType.COMPOUNDS)
-                .build();
+        return convertToApiFoldChange(foldChange, QuantRowType.COMPOUNDS);
     }
 
-    private static FoldChange.FoldChangeBuilder<?, ?> convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange foldChange) {
+    private static FoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange foldChange, QuantRowType quantRowType) {
         return FoldChange.builder()
+                .quantType(quantRowType)
                 .objectId(Long.toString(foldChange.getForeignId()))
                 .leftGroup(foldChange.getLeftGroup())
                 .rightGroup(foldChange.getRightGroup())
                 .aggregation(foldChange.getAggregation())
                 .quantification(foldChange.getQuantification())
-                .foldChange(foldChange.getFoldChange());
+                .foldChange(foldChange.getFoldChange())
+                .build();
     }
 
 
@@ -1668,6 +1667,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public void deleteCompoundById(String compoundId) {
         project().cascadeDeleteCompound(Long.parseLong(compoundId));
+        //todo update index.
     }
 
 
@@ -1870,8 +1870,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     /**
      * Imports features without compound grouping. Since grouping is unknown, each feature needs to belong to its own compound.
      * To group features as compounds together, please use add compounds instead.
-     * @param features the features to be imported into the project
-     * @param profile the instrument the features have been measured on.
+     *
+     * @param features  the features to be imported into the project
+     * @param profile   the instrument the features have been measured on.
      * @param optFields opt fields to be returned as part of the imported features/
      * @return imported features with selected opt fields and UUIDs for features and compounds.
      */
@@ -1906,12 +1907,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public void deleteAlignedFeaturesById(String alignedFeatureId) {
         project().cascadeDeleteAlignedFeatures(Long.parseLong(alignedFeatureId));
+        //todo update index
     }
 
     @Override
     @SneakyThrows
     public void deleteAlignedFeaturesByIds(List<String> alignedFeatureIds) {
         project().cascadeDeleteAlignedFeatures(alignedFeatureIds.stream().map(Long::parseLong).sorted().toList());
+        //todo update index
     }
 
     @SneakyThrows
@@ -2047,7 +2050,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             w.reset();
             w.start();
 
-            if(searchService != null)
+            if (searchService != null)
                 searchService.addTagsToDocuments(projectId, objectToTags, (Class<? extends Taggable>) target);
             System.out.println("Added/Updated Tags To LUCENE in: " + w);
 
@@ -2133,7 +2136,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
         storage().removeAll(Filter.where("tagName").eq(tagName), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class);
         storage().remove(tagDef);
-        //todo optimize find fifferent solution
+        //todo optimize find different solution
 
         searchService.removeTagValueType(projectId, tagName);
     }
@@ -2277,32 +2280,58 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     @SuppressWarnings("unchecked")
     public Page<FoldChange> listFoldChanges(QuantRowType statsTarget, Pageable pageable) {
-       return findPage(storage(), statsTarget.getProjectFoldChangeClass(), pageable)
-                .map(NoSQLProjectImpl::convertToApiFoldChange).map(FoldChange.FoldChangeBuilder::build);
+        return findPage(storage(), statsTarget.getProjectFoldChangeClass(), pageable)
+                .map(fc -> convertToApiFoldChange(fc, statsTarget));
     }
 
     @SneakyThrows
     @Override
     @SuppressWarnings("unchecked")
-    public  List<FoldChange> getFoldChanges(QuantRowType statsTarget, String objectId) {
+    public List<FoldChange> getFoldChanges(QuantRowType statsTarget, String objectId) {
         return storage()
                 .findStr(Filter.where(statsTarget.getTargetIdFieldName()).eq(Long.parseLong(objectId)), statsTarget.getProjectFoldChangeClass())
-                .map(NoSQLProjectImpl::convertToApiFoldChange)
-                .map(FoldChange.FoldChangeBuilder::build)
+                .map(fc -> convertToApiFoldChange(fc, statsTarget))
                 .collect(Collectors.toList());
     }
+
 
     @SneakyThrows
     @Override
     public void deleteFoldChange(QuantRowType statsTarget, String left, String right, AggregationType aggregation, QuantMeasure quantification) {
-        storage().removeAll(
+        Map<String, List<FoldChange>> foldChanges = new HashMap<>();
+        List<Long> toDelete = new ArrayList<>();
+
+        //finde folc changes to delte
+        storage().find(
                 Filter.and(
                         Filter.where("leftGroup").eq(left),
                         Filter.where("rightGroup").eq(right),
                         Filter.where("aggregation").eq(aggregation.toString()),
                         Filter.where("quantification").eq(quantification.toString())
                 ),
-                statsTarget.getProjectTargetClass());
+                statsTarget.getProjectFoldChangeClass()).forEach(fc -> {
+            toDelete.add(fc.getId());
+            FoldChange apiFc = convertToApiFoldChange(fc, statsTarget);
+            foldChanges.computeIfAbsent(apiFc.getObjectId(), s -> new ArrayList<>()).add(apiFc);
+        });
+
+       // delete fold changes from index.
+       switch (statsTarget) {
+            case FEATURES -> searchService.updateDocumentsFields(projectId, foldChanges.keySet(), af -> {
+                if (af.getStats() != null)
+                    af.getStats().removeAll(foldChanges.get(af.getAlignedFeatureId()));
+            }, AlignedFeature.class);
+            case COMPOUNDS -> searchService.updateDocumentsFields(projectId, foldChanges.keySet(), af -> {
+                if (af.getStats() != null)
+                    af.getStats().removeAll(foldChanges.get(af.getCompoundId()));
+            }, Compound.class);
+            default -> throw new IllegalArgumentException("Unknown fold change target!");
+        }
+
+        //delete fold changes from db
+        storage().removeAll(
+                Filter.where("id").in(toDelete.toArray(Long[]::new)),
+                statsTarget.getProjectFoldChangeClass());
     }
 
     private SpectralLibraryMatchSummary summarize(Filter filter) throws IOException {
@@ -2523,7 +2552,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             sSum.setFingerprint(AnnotationUtils.asBinaryFingerprint(match.getCandidate().getFingerprint()));
 
         if (optFields.contains(StructureCandidateScored.OptField.structureSvg))
-                sSum.setStructureSvg(Spectrums.smilesToSVGSilent(match.getCandidate().getSmiles()));
+            sSum.setStructureSvg(Spectrums.smilesToSVGSilent(match.getCandidate().getSmiles()));
 
         sSum.setFormulaId(String.valueOf(match.getFormulaId()));
         sSum.setRank(match.getStructureRank());
