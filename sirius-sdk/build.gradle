@@ -89,7 +89,7 @@ dependencies {
     api project(":sirius-sdk:sirius-sdk.openapi")
     api "org.springframework.boot:spring-boot-starter-webflux:$spring_boot_version"
     api "io.projectreactor.netty:reactor-netty-http:$reactor_netty_version"
-    api 'org.apache.lucene:lucene-core:10.1.0'
+    api "org.apache.lucene:lucene-core:$lucene_version"
 }
 
 openApiGenerate {
