@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 import java.nio.file.Files
 import java.util.stream.Collectors
 
@@ -156,6 +158,82 @@ tasks.register("generateOpenApiDocsAdvancedEnumsAsString") {
         }
     }
     finalizedBy "generateOpenApiDocs"
+}
+
+
+tasks.register("updateExperimentalExclusions") {
+    group "openApi"
+    description "Parses the generated OpenAPI spec and updates the STABLE_EXCLUSIONS list in MiddlewareAppOptions.java"
+
+    // Define inputs to ensure task runs when spec changes
+    def specFile = file("openapi-spec-enums-as-string.json")
+
+    // Adjust this path if your source folder structure is different
+    def javaSourceFile = file("src/main/java/de/unijena/bioinf/ms/frontend/subtools/middleware/MiddlewareAppOptions.java")
+
+    // Ensure the spec exists before running this task
+    dependsOn "generateOpenApiDocsEnumsAsString"
+
+    doLast {
+        if (!specFile.exists()) {
+            throw new GradleException("OpenAPI spec file not found: ${specFile}")
+        }
+        if (!javaSourceFile.exists()) {
+            throw new GradleException("Target Java source file not found: ${javaSourceFile}")
+        }
+
+        // 1. Parse the JSON Spec
+        def json = new JsonSlurper().parse(specFile)
+        def experimentalPaths = [] as Set
+
+        // 2. Iterate paths and extract [EXPERIMENTAL] endpoints
+        json.paths.each { pathKey, methods ->
+            // Check if any method in this path has the experimental tag in summary or description
+            boolean isExperimental = methods.any { method, details ->
+                def summary = details.get("summary", "")
+                def description = details.get("description", "")
+                return summary.contains("[EXPERIMENTAL]") || description.contains("[EXPERIMENTAL]")
+            }
+
+            if (isExperimental) {
+                // Normalize path: replace {param} with *
+                // Equivalent to python: re.sub(r'\{[^}]+\}', '*', path)
+                def normalizedPath = pathKey.replaceAll(/\{[^}]+\}/, "*")
+                experimentalPaths.add(normalizedPath)
+            }
+        }
+
+        // 3. Sort and Format (Java List.of style)
+        def sortedPaths = experimentalPaths.sort()
+        def javaListContent = sortedPaths.collect { "            \"$it\"" }.join(",\n")
+
+        // 4. Inject into Java File
+        def fileContent = javaSourceFile.text
+
+        // Regex to find: STABLE_EXCLUSIONS = List.of( ... );
+        // (?s) enables DOTALL so . matches newlines
+        def regex = /(?s)(private final static List<String> STABLE_EXCLUSIONS = List\.of\s*\()(.*?)(\);)/
+
+        def matcher = (fileContent =~ regex)
+        if (matcher.find()) {
+            def newContent = fileContent.replaceFirst(regex, "\$1\n${javaListContent}\n    \$3")
+
+            // Only write if changes are detected to preserve file timestamp if possible
+            if (fileContent != newContent) {
+                javaSourceFile.text = newContent
+                logger.lifecycle("Successfully updated STABLE_EXCLUSIONS in MiddlewareAppOptions.java with ${sortedPaths.size()} paths.")
+            } else {
+                logger.lifecycle("MiddlewareAppOptions.java is already up to date.")
+            }
+        } else {
+            logger.error("Could not find 'STABLE_EXCLUSIONS = List.of(...)' pattern in ${javaSourceFile.name}")
+        }
+    }
+}
+
+// Add this line after the task definition
+tasks.named("generateOpenApiDocsEnumsAsString") {
+    finalizedBy "updateExperimentalExclusions"
 }
 
 //###################################### Start Default values ##########################################
