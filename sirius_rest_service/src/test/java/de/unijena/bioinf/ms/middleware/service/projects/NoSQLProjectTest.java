@@ -50,6 +50,7 @@ import lombok.SneakyThrows;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.time.StopWatch;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AutoClose;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -121,7 +122,6 @@ public class NoSQLProjectTest {
 
         List<CompoundImport> imports = List.of(CompoundImport.builder().name("foo").features(
                 List.of(FeatureImport.builder()
-//                            .name("foo")
                         .externalFeatureId("testFID")
                         .ionMass(42d)
                         .charge(1)
@@ -168,8 +168,7 @@ public class NoSQLProjectTest {
         assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(1), d2.getMs2Spectra().get(1)));
     }
 
-    @Test
-    public void testFeatures() {
+    private static List<FeatureImport> dummyFeatureImport(@Nullable String name, @Nullable String externalFeatureId){
         BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
         BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
 
@@ -178,9 +177,9 @@ public class NoSQLProjectTest {
         ms2.setPrecursorMz(42d);
         ms2.setScanNumber(5);
 
-        List<FeatureImport> imports = List.of(FeatureImport.builder()
-                .name("foo")
-                .externalFeatureId("testFID")
+        return List.of(FeatureImport.builder()
+                .name(name)
+                .externalFeatureId(externalFeatureId)
                 .ionMass(42d)
                 .charge(1)
                 .detectedAdducts(Set.of("M+H+"))
@@ -191,6 +190,12 @@ public class NoSQLProjectTest {
                 .ms1Spectra(List.of(ms1))
                 .ms2Spectra(List.of(ms2, ms2))
                 .build());
+    }
+
+    @Test
+    public void testFeatures() {
+
+        List<FeatureImport> imports = dummyFeatureImport("foo","testFID");
 
         List<AlignedFeature> features = project.addAlignedFeatures(imports, null, EnumSet.of(AlignedFeature.OptField.msData));
         List<AlignedFeature> features2 = project.findAlignedFeatures(null, Pageable.unpaged(), false, EnumSet.of(AlignedFeature.OptField.msData)).getContent();
@@ -462,11 +467,12 @@ public class NoSQLProjectTest {
         project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().tagName("sample").value("sample").build()));
         project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").value("blank").build()));
 
-        AlignedFeatures af = AlignedFeatures.builder().name("af").build();
-        ps.getStorage().insert(af);
+        List<FeatureImport> afImport = dummyFeatureImport("af", null);
+        AlignedFeature af = project.addAlignedFeatures(afImport, null, EnumSet.noneOf(AlignedFeature.OptField.class)).getFirst();
+        long afId = Long.parseLong(af.getAlignedFeatureId());
 
-        Feature f1 = Feature.builder().alignedFeatureId(af.getAlignedFeatureId()).apexIntensity(2.0).runId(runs.get(0).getRunId()).build();
-        Feature f2 = Feature.builder().alignedFeatureId(af.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
+        Feature f1 = Feature.builder().alignedFeatureId(afId).apexIntensity(2.0).runId(runs.get(0).getRunId()).build();
+        Feature f2 = Feature.builder().alignedFeatureId(afId).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
         ps.getStorage().insertAll(List.of(f1, f2));
 
         project.addTagGroup("sample", "tags.sample:sample", "type1");
@@ -477,23 +483,24 @@ public class NoSQLProjectTest {
                 QuantRowType.FEATURES
         ).awaitResult();
 
-        List<FoldChange> fc = project.getFoldChanges(QuantRowType.FEATURES, Long.toString(af.getAlignedFeatureId()));
+        List<FoldChange> fc = project.getFoldChanges(QuantRowType.FEATURES, af.getAlignedFeatureId());
         assertEquals(1, fc.size());
         assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
         assertEquals(FoldChange.class, fc.getFirst().getClass());
-        assertEquals(Long.toString(af.getAlignedFeatureId()), fc.getFirst().getObjectId());
+        assertEquals(af.getAlignedFeatureId(), fc.getFirst().getObjectId());
         fc = project.listFoldChanges(QuantRowType.FEATURES, Pageable.unpaged()).getContent();
         assertEquals(1, fc.size());
         assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
         assertEquals(FoldChange.class, fc.getFirst().getClass());
-        assertEquals(Long.toString(af.getAlignedFeatureId()), fc.getFirst().getObjectId());
+        assertEquals(af.getAlignedFeatureId(), fc.getFirst().getObjectId());
 
 
-        AlignedFeatures af2 = AlignedFeatures.builder().name("af2").build();
-        ps.getStorage().insert(af2);
+        List<FeatureImport> af2Import = dummyFeatureImport("af2", null);
+        AlignedFeature af2 = project.addAlignedFeatures(af2Import, null, EnumSet.noneOf(AlignedFeature.OptField.class)).getFirst();
+        long af2Id = Long.parseLong(af2.getAlignedFeatureId());
 
-        Feature f21 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(3.0).runId(runs.get(0).getRunId()).build();
-        Feature f22 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
+        Feature f21 = Feature.builder().alignedFeatureId(af2Id).apexIntensity(3.0).runId(runs.get(0).getRunId()).build();
+        Feature f22 = Feature.builder().alignedFeatureId(af2Id).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
         ps.getStorage().insertAll(List.of(f21, f22));
 
         new BackgroundRuns(project, null).runFoldChange(FoldChangeJobSubmission.of("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY), QuantRowType.FEATURES).awaitResult();
@@ -538,8 +545,8 @@ public class NoSQLProjectTest {
         assertEquals(0, table3.getColumnRightGroups().length);
 
         assertEquals(2, table1.getRowIds().length);
-        assertTrue(Arrays.binarySearch(table1.getRowIds(), Long.toString(af.getAlignedFeatureId())) >= 0);
-        assertTrue(Arrays.binarySearch(table1.getRowIds(), Long.toString(af2.getAlignedFeatureId())) >= 0);
+        assertTrue(Arrays.binarySearch(table1.getRowIds(), af.getAlignedFeatureId()) >= 0);
+        assertTrue(Arrays.binarySearch(table1.getRowIds(), af2.getAlignedFeatureId()) >= 0);
 
         double[] vals = Arrays.stream(table1.getValues()).mapToDouble(col -> {
             assertEquals(1, col.length);
