@@ -126,6 +126,8 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code tags.MyTagA:/[mb]oat/}</li>
      *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code tags.MyTagB<3}</li>
      *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code tags.MyTagB:[* TO 3] }</li>
+     *     <li>a <strong>boolean</strong>: tags with boolean value are matched as follows: e.g. {@code tags.MyTagA:true}, {@code tags.MyTagA:false}</li>
+     *     <li>a <strong>value-less</strong>: tags without values (See TagDefinition) are matched as follows: e.g. {@code tags.MyTagA:*} or {@code tags.MyTagA:true}</li>
      * </ul>
      *
      * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>
