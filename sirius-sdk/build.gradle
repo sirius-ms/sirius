@@ -103,4 +103,11 @@ openApiGenerate {
     groupId.set("io.sirius-ms")
     version.set(project.version.toString())
     configFile.set("$projectDir/openapi-gen-config.json")
+
+    typeMappings.set([
+            "AnyValue": "Object"
+    ])
+    importMappings.set([
+            "Object": "java.lang.Object"
+    ])
 }

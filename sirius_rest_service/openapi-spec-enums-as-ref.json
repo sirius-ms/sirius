@@ -7997,6 +7997,27 @@
           "UNALIGNED_RUNS"
         ]
       },
+      "AnyValue": {
+        "type": "object",
+        "description": "Can be a String, Number or Boolean",
+        "nullable": true,
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
       "TagDefinitionImport": {
         "required": [
           "tagName",
@@ -8025,17 +8046,14 @@
             "type": "array",
             "nullable": true,
             "items": {
-              "type": "object",
-              "nullable": true
+              "$ref": "#/components/schemas/AnyValue"
             }
           },
           "minValue": {
-            "type": "object",
-            "nullable": true
+            "$ref": "#/components/schemas/AnyValue"
           },
           "maxValue": {
-            "type": "object",
-            "nullable": true
+            "$ref": "#/components/schemas/AnyValue"
           }
         }
       },
@@ -8079,17 +8097,14 @@
             "type": "array",
             "nullable": true,
             "items": {
-              "type": "object",
-              "nullable": true
+              "$ref": "#/components/schemas/AnyValue"
             }
           },
           "minValue": {
-            "type": "object",
-            "nullable": true
+            "$ref": "#/components/schemas/AnyValue"
           },
           "maxValue": {
-            "type": "object",
-            "nullable": true
+            "$ref": "#/components/schemas/AnyValue"
           },
           "editable": {
             "type": "boolean"
