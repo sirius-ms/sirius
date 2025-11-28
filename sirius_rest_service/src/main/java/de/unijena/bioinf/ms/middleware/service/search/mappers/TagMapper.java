@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
+import static org.apache.lucene.document.Field.Store.NO;
 import static org.apache.lucene.document.Field.Store.YES;
 
 public class TagMapper implements FieldMapper<Map<String, Tag>> {
@@ -56,7 +57,7 @@ public class TagMapper implements FieldMapper<Map<String, Tag>> {
     private Tag convertFieldToTag(int namSpaceLength, IndexableField tagField) {
         String tagName = tagField.name().substring(namSpaceLength);
         @NotNull ValueType valueType = valueTypeProvider.apply(tagName);
-        Object formattedValue = null;
+        Object formattedValue = null; // NONE tags get stay null
 
         switch (valueType) {
             case BOOLEAN -> formattedValue = Boolean.valueOf(tagField.stringValue());
@@ -110,6 +111,7 @@ public class TagMapper implements FieldMapper<Map<String, Tag>> {
                 fields.add(new LongPoint(tagFieldName, (Long) value));
                 fields.add(new StoredField(tagFieldName, (String) formattedValue));
             }
+            case NONE -> fields.add(new StringField(tagFieldName, Boolean.TRUE.toString(), NO));
             default -> throw new IllegalArgumentException("Unsupported ValueType for tag: " + valueType);
         }
         return fields;
