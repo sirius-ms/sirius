@@ -38,6 +38,7 @@ public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPan
 
     public ActZodiacConfigPanel(SiriusGui gui, List<InstanceBean> compounds) {
         super(gui, "ZODIAC", Icons.ZODIAC.derive(32,32), ZodiacConfigPanel::new, compounds, SoftwareTourInfoStore.BatchCompute_ZODIAC);
+        optionalTool = true;
     }
 
     @Override
