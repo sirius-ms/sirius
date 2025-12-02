@@ -68,7 +68,6 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
     protected String notConnectedMessage = "Cannot connect to the server";  // Can be overridden in subclasses
 
     protected final long totalCompounds;
-    @Getter
     protected final long computedCompounds;
 
     protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl, List<InstanceBean> compounds, SoftwareTourInfo tourInfo) {
@@ -105,7 +104,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
         computedCompounds = compounds.stream().map(InstanceBean::getComputedTools).filter(this::isComputed).count();
 
         countLabel = new JLabel();
-        updateCountLabel();
+        countLabel.setText(String.format("<html><small>%s / %s computed</small></html>", computedCompounds, totalCompounds));
+        countLabel.setToolTipText(String.format("%s of %s selected features already have %s results", computedCompounds, totalCompounds, toolName));
 
         add(activationButton,"cell 0 0, split 2, flowy, alignx center, aligny top");
         add(countLabel, "alignx center, gaptop 2");
@@ -130,15 +130,10 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
         setComponentsEnabled(activationButton.isSelected());
     }
 
-    protected void updateCountLabel() {
-        countLabel.setText(String.format("<html><small>%s / %s computed</small></html>", getComputedCompounds(), totalCompounds));
-        countLabel.setToolTipText(String.format("%s of %s selected features already have %s results", getComputedCompounds(), totalCompounds, toolName));
-    }
-
     protected abstract boolean isComputed(@NotNull ComputedSubtools computedSubtools);
 
     protected boolean allComputed() {
-        return getComputedCompounds() == totalCompounds;
+        return computedCompounds == totalCompounds;
     }
 
     protected void processConnectionCheck(ConnectionCheck check) {
@@ -215,19 +210,19 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
     public void addToolDependency(ActivatableConfigPanel<?> upstreamTool) {
         this.addToolDependencyListener((c, enabled) -> {
             if (enabled && !upstreamTool.isToolSelected() && !upstreamTool.allComputed()) {
-                if (upstreamTool.getComputedCompounds() == 0) {
+                if (upstreamTool.computedCompounds == 0) {
                     upstreamTool.activationButton.doClick(0);
                 } else {
-                    showAutoEnableInfoDialog(String.format("<html>Results from upstream tool(s) are needed for the tool you selected but are only available for %s of %s features.</html>", upstreamTool.getComputedCompounds(), upstreamTool.totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM);
+                    showAutoEnableInfoDialog(String.format("<html>Results from upstream tool(s) are needed for the tool you selected but are only available for %s of %s features.</html>", upstreamTool.computedCompounds, upstreamTool.totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM);
                 }
             }
         });
         upstreamTool.addToolDependencyListener((c, enabled) -> {
             if (!enabled && this.isToolSelected() && !upstreamTool.allComputed()) {
-                if (upstreamTool.getComputedCompounds() == 0) {
+                if (upstreamTool.computedCompounds == 0) {
                     this.activationButton.doClick(0);
                 } else {
-                    showAutoEnableInfoDialog(String.format("<html>Results from the tool you deactivated are needed for downstream tool(s) but are only available for %s of %s features.</html>", getComputedCompounds(), totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM);
+                    showAutoEnableInfoDialog(String.format("<html>Results from the tool you deactivated are needed for downstream tool(s) but are only available for %s of %s features.</html>", computedCompounds, totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM);
                 }
             }
         });

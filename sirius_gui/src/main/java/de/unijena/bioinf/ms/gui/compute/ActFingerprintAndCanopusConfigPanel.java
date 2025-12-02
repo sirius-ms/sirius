@@ -30,25 +30,15 @@ import java.util.List;
 
 public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<FingerprintAndCanopusConfigPanel> {
 
-    private final ActFormulaIDConfigPanel formulaIDConfigPanel;
-
-    public ActFingerprintAndCanopusConfigPanel(@NotNull SiriusGui gui, List<InstanceBean> compounds, ActFormulaIDConfigPanel formulaIdConfigPanel) {
+    public ActFingerprintAndCanopusConfigPanel(@NotNull SiriusGui gui, List<InstanceBean> compounds) {
         super(gui, "Predict", FingerprintAndCanopusConfigPanel.description,
                 Icons.FINGER.derive(32,32), true, FingerprintAndCanopusConfigPanel::new,
                 compounds, SoftwareTourInfoStore.BatchCompute_FingerprintCanopus);
         notConnectedMessage = "Can't connect to prediction server!";
-        this.formulaIDConfigPanel = formulaIdConfigPanel;
-
-        this.formulaIDConfigPanel.addEnableChangeListener((c, enabled) -> updateCountLabel());
     }
 
     @Override
     protected boolean isComputed(@NotNull ComputedSubtools computedSubtools) {
         return Boolean.TRUE.equals(computedSubtools.isCanopus()) && Boolean.TRUE.equals(computedSubtools.isFingerprint());
-    }
-
-    @Override
-    public long getComputedCompounds() {
-        return formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected() ? 0 : computedCompounds;
     }
 }
