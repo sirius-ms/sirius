@@ -31,6 +31,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-core:$lucene_version"
     implementation "org.apache.lucene:lucene-queryparser:$lucene_version"
     implementation "org.apache.lucene:lucene-analysis-common:$lucene_version"
+    implementation "org.apache.lucene:lucene-backward-codecs:$lucene_version"
 
 //    implementation("org.springframework.boot:spring-boot-properties-migrator")
     implementation project(':sirius_cli')
