@@ -34,6 +34,7 @@ public class ActSpectraSearchConfigPanel extends ActivatableConfigPanel<SpectraS
 
     public ActSpectraSearchConfigPanel(SiriusGui gui, List<InstanceBean> compounds, GlobalConfigPanel globalConfigPanel) {
         super(gui, "Spectral Matching", Icons.SPEC_SEARCH.derive(32, 32), () -> new SpectraSearchConfigPanel(globalConfigPanel), compounds, SoftwareTourInfoStore.BatchCompute_SpectraSearch);
+        optionalTool = true;
 
         if (activationButton.isSelected()) {
             if (globalConfigPanel.getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb)) {

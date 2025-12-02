@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static de.unijena.bioinf.ms.gui.compute.ActivatableConfigPanel.DO_NOT_SHOW_TOOL_AUTOENABLE;
-
 
 public class ComputeToolPanel extends JPanel {
     public static final String PRESET_FROZEN_MESSAGE = "Could not load preset.";
@@ -65,8 +63,6 @@ public class ComputeToolPanel extends JPanel {
         add(formulaIDConfigPanel, "cell 0 5, aligny top,  wrap");
 
         if (hasMs2) {
-            final boolean compoundClassesAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isCanopus());
-
             add(new JXTitledSeparator("Spectral Library Search"), "cell 0 2, growx, spanx 2, aligny top, wrap");
             add(spectraSearchConfigPanel, "cell 0 3, spanx 2, aligny top, wrap");
 
@@ -84,17 +80,12 @@ public class ComputeToolPanel extends JPanel {
             add(new JXTitledSeparator("MSNovelist - De Novo Structure Generation"), "cell 1 8, growx, aligny top, wrap");
             add(msNovelistConfigs, "cell 1 9, aligny top, wrap");
 
-
+            formulaIDConfigPanel.addToolDependency(spectraSearchConfigPanel);
+            zodiacConfigs.addToolDependency(formulaIDConfigPanel);
             fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel);
+            fingerprintAndCanopusConfigPanel.addToolDependency(zodiacConfigs);
             csiSearchConfigs.addToolDependency(fingerprintAndCanopusConfigPanel);
             msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel);
-            // computing formulaId will discard fingerprints, so we need to enable it for structure search
-            formulaIDConfigPanel.addToolDependencyListener((c, enabled) -> {
-                if (enabled && !fingerprintAndCanopusConfigPanel.isToolSelected() && (csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected())) {
-                    fingerprintAndCanopusConfigPanel.activationButton.doClick(0);
-                    fingerprintAndCanopusConfigPanel.showAutoEnableInfoDialog(String.format("<html>%s is activated because a downstream tool needs its input, which would be deleted by running %s.</html>", fingerprintAndCanopusConfigPanel.toolName, formulaIDConfigPanel.toolName), DO_NOT_SHOW_TOOL_AUTOENABLE);
-                }
-            });
         }
     }
 

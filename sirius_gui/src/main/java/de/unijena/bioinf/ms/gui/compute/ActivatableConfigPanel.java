@@ -47,7 +47,6 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 
 public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPanel {
 
-    public static final String DO_NOT_SHOW_TOOL_AUTOENABLE = "de.unijena.bioinf.sirius.computeDialog.autoEnable.dontAskAgain";
     public static final String DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM = "de.unijena.bioinf.sirius.computeDialog.partialResultsDownstream.dontAskAgain";
     public static final String DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM = "de.unijena.bioinf.sirius.computeDialog.partialResultsUpstream.dontAskAgain";
 
@@ -69,6 +68,9 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
 
     protected final long totalCompounds;
     protected final long computedCompounds;
+    protected final List<ActivatableConfigPanel<?>> upstreamTools = new ArrayList<>();
+    protected final List<ActivatableConfigPanel<?>> downstreamTools = new ArrayList<>();
+    protected boolean optionalTool = false;
 
     protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl, List<InstanceBean> compounds, SoftwareTourInfo tourInfo) {
         this(gui, toolname, null, buttonIcon, false, contentSuppl, compounds, tourInfo);
@@ -142,10 +144,32 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
 
     protected void setComponentsEnabled(final boolean enabled) {
         GuiUtils.setEnabled(content, enabled);
-        listeners.forEach(e -> {
-            if (e instanceof ActivatableConfigPanel.ToolDependencyListener<C> && suppressDependencyListeners) return;
-            e.onChange(content, enabled);
-        });
+
+        if (!suppressDependencyListeners) {
+            for (ActivatableConfigPanel<?> upstreamTool : upstreamTools) {
+                if (enabled && !upstreamTool.isToolSelected() && !upstreamTool.allComputed() && !upstreamTool.optionalTool) {
+                    if (upstreamTool.computedCompounds == 0) {
+                        upstreamTool.activationButton.doClick(0);
+                    } else {
+                        showAutoEnableInfoDialog(String.format("<html>Results from upstream tool(s) are needed for the tool you selected but are only available for %s of %s features.</html>", upstreamTool.computedCompounds, upstreamTool.totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM);
+                    }
+                }
+            }
+
+            for (ActivatableConfigPanel<?> downstreamTool : downstreamTools) {
+                if (!enabled && downstreamTool.isToolSelected() && !allComputed() && !optionalTool) {
+                    if (computedCompounds == 0) {
+                        downstreamTool.activationButton.doClick(0);
+                    } else {
+                        showAutoEnableInfoDialog(String.format("<html>Results from the tool you deactivated are needed for downstream tool(s) but are only available for %s of %s features.</html>", computedCompounds, totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM);
+                    }
+                }
+            }
+
+            // TODO broken chain
+        }
+
+        listeners.forEach(e -> e.onChange(content, enabled));
     }
 
     protected void setButtonEnabled(final boolean enabled, @Nullable String reason) {
@@ -185,12 +209,6 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
         listeners.add(listener);
     }
 
-    /**
-     * Add a listener for auto enabling tools
-     */
-    public void addToolDependencyListener(ToolDependencyListener<C> listener) {
-        addEnableChangeListener(listener);
-    }
 
 
     @FunctionalInterface
@@ -199,33 +217,12 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
     }
 
     /**
-     * Separate interface to distinguish and suppress dependency listeners
-     */
-    public interface ToolDependencyListener<C extends ConfigPanel> extends EnableChangeListener<C> {}
-
-    /**
-     * Add listeners that enable the upstream tool if this gets enabled, and disable this if the upstream gets disabled
+     * Add upstream tool for auto enabling/disabling
      * @param upstreamTool the tool which produces the data required for this tool
      */
     public void addToolDependency(ActivatableConfigPanel<?> upstreamTool) {
-        this.addToolDependencyListener((c, enabled) -> {
-            if (enabled && !upstreamTool.isToolSelected() && !upstreamTool.allComputed()) {
-                if (upstreamTool.computedCompounds == 0) {
-                    upstreamTool.activationButton.doClick(0);
-                } else {
-                    showAutoEnableInfoDialog(String.format("<html>Results from upstream tool(s) are needed for the tool you selected but are only available for %s of %s features.</html>", upstreamTool.computedCompounds, upstreamTool.totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM);
-                }
-            }
-        });
-        upstreamTool.addToolDependencyListener((c, enabled) -> {
-            if (!enabled && this.isToolSelected() && !upstreamTool.allComputed()) {
-                if (upstreamTool.computedCompounds == 0) {
-                    this.activationButton.doClick(0);
-                } else {
-                    showAutoEnableInfoDialog(String.format("<html>Results from the tool you deactivated are needed for downstream tool(s) but are only available for %s of %s features.</html>", computedCompounds, totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM);
-                }
-            }
-        });
+        upstreamTools.add(upstreamTool);
+        upstreamTool.downstreamTools.add(this);
     }
 
     public void showAutoEnableInfoDialog(String message, String property) {
