@@ -49,7 +49,7 @@ public class ComputeToolPanel extends JPanel {
         spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, compoundsToProcess, globalConfigPanel);
         formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, compoundsToProcess, globalConfigPanel, hasMs2);
         zodiacConfigs = new ActZodiacConfigPanel(gui, compoundsToProcess);
-        fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui, compoundsToProcess, formulaIDConfigPanel);
+        fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui, compoundsToProcess);
         csiSearchConfigs = new ActFingerblastConfigPanel(gui, compoundsToProcess, globalConfigPanel);
         msNovelistConfigs = new ActMSNovelistConfigPanel(gui, compoundsToProcess);
 
