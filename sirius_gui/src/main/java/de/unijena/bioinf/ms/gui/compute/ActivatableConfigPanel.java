@@ -40,6 +40,7 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -59,7 +60,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
     protected PropertyChangeListener listener;
     protected final SiriusGui gui;
 
-    protected boolean suppressDependencyListeners = false;
+    private boolean suppressDependencyListeners = false;
 
     protected LinkedHashSet<EnableChangeListener<C>> listeners = new LinkedHashSet<>();
 
@@ -166,7 +167,23 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
                 }
             }
 
-            // TODO broken chain
+            if (enabled) {
+                // Check if enabling this tool creates a "broken chain" either upstream or downstream and activate missing tools
+                List<ActivatableConfigPanel<?>> brokenChain = checkBrokenChain(new ArrayList<>(), t -> t.upstreamTools);
+                brokenChain.addAll(checkBrokenChain(new ArrayList<>(), t -> t.downstreamTools));
+                for (ActivatableConfigPanel<?> missingTool : new HashSet<>(brokenChain)) {
+                    missingTool.clickIgnoreDependencies();
+                }
+            } else {
+                // Check if disabling this tool creates a broken chain, and, if so, disable the downstream tools
+                if (findEnabled(t -> t.upstreamTools) != null) {
+                    ActivatableConfigPanel<?> downstreamEnabled = findEnabled(t -> t.downstreamTools);
+                    while (downstreamEnabled != null) {
+                        downstreamEnabled.clickIgnoreDependencies();
+                        downstreamEnabled = findEnabled(t -> t.downstreamTools);
+                    }
+                }
+            }
         }
 
         listeners.forEach(e -> e.onChange(content, enabled));
@@ -243,11 +260,63 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
      */
     public void applyValuesFromPreset(boolean enable, Map<String, String> preset) {
         if (enable != isToolSelected()) {
-            suppressDependencyListeners = true;  // avoid annoying dialogs in the middle of preset activation
+            clickIgnoreDependencies();
+        }
+        content.applyValuesFromPreset(preset);
+    }
+
+    /**
+     * Recursively walk the tool dependency graph and check if there is a "broken chain" - deactivated tools between the current and some activated tool
+     * @param currentChain the chain of deactivated tools found so far up to this
+     * @param nextTools either upstream or downstream tool function
+     * @return deactivated "missing" tools between this and some next active tool
+     */
+    private List<ActivatableConfigPanel<?>> checkBrokenChain(List<ActivatableConfigPanel<?>> currentChain, Function<ActivatableConfigPanel<?>, List<ActivatableConfigPanel<?>>> nextTools) {
+        List<ActivatableConfigPanel<?>> brokenChain = new ArrayList<>();
+        for (ActivatableConfigPanel<?> nextTool : nextTools.apply(this)) {
+            if (nextTool.isToolSelected()) {
+                brokenChain.addAll(currentChain);
+            } else if (!nextTool.optionalTool) {
+                List<ActivatableConfigPanel<?>> nextChain = new ArrayList<>(currentChain);
+                nextChain.add(nextTool);
+                brokenChain.addAll(nextTool.checkBrokenChain(nextChain, nextTools));
+            }
+        }
+        return brokenChain;
+    }
+
+    /**
+     * Recursively finds an enabled tool among next tools
+     * @param nextTools either upstream or downstream tool function
+     * @return enabled tool or null if all next tools are disabled
+     */
+    @Nullable
+    private ActivatableConfigPanel<?> findEnabled(Function<ActivatableConfigPanel<?>, List<ActivatableConfigPanel<?>>> nextTools) {
+        for (ActivatableConfigPanel<?> nextTool : nextTools.apply(this)) {
+            if (nextTool.isToolSelected()) {
+                return nextTool;
+            } else if (!nextTool.optionalTool) {
+                ActivatableConfigPanel<?> furtherEnabled = nextTool.findEnabled(nextTools);
+                if (furtherEnabled != null) {
+                    return furtherEnabled;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Simulate a click to (de)activate the tool, but ignore all upstream/downstream tool logic
+     */
+    protected void clickIgnoreDependencies() {
+        if (suppressDependencyListeners) {
+            activationButton.doClick(0);
+        } else {
+            suppressDependencyListeners = true;
             activationButton.doClick(0);
             suppressDependencyListeners = false;
         }
-        content.applyValuesFromPreset(preset);
+
     }
 }
 
