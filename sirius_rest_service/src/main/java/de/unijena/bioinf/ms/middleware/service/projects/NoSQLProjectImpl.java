@@ -1328,8 +1328,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                         .stream()
                         .map(formatter::toFormattedGeneric)
                         .collect(Collectors.toList()))
-                .minValue(valueDef.getMinValue())
-                .maxValue(valueDef.getMaxValue())
+                .minValue(formatter.toFormattedGeneric(valueDef.getMinValue()))
+                .maxValue(formatter.toFormattedGeneric(valueDef.getMaxValue()))
                 .build();
     }
 
