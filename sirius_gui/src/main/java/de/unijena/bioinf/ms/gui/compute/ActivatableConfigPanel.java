@@ -170,7 +170,6 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
             }
 
             if (enabled) {
-                // Check if enabling this tool creates a "broken chain" either upstream or downstream and activate missing tools
                 List<ActivatableConfigPanel<?>> brokenChain = checkBrokenChain(new ArrayList<>(), t -> t.upstreamTools);
                 brokenChain.addAll(checkBrokenChain(new ArrayList<>(), t -> t.downstreamTools));
                 if (!brokenChain.isEmpty()) {
@@ -180,7 +179,6 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
                     missingTool.clickIgnoreDependencies();
                 }
             } else if (!optionalTool) {
-                // Check if disabling this tool creates a broken chain, and, if so, disable the downstream tools
                 if (findEnabled(t -> t.upstreamTools) != null) {
                     ActivatableConfigPanel<?> downstreamEnabled = findEnabled(t -> t.downstreamTools);
                     if (downstreamEnabled != null) {
