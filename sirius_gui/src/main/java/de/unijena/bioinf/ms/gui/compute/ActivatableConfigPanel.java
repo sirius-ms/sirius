@@ -50,6 +50,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
 
     public static final String DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM = "de.unijena.bioinf.sirius.computeDialog.partialResultsDownstream.dontAskAgain";
     public static final String DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM = "de.unijena.bioinf.sirius.computeDialog.partialResultsUpstream.dontAskAgain";
+    public static final String DO_NOT_SHOW_BROKEN_CHAIN_ACTIVATE = "de.unijena.bioinf.sirius.computeDialog.brokenChain.activate.dontAskAgain";
+    public static final String DO_NOT_SHOW_BROKEN_CHAIN_DEACTIVATE = "de.unijena.bioinf.sirius.computeDialog.brokenChain.deactivate.dontAskAgain";
 
     protected ToolbarToggleButton activationButton;
     protected JLabel countLabel;
@@ -171,13 +173,19 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
                 // Check if enabling this tool creates a "broken chain" either upstream or downstream and activate missing tools
                 List<ActivatableConfigPanel<?>> brokenChain = checkBrokenChain(new ArrayList<>(), t -> t.upstreamTools);
                 brokenChain.addAll(checkBrokenChain(new ArrayList<>(), t -> t.downstreamTools));
+                if (!brokenChain.isEmpty()) {
+                    showAutoEnableInfoDialog(String.format("<html>You enabled %s, creating a \"broken\" toolchain. Missing tools will be automatically enabled.</html>", toolName), DO_NOT_SHOW_BROKEN_CHAIN_ACTIVATE);
+                }
                 for (ActivatableConfigPanel<?> missingTool : new HashSet<>(brokenChain)) {
                     missingTool.clickIgnoreDependencies();
                 }
-            } else {
+            } else if (!optionalTool) {
                 // Check if disabling this tool creates a broken chain, and, if so, disable the downstream tools
                 if (findEnabled(t -> t.upstreamTools) != null) {
                     ActivatableConfigPanel<?> downstreamEnabled = findEnabled(t -> t.downstreamTools);
+                    if (downstreamEnabled != null) {
+                        showAutoEnableInfoDialog(String.format("<html>You disabled %s, creating a \"broken\" toolchain. Downstream tools will be automatically disabled.</html>", toolName), DO_NOT_SHOW_BROKEN_CHAIN_DEACTIVATE);
+                    }
                     while (downstreamEnabled != null) {
                         downstreamEnabled.clickIgnoreDependencies();
                         downstreamEnabled = findEnabled(t -> t.downstreamTools);
