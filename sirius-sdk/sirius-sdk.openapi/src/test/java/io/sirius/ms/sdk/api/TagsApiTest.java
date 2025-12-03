@@ -36,6 +36,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,9 +66,17 @@ public class TagsApiTest {
      */
     @Test
     public void addGroupTest() {
-        String groupName = "TestGroup_" + UUID.randomUUID().toString();
-        // A simple query syntax assuming standard Lucene or SIRIUS filter syntax
-        String filter = "tag:value";
+        // 1. Create a Tag Definition first to make the query realistic
+        String tagName = "priority_" + UUID.randomUUID();
+        TagDefinitionImport tagImport = new TagDefinitionImport()
+                .tagName(tagName)
+                .valueType(ValueType.TEXT);
+        api.createTags(projectId, List.of(tagImport));
+
+        // 2. Create a Group using a real Lucene query syntax targeting that tag
+        String groupName = "HighPriority_" + UUID.randomUUID();
+        // Realistic query: tags.tagName:value
+        String filter = "tags." + tagName + ":high";
         String type = "USER_DEFINED";
 
         TagGroup response = api.addGroup(projectId, groupName, filter, type);
@@ -146,8 +155,10 @@ public class TagsApiTest {
      */
     @Test
     public void deleteGroupTest() {
-        String groupName = "GroupToDelete_" + UUID.randomUUID().toString();
-        api.addGroup(projectId, groupName, "query", "temp");
+        String groupName = "GroupToDelete_" + UUID.randomUUID();
+        // Use a realistic fallback query if tags aren't involved, e.g., filtering by ID or name
+        String validQuery = "name:Run1";
+        api.addGroup(projectId, groupName, validQuery, "temp");
 
         // Verify it exists first
         assertNotNull(api.getGroupByName(projectId, groupName));
@@ -167,7 +178,7 @@ public class TagsApiTest {
      */
     @Test
     public void deleteTagTest() {
-        String tagName = "TagToDelete";
+        String tagName = "TagToDelete_" + UUID.randomUUID();
         TagDefinitionImport tagImport = new TagDefinitionImport()
                 .tagName(tagName)
                 .valueType(ValueType.BOOLEAN); // Simple boolean tag
@@ -192,14 +203,16 @@ public class TagsApiTest {
      */
     @Test
     public void getGroupByNameTest() {
-        String groupName = "SpecificGroup_" + UUID.randomUUID().toString();
-        api.addGroup(projectId, groupName, "intensity > 100", "FILTER");
+        String groupName = "SpecificGroup_" + UUID.randomUUID();
+        // Realistic query: filtering by intensity
+        String query = "intensity > 100";
+        api.addGroup(projectId, groupName, query, "FILTER");
 
         TagGroup response = api.getGroupByName(projectId, groupName);
 
         assertNotNull(response);
         assertEquals(groupName, response.getGroupName());
-        assertEquals("intensity > 100", response.getLuceneQuery());
+        assertEquals(query, response.getLuceneQuery());
     }
 
     /**
@@ -210,21 +223,95 @@ public class TagsApiTest {
         // Create two groups with different types
         String typeA = "TypeA";
         String typeB = "TypeB";
+        String group1 = "Group1_" + UUID.randomUUID();
+        String group2 = "Group2_" + UUID.randomUUID();
 
-        api.addGroup(projectId, "Group1", "q1", typeA);
-        api.addGroup(projectId, "Group2", "q2", typeB);
+        // Realistic queries
+        api.addGroup(projectId, group1, "name:Query1", typeA);
+        api.addGroup(projectId, group2, "name:Query2", typeB);
 
         // Fetch all groups
         List<TagGroup> allGroups = api.getGroups(projectId, null);
         assertNotNull(allGroups);
-        assertTrue(allGroups.stream().anyMatch(g -> g.getGroupName().equals("Group1")));
-        assertTrue(allGroups.stream().anyMatch(g -> g.getGroupName().equals("Group2")));
+        assertTrue(allGroups.stream().anyMatch(g -> g.getGroupName().equals(group1)));
+        assertTrue(allGroups.stream().anyMatch(g -> g.getGroupName().equals(group2)));
 
         // Fetch groups filtered by type
         List<TagGroup> typeAGroups = api.getGroups(projectId, typeA);
         assertNotNull(typeAGroups);
-        assertTrue(typeAGroups.stream().anyMatch(g -> g.getGroupName().equals("Group1")));
-        assertFalse(typeAGroups.stream().anyMatch(g -> g.getGroupName().equals("Group2")));
+        assertTrue(typeAGroups.stream().anyMatch(g -> g.getGroupName().equals(group1)));
+        assertFalse(typeAGroups.stream().anyMatch(g -> g.getGroupName().equals(group2)));
+    }
+
+    /**
+     * Comprehensive flow test for Groups logic (Creation, Retrieval by Type, Deletion)
+     * utilizing realistic Tag definitions and Lucene queries.
+     */
+    @Test
+    public void testGroupsFlow() {
+        // 1. Setup: Create Tag Definitions
+        String tagName = "sample_" + UUID.randomUUID();
+        api.createTags(projectId, List.of(
+                new TagDefinitionImport().tagName(tagName).valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank", "control"))
+        ));
+
+        // 2. Create Groups based on these tags
+        String group1Name = "group1_" + UUID.randomUUID();
+        String group2Name = "group2_" + UUID.randomUUID();
+        String group3Name = "group3_" + UUID.randomUUID();
+
+        String type1 = "type1";
+        String type2 = "type2";
+
+        // "tags.sample:sample" -> real Lucene syntax used in SIRIUS
+        api.addGroup(projectId, group1Name, "tags." + tagName + ":sample", type1);
+        api.addGroup(projectId, group2Name, "tags." + tagName + ":blank", type1);
+        api.addGroup(projectId, group3Name, "tags." + tagName + ":control", type2);
+
+        // 3. Verify Existence via getGroups (Map verification)
+        List<TagGroup> groups = api.getGroups(projectId, null);
+        assertTrue(groups.stream().anyMatch(g -> g.getGroupName().equals(group1Name)));
+        assertTrue(groups.stream().anyMatch(g -> g.getGroupName().equals(group2Name)));
+        assertTrue(groups.stream().anyMatch(g -> g.getGroupName().equals(group3Name)));
+
+        TagGroup g1 = groups.stream().filter(g -> g.getGroupName().equals(group1Name)).findFirst().orElseThrow();
+        assertEquals(type1, g1.getGroupType());
+        assertEquals("tags." + tagName + ":sample", g1.getLuceneQuery());
+
+        // 4. Test Single Fetch
+        TagGroup fetchedGroup = api.getGroupByName(projectId, group1Name);
+        assertNotNull(fetchedGroup);
+        assertEquals(group1Name, fetchedGroup.getGroupName());
+
+        assertThrows(WebClientResponseException.class, () -> api.getGroupByName(projectId, "non_existent_group"));
+
+        // 5. Test Filtering by Type
+        List<String> type1GroupNames = api.getGroups(projectId, type1).stream()
+                .map(TagGroup::getGroupName)
+                .collect(Collectors.toList());
+
+        assertEquals(2, type1GroupNames.size());
+        assertTrue(type1GroupNames.contains(group1Name));
+        assertTrue(type1GroupNames.contains(group2Name));
+        assertFalse(type1GroupNames.contains(group3Name)); // Type2 should not be here
+
+        List<String> type2GroupNames = api.getGroups(projectId, type2).stream()
+                .map(TagGroup::getGroupName)
+                .collect(Collectors.toList());
+        assertEquals(1, type2GroupNames.size());
+        assertTrue(type2GroupNames.contains(group3Name));
+
+        // 6. Test Deletion
+        api.deleteGroup(projectId, group2Name);
+        api.deleteGroup(projectId, group3Name);
+
+        List<String> remainingGroups = api.getGroups(projectId, null).stream()
+                .map(TagGroup::getGroupName)
+                .collect(Collectors.toList());
+
+        assertTrue(remainingGroups.contains(group1Name));
+        assertFalse(remainingGroups.contains(group2Name));
+        assertFalse(remainingGroups.contains(group3Name));
     }
 
     /**
@@ -232,7 +319,7 @@ public class TagsApiTest {
      */
     @Test
     public void getTagTest() {
-        String tagName = "SingleFetchTag";
+        String tagName = "SingleFetchTag_" + UUID.randomUUID();
         TagDefinitionImport tagImport = new TagDefinitionImport()
                 .tagName(tagName)
                 .valueType(ValueType.REAL)
@@ -268,23 +355,29 @@ public class TagsApiTest {
     public void getTagsTest() {
         String type1 = "Category1";
         String type2 = "Category2";
+        String tagA = "TagA_" + UUID.randomUUID();
+        String tagB = "TagB_" + UUID.randomUUID();
+        String tagC = "TagC_" + UUID.randomUUID();
 
         api.createTags(projectId, List.of(
-                new TagDefinitionImport().tagName("TagA").tagType(type1).valueType(ValueType.TEXT),
-                new TagDefinitionImport().tagName("TagB").tagType(type1).valueType(ValueType.TEXT),
-                new TagDefinitionImport().tagName("TagC").tagType(type2).valueType(ValueType.TEXT)
+                new TagDefinitionImport().tagName(tagA).tagType(type1).valueType(ValueType.TEXT),
+                new TagDefinitionImport().tagName(tagB).tagType(type1).valueType(ValueType.TEXT),
+                new TagDefinitionImport().tagName(tagC).tagType(type2).valueType(ValueType.TEXT)
         ));
 
         // Test retrieval of all tags
         List<TagDefinition> allTags = api.getTags(projectId, null);
-        assertTrue(allTags.stream().anyMatch(t -> t.getTagName().equals("TagA")));
-        assertTrue(allTags.stream().anyMatch(t -> t.getTagName().equals("TagB")));
-        assertTrue(allTags.stream().anyMatch(t -> t.getTagName().equals("TagC")));
+        assertTrue(allTags.stream().anyMatch(t -> t.getTagName().equals(tagA)));
+        assertTrue(allTags.stream().anyMatch(t -> t.getTagName().equals(tagB)));
+        assertTrue(allTags.stream().anyMatch(t -> t.getTagName().equals(tagC)));
 
         // Test retrieval filtered by type
         List<TagDefinition> cat1Tags = api.getTags(projectId, type1);
         long countType1 = cat1Tags.stream().filter(t -> t.getTagType().equals(type1)).count();
-        assertEquals(2, countType1);
-        assertTrue(cat1Tags.stream().noneMatch(t -> t.getTagName().equals("TagC")));
+        // There might be other tags from other tests, so we check if ours are present
+        assertTrue(countType1 >= 2);
+        assertTrue(cat1Tags.stream().anyMatch(t -> t.getTagName().equals(tagA)));
+        assertTrue(cat1Tags.stream().anyMatch(t -> t.getTagName().equals(tagB)));
+        assertTrue(cat1Tags.stream().noneMatch(t -> t.getTagName().equals(tagC)));
     }
 }
