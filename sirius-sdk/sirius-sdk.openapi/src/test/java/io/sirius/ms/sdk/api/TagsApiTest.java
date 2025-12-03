@@ -23,39 +23,54 @@
 
 package io.sirius.ms.sdk.api;
 
+import io.sirius.ms.sdk.model.ProjectInfo;
 import io.sirius.ms.sdk.model.TagDefinition;
 import io.sirius.ms.sdk.model.TagDefinitionImport;
-import io.sirius.ms.sdk.model.TagGroup;
-import org.junit.Test;
+import io.sirius.ms.sdk.model.ValueType;
 import org.junit.Ignore;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * API tests for TagsApi
  */
-@Ignore
 public class TagsApiTest {
 
-    private final TagsApi api = new TagsApi();
+    private TagsApi api;
+    private ProjectInfo project;
+    private String projectId;
 
-    
+    @BeforeEach
+    public void setUp() {
+        TestSetup.getInstance().loginIfNeeded();
+        api = TestSetup.getInstance().getSiriusClient().tags();
+        try {
+            project = TestSetup.getInstance().createTestProject(null, null);
+            projectId = project.getProjectId();
+        } catch (IOException e) {
+            fail("Failed to create test project: " + e.getMessage());
+        }
+    }
+
+
+
     /**
      * [EXPERIMENTAL] Group tags in the project
      *
      * [EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
+    @Ignore
     @Test
     public void addGroupTest()  {
-        String projectId = null;
-        String groupName = null;
-        String filter = null;
-        String type = null;
-        TagGroup response = api.addGroup(projectId, groupName, filter, type);
+//        String groupName = null;
+//        String filter = null;
+//        String type = null;
+//        TagGroup response = api.addGroup(projectId, groupName, filter, type);
 
         // TODO: test validations
     }
@@ -67,12 +82,21 @@ public class TagsApiTest {
      */
     @Test
     public void addPossibleValuesToTagDefinitionTest()  {
-        String projectId = null;
-        String tagName = null;
-        List<Object> requestBody = null;
-        TagDefinition response = api.addPossibleValuesToTagDefinition(projectId, tagName, requestBody);
+        String tagName = "SampleType";
+        TagDefinitionImport tagImport = new TagDefinitionImport().tagName(tagName).tagType("SOME_TYPE").valueType(ValueType.TEXT).possibleValues(List.of("BLANK"));
+       api.createTags(projectId, List.of(tagImport));
 
-        // TODO: test validations
+
+        TagDefinition tagDefinition = api.getTag(projectId, tagName);
+        assertEquals(tagImport.getTagName(), tagDefinition.getTagName());
+        assertEquals(tagImport.getTagType(), tagDefinition.getTagType());
+        assertEquals(tagImport.getPossibleValues(), tagDefinition.getPossibleValues());
+
+        api.addPossibleValuesToTagDefinition(projectId, tagName, List.of("SAMPLE", "PolledQC"));
+        tagDefinition = api.getTag(projectId, tagName);
+        assertEquals(tagImport.getTagName(), tagDefinition.getTagName());
+        assertEquals(tagImport.getTagType(), tagDefinition.getTagType());
+        assertEquals(List.of("BLANK", "SAMPLE", "PolledQC"), tagDefinition.getPossibleValues());
     }
     
     /**
@@ -82,11 +106,25 @@ public class TagsApiTest {
      */
     @Test
     public void createTagsTest()  {
-        String projectId = null;
-        List<TagDefinitionImport> tagDefinitionImport = null;
-        List<TagDefinition> response = api.createTags(projectId, tagDefinitionImport);
+        String tagName = "SampleType";
+        TagDefinitionImport tagImport = new TagDefinitionImport().tagName(tagName).tagType("SOME_TYPE").valueType(ValueType.TEXT).possibleValues(List.of("BLANK","SAMPLE", "PolledQC"));
+        List<TagDefinition> response = api.createTags(projectId, List.of(tagImport));
 
-        // TODO: test validations
+        assertNotNull(response);
+        assertEquals(1, response.size());
+
+        TagDefinition tagDefinition = response.getFirst();
+
+        // assert response tagdef
+        assertEquals(tagImport.getTagName(), tagDefinition.getTagName());
+        assertEquals(tagImport.getTagType(), tagDefinition.getTagType());
+        assertEquals(tagImport.getPossibleValues(), tagDefinition.getPossibleValues());
+
+        // assert requested tagdef
+        tagDefinition = api.getTag(projectId, tagName);
+        assertEquals(tagImport.getTagName(), tagDefinition.getTagName());
+        assertEquals(tagImport.getTagType(), tagDefinition.getTagType());
+        assertEquals(tagImport.getPossibleValues(), tagDefinition.getPossibleValues());
     }
     
     /**
@@ -94,11 +132,11 @@ public class TagsApiTest {
      *
      * [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
+    @Ignore
     @Test
     public void deleteGroupTest()  {
-        String projectId = null;
-        String groupName = null;
-        api.deleteGroup(projectId, groupName);
+//        String groupName = null;
+//        api.deleteGroup(projectId, groupName);
 
         // TODO: test validations
     }
@@ -108,11 +146,11 @@ public class TagsApiTest {
      *
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
+    @Ignore
     @Test
     public void deleteTagTest()  {
-        String projectId = null;
-        String tagName = null;
-        api.deleteTag(projectId, tagName);
+//        String tagName = null;
+//        api.deleteTag(projectId, tagName);
 
         // TODO: test validations
     }
@@ -122,11 +160,11 @@ public class TagsApiTest {
      *
      * [EXPERIMENTAL] Get tag group by name in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
+    @Ignore
     @Test
     public void getGroupByNameTest()  {
-        String projectId = null;
-        String groupName = null;
-        TagGroup response = api.getGroupByName(projectId, groupName);
+//        String groupName = null;
+//        TagGroup response = api.getGroupByName(projectId, groupName);
 
         // TODO: test validations
     }
@@ -138,9 +176,8 @@ public class TagsApiTest {
      */
     @Test
     public void getGroupsTest()  {
-        String projectId = null;
-        String groupType = null;
-        List<TagGroup> response = api.getGroups(projectId, groupType);
+//        String groupType = null;
+//        List<TagGroup> response = api.getGroups(projectId, groupType);
 
         // TODO: test validations
     }
@@ -153,9 +190,8 @@ public class TagsApiTest {
      */
     @Test
     public void getTagTest()  {
-        String projectId = null;
-        String tagName = null;
-        TagDefinition response = api.getTag(projectId, tagName);
+//        String tagName = null;
+//        TagDefinition response = api.getTag(projectId, tagName);
 
         // TODO: test validations
     }
@@ -167,9 +203,8 @@ public class TagsApiTest {
      */
     @Test
     public void getTagsTest()  {
-        String projectId = null;
-        String tagType = null;
-        List<TagDefinition> response = api.getTags(projectId, tagType);
+//        String tagType = null;
+//        List<TagDefinition> response = api.getTags(projectId, tagType);
 
         // TODO: test validations
     }
