@@ -1318,14 +1318,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     private TagDefinition convertToApiDefinition(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition projectDefinition) {
         ValueFormatter<?, ?> formatter = projectDefinition.getValueDefinition().getValueType().getFormatter();
+        ValueDefinition<?> valueDef = projectDefinition.getValueDefinition();
         return TagDefinition.builder()
                 .tagName(projectDefinition.getTagName())
                 .tagType(projectDefinition.getTagType())
+                .description(projectDefinition.getDescription())
                 .valueType(projectDefinition.getValueDefinition().getValueType())
-                .possibleValues(projectDefinition.getValueDefinition().getPossibleValues()
+                .possibleValues(valueDef.getPossibleValues()
                         .stream()
                         .map(formatter::toFormattedGeneric)
                         .collect(Collectors.toList()))
+                .minValue(valueDef.getMinValue())
+                .maxValue(valueDef.getMaxValue())
                 .build();
     }
 
@@ -1339,6 +1343,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.builder()
                 .tagName(tagDefinitionImport.getTagName())
                 .tagType(tagDefinitionImport.getTagType())
+                .description(tagDefinitionImport.getDescription())
                 .editable(editable)
                 .valueDefinition(new ValueDefinition<>(tagDefinitionImport.getValueType(),
                         psConverted,
