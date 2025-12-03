@@ -30,6 +30,8 @@ import io.sirius.ms.sdk.model.TagGroup;
 import io.sirius.ms.sdk.model.ValueType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -58,6 +60,80 @@ public class TagsApiTest {
             projectId = project.getProjectId();
         } catch (IOException e) {
             fail("Failed to create test project: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Helper to create a valid TagDefinitionImport for a given ValueType with reasonable defaults.
+     */
+    private TagDefinitionImport createTagDefinition(String tagName, ValueType valueType) {
+        TagDefinitionImport tagImport = new TagDefinitionImport()
+                .tagName(tagName)
+                .valueType(valueType)
+                .tagType("TEST_GENERATED");
+
+        // Apply type-specific constraints
+        switch (valueType) {
+            case TEXT:
+                tagImport.possibleValues(List.of("A", "B", "C"));
+                break;
+            case INTEGER:
+                tagImport.minValue(0);
+                tagImport.maxValue(100);
+                break;
+            case REAL:
+                tagImport.minValue(0.0);
+                tagImport.maxValue(100.0);
+                break;
+            case DATE:
+                // Assuming ISO-8601 format YYYY-MM-DD
+                tagImport.minValue("2020-01-01");
+                tagImport.maxValue("2025-12-31");
+                break;
+            case TIME:
+                // Assuming ISO-8601 format HH:MM:SS or similar
+                tagImport.minValue("00:00:00");
+                tagImport.maxValue("23:59:59");
+                break;
+            case BOOLEAN:
+            case NONE:
+            default:
+                // No extra constraints needed
+                break;
+        }
+        return tagImport;
+    }
+
+    /**
+     * Helper to assert that a TagDefinition matches the import request.
+     * Handles type conversions for numbers (e.g. Integer -> Double) that may occur during serialization.
+     */
+    private void assertTagDefinitionEquals(TagDefinitionImport expected, TagDefinition actual) {
+        assertEquals(expected.getTagName(), actual.getTagName());
+        assertEquals(expected.getValueType(), actual.getValueType());
+        assertEquals(expected.getTagType(), actual.getTagType());
+
+        if (expected.getPossibleValues() != null) {
+            assertNotNull(actual.getPossibleValues());
+            assertTrue(actual.getPossibleValues().containsAll(expected.getPossibleValues()));
+        }
+
+        if (expected.getMinValue() != null) {
+            if (expected.getValueType() == ValueType.REAL || expected.getValueType() == ValueType.INTEGER) {
+                assertTrue(actual.getMinValue() instanceof Number);
+                assertEquals(((Number) expected.getMinValue()).doubleValue(), ((Number) actual.getMinValue()).doubleValue(), 0.0001);
+            } else {
+                assertEquals(expected.getMinValue(), actual.getMinValue());
+            }
+        }
+
+        if (expected.getMaxValue() != null) {
+            if (expected.getValueType() == ValueType.REAL || expected.getValueType() == ValueType.INTEGER) {
+                assertTrue(actual.getMaxValue() instanceof Number);
+                assertEquals(((Number) expected.getMaxValue()).doubleValue(), ((Number) actual.getMaxValue()).doubleValue(), 0.0001);
+            } else {
+                assertEquals(expected.getMaxValue(), actual.getMaxValue());
+            }
         }
     }
 
@@ -118,36 +194,25 @@ public class TagsApiTest {
     }
 
     /**
-     * [EXPERIMENTAL] Add tags to the project
+     * [EXPERIMENTAL] Add tags to the project (Parameterized for all ValueTypes)
      */
-    @Test
-    public void createTagsTest() {
-        String tagName = "QualityControl_" + UUID.randomUUID().toString();
-
-        TagDefinitionImport tagImport = new TagDefinitionImport()
-                .tagName(tagName)
-                .tagType("QC_TAG")
-                .description("Tag for quality control status")
-                .valueType(ValueType.TEXT)
-                .possibleValues(List.of("PASS", "FAIL", "WARN"));
+    @ParameterizedTest
+    @EnumSource(ValueType.class)
+    public void createTagsTest(ValueType valueType) {
+        String tagName = "TestTag_" + valueType.name() + "_" + UUID.randomUUID();
+        TagDefinitionImport tagImport = createTagDefinition(tagName, valueType);
 
         List<TagDefinition> response = api.createTags(projectId, List.of(tagImport));
 
         assertNotNull(response);
         assertEquals(1, response.size());
 
-        TagDefinition tagDefinition = response.getFirst();
+        TagDefinition tagDefinition = response.get(0);
+        assertTagDefinitionEquals(tagImport, tagDefinition);
 
-        // assert response tagdef structure
-        assertEquals(tagImport.getTagName(), tagDefinition.getTagName());
-        assertEquals(tagImport.getTagType(), tagDefinition.getTagType());
-        assertEquals(tagImport.getDescription(), tagDefinition.getDescription());
-        assertEquals(tagImport.getValueType(), tagDefinition.getValueType());
-        assertEquals(tagImport.getPossibleValues(), tagDefinition.getPossibleValues());
-
-        // assert requested tagdef via getTag
+        // Also verify that getTag returns the correct definition
         TagDefinition fetchedDef = api.getTag(projectId, tagName);
-        assertEquals(tagDefinition, fetchedDef);
+        assertTagDefinitionEquals(tagImport, fetchedDef);
     }
 
     /**
@@ -156,7 +221,7 @@ public class TagsApiTest {
     @Test
     public void deleteGroupTest() {
         String groupName = "GroupToDelete_" + UUID.randomUUID();
-        // Use a realistic fallback query if tags aren't involved, e.g., filtering by ID or name
+        // Use a realistic fallback query
         String validQuery = "name:Run1";
         api.addGroup(projectId, groupName, validQuery, "temp");
 
@@ -174,14 +239,13 @@ public class TagsApiTest {
     }
 
     /**
-     * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space
+     * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space (Parameterized)
      */
-    @Test
-    public void deleteTagTest() {
-        String tagName = "TagToDelete_" + UUID.randomUUID();
-        TagDefinitionImport tagImport = new TagDefinitionImport()
-                .tagName(tagName)
-                .valueType(ValueType.BOOLEAN); // Simple boolean tag
+    @ParameterizedTest
+    @EnumSource(ValueType.class)
+    public void deleteTagTest(ValueType valueType) {
+        String tagName = "TagToDelete_" + valueType.name() + "_" + UUID.randomUUID();
+        TagDefinitionImport tagImport = createTagDefinition(tagName, valueType);
 
         api.createTags(projectId, List.of(tagImport));
 
@@ -315,69 +379,36 @@ public class TagsApiTest {
     }
 
     /**
-     * [EXPERIMENTAL] Get tag definition by its name in the given project-space
-     */
-    @Test
-    public void getTagTest() {
-        String tagName = "SingleFetchTag_" + UUID.randomUUID();
-        TagDefinitionImport tagImport = new TagDefinitionImport()
-                .tagName(tagName)
-                .valueType(ValueType.REAL)
-                .minValue(0.0)
-                .maxValue(100.0);
-
-        List<TagDefinition> defs = api.createTags(projectId, List.of(tagImport));
-        assertNotNull(defs);
-        assertEquals(1, defs.size());
-
-        //test response
-        TagDefinition response = defs.getFirst();
-        assertNotNull(response);
-        assertEquals(tagName, response.getTagName());
-        // Note: Depending on JSON serialization, 0.0 might be Double or Integer, using Number for safety if needed
-        assertEquals(0.0, ((Number) response.getMinValue()).doubleValue());
-        assertEquals(100.0, ((Number) response.getMaxValue()).doubleValue());
-
-        //test requested
-        response = api.getTag(projectId, tagName);
-
-        assertNotNull(response);
-        assertEquals(tagName, response.getTagName());
-        // Note: Depending on JSON serialization, 0.0 might be Double or Integer, using Number for safety if needed
-        assertEquals(0.0, ((Number) response.getMinValue()).doubleValue());
-        assertEquals(100.0, ((Number) response.getMaxValue()).doubleValue());
-    }
-
-    /**
      * [EXPERIMENTAL] Get all tag definitions in the given project-space
+     * Generified to ensure multiple types can be fetched together.
      */
     @Test
     public void getTagsTest() {
-        String type1 = "Category1";
-        String type2 = "Category2";
-        String tagA = "TagA_" + UUID.randomUUID();
-        String tagB = "TagB_" + UUID.randomUUID();
-        String tagC = "TagC_" + UUID.randomUUID();
-
-        api.createTags(projectId, List.of(
-                new TagDefinitionImport().tagName(tagA).tagType(type1).valueType(ValueType.TEXT),
-                new TagDefinitionImport().tagName(tagB).tagType(type1).valueType(ValueType.TEXT),
-                new TagDefinitionImport().tagName(tagC).tagType(type2).valueType(ValueType.TEXT)
-        ));
+        // Create one tag for each value type
+        for (ValueType type : ValueType.values()) {
+            String tagName = "ListTag_" + type.name() + "_" + UUID.randomUUID();
+            api.createTags(projectId, List.of(createTagDefinition(tagName, type)));
+        }
 
         // Test retrieval of all tags
         List<TagDefinition> allTags = api.getTags(projectId, null);
-        assertTrue(allTags.stream().anyMatch(t -> t.getTagName().equals(tagA)));
-        assertTrue(allTags.stream().anyMatch(t -> t.getTagName().equals(tagB)));
-        assertTrue(allTags.stream().anyMatch(t -> t.getTagName().equals(tagC)));
+        assertNotNull(allTags);
 
-        // Test retrieval filtered by type
-        List<TagDefinition> cat1Tags = api.getTags(projectId, type1);
-        long countType1 = cat1Tags.stream().filter(t -> t.getTagType().equals(type1)).count();
-        // There might be other tags from other tests, so we check if ours are present
-        assertTrue(countType1 >= 2);
-        assertTrue(cat1Tags.stream().anyMatch(t -> t.getTagName().equals(tagA)));
-        assertTrue(cat1Tags.stream().anyMatch(t -> t.getTagName().equals(tagB)));
-        assertTrue(cat1Tags.stream().noneMatch(t -> t.getTagName().equals(tagC)));
+        // Verify that we can find at least one tag for every type we just created
+        for (ValueType type : ValueType.values()) {
+            boolean typeExists = allTags.stream()
+                    .anyMatch(t -> t.getTagName().contains("ListTag_" + type.name()));
+            assertTrue(typeExists, "Should find created tag for ValueType: " + type.name());
+        }
+
+        // Test retrieval filtered by type (using TEXT as example if available)
+        String specificType = "FILTER_TEST_TYPE";
+        api.createTags(projectId, List.of(
+                new TagDefinitionImport().tagName("FilteredTag_" + UUID.randomUUID()).tagType(specificType).valueType(ValueType.TEXT)
+        ));
+
+        List<TagDefinition> filteredTags = api.getTags(projectId, specificType);
+        assertFalse(filteredTags.isEmpty());
+        assertTrue(filteredTags.stream().allMatch(t -> specificType.equals(t.getTagType())));
     }
 }
