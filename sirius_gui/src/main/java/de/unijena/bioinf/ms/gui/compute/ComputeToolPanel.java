@@ -44,12 +44,12 @@ public class ComputeToolPanel extends JPanel {
 
         // make subtool config panels
         globalConfigPanel = new GlobalConfigPanel(gui, compoundsToProcess, hasMs2);
-        spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, globalConfigPanel);
+        spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, compoundsToProcess, globalConfigPanel);
         formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, compoundsToProcess, globalConfigPanel, hasMs2);
-        zodiacConfigs = new ActZodiacConfigPanel(gui, compoundsToProcess.size());
-        fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
-        csiSearchConfigs = new ActFingerblastConfigPanel(gui, globalConfigPanel);
-        msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
+        zodiacConfigs = new ActZodiacConfigPanel(gui, compoundsToProcess);
+        fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui, compoundsToProcess);
+        csiSearchConfigs = new ActFingerblastConfigPanel(gui, compoundsToProcess, globalConfigPanel);
+        msNovelistConfigs = new ActMSNovelistConfigPanel(gui, compoundsToProcess);
 
         JXTitledSeparator sep = new JXTitledSeparator("Global Configuration");
         //just to prevent resizing of toplevel separators
@@ -63,9 +63,6 @@ public class ComputeToolPanel extends JPanel {
         add(formulaIDConfigPanel, "cell 0 5, aligny top,  wrap");
 
         if (hasMs2) {
-            final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
-            final boolean compoundClassesAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isCanopus());
-
             add(new JXTitledSeparator("Spectral Library Search"), "cell 0 2, growx, spanx 2, aligny top, wrap");
             add(spectraSearchConfigPanel, "cell 0 3, spanx 2, aligny top, wrap");
 
@@ -83,17 +80,12 @@ public class ComputeToolPanel extends JPanel {
             add(new JXTitledSeparator("MSNovelist - De Novo Structure Generation"), "cell 1 8, growx, aligny top, wrap");
             add(msNovelistConfigs, "cell 1 9, aligny top, wrap");
 
-
-            fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
-            csiSearchConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
-            msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
-            // computing formulaId will discard fingerprints, so we need to enable it for structure search
-            formulaIDConfigPanel.addToolDependencyListener((c, enabled) -> {
-                if (enabled && !fingerprintAndCanopusConfigPanel.isToolSelected() && (csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected())) {
-                    fingerprintAndCanopusConfigPanel.activationButton.doClick(0);
-                    fingerprintAndCanopusConfigPanel.showAutoEnableInfoDialog(fingerprintAndCanopusConfigPanel.toolName + " is activated because a downstream tool needs its input, which would be deleted by running " + formulaIDConfigPanel.toolName + ".");
-                }
-            });
+            formulaIDConfigPanel.addToolDependency(spectraSearchConfigPanel);
+            zodiacConfigs.addToolDependency(formulaIDConfigPanel);
+            fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel);
+            fingerprintAndCanopusConfigPanel.addToolDependency(zodiacConfigs);
+            csiSearchConfigs.addToolDependency(fingerprintAndCanopusConfigPanel);
+            msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel);
         }
     }
 
