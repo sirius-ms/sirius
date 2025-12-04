@@ -27,6 +27,8 @@ import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfo;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.model.ComputedSubtools;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import lombok.Getter;
 import net.miginfocom.swing.MigLayout;
@@ -36,8 +38,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -45,9 +48,13 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 
 public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPanel {
 
-    public static final String DO_NOT_SHOW_TOOL_AUTOENABLE = "de.unijena.bioinf.sirius.computeDialog.autoEnable.dontAskAgain";
+    public static final String DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM = "de.unijena.bioinf.sirius.computeDialog.partialResultsDownstream.dontAskAgain";
+    public static final String DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM = "de.unijena.bioinf.sirius.computeDialog.partialResultsUpstream.dontAskAgain";
+    public static final String DO_NOT_SHOW_BROKEN_CHAIN_ACTIVATE = "de.unijena.bioinf.sirius.computeDialog.brokenChain.activate.dontAskAgain";
+    public static final String DO_NOT_SHOW_BROKEN_CHAIN_DEACTIVATE = "de.unijena.bioinf.sirius.computeDialog.brokenChain.deactivate.dontAskAgain";
 
     protected ToolbarToggleButton activationButton;
+    protected JLabel countLabel;
     protected final String toolName;
     protected final String[] toolDescription;
     @Getter
@@ -55,22 +62,28 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
     protected PropertyChangeListener listener;
     protected final SiriusGui gui;
 
-    protected boolean suppressDependencyListeners = false;
+    private boolean suppressDependencyListeners = false;
 
     protected LinkedHashSet<EnableChangeListener<C>> listeners = new LinkedHashSet<>();
 
     protected Set<String> disabledReasons = new HashSet<>();
     protected String notConnectedMessage = "Cannot connect to the server";  // Can be overridden in subclasses
 
-    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo) {
-        this(gui, toolname, buttonIcon, false, contentSuppl, tourInfo);
+    protected final long totalCompounds;
+    protected final long computedCompounds;
+    protected final List<ActivatableConfigPanel<?>> upstreamTools = new ArrayList<>();
+    protected final List<ActivatableConfigPanel<?>> downstreamTools = new ArrayList<>();
+    protected boolean optionalTool = false;
+
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl, List<InstanceBean> compounds, SoftwareTourInfo tourInfo) {
+        this(gui, toolname, null, buttonIcon, false, contentSuppl, compounds, tourInfo);
     }
 
-    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo) {
-        this(gui, toolname, null, buttonIcon, checkServerConnection, contentSuppl, tourInfo);
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl, List<InstanceBean> compounds, SoftwareTourInfo tourInfo) {
+        this(gui, toolname, null, buttonIcon, checkServerConnection, contentSuppl, compounds, tourInfo);
     }
 
-    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo) {
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl, List<InstanceBean> compounds, SoftwareTourInfo tourInfo) {
         super(new MigLayout("insets 0", "[left]10[left]","[top]"));
 
         this.toolName = toolname;
@@ -91,7 +104,17 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
             this.toolDescription = new String[]{};
 
         activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(this.toolDescription));
-        add(activationButton,"cell 0 0");
+
+        totalCompounds = compounds.size();
+        computedCompounds = compounds.stream().map(InstanceBean::getComputedTools).filter(this::isComputed).count();
+
+        countLabel = new JLabel();
+        countLabel.setText(String.format("<html><small>%s / %s computed</small></html>", computedCompounds, totalCompounds));
+        countLabel.setToolTipText(String.format("%s of %s selected features already have %s results", computedCompounds, totalCompounds, toolName));
+
+        add(activationButton,"cell 0 0, split 2, flowy, alignx center, aligny top");
+        add(countLabel, "alignx center, gaptop 2");
+
         add(content, "cell 1 0, growx, wrap");
 
         if (tourInfo != null) {
@@ -112,16 +135,64 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
         setComponentsEnabled(activationButton.isSelected());
     }
 
+    protected abstract boolean isComputed(@NotNull ComputedSubtools computedSubtools);
+
+    protected boolean allComputed() {
+        return computedCompounds == totalCompounds;
+    }
+
     protected void processConnectionCheck(ConnectionCheck check) {
         setButtonEnabled(isConnected(check), notConnectedMessage);
     }
 
     protected void setComponentsEnabled(final boolean enabled) {
         GuiUtils.setEnabled(content, enabled);
-        listeners.forEach(e -> {
-            if (e instanceof ActivatableConfigPanel.ToolDependencyListener<C> && suppressDependencyListeners) return;
-            e.onChange(content, enabled);
-        });
+
+        if (!suppressDependencyListeners) {
+            for (ActivatableConfigPanel<?> upstreamTool : upstreamTools) {
+                if (enabled && !upstreamTool.isToolSelected() && !upstreamTool.allComputed() && !upstreamTool.optionalTool) {
+                    if (upstreamTool.computedCompounds == 0) {
+                        upstreamTool.activationButton.doClick(0);
+                    } else {
+                        showAutoEnableInfoDialog(String.format("<html>Results from upstream tool(s) are needed for the tool you selected but are only available for %s of %s features.</html>", upstreamTool.computedCompounds, upstreamTool.totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_UPSTREAM);
+                    }
+                }
+            }
+
+            for (ActivatableConfigPanel<?> downstreamTool : downstreamTools) {
+                if (!enabled && downstreamTool.isToolSelected() && !allComputed() && !optionalTool) {
+                    if (computedCompounds == 0) {
+                        downstreamTool.activationButton.doClick(0);
+                    } else {
+                        showAutoEnableInfoDialog(String.format("<html>Results from the tool you deactivated are needed for downstream tool(s) but are only available for %s of %s features.</html>", computedCompounds, totalCompounds), DO_NOT_SHOW_PARTIAL_RESULTS_DOWNSTREAM);
+                    }
+                }
+            }
+
+            if (enabled) {
+                List<ActivatableConfigPanel<?>> brokenChain = checkBrokenChain(new ArrayList<>(), t -> t.upstreamTools);
+                brokenChain.addAll(checkBrokenChain(new ArrayList<>(), t -> t.downstreamTools));
+                if (!brokenChain.isEmpty()) {
+                    showAutoEnableInfoDialog(String.format("<html>You enabled %s, creating a \"broken\" toolchain. Missing tools will be automatically enabled.</html>", toolName), DO_NOT_SHOW_BROKEN_CHAIN_ACTIVATE);
+                }
+                for (ActivatableConfigPanel<?> missingTool : new HashSet<>(brokenChain)) {
+                    missingTool.clickIgnoreDependencies();
+                }
+            } else if (!optionalTool) {
+                if (findEnabled(t -> t.upstreamTools) != null) {
+                    ActivatableConfigPanel<?> downstreamEnabled = findEnabled(t -> t.downstreamTools);
+                    if (downstreamEnabled != null) {
+                        showAutoEnableInfoDialog(String.format("<html>You disabled %s, creating a \"broken\" toolchain. Downstream tools will be automatically disabled.</html>", toolName), DO_NOT_SHOW_BROKEN_CHAIN_DEACTIVATE);
+                    }
+                    while (downstreamEnabled != null) {
+                        downstreamEnabled.clickIgnoreDependencies();
+                        downstreamEnabled = findEnabled(t -> t.downstreamTools);
+                    }
+                }
+            }
+        }
+
+        listeners.forEach(e -> e.onChange(content, enabled));
     }
 
     protected void setButtonEnabled(final boolean enabled, @Nullable String reason) {
@@ -161,12 +232,6 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
         listeners.add(listener);
     }
 
-    /**
-     * Add a listener for auto enabling tools
-     */
-    public void addToolDependencyListener(ToolDependencyListener<C> listener) {
-        addEnableChangeListener(listener);
-    }
 
 
     @FunctionalInterface
@@ -175,33 +240,23 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
     }
 
     /**
-     * Separate interface to distinguish and suppress dependency listeners
-     */
-    public interface ToolDependencyListener<C extends ConfigPanel> extends EnableChangeListener<C> {}
-
-    /**
-     * Add listeners that enable the upstream tool if this gets enabled, and disable this if the upstream gets disabled
+     * Add upstream tool for auto enabling/disabling
      * @param upstreamTool the tool which produces the data required for this tool
-     * @param upstreamResultAvailable function that checks if the existing results of the upstream tool can be used
      */
-    public void addToolDependency(ActivatableConfigPanel<?> upstreamTool, Supplier<Boolean> upstreamResultAvailable) {
-        this.addToolDependencyListener((c, enabled) -> {
-            if (enabled && !upstreamTool.isToolSelected() && !upstreamResultAvailable.get()) {
-                upstreamTool.activationButton.doClick(0);
-                showAutoEnableInfoDialog("The '" + upstreamTool.toolName + "' tool is enabled because not all selected features contain its results, but the '" + this.toolName + "' tool needs them as input.");
-            }
-        });
-        upstreamTool.addToolDependencyListener((c, enabled) -> {
-            if (!enabled && this.isToolSelected() && !upstreamResultAvailable.get()) {
-                this.activationButton.doClick(0);
-                showAutoEnableInfoDialog("The '" + this.toolName + "' tool is also disabled because it needs the results from the '" + upstreamTool.toolName + "' tool as input.");
-            }
-        });
+    public void addToolDependency(ActivatableConfigPanel<?> upstreamTool) {
+        upstreamTools.add(upstreamTool);
+        upstreamTool.downstreamTools.add(this);
     }
 
-    public void showAutoEnableInfoDialog(String message) {
-        if (!PropertyManager.getBoolean(DO_NOT_SHOW_TOOL_AUTOENABLE, false)) {
-            new InfoDialog(gui.getMainFrame(), message, DO_NOT_SHOW_TOOL_AUTOENABLE);
+    public void showAutoEnableInfoDialog(String message, String property) {
+        //use tutorial info mechanism to not present dialog multiple times in one session.
+        if (gui.getProperties().isAskedTutorialThisSession(property))
+            return;
+        else
+            gui.getProperties().setTutorialKnownForThisSession(property);
+
+        if (!PropertyManager.getBoolean(property, false)) {
+            new InfoDialog(gui.getMainFrame(), message, property);
         }
     }
 
@@ -211,11 +266,63 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPan
      */
     public void applyValuesFromPreset(boolean enable, Map<String, String> preset) {
         if (enable != isToolSelected()) {
-            suppressDependencyListeners = true;  // avoid annoying dialogs in the middle of preset activation
+            clickIgnoreDependencies();
+        }
+        content.applyValuesFromPreset(preset);
+    }
+
+    /**
+     * Recursively walk the tool dependency graph and check if there is a "broken chain" - deactivated tools between the current and some activated tool
+     * @param currentChain the chain of deactivated tools found so far up to this
+     * @param nextTools either upstream or downstream tool function
+     * @return deactivated "missing" tools between this and some next active tool
+     */
+    private List<ActivatableConfigPanel<?>> checkBrokenChain(List<ActivatableConfigPanel<?>> currentChain, Function<ActivatableConfigPanel<?>, List<ActivatableConfigPanel<?>>> nextTools) {
+        List<ActivatableConfigPanel<?>> brokenChain = new ArrayList<>();
+        for (ActivatableConfigPanel<?> nextTool : nextTools.apply(this)) {
+            if (nextTool.isToolSelected()) {
+                brokenChain.addAll(currentChain);
+            } else if (!nextTool.optionalTool) {
+                List<ActivatableConfigPanel<?>> nextChain = new ArrayList<>(currentChain);
+                nextChain.add(nextTool);
+                brokenChain.addAll(nextTool.checkBrokenChain(nextChain, nextTools));
+            }
+        }
+        return brokenChain;
+    }
+
+    /**
+     * Recursively finds an enabled tool among next tools
+     * @param nextTools either upstream or downstream tool function
+     * @return enabled tool or null if all next tools are disabled
+     */
+    @Nullable
+    private ActivatableConfigPanel<?> findEnabled(Function<ActivatableConfigPanel<?>, List<ActivatableConfigPanel<?>>> nextTools) {
+        for (ActivatableConfigPanel<?> nextTool : nextTools.apply(this)) {
+            if (nextTool.isToolSelected()) {
+                return nextTool;
+            } else if (!nextTool.optionalTool) {
+                ActivatableConfigPanel<?> furtherEnabled = nextTool.findEnabled(nextTools);
+                if (furtherEnabled != null) {
+                    return furtherEnabled;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Simulate a click to (de)activate the tool, but ignore all upstream/downstream tool logic
+     */
+    protected void clickIgnoreDependencies() {
+        if (suppressDependencyListeners) {
+            activationButton.doClick(0);
+        } else {
+            suppressDependencyListeners = true;
             activationButton.doClick(0);
             suppressDependencyListeners = false;
         }
-        content.applyValuesFromPreset(preset);
+
     }
 }
 
