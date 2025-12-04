@@ -1968,7 +1968,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no run '" + runId + "' in project " + projectId + "."));
     }
 
-    private Class<?> convertToProjectObjectClass(Class<?> taggable) {
+    private Class<?> convertToProjectObjectClass(Class<? extends Taggable> taggable) {
         if (taggable.equals(Run.class))
             return LCMSRun.class;
 
@@ -1995,19 +1995,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @Override
-    public List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags) {
-        addTagsToObjects(target, Map.of(objectId, tags));
-        return findTagsByObject(target, objectId);
+    public List<Tag> addTagsToObject(Class<? extends Taggable> taggedObjectClass, String objectId, List<Tag> tags) {
+        addTagsToObjects(taggedObjectClass, Map.of(objectId, tags));
+        return findTagsByObject(taggedObjectClass, objectId);
     }
 
     @Override
-    public void addTagsToObjects(Class<?> target, List<TagSubmission> tags) {
-        addTagsToObjects(target, tags.stream().collect(Collectors.groupingBy(TagSubmission::getTaggedObjectId)));
+    public void addTagsToObjects(Class<? extends Taggable> taggedObjectClass, List<TagSubmission> tags) {
+        addTagsToObjects(taggedObjectClass, tags.stream().collect(Collectors.groupingBy(TagSubmission::getTaggedObjectId)));
     }
 
-    private void addTagsToObjects(Class<?> target, Map<String, ? extends Collection<? extends Tag>> objectToTags) {
+    private void addTagsToObjects(Class<? extends Taggable> taggedObjectClass, Map<String, ? extends Collection<? extends Tag>> objectToTags) {
         try {
-            final Class<?> taggedObjectClass = convertToProjectObjectClass(target);
+            final Class<?> taggedProjectObjectClass = convertToProjectObjectClass(taggedObjectClass);
 
             Map<String, de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition> tagDefByName = new HashMap<>();
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> upsertTags = new ArrayList<>();
@@ -2019,7 +2019,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             //todo can be upsert without knowing the primary key?
             for (Map.Entry<String, ? extends Collection<? extends Tag>> entry : objectToTags.entrySet()) {
                 long objId = Long.parseLong(entry.getKey());
-                if (!storage().containsPrimaryKey(objId, taggedObjectClass))
+                if (!storage().containsPrimaryKey(objId, taggedProjectObjectClass))
                     throw new ResponseStatusException(NOT_FOUND, "There is no object '" + objId + "' in project " + projectId + ".");
 
                 for (Tag tag : entry.getValue()) {
@@ -2030,7 +2030,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                     try {
                         Filter.FilterClause filter = Filter.and(
-                                Filter.where("taggedObjectClass").eq(taggedObjectClass.getName()),
+                                Filter.where("taggedObjectClass").eq(taggedProjectObjectClass.getName()),
                                 Filter.where("taggedObjectId").eq(objId),
                                 Filter.where("tagName").eq(tag.getTagName())
                         );
@@ -2038,7 +2038,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                         storage().findStr(filter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                                 .findFirst().ifPresentOrElse(
                                         existing -> upsertTags.add(tagDef.setFormattedValueOfTag(existing, tag.getValue())),
-                                        () -> insertTags.add(tagDef.newTagWithFormattedValue(tag.getValue(), taggedObjectClass, objId)));
+                                        () -> insertTags.add(tagDef.newTagWithFormattedValue(tag.getValue(), taggedProjectObjectClass, objId)));
 
                     } catch (IllegalArgumentException e) {
                         throw new ResponseStatusException(BAD_REQUEST, "Forbidden value '" + tag.getValue() + " for TagDefinition " + tag.getTagName() + ".");
@@ -2056,7 +2056,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             w.start();
 
             if (searchService != null)
-                searchService.addTagsToDocuments(projectId, objectToTags, (Class<? extends Taggable>) target);
+                searchService.addTagsToDocuments(projectId, objectToTags, taggedObjectClass);
             System.out.println("Added/Updated Tags To LUCENE in: " + w);
 
 
@@ -2068,7 +2068,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public void removeTagsFromObject(Class<?> taggedOobjectClass, String taggedObjectId, List<String> tagNames) {
+    public void removeTagsFromObject(Class<? extends Taggable> taggedOobjectClass, String taggedObjectId, List<String> tagNames) {
         storage().removeAll(Filter.and(
                 Filter.where("taggedObjectClass").eq(convertToProjectObjectClass(taggedOobjectClass).getName()),
                 Filter.where("taggedObjectId").eq(Long.parseLong(taggedObjectId)),
@@ -2086,13 +2086,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @Override
-    public List<Tag> findTagsByObject(@NotNull Class<?> target, @NotNull String objectId) {
-        return findTagsByObject(target, Long.parseLong(objectId)).toList();
+    public List<Tag> findTagsByObject(@NotNull Class<? extends Taggable> taggedObjectClass, @NotNull String objectId) {
+        final Class<?> taggedProjectObjectClass = convertToProjectObjectClass(taggedObjectClass);
+        return findTagsByObject(taggedProjectObjectClass, Long.parseLong(objectId)).toList();
     }
 
-    public Stream<Tag> findTagsByObject(Class<?> target, long objectId) {
+    private Stream<Tag> findTagsByObject(Class<?> taggedProjectObjectClass, long objectId) {
         return project()
-                .findTagsForObject(target, objectId)
+                .findTagsForObject(taggedProjectObjectClass, objectId)
                 .map(this::convertToApiTag);
     }
 

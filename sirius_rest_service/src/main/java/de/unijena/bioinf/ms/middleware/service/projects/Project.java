@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
@@ -189,18 +190,18 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     /**
      * Add/Updates tags to/of a target object identified by target class und object id.
-     * @param target class of the target
+     * @param taggedObjectClass class of the target
      * @param objectId id of the target
      * @param tags tags to be added
      * @return return all tags of the target object that has been modified.
      */
-    List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags);
+    List<Tag> addTagsToObject(Class<? extends Taggable> taggedObjectClass, String objectId, List<Tag> tags);
 
-    void addTagsToObjects(Class<?> target, List<TagSubmission> tags);
+    void addTagsToObjects(Class<? extends Taggable> taggedObjectClass, List<TagSubmission> tags);
 
-    void removeTagsFromObject(Class<?> taggedObjectClass, String taggedObjectId, List<String> tagNames);
+    void removeTagsFromObject(Class<? extends Taggable> taggedObjectClass, String taggedObjectId, List<String> tagNames);
 
-    List<Tag> findTagsByObject(Class<?> target, String objectId);
+    List<Tag> findTagsByObject(Class<? extends Taggable> taggedObjectClass, String objectId);
 
     List<TagDefinition> findTags();
 
