@@ -7561,32 +7561,6 @@
         }
       }
     },
-    "/api/job-config-names": {
-      "get": {
-        "tags": [
-          "Jobs"
-        ],
-        "summary": "[DEPRECATED] Get all (non-default) job configuration names\n ",
-        "description": "[DEPRECATED] Get all (non-default) job configuration names\n \u003cp\u003e\n [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.",
-        "operationId": "getJobConfigNames",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true
-      }
-    },
     "/api/info": {
       "get": {
         "tags": [

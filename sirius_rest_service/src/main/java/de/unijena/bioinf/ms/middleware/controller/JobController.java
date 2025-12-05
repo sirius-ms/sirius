@@ -270,22 +270,6 @@ public class JobController {
     }
 
     /**
-     * [DEPRECATED] Get all (non-default) job configuration names
-     * <p>
-     * [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
-     *
-     */
-    @GetMapping(value = "/job-config-names", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus(HttpStatus.OK)
-    @Deprecated(forRemoval = true)
-    public List<String> getJobConfigNames() {
-        return getJobConfigs().stream()
-                .map(StoredJobSubmission::getName)
-                .filter(n -> !n.equals(JobConfigService.DEFAULT_CONFIG_NAME))
-                .toList();
-    }
-
-    /**
      * Request job configuration with given name.
      *
      * @param name             name of the job-config to return
