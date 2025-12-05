@@ -1,7 +1,6 @@
 import groovy.json.JsonSlurper
 
 import java.nio.file.Files
-import java.util.stream.Collectors
 
 buildscript {
     repositories {
@@ -161,15 +160,20 @@ tasks.register("generateOpenApiDocsAdvancedEnumsAsString") {
 }
 
 
-tasks.register("updateExperimentalExclusions") {
+tasks.register("updateUnstableExclusions") {
     group "openApi"
-    description "Parses the generated OpenAPI spec and updates the STABLE_EXCLUSIONS list in MiddlewareAppOptions.java"
+    description "Parses the generated OpenAPI spec and updates the exclusions lists in MiddlewareAppOptions.java"
 
     // Define inputs to ensure task runs when spec changes
     def specFile = file("openapi-spec-enums-as-string.json")
 
     // Adjust this path if your source folder structure is different
     def javaSourceFile = file("src/main/java/de/unijena/bioinf/ms/frontend/subtools/middleware/MiddlewareAppOptions.java")
+
+    def targets = [['[EXPERIMENTAL]', 'EXPERIMENTAL_EXCLUSIONS'],
+                   ['[INTERNAL]', 'INTERNAL_EXCLUSIONS'],
+                   ['[DEPRECATED]', 'DEPRECATED_EXCLUSIONS']]
+
 
     // Ensure the spec exists before running this task
     dependsOn "generateOpenApiDocsEnumsAsString"
@@ -184,56 +188,61 @@ tasks.register("updateExperimentalExclusions") {
 
         // 1. Parse the JSON Spec
         def json = new JsonSlurper().parse(specFile)
-        def experimentalPaths = [] as Set
 
-        // 2. Iterate paths and extract [EXPERIMENTAL] endpoints
-        json.paths.each { pathKey, methods ->
-            // Check if any method in this path has the experimental tag in summary or description
-            boolean isExperimental = methods.any { method, details ->
-                def summary = details.get("summary", "")
-                def description = details.get("description", "")
-                return summary.contains("[EXPERIMENTAL]") || description.contains("[EXPERIMENTAL]")
+        // 2. Iterate paths and extract target endpoints
+        for (def target : targets) {
+            def unstablePaths = [] as Set
+            def marker = target[0]
+            def variable = target[1]
+
+            json.paths.each { pathKey, methods ->
+                // Check if any method in this path has the experimental tag in summary or description
+                boolean isExperimental = methods.any { method, details ->
+                    def summary = details.get("summary", "")
+                    def description = details.get("description", "")
+                    return summary.contains(marker) || description.contains(marker)
+                }
+
+                if (isExperimental) {
+                    // Normalize path: replace {param} with *
+                    // Equivalent to python: re.sub(r'\{[^}]+\}', '*', path)
+                    def normalizedPath = pathKey.replaceAll(/\{[^}]+\}/, "*")
+                    unstablePaths.add(normalizedPath)
+                }
             }
 
-            if (isExperimental) {
-                // Normalize path: replace {param} with *
-                // Equivalent to python: re.sub(r'\{[^}]+\}', '*', path)
-                def normalizedPath = pathKey.replaceAll(/\{[^}]+\}/, "*")
-                experimentalPaths.add(normalizedPath)
-            }
-        }
+            // 3. Sort and Format (Java List.of style)
+            def sortedPaths = unstablePaths.sort()
+            def javaListContent = sortedPaths.collect { "            \"$it\"" }.join(",\n")
 
-        // 3. Sort and Format (Java List.of style)
-        def sortedPaths = experimentalPaths.sort()
-        def javaListContent = sortedPaths.collect { "            \"$it\"" }.join(",\n")
+            // 4. Inject into Java File
+            def fileContent = javaSourceFile.text
 
-        // 4. Inject into Java File
-        def fileContent = javaSourceFile.text
+            // Regex to find: variable = List.of( ... );
+            // (?s) enables DOTALL so . matches newlines
+            def regex = /(?s)(private final static List<String> ${variable} = List\.of\s*\()(.*?)(\);)/
 
-        // Regex to find: STABLE_EXCLUSIONS = List.of( ... );
-        // (?s) enables DOTALL so . matches newlines
-        def regex = /(?s)(private final static List<String> STABLE_EXCLUSIONS = List\.of\s*\()(.*?)(\);)/
+            def matcher = (fileContent =~ regex)
+            if (matcher.find()) {
+                def newContent = fileContent.replaceFirst(regex, "\$1\n${javaListContent}\n    \$3")
 
-        def matcher = (fileContent =~ regex)
-        if (matcher.find()) {
-            def newContent = fileContent.replaceFirst(regex, "\$1\n${javaListContent}\n    \$3")
-
-            // Only write if changes are detected to preserve file timestamp if possible
-            if (fileContent != newContent) {
-                javaSourceFile.text = newContent
-                logger.lifecycle("Successfully updated STABLE_EXCLUSIONS in MiddlewareAppOptions.java with ${sortedPaths.size()} paths.")
+                // Only write if changes are detected to preserve file timestamp if possible
+                if (fileContent != newContent) {
+                    javaSourceFile.text = newContent
+                    logger.lifecycle("Successfully updated $variable in MiddlewareAppOptions.java with ${sortedPaths.size()} paths.")
+                } else {
+                    logger.lifecycle("MiddlewareAppOptions.java is already up to date.")
+                }
             } else {
-                logger.lifecycle("MiddlewareAppOptions.java is already up to date.")
+                logger.error("Could not find '$variable = List.of(...)' pattern in ${javaSourceFile.name}")
             }
-        } else {
-            logger.error("Could not find 'STABLE_EXCLUSIONS = List.of(...)' pattern in ${javaSourceFile.name}")
         }
     }
 }
 
 // Add this line after the task definition
 tasks.named("generateOpenApiDocsEnumsAsString") {
-    finalizedBy "updateExperimentalExclusions"
+    finalizedBy "updateUnstableExclusions"
 }
 
 //###################################### Start Default values ##########################################
