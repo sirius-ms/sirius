@@ -171,6 +171,7 @@ public class JobController {
      * [DEPRECATED] Start computation for given command and input.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      *
      * @param projectId         project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed

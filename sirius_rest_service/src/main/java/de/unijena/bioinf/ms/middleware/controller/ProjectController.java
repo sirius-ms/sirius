@@ -228,6 +228,7 @@ public class ProjectController {
      * API to allow for more flexible use cases. Use 'ms-data-files-job' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      *
      * @param projectId      Project-space to import into.
      * @param localFilePaths Local files to import into project.
@@ -267,6 +268,7 @@ public class ProjectController {
      * API to allow for more flexible use cases. Use 'ms-data-files' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      *
      * @param projectId      Project to import into.
      * @param localFilePaths Local files to import into project.
@@ -346,6 +348,7 @@ public class ProjectController {
      * API to allow for more flexible use cases. Use 'preprocessed-data-files-job' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      *
      * @param projectId project-space to import into.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
@@ -381,6 +384,7 @@ public class ProjectController {
      * API to allow for more flexible use cases. Use 'preprocessed-data-files' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      *
      * @param projectId      project-space to import into.
      * @param localFilePaths files to import into project
@@ -406,6 +410,7 @@ public class ProjectController {
      * [DEPRECATED] Move an existing (opened) project-space to another location.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      *
      * @param projectId           unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
@@ -415,7 +420,7 @@ public class ProjectController {
      */
     @Deprecated(forRemoval = true)
     @Operation(
-            summary = "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API."
+            summary = "[DEPRECATED] [INTERNAL] This endpoint is based on local file paths and will likely be removed in future versions of this API."
     )
     @PutMapping(value = "/{projectId}/copy", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo copyProject(@PathVariable String projectId, @RequestParam String pathToCopiedProject, @RequestParam(required = false) String copyProjectId, @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields) throws IOException {

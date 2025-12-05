@@ -52,7 +52,7 @@ public class SearchableDatabasesApi {
 
     
     /**
-     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
+     * [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter
@@ -91,7 +91,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
+     * [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter
@@ -104,7 +104,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
+     * [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter
@@ -117,7 +117,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
+     * [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter
@@ -444,7 +444,7 @@ public class SearchableDatabasesApi {
 
     /**
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use
-     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - list of databases available for downloading.
      * @return List&lt;DownloadableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -476,7 +476,7 @@ public class SearchableDatabasesApi {
 
     /**
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use
-     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - list of databases available for downloading.
      * @return List&lt;DownloadableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -488,7 +488,7 @@ public class SearchableDatabasesApi {
 
     /**
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use
-     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - list of databases available for downloading.
      * @return ResponseEntity&lt;List&lt;DownloadableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -500,7 +500,7 @@ public class SearchableDatabasesApi {
 
     /**
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use
-     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+     * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - list of databases available for downloading.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
