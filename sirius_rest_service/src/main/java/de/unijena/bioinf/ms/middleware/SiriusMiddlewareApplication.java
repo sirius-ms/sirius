@@ -25,7 +25,6 @@ import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
-import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
@@ -291,7 +290,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 RUN.cancel();
             }
         } finally {
-            if (successfulParsed && PropertyManager.DEFAULTS.createInstanceWithDefaults(PrintCitations.class).value)
+            if (successfulParsed && PropertyManager.getBoolean("de.unijena.bioinf.sirius.printCitations", true))
                 ApplicationCore.BIBTEX.citeToSystemErr();
         }
     }

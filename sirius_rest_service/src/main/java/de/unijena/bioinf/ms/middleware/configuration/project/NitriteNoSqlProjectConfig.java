@@ -32,6 +32,7 @@ import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -42,6 +43,7 @@ import org.springframework.context.annotation.DependsOn;
 import java.io.IOException;
 import java.nio.file.Path;
 
+@Slf4j
 @Configuration
 @ConditionalOnProperty(name = "sirius.middleware.project-space", havingValue = "NITRITE-NOSQL")
 public class NitriteNoSqlProjectConfig {
@@ -51,13 +53,19 @@ public class NitriteNoSqlProjectConfig {
         return new NitriteProjectSpaceManagerFactory();
     }
 
-
     @Bean(destroyMethod = "close")
-    public SearchService searchService(@Value("${de.unijena.bioinf.sirius.indexing.homeDir:#{null}}") Path indexingHome) throws IOException {
+    public SearchService searchService(@Value("${de.unijena.bioinf.sirius.indexing.homeDir:#{null}}") Path indexingHome, @Value("${de.unijena.bioinf.sirius.project.inMemoryIndex:#{false}}") boolean inMemoryIndex) throws IOException {
+        if (inMemoryIndex) {
+            indexingHome = null;
+        } else {
+            if (indexingHome == null)
+                indexingHome = Workspace.WORKSPACE.resolve("search-indexes").resolve("lucene");
+        }
+
         if (indexingHome == null)
-            indexingHome = Workspace.WORKSPACE.resolve("search-indexes").resolve("lucene");
+            log.warn("Running in in-memory search index mode.");
+
         return new SearchServiceImpl(indexingHome, PerPojoProjectSearchContext.FACTORY);
-//        return new SearchServiceImpl(null, PerPojoProjectSearchContext.FACTORY);
     }
 
     @Bean
