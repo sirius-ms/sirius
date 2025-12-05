@@ -83,8 +83,30 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
     public enum ApiDocMode {STABLE, BASIC, STABLE_ADVANCED, ADVANCED}
 
-    private final static List<String> STABLE_EXCLUSIONS = List.of(
+    private final static List<String> INTERNAL_EXCLUSIONS = List.of(
             "/api/databases/downloadable",
+            "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree",
+            "/api/projects/*/copy",
+            "/api/projects/*/import/ms-data-local-files-job",
+            "/api/projects/*/import/ms-local-data-files",
+            "/api/projects/*/import/preprocessed-local-data-files",
+            "/api/projects/*/import/preprocessed-local-data-files-job",
+            "/api/projects/*/jobs/run-command"
+    );
+
+    private final static List<String> DEPRECATED_EXCLUSIONS = List.of(
+            "/api/databases",
+            "/api/databases/downloadable",
+            "/api/job-config-names",
+            "/api/projects/*/copy",
+            "/api/projects/*/import/ms-data-local-files-job",
+            "/api/projects/*/import/ms-local-data-files",
+            "/api/projects/*/import/preprocessed-local-data-files",
+            "/api/projects/*/import/preprocessed-local-data-files-job",
+            "/api/projects/*/jobs/run-command"
+    );
+
+    private final static List<String> EXPERIMENTAL_EXCLUSIONS = List.of(
             "/api/projects/*/aligned-features/*/adducts",
             "/api/projects/*/aligned-features/*/denovo-structures",
             "/api/projects/*/aligned-features/*/formulas/*/structures/*/annotated-msmsdata",
@@ -94,24 +116,23 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             "/api/projects/*/aligned-features/*/spectral-library-matches/*/annotated",
             "/api/projects/*/aligned-features/*/traces",
             "/api/projects/*/aligned-features/grouped",
-            "/api/projects/*/aligned-features/page",
             "/api/projects/*/aligned-features/quant-table",
             "/api/projects/*/aligned-features/statistics/foldchange/compute",
             "/api/projects/*/aligned-features/statistics/foldchanges",
             "/api/projects/*/aligned-features/statistics/foldchanges/*",
             "/api/projects/*/aligned-features/statistics/foldchanges/stats-table",
-            "/api/projects/*/aligned-features/tags",
+            "/api/projects/*/aligned-features/tagged",
             "/api/projects/*/aligned-features/tags/*",
             "/api/projects/*/aligned-features/tags/*/*",
             "/api/projects/*/compounds/*/quant-table-row",
             "/api/projects/*/compounds/*/traces",
             "/api/projects/*/compounds/grouped",
-            "/api/projects/*/compounds/page",
             "/api/projects/*/compounds/quant-table",
             "/api/projects/*/compounds/statistics/foldchange/compute",
             "/api/projects/*/compounds/statistics/foldchanges",
             "/api/projects/*/compounds/statistics/foldchanges/*",
             "/api/projects/*/compounds/statistics/foldchanges/stats-table",
+            "/api/projects/*/compounds/tagged",
             "/api/projects/*/compounds/tags/*",
             "/api/projects/*/compounds/tags/*/*",
             "/api/projects/*/groups",
@@ -119,14 +140,14 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             "/api/projects/*/runs/*",
             "/api/projects/*/runs/grouped",
             "/api/projects/*/runs/page",
-            "/api/projects/*/runs/tags",
+            "/api/projects/*/runs/tagged",
             "/api/projects/*/runs/tags/*",
             "/api/projects/*/runs/tags/*/*",
             "/api/projects/*/tags",
             "/api/projects/*/tags/*"
     );
 
-    private static final List<String> BASIC_EXCLUSIONS = List.of("/api/projects/*/gui/advanced");
+    private static final List<String> ADVANCED_EXCLUSIONS = List.of("/api/projects/*/gui/advanced");
 
 
     @CommandLine.Option(names = {"--api-doc-mode", "--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true)
@@ -140,12 +161,15 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         switch (apiDocMode) {
             case STABLE ->
                     System.setProperty("springdoc.pathsToExclude",
-                            Stream.concat(STABLE_EXCLUSIONS.stream(), BASIC_EXCLUSIONS.stream())
+                            Stream.of(INTERNAL_EXCLUSIONS, EXPERIMENTAL_EXCLUSIONS, ADVANCED_EXCLUSIONS)
+                                    .flatMap(List::stream)
                                     .collect(Collectors.joining(",")));
             case BASIC ->
-                    System.setProperty("springdoc.pathsToExclude", String.join(",", BASIC_EXCLUSIONS));
+                    System.setProperty("springdoc.pathsToExclude", String.join(",", ADVANCED_EXCLUSIONS));
             case STABLE_ADVANCED ->
-                    System.setProperty("springdoc.pathsToExclude", String.join(",", STABLE_EXCLUSIONS));
+                    System.setProperty("springdoc.pathsToExclude", Stream.of(INTERNAL_EXCLUSIONS, EXPERIMENTAL_EXCLUSIONS)
+                            .flatMap(List::stream)
+                            .collect(Collectors.joining(",")));
             case ADVANCED ->
                     System.getProperties().remove("springdoc.pathsToExclude");
         }

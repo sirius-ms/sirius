@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addDatabases**](SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API. |
+| [**addDatabases**](SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API. |
 | [**createDatabase**](SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} |  |
 | [**getCustomDatabases**](SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom |  |
 | [**getDatabase**](SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} |  |
@@ -21,7 +21,7 @@ All URIs are relative to *http://localhost:8888*
 
 > List&lt;SearchableDatabase&gt; addDatabases(requestBody)
 
-DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
+[DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
 
 ### Example
 
@@ -351,7 +351,7 @@ No authorization required
 
 Get list of curated custom databases downloadable from the SIRIUS web service for local use
 
-Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
 
 ### Example
 
