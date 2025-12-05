@@ -478,8 +478,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
-        "description": "[DEPRECATED] Move an existing (opened) project-space to another location.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "summary": "[DEPRECATED] [INTERNAL] This endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "description": "[DEPRECATED] Move an existing (opened) project-space to another location.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
         "operationId": "copyProject",
         "parameters": [
           {
@@ -1322,7 +1322,7 @@
           "Jobs"
         ],
         "summary": "[DEPRECATED] Start computation for given command and input",
-        "description": "[DEPRECATED] Start computation for given command and input.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "description": "[DEPRECATED] Start computation for given command and input.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
         "operationId": "startCommand",
         "parameters": [
           {
@@ -1463,7 +1463,7 @@
           "Projects"
         ],
         "summary": "[DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n ",
-        "description": "[DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "description": "[DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
         "operationId": "importPreprocessedDataLocally",
         "parameters": [
           {
@@ -1529,7 +1529,7 @@
           "Projects"
         ],
         "summary": "[DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job",
-        "description": "[DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files-job\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "description": "[DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files-job\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
         "operationId": "importPreprocessedDataAsJobLocally",
         "parameters": [
           {
@@ -1770,7 +1770,7 @@
           "Projects"
         ],
         "summary": "[DEPRECATED] Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)\n ",
-        "description": "[DEPRECATED] Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027ms-data-files\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "description": "[DEPRECATED] Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027ms-data-files\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
         "operationId": "importMsRunDataLocally",
         "parameters": [
           {
@@ -1827,7 +1827,7 @@
           "Projects"
         ],
         "summary": "[DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job",
-        "description": "[DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027ms-data-files-job\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "description": "[DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027ms-data-files-job\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
         "operationId": "importMsRunDataAsJobLocally",
         "parameters": [
           {
@@ -2744,7 +2744,7 @@
         "tags": [
           "Searchable Databases"
         ],
-        "summary": "DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.",
+        "summary": "[DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.",
         "operationId": "addDatabases",
         "requestBody": {
           "content": {
@@ -7432,7 +7432,7 @@
           "Searchable Databases"
         ],
         "summary": "Get list of curated custom databases downloadable from the SIRIUS web service for local use",
-        "description": "Get list of curated custom databases downloadable from the SIRIUS web service for local use.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\n [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.",
+        "description": "Get list of curated custom databases downloadable from the SIRIUS web service for local use.\n \u003cp\u003e\n [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
         "operationId": "getDownloadableDatabases",
         "responses": {
           "200": {

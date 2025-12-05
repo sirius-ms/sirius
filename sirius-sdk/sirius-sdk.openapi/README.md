@@ -213,7 +213,7 @@ Class | Method | HTTP request | Description
 *LoginAndAccountApi* | [**selectSubscription**](docs/LoginAndAccountApi.md#selectSubscription) | **PUT** /api/account/subscriptions/select-active | Select a subscription as active subscription to be used for computations.
 *LoginAndAccountApi* | [**signUp**](docs/LoginAndAccountApi.md#signUp) | **GET** /api/account/signUp | Open SignUp window in system browser and return signUp link.
 *ProjectsApi* | [**closeProject**](docs/ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from the application
-*ProjectsApi* | [**copyProject**](docs/ProjectsApi.md#copyProject) | **PUT** /api/projects/{projectId}/copy | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+*ProjectsApi* | [**copyProject**](docs/ProjectsApi.md#copyProject) | **PUT** /api/projects/{projectId}/copy | [DEPRECATED] [INTERNAL] This endpoint is based on local file paths and will likely be removed in future versions of this API.
 *ProjectsApi* | [**createProject**](docs/ProjectsApi.md#createProject) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId.
 *ProjectsApi* | [**getCanopusClassyFireData**](docs/ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes
 *ProjectsApi* | [**getCanopusNpcData**](docs/ProjectsApi.md#getCanopusNpcData) | **GET** /api/projects/{projectId}/npc-data | Get CANOPUS prediction vector definition for NPC classes
@@ -237,7 +237,7 @@ Class | Method | HTTP request | Description
 *RunsApi* | [**getRunsByTagExperimental**](docs/RunsApi.md#getRunsByTagExperimental) | **GET** /api/projects/{projectId}/runs/tagged | [EXPERIMENTAL] Get runs by tag
 *RunsApi* | [**getTagsForRunExperimental**](docs/RunsApi.md#getTagsForRunExperimental) | **GET** /api/projects/{projectId}/runs/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Run
 *RunsApi* | [**removeTagFromRunExperimental**](docs/RunsApi.md#removeTagFromRunExperimental) | **DELETE** /api/projects/{projectId}/runs/tags/{runId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the run with the specified ID in the specified project-space
-*SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
+*SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
 *SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | 
 *SearchableDatabasesApi* | [**getDatabase**](docs/SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} | 
