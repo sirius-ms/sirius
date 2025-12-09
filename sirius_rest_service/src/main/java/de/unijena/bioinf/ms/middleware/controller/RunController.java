@@ -99,7 +99,7 @@ public class RunController implements TaggableController<Run, Run.OptField> {
     }
 
     /**
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.
+     * [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter.
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
