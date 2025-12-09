@@ -148,8 +148,8 @@ public class RunsApi {
     }
 
     /**
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter
+     * [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
      * @param sampleTypeFoldChangeRequest request with lists of run IDs that are sample, blank, and control runs
@@ -195,8 +195,8 @@ public class RunsApi {
     }
 
     /**
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter
+     * [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
      * @param sampleTypeFoldChangeRequest request with lists of run IDs that are sample, blank, and control runs
@@ -210,8 +210,8 @@ public class RunsApi {
     }
 
     /**
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter
+     * [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
      * @param sampleTypeFoldChangeRequest request with lists of run IDs that are sample, blank, and control runs
@@ -225,8 +225,8 @@ public class RunsApi {
     }
 
     /**
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter
+     * [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
      * @param sampleTypeFoldChangeRequest request with lists of run IDs that are sample, blank, and control runs
