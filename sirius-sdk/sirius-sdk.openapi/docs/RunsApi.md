@@ -5,7 +5,7 @@ All URIs are relative to *http://localhost:8888*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**addTagsToRunExperimental**](RunsApi.md#addTagsToRunExperimental) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | [EXPERIMENTAL] Add tags to a run in the project |
-| [**computeFoldChangeForBlankSubtraction**](RunsApi.md#computeFoldChangeForBlankSubtraction) | **PUT** /api/projects/{projectId}/runs/blanksubtract/compute | **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter |
+| [**computeFoldChangeForBlankSubtraction**](RunsApi.md#computeFoldChangeForBlankSubtraction) | **PUT** /api/projects/{projectId}/runs/blanksubtract/compute | [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter |
 | [**getRunExperimental**](RunsApi.md#getRunExperimental) | **GET** /api/projects/{projectId}/runs/{runId} | [EXPERIMENTAL] Get run with the given identifier from the specified project-space |
 | [**getRunPageExperimental**](RunsApi.md#getRunPageExperimental) | **GET** /api/projects/{projectId}/runs/page | [EXPERIMENTAL] Get all available runs in the given project-space |
 | [**getRunsByGroupExperimental**](RunsApi.md#getRunsByGroupExperimental) | **GET** /api/projects/{projectId}/runs/grouped | [EXPERIMENTAL] Get runs by tag group |
@@ -89,9 +89,9 @@ No authorization required
 
 > Job computeFoldChangeForBlankSubtraction(projectId, sampleTypeFoldChangeRequest, optFields)
 
-**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
+[EXPERIMENTAL] Compute the fold changes that are required for the fold change filter
 
-**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+[EXPERIMENTAL] Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
 
 ### Example
 
