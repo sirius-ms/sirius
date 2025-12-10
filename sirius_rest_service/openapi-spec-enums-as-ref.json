@@ -9499,7 +9499,8 @@
             "type": "number",
             "format": "double"
           }
-        }
+        },
+        "nullable": true
       },
       "LcmsSubmissionParameters": {
         "type": "object",
