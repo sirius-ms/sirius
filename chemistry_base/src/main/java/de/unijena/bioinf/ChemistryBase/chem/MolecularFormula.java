@@ -955,6 +955,40 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return new ImmutableMolecularFormula(sel, copy);
     }
 
+    /**
+    Replace all occurences of element toRemove with the element toReplace
+     */
+    public MolecularFormula substitute(Element toRemove, Element toReplace) {
+        short count = (short) numberOf(toRemove);
+        if (count==0) return this;
+        final TableSelection sel = getTableSelection();
+        final BitSet set = sel.getBitMask();
+        set.set(toRemove.getId(), false);
+        set.set(toReplace.getId(), true);
+        final TableSelection newSelection = sel.getPeriodicTable().getSelectionFor(set);
+        if (newSelection.equals(sel)) {
+            final short[] copy = buffer().clone();
+            copy[sel.indexOf(toRemove)]=0;
+            copy[sel.indexOf(toReplace)]+=count;
+            return new ImmutableMolecularFormula(sel, copy);
+        } else {
+            final short[] buffer = new short[newSelection.numberOfElements()];
+            final short[] prev = buffer();
+            for (int k=0; k < prev.length; ++k) {
+                Element e = sel.get(k);
+                short c;
+                if (e==toRemove) continue;
+                else if (e==toReplace) {
+                    c = (short)(count + prev[k]);
+                } else {
+                    c = prev[k];
+                }
+                buffer[newSelection.indexOf(e)] = c;
+            }
+            return new ImmutableMolecularFormula(newSelection, buffer);
+        }
+    }
+
     private final static class Counter implements FormulaVisitor<Object> {
         private int count = 0;
         private MolecularFormula other;
