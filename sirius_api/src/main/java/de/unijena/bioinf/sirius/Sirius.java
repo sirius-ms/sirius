@@ -83,8 +83,6 @@ public class Sirius {
         this.getMs2Analyzer().registerPlugin(new UseLossMassDeviationScoringPlugin());
         this.getMs2Analyzer().registerPlugin(new TreeMotifPlugin());
 
-        this.getMs2Analyzer().registerPlugin(new PolyfluorinatedCompoundPlugin());
-
         this.getMs2Analyzer().registerPlugin(new PredefinedPeakPlugin());
         this.getMs2Analyzer().registerPlugin(new AminoAcidPlugin());
         this.getMs2Analyzer().registerPlugin(new AdductNeutralizationPlugin());
