@@ -23,7 +23,9 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
@@ -35,6 +37,7 @@ import gnu.trove.procedure.TObjectDoubleProcedure;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Function;
 
 public class CommonLossEdgeScorer implements LossScorer {
 
@@ -180,8 +183,16 @@ public class CommonLossEdgeScorer implements LossScorer {
         merge(lossScorer.commonLosses);
     }
 
+    private static Element H= PeriodicTable.getInstance().getByName("H"), F = PeriodicTable.getInstance().getByName("F");
+    private double substituteFluor(MolecularFormula f, Function<MolecularFormula, Double> function) {
+        MolecularFormula g = f.substitute(H, F);
+        if (g==f) return function.apply(f);
+        else return Math.max(function.apply(f), function.apply(g));
+    }
+
     public double score(MolecularFormula formula) {
-        final double score = getRecombinatedList().get(formula);
+        TObjectDoubleHashMap<MolecularFormula> map = getRecombinatedList();
+        final double score = substituteFluor(formula, map::get);
         if (score != 0) return score - normalization;
         else return commonLosses.get(formula) - normalization;
     }
