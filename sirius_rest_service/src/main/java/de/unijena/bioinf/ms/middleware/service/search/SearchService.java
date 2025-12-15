@@ -1,25 +1,78 @@
 package de.unijena.bioinf.ms.middleware.service.search;
 
-import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
-import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
-import de.unijena.bioinf.storage.db.nosql.Database;
-import de.unijena.bioinf.storage.db.nosql.Filter;
-import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.projects.Project;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
+import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import lombok.SneakyThrows;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
-import java.util.stream.Stream;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
 
-public interface SearchService {
+public interface SearchService extends AutoCloseable {
+    void openOrCreateProjectIndex(Project<?> project) throws IOException;
 
-    void indexProject(String projectId, SiriusProjectDatabaseImpl<? extends Database<?>> project);
-    void closeProject(String projectId);
+    @SneakyThrows
+    default void closeProjectIndex(String projectId) {
+        //sneaky throws is fine since no deletion will happen.
+        closeProjectIndex(projectId, false);
+    }
 
-    TagDefinition getTagDefinition(String projectId, String tagName);
-    Stream<TagDefinition> getTagDefinitions(String projectId);
-    void addTagDefinition(String projectId, TagDefinition tagDefinition);
-    boolean removeTagDefinition(String projectId, String tagName);
+    void closeProjectIndex(String projectId, boolean deleteIndexFromDisk) throws IOException;
 
-    Filter parseFindTagsByObjectType(String projectId, Class<?> targeObjectClass, String luceneFilterQuery) throws QueryNodeException, IOException;
-    Filter parseFindTags(String projectId, String luceneFilterQuery) throws QueryNodeException, IOException;
+    void clearIndex(@NotNull Project<?> project) throws IOException;
 
+    <T> int getNumberOfDocuments(String projectId, Class<T> clazz);
+
+    default <T>  boolean isEmpty (String projectId, Class<T> clazz){
+        return getNumberOfDocuments(projectId, clazz) <= 0;
+    }
+
+    <T> void addDocument(String projectId, T bean);
+
+    <T> void addDocuments(String projectId, Collection<T> beans);
+
+
+    <T> void updateDocument(String projectId, T bean);
+
+    <T> void updateDocuments(String projectId, Collection<T> beans);
+
+    <T> Optional<T> updateDocumentFields(@NotNull String projectId, Object uuid, Consumer<T> modifier, Class<T> clazz);
+
+    default <T extends Taggable> void addTagToDocument(@NotNull String projectId, Object docId, Tag tag, @NotNull Class<T> clazz){
+        addTagsToDocument(projectId,docId, List.of(tag), clazz);
+    }
+
+    <T> void updateDocumentsFields(@NotNull String projectId, Collection<?> objectIds, Consumer<T> objectModifier, Class<T> clazz) throws IllegalArgumentException;
+
+    <T extends Taggable> void addTagsToDocument(@NotNull String projectId, Object docId, Collection<Tag> tags, @NotNull Class<T> clazz);
+    <T extends Taggable> void addTagsToDocuments(@NotNull String projectId, Map<String, ? extends Collection<? extends Tag>> docIdsToTags, @NotNull Class<T> clazz);
+
+    default <T extends Taggable> void removeTagFromDocument(@NotNull String projectId, Object docId, String tagName, @NotNull Class<T> clazz){
+        removeTagsFromDocument(projectId,docId, List.of(tagName), clazz);
+    }
+
+    <T extends Taggable> void removeTagsFromDocument(@NotNull String projectId, Object docId,  Collection<String> tagName, @NotNull Class<T> clazz);
+
+    <T> void removeDocument(@NotNull String projectId, @NotNull T beanToRemove);
+    <T> void removeDocuments(@NotNull String projectId, @NotNull Collection<T> beans);
+
+    <T> void removeDocumentById(@NotNull String projectId, @NotNull Object docId, Class<T> pojoClass);
+
+    <T> void removeDocumentsById(@NotNull String projectId, @NotNull Collection<?> docIds, Class<T> pojoClass);
+
+    <T> Page<T> search(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
+    <T> Page<String> searchIds(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
+
+    ValueType getTagValueType(String projectId, String tagName);
+    void addTagValueType(String projectId, String tagName, ValueType valueType);
+    boolean removeTagValueType(String projectId, String tagName);
 }

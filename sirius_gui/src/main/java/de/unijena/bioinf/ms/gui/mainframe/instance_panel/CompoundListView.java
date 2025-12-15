@@ -48,7 +48,7 @@ public class CompoundListView extends JScrollPane {
         this.sourceList = sourceList;
         //todo move texfield and filter funktion here
         compoundListView = new JListDropImage<>(new DefaultEventListModel<>(sourceList.compoundList), sourceList.sortedSource::isEmpty, sourceList.compoundList::isEmpty);
-        compoundListView.setSelectionModel(sourceList.compountListSelectionModel);
+        compoundListView.setSelectionModel(sourceList.compoundListSelectionModel);
         compoundListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         compoundListView.setCellRenderer(new CompoundCellRenderer(gui));
         expPopMenu = new CompoundContextMenu(gui);

@@ -20,12 +20,14 @@
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
+import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Summary of the results of a feature (aligned over runs). Can be added to a AlignedFeature.
@@ -35,18 +37,25 @@ import java.util.List;
  * */
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FeatureAnnotations {
+
     /**
      * Best matching FormulaCandidate.
      */
+    @IndexField
     @Schema(nullable = true)
     protected FormulaCandidate formulaAnnotation; // SIRIUS + ZODIAC
+
     /**
      * Best matching StructureCandidate ranked by CSI:FingerID Score over all FormulaCandidates.
      */
     @Schema(nullable = true)
     protected StructureCandidateScored structureAnnotation; // CSI:FingerID or MSNovelist
+
     /**
      * Best matching compound classes that correspond to the formulaAnnotation
      */
@@ -56,16 +65,19 @@ public class FeatureAnnotations {
     /**
      * Confidence Score that represents the confidence whether the top hit is correct.
      */
+    @IndexField(sortable = true)
     @Schema(nullable = true)
     protected Double confidenceExactMatch;
+
     /**
      * Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.
      */
+    @IndexField(sortable = true)
     @Schema(nullable = true)
     protected Double confidenceApproxMatch;
 
     /**
-     * Result that shows if structure annotation was expanded by using PubChem as fallback and if so, which confidence mode was used (as per input paramter)
+     * Result that shows if structure annotation was expanded by using PubChem as fallback and if so, which confidence mode was used (as per input parameter)
      *
      */
     @Schema(nullable = true)
@@ -76,10 +88,19 @@ public class FeatureAnnotations {
      */
     @Schema(nullable = true)
     protected List<String> specifiedDatabases;
+
     /**
      * List of databases that have been used to expand search space during expansive search. Null if no structure db search has been performed.
      */
     @Schema(nullable = true)
     protected List<String> expandedDatabases;
+
+    /**
+     * A mapping of structural database names (keys) to the rank (value) of the highest-ranked match found in each database.
+     * NOTE: This field is mainly for search index building and therefore hidden from the api
+     */
+    @IndexField(sortable = true)
+    @Schema(nullable = true, hidden = true)
+    private Map<String, Integer> matchedDatabases;
 }
 

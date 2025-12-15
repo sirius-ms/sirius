@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
@@ -30,8 +29,10 @@ import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
-import de.unijena.bioinf.projectspace.*;
-import it.unimi.dsi.fastutil.Pair;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.FormulaResultId;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.dizitart.no2.exceptions.NitriteIOException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,6 @@ import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrBlank;
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectEventType.PROJECT_OPENED;
-import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 import static de.unijena.bioinf.projectspace.ProjectSpaceIO.*;
 
 public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManager, P extends Project<PSM>> implements ProjectsProvider<P> {
@@ -125,12 +125,18 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
             b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countAllFeatures()).numOfCompounds(psm.countAllCompounds());
         if (optFields.contains(ProjectInfo.OptField.compatibilityInfo))
             b.compatible(psm.isCompatibleWithBackendDataUnchecked(ApplicationCore.WEB_API()));
+        if (optFields.contains(ProjectInfo.OptField.detectedAdducts))
+            b.detectedAdducts(psm.getDetectedAdducts().getDetectedAdducts());
 
         return b.build();
     }
 
     @Override
     public ProjectInfo openProject(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        return openProject(projectId, pathToProject, optFields, false);
+    }
+
+    protected ProjectInfo openProject(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean tmpProject) throws IOException {
         projectId = ensureUniqueProjectId(validateId(projectId));
         final Lock lock = projectSpaceLock.writeLock();
         lock.lock();
@@ -145,7 +151,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "'" + projectId + "' is no valid SIRIUS project space.");
             }
 
-            return createOrOpen(projectId, location, optFields);
+            return createOrOpen(projectId, location, optFields, tmpProject);
         } finally {
             lock.unlock();
         }
@@ -153,6 +159,10 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
 
     @Override
     public ProjectInfo createProject(@NotNull String projectIdSuggestion, @Nullable String path, @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean failIfExists) {
+        return createProject(projectIdSuggestion, path, optFields, failIfExists, false);
+    }
+
+    protected ProjectInfo createProject(@NotNull String projectIdSuggestion, @Nullable String path, @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean failIfExists, boolean tempProject) {
         return ensureUniqueName(validateId(projectIdSuggestion), (projectId) -> {
             try {
                 Path location;
@@ -171,7 +181,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
                         validateExistingLocation(location);
                     }
                 }
-                return createOrOpen(projectId, location, optFields);
+                return createOrOpen(projectId, location, optFields, tempProject);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when accessing file system to create project.", e);
             }
@@ -180,9 +190,10 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
 
     protected abstract void validateExistingLocation(Path location) throws IOException;
 
-    private ProjectInfo createOrOpen(String projectId, Path location, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+    private ProjectInfo createOrOpen(String projectId, Path location, @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean tempProject) throws IOException {
         try {
             PSM psm = projectSpaceManagerFactory.createOrOpen(location);
+            psm.setTempProject(tempProject);
             registerEventListeners(projectId, psm);
             projectSpaces.put(projectId, createProject(projectId, psm));
             eventService.sendEvent(ServerEvents.newProjectEvent(projectId, PROJECT_OPENED));
@@ -307,13 +318,5 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
         }
-    }
-
-    public static Pair<String,String> makeTempProjectData(){
-        Path p = FileUtils.createTmpProjectSpaceLocation(SIRIUS_PROJECT_SUFFIX);
-        String projectId = p.getFileName().toString();
-        projectId = projectId.substring(0, projectId.length() - SIRIUS_PROJECT_SUFFIX.length());
-        projectId = FileUtils.sanitizeFilename(projectId);
-        return Pair.of(projectId, p.toAbsolutePath().toString());
     }
 }

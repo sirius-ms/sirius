@@ -9,6 +9,8 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
     implementation "jakarta.annotation:jakarta.annotation-api:$jakarta_annotation_version"
     testImplementation project(":sirius-sdk")
+    testImplementation project(':ms_persistence_oss:ms_persistence_model_oss')
+    testImplementation project(':ms_persistence_oss:ms_persistence_document_storage_oss')
 }
 
 integrationTest {

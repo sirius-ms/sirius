@@ -29,7 +29,6 @@ import java.util.List;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public interface ExperimentListChangeListener{
-    void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize);
-    default void fullListChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int filteredSize) {}
-    void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize);
+    void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, long totalElements);
+    void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, long totalElements);
 }

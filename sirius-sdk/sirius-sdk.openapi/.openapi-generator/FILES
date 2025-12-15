@@ -54,6 +54,7 @@ docs/FeatureStatisticsApi.md
 docs/FeaturesApi.md
 docs/FingerprintPrediction.md
 docs/FoldChange.md
+docs/FoldChangeJobSubmission.md
 docs/FormulaCandidate.md
 docs/FormulaCandidateOptField.md
 docs/FragmentNode.md
@@ -108,7 +109,6 @@ docs/QuantTableExperimental.md
 docs/Run.md
 docs/RunOptField.md
 docs/RunsApi.md
-docs/SampleTypeFoldChangeRequest.md
 docs/SearchableDatabase.md
 docs/SearchableDatabaseParameters.md
 docs/SearchableDatabasesApi.md
@@ -139,6 +139,7 @@ docs/Tag.md
 docs/TagDefinition.md
 docs/TagDefinitionImport.md
 docs/TagGroup.md
+docs/TagSubmission.md
 docs/TagsApi.md
 docs/Term.md
 docs/Timeout.md
@@ -227,6 +228,7 @@ src/main/java/io/sirius/ms/sdk/model/FeatureAnnotations.java
 src/main/java/io/sirius/ms/sdk/model/FeatureImport.java
 src/main/java/io/sirius/ms/sdk/model/FingerprintPrediction.java
 src/main/java/io/sirius/ms/sdk/model/FoldChange.java
+src/main/java/io/sirius/ms/sdk/model/FoldChangeJobSubmission.java
 src/main/java/io/sirius/ms/sdk/model/FormulaCandidate.java
 src/main/java/io/sirius/ms/sdk/model/FormulaCandidateOptField.java
 src/main/java/io/sirius/ms/sdk/model/FragmentNode.java
@@ -275,7 +277,6 @@ src/main/java/io/sirius/ms/sdk/model/QuantRowType.java
 src/main/java/io/sirius/ms/sdk/model/QuantTableExperimental.java
 src/main/java/io/sirius/ms/sdk/model/Run.java
 src/main/java/io/sirius/ms/sdk/model/RunOptField.java
-src/main/java/io/sirius/ms/sdk/model/SampleTypeFoldChangeRequest.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabaseParameters.java
 src/main/java/io/sirius/ms/sdk/model/SecurityContext.java
 src/main/java/io/sirius/ms/sdk/model/SecurityContextPrincipal.java
@@ -304,6 +305,7 @@ src/main/java/io/sirius/ms/sdk/model/Tag.java
 src/main/java/io/sirius/ms/sdk/model/TagDefinition.java
 src/main/java/io/sirius/ms/sdk/model/TagDefinitionImport.java
 src/main/java/io/sirius/ms/sdk/model/TagGroup.java
+src/main/java/io/sirius/ms/sdk/model/TagSubmission.java
 src/main/java/io/sirius/ms/sdk/model/Term.java
 src/main/java/io/sirius/ms/sdk/model/Timeout.java
 src/main/java/io/sirius/ms/sdk/model/TraceAnnotationExperimental.java

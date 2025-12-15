@@ -21,11 +21,9 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
-import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
-import de.unijena.bioinf.ms.middleware.model.statistics.SampleTypeFoldChangeRequest;
-import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagSubmission;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -52,79 +50,14 @@ public class RunController implements TaggableController<Run, Run.OptField> {
     @Getter
     private final ProjectsProvider<?> projectsProvider;
 
-    private final ComputeService computeService;
-
     @Autowired
-    public RunController(ProjectsProvider<?> projectsProvider, ComputeService computeService) {
+    public RunController(ProjectsProvider<?> projectsProvider) {
         this.projectsProvider = projectsProvider;
-        this.computeService = computeService;
-    }
-
-    /**
-     * [EXPERIMENTAL] Get all available runs in the given project-space.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId project-space to read from.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @return Runs with tags (if specified).
-     */
-    @Operation(operationId = "getRunPageExperimental")
-    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<Run> getRunsPaged(
-            @PathVariable String projectId,
-            @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "") EnumSet<Run.OptField> optFields
-    ) {
-        return projectsProvider.getProjectOrThrow(projectId).findRuns(pageable, removeNone(optFields));
-    }
-
-    /**
-     * [EXPERIMENTAL] Get run with the given identifier from the specified project-space.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId        project-space to read from.
-     * @param runId            identifier of run to access.
-     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
-     * @return Run with tags (if specified).
-     */
-    @Operation(operationId = "getRunExperimental")
-    @GetMapping(value = "/{runId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Run getRun(
-            @PathVariable String projectId, @PathVariable String runId,
-            @RequestParam(defaultValue = "") EnumSet<Run.OptField> optFields
-    ) {
-        return projectsProvider.getProjectOrThrow(projectId).findRunById(runId, removeNone(optFields));
-    }
-
-    /**
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.
-     *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
-     *
-     * @param projectId project-space to compute the fold change in.
-     * @param request   request with lists of run IDs that are sample, blank, and control runs
-     * @param optFields job opt fields.
-     * @return
-     */
-    @PutMapping(value = "/blanksubtract/compute",  produces = MediaType.APPLICATION_JSON_VALUE)
-    public Job computeFoldChangeForBlankSubtraction(
-            @PathVariable String projectId,
-            @RequestBody @Valid SampleTypeFoldChangeRequest request,
-            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
-    ) {
-        return computeService.createAndSubmitFoldChangeForBlankSubtractionJob(
-                getProjectsProvider().getProjectOrThrow(projectId),
-                request.getSampleRunIds(),
-                request.getBlankRunIds(),
-                request.getControlRunIds(),
-                removeNone(optFields));
     }
 
     /**
      *
-     * [EXPERIMENTAL] Get runs by tag.
+     * [EXPERIMENTAL] Get runs in the given project-space.
      *
      * <h2>Supported filter syntax</h2>
      *
@@ -158,15 +91,39 @@ public class RunController implements TaggableController<Run, Run.OptField> {
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId    project space to get runs from.
-     * @param filter       tag filter.
+     * @param searchQuery  optional search query in lucene syntax.
      * @param pageable     pageable.
      * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged runs
      */
-    @Operation(operationId = "getRunsByTagExperimental")
-    @Override
-    public Page<Run> getObjectsByTag(String projectId, String filter, Pageable pageable, EnumSet<Run.OptField> optFields) {
-        return TaggableController.super.getObjectsByTag(projectId, filter, pageable, optFields);
+    @Operation(operationId = "getRunsPageExperimental")
+    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<Run> getRunsPage(
+            @PathVariable String projectId,
+            @RequestParam(required = false) String searchQuery,
+            @ParameterObject Pageable pageable,
+            @RequestParam(defaultValue = "") EnumSet<Run.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findRuns(searchQuery, pageable, removeNone(optFields));
+    }
+
+    /**
+     * [EXPERIMENTAL] Get run with the given identifier from the specified project-space.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId        project-space to read from.
+     * @param runId            identifier of run to access.
+     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
+     * @return Run with tags (if specified).
+     */
+    @Operation(operationId = "getRunExperimental")
+    @GetMapping(value = "/{runId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Run getRun(
+            @PathVariable String projectId, @PathVariable String runId,
+            @RequestParam(defaultValue = "") EnumSet<Run.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findRunById(runId, removeNone(optFields));
     }
 
     /**
@@ -201,6 +158,21 @@ public class RunController implements TaggableController<Run, Run.OptField> {
     }
 
     /**
+     *
+     * [EXPERIMENTAL] Add tags to a run in the project. Tags with the same name will be overwritten.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId  project-space to add to.
+     * @param tags       tags with the id of run they shall be added to.
+     */
+    @Operation(operationId = "addTagsToRunsExperimental")
+    @Override
+    public void addTagsToObjects(String projectId, List<TagSubmission> tags) {
+        TaggableController.super.addTagsToObjects(projectId, tags);
+    }
+
+    /**
      * [EXPERIMENTAL] Delete tag with the given name from the run with the specified ID in the specified project-space.
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -228,10 +200,15 @@ public class RunController implements TaggableController<Run, Run.OptField> {
      * @return tagged runs
      */
     @Operation(operationId = "getRunsByGroupExperimental")
-    @Override
-    public Page<Run> getObjectsByGroup(String projectId, String groupName, Pageable pageable, EnumSet<Run.OptField> optFields) {
-        return TaggableController.super.getObjectsByGroup(projectId, groupName, pageable, optFields);
+    @GetMapping(value = "/grouped", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<Run> getRunsByGroup(@PathVariable String projectId,
+                                                          @RequestParam String groupName,
+                                                          @ParameterObject Pageable pageable,
+                                                          @RequestParam(defaultValue = "none") EnumSet<Run.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findRunsByGroup(groupName, pageable, optFields);
     }
+
 
     @Override
     public Class<Run> getTagTarget() {

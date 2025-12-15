@@ -37,8 +37,9 @@ import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
-import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.tags.TagSubmission;
 import de.unijena.bioinf.ms.middleware.security.Authorities;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
@@ -49,8 +50,8 @@ import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.spectraldb.SpectrumType;
-import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
-import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
+import de.unijena.bioinf.spectraldb.entities.*;
+import io.swagger.v3.oas.annotations.Hidden;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bioinf.webapi.WebAPI;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -103,23 +104,87 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * Get all available features (aligned over runs) in the given project-space.
      *
-     * @param projectId project-space to read from.
+     * [EXPERIMENTAL] Get features (aligned over runs) in the given project-space.
+     *
+     * <h2>Supported filter syntax</h2>
+     *
+     * <p>The filter string must contain one or more clauses. A clause is prefíxed
+     * by a field name.
+     * </p>
+     *
+     * Currently the only searchable fields are names of tags ({@code tagName}) followed by a clause that is valued for the value type of the tag (See TagDefinition).
+     * Tag name based field need to be prefixed with the namespace {@code tags.}.
+     * Possible value types of tags are <strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value
+     *
+     * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
+     *
+     * <p>A clause may be:</p>
+     * <ul>
+     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tags.MyTagA:sample}</li>
+     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code tags.MyTagA:"Some Text"}</li>
+     *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code tags.MyTagA:/[mb]oat/}</li>
+     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code tags.MyTagB<3}</li>
+     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code tags.MyTagB:[* TO 3] }</li>
+     *     <li>a <strong>boolean</strong>: tags with boolean value are matched as follows: e.g. {@code tags.MyTagA:true}, {@code tags.MyTagA:false}</li>
+     *     <li>a <strong>value-less</strong>: tags without values (See TagDefinition) are matched as follows: e.g. {@code tags.MyTagA:*} or {@code tags.MyTagA:true}</li>
+     * </ul>
+     *
+     * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>
+     *
+     * <h3>Example</h3>
+     *
+     * <p>The syntax allows to build complex filter queries such as:</p>
+     *
+     * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
+     *
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId    project space to get features (aligned over runs) from.
+     * @param searchQuery       optional search query in lucene syntax.
+     * @param pageable     pageable.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
+     *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                            peak assignments and reference spectra.
+     * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
+     *
+     * @return tagged features (aligned over runs)
+     */
+    @Operation(operationId = "getAlignedFeaturesPageExperimental")
+    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<AlignedFeature> getAlignedFeaturesPage(
+            @PathVariable String projectId,
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
+            @RequestParam(defaultValue = "tags, computedTools, qualities") EnumSet<AlignedFeature.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(searchQuery, pageable, msDataSearchPrepared, removeNone(optFields));
+    }
+
+    /**
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId project-space to delete from.
+     * @param groupName tag group name.
+     * @param pageable  pageable.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     *
-     * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
+     * @return tagged features (aligned over runs)
      */
-    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<AlignedFeature> getAlignedFeaturesPaged(
-            @PathVariable String projectId, @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
-            @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
+    @Operation(operationId = "getAlignedFeaturesByGroupExperimental")
+    @GetMapping(value = "/grouped", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<AlignedFeature> getAlignedFeaturesByGroup(@PathVariable String projectId,
+                                                          @RequestParam String groupName,
+                                                          @ParameterObject Pageable pageable,
+                                                          @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
+                                                          @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, msDataSearchPrepared, removeNone(optFields));
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesByGroup(groupName, pageable, msDataSearchPrepared, optFields);
     }
 
     /**
@@ -861,7 +926,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation", produces = MediaType.APPLICATION_JSON_VALUE)
     public LipidAnnotation getLipidAnnotation(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         LipidAnnotation res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId,false, FormulaCandidate.OptField.lipidAnnotation)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, false)
                 .getLipidAnnotation();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Lipid annotation for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -1037,54 +1102,6 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     //region tags and groups
-
-    /**
-     * [EXPERIMENTAL] Get features (aligned over runs) by tag.
-     *
-     * <h2>Supported filter syntax</h2>
-     *
-     * <p>The filter string must contain one or more clauses. A clause is prefíxed
-     * by a field name.
-     * </p>
-     * <p>
-     * Currently the only searchable fields are names of tags ({@code tagName}) followed by a clause that is valued for the value type of the tag (See TagDefinition).
-     * Tag name based field need to be prefixed with the namespace {@code tags.}.
-     * Possible value types of tags are <strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value
-     *
-     * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
-     *
-     * <p>A clause may be:</p>
-     * <ul>
-     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tags.MyTagA:sample}</li>
-     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code tags.MyTagA:"Some Text"}</li>
-     *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code tags.MyTagA:/[mb]oat/}</li>
-     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code tags.MyTagB<3}</li>
-     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code tags.MyTagB:[* TO 3] }</li>
-     * </ul>
-     *
-     * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>
-     *
-     * <h3>Example</h3>
-     *
-     * <p>The syntax allows to build complex filter queries such as:</p>
-     *
-     * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId project space to get features (aligned over runs) from.
-     * @param filter    tag filter.
-     * @param pageable  pageable.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @return tagged features (aligned over runs)
-     */
-    @Operation(operationId = "getAlignedFeaturesByTagExperimental")
-    @Override
-    public Page<AlignedFeature> getObjectsByTag(String projectId, String filter, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
-        return TaggableController.super.getObjectsByTag(projectId, filter, pageable, optFields);
-    }
-
-
     /**
      * [EXPERIMENTAL] Get all tags associated with this Object
      *
@@ -1104,7 +1121,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId        project-space to add to.
-     * @param alignedFeatureId run to add tags to.
+     * @param alignedFeatureId feature to add tags to.
      * @param tags             tags to add.
      * @return the tags that have been added
      */
@@ -1113,6 +1130,21 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @Override
     public List<Tag> addTags(String projectId, String alignedFeatureId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
         return TaggableController.super.addTags(projectId, alignedFeatureId, tags);
+    }
+
+    /**
+     *
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId  project-space to add to.
+     * @param tags       tags with the id of feature they shall be added to.
+     */
+    @Operation(operationId = "addTagsToAlignedFeaturesExperimental")
+    @Override
+    public void addTagsToObjects(String projectId, List<TagSubmission> tags) {
+        TaggableController.super.addTagsToObjects(projectId, tags);
     }
 
     /**
@@ -1129,24 +1161,6 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @Override
     public void removeTags(String projectId, String alignedFeatureId, String tagName) {
         TaggableController.super.removeTags(projectId, alignedFeatureId, tagName);
-    }
-
-    /**
-     * [EXPERIMENTAL] Get features (aligned over runs) by tag group.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId project-space to delete from.
-     * @param groupName tag group name.
-     * @param pageable  pageable.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @return tagged features (aligned over runs)
-     */
-
-    @Operation(operationId = "getAlignedFeaturesByGroupExperimental")
-    @Override
-    public Page<AlignedFeature> getObjectsByGroup(String projectId, String groupName, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
-        return TaggableController.super.getObjectsByGroup(projectId, groupName, pageable, optFields);
     }
 
     @Override
