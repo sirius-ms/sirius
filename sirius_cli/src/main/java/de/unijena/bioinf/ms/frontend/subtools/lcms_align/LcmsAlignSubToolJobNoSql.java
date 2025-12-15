@@ -61,6 +61,8 @@ import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.tags.Tag;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
@@ -432,6 +434,16 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                     countMap.values().stream().mapToInt(Integer::intValue).sum(),
                     countMapMs2.values().stream().mapToInt(Integer::intValue).sum()
             );
+
+            // PFAS detection
+            {
+                AlignedFeatures[] features = ps.getStorage().findStr(Filter.where("runId").eq(merged.getRun().getRunId()), AlignedFeatures.class).filter(x -> x.getDataQuality().getScore() >= DataQuality.DECENT.getScore()).toArray(AlignedFeatures[]::new);
+                List<Tag> pfasTags = new CF2Detector(provider).detectPFASSeries(features).longStream().mapToObj(feature->
+                    TagDefinitions.PFAS_TYPE.newTagWithValue(TagDefinitions.PFAS_TYPE_0, AlignedFeatures.class, feature)
+                ).toList();
+                ps.getStorage().insertAll(pfasTags);
+            }
+
         } finally {
             processing.closeStorages();
         }
