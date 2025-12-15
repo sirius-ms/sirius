@@ -68,6 +68,16 @@ public class CommonLossEdgeScorer implements LossScorer {
     private double normalization;
     private Recombinator recombinator;
 
+    private LossSizeScorer lossSizeScorer;
+
+    public LossSizeScorer getLossSizeScorer() {
+        return lossSizeScorer;
+    }
+
+    public void setLossSizeScorer(LossSizeScorer lossSizeScorer) {
+        this.lossSizeScorer = lossSizeScorer;
+    }
+
     public CommonLossEdgeScorer() {
         this(Collections.<MolecularFormula, Double>emptyMap(), null);
     }
@@ -191,15 +201,16 @@ public class CommonLossEdgeScorer implements LossScorer {
     }
 
     public double score(MolecularFormula formula) {
-        TObjectDoubleHashMap<MolecularFormula> map = getRecombinatedList();
-        final double score = substituteFluor(formula, map::get);
-        if (score != 0) return score - normalization;
-        else return commonLosses.get(formula) - normalization;
+        return substituteFluor(formula, this::getScoreForFormulaWithLossSize);
     }
 
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
         return score(loss.getFormula());
+    }
+
+    private double getScoreForFormulaWithLossSize(MolecularFormula formula) {
+        return getRecombinatedList().get(formula) - normalization + lossSizeScorer.score(formula);
     }
 
     @Override
