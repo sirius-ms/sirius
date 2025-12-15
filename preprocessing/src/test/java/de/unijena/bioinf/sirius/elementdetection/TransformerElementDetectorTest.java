@@ -4,10 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -22,6 +19,7 @@ import de.unijena.bioinf.sirius.deisotope.IsotopePatternDetection;
 import de.unijena.bioinf.sirius.elementdetection.transformer.FourierEncoder;
 import de.unijena.bioinf.sirius.elementdetection.transformer.TransformerBasedPredictor;
 import de.unijena.bioinf.sirius.elementdetection.transformer.TransformerPrediction;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +29,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 import static de.unijena.bioinf.ChemistryBase.math.MatrixUtils.dot;
+import static de.unijena.bioinf.sirius.elementdetection.transformer.TransformerBasedPredictor.readFromTxt;
 
 public class TransformerElementDetectorTest {
 
@@ -112,9 +111,9 @@ public class TransformerElementDetectorTest {
     }
 
     public static void testData() throws IOException {
-        final TransformerElementDetector det = new TransformerElementDetector();
-        final File out = new File("/home/kaidu/software/sirius-frontend/preprocessing/src/main/resources/transformer.bin");
-        final TransformerBasedPredictor predictor = TransformerBasedPredictor.readFromBinary(out);//readFromTxt(new File("/home/kaidu/data/iso/redone/parameters"));
+        final File out = new File("//home/kaidu/github/sirius-frontend/preprocessing/src/main/resources/transformer.bin");
+        final TransformerBasedPredictor predictor = TransformerBasedPredictor.readFromBinary(out);
+        //final TransformerBasedPredictor predictor = readFromTxt(new File("/home/kaidu/work/data/iso/parameters"));
         int correctPredicted = 0, wrongPredicted = 0;
         List<MolecularFormula> wrong = new ArrayList<>();
         int legacyCorrect=0, legacyWrong=0;
@@ -127,9 +126,29 @@ public class TransformerElementDetectorTest {
                                 T.getByName("Se"),T.getByName("Mg"),
                                         T.getByName("Fe"),T.getByName("Zn")
         };
+
+        // statistics
+        FloatArrayList[] massDeviationsInPPMPerPeak = new FloatArrayList[7];
+        for (int i=0; i < massDeviationsInPPMPerPeak.length; ++i) massDeviationsInPPMPerPeak[i] = new FloatArrayList();
+
+        FloatArrayList[] absoluteIntensityDeviationsPerPeak = new FloatArrayList[7];
+        for (int i=0; i < absoluteIntensityDeviationsPerPeak.length; ++i) absoluteIntensityDeviationsPerPeak[i] = new FloatArrayList();
+
+        FloatArrayList[] relativeMassDeviations = new FloatArrayList[7];
+        for (int i=0; i < relativeMassDeviations.length; ++i) relativeMassDeviations[i] = new FloatArrayList();
+
+        FloatArrayList[] relativeMassDeviationsLM = new FloatArrayList[7];
+        for (int i=0; i < relativeMassDeviationsLM.length; ++i) relativeMassDeviationsLM[i] = new FloatArrayList();
+        FloatArrayList[] relativeMassDeviationsSM = new FloatArrayList[7];
+        for (int i=0; i < relativeMassDeviationsSM.length; ++i) relativeMassDeviationsSM[i] = new FloatArrayList();
+
+        FloatArrayList[] relativeIntensityDeviationsPerPeak = new FloatArrayList[7];
+        for (int i=0; i < relativeIntensityDeviationsPerPeak.length; ++i) relativeIntensityDeviationsPerPeak[i] = new FloatArrayList();
+
+        FastIsotopePatternGenerator fastIsotopePatternGenerator = new FastIsotopePatternGenerator(Normalization.Sum(1));
         DeepNeuralNetworkElementDetector legacy = new DeepNeuralNetworkElementDetector();
         final Ms1Preprocessor preprocessor = new Ms1Preprocessor();
-        for (File f : new File("/home/kaidu/data/iso/redone/test/ms1").listFiles()) {
+        for (File f : new File("/home/kaidu/work/data/iso/test/ms1").listFiles()) {
             if (f.getName().endsWith(".ms")) {
                 try {
                     Ms2Experiment exp = MsIO.readExperimentFromFile(f).next();
@@ -138,13 +157,43 @@ public class TransformerElementDetectorTest {
                     if (isotopes.isEmpty()) continue;
                     System.out.println("-------------------------------------------");
                     System.out.println(exp.getMolecularFormula() + " \t" + f.getName());
-                    for (Peak p : Spectrums.getNormalizedSpectrum(isotopes, Normalization.Sum(1d))) {
+                    SimpleSpectrum measuredData = Spectrums.getNormalizedSpectrum(isotopes, Normalization.Sum(1d));
+                    for (Peak p : measuredData) {
                         System.out.println(p.getMass() + "\t" + p.getIntensity());
                     }
+                    fastIsotopePatternGenerator.setMaximalNumberOfPeaks(measuredData.size());
+                    PrecursorIonType precursorIonType = preprocess.getExperimentInformation().getPrecursorIonType();
+                    Ionization ionization = precursorIonType.getIonization();
+                    SimpleSpectrum theoreticalSpectrum = fastIsotopePatternGenerator.simulatePattern(precursorIonType.neutralMoleculeToMeasuredNeutralMolecule(exp.getMolecularFormula()),
+                            precursorIonType.isIntrinsicalCharged() ? new Charge(ionization.getCharge()) : ionization);
+
+                    for (int j=0; j < theoreticalSpectrum.size(); ++j) {
+                        if (j < measuredData.size()) {
+                            final Peak m = measuredData.getPeakAt(j);
+                            final Peak t = theoreticalSpectrum.getPeakAt(j);
+
+                            relativeMassDeviations[j].add((float)Math.abs((m.getMass() - measuredData.getMzAt(0)) - (t.getMass() - theoreticalSpectrum.getMzAt(0)) ));
+                            if (theoreticalSpectrum.getMzAt(0) > 500) {
+                                relativeMassDeviationsLM[j].add((float)Math.abs((m.getMass() - measuredData.getMzAt(0)) - (t.getMass() - theoreticalSpectrum.getMzAt(0)) ));
+                            } else {
+                                relativeMassDeviationsSM[j].add((float)Math.abs((m.getMass() - measuredData.getMzAt(0)) - (t.getMass() - theoreticalSpectrum.getMzAt(0)) ));
+
+                            }
+                            massDeviationsInPPMPerPeak[j].add((float)Math.abs(Deviation.fromMeasurementAndReference(m.getMass(), t.getMass()).getPpm()));
+                            absoluteIntensityDeviationsPerPeak[j].add((float)Math.abs(m.getIntensity()-t.getIntensity()));
+                            relativeIntensityDeviationsPerPeak[j].add((float)Math.exp(Math.abs(Math.log(m.getIntensity())-Math.log(t.getIntensity())))-1f);
+                        }
+                    }
+
                     System.out.println();
                     boolean found=false;
                     final FormulaConstraints defaultfc  = isotopes.size()>2 ? new FormulaConstraints("CHNOPFI") : new FormulaConstraints("CHNOPSFI");
                     TransformerPrediction monoPred = null;
+
+                    if (f.getName().endsWith("agilent_859.ms")) {
+                        System.err.println("Debug.");
+                    }
+
                     for (TransformerPrediction p : predictor.predict(isotopes)) {
                         System.out.println(p);
                         if (p.getMonoisotopicPeak()==0) {
@@ -159,7 +208,8 @@ public class TransformerElementDetectorTest {
                         ++wrongPredicted;
                         wrong.add(exp.getMolecularFormula());
                     }
-                    DetectedFormulaConstraints legdec = legacy.detect(preprocess);
+                    DetectedElements legacyDetection = legacy.detect(preprocess);
+                    FormulaConstraints legdec = legacyDetection.getFormulaConstraints(new FormulaConstraints("CHNOPS")).constraints();
                     System.out.println("Legacy: " + legdec);
                     System.out.println();
                     if (legdec.isSatisfied(exp.getMolecularFormula())) {
@@ -191,14 +241,56 @@ public class TransformerElementDetectorTest {
         System.out.println(legacyFPNOS+ " / " + (correctPredicted+wrongPredicted) + " instances have too many elements beyond S predicted.");
         System.out.println("\nFormulas that were wrong: ");
         System.out.println(wrong);
+        /// ///////// stats
+
+        System.out.println("\nMass Deviation (ppm)");
+        for (int i=0; i < massDeviationsInPPMPerPeak.length; ++i) {
+            if (massDeviationsInPPMPerPeak[i].isEmpty()) continue;
+            massDeviationsInPPMPerPeak[i].sort(null);
+            System.out.printf("%d-th peak\tavg = %.3f\tmedian = %.3f\t%d samples\n", i, massDeviationsInPPMPerPeak[i].doubleStream().average().orElse(0d),
+                    massDeviationsInPPMPerPeak[i].getFloat((int)(massDeviationsInPPMPerPeak[i].size()/2)), massDeviationsInPPMPerPeak[i].size());
+        }
+        System.out.println("\nMass Difference Deviation (Da)");
+        for (int i=0; i < relativeMassDeviations.length; ++i) {
+            FloatArrayList fs = relativeMassDeviations[i];
+            if (fs.isEmpty()) continue;
+            fs.sort(null);
+            System.out.printf("%d-th peak\tavg = %.8f\tmedian = %.8f\t%d samples\n", i, fs.doubleStream().average().orElse(0d),
+                    fs.getFloat((int)(fs.size()/2)), fs.size());
+            fs = relativeMassDeviationsLM[i];
+            if (fs.isEmpty()) continue;
+            fs.sort(null);
+            System.out.printf("%d-th peak\tavg = %.8f\tmedian = %.8f\t%d samples\t mass above 500\n", i, fs.doubleStream().average().orElse(0d),
+                    fs.getFloat((int)(fs.size()/2)), fs.size());
+            fs = relativeMassDeviationsSM[i];
+            if (fs.isEmpty()) continue;
+            fs.sort(null);
+            System.out.printf("%d-th peak\tavg = %.8f\tmedian = %.8f\t%d samples\t mass below 500\n", i, fs.doubleStream().average().orElse(0d),
+                    fs.getFloat((int)(fs.size()/2)), fs.size());
+        }
+        System.out.println("\nAbsolute Intensity Deviation (%)");
+        for (int i=0; i < absoluteIntensityDeviationsPerPeak.length; ++i) {
+            if (absoluteIntensityDeviationsPerPeak[i].isEmpty()) continue;
+            absoluteIntensityDeviationsPerPeak[i].sort(null);
+            System.out.printf("%d-th peak\tavg = %.3f\tmedian = %.3f\t%d samples\n", i, absoluteIntensityDeviationsPerPeak[i].doubleStream().average().orElse(0d),
+                    absoluteIntensityDeviationsPerPeak[i].getFloat((int)(absoluteIntensityDeviationsPerPeak[i].size()/2)), absoluteIntensityDeviationsPerPeak[i].size());
+        }
+
+        System.out.println("\nRelative Intensity Deviation");
+        for (int i=0; i < relativeIntensityDeviationsPerPeak.length; ++i) {
+            if (relativeIntensityDeviationsPerPeak[i].isEmpty()) continue;
+            relativeIntensityDeviationsPerPeak[i].sort(null);
+            System.out.printf("%d-th peak\tavg = %.3f\tmedian = %.3f\t%d samples\n", i, relativeIntensityDeviationsPerPeak[i].doubleStream().average().orElse(0d),
+                    relativeIntensityDeviationsPerPeak[i].getFloat((int)(relativeIntensityDeviationsPerPeak[i].size()/2)), relativeIntensityDeviationsPerPeak[i].size());
+        }
+
     }
 
     public static void main(String[] args) {
         try {
             testData();
-            if (true) System.exit(0);
-            final File out = new File("/home/kaidu/software/sirius-frontend/preprocessing/src/main/resources/transformer.bin");
-            final TransformerBasedPredictor predictor = TransformerBasedPredictor.readFromTxt(new File("/home/kaidu/data/iso/redone/parameters"));
+            final File out = new File("/home/kaidu/github/sirius-frontend/preprocessing/src/main/resources/transformer.bin");
+            final TransformerBasedPredictor predictor = readFromTxt(new File("/home/kaidu/work/data/iso/parameters"));
 
             final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
             /*
@@ -228,14 +320,16 @@ public class TransformerElementDetectorTest {
             for (TransformerPrediction p : predict) {
                 System.out.println(p);
             }
-            if (!out.exists()) {
-                try (final FileChannel channel = FileChannel.open(out.toPath(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+            if (true){//(!out.exists()) {
+                try (final FileChannel channel = FileChannel.open(out.toPath(), StandardOpenOption.WRITE)) {
                     ByteBuffer buffer = ByteBuffer.allocate(1024 * 1024);
                     predictor.write(buffer);
                     buffer.flip();
                     channel.write(buffer);
                 }
             }
+            // validate
+            TransformerBasedPredictor.readFromBinary(out);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
