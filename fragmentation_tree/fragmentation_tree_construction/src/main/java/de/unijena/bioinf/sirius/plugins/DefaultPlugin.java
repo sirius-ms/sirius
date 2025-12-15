@@ -48,9 +48,15 @@ public class DefaultPlugin extends SiriusPlugin {
                 scorer=(LossSizeScorer) s;
             }
         }
-        if (scorer!=null) {
+        CommonLossEdgeScorer commonLosses = null;
+        for (LossScorer s : initializer.getAnalysis().getLossScorers()) {
+            if (s instanceof CommonLossEdgeScorer) {
+                commonLosses=(CommonLossEdgeScorer) s;
+            }
+        }
+        if (scorer!=null && commonLosses!=null) {
             initializer.getAnalysis().getPeakPairScorers().remove(scorer);
-            initializer.getAnalysis().getLossScorers().add(scorer);
+            commonLosses.setLossSizeScorer(scorer);
         }
 
     }

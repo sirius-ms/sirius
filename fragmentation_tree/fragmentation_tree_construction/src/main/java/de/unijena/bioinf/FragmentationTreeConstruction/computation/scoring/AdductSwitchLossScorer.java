@@ -55,16 +55,14 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
 
     private double naHSwitchScore;
     private double naHSwitchChildrenScore;
-    private LossSizeScorer lossSizeScorer;
 
-    public AdductSwitchLossScorer(@Nullable LossSizeScorer lossSizeScorer) {
-        this(DEFAULT_NA_H_SWITCH_SCORE, DEFAULT_NA_H_SWITCH_CHILD_FRAG_SCORE, lossSizeScorer);
+    public AdductSwitchLossScorer() {
+        this(DEFAULT_NA_H_SWITCH_SCORE, DEFAULT_NA_H_SWITCH_CHILD_FRAG_SCORE);
     }
 
-    public AdductSwitchLossScorer(double naHSwitchScore, double naHSwitchChildrenScore, @Nullable LossSizeScorer lossSizeScorer) {
+    public AdductSwitchLossScorer(double naHSwitchScore, double naHSwitchChildrenScore) {
         this.naHSwitchScore = naHSwitchScore;
         this.naHSwitchChildrenScore = naHSwitchChildrenScore;
-        this.lossSizeScorer = lossSizeScorer;
         PeriodicTable T = PeriodicTable.getInstance();
     }
 
@@ -98,7 +96,7 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
     }
 
     public AdductSwitchLossScorer replaceScores(double naHSwitchScore, double naHSwitchChildrenScore){
-        return new AdductSwitchLossScorer(naHSwitchScore, naHSwitchChildrenScore, lossSizeScorer);
+        return new AdductSwitchLossScorer(naHSwitchScore, naHSwitchChildrenScore);
     }
 
     @Override
