@@ -966,14 +966,15 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         set.set(toRemove.getId(), false);
         set.set(toReplace.getId(), true);
         final TableSelection newSelection = sel.getPeriodicTable().getSelectionFor(set);
+        short[] prev = buffer();
         if (newSelection.equals(sel)) {
-            final short[] copy = buffer().clone();
+            int newInd = sel.indexOf(toReplace);
+            final short[] copy = Arrays.copyOf(prev, Math.max(prev.length, newInd+1));
             copy[sel.indexOf(toRemove)]=0;
-            copy[sel.indexOf(toReplace)]+=count;
+            copy[newInd]+=count;
             return new ImmutableMolecularFormula(sel, copy);
         } else {
             final short[] buffer = new short[newSelection.numberOfElements()];
-            final short[] prev = buffer();
             for (int k=0; k < prev.length; ++k) {
                 Element e = sel.get(k);
                 short c;
