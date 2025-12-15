@@ -20,12 +20,17 @@
 // Source: http://stackoverflow.com/questions/16213836/java-swing-jtextfield-set-placeholder
 package de.unijena.bioinf.ms.gui.utils;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.swing.*;
 import javax.swing.text.Document;
 import java.awt.*;
 
+@Setter
+@Getter
 public class PlaceholderTextField extends JTextField {
-    protected String placeholder ;
+    protected String placeholder;
 
     public PlaceholderTextField() {
     }
@@ -33,8 +38,7 @@ public class PlaceholderTextField extends JTextField {
     public PlaceholderTextField(
             final Document pDoc,
             final String pText,
-            final int pColumns)
-    {
+            final int pColumns) {
         super(pDoc, pText, pColumns);
     }
 
@@ -50,15 +54,11 @@ public class PlaceholderTextField extends JTextField {
         super(pText, pColumns);
     }
 
-    public String getPlaceholder() {
-        return placeholder;
-    }
-
     @Override
     protected void paintComponent(final Graphics pG) {
         super.paintComponent(pG);
 
-        if (placeholder == null || placeholder.length() == 0 || getText().length() > 0) {
+        if (placeholder == null || placeholder.isEmpty() || !getText().isEmpty()) {
             return;
         }
 
@@ -70,9 +70,4 @@ public class PlaceholderTextField extends JTextField {
         g.drawString(placeholder, getInsets().left, pG.getFontMetrics()
                 .getMaxAscent() + getInsets().top);
     }
-
-    public void setPlaceholder(final String s) {
-        placeholder = s;
-    }
-
 }

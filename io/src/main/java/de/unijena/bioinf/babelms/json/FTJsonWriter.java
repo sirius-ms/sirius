@@ -24,8 +24,6 @@ package de.unijena.bioinf.babelms.json;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.JDKDocument;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -44,8 +42,8 @@ import java.util.Map;
 
 public class FTJsonWriter {
 
-
     private DescriptorRegistry registry = DescriptorRegistry.getInstance();
+    private DescriptorRegistry registrySlimWriter = DescriptorRegistry.getInstanceSlimWriter();
 
     public String treeToJsonString(@NotNull FTree tree, @Nullable Double precursorMass) {
         StringWriter w = new StringWriter();
@@ -72,13 +70,15 @@ public class FTJsonWriter {
         factory.enable(JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS);
         try {
             final JsonGenerator generator = factory.createGenerator(writer);
-            tree2json(tree, precursorMass, generator);
+            tree2json(tree, precursorMass, generator, false);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    protected void tree2json(@NotNull FTree tree, @Nullable Double precursorMass, @NotNull final JsonGenerator generator) throws IOException {
+    protected void tree2json(@NotNull FTree tree, @Nullable Double precursorMass, @NotNull final JsonGenerator generator, boolean slimSerializer) throws IOException {
+        DescriptorRegistry registry = slimSerializer ? this.registrySlimWriter : this.registry;
+
         generator.useDefaultPrettyPrinter();
         generator.writeStartObject();
 

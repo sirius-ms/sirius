@@ -23,12 +23,15 @@ import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.FastPropertyChangeSupport;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
-import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -37,30 +40,35 @@ import io.sirius.ms.sdk.model.*;
 import io.sirius.ms.sse.DataEventType;
 import io.sirius.ms.sse.DataObjectEvents;
 import it.unimi.dsi.fastutil.Pair;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+@Slf4j
 public class GuiProjectManager implements Closeable {
-    private final ArrayList<InstanceBean> innerList;
     public final BasicEventList<InstanceBean> INSTANCE_LIST;
 
     public final String projectId;
     private final SiriusClient siriusClient;
     private final GuiProperties properties;
+    private final SiriusGui siriusGui;
+
     protected final FastPropertyChangeSupport pcs = new FastPropertyChangeSupport(this);
 
     private FingerIdData fingerIdDataPos;
@@ -79,26 +87,37 @@ public class GuiProjectManager implements Closeable {
     private final BlockingQueue<Object> eventQueue = new LinkedBlockingDeque<>();
     private final JJob<Void> eventExec;
 
+    @Getter
+    final FeatureFilterModel featureFilterModel;
+
+    private final AtomicLong totalInstances = new AtomicLong(0);
+    @Getter
+    private @NotNull Set<PrecursorIonType> detectedAdducts;
+
+    public long getTotalInstances() {
+        return totalInstances.get();
+    }
+
     public GuiProjectManager(@NotNull String projectId, @NotNull SiriusClient siriusClient, @NotNull GuiProperties properties, SiriusGui siriusGui) {
         this.properties = properties;
         this.projectId = projectId;
         this.siriusClient = siriusClient;
+        this.siriusGui = siriusGui;
 
-        //todo can be parallelizec to import project opening performance
-        List<InstanceBean> tmp = siriusClient.features()
-                .getAlignedFeatures(projectId, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
-                .stream().map(f -> new InstanceBean(f, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, this)).toList();
+        this.featureFilterModel = new FeatureFilterModel();
 
-        this.innerList = new ArrayList<>(tmp.size());
-        this.INSTANCE_LIST = new BasicEventList<>(innerList);
+        StopWatch w = StopWatch.createStarted();
+        this.INSTANCE_LIST = new BasicEventList<>();
 
-        Jobs.runEDTAndWaitLazy(() -> {
-            INSTANCE_LIST.clear();
-            INSTANCE_LIST.addAll(tmp);
-        });
+        PropertyChangeListener filterListener = evt -> reloadFeatures();
+        featureFilterModel.addUpdateCompleteListener(filterListener);
 
-        confidenceModeListender = (evt) -> SiriusGlazedLists.allUpdate(INSTANCE_LIST);
+        confidenceModeListender = (evt) -> reloadFeatures();
         properties.addPropertyChangeListener("confidenceDisplayMode", confidenceModeListender);
+
+        reloadProjectData();
+        reloadFeatures();
+
 
         //handle events for import data changes
         importListener = evt -> DataObjectEvents.
@@ -134,17 +153,8 @@ public class GuiProjectManager implements Closeable {
                             siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(true, true);
                             try {
                                 checkForInterruption();
-                                List<InstanceBean> instances = idsToImport.stream().map(id -> new InstanceBean(id, GuiProjectManager.this)).toList();
-                                checkForInterruption();
-                                //update adducts before adding instances so that the filter already works correctly during adding.
-                                siriusGui.getMainFrame().getCompoundList().updateFilter(Stream.concat(INSTANCE_LIST.stream(), instances.stream()).toList());
-                                checkForInterruption();
-                                INSTANCE_LIST.getReadWriteLock().writeLock().lock();
-                                try {
-                                    INSTANCE_LIST.addAll(instances);
-                                } finally {
-                                    INSTANCE_LIST.getReadWriteLock().writeLock().unlock();
-                                }
+                                reloadProjectData();
+                                reloadFeatures();
                             } finally {
                                 siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(false, true);
                             }
@@ -184,6 +194,7 @@ public class GuiProjectManager implements Closeable {
                                         if (inst.getFeatureId().equals(projectEvent.getFeaturedId())) {
                                             iterator.remove();
                                             inst.unregisterProjectSpaceListener();
+                                            totalInstances.decrementAndGet();
                                             break;
                                         }
                                     }
@@ -205,6 +216,76 @@ public class GuiProjectManager implements Closeable {
                 eventQueue.add(stopper);
             }
         });
+
+        System.out.println("Project loaded in: " + w);
+    }
+
+    private synchronized void reloadProjectData() {
+        System.out.printf("Remove JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
+        ProjectInfo info = siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.SIZE_INFORMATION, ProjectInfoOptField.DETECTED_ADDUCTS));
+        totalInstances.set(info.getNumOfFeatures());
+        detectedAdducts = info.getDetectedAdducts().stream().map(PrecursorIonType::fromString).collect(Collectors.toSet());
+        featureFilterModel.updateAdducts(detectedAdducts);
+    }
+
+    private InstanceBean jumpToInstanceBean = null;
+    public synchronized InstanceBean findAndAddTemporaryJumpToFeature(String alignedFeatureId) {
+        System.out.printf("Add JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
+        AlignedFeature feature = siriusClient.features()
+                .getAlignedFeature(projectId, alignedFeatureId, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS);
+        if (feature == null)
+            return null;
+
+        jumpToInstanceBean = new InstanceBean(feature, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this);
+        INSTANCE_LIST.add(jumpToInstanceBean);
+        return jumpToInstanceBean;
+    }
+
+    public synchronized void removeTemporaryJumpToFeatureIfNotSelected(String selectedFeatureid) {
+        System.out.printf("Remove JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
+        if (jumpToInstanceBean != null && !jumpToInstanceBean.getFeatureId().equals(selectedFeatureid)) {
+            INSTANCE_LIST.remove(jumpToInstanceBean);
+            jumpToInstanceBean = null;
+        }
+    }
+
+    public synchronized void reloadFeatures() {
+        reloadFeatures(() -> featureFilterModel.toLuceneQuery(properties.getConfidenceDisplayMode())
+                .orElse(null), null);
+    }
+
+    // no sync needed because of blocking edt thread call.
+    private synchronized void reloadFeatures(@Nullable Supplier<String> filterQueryProvider, @Nullable Supplier<List<String>> sortQueryProvider) {
+        //todo LUCENE: handle loading mechanism for compound list.
+        System.out.printf("Reload Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
+
+        FilterableCompoundListPanel loadable = Optional.ofNullable(siriusGui.getMainFrame())
+                .map(MainFrame::getFilterableCompoundListPanel).orElse(null);
+
+        Runnable r = () -> {
+            String filterQuery = filterQueryProvider != null ? filterQueryProvider.get() : null;
+            List<String> sortQuery = sortQueryProvider != null ? sortQueryProvider.get() : null;
+            List<InstanceBean> tmpInst = siriusClient.features()
+                    .getAlignedFeaturesPageExperimental(projectId, 0, Integer.MAX_VALUE, sortQuery, filterQuery, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
+                    .getContent().stream().map(f -> new InstanceBean(f, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this)).toList();
+
+
+            try {
+                Jobs.runEDTAndWait(() -> {
+                    INSTANCE_LIST.clear();
+                    INSTANCE_LIST.addAll(tmpInst);
+                });
+            } catch (InvocationTargetException | InterruptedException e) {
+                log.warn("Reloading features EDT wait interrupted", e);
+            }
+        };
+
+
+        if (loadable != null)
+            loadable.runInBackgroundAndLoad(r);
+        else
+            Jobs.runInBackground(r);
+
     }
 
     public void disableImportListener() {
@@ -273,7 +354,7 @@ public class GuiProjectManager implements Closeable {
 
     public ProjectInfo compactWithLoading(Window parent) {
         if (siriusClient.jobs().hasJobs(projectId, false)) {
-            if (JOptionPane.showConfirmDialog(parent,"There are running jobs. They will be canceled before compacting.", null, JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
+            if (JOptionPane.showConfirmDialog(parent, "There are running jobs. They will be canceled before compacting.", null, JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
                 return null;
             }
         }

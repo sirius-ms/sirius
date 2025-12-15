@@ -77,7 +77,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
         //this is the selection refresh, element changes are detected by eventlist
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {
+            public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, long totalElements) {
                 if (!selection.isSelectionEmpty()) {
                     while (event.next()) {
                         if (selection.isSelectedIndex(event.getIndex())) {
@@ -89,7 +89,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
             }
 
             @Override
-            public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+            public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, long totalElements) {
                 if (!selected.isEmpty())
                     changeData(selected.getFirst());
                 else

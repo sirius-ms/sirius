@@ -3,6 +3,7 @@ package de.unijena.bioinf.lcms.quality;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.lcms.adducts.Scorer;
 import de.unijena.bioinf.lcms.adducts.TraceProvider;
+import de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractFeature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
@@ -20,7 +21,7 @@ public class CheckIsotopeQuality implements FeatureQualityChecker{
     @Override
     public void addToReport(QualityReport report, MergedLCMSRun run, AlignedFeatures feature, TraceProvider traceProvider) throws IOException {
         // majors
-        QualityReport.Category peakQuality = new QualityReport.Category(QualityReport.ISOTOPE_QUALITY);
+        QualityReport.Category peakQuality = new QualityReport.Category(DefaultQualityCategory.ISOTOPE_QUALITY);
         // 1. if LC/MS exists, check correlation
         if (feature.getIsotopicFeatures().isPresent()) {
             checkLC(feature, traceProvider, peakQuality);

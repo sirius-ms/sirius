@@ -62,6 +62,9 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
     @CommandLine.Option(names = {"--chemvista"}, description = "Export a summary file for importing structure annotations into ChemVista (always CSV and Top Hits regardless of other options).", defaultValue = "false")
     protected boolean chemVista;
 
+    @CommandLine.Option(names = {"--mztabm"}, description = "Export results of this project as mzTab-M file.", defaultValue = "false")
+    protected boolean mztabm;
+
     //todo enable when implementing spectral match export, per compound candidate
 //    @Getter
 //    @CommandLine.Option(names = {"--all-spectra"}, description = {"Write project wide summary files with ALL reference spectrum hits. ", "(Use with care! Might create large files and consume large amounts of memory for large projects.)"}, defaultValue = "false", negatable = true)

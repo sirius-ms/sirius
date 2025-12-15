@@ -104,6 +104,8 @@ ext {
 
     auth0_version = '3.16.0'
 
+    lucene_version = '10.3.2'
+
     junit_version = '5.12.2'
     junit_mockito_version = '5.19.0'
     junit_platform_version = '1.12.2'//''1.13.4'

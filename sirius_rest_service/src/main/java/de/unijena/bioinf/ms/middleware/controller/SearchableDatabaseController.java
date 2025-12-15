@@ -98,7 +98,7 @@ public class SearchableDatabaseController {
 
     @Deprecated(forRemoval = true)
     @Operation(
-            summary = "DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API."
+            summary = "[DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API."
     )
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public List<SearchableDatabase> addDatabases(@RequestBody List<String> pathToDatabases) {
@@ -148,8 +148,8 @@ public class SearchableDatabaseController {
     /**
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use.
      * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      *
      * @return list of databases available for downloading.
      */

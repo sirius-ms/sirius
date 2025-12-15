@@ -30,6 +30,7 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.summaries.mztab.NoSqlMztabMSummaryWriter;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
@@ -170,7 +171,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             ? initQualitySummaryWriter(location, "feature_quality") : null;
 
                     ChemVistaSummaryWriter chemVistaWriter = options.chemVista
-                            ? initChemVistaWriter(location, "chemvista_summary") : null
+                            ? initChemVistaWriter(location, "chemvista_summary") : null;
+
+                    NoSqlMztabMSummaryWriter mztabMWriter = options.mztabm
+                            ? initMzTabWriter(location, "mztab_summary") : null
             ) {
                 //we load all data on demand from project db without manual caching or re-usage.
                 //if this turns out to be too slow we can cache e.g. the formula candidates.
@@ -247,6 +251,11 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                                 nothingWritten = false;
                             }
 
+                            if (ssr == null && mztabMWriter != null && first) {
+                                mztabMWriter.writeFeatureResult(feature, fc, null, null);
+                                nothingWritten = false;
+                            }
+
                             if (nothingWritten)
                                 break;
 
@@ -283,6 +292,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             }
                             if (chemVistaWriter != null && first) {
                                 chemVistaWriter.writeStructureCandidate(feature, fc, sc, ssr);
+                                nothingWritten = false;
+                            }
+                            if (mztabMWriter != null && first) {
+                                mztabMWriter.writeFeatureResult(feature, fc, sc, ssr);
                                 nothingWritten = false;
                             }
                             if (formulaTopK != null && rank <= options.getTopK()) {
@@ -433,12 +446,12 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
 
                 if (qualityWriter != null) qualityWriter.flush();
                 if (chemVistaWriter != null) chemVistaWriter.flush();
-
-                w.stop();
-                log.info("Summaries written in: {}", w);
-                updateProgress(maxProgress, maxProgress, "Summaries written in: " + w);
-                return true;
             }
+
+            w.stop();
+            log.info("Summaries written in: {}", w);
+            updateProgress(maxProgress, maxProgress, "Summaries written in: " + w);
+            return true;
         } finally {
             if (!standalone && project != null)
                 project.close(); // close project if this is a postprocessor
@@ -512,6 +525,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
         ChemVistaSummaryWriter writer = new ChemVistaSummaryWriter(csvWriter);
         writer.writeHeader();
         return writer;
+    }
+
+    NoSqlMztabMSummaryWriter initMzTabWriter(Path location, String filename) throws IOException {
+        return new NoSqlMztabMSummaryWriter(Files.newBufferedWriter(location.resolve(filename + ".mztab")));
     }
 
     private SummaryTableWriter makeTableWriter(Path location, String filename) throws IOException {

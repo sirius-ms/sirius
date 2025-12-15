@@ -20,6 +20,7 @@
 package de.unijena.bioinf.elgordo;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 import org.slf4j.LoggerFactory;
 
@@ -185,6 +186,14 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
 
     public URI lipidMapsFuzzySearchLink() {
         return LipidClass.makeLipidMapsFuzzySearchLink(this.toString());
+    }
+
+
+    public static final class FromStringDeserializer extends SimpleSerializers.FromStringDeserializer<LipidSpecies> {
+        @Override
+        public LipidSpecies getObject(String text) {
+            return LipidSpecies.fromString(text);
+        }
     }
 
 }

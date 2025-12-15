@@ -79,6 +79,12 @@ public class Tag {
     @Nullable
     protected Object value;
 
+    public @Nullable Object getValueFormatted() {
+        if (value == null)
+            return null;
+        return getValueType().getFormatter().toFormattedGeneric(value);
+    }
+
     public Tag(@NotNull ValueType valueType) {
         this.valueType = valueType;
     }

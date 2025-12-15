@@ -22,18 +22,20 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.backgroundruns.BackgroundRuns;
+import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChangeJobSubmission;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsType;
-import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
-import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
-import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
-import de.unijena.bioinf.ms.middleware.service.search.FakeLuceneSearchService;
+import de.unijena.bioinf.ms.middleware.model.tags.*;
+import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
+import de.unijena.bioinf.ms.middleware.service.search.SearchService;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoProjectSearchContext;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
@@ -44,9 +46,11 @@ import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
+import lombok.SneakyThrows;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.time.StopWatch;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AutoClose;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,6 +70,34 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class NoSQLProjectTest {
 
+    // todo use spring mocks to get services
+    private static final GlobalConfig GLOBAL_CONFIG = new GlobalConfig(2147483647);
+
+    @SneakyThrows
+    private static SearchService makeSearchService() {
+        return new SearchServiceImpl(null, PerPojoProjectSearchContext.FACTORY);
+    }
+
+    @SneakyThrows
+    private static void insertRunsAndIndex(Collection<LCMSRun> runs, NoSQLProjectImpl project){
+        StopWatch watch = new StopWatch();
+        watch.start();
+
+        project.storage().insertAll(runs);
+        project.storage().flush();
+
+        watch.stop();
+        System.out.println("INSERTED RUNS in: " + watch);
+        watch.reset();watch.start();
+
+
+        project.getSearchService().addDocuments(project.getProjectId(), runs.stream()
+                .map(run -> project.convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))).toList());
+
+        watch.stop();
+        System.out.println("INDEXED RUNS in: " + watch);
+    }
+
     @AutoClose
     private NitriteSirirusProject ps;
     private NoSQLProjectImpl project;
@@ -74,8 +106,8 @@ public class NoSQLProjectTest {
     public void createTestProject() throws IOException {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         ps = new NitriteSirirusProject(location);
-        NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-        project = new NoSQLProjectImpl("test", psm, new FakeLuceneSearchService(), (a, b) -> false);
+        SearchService searchService = makeSearchService();
+        project = new NoSQLProjectImpl("test", new NoSQLProjectSpaceManager(ps), searchService, (a, b) -> false);
     }
 
     @Test
@@ -90,7 +122,6 @@ public class NoSQLProjectTest {
 
         List<CompoundImport> imports = List.of(CompoundImport.builder().name("foo").features(
                 List.of(FeatureImport.builder()
-//                            .name("foo")
                         .externalFeatureId("testFID")
                         .ionMass(42d)
                         .charge(1)
@@ -137,8 +168,7 @@ public class NoSQLProjectTest {
         assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(1), d2.getMs2Spectra().get(1)));
     }
 
-    @Test
-    public void testFeatures() {
+    private static List<FeatureImport> dummyFeatureImport(@Nullable String name, @Nullable String externalFeatureId){
         BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
         BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
 
@@ -147,9 +177,9 @@ public class NoSQLProjectTest {
         ms2.setPrecursorMz(42d);
         ms2.setScanNumber(5);
 
-        List<FeatureImport> imports = List.of(FeatureImport.builder()
-                .name("foo")
-                .externalFeatureId("testFID")
+        return List.of(FeatureImport.builder()
+                .name(name)
+                .externalFeatureId(externalFeatureId)
                 .ionMass(42d)
                 .charge(1)
                 .detectedAdducts(Set.of("M+H+"))
@@ -160,9 +190,15 @@ public class NoSQLProjectTest {
                 .ms1Spectra(List.of(ms1))
                 .ms2Spectra(List.of(ms2, ms2))
                 .build());
+    }
+
+    @Test
+    public void testFeatures() {
+
+        List<FeatureImport> imports = dummyFeatureImport("foo","testFID");
 
         List<AlignedFeature> features = project.addAlignedFeatures(imports, null, EnumSet.of(AlignedFeature.OptField.msData));
-        List<AlignedFeature> features2 = project.findAlignedFeatures(Pageable.unpaged(), false, EnumSet.of(AlignedFeature.OptField.msData)).getContent();
+        List<AlignedFeature> features2 = project.findAlignedFeatures(null, Pageable.unpaged(), false, EnumSet.of(AlignedFeature.OptField.msData)).getContent();
 
 
         assertEquals(1, features.size());
@@ -186,6 +222,7 @@ public class NoSQLProjectTest {
 
         assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(0), d2.getMs2Spectra().get(0)));
         assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(1), d2.getMs2Spectra().get(1)));
+
     }
 
     @Test
@@ -236,7 +273,9 @@ public class NoSQLProjectTest {
     }
 
     @Test
-    public void testRuns() throws IOException {
+    public void testRuns() {
+
+
         LCMSRun runIn = LCMSRun.builder()
                 .name("run1")
                 .chromatography(Chromatography.LC)
@@ -245,7 +284,7 @@ public class NoSQLProjectTest {
                 .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
                 .build();
 
-        ps.getStorage().insert(runIn);
+        insertRunsAndIndex(List.of(runIn), project);
         Run runOut = project.findRunById(Long.toString(runIn.getRunId()));
 
         assertEquals(1, project.findRuns(Pageable.unpaged()).getTotalElements());
@@ -328,7 +367,7 @@ public class NoSQLProjectTest {
     }
 
     @Test
-    public void testGroups() throws IOException {
+    public void testGroups() {
         project.createTags(List.of(
                 TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank", "control")).build()
         ), true);
@@ -354,7 +393,7 @@ public class NoSQLProjectTest {
                         .build()
         );
 
-        ps.getStorage().insertAll(runs);
+        insertRunsAndIndex(runs, project);
         project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().tagName("sample").value("sample").build()));
         project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").value("blank").build()));
         project.addTagsToObject(Run.class, Long.toString(runs.get(2).getRunId()), List.of(Tag.builder().tagName("sample").value("control").build()));
@@ -373,13 +412,13 @@ public class NoSQLProjectTest {
         assertEquals("type1", groups.get("group2").getGroupType());
         assertEquals("type2", groups.get("group3").getGroupType());
 
-        Page<Run> r1 = project.findObjectsByTagGroup(Run.class, "group1", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
+        Page<Run> r1 = project.findRunsByGroup("group1", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
         assertEquals(1, r1.getContent().size());
         assertEquals("run1", r1.getContent().getFirst().getName());
-        Page<Run> r2 = project.findObjectsByTagGroup(Run.class, "group2", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
+        Page<Run> r2 = project.findRunsByGroup("group2", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
         assertEquals(1, r2.getContent().size());
         assertEquals("run2", r2.getContent().getFirst().getName());
-        Page<Run> r3 = project.findObjectsByTagGroup(Run.class, "group3", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
+        Page<Run> r3 = project.findRunsByGroup("group3", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
         assertEquals(1, r3.getContent().size());
         assertEquals("run3", r3.getContent().getFirst().getName());
 
@@ -424,47 +463,52 @@ public class NoSQLProjectTest {
                         .build()
         );
 
-        ps.getStorage().insertAll(runs);
+        insertRunsAndIndex(runs, project);
         project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().tagName("sample").value("sample").build()));
         project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").value("blank").build()));
 
-        AlignedFeatures af = AlignedFeatures.builder().name("af").build();
-        ps.getStorage().insert(af);
+        List<FeatureImport> afImport = dummyFeatureImport("af", null);
+        AlignedFeature af = project.addAlignedFeatures(afImport, null, EnumSet.noneOf(AlignedFeature.OptField.class)).getFirst();
+        long afId = Long.parseLong(af.getAlignedFeatureId());
 
-        Feature f1 = Feature.builder().alignedFeatureId(af.getAlignedFeatureId()).apexIntensity(2.0).runId(runs.get(0).getRunId()).build();
-        Feature f2 = Feature.builder().alignedFeatureId(af.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
+        Feature f1 = Feature.builder().alignedFeatureId(afId).apexIntensity(2.0).runId(runs.get(0).getRunId()).build();
+        Feature f2 = Feature.builder().alignedFeatureId(afId).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
         ps.getStorage().insertAll(List.of(f1, f2));
 
         project.addTagGroup("sample", "tags.sample:sample", "type1");
         project.addTagGroup("blank", "tags.sample:blank", "type1");
 
-        new BackgroundRuns(project, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+        new BackgroundRuns(project, null).runFoldChange(
+                FoldChangeJobSubmission.of("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY),
+                QuantRowType.FEATURES
+        ).awaitResult();
 
-        List<FoldChange> fc = project.getFoldChanges(AlignedFeature.class, Long.toString(af.getAlignedFeatureId()));
+        List<FoldChange> fc = project.getFoldChanges(QuantRowType.FEATURES, af.getAlignedFeatureId());
         assertEquals(1, fc.size());
         assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
         assertEquals(FoldChange.class, fc.getFirst().getClass());
-        assertEquals(Long.toString(af.getAlignedFeatureId()), fc.getFirst().getObjectId());
-        fc = project.listFoldChanges(AlignedFeature.class, Pageable.unpaged()).getContent();
+        assertEquals(af.getAlignedFeatureId(), fc.getFirst().getObjectId());
+        fc = project.listFoldChanges(QuantRowType.FEATURES, Pageable.unpaged()).getContent();
         assertEquals(1, fc.size());
         assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
         assertEquals(FoldChange.class, fc.getFirst().getClass());
-        assertEquals(Long.toString(af.getAlignedFeatureId()), fc.getFirst().getObjectId());
+        assertEquals(af.getAlignedFeatureId(), fc.getFirst().getObjectId());
 
 
-        AlignedFeatures af2 = AlignedFeatures.builder().name("af2").build();
-        ps.getStorage().insert(af2);
+        List<FeatureImport> af2Import = dummyFeatureImport("af2", null);
+        AlignedFeature af2 = project.addAlignedFeatures(af2Import, null, EnumSet.noneOf(AlignedFeature.OptField.class)).getFirst();
+        long af2Id = Long.parseLong(af2.getAlignedFeatureId());
 
-        Feature f21 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(3.0).runId(runs.get(0).getRunId()).build();
-        Feature f22 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
+        Feature f21 = Feature.builder().alignedFeatureId(af2Id).apexIntensity(3.0).runId(runs.get(0).getRunId()).build();
+        Feature f22 = Feature.builder().alignedFeatureId(af2Id).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
         ps.getStorage().insertAll(List.of(f21, f22));
 
-        new BackgroundRuns(project, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
-        new BackgroundRuns(project, null).runFoldChange("sample", "blank", AggregationType.MAX, QuantMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+        new BackgroundRuns(project, null).runFoldChange(FoldChangeJobSubmission.of("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY), QuantRowType.FEATURES).awaitResult();
+        new BackgroundRuns(project, null).runFoldChange(FoldChangeJobSubmission.of("sample", "blank", AggregationType.MAX, QuantMeasure.APEX_INTENSITY), QuantRowType.FEATURES).awaitResult();
 
-        StatisticsTable table1 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
-        StatisticsTable table2 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MAX, QuantMeasure.APEX_INTENSITY);
-        StatisticsTable table3 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MIN, QuantMeasure.APEX_INTENSITY);
+        StatisticsTable table1 = project.getFoldChangeTable(QuantRowType.FEATURES, AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
+        StatisticsTable table2 = project.getFoldChangeTable(QuantRowType.FEATURES, AggregationType.MAX, QuantMeasure.APEX_INTENSITY);
+        StatisticsTable table3 = project.getFoldChangeTable(QuantRowType.FEATURES, AggregationType.MIN, QuantMeasure.APEX_INTENSITY);
 
         assertEquals(AggregationType.AVG, table1.getAggregationType());
         assertEquals(AggregationType.MAX, table2.getAggregationType());
@@ -501,8 +545,8 @@ public class NoSQLProjectTest {
         assertEquals(0, table3.getColumnRightGroups().length);
 
         assertEquals(2, table1.getRowIds().length);
-        assertTrue(Arrays.binarySearch(table1.getRowIds(), Long.toString(af.getAlignedFeatureId())) >= 0);
-        assertTrue(Arrays.binarySearch(table1.getRowIds(), Long.toString(af2.getAlignedFeatureId())) >= 0);
+        assertTrue(Arrays.binarySearch(table1.getRowIds(), af.getAlignedFeatureId()) >= 0);
+        assertTrue(Arrays.binarySearch(table1.getRowIds(), af2.getAlignedFeatureId()) >= 0);
 
         double[] vals = Arrays.stream(table1.getValues()).mapToDouble(col -> {
             assertEquals(1, col.length);
@@ -522,11 +566,13 @@ public class NoSQLProjectTest {
 
         assertEquals(0, table3.getValues().length);
 
-        project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
-        project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.MAX, QuantMeasure.APEX_INTENSITY);
-        fc = project.listFoldChanges(AlignedFeature.class, Pageable.unpaged()).getContent();
+        project.deleteFoldChange(QuantRowType.FEATURES, "sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
+        project.deleteFoldChange(QuantRowType.FEATURES, "sample", "blank", AggregationType.MAX, QuantMeasure.APEX_INTENSITY);
+        fc = project.listFoldChanges(QuantRowType.FEATURES, Pageable.unpaged()).getContent();
         assertEquals(0, fc.size());
     }
+
+
 
     @Test
     public void testTags() throws IOException {
@@ -547,7 +593,8 @@ public class NoSQLProjectTest {
                         .build()
         );
 
-        ps.getStorage().insertAll(runs);
+        insertRunsAndIndex(runs, project);
+
         final Run run = project.findRunById(Long.toString(runs.getFirst().getRunId()));
 
         project.createTags(List.of(TagDefinitionImport.builder().tagName("c1").valueType(ValueType.BOOLEAN).build()), true);
@@ -599,15 +646,26 @@ public class NoSQLProjectTest {
         assertEquals(false, tags.get("c1").getValue());
         assertEquals(42, tags.get("c2").getValue());
 
-        //todo Implement search
-        Page<Run> page = project.findObjectsByTagFilter(Run.class, "tags.c2:[12 TO 43]", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+        project.storage().flush();
+
+        Page<Run> pageRaw = project.findRuns(null, Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+        Page<Run> page = project.findRuns("runId:" + pageRaw.stream().findFirst().map(Run::getRunId).orElseThrow(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+        System.out.println("==========> BEFORE SEARCH!!!!!");
+        page = project.findRuns("tags.c2:[12 TO 43]", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+        System.out.println("==========> AFTER SEARCH!!!!!");
+
+        List<LCMSRun> allRuns = project.storage().findAllStr(LCMSRun.class).toList();
+        List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> allTags = project.storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class).toList();
+//            page = project.findRuns( "tags.c1:false", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+
         assertEquals(1, page.getTotalElements());
         assertEquals(Long.toString(runs.getFirst().getRunId()), page.getContent().getFirst().getRunId());
         assertEquals(2, tags.size());
+
 //            assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
 //            assertEquals(TagDefinitionImport.ValueType.INTEGER, tags.get("c2").getValueType());
         assertEquals(false, tags.get("c1").getValue());
-        assertEquals(42, tags.get("c2").getValue());
+        assertEquals(Integer.valueOf(42), tags.get("c2").getValue());
 
         project.deleteTags("c2");
         project.deleteTags("c3");
@@ -616,7 +674,7 @@ public class NoSQLProjectTest {
 //            assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
         assertEquals(false, tags.get("c1").getValue());
 
-        page = project.findObjectsByTagFilter(Run.class, "tags.c1:false", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+        page = project.findRuns("tags.c1:false", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
         assertEquals(1, page.getTotalElements());
         assertEquals(run.getRunId(), page.getContent().getFirst().getRunId());
         tags = page.get().findFirst().orElseThrow().getTags();
@@ -635,7 +693,7 @@ public class NoSQLProjectTest {
                 Tag.builder().tagName("time").value("12:00:00").build()
         ));
 
-        page = project.findObjectsByTagFilter(Run.class, "tags.date:[2024-12-01 TO 2025-12-31] OR tags.time:12\\:00\\:00", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+        page = project.findRuns("tags.date:[2024-12-01 TO 2025-12-31] OR tags.time:12\\:00\\:00", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
         assertEquals(1, page.getTotalElements());
         assertEquals(run2.getRunId(), page.getContent().getFirst().getRunId());
         tags = page.get().findFirst().orElseThrow().getTags();
@@ -645,12 +703,13 @@ public class NoSQLProjectTest {
 //            assertEquals(ValueType.TIME.getTagValueClass(), tags.get("time").getValue().getClass());
         assertEquals("12:00:00", tags.get("time").getValue());
 
-        assertThrows(ResponseStatusException.class, () -> project.findObjectsByTagFilter(Run.class, "", Pageable.unpaged(), EnumSet.of(Run.OptField.tags)));
-    }
+//            Assert.assertThrows(ResponseStatusException.class, () -> project.findRuns("", Pageable.unpaged(), EnumSet.of(Run.OptField.tags)));
+        }
+
 
     @Test
-    public void testMany() throws IOException {
-        List<LCMSRun> lcmsRuns = IntStream.range(0, 10000).mapToObj(i -> (LCMSRun) LCMSRun.builder()
+    public void testMany() {
+        List<LCMSRun> lcmsRuns = IntStream.range(0, 100_000).mapToObj(i -> (LCMSRun) LCMSRun.builder()
                 .name("run" + i)
                 .chromatography(Chromatography.LC)
                 .fragmentation(Fragmentation.byValue("CID").orElseThrow())
@@ -658,7 +717,11 @@ public class NoSQLProjectTest {
                 .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
                 .build()).toList();
 
-        ps.getStorage().insertAll(lcmsRuns);
+
+        insertRunsAndIndex(lcmsRuns, project);
+
+        StopWatch watch = new StopWatch();
+        watch.start();
 
         List<Run> runs = project.findRuns(Pageable.unpaged()).getContent();
         List<Run> control = runs.subList(0, runs.size() / 3);
@@ -669,63 +732,71 @@ public class NoSQLProjectTest {
                 TagDefinitionImport.builder().tagType("sampleCat").tagName("sample-type").valueType(ValueType.TEXT).possibleValues(List.of("control", "blank", "sample")).build()
         ), true);
 
-        StopWatch watch = new StopWatch();
+        watch.stop();
+        System.out.println("INSERT Tag Definitions: " + watch);
+        watch.reset();
         watch.start();
 
-        for (Run run : control) {
-            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("control").build()));
-        }
-        for (Run run : blank) {
-            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("blank").build()));
-        }
-        for (Run run : sample) {
-            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("sample").build()));
-        }
+//                for (Run run : control) {
+//                    project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("control").build()));
+//                }
+        project.addTagsToObjects(Run.class, control.stream().map(Run::getRunId).map(rid -> TagSubmission.builder().taggedObjectId(rid).tagName("sample-type").value("control").build()).collect(Collectors.toList()));
 
-        watch.stop();
-        System.out.println("CREATE TAGS: " + watch);
+//                for (Run run : blank) {
+//                    project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("blank").build()));
+//                }
+        project.addTagsToObjects(Run.class, blank.stream().map(Run::getRunId).map(rid -> TagSubmission.builder().taggedObjectId(rid).tagName("sample-type").value("blank").build()).collect(Collectors.toList()));
 
-        watch = new StopWatch();
+//                for (Run run : sample) {
+//                    project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("sample").build()));
+//                }
+        project.addTagsToObjects(Run.class, sample.stream().map(Run::getRunId).map(rid -> TagSubmission.builder().taggedObjectId(rid).tagName("sample-type").value("sample").build()).collect(Collectors.toList()));
+        System.out.println("ADD TAGS TO RUNS: " + watch);
+        watch.reset();
         watch.start();
 
-        project.findObjectsByTagFilter(Run.class, "tags.sample-type:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+        Page<Run> runPage = project.findRuns("tags.sample-type:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags)); //EnumSet.of(Run.OptField.tags) //EnumSet.noneOf(Run.OptField.class)
+        System.out.println("FIND OBJ '" + runPage.getNumberOfElements() + "' BY TAGS INDEX ONLY: " + watch);
+        watch.reset();
+        watch.start();
 
-        watch.stop();
-        System.out.println("FIND OBJ BY TAGS: " + watch);
+        Page<Run> runPageAll = project.findRuns(Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+        System.out.println("FIND ALL '" + runPageAll.getNumberOfElements() + "' OBJ: " + watch);
     }
 
-    @Test
-    public void testPsmFilter() throws IOException {
-        NoSQLProjectSpaceManager psm = project.getProjectSpaceManager();
 
-        // empty
-        assertEquals(0, psm.countAllFeatures());
-        List<Instance> instances = new ArrayList<>();
-        psm.forEach(instances::add);
-        assertTrue(instances.isEmpty());
+@Test
+public void testPsmFilter() throws IOException {
+    NoSQLProjectSpaceManager psm = project.getProjectSpaceManager();
 
-        AlignedFeatures af1 = AlignedFeatures.builder().alignedFeatureId(1L).retentionTime(new RetentionTime(1d)).build();
-        AlignedFeatures af2 = AlignedFeatures.builder().alignedFeatureId(2L).retentionTime(new RetentionTime(2d)).build();
-        ps.getStorage().insertAll(List.of(af1, af2));
+    // empty
+    assertEquals(0, psm.countAllFeatures());
+    List<Instance> instances = new ArrayList<>();
+    psm.forEach(instances::add);
+    assertTrue(instances.isEmpty());
 
-        // unfiltered
-        assertEquals(2, psm.size());
-        instances.clear();
-        psm.forEach(instances::add);
-        assertEquals(2, instances.size());
+    AlignedFeatures af1 = AlignedFeatures.builder().alignedFeatureId(1L).retentionTime(new RetentionTime(1d)).build();
+    AlignedFeatures af2 = AlignedFeatures.builder().alignedFeatureId(2L).retentionTime(new RetentionTime(2d)).build();
+    ps.getStorage().insertAll(List.of(af1, af2));
 
-        // filtered
-        psm.setAlignedFeaturesFilter(Filter.where("retentionTime.middle").gt(1.0));
-        assertEquals(1, psm.size());
-        instances.clear();
-        psm.forEach(instances::add);
-        assertEquals(1, instances.size());
-        assertEquals("2", instances.getFirst().getId());
-    }
+    // unfiltered
+    assertEquals(2, psm.size());
+    instances.clear();
+    psm.forEach(instances::add);
+    assertEquals(2, instances.size());
+
+    // filtered
+    psm.setAlignedFeaturesFilter(Filter.where("retentionTime.middle").gt(1.0));
+    assertEquals(1, psm.size());
+    instances.clear();
+    psm.forEach(instances::add);
+    assertEquals(1, instances.size());
+    assertEquals("2", instances.getFirst().getId());
+}
 
 //    @Test
 //    public void testFilterTranslation() throws IOException, QueryNodeException, InvocationTargetException, IllegalAccessException, ParseException {
-//        Filter filter = LuceneUtils.translateTagFilter("(test || bla) && \"new york\" AND /[mb]oat/ AND integer:[1 TO *] OR real<=3 date:2024-01-01 date:[2023-10-01 TO 2023-12-24] date<2022-01-01 time:12\\:00\\:00 time:[12\\:00\\:00 TO 14\\:00\\:00} time<10\\:00\\:00");
+//        Filter filter = LuceneQueryUtils.translateTagFilter("(test || bla) && \"new york\" AND /[mb]oat/ AND integer:[1 TO *] OR real<=3 date:2024-01-01 date:[2023-10-01 TO 2023-12-24] date<2022-01-01 time:12\\:00\\:00 time:[12\\:00\\:00 TO 14\\:00\\:00} time<10\\:00\\:00");
 //        assertEquals(
 //                "(((text==test OR text==bla) AND text==new york AND text~=/[mb]oat/ AND int32:[1, " + Integer.MAX_VALUE + "]) OR real:[-Infinity, 3.0] OR " +
 //                        "int64:[" + TaggableController.DATE_FORMAT.parse("2024-01-01").getTime() + ", " + TaggableController.DATE_FORMAT.parse("2024-01-01").getTime() + "] OR " +

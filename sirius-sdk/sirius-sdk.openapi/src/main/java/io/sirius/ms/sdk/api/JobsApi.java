@@ -621,73 +621,6 @@ public class JobsApi {
     }
 
     /**
-     * [DEPRECATED] Get all (non-default) job configuration names  
-     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
-     * <p><b>200</b> - OK
-     * @return List&lt;String&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     * @deprecated
-     */
-    @Deprecated
-    private ResponseSpec getJobConfigNamesRequestCreation() throws WebClientResponseException {
-        Object postBody = null;
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
-        return apiClient.invokeAPI("/api/job-config-names", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * [DEPRECATED] Get all (non-default) job configuration names  
-     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
-     * <p><b>200</b> - OK
-     * @return List&lt;String&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public List<String> getJobConfigNames() throws WebClientResponseException {
-        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
-        return getJobConfigNamesRequestCreation().bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * [DEPRECATED] Get all (non-default) job configuration names  
-     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
-     * <p><b>200</b> - OK
-     * @return ResponseEntity&lt;List&lt;String&gt;&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<List<String>> getJobConfigNamesWithHttpInfo() throws WebClientResponseException {
-        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
-        return getJobConfigNamesRequestCreation().toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * [DEPRECATED] Get all (non-default) job configuration names  
-     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
-     * <p><b>200</b> - OK
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getJobConfigNamesWithResponseSpec() throws WebClientResponseException {
-        return getJobConfigNamesRequestCreation();
-    }
-
-    /**
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
@@ -1108,7 +1041,7 @@ public class JobsApi {
 
     /**
      * [DEPRECATED] Start computation for given command and input
-     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
@@ -1157,7 +1090,7 @@ public class JobsApi {
 
     /**
      * [DEPRECATED] Start computation for given command and input
-     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
@@ -1172,7 +1105,7 @@ public class JobsApi {
 
     /**
      * [DEPRECATED] Start computation for given command and input
-     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
@@ -1187,7 +1120,7 @@ public class JobsApi {
 
     /**
      * [DEPRECATED] Start computation for given command and input
-     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed

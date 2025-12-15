@@ -28,14 +28,21 @@ import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressSupport;
+import de.unijena.bioinf.ms.frontend.subtools.foldchange.AlignedFeaturesFoldChangeJob;
 import de.unijena.bioinf.lcms.align.AlignmentThresholds;
 import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
-import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.tags.Groups;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
+import it.unimi.dsi.fastutil.longs.LongCollection;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +50,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
@@ -61,15 +68,20 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
     @NotNull
     private LongLinkedOpenHashSet importedCompoundIds = new LongLinkedOpenHashSet();
 
+    @NotNull
+    private Map<String, LongSet> importedRunIds = new HashMap<>();
+
+    public @NotNull LongLinkedOpenHashSet getImportedRunIds() {
+        return importedRunIds.values().stream().flatMap(LongCollection::stream)
+                .collect(Collectors.toCollection(LongLinkedOpenHashSet::new));
+    }
+
     private final boolean saveImportedCompounds;
 
-    private final NoSQLProjectSpaceManager psm;
+    private final NoSQLProjectImpl project;
 
-    public ImportMsFromResourceWorkflow(ProjectSpaceManager psm, AbstractImportSubmission submission, boolean saveImportedCompounds) {
-        if (!(psm instanceof NoSQLProjectSpaceManager)) {
-            throw new IllegalArgumentException("Project space type not supported!");
-        }
-        this.psm = (NoSQLProjectSpaceManager) psm;
+    public ImportMsFromResourceWorkflow(NoSQLProjectImpl project, AbstractImportSubmission<?> submission, boolean saveImportedCompounds) {
+        this.project = project;
         this.submission = submission;
         this.saveImportedCompounds = saveImportedCompounds;
     }
@@ -103,15 +115,18 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
     public void run() {
         importedFeatureIds = new LongLinkedOpenHashSet();
         importedCompoundIds = new LongLinkedOpenHashSet();
+        importedRunIds = new HashMap<>();
         final List<PathInputResource> inputResources = submission.asPathInputResource();
         final AlignmentThresholds thresholds = new AlignmentThresholds();
         thresholds.setMaximalAllowedMassError(submission.getAlignMaxMassDeviation());
         if (submission.getAlignMaxRetentionTimeDeviation()>=0) thresholds.setMaximalAllowedRetentionTimeError(submission.getAlignMaxRetentionTimeDeviation());
         if (inputResources != null && !inputResources.isEmpty()) {
             try {
+                // import
                 LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
                         inputResources.stream().map(PathInputResource::getResource).toList(),
-                        () -> psm,
+                        submission.getSampleTypes(),
+                        project::getProjectSpaceManager,
                         submission.isAlignLCMSRuns(),
                         submission.getFilter(),
                         submission.getGaussianSigma(),
@@ -125,10 +140,30 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                 );
                 importerJJob.addJobProgressListener(progressSupport);
                 SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
+
+                //add imported Ids
                 if (importerJJob.getImportedFeatureIds() != null)
                     importedFeatureIds = importerJJob.getImportedFeatureIds();
                 if (importerJJob.getImportedCompoundIds() != null)
                     importedCompoundIds = importerJJob.getImportedCompoundIds();
+                if (importerJJob.getImportedRunIds() != null)
+                    importedRunIds = importerJJob.getImportedRunIds();
+
+
+                LongSet sampleRuns = importedRunIds.getOrDefault(TagDefinitions.SAMPLE_TYPE_SAMPLE, LongSets.emptySet());
+                LongSet blankRuns = importedRunIds.getOrDefault(TagDefinitions.SAMPLE_TYPE_BLANK, LongSets.emptySet());
+                if (!sampleRuns.isEmpty() && !blankRuns.isEmpty()) { // compute fold changes if there are mor
+                    SiriusJobs.getGlobalJobManager().submitJob(
+                            new AlignedFeaturesFoldChangeJob(project.project(),
+                                    Groups.SAMPLE_RUNS.getGroupName(), sampleRuns,
+                                    Groups.BLANK_RUNS.getGroupName(), blankRuns,
+                                    EnumSet.allOf(QuantMeasure.class), EnumSet.allOf(AggregationType.class),
+                                    importedFeatureIds
+                            )).awaitResult();
+                } else {
+                    log.warn("Not all runs have a run type specified. But run types are mandatory for fold change analysis. Skipping simple vs blank fold change analysis!");
+                }
+
             } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {

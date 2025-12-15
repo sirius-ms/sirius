@@ -20,21 +20,30 @@
 
 package de.unijena.bioinf.ms.middleware.configuration.project;
 
+import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectProviderImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
-import de.unijena.bioinf.ms.middleware.service.search.FakeLuceneSearchService;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoProjectSearchContext;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
 import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
+import java.io.IOException;
+import java.nio.file.Path;
+
+@Slf4j
 @Configuration
 @ConditionalOnProperty(name = "sirius.middleware.project-space", havingValue = "NITRITE-NOSQL")
 public class NitriteNoSqlProjectConfig {
@@ -44,9 +53,19 @@ public class NitriteNoSqlProjectConfig {
         return new NitriteProjectSpaceManagerFactory();
     }
 
-    @Bean
-    public SearchService searchService() {
-        return new FakeLuceneSearchService();
+    @Bean(destroyMethod = "close")
+    public SearchService searchService(@Value("${de.unijena.bioinf.sirius.indexing.homeDir:#{null}}") Path indexingHome, @Value("${de.unijena.bioinf.sirius.project.inMemoryIndex:#{false}}") boolean inMemoryIndex) throws IOException {
+        if (inMemoryIndex) {
+            indexingHome = null;
+        } else {
+            if (indexingHome == null)
+                indexingHome = Workspace.WORKSPACE.resolve("search-indexes").resolve("lucene");
+        }
+
+        if (indexingHome == null)
+            log.warn("Running in in-memory search index mode.");
+
+        return new SearchServiceImpl(indexingHome, PerPojoProjectSearchContext.FACTORY);
     }
 
     @Bean
@@ -55,7 +74,7 @@ public class NitriteNoSqlProjectConfig {
     public ProjectsProvider<?> projectsProvider(ComputeService computeService,
                                                 SearchService searchService,
                                                 EventService<?> eventService,
-                                                ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory
+                                                @Autowired(required = false) ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory
     ) {
         return new NoSQLProjectProviderImpl((ProjectSpaceManagerFactory<NoSQLProjectSpaceManager>) projectSpaceManagerFactory, eventService, computeService, searchService);
     }

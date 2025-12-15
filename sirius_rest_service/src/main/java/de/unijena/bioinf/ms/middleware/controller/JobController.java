@@ -171,6 +171,7 @@ public class JobController {
      * [DEPRECATED] Start computation for given command and input.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      *
      * @param projectId         project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
@@ -266,22 +267,6 @@ public class JobController {
         List<StoredJobSubmission> configs = jobConfigService.getAllConfigs();
         configs.forEach(js -> js.getJobSubmission().mergeCombinedConfigMap());
         return configs;
-    }
-
-    /**
-     * [DEPRECATED] Get all (non-default) job configuration names
-     * <p>
-     * [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
-     *
-     */
-    @GetMapping(value = "/job-config-names", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus(HttpStatus.OK)
-    @Deprecated(forRemoval = true)
-    public List<String> getJobConfigNames() {
-        return getJobConfigs().stream()
-                .map(StoredJobSubmission::getName)
-                .filter(n -> !n.equals(JobConfigService.DEFAULT_CONFIG_NAME))
-                .toList();
     }
 
     /**

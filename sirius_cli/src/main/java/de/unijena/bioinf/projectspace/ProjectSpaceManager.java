@@ -22,6 +22,7 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.IterableWithSize;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -37,6 +38,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 public interface ProjectSpaceManager extends IterableWithSize<Instance> {
+    boolean isTempProject();
+    void setTempProject(boolean tmpProject);
 
     Pattern PROJECT_FILENAME_VALIDATOR = Pattern.compile("[a-zA-Z0-9_-]+", Pattern.CASE_INSENSITIVE);
 
@@ -120,5 +123,11 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
             return null;
         }
     }
+
+    /**
+     * @return Set of all detected adducts from all features in the project
+     */
+    @NotNull
+    ProjectDetectedAdducts getDetectedAdducts();
 
 }
