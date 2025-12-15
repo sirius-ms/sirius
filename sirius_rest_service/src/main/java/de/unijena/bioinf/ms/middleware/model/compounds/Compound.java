@@ -23,7 +23,12 @@ package de.unijena.bioinf.ms.middleware.model.compounds;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsCSI;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsDeNovo;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.statistics.Statistics;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.FoldChangeMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +41,8 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Compound {
+public class Compound implements Taggable {
+
     @Schema(name = "CompoundOptField", nullable = true)
     public enum OptField {none, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations, tags}
 
@@ -99,6 +105,16 @@ public class Compound {
     /**
      * Key: tagName, value: tag
      */
+    @IndexFieldWithMapper(mapper = TagMapper.class)
     @Schema(nullable = true)
-    protected Map<String, ? extends Tag> tags;
+    protected Map<String, Tag> tags;
+
+    /**
+     * Aggregated fold change of sample runs vs blank runs for this aligned feature
+     * NULL if not a sample run or no fold change exists
+     * NOTE: This field is mainly for search index building and therefore hidden from the api
+     */
+    @IndexFieldWithMapper(mapper = FoldChangeMapper.CompoundFoldChange.class)
+    @Schema(nullable = true, hidden = true)
+    protected List<Statistics> stats;
 }

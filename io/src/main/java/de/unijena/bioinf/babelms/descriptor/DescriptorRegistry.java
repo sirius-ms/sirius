@@ -20,6 +20,10 @@
 
 package de.unijena.bioinf.babelms.descriptor;
 
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.ImplicitAdduct;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
 import java.util.*;
@@ -32,13 +36,23 @@ public class DescriptorRegistry {
     private final HashMap<Class, DescriptorMap> registry;
 
     private static DescriptorRegistry SINGLETON;
+    private static DescriptorRegistry SINGLETON_SLIM;
     static {
         SINGLETON = new DescriptorRegistry();
         DefaultDescriptors.addAll(SINGLETON);
+
+        SINGLETON_SLIM = new DescriptorRegistry();
+        DefaultDescriptors.addAll(SINGLETON_SLIM);
+        SINGLETON_SLIM.put(Fragment.class, AnnotatedPeak.class, new DefaultDescriptors.AnnotatedPeakDescriptor(false));
+        SINGLETON_SLIM.put(Loss.class, ImplicitAdduct.class, new DefaultDescriptors.ImplicitAdductDescriptor(false));
     }
 
     public static DescriptorRegistry getInstance() {
         return SINGLETON;
+    }
+
+    public static DescriptorRegistry getInstanceSlimWriter() {
+        return SINGLETON_SLIM;
     }
 
     DescriptorRegistry() {

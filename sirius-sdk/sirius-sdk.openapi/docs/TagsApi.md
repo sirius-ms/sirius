@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addGroup**](TagsApi.md#addGroup) | **POST** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Group tags in the project |
+| [**addGroup**](TagsApi.md#addGroup) | **POST** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] TagGroup tags in the project |
 | [**addPossibleValuesToTagDefinition**](TagsApi.md#addPossibleValuesToTagDefinition) | **PATCH** /api/projects/{projectId}/tags/{tagName} | [EXPERIMENTAL] Add a possible value to the tag definition in the project |
 | [**createTags**](TagsApi.md#createTags) | **PUT** /api/projects/{projectId}/tags | [EXPERIMENTAL] Add tags to the project |
 | [**deleteGroup**](TagsApi.md#deleteGroup) | **DELETE** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space |
@@ -20,9 +20,9 @@ All URIs are relative to *http://localhost:8888*
 
 > TagGroup addGroup(projectId, groupName, filter, type)
 
-[EXPERIMENTAL] Group tags in the project
+[EXPERIMENTAL] TagGroup tags in the project
 
-[EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+[EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
