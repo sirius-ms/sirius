@@ -16,6 +16,7 @@ import de.unijena.bionf.fastcosine.SearchPreparedMergedSpectrum;
 import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
 import java.util.*;
 
@@ -31,7 +32,12 @@ public class CF2Detector {
         this.provider = provider;
     }
 
-    public List<AlignedFeatures> detectPFASSeries(AlignedFeatures[] features) {
+    /**
+     * Detects all features that are part of a CF2 homologue series
+     * @param features
+     * @return IDs of features that have homologue series
+     */
+    public LongOpenHashSet detectPFASSeries(AlignedFeatures[] features) {
         Arrays.sort(features, Comparator.comparingDouble((AlignedFeatures x)->x.getDataQuality().getScore()).thenComparing(AbstractFeature::getApexIntensity).reversed());
         final MolecularFormula CF2 = MolecularFormula.parseOrThrow("CF2");
 
@@ -71,7 +77,7 @@ public class CF2Detector {
         final TransformerElementDetector detector = new TransformerElementDetector();
         final int MAYBE_FLUORINE_FLAG = 4;
         final int FLUORINE_FLAG = 2;
-        List<AlignedFeatures> pfas = new ArrayList<>();
+        LongOpenHashSet pfas = new LongOpenHashSet();
         for (Node s : seeds) {
 
             List<Node> compl = s.completeSeries();
@@ -139,6 +145,7 @@ public class CF2Detector {
                 List<Node> series = m.completeSeries();
                 if (series.size()>=2) {
                     for (Node n : series) {
+                        if (n.features.isEmpty() || pfas.contains(n.features.get(0).getAlignedFeatureId())) continue;
                         //n.features.get(0).setName("PFAS_SER_" + series.size() + "_" + length + "_" + fls);
                         for (AlignedFeatures f : n.features) {
                             if (f.getDetectedElements()==null) f.setDetectedElements(new DetectedElements());
@@ -146,7 +153,7 @@ public class CF2Detector {
                                     de.unijena.bioinf.ChemistryBase.ms.DetectedElements.Source.HOMOLOGUE_SERIES,
                                     new PossibleElement(F, 3f)
                             ));
-                            pfas.add(f);
+                            pfas.add(f.getAlignedFeatureId());
                         }
                     }
                 }
