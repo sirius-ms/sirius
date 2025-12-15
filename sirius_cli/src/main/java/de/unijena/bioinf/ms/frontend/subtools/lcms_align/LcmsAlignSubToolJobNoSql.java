@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -34,6 +35,7 @@ import de.unijena.bioinf.lcms.adducts.assignment.OptimalAssignmentViaBeamSearch;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.align.AlignmentThresholds;
 import de.unijena.bioinf.lcms.align.MoI;
+import de.unijena.bioinf.lcms.homologues.CF2Detector;
 import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
 import de.unijena.bioinf.lcms.quality.*;
 import de.unijena.bioinf.lcms.statistics.UserSpecifiedThresholds;
@@ -50,12 +52,14 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractAlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractFeature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.tags.*;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
@@ -65,7 +69,11 @@ import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bionf.fastcosine.FastCosine;
+import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
+import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.*;
 import lombok.Getter;
 import org.apache.commons.io.function.IOSupplier;
@@ -403,11 +411,20 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                     countMap.values().stream().mapToInt(Integer::intValue).sum(),
                     countMapMs2.values().stream().mapToInt(Integer::intValue).sum()
             );
+            /*
+            {
+                AlignedFeatures[] fs = ps.getStorage().findStr(Filter.where("runId").eq(merged.getRun().getRunId()), AlignedFeatures.class).toArray(AlignedFeatures[]::new);
+                List<AlignedFeatures> pfas = new CF2Detector(provider).detectPFASSeries(fs);
+                // add pfas tag if not existing
+                for (AlignedFeatures f : pfas) {
+                    ps.getStorage().upsert(f);
+                }
+            }
+             */
         } finally {
             processing.closeStorages();
         }
     }
-
     private void deleteIsotopicPeak(SiriusProjectDatabaseImpl<? extends Database<?>> ps, AlignedFeatures x) throws IOException {
         // delete isotopic feature
         ps.cascadeDeleteAlignedFeatures(x.getAlignedFeatureId());
