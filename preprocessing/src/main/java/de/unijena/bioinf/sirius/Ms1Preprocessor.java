@@ -95,22 +95,37 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
     }
 
     /**
+     * Extracts all element detection information and determines the final formula constraints
+     */
+    @Requires(DetectedElements.class)
+    @Provides(FormulaConstraints.class)
+    @Provides(ElementsDetectedAsAbsent.class)
+    public void elementDetection(ProcessedInput pinput) {
+        detectElementsFromIsotopePattern(pinput);
+        final FormulaSettings settings = pinput.getAnnotationOrDefault(FormulaSettings.class);
+        checkDetectableElementSettings(settings);
+        final DetectedElements detectedElements = pinput.getAnnotationOrNull(DetectedElements.class);
+        if (detectedElements==null) {
+            pinput.setAnnotation(FormulaConstraints.class, settings.getFallbackAlphabet().getExtendedConstraints(settings.getEnforcedAlphabet()));
+        } else {
+            final DetectedElements.DetectionResult result = detectedElements.getFormulaConstraints(settings.getFallbackAlphabet());
+            pinput.setAnnotation(FormulaConstraints.class, new DetectedFormulaConstraints(result.constraints().intersection(settings.getAutoDetectionElementsWithPFAS().toArray(Element[]::new)).getExtendedConstraints(settings.getEnforcedAlphabet()), true));
+            pinput.setAnnotation(ElementsDetectedAsAbsent.class, new ElementsDetectedAsAbsent(result.forbiddenElements()));
+        }
+    }
+
+    /**
      * Detect elements based on MS spectrum
-     * @param pinput
      */
     @Requires(Ms1IsotopePattern.class)
     @Requires(PossibleAdducts.class)
-    @Provides(FormulaConstraints.class)
-    public void elementDetection(ProcessedInput pinput) {
-        final FormulaSettings settings = pinput.getAnnotationOrDefault(FormulaSettings.class);
-        checkDetectableElementSettings(settings);
-
-        final DetectedFormulaConstraints fc = elementDetection.detect(pinput);
-        if (fc==null) {
-            DetectedFormulaConstraints dfc = new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()), false);
-            pinput.setAnnotation(FormulaConstraints.class, dfc); //to ensure backwards compatibility, still use FormulaConstraints.class as key
-        } else {
-            pinput.setAnnotation(FormulaConstraints.class, fc); //to ensure backwards compatibility, still use FormulaConstraints.class as key
+    @Provides(DetectedElements.class)
+    public void detectElementsFromIsotopePattern(ProcessedInput pinput) {
+        final DetectedElements fc = elementDetection.detect(pinput);
+        if (fc!=null) {
+            final DetectedElements el = pinput.getAnnotationOrNull(DetectedElements.class);
+            if (el==null) pinput.setAnnotation(DetectedElements.class, fc);
+            else pinput.setAnnotation(DetectedElements.class, el.with(fc));
         }
     }
 
