@@ -438,10 +438,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             // PFAS detection
             {
                 AlignedFeatures[] features = ps.getStorage().findStr(Filter.where("runId").eq(merged.getRun().getRunId()), AlignedFeatures.class).filter(x -> x.getDataQuality().getScore() >= DataQuality.DECENT.getScore()).toArray(AlignedFeatures[]::new);
-                List<Tag> pfasTags = new CF2Detector(provider).detectPFASSeries(features).longStream().mapToObj(feature->
+                LongOpenHashSet pfas = new CF2Detector(provider).detectPFASSeries(features);
+                List<Tag> pfasTags = pfas.longStream().mapToObj(feature->
                     TagDefinitions.PFAS_TYPE.newTagWithValue(TagDefinitions.PFAS_TYPE_0, AlignedFeatures.class, feature)
                 ).toList();
                 ps.getStorage().insertAll(pfasTags);
+                if (!pfas.isEmpty()) {
+                    ps.getStorage().upsertAll(Arrays.asList(Arrays.stream(features).filter(x->pfas.contains(x.getAlignedFeatureId())).toArray(AlignedFeatures[]::new)));
+                }
             }
 
         } finally {
