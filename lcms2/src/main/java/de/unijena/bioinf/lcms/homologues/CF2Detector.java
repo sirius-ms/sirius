@@ -21,10 +21,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.util.*;
 
 public class CF2Detector {
-
-    public static final String TAG_NAME = "PFAS";
-    public final static String TAG_TYPE = "Feature";
-    public final static String TAG_DESCR = "Features detected as PFAS";
+    // tags.pfas:sample
 
     private ProjectSpaceTraceProvider provider;
 
