@@ -70,13 +70,11 @@ public class CF2Detector {
             }
         }
         final FastCosine fastCosine = new FastCosine();
-        System.out.println("Number of series: " + seeds.size());
         final TransformerElementDetector detector = new TransformerElementDetector();
         final int MAYBE_FLUORINE_FLAG = 4;
         final int FLUORINE_FLAG = 2;
         LongOpenHashSet pfas = new LongOpenHashSet();
         for (Node s : seeds) {
-
             List<Node> compl = s.completeSeries();
             for (Node n : compl) {
                 for (AlignedFeatures f : n.features) {
@@ -97,8 +95,7 @@ public class CF2Detector {
 
             int length = s.length();
             int fls = (int)compl.stream().filter(x->(x.flag&FLUORINE_FLAG)!=0 ).count();
-            if (length<4 || fls<1) continue;
-            System.out.println(length);
+            if (fls <= 0 && length < 4) continue;
             List<AlignedFeatures> ms2 = compl.stream().flatMap(x->x.features.stream()).filter(AbstractAlignedFeatures::isHasMsMs).toList();
             List<SearchPreparedSpectrum> specs = ms2.stream().map(x-> fastCosine.prepareQuery(x.getAverageMass(), provider.getMsMsSpectrumOf(x).get())).toList();
             final FloatArrayList sameMz = new FloatArrayList(), differentMz = new FloatArrayList();
@@ -137,13 +134,10 @@ public class CF2Detector {
             final Element F = PeriodicTable.getInstance().getByName("F");
             // check if we have a series
             for (Node m : ms2Nodes) {
-                //if (m.features.get(0).getName()!=null && m.features.get(0).getName().startsWith("PFAS"))
-                //    continue;
                 List<Node> series = m.completeSeries();
                 if (series.size()>=2) {
                     for (Node n : series) {
                         if (n.features.isEmpty() || pfas.contains(n.features.get(0).getAlignedFeatureId())) continue;
-                        //n.features.get(0).setName("PFAS_SER_" + series.size() + "_" + length + "_" + fls);
                         for (AlignedFeatures f : n.features) {
                             if (f.getDetectedElements()==null) f.setDetectedElements(new DetectedElements());
                             f.getDetectedElements().addDetectedElements(de.unijena.bioinf.ChemistryBase.ms.DetectedElements.singleton(
