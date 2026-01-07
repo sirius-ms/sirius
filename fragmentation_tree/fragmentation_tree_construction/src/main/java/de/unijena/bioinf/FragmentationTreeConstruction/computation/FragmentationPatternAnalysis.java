@@ -43,6 +43,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Scoring;
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
 import de.unijena.bioinf.MassDecomposer.Chemistry.AddDeNovoDecompositionsToWhiteset;
+import de.unijena.bioinf.MassDecomposer.Chemistry.AddIntrinsicPFASToDecomps;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.NonEmptyFormulaValidator;
@@ -244,12 +245,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final List<FormulaConstraints> constraintList = new ArrayList<>();
         getDecomposersFor(pmds, constraints, decomposers, constraintList);
 
+        final boolean mayContainFluorine = constraints.getUpperbound(AddIntrinsicPFASToDecomps.F)>0;
+
         Set<Ionization> ionModeSet = new HashSet<>(ionModes);
 
 
         for (IonMode pmdIonMode : ionModes.toArray(new IonMode[0])) {
             for (SiriusPlugin plugin : siriusPlugins.values()) {
-                plugin.addPossibleIonModesToGraph(input, pmdIonMode, ionModeSet);
+                plugin.addPossibleIonModesToDecomposer(input, pmdIonMode, ionModeSet);
             }
         }
 
@@ -272,6 +275,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                     }
                 }
             }
+            if (mayContainFluorine) AddIntrinsicPFASToDecomps.addIntrinsicalPFAS(decompositions, ionModeSet, decomposers, mz, fragmentDeviation.absoluteFor(peak.getMass()), constraintList);
 
             DecompositionList peakDecompList = new DecompositionList(decompositions);
             for (SiriusPlugin plugin : siriusPlugins.values()) {
