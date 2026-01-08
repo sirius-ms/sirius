@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
@@ -337,8 +338,13 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
                 .toList();
         List<FingerIdResult> idResults = inputData.stream().map(d -> d.getAnnotationOrThrow(FingerIdResult.class)).toList();
 
-        Scored<FingerprintCandidate> candidates = SiriusJobs.runInBackground(new AddExternalStructureJJob(smiles, idResults, instance.getCharge(), webAPI).asType(JJob.JobType.TINY_BACKGROUND)).takeResult();
-        if (candidates == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fingerprint candidate count not be computed");
+        try {
+            Scored<FingerprintCandidate> candidates = SiriusJobs.runInBackground(new AddExternalStructureJJob(smiles, idResults, instance.getCharge(), webAPI).asType(JJob.JobType.TINY_BACKGROUND)).takeResult();
+            if (candidates == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fingerprint candidate could not be computed");
+        } catch (InvalidException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+
 
         instance.addMsNovelistResult(inputData); //only one FCandidate with a result
         return null; //todo what to return
