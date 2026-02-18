@@ -44,9 +44,9 @@ public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel>
                 .newBuilder(HARDWARE_ACCELERATED)
                 .licenseKey(new String(Base64.getDecoder().decode(System.getProperty("jxbrowser.license.key")), StandardCharsets.UTF_8))
                 .disableTouchMenu()
-                .userDataDir(Workspace.jxBrowserDir)
                 .enableIncognito() // no storage dir, all in memory, fresh state after every start.
                 .disableSandbox() // does not work on all linux systems.
+//                .userDataDir(Workspace.jxBrowserDir) do not store user data without sandbox/ just Incognito
                 .build();
 
         Engine engine = Engine.newInstance(opts);
