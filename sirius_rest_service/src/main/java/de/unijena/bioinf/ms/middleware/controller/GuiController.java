@@ -35,7 +35,7 @@ import java.util.List;
 
 @RestController
 @Tag(name = "Gui", description = "GUI Control: Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects.")
-@ConditionalOnExpression("!${de.unijena.bioinf.sirius.headless:false} || ${sirius.middleware.force-gui-endpoints:false}")
+@ConditionalOnExpression("!${de.unijena.bioinf.sirius.headless:false}")
 public class GuiController {
 
     protected final ProjectsProvider projectsProvider;
