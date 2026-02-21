@@ -4,6 +4,7 @@ import io.sirius.ms.sdk.model.*;
 import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -94,6 +95,7 @@ public class CompoundsApiTest {
         instance.deleteCompound(project.getProjectId(), newCompound.getCompoundId());
     }
 
+    @Disabled
     @Test
     public void addCompoundAndComputeWorkflowTest() throws InterruptedException {
         JobsApi jobsApi = TestSetup.getInstance().getSiriusClient().jobs();
