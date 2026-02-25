@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -1760,8 +1761,9 @@ public class Spectrums {
         return new OrderedSpectrumDelegate<>(spec);
     }
 
-    public static final DecimalFormat THREE_DIGITS = new DecimalFormat("#.###");
-    public static final DecimalFormat FOUR_DIGITS = new DecimalFormat("#.####");
+    private static final DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+    public static final DecimalFormat THREE_DIGITS = new DecimalFormat("#.###", symbols);
+    public static final DecimalFormat FOUR_DIGITS = new DecimalFormat("#.####", symbols);
 
     public static void writePeaks(BufferedWriter writer, Spectrum spec) throws IOException {
         for (int k = 0; k < spec.size(); ++k) {
