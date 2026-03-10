@@ -37,7 +37,7 @@ public class SdfExperimentParser implements Parser<Ms2Experiment> {
 
     @Override
     public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
-        IteratingSDFReader sdfReader = new IteratingSDFReader(reader, SilentChemObjectBuilder.getInstance());
+        IteratingSDFReader sdfReader = new IteratingSDFReader(reader, SilentChemObjectBuilder.getInstance(), true); //skip malformed or not parsable molecules. Else the whole import would just stop.
         if (sdfReader.hasNext()) {
             IAtomContainer sdfData = sdfReader.next();
             ExperimentData data = extractData(sdfData);
