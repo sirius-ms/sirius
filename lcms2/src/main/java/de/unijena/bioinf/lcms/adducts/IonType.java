@@ -1,6 +1,5 @@
 package de.unijena.bioinf.lcms.adducts;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import lombok.extern.slf4j.Slf4j;
 
