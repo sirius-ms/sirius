@@ -73,9 +73,10 @@ ext {
             break
         case DistJRE.TEMURIN:
             //https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.8%2B9/OpenJDK21U-jre_x64_mac_hotspot_21.0.8_9.tar.gz
+            //https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jre_x64_mac_hotspot_21.0.10_7.tar.gz
             jre_mac_prefix = "Contents/Home"
             jre_distributor_version = "7"
-            jre_fname = "jdk-${jre_version}%2B9/OpenJDK21U-jre_${siriusTargetPlatform.adoptClassifier().get()}_hotspot_${jre_version}_${jre_distributor_version}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
+            jre_fname = "jdk-${jre_version}%2B7/OpenJDK21U-jre_${siriusTargetPlatform.adoptClassifier().get()}_hotspot_${jre_version}_${jre_distributor_version}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
             jre_download_base_link = "https://github.com/adoptium/temurin21-binaries/releases/download/"
             break;
         case DistJRE.MICROSOFT:
