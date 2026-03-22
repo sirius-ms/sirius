@@ -12,11 +12,17 @@ public class SoftwareTourMessage extends QuestionDialog {
     final int currentMessage;
     final int totalMessages;
 
+    /**
+     * runs before disposal of the last message window (either on last "next" or when canceled)
+     */
+    private final Runnable preDisposeActionFinalMessage;
+
     private JLabel counter;
 
-    public SoftwareTourMessage(Window owner, String tutorialInfo, int currentMessage, int totalMessages) {
+    public SoftwareTourMessage(Window owner, String tutorialInfo, int currentMessage, int totalMessages, Runnable preDisposeActionFinalMessage) {
         super(owner, null, () -> tutorialInfo, null, null, false);
 
+        this.preDisposeActionFinalMessage = preDisposeActionFinalMessage;
         this.currentMessage = currentMessage;
         this.totalMessages = totalMessages;
         counter.setText(currentMessage + " / " + totalMessages);
@@ -40,6 +46,7 @@ public class SoftwareTourMessage extends QuestionDialog {
         ok = new JButton("Next");
         ok.addActionListener(e -> {
             rv = ReturnValue.Success;
+            if (preDisposeActionFinalMessage != null && currentMessage == totalMessages) preDisposeActionFinalMessage.run();
             saveDoNotAskMeAgain();
             dispose();
         });
@@ -47,6 +54,7 @@ public class SoftwareTourMessage extends QuestionDialog {
         cancel = new JButton("Cancel");
         cancel.addActionListener(e -> {
             rv = ReturnValue.Cancel;
+            if (preDisposeActionFinalMessage != null) preDisposeActionFinalMessage.run();
             saveDoNotAskMeAgain();
             dispose();
         });

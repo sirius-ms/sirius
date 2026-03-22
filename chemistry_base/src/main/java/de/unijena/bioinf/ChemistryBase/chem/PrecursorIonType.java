@@ -282,7 +282,7 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
             return "[" + multimereStr() + isoString() + " + ?]" +  chargeString();
         }
         if (isIntrinsicalCharged()) {
-            return "[" + multimereStr() +isoString() + "M]" + chargeString();
+            return "[" + multimereStr() +isoString() + "]" + chargeString();
         }
         final StringBuilder buf = new StringBuilder(128);
         buf.append("[").append(multimereStr());
