@@ -138,7 +138,6 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             "/api/projects/*/groups",
             "/api/projects/*/groups/*",
             "/api/projects/*/runs/*",
-            "/api/projects/*/runs/blanksubtract/compute",
             "/api/projects/*/runs/grouped",
             "/api/projects/*/runs/page",
             "/api/projects/*/runs/tags",
