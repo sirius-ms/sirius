@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
-import static com.teamdev.jxbrowser.engine.RenderingMode.OFF_SCREEN;
+import static com.teamdev.jxbrowser.engine.RenderingMode.HARDWARE_ACCELERATED;
 
 @Slf4j
 public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel> {
@@ -41,11 +41,12 @@ public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel>
 
     private static Engine setupEngine() {
         EngineOptions opts = EngineOptions
-                .newBuilder(OFF_SCREEN)
+                .newBuilder(HARDWARE_ACCELERATED)
                 .licenseKey(new String(Base64.getDecoder().decode(System.getProperty("jxbrowser.license.key")), StandardCharsets.UTF_8))
                 .disableTouchMenu()
-                .userDataDir(Workspace.jxBrowserDir)
                 .enableIncognito() // no storage dir, all in memory, fresh state after every start.
+                .disableSandbox() // does not work on all linux systems.
+//                .userDataDir(Workspace.jxBrowserDir) do not store user data without sandbox/ just Incognito
                 .build();
 
         Engine engine = Engine.newInstance(opts);

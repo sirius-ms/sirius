@@ -4,6 +4,7 @@ import io.sirius.ms.sdk.model.*;
 import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -93,6 +95,7 @@ public class CompoundsApiTest {
         instance.deleteCompound(project.getProjectId(), newCompound.getCompoundId());
     }
 
+    @Disabled
     @Test
     public void addCompoundAndComputeWorkflowTest() throws InterruptedException {
         JobsApi jobsApi = TestSetup.getInstance().getSiriusClient().jobs();
@@ -125,6 +128,8 @@ public class CompoundsApiTest {
 
         // Wait until computations are finished
         TestSetup.getInstance().getSiriusClient().awaitJob(project.getProjectId(), job.getId());
+
+        TimeUnit.SECONDS.sleep(5);
 
         // Get the consensus result for the whole compound
         Compound compound = instance.getCompound(

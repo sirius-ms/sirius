@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
@@ -48,7 +49,7 @@ public class AddExternalStructureJJob extends BasicMasterJJob<Scored<Fingerprint
     }
 
     @Override
-    protected Scored<FingerprintCandidate> compute() throws Exception {
+    protected Scored<FingerprintCandidate> compute() throws Exception, InvalidException {
         final @NotNull CSIPredictor predictor = NetUtils.tryAndWait(() -> (CSIPredictor)
                         webAPI.getStructurePredictor(charge),
                 this::checkForInterruption);
@@ -60,12 +61,12 @@ public class AddExternalStructureJJob extends BasicMasterJJob<Scored<Fingerprint
         final FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(fingerIdData.getCdkFingerprintVersion(), false);
 
         FingerprintCandidate fingerprintCandidate = computeFingerprint(smiles, fixedFingerprinter, fpMask);
-        if (fingerprintCandidate == null) throw new  RuntimeException("Cannot compute fingerprint for " + smiles);
+        if (fingerprintCandidate == null) throw new  InvalidException("Cannot compute fingerprint for " + smiles);
 
         MolecularFormula molecularFormula = InChIs.extractNeutralFormulaByAdjustingHsOrThrow(fingerprintCandidate.getInchi().in2D);
 
         FingerIdResult idResult = idResults.stream()
-                .filter(r -> r.getMolecularFormula().equals(molecularFormula)).findFirst().orElseThrow(() -> new RuntimeException("Cannot find FingerIdResult for molecular formula '"+molecularFormula+"' of SMILES '"+smiles+"'"));
+                .filter(r -> r.getMolecularFormula().equals(molecularFormula)).findFirst().orElseThrow(() -> new InvalidException("Cannot find fingerprint candidate for molecular formula '"+molecularFormula+"' of SMILES '"+smiles+"'"));
         ProbabilityFingerprint fp = idResult.getPredictedFingerprint();
 
         checkForInterruption();

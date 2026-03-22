@@ -60,47 +60,52 @@ public class SoftwareTourUtils {
     protected static void checkAndInitTour(Window windowOwner, Container tutorialRoot, String tutorialName, String propertyKey) {
         ToolTipManager.sharedInstance().setEnabled(false); //disable tool tips so they don't interfere with the tour
 
-        SoftwareTourInitialDialog askToStart = new SoftwareTourInitialDialog(windowOwner, tutorialName, propertyKey);
 
-        if (askToStart.isSuccess()) {
-            List<Component> allComponents = collectNestedComponents(windowOwner).stream()
-                    .toList();
-            Map<Component, Boolean> componentToEnabledState = allComponents.stream().collect(Collectors.toMap(component -> component, Component::isEnabled));
+        try {
+            SoftwareTourInitialDialog askToStart = new SoftwareTourInitialDialog(windowOwner, tutorialName, propertyKey);
 
-            List<JComponent> componentsWithTutorial = collectNestedComponents(tutorialRoot).stream()
-                    .filter(c -> c instanceof JComponent)
-                    .map(c -> (JComponent) c)
-                    .filter(jc -> getTourInfo(jc) != null)
-                    .filter(jc -> getTourInfo(jc).isInScope(propertyKey))
-                    .filter(SoftwareTourUtils::isVisibleOnScreen)
-                    .sorted(Comparator.comparing(jc -> getTourInfo(jc).getOrderImportance()))
-                    .toList();
+            if (askToStart.isSuccess()) {
+                List<Component> allComponents = collectNestedComponents(windowOwner).stream()
+                        .toList();
+                Map<Component, Boolean> componentToEnabledState = allComponents.stream().collect(Collectors.toMap(component -> component, Component::isEnabled));
 
-            for (int i = 0; i < componentsWithTutorial.size(); i++) {
-                JComponent component = componentsWithTutorial.get(i);
-                SoftwareTourInfo tourInfo = getTourInfo(component);
-                if (component instanceof SoftwareTourHighlighter<?> h) {
-                    h.updateBounds();
+                List<JComponent> componentsWithTutorial = collectNestedComponents(tutorialRoot).stream()
+                        .filter(c -> c instanceof JComponent)
+                        .map(c -> (JComponent) c)
+                        .filter(jc -> getTourInfo(jc) != null)
+                        .filter(jc -> getTourInfo(jc).isInScope(propertyKey))
+                        .filter(SoftwareTourUtils::isVisibleOnScreen)
+                        .sorted(Comparator.comparing(jc -> getTourInfo(jc).getOrderImportance()))
+                        .toList();
+
+                for (int i = 0; i < componentsWithTutorial.size(); i++) {
+                    JComponent component = componentsWithTutorial.get(i);
+                    SoftwareTourInfo tourInfo = getTourInfo(component);
+                    if (component instanceof SoftwareTourHighlighter<?> h) {
+                        h.updateBounds();
+                    }
+
+                    //disable all components
+                    allComponents.forEach(c -> c.setEnabled(false));
+                    //highlight current
+                    Border originalBorder = highlight(component);
+                    boolean originalBorderPainted = ensureBorderPainted(component);
+                    enableFocusedComponent(component, componentToEnabledState);
+                    //dialog
+                    //the enabling o components needs to happen BEFORE the last message window closes. Else Windows will not find focus and minimize SIRIUS. Thus, we run this action inside the SoftwareTourMessage
+                    SoftwareTourMessage tutorialDialog = new SoftwareTourMessage(windowOwner, tourInfo.getTutorialDescription(), i + 1, componentsWithTutorial.size(), () -> componentToEnabledState.forEach(Component::setEnabled));
+
+                    setRelativeLocation(component, tourInfo, tutorialDialog);
+                    tutorialDialog.setVisible(true);
+                    //reset
+                    resetHighlight(component, originalBorder, originalBorderPainted);
+
+                    if (tutorialDialog.isCancel()) break;
                 }
-
-                //disable all components
-                allComponents.forEach(c -> c.setEnabled(false));
-                //highlight current
-                Border originalBorder = highlight(component);
-                boolean originalBorderPainted = ensureBorderPainted(component);
-                enableFocusedComponent(component, componentToEnabledState);
-                //dialog
-                SoftwareTourMessage tutorialDialog = new SoftwareTourMessage(windowOwner, tourInfo.getTutorialDescription(), i+1, componentsWithTutorial.size());
-                setRelativeLocation(component, tourInfo, tutorialDialog);
-                tutorialDialog.setVisible(true);
-                //reset
-                resetHighlight(component, originalBorder, originalBorderPainted);
-                if (tutorialDialog.isCancel()) break;
             }
-
-            componentToEnabledState.forEach(Component::setEnabled);
+        } finally {
+            ToolTipManager.sharedInstance().setEnabled(true);
         }
-        ToolTipManager.sharedInstance().setEnabled(true);
     }
 
     private static boolean ensureBorderPainted(JComponent jc) {

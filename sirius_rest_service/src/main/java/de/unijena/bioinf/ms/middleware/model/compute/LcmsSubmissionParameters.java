@@ -64,7 +64,7 @@ public class LcmsSubmissionParameters {
     /**
      * Maximal allowed mass deviation for peaks in ms1 to be considered as belonging to the same trace.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "null")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, nullable = true)
     @JsonSerialize(using = ToStringSerializer.class)
     @JsonDeserialize(using = SimpleSerializers.DeviationDeserializer.class)
     protected Deviation traceMaxMassDeviation = null;
@@ -72,7 +72,7 @@ public class LcmsSubmissionParameters {
     /**
      * Maximal allowed mass deviation for aligning features. If not specified, this parameter is estimated from data.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "null")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, nullable = true)
     @JsonSerialize(using = ToStringSerializer.class)
     @JsonDeserialize(using = SimpleSerializers.DeviationDeserializer.class)
     protected Deviation alignMaxMassDeviation = null;
