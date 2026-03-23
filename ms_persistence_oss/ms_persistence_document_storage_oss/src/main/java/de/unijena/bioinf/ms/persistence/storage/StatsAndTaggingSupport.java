@@ -34,7 +34,8 @@ public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsP
 
                 .addRepository(FoldChange.CompoundFoldChange.class, Index.nonUnique("compoundId"))
                 .addRepository(FoldChange.AlignedFeaturesFoldChange.class, Index.nonUnique("alignedFeatureId"))
-
+                .addRepository(FoldChange.NpcFoldChange.class, Index.nonUnique("npcIndex"))
+                .addRepository(FoldChange.ClassyfireFoldChange.class, Index.nonUnique("classyfireIndex"))
                 ;
     }
 
