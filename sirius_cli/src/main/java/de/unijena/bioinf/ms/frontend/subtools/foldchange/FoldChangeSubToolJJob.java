@@ -60,9 +60,9 @@ public abstract class FoldChangeSubToolJJob<FC> extends BasicMasterJJob<List<FC>
 
     protected double aggregate(DoubleStream values, AggregationType aggregationType) {
         return switch (aggregationType) {
-            case AVG -> values.average().orElse(Double.POSITIVE_INFINITY);
-            case MIN -> values.min().orElse(Double.POSITIVE_INFINITY);
-            case MAX -> values.max().orElse(Double.POSITIVE_INFINITY);
+            case AVG -> values.average().orElse(0.0);
+            case MIN -> values.min().orElse(0.0);
+            case MAX -> values.max().orElse(0.0);
         };
     }
 }

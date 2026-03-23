@@ -48,4 +48,7 @@ public class StatisticsTable {
 
     private double[][] values;
 
+    // for compound classes
+    private String[] rowNames;
+    private String[] rowLevels;
 }

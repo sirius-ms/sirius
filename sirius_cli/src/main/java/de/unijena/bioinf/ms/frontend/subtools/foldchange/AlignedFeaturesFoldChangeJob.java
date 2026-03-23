@@ -7,7 +7,10 @@ import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
-import it.unimi.dsi.fastutil.longs.*;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -39,6 +42,7 @@ public class AlignedFeaturesFoldChangeJob extends FoldChangeSubToolJJob<FoldChan
 
     @Override
     protected List<FoldChange.AlignedFeaturesFoldChange> compute() throws Exception {
+        total.set(alignedFeatureIds.size());
         List<FoldChange.AlignedFeaturesFoldChange> foldChanges = new ArrayList<>();
         for (long af : alignedFeatureIds) {
             Long2ObjectMap<List<Feature>> leftFeatures = new Long2ObjectOpenHashMap<>(leftRuns.size());
@@ -53,16 +57,12 @@ public class AlignedFeaturesFoldChangeJob extends FoldChangeSubToolJJob<FoldChan
             });
 
             updateProgress(total.get(), progress.addAndGet(1));
-            if (leftFeatures.isEmpty() || rightFeatures.isEmpty()) {
-                continue;
-            }
-
 
             for (AggregationType aggregationType : aggregationTypes) {
                 for (QuantMeasure quantMeasure : quantMeasures) {
                     double leftval = aggregate(quantify(leftFeatures, quantMeasure), aggregationType);
                     double rightval = aggregate(quantify(rightFeatures, quantMeasure), aggregationType);
-                    double foldChange = Double.isFinite(rightval) ? leftval / rightval : 0.0;
+                    double foldChange = (rightval > 0) ? (leftval / rightval) : (leftval > 0 ? Double.POSITIVE_INFINITY : 1.0);
 
                     foldChanges.add(FoldChange.AlignedFeaturesFoldChange
                             .builder()
