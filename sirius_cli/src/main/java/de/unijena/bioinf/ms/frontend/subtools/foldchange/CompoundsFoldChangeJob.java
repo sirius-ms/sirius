@@ -31,6 +31,7 @@ public class CompoundsFoldChangeJob extends FoldChangeSubToolJJob<FoldChange.Com
 
     @Override
     protected List<FoldChange.CompoundFoldChange> compute() throws Exception {
+        total.set(compounds.size());
         List<FoldChange.CompoundFoldChange> foldChanges = new ArrayList<>();
         for (Compound c : compounds) {
             Long2ObjectMap<List<Feature>> leftFeatures = new Long2ObjectOpenHashMap<>(leftRuns.size());
@@ -51,15 +52,12 @@ public class CompoundsFoldChangeJob extends FoldChangeSubToolJJob<FoldChange.Com
                 }
             }
             updateProgress(total.get(), progress.addAndGet(1));
-            if (leftFeatures.isEmpty() || rightFeatures.isEmpty()) {
-                continue;
-            }
 
             for (AggregationType aggregationType : aggregationTypes) {
                 for (QuantMeasure quantMeasure : quantMeasures) {
                     double leftval = aggregate(quantify(leftFeatures, quantMeasure), aggregationType);
                     double rightval = aggregate(quantify(rightFeatures, quantMeasure), aggregationType);
-                    double foldChange = rightval > 0 ? leftval / rightval : 0.0;
+                    double foldChange = (rightval > 0) ? (leftval / rightval) : (leftval > 0 ? Double.POSITIVE_INFINITY : 1.0);
 
                     foldChanges.add(FoldChange.CompoundFoldChange
                             .builder()
