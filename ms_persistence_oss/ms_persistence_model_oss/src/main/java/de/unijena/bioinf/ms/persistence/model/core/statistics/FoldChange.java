@@ -63,4 +63,33 @@ public abstract class FoldChange extends Statistics implements ForeignKey {
         }
     }
 
+    @NoArgsConstructor
+    @SuperBuilder
+    @Getter
+    @Setter
+    @ToString
+    public static class NpcFoldChange extends FoldChange {
+        protected long npcIndex;
+
+        @JsonIgnore
+        @Override
+        public long getForeignId() {
+            return npcIndex;
+        }
+    }
+
+    @NoArgsConstructor
+    @SuperBuilder
+    @Getter
+    @Setter
+    @ToString
+    public static class ClassyfireFoldChange extends FoldChange {
+        protected int classyfireIndex;
+
+        @JsonIgnore
+        @Override
+        public long getForeignId() {
+            return classyfireIndex;
+        }
+    }
 }

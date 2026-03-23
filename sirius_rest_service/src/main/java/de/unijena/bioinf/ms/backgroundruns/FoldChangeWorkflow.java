@@ -23,7 +23,9 @@ package de.unijena.bioinf.ms.backgroundruns;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.subtools.foldchange.AlignedFeaturesFoldChangeJob;
+import de.unijena.bioinf.ms.frontend.subtools.foldchange.ClassyfireFoldChangeJob;
 import de.unijena.bioinf.ms.frontend.subtools.foldchange.CompoundsFoldChangeJob;
+import de.unijena.bioinf.ms.frontend.subtools.foldchange.NpcFoldChangeJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
@@ -141,6 +143,38 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                         }, AlignedFeature.class);
                     }
                 });
+
+                /**
+                 * no batches for compound classes, as we would duplicate classes over multiple batches...
+                 * TODO parallelize loops inside compute methods?
+                 */
+                case NPC_CLASSES -> {
+                    List<de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures> allFeatures =
+                            project.project().getAllAlignedFeatures().toList();
+                    NpcFoldChangeJob job = new NpcFoldChangeJob(
+                            project.project(),
+                            jobSubmission.getLeftRunGroup(), leftRuns,
+                            jobSubmission.getRightRunGroup(), rightRuns,
+                            jobSubmission.getQuantificationMeasures(),
+                            jobSubmission.getAggregationTypes(),
+                            allFeatures, 0.5);
+                    job.addJobProgressListener(progressSupport);
+                    SiriusJobs.getGlobalJobManager().submitJob(job).takeResult();
+                }
+
+                case CLASSYFIRE_CLASSES -> {
+                    List<de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures> allFeatures =
+                            project.project().getAllAlignedFeatures().toList();
+                    ClassyfireFoldChangeJob job = new ClassyfireFoldChangeJob(
+                            project.project(),
+                            jobSubmission.getLeftRunGroup(), leftRuns,
+                            jobSubmission.getRightRunGroup(), rightRuns,
+                            jobSubmission.getQuantificationMeasures(),
+                            jobSubmission.getAggregationTypes(),
+                            allFeatures, 0.5);
+                    job.addJobProgressListener(progressSupport);
+                    SiriusJobs.getGlobalJobManager().submitJob(job).takeResult();
+                }
 
                 case COMPOUNDS -> forEachBatch(project.project().getAllCompounds(), af -> {
                     List<CompoundsFoldChangeJob> jobs =

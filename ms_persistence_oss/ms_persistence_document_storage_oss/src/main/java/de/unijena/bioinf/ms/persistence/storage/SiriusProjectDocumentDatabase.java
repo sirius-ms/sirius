@@ -199,6 +199,11 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     }
 
     @SneakyThrows
+    default Stream<CanopusPrediction> findCanopusResult(long alignedFeatureId, long formulaId) {
+        return findByFeatureIdAndFormulaIdStr(alignedFeatureId, formulaId, CanopusPrediction.class);
+    }
+
+    @SneakyThrows
     default Optional<Ms2Experiment> fetchMsDataAndConfigsAsMsExperiment(@Nullable final AlignedFeatures feature) {
         if (feature == null)
             return Optional.empty();
