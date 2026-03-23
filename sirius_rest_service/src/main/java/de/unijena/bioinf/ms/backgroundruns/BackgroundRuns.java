@@ -283,7 +283,7 @@ public final class BackgroundRuns {
     public BackgroundRunJob runFoldChange(FoldChangeJobSubmission jobSubmission, QuantRowType statsTarget) {
         Workflow computation = new FoldChangeWorkflow((NoSQLProjectImpl) project, jobSubmission, statsTarget);
         return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", JobEffect.COMPUTATION));
+                new BackgroundRunJob(computation, project.getProjectSpaceManager(), RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", JobEffect.COMPUTATION));
     }
 
     private BackgroundRunJob makeBackgroundRun(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {

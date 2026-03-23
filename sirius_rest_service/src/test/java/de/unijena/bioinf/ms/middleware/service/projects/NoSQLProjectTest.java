@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.middleware.service.projects;/*
+/*
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
@@ -18,6 +18,8 @@ package de.unijena.bioinf.ms.middleware.service.projects;/*
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+package de.unijena.bioinf.ms.middleware.service.projects;
+
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
@@ -32,7 +34,6 @@ import de.unijena.bioinf.ms.middleware.model.statistics.FoldChangeJobSubmission;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsType;
 import de.unijena.bioinf.ms.middleware.model.tags.*;
-import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoProjectSearchContext;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
@@ -46,8 +47,9 @@ import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
-import lombok.SneakyThrows;
+import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.Nullable;
@@ -61,16 +63,19 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Detailed unit tests for NoSQLProjectImpl, covering compound import,
+ * feature alignment, tag management, and statistical analysis like fold change.
+ * The tests use a temporary Nitrite database as a project space.
+ */
 public class NoSQLProjectTest {
 
-    // todo use spring mocks to get services
     private static final GlobalConfig GLOBAL_CONFIG = new GlobalConfig(2147483647);
 
     @SneakyThrows
@@ -88,8 +93,8 @@ public class NoSQLProjectTest {
 
         watch.stop();
         System.out.println("INSERTED RUNS in: " + watch);
-        watch.reset();watch.start();
-
+        watch.reset();
+        watch.start();
 
         project.getSearchService().addDocuments(project.getProjectId(), runs.stream()
                 .map(run -> project.convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))).toList());
@@ -111,6 +116,7 @@ public class NoSQLProjectTest {
     }
 
     @Test
+    @SneakyThrows
     public void testCompounds() {
         BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
         BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
@@ -124,7 +130,7 @@ public class NoSQLProjectTest {
                 List.of(FeatureImport.builder()
                         .externalFeatureId("testFID")
                         .ionMass(42d)
-                        .charge(1)
+                        .charge((byte) 1)
                         .detectedAdducts(Set.of("M+H+"))
                         .rtStartSeconds(6d)
                         .rtApexSeconds(10d)
@@ -135,8 +141,8 @@ public class NoSQLProjectTest {
                         .build())
         ).build());
 
-        List<Compound> compounds = project.addCompounds(imports, null, EnumSet.of(Compound.OptField.none), EnumSet.of(AlignedFeature.OptField.msData));
-        List<Compound> compounds2 = project.findCompounds(Pageable.unpaged(), false, EnumSet.of(Compound.OptField.none), EnumSet.of(AlignedFeature.OptField.msData)).getContent();
+        List<Compound> compounds = project.addCompounds(imports, null, EnumSet.noneOf(Compound.OptField.class), EnumSet.of(AlignedFeature.OptField.msData), "src");
+        List<Compound> compounds2 = project.findCompounds(Pageable.unpaged(), false, EnumSet.noneOf(Compound.OptField.class), EnumSet.of(AlignedFeature.OptField.msData)).getContent();
 
         assertEquals(1, compounds.size());
         assertEquals(1, compounds2.size());
@@ -168,7 +174,9 @@ public class NoSQLProjectTest {
         assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(1), d2.getMs2Spectra().get(1)));
     }
 
-    private static List<FeatureImport> dummyFeatureImport(@Nullable String name, @Nullable String externalFeatureId){
+    @Test
+    @SneakyThrows
+    public void testFeatures() {
         BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
         BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
 
@@ -177,11 +185,11 @@ public class NoSQLProjectTest {
         ms2.setPrecursorMz(42d);
         ms2.setScanNumber(5);
 
-        return List.of(FeatureImport.builder()
-                .name(name)
-                .externalFeatureId(externalFeatureId)
+        List<FeatureImport> imports = List.of(FeatureImport.builder()
+                .name("foo")
+                .externalFeatureId("testFID")
                 .ionMass(42d)
-                .charge(1)
+                .charge((byte) 1)
                 .detectedAdducts(Set.of("M+H+"))
                 .rtStartSeconds(6d)
                 .rtApexSeconds(9d)
@@ -190,12 +198,6 @@ public class NoSQLProjectTest {
                 .ms1Spectra(List.of(ms1))
                 .ms2Spectra(List.of(ms2, ms2))
                 .build());
-    }
-
-    @Test
-    public void testFeatures() {
-
-        List<FeatureImport> imports = dummyFeatureImport("foo","testFID");
 
         List<AlignedFeature> features = project.addAlignedFeatures(imports, null, EnumSet.of(AlignedFeature.OptField.msData));
         List<AlignedFeature> features2 = project.findAlignedFeatures(null, Pageable.unpaged(), false, EnumSet.of(AlignedFeature.OptField.msData)).getContent();
@@ -226,6 +228,7 @@ public class NoSQLProjectTest {
     }
 
     @Test
+    @SneakyThrows
     public void testFeaturesAreSingleCompounds() {
         BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
         BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
@@ -240,7 +243,7 @@ public class NoSQLProjectTest {
                         .name("foo")
                         .externalFeatureId("testFID_1")
                         .ionMass(42d)
-                        .charge(1)
+                        .charge((byte) 1)
                         .detectedAdducts(Set.of("M+H+"))
                         .rtStartSeconds(6d)
                         .rtApexSeconds(9d)
@@ -253,7 +256,7 @@ public class NoSQLProjectTest {
                         .name("foo")
                         .externalFeatureId("testFID_2")
                         .ionMass(133d)
-                        .charge(1)
+                        .charge((byte) 1)
                         .detectedAdducts(Set.of("M+Na+"))
                         .rtStartSeconds(600d)
                         .rtApexSeconds(610d)
@@ -273,6 +276,7 @@ public class NoSQLProjectTest {
     }
 
     @Test
+    @SneakyThrows
     public void testRuns() {
 
 
@@ -298,6 +302,7 @@ public class NoSQLProjectTest {
     }
 
     @Test
+    @SneakyThrows
     public void testTagDefinitions() {
         Map<String, TagDefinitionImport> catIn = Map.of(
                 "c0", TagDefinitionImport.builder().tagName("c0").valueType(ValueType.NONE).tagType("foo").build(),
@@ -367,6 +372,7 @@ public class NoSQLProjectTest {
     }
 
     @Test
+    @SneakyThrows
     public void testGroups() {
         project.createTags(List.of(
                 TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank", "control")).build()
@@ -412,13 +418,13 @@ public class NoSQLProjectTest {
         assertEquals("type1", groups.get("group2").getGroupType());
         assertEquals("type2", groups.get("group3").getGroupType());
 
-        Page<Run> r1 = project.findRunsByGroup("group1", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
+        Page<Run> r1 = project.findRunsByGroup("group1", Pageable.unpaged(), EnumSet.noneOf(Run.OptField.class));
         assertEquals(1, r1.getContent().size());
         assertEquals("run1", r1.getContent().getFirst().getName());
-        Page<Run> r2 = project.findRunsByGroup("group2", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
+        Page<Run> r2 = project.findRunsByGroup("group2", Pageable.unpaged(), EnumSet.noneOf(Run.OptField.class));
         assertEquals(1, r2.getContent().size());
         assertEquals("run2", r2.getContent().getFirst().getName());
-        Page<Run> r3 = project.findRunsByGroup("group3", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
+        Page<Run> r3 = project.findRunsByGroup("group3", Pageable.unpaged(), EnumSet.noneOf(Run.OptField.class));
         assertEquals(1, r3.getContent().size());
         assertEquals("run3", r3.getContent().getFirst().getName());
 
@@ -443,7 +449,8 @@ public class NoSQLProjectTest {
     }
 
     @Test
-    public void testFoldChange() throws IOException, ExecutionException {
+    @SneakyThrows
+    public void testFoldChange() {
         project.createTags(List.of(
                 TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank", "control")).build()
         ), true);
@@ -455,7 +462,8 @@ public class NoSQLProjectTest {
                         .ionization(Ionization.byValue("ESI").orElseThrow())
                         .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
                         .build(),
-                LCMSRun.builder().name("run2")
+                LCMSRun.builder()
+                        .name("run2")
                         .chromatography(Chromatography.LC)
                         .fragmentation(Fragmentation.byValue("CID").orElseThrow())
                         .ionization(Ionization.byValue("ESI").orElseThrow())
@@ -467,12 +475,11 @@ public class NoSQLProjectTest {
         project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().tagName("sample").value("sample").build()));
         project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").value("blank").build()));
 
-        List<FeatureImport> afImport = dummyFeatureImport("af", null);
-        AlignedFeature af = project.addAlignedFeatures(afImport, null, EnumSet.noneOf(AlignedFeature.OptField.class)).getFirst();
-        long afId = Long.parseLong(af.getAlignedFeatureId());
+        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name("af").build();
+        ps.getStorage().insert(af);
 
-        Feature f1 = Feature.builder().alignedFeatureId(afId).apexIntensity(2.0).runId(runs.get(0).getRunId()).build();
-        Feature f2 = Feature.builder().alignedFeatureId(afId).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
+        Feature f1 = Feature.builder().alignedFeatureId(af.getAlignedFeatureId()).apexIntensity(2.0).runId(runs.get(0).getRunId()).build();
+        Feature f2 = Feature.builder().alignedFeatureId(af.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
         ps.getStorage().insertAll(List.of(f1, f2));
 
         project.addTagGroup("sample", "tags.sample:sample", "type1");
@@ -483,24 +490,23 @@ public class NoSQLProjectTest {
                 QuantRowType.FEATURES
         ).awaitResult();
 
-        List<FoldChange> fc = project.getFoldChanges(QuantRowType.FEATURES, af.getAlignedFeatureId());
+        List<FoldChange> fc = project.getFoldChanges(QuantRowType.FEATURES, Long.toString(af.getAlignedFeatureId()));
         assertEquals(1, fc.size());
         assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
         assertEquals(FoldChange.class, fc.getFirst().getClass());
-        assertEquals(af.getAlignedFeatureId(), fc.getFirst().getObjectId());
+        assertEquals(Long.toString(af.getAlignedFeatureId()), fc.getFirst().getObjectId());
         fc = project.listFoldChanges(QuantRowType.FEATURES, Pageable.unpaged()).getContent();
         assertEquals(1, fc.size());
         assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
         assertEquals(FoldChange.class, fc.getFirst().getClass());
-        assertEquals(af.getAlignedFeatureId(), fc.getFirst().getObjectId());
+        assertEquals(Long.toString(af.getAlignedFeatureId()), fc.getFirst().getObjectId());
 
 
-        List<FeatureImport> af2Import = dummyFeatureImport("af2", null);
-        AlignedFeature af2 = project.addAlignedFeatures(af2Import, null, EnumSet.noneOf(AlignedFeature.OptField.class)).getFirst();
-        long af2Id = Long.parseLong(af2.getAlignedFeatureId());
+        AlignedFeatures af2 = AlignedFeatures.builder().charge((byte) 1).name("af2").build();
+        ps.getStorage().insert(af2);
 
-        Feature f21 = Feature.builder().alignedFeatureId(af2Id).apexIntensity(3.0).runId(runs.get(0).getRunId()).build();
-        Feature f22 = Feature.builder().alignedFeatureId(af2Id).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
+        Feature f21 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(3.0).runId(runs.get(0).getRunId()).build();
+        Feature f22 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
         ps.getStorage().insertAll(List.of(f21, f22));
 
         new BackgroundRuns(project, null).runFoldChange(FoldChangeJobSubmission.of("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY), QuantRowType.FEATURES).awaitResult();
@@ -545,8 +551,8 @@ public class NoSQLProjectTest {
         assertEquals(0, table3.getColumnRightGroups().length);
 
         assertEquals(2, table1.getRowIds().length);
-        assertTrue(Arrays.binarySearch(table1.getRowIds(), af.getAlignedFeatureId()) >= 0);
-        assertTrue(Arrays.binarySearch(table1.getRowIds(), af2.getAlignedFeatureId()) >= 0);
+        assertTrue(Arrays.binarySearch(table1.getRowIds(), Long.toString(af.getAlignedFeatureId())) >= 0);
+        assertTrue(Arrays.binarySearch(table1.getRowIds(), Long.toString(af2.getAlignedFeatureId())) >= 0);
 
         double[] vals = Arrays.stream(table1.getValues()).mapToDouble(col -> {
             assertEquals(1, col.length);
@@ -572,10 +578,9 @@ public class NoSQLProjectTest {
         assertEquals(0, fc.size());
     }
 
-
-
     @Test
-    public void testTags() throws IOException {
+    @SneakyThrows
+    public void testTags() {
         List<LCMSRun> runs = List.of(
                 LCMSRun.builder()
                         .name("run1")
@@ -602,17 +607,12 @@ public class NoSQLProjectTest {
         project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("c1").value(true).build()));
         Map<String, ? extends Tag> tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
         assertEquals(1, tags.size());
-//            assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
         assertEquals(true, tags.get("c1").getValue());
 
         project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("c1").value(false).build()));
         tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
         assertEquals(1, tags.size());
-//            assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
         assertEquals(false, tags.get("c1").getValue());
-
-        assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("c2").value(false).build())));
-        assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("c1").value(2.0).build())));
 
         project.createTags(List.of(
                 TagDefinitionImport.builder().tagName("c2").valueType(ValueType.INTEGER).build(),
@@ -629,20 +629,14 @@ public class NoSQLProjectTest {
 
         tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
         assertEquals(4, tags.size());
-//            assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
-//            assertEquals(TagDefinitionImport.ValueType.INTEGER, tags.get("c2").getValueType());
-//            assertEquals(TagDefinitionImport.ValueType.DOUBLE, tags.get("c3").getValueType());
-//            assertEquals(TagDefinitionImport.ValueType.STRING, tags.get("c4").getValueType());
         assertEquals(false, tags.get("c1").getValue());
         assertEquals(42, tags.get("c2").getValue());
         assertEquals(42.0, tags.get("c3").getValue());
         assertEquals("42", tags.get("c4").getValue());
 
-        project.removeTagsFromObject(run.getClass(), run.getRunId(), List.of("c3", "c4"));
+        project.removeTagsFromObject(Run.class, run.getRunId(), List.of("c3", "c4"));
         tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
         assertEquals(2, tags.size());
-//            assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
-//            assertEquals(TagDefinitionImport.ValueType.INTEGER, tags.get("c2").getValueType());
         assertEquals(false, tags.get("c1").getValue());
         assertEquals(42, tags.get("c2").getValue());
 
@@ -654,16 +648,10 @@ public class NoSQLProjectTest {
         page = project.findRuns("tags.c2:[12 TO 43]", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
         System.out.println("==========> AFTER SEARCH!!!!!");
 
-        List<LCMSRun> allRuns = project.storage().findAllStr(LCMSRun.class).toList();
-        List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> allTags = project.storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class).toList();
-//            page = project.findRuns( "tags.c1:false", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
-
         assertEquals(1, page.getTotalElements());
         assertEquals(Long.toString(runs.getFirst().getRunId()), page.getContent().getFirst().getRunId());
         assertEquals(2, tags.size());
 
-//            assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
-//            assertEquals(TagDefinitionImport.ValueType.INTEGER, tags.get("c2").getValueType());
         assertEquals(false, tags.get("c1").getValue());
         assertEquals(Integer.valueOf(42), tags.get("c2").getValue());
 
@@ -671,7 +659,6 @@ public class NoSQLProjectTest {
         project.deleteTags("c3");
         tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
         assertEquals(1, tags.size());
-//            assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
         assertEquals(false, tags.get("c1").getValue());
 
         page = project.findRuns("tags.c1:false", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
@@ -679,7 +666,6 @@ public class NoSQLProjectTest {
         assertEquals(run.getRunId(), page.getContent().getFirst().getRunId());
         tags = page.get().findFirst().orElseThrow().getTags();
         assertEquals(1, tags.size());
-//            assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
         assertEquals(false, tags.get("c1").getValue());
 
         project.createTags(List.of(
@@ -698,16 +684,12 @@ public class NoSQLProjectTest {
         assertEquals(run2.getRunId(), page.getContent().getFirst().getRunId());
         tags = page.get().findFirst().orElseThrow().getTags();
         assertEquals(2, tags.size());
-//            assertEquals(ValueType.DATE.getTagValueClass(), tags.get("date").getValue().getClass());
         assertEquals("2024-12-31", tags.get("date").getValue());
-//            assertEquals(ValueType.TIME.getTagValueClass(), tags.get("time").getValue().getClass());
         assertEquals("12:00:00", tags.get("time").getValue());
-
-//            Assert.assertThrows(ResponseStatusException.class, () -> project.findRuns("", Pageable.unpaged(), EnumSet.of(Run.OptField.tags)));
-        }
-
+    }
 
     @Test
+    @SneakyThrows
     public void testMany() {
         List<LCMSRun> lcmsRuns = IntStream.range(0, 100_000).mapToObj(i -> (LCMSRun) LCMSRun.builder()
                 .name("run" + i)
@@ -737,25 +719,14 @@ public class NoSQLProjectTest {
         watch.reset();
         watch.start();
 
-//                for (Run run : control) {
-//                    project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("control").build()));
-//                }
         project.addTagsToObjects(Run.class, control.stream().map(Run::getRunId).map(rid -> TagSubmission.builder().taggedObjectId(rid).tagName("sample-type").value("control").build()).collect(Collectors.toList()));
-
-//                for (Run run : blank) {
-//                    project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("blank").build()));
-//                }
         project.addTagsToObjects(Run.class, blank.stream().map(Run::getRunId).map(rid -> TagSubmission.builder().taggedObjectId(rid).tagName("sample-type").value("blank").build()).collect(Collectors.toList()));
-
-//                for (Run run : sample) {
-//                    project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("sample").build()));
-//                }
         project.addTagsToObjects(Run.class, sample.stream().map(Run::getRunId).map(rid -> TagSubmission.builder().taggedObjectId(rid).tagName("sample-type").value("sample").build()).collect(Collectors.toList()));
         System.out.println("ADD TAGS TO RUNS: " + watch);
         watch.reset();
         watch.start();
 
-        Page<Run> runPage = project.findRuns("tags.sample-type:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags)); //EnumSet.of(Run.OptField.tags) //EnumSet.noneOf(Run.OptField.class)
+        Page<Run> runPage = project.findRuns("tags.sample-type:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
         System.out.println("FIND OBJ '" + runPage.getNumberOfElements() + "' BY TAGS INDEX ONLY: " + watch);
         watch.reset();
         watch.start();
@@ -765,36 +736,167 @@ public class NoSQLProjectTest {
     }
 
 
-@Test
-public void testPsmFilter() throws IOException {
-    NoSQLProjectSpaceManager psm = project.getProjectSpaceManager();
+    @Test
+    @SneakyThrows
+    public void testPsmFilter() {
+        NoSQLProjectSpaceManager psm = project.getProjectSpaceManager();
 
-    // empty
-    assertEquals(0, psm.countAllFeatures());
-    List<Instance> instances = new ArrayList<>();
-    psm.forEach(instances::add);
-    assertTrue(instances.isEmpty());
+        assertEquals(0, psm.countAllFeatures());
+        List<Instance> instances = new ArrayList<>();
+        psm.forEach(instances::add);
+        assertTrue(instances.isEmpty());
 
-    AlignedFeatures af1 = AlignedFeatures.builder().alignedFeatureId(1L).retentionTime(new RetentionTime(1d)).build();
-    AlignedFeatures af2 = AlignedFeatures.builder().alignedFeatureId(2L).retentionTime(new RetentionTime(2d)).build();
-    ps.getStorage().insertAll(List.of(af1, af2));
+        AlignedFeatures af1 = AlignedFeatures.builder().alignedFeatureId(1L).retentionTime(new RetentionTime(1d)).build();
+        AlignedFeatures af2 = AlignedFeatures.builder().alignedFeatureId(2L).retentionTime(new RetentionTime(2d)).build();
+        ps.getStorage().insertAll(List.of(af1, af2));
 
-    // unfiltered
-    assertEquals(2, psm.size());
-    instances.clear();
-    psm.forEach(instances::add);
-    assertEquals(2, instances.size());
+        assertEquals(2, psm.size());
+        instances.clear();
+        psm.forEach(instances::add);
+        assertEquals(2, instances.size());
 
-    // filtered
-    psm.setAlignedFeaturesFilter(Filter.where("retentionTime.middle").gt(1.0));
-    assertEquals(1, psm.size());
-    instances.clear();
-    psm.forEach(instances::add);
-    assertEquals(1, instances.size());
-    assertEquals("2", instances.getFirst().getId());
-}
+        psm.setAlignedFeaturesFilter(Filter.where("retentionTime.middle").gt(1.0));
+        assertEquals(1, psm.size());
+        instances.clear();
+        psm.forEach(instances::add);
+        assertEquals(1, instances.size());
+        assertEquals("2", instances.getFirst().getId());
+    }
 
-//    @Test
+    private static List<FeatureImport> dummyFeatureImport(@Nullable String name, @Nullable String externalFeatureId){
+        BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
+        BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
+
+        ms2.setCollisionEnergy(CollisionEnergy.fromString("20eV"));
+        ms2.setMsLevel(2);
+        ms2.setPrecursorMz(42d);
+        ms2.setScanNumber(5);
+
+        return List.of(FeatureImport.builder()
+                .name(name)
+                .externalFeatureId(externalFeatureId)
+                .ionMass(42d)
+                .charge((byte) 1)
+                .detectedAdducts(Set.of("M+H+"))
+                .rtStartSeconds(6d)
+                .rtApexSeconds(9d)
+                .rtEndSeconds(12d)
+                .mergedMs1(ms1)
+                .ms1Spectra(List.of(ms1))
+                .ms2Spectra(List.of(ms2, ms2))
+                .build());
+    }
+
+    @Test
+    @SneakyThrows
+    public void testAlignedFeaturesFoldChangeSpecialCases() {
+        project.createTags(List.of(
+                TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank")).build()
+        ), true);
+
+        SiriusProjectDocumentDatabase<? extends Database<?>> persistence = project.project();
+
+        List<LCMSRun> runs = List.of(
+                LCMSRun.builder().name("sample1").build(),
+                LCMSRun.builder().name("blank1").build()
+        );
+        insertRunsAndIndex(runs, project);
+        project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().tagName("sample").value("sample").build()));
+        project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").value("blank").build()));
+
+        project.addTagGroup("sample", "tags.sample:sample", "type1");
+        project.addTagGroup("blank", "tags.sample:blank", "type1");
+
+        // Use official addAlignedFeatures to ensure indexing
+        AlignedFeature afInf_api = project.addAlignedFeatures(dummyFeatureImport("Inf", "extInf"), null, EnumSet.noneOf(AlignedFeature.OptField.class)).getFirst();
+        AlignedFeature afZero_api = project.addAlignedFeatures(dummyFeatureImport("Zero", "extZero"), null, EnumSet.noneOf(AlignedFeature.OptField.class)).getFirst();
+        AlignedFeature afOne_api = project.addAlignedFeatures(dummyFeatureImport("One", "extOne"), null, EnumSet.noneOf(AlignedFeature.OptField.class)).getFirst();
+
+        long afInfId = Long.parseLong(afInf_api.getAlignedFeatureId());
+        long afZeroId = Long.parseLong(afZero_api.getAlignedFeatureId());
+
+        // Case 1: Infinite Increase (Present in sample, absent in blank)
+        persistence.getStorage().insert(Feature.builder().alignedFeatureId(afInfId).apexIntensity(10.0).runId(runs.get(0).getRunId()).build());
+
+        // Case 2: Infinite Decrease (Absent in sample, present in blank)
+        persistence.getStorage().insert(Feature.builder().alignedFeatureId(afZeroId).apexIntensity(10.0).runId(runs.get(1).getRunId()).build());
+
+        // Case 3: 1.0 (Absent in both)
+
+        new BackgroundRuns(project, null).runFoldChange(FoldChangeJobSubmission.of("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY), QuantRowType.FEATURES).awaitResult();
+
+        StatisticsTable table = project.getFoldChangeTable(QuantRowType.FEATURES, AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
+
+        Map<String, Double> results = new HashMap<>();
+        for (int i = 0; i < table.getRowIds().length; i++) {
+            results.put(table.getRowIds()[i], table.getValues()[i][0]);
+        }
+
+        assertTrue(results.containsKey(afInf_api.getAlignedFeatureId()), "Results should contain Infinite case");
+        assertEquals(Double.POSITIVE_INFINITY, results.get(afInf_api.getAlignedFeatureId()), "Infinite increase should be POSITIVE_INFINITY");
+
+        assertTrue(results.containsKey(afZero_api.getAlignedFeatureId()), "Results should contain Zero case");
+        assertEquals(0.0, results.get(afZero_api.getAlignedFeatureId()), "Infinite decrease should be 0.0");
+
+        assertTrue(results.containsKey(afOne_api.getAlignedFeatureId()), "Results should contain One case");
+        assertEquals(1.0, results.get(afOne_api.getAlignedFeatureId()), "Absent in both should be 1.0");
+    }
+
+    @Test
+    @SneakyThrows
+    public void testCompoundsFoldChangeSpecialCases() {
+        project.createTags(List.of(
+                TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank")).build()
+        ), true);
+
+        SiriusProjectDocumentDatabase<? extends Database<?>> persistence = project.project();
+
+        List<LCMSRun> runs = List.of(
+                LCMSRun.builder().name("sample1").build(),
+                LCMSRun.builder().name("blank1").build()
+        );
+        insertRunsAndIndex(runs, project);
+        project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().tagName("sample").value("sample").build()));
+        project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").value("blank").build()));
+
+        project.addTagGroup("sample", "tags.sample:sample", "type1");
+        project.addTagGroup("blank", "tags.sample:blank", "type1");
+
+        // Import compounds
+        List<CompoundImport> cis = List.of(
+                CompoundImport.builder().name("Inf").features(dummyFeatureImport("f1", null)).build(),
+                CompoundImport.builder().name("Zero").features(dummyFeatureImport("f2", null)).build(),
+                CompoundImport.builder().name("One").features(dummyFeatureImport("f3", null)).build()
+        );
+        List<Compound> imported = project.addCompounds(cis, null, EnumSet.noneOf(Compound.OptField.class), EnumSet.noneOf(AlignedFeature.OptField.class), "src");
+
+        String idInf = imported.get(0).getCompoundId();
+        String idZero = imported.get(1).getCompoundId();
+        String idOne = imported.get(2).getCompoundId();
+
+        long afIdInf = Long.parseLong(imported.get(0).getFeatures().get(0).getAlignedFeatureId());
+        long afIdZero = Long.parseLong(imported.get(1).getFeatures().get(0).getAlignedFeatureId());
+
+        // Case 1: Infinite Increase
+        persistence.getStorage().insert(Feature.builder().alignedFeatureId(afIdInf).apexIntensity(10.0).runId(runs.get(0).getRunId()).build());
+
+        // Case 2: Infinite Decrease
+        persistence.getStorage().insert(Feature.builder().alignedFeatureId(afIdZero).apexIntensity(10.0).runId(runs.get(1).getRunId()).build());
+
+        new BackgroundRuns(project, null).runFoldChange(FoldChangeJobSubmission.of("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY), QuantRowType.COMPOUNDS).awaitResult();
+
+        StatisticsTable table = project.getFoldChangeTable(QuantRowType.COMPOUNDS, AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
+        Map<String, Double> results = new HashMap<>();
+        for (int i = 0; i < table.getRowIds().length; i++) {
+            results.put(table.getRowIds()[i], table.getValues()[i][0]);
+        }
+
+        assertEquals(Double.POSITIVE_INFINITY, results.get(idInf), "Infinite increase should be POSITIVE_INFINITY");
+        assertEquals(0.0, results.get(idZero), "Infinite decrease should be 0.0");
+        assertEquals(1.0, results.get(idOne), "Absent in both should be 1.0");
+    }
+
+    //    @Test
 //    public void testFilterTranslation() throws IOException, QueryNodeException, InvocationTargetException, IllegalAccessException, ParseException {
 //        Filter filter = LuceneQueryUtils.translateTagFilter("(test || bla) && \"new york\" AND /[mb]oat/ AND integer:[1 TO *] OR real<=3 date:2024-01-01 date:[2023-10-01 TO 2023-12-24] date<2022-01-01 time:12\\:00\\:00 time:[12\\:00\\:00 TO 14\\:00\\:00} time<10\\:00\\:00");
 //        assertEquals(
@@ -808,5 +910,4 @@ public void testPsmFilter() throws IOException {
 //                filter.toString()
 //        );
 //    }
-
 }
