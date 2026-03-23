@@ -23,6 +23,8 @@ package de.unijena.bioinf.ms.middleware.service.projects;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.fp.ClassyFireFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -2259,9 +2261,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         ), fcClass).sorted(Comparator.comparingLong(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange::getForeignId)).toList();
 
         Set<Pair<String, String>> pairSet = new HashSet<>();
-        for (de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange fc : foldChanges) {
+        for (de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange fc : foldChanges)
             pairSet.add(Pair.of(fc.getLeftGroup(), fc.getRightGroup()));
-        }
         List<Pair<String, String>> pairs = new ArrayList<>(pairSet);
 
         LongList rowIds = new LongArrayList();
@@ -2280,6 +2281,29 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         table.setColumnRightGroups(pairs.stream().map(Pair::getRight).toArray(String[]::new));
         table.setRowIds(rowIds.stream().map(String::valueOf).toArray(String[]::new));
         table.setValues(values.toArray(double[][]::new));
+
+        // populate class names and levels for compound class types
+        switch (table.getRowType()) {
+            case NPC_CLASSES -> {
+                NPCFingerprintVersion npc = NPCFingerprintVersion.get();
+                table.setRowNames(rowIds.longStream()
+                        .mapToObj(id -> npc.getMolecularProperty((int) id).getName())
+                        .toArray(String[]::new));
+                table.setRowLevels(rowIds.longStream()
+                        .mapToObj(id -> npc.getMolecularProperty((int) id).getLevel().name)
+                        .toArray(String[]::new));
+            }
+            case CLASSYFIRE_CLASSES -> {
+                ClassyFireFingerprintVersion cf = ClassyFireFingerprintVersion.getDefault();
+                table.setRowNames(rowIds.longStream()
+                        .mapToObj(id -> cf.getPropertyWithChemontId((int) id).getName())
+                        .toArray(String[]::new));
+                table.setRowLevels(rowIds.longStream()
+                        .mapToObj(id -> String.valueOf(cf.getPropertyWithChemontId((int) id).getLevel()))
+                        .toArray(String[]::new));
+            }
+            default -> {}
+        }
     }
 
     @SneakyThrows
@@ -2294,8 +2318,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     @SuppressWarnings("unchecked")
     public List<FoldChange> getFoldChanges(QuantRowType statsTarget, String objectId) {
+        String filterField = switch (statsTarget) {
+            case NPC_CLASSES -> "npcIndex";
+            case CLASSYFIRE_CLASSES -> "classyfireIndex";
+            default -> statsTarget.getTargetIdFieldName();
+        };
         return storage()
-                .findStr(Filter.where(statsTarget.getTargetIdFieldName()).eq(Long.parseLong(objectId)), statsTarget.getProjectFoldChangeClass())
+                .findStr(Filter.where(filterField).eq(Long.parseLong(objectId)), statsTarget.getProjectFoldChangeClass())
                 .map(fc -> convertToApiFoldChange(fc, statsTarget))
                 .collect(Collectors.toList());
     }
@@ -2331,6 +2360,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 if (af.getStats() != null)
                     af.getStats().removeAll(foldChanges.get(af.getCompoundId()));
             }, Compound.class);
+            case NPC_CLASSES, CLASSYFIRE_CLASSES -> {} // no index to update
             default -> throw new IllegalArgumentException("Unknown fold change target!");
         }
 

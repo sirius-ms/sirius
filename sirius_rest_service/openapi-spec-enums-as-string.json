@@ -13,12 +13,20 @@
   ],
   "tags": [
     {
+      "name": "NPC Class Statistics",
+      "description": "[EXPERIMENTAL] ..."
+    },
+    {
       "name": "Info",
       "description": "Status und Information"
     },
     {
       "name": "Feature Statistics",
       "description": "[EXPERIMENTAL] This feature based API allows computing and accessing statistics for features (aligned over runs).All endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
+    },
+    {
+      "name": "ClassyFire Class Statistics",
+      "description": "[EXPERIMENTAL] ..."
     },
     {
       "name": "Jobs",
@@ -475,6 +483,72 @@
         }
       }
     },
+    "/api/projects/{projectId}/npc-classes/statistics/foldchange/compute": {
+      "put": {
+        "tags": [
+          "NPC Class Statistics"
+        ],
+        "summary": "[EXPERIMENTAL] Compute the fold change between two groups of runs",
+        "description": "[EXPERIMENTAL] Compute the fold change between two groups of runs.\n \u003cp\u003e\n The runs need to be tagged and grouped.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "computeNpcClassFoldChangesExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to compute the fold change in.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "job opt fields.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Parameters of fold change job",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoldChangeJobSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/index": {
       "put": {
         "tags": [
@@ -691,6 +765,72 @@
         "summary": "[EXPERIMENTAL] Compute the fold change between two groups of runs",
         "description": "[EXPERIMENTAL] Compute the fold change between two groups of runs.\n \u003cp\u003e\n The runs need to be tagged and grouped.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "computeCompoundFoldChangesExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to compute the fold change in.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "job opt fields.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Parameters of fold change job",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoldChangeJobSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/classyfire-classes/statistics/foldchange/compute": {
+      "put": {
+        "tags": [
+          "ClassyFire Class Statistics"
+        ],
+        "summary": "[EXPERIMENTAL] Compute the fold change between two groups of runs",
+        "description": "[EXPERIMENTAL] Compute the fold change between two groups of runs.\n \u003cp\u003e\n The runs need to be tagged and grouped.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "computeClassyfireClassFoldChangesExperimental",
         "parameters": [
           {
             "name": "projectId",
@@ -3694,6 +3834,68 @@
         }
       }
     },
+    "/api/projects/{projectId}/npc-classes/statistics/foldchanges/stats-table": {
+      "get": {
+        "tags": [
+          "NPC Class Statistics"
+        ],
+        "summary": "[EXPERIMENTAL] Get table of all fold changes in the project space",
+        "description": "[EXPERIMENTAL] Get table of all fold changes in the project space.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "getNpcClassFoldChangeTableExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "description": "aggregation type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "description": "quantification type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "table of fold changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatisticsTable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/jobs/{jobId}": {
       "get": {
         "tags": [
@@ -4729,6 +4931,68 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PagedModelCompound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/classyfire-classes/statistics/foldchanges/stats-table": {
+      "get": {
+        "tags": [
+          "ClassyFire Class Statistics"
+        ],
+        "summary": "[EXPERIMENTAL] Get table of all fold changes in the project space",
+        "description": "[EXPERIMENTAL] Get table of all fold changes in the project space.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "getClassyfireClassFoldChangeTableExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "description": "aggregation type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "description": "quantification type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "table of fold changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatisticsTable"
                 }
               }
             }
@@ -8026,6 +8290,77 @@
         }
       }
     },
+    "/api/projects/{projectId}/npc-classes/statistics/foldchanges": {
+      "delete": {
+        "tags": [
+          "NPC Class Statistics"
+        ],
+        "summary": "[EXPERIMENTAL] Delete fold changes",
+        "description": "[EXPERIMENTAL] Delete fold changes.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "deleteNpcClassFoldChangesExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "leftGroupName",
+            "in": "query",
+            "description": "name of the left group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rightGroupName",
+            "in": "query",
+            "description": "name of the right group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/compounds/tags/{compoundId}/{tagName}": {
       "delete": {
         "tags": [
@@ -8078,6 +8413,77 @@
         "summary": "[EXPERIMENTAL] Delete fold changes",
         "description": "[EXPERIMENTAL] Delete fold changes.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "deleteCompoundFoldChangesExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "leftGroupName",
+            "in": "query",
+            "description": "name of the left group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rightGroupName",
+            "in": "query",
+            "description": "name of the right group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/classyfire-classes/statistics/foldchanges": {
+      "delete": {
+        "tags": [
+          "ClassyFire Class Statistics"
+        ],
+        "summary": "[EXPERIMENTAL] Delete fold changes",
+        "description": "[EXPERIMENTAL] Delete fold changes.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "deleteClassyfireClassFoldChangesExperimental",
         "parameters": [
           {
             "name": "projectId",
@@ -11289,6 +11695,87 @@
           }
         }
       },
+      "StatisticsTable": {
+        "type": "object",
+        "properties": {
+          "statisticsType": {
+            "type": "string",
+            "enum": [
+              "FOLD_CHANGE"
+            ]
+          },
+          "aggregationType": {
+            "type": "string",
+            "enum": [
+              "AVG",
+              "MIN",
+              "MAX"
+            ]
+          },
+          "quantificationMeasure": {
+            "type": "string",
+            "enum": [
+              "APEX_INTENSITY",
+              "AREA_UNDER_CURVE"
+            ]
+          },
+          "rowType": {
+            "type": "string",
+            "enum": [
+              "FEATURES",
+              "COMPOUNDS",
+              "NPC_CLASSES",
+              "CLASSYFIRE_CLASSES"
+            ]
+          },
+          "rowIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "columnNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "columnLeftGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "columnRightGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "format": "double"
+              }
+            }
+          },
+          "rowNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rowLevels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "PagedModelJob": {
         "type": "object",
         "properties": {
@@ -11530,7 +12017,9 @@
             "type": "string",
             "enum": [
               "FEATURES",
-              "COMPOUNDS"
+              "COMPOUNDS",
+              "NPC_CLASSES",
+              "CLASSYFIRE_CLASSES"
             ]
           },
           "rowIds": {
@@ -11613,7 +12102,9 @@
             "type": "string",
             "enum": [
               "FEATURES",
-              "COMPOUNDS"
+              "COMPOUNDS",
+              "NPC_CLASSES",
+              "CLASSYFIRE_CLASSES"
             ]
           },
           "objectId": {
@@ -11622,73 +12113,6 @@
           "foldChange": {
             "type": "number",
             "format": "double"
-          }
-        }
-      },
-      "StatisticsTable": {
-        "type": "object",
-        "properties": {
-          "statisticsType": {
-            "type": "string",
-            "enum": [
-              "FOLD_CHANGE"
-            ]
-          },
-          "aggregationType": {
-            "type": "string",
-            "enum": [
-              "AVG",
-              "MIN",
-              "MAX"
-            ]
-          },
-          "quantificationMeasure": {
-            "type": "string",
-            "enum": [
-              "APEX_INTENSITY",
-              "AREA_UNDER_CURVE"
-            ]
-          },
-          "rowType": {
-            "type": "string",
-            "enum": [
-              "FEATURES",
-              "COMPOUNDS"
-            ]
-          },
-          "rowIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "columnNames": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "columnLeftGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "columnRightGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "values": {
-            "type": "array",
-            "items": {
-              "type": "array",
-              "items": {
-                "type": "number",
-                "format": "double"
-              }
-            }
           }
         }
       },
