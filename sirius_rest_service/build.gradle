@@ -17,8 +17,6 @@ ext['junit-jupiter.version'] = libs.versions.junit.get()
 version = siriusFrontendVersion
 
 dependencies {
-    // Import Spring Boot BOM
-    implementation platform(libs.springBootDependencies)
 
     implementation project(':sirius_cli')
     implementation project(':sirius_gui')
