@@ -179,6 +179,9 @@ allprojects {
     }
 
     dependencies {
+        // Import Spring Boot BOM
+        implementation platform(libs.springBootDependencies)
+
         compileOnly libs.lombok
         annotationProcessor libs.lombok
         
