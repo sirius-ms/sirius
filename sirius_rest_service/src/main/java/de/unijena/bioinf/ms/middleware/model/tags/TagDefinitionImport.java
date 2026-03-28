@@ -23,9 +23,7 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +34,8 @@ import java.util.List;
 @Setter
 @SuperBuilder
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@AllArgsConstructor
+@NoArgsConstructor
 public class TagDefinitionImport {
 
     /**

@@ -16,12 +16,12 @@ dependencies {
     api project(":fragmentation_tree:ft_gurobi")
     api project(":fragmentation_tree:ft_glpk")
 
-    api "org.openscience.cdk:cdk-bundle:$cdk_version"
-    implementation group: 'args4j', name: 'args4j', version: '2.33'
-    implementation group: 'org.jfree', name: 'jfreechart', version: '1.5.2'
+    api libs.cdkBundle
+    implementation libs.args4j
+    implementation libs.jfreechart
 
 
-    testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
+    testImplementation libs.cdkBundle
 }
 
 application {
