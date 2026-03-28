@@ -22,8 +22,14 @@ dependencies {
 	//project
     api project(':chemical_db_oss')
     // CDK
-    for (module in ["inchi", "io", "data", "smiles", "ctab", 'formula', 'qsarmolecular', "bundle"])
-        api "org.openscience.cdk:cdk-$module:$cdk_version"
+    api libs.cdkInchi
+    api libs.cdkIo
+    api libs.cdkData
+    api libs.cdkSmiles
+    api libs.cdkCtab
+    api libs.cdkFormula
+    api libs.cdkQsarmolecular
+    api libs.cdkBundle
     // SPLASH
-    api 'edu.ucdavis.fiehnlab.splash:core:1.8'
+    api libs.splashCore
 }	

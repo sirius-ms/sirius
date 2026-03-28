@@ -23,13 +23,13 @@ package de.unijena.bioinf.ms.middleware.model.projects;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.extern.jackson.Jacksonized;
+import lombok.AllArgsConstructor;
 
 import java.util.List;
 
 @Getter
 @Builder
-@Jacksonized
+@AllArgsConstructor
 public class ImportResult {
     /**
      * List of compoundIds that have been imported.

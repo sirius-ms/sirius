@@ -21,10 +21,12 @@
 
 apply plugin: "application"
 
-mainClassName = "de.unijena.bioinf.IsotopePatternAnalysis.isogencli.Main"
+application {
+    mainClass = "de.unijena.bioinf.IsotopePatternAnalysis.isogencli.Main"
+}
 
 dependencies() {
     api project(":io")
     api project(":isotope_pattern:isotope_pattern_analysis")
-    implementation "com.lexicalscope.jewelcli:jewelcli:$jewelcli_version"
+    implementation libs.jewelcli
 }
