@@ -22,9 +22,7 @@ version = siriusVersion
 
 dependencies {
     // external
-    api platform('org.dizitart:nitrite-bom:4.3.0'){
-        exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
-    }
+    api platform(libs.nitriteBom)
     api ('org.dizitart:nitrite-jackson-mapper') {
         exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
     }
@@ -34,8 +32,8 @@ dependencies {
     }
 //    implementation 'org.dizitart:nitrite-rocksdb-adapter'
 
-    implementation "jakarta.validation:jakarta.validation-api:2.0.2"
-    implementation "io.hypersistence:hypersistence-tsid:2.1.1"
+    implementation libs.jakartaValidationApi
+    implementation libs.hypersistenceTsid
 
-    testImplementation "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+    testImplementation libs.jacksonDatabind
 }

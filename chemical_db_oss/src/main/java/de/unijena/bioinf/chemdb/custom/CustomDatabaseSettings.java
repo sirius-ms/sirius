@@ -26,14 +26,14 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
+import lombok.AllArgsConstructor;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Builder
-@Jacksonized
+@AllArgsConstructor
 @Getter
 public class CustomDatabaseSettings {
     private final List<CdkFingerprintVersion.USED_FINGERPRINTS> usedFingerprints;

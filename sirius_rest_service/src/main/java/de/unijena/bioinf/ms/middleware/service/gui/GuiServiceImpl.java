@@ -33,7 +33,7 @@ import io.sirius.ms.sdk.SiriusClient;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.springframework.boot.web.context.WebServerApplicationContext;
+import org.springframework.boot.web.server.context.WebServerApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;

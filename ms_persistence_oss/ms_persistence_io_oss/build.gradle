@@ -23,5 +23,6 @@ dependencies {
     api project(':io')
     api project(':document-storage')
 
-    implementation "org.glassfish.jaxb:jaxb-runtime:$jaxb_version"
+    api libs.jakartaXmlBindApi
+    implementation libs.jaxbRuntime
 }

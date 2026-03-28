@@ -20,5 +20,5 @@
 
 dependencies {
     // deprecated for removal ->  use fastutil instead
-    implementation 'net.sf.trove4j:core:3.1.0'
+    implementation libs.trove4j
 }
