@@ -22,8 +22,10 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.extern.jackson.Jacksonized;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(
@@ -31,31 +33,23 @@ import lombok.extern.jackson.Jacksonized;
         getterVisibility = JsonAutoDetect.Visibility.NONE,
         isGetterVisibility = JsonAutoDetect.Visibility.NONE,
         setterVisibility = JsonAutoDetect.Visibility.NONE,
-        creatorVisibility = JsonAutoDetect.Visibility.NONE)
+        creatorVisibility = JsonAutoDetect.Visibility.ANY)
 @Builder
-@Jacksonized
+@NoArgsConstructor
+@AllArgsConstructor
 public class SimplePeak implements Peak {
     protected static final double DELTA = 1e-8;
 
     protected double mz;
+    @Getter
     protected double intensity;
 
     public SimplePeak(Peak x) {
         this(x.getMass(), x.getIntensity());
     }
 
-    public SimplePeak(double mz, double intensity) {
-        super();
-        this.mz = mz;
-        this.intensity = intensity;
-    }
-
     public double getMass() {
         return mz;
-    }
-
-    public double getIntensity() {
-        return intensity;
     }
 
     @Override
@@ -75,8 +69,7 @@ public class SimplePeak implements Peak {
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
-        if (obj instanceof SimplePeak) {
-            Peak p = (Peak) obj;
+        if (obj instanceof SimplePeak p) {
             return Math.abs(mz - p.getMass()) < DELTA && Math.abs(intensity - p.getIntensity()) < DELTA;
         }
         return false;

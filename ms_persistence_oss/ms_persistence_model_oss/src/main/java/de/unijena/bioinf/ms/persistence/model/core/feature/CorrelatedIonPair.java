@@ -23,7 +23,6 @@ package de.unijena.bioinf.ms.persistence.model.core.feature;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Id;
 import lombok.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
@@ -34,7 +33,6 @@ import java.util.Optional;
 @Setter
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
 @ToString
 public class CorrelatedIonPair {
     public enum Type {ADDUCT, INSOURCE, MULTIMERE, ISOMERE, UNKNOWN, ISOTOPE}
@@ -63,7 +61,6 @@ public class CorrelatedIonPair {
         return Optional.ofNullable(alignedFeatures2);
     }
 
-    @NotNull
     private Type type;
 
     //MetaInformation...

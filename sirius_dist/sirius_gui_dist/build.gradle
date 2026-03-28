@@ -4,22 +4,16 @@ import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
 
 import java.util.stream.Collectors
 
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:$spring_boot_version")
-    }
-}
-
 plugins {
     id 'com.github.jk1.dependency-license-report' version '2.8'
 }
 
 apply plugin: "application"
 apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
+
+tasks.withType(AbstractCopyTask).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
 
 version = siriusFrontendVersion
 
@@ -71,19 +65,162 @@ dependencies {
     testImplementation project(':sirius_dist').sourceSets.test.output //needed for the TestLocal tests
 }
 
-mainClassName = 'org.springframework.boot.loader.launch.JarLauncher'
+ext {
+//    mainClassNameGlobal = 'org.springframework.boot.loader.launch.JarLauncher'
+    mainClassNameGlobal = 'de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication'
+}
+
 def bootJarTask = project(':sirius_rest_service').tasks.named('bootJar')
 
+//###################################### AOT post processing #########################################
+
+// 1. Define the extraction task
+tasks.register('extractForLeyden', Exec) {
+    group = 'build'
+    description = 'Extracts the Spring Boot fat JAR into a flat structure for Project Leyden'
+
+    // Ensure this runs AFTER the fat jar is fully built
+    dependsOn bootJarTask
+
+    // Grab the built jar file and define the output folder
+    def jarFile = bootJarTask.get().outputs.files.singleFile
+    def outputDir = layout.buildDirectory.dir("optimized-app").get().asFile
+    outputs.dir(outputDir)
+
+    // Clear the old extracted folder if it exists
+    doFirst {
+        delete(outputDir)
+    }
+
+    // Execute the exact extraction command
+    commandLine "java",
+            "-Djarmode=tools",
+            "-jar", jarFile.absolutePath,
+            "extract",
+            "--destination", outputDir.absolutePath
+}
+
+// 2. Hook it into the standard build lifecycle
+tasks.named('build') {
+    dependsOn 'extractForLeyden'
+}
+
+tasks.register('trainLeydenCache') {
+    group = 'build'
+    description = 'Runs the extracted app in the background, polls /api/guis to ensure UI is loaded, and shuts it down via Actuator.'
+    dependsOn 'extractForLeyden'
+    dependsOn parent.tasks.named('extractRuntimeImage')
+
+    doLast {
+        def outputDir = getTasksByName("extractForLeyden", false).outputs.files.getFirst().singleFile
+        def extractedJarName = bootJarTask.get().outputs.files.singleFile.getName()
+        // todo use bunlde jdk for testrun when moved to dist package.
+        def javaExe = new File(parent.tasks.getByName('extractRuntimeImage').outputs.files.singleFile, 'bin/java').absolutePath
+
+        // Launch with the specific args to expose Actuator (-s) and start the GUI (--gui)
+        def processArgs = [
+                javaExe,
+                "-XX:AOTCacheOutput=app.aot",
+                "-Dspring.aot.enabled=true",
+                "-Djxbrowser.chromium.dir=${layout.buildDirectory.dir("jxbrowser-tmp").get().asFile.absolutePath}" as String,
+                "-jar", extractedJarName,
+                "rest", "-s", "-p", "8080", "--gui"
+        ]
+
+        logger.lifecycle("\n=======================================================")
+        logger.lifecycle(" 🚀 STARTING AUTOMATED LEYDEN TRAINING RUN")
+        logger.lifecycle(" Spawning application in the background...")
+        logger.lifecycle("=======================================================\n")
+
+        // 1. Start the application in the background
+        def processBuilder = new ProcessBuilder(processArgs)
+        processBuilder.directory(outputDir)
+        processBuilder.redirectErrorStream(true) // Merge stdout and stderr
+        def process = processBuilder.start()
+
+        // Consume the output stream so the OS buffer doesn't hang the process
+        Thread.start {
+            process.inputStream.eachLine { line ->
+                println "[Training App] $line"
+            }
+        }
+
+        // 2. Poll the application until both Actuator Health AND the GUI are up
+        def isUp = false
+        def maxTries = 60 // Wait up to 60 seconds for heavy Swing startup
+
+        for (int i = 0; i < maxTries; i++) {
+            sleep(1000)
+            if (!process.isAlive()) {
+                throw new GradleException("Training process died unexpectedly with exit code ${process.exitValue()}")
+            }
+
+            try {
+                // Check if Spring context is serving HTTP
+                def healthCheck = new URL("http://localhost:8080/actuator/health").openConnection()
+                healthCheck.setRequestMethod("GET")
+                healthCheck.connect()
+                println("HEALTHCHECK! ${healthCheck.responseCode}")
+                if (healthCheck.responseCode == 200) {
+                    // Spring is up. Now check if the GUI is registered!
+                    def guiCheck = new URL("http://localhost:8080/api/guis").openConnection()
+                    guiCheck.setRequestMethod("GET")
+                    guiCheck.connect()
+                    println("GUI! ${guiCheck.responseCode}")
+
+                    if (guiCheck.responseCode == 200) {
+                        isUp = true
+                        logger.lifecycle("\n✅ REST API and GUI are fully initialized! Triggering graceful shutdown...")
+                        break
+                    }
+                }
+            } catch (Exception e) {
+                // Connection refused, app is still starting up
+            }
+        }
+
+        if (!isUp) {
+            process.destroyForcibly()
+            throw new GradleException("Application failed to become healthy on port 8080 within ${maxTries} seconds.")
+        }
+
+        // 3. Trigger the Actuator Shutdown
+        try {
+            def shutdownConn = new URL("http://localhost:8080/actuator/shutdown").openConnection()
+            shutdownConn.setRequestMethod("POST")
+            shutdownConn.setRequestProperty("Content-Type", "application/json")
+            shutdownConn.setDoOutput(true)
+            shutdownConn.getInputStream().text
+            logger.lifecycle("🛑 Shutdown request accepted. Waiting for JVM to dump AOT cache...")
+        } catch (Exception e) {
+            logger.warn("⚠️ Shutdown request threw an error (process might be terminating too fast to return a response): ${e.message}")
+        }
+
+        // 4. Wait for the JVM to exit and write the app.aot file to disk
+        def exitCode = process.waitFor()
+
+        if (exitCode != 0 && exitCode != 143) { // 143 is standard SIGTERM, which is fine
+            logger.warn("⚠️ Training process exited with code ${exitCode}. Check the logs above.")
+        } else {
+            logger.lifecycle("\n🎉 Leyden cache 'app.aot' successfully generated in ${outputDir.absolutePath}!\n")
+        }
+    }
+}
+
+//###################################### AOT post processing END #######################################
+
+
+
 application {
-    mainClass = project.mainClassName
+    mainClass = mainClassNameGlobal
     applicationDefaultJvmArgs = project.siriusJvmArgs
     executableDir = 'bin'
 }
 
 
 launch4j {
-    mainClassName = project.mainClassName
-    jar = bootJarTask.map { getLibraryDir() + File.separator + it.archiveFileName.get() }
+    mainClassName = mainClassNameGlobal
+    jarTask = bootJarTask
     jvmOptions = project.siriusJvmArgs as Set
 }
 
@@ -106,7 +243,7 @@ startScripts {
         if (!siriusTargetPlatform.isWin()) {
             def templateBinding = [
                     toolName : "SIRIUS",
-                    mainClass: project.mainClassName
+                    mainClass: mainClassNameGlobal
             ]
             def sf = file("${rootDir}/scripts/sirius.sh.templ")
             templateBinding.shell = "sh"
@@ -130,7 +267,7 @@ startScripts {
             //reset binding and create windows bat
             def templateBinding = [
                     toolName : "SIRIUS",
-                    mainClass: project.mainClassName
+                    mainClass: mainClassNameGlobal
             ]
             // write bat
             def sf = file("${rootDir}/scripts/sirius.bat.templ")
@@ -150,15 +287,19 @@ startScripts {
     }
 }
 
+
+
 distributions {
     sirius {
         contents {
             into('app') {
-                from(bootJarTask)
+                from(tasks.named('extractForLeyden')){
+                    exclude('app.aot')
+                }
             }
             if (siriusTargetPlatform.isWin()) {
                 from startScripts
-                from("${buildDir}/launch4j") {
+                from(layout.buildDirectory.dir("launch4j").get().asFile) {
                     include("*.exe")
                 }
                 into('ExplorerLicTester') {
@@ -173,11 +314,11 @@ distributions {
                 include('COPYING.txt')
                 include('LICENSE.txt')
             }
-            from("${buildDir}/reports/dependency-license") {
+            from(layout.buildDirectory.dir("reports/dependency-license").get().asFile) {
                 include('licenses.md')
             }
             if (includeRuntime) {
-                into('runtime'){
+                into('runtime') {
                     from {
                         "${parent.tasks.getByName('extractRuntimeImage').outputs.files.singleFile}"
                     }
@@ -187,15 +328,15 @@ distributions {
     }
 }
 
-installSiriusDist.dependsOn bootJarTask
-siriusDistZip.dependsOn bootJarTask
-siriusDistTar.dependsOn bootJarTask
+installSiriusDist.dependsOn('extractForLeyden')
+siriusDistZip.dependsOn('extractForLeyden')
+siriusDistTar.dependsOn('extractForLeyden')
 
 installSiriusDist.dependsOn('generateLicenseReport')
 siriusDistZip.dependsOn 'generateLicenseReport'
 siriusDistTar.dependsOn 'generateLicenseReport'
 
-if(siriusTargetPlatform.isWin()){
+if (siriusTargetPlatform.isWin()) {
     installSiriusDist.dependsOn('launch4j')
     siriusDistZip.dependsOn('launch4j')
     siriusDistTar.dependsOn('launch4j')
@@ -206,7 +347,7 @@ if(siriusTargetPlatform.isWin()){
 }
 
 
-if (includeRuntime){
+if (includeRuntime) {
     installSiriusDist.dependsOn parent.tasks.named('extractRuntimeImage')
     siriusDistZip.dependsOn parent.tasks.named('extractRuntimeImage')
     siriusDistTar.dependsOn parent.tasks.named('extractRuntimeImage')
@@ -231,9 +372,9 @@ distImage {
     runtimeImageDirectory = installSiriusDist.outputs.files.singleFile.toPath().resolve("runtime").toFile()
     inputDir = installSiriusDist.outputs.files.singleFile.toPath().resolve("app").toFile()
     imageName = 'sirius'
-    mainClass = project.mainClassName
+    mainClass = mainClassNameGlobal
     jvmArgs = application.applicationDefaultJvmArgs
-    mainJarName =  bootJarTask.flatMap { it.archiveFileName }
+    mainJarName = bootJarTask.flatMap { it.archiveFileName }
     winConsole = true
     macPackageName = 'SIRIUS'
     if (siriusTargetPlatform.isWin()) {

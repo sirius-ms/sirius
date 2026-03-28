@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import lombok.extern.jackson.Jacksonized;
+import lombok.AllArgsConstructor;
 
 import java.sql.Date;
 
@@ -15,7 +15,7 @@ import java.sql.Date;
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Builder
-@Jacksonized
+@AllArgsConstructor
 @ToString
 public class Subscription {
     /**

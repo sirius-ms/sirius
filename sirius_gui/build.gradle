@@ -1,15 +1,5 @@
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}")
-    }
-}
-
 apply plugin: 'java-library'
 apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
 
 version = siriusFrontendVersion
 
@@ -27,34 +17,48 @@ dependencies {
     api project(':sirius-sdk')
     implementation project(':sirius-sdk:sirius-sdk.jjobs')
     //internal
-    api "de.unijena.bioinf:jjobs-swing:$jjobs_version"
+    api libs.jjobsSwing
     //external
-    implementation 'org.jdesktop:timingframework:0.55'
-    api "net.sf.opencsv:opencsv:2.3"
-    api "org.swinglabs.swingx:swingx-all:1.6.5-1"
+    implementation libs.timingframework
+    api libs.opencsv
+    api libs.swingx
 
     //cdk
-    for (module in ["render", "renderextra", "renderawt", "data", "core", "interfaces", "inchi", "smiles", "io", "ioformats", "sdg", "smarts", "legacy", "fingerprint", "silent", "depict"])
-        api "org.openscience.cdk:cdk-$module:$cdk_version"
+    api libs.cdkRender
+    api libs.cdkRenderextra
+    api libs.cdkRenderawt
+    api libs.cdkData
+    api libs.cdkCore
+    api libs.cdkInterfaces
+    api libs.cdkInchi
+    api libs.cdkSmiles
+    api libs.cdkIo
+    api libs.cdkIoformats
+    api libs.cdkSdg
+    api libs.cdkSmarts
+    api libs.cdkLegacy
+    api libs.cdkFingerprint
+    api libs.cdkSilent
+    api libs.cdkDepict
 
-    api 'com.glazedlists:glazedlists:1.11.0'
+    api libs.glazedlists
 
-    api 'org.apache.xmlgraphics:batik-rasterizer:1.16'
-    api 'org.apache.xmlgraphics:fop:2.7'
+    api libs.batikRasterizer
+    api libs.fop
 
-    implementation 'com.formdev:flatlaf:3.5.2'
-    implementation 'com.formdev:flatlaf-extras:3.5.2'
-    implementation 'com.github.weisj:jsvg:1.6.1'
-    implementation 'raven.swing:spinner-progress:1.0.0'
+    implementation libs.flatlaf
+    implementation libs.flatlafExtras
+    implementation libs.jsvg
+    implementation libs.spinnerProgress
 
-    api "org.apache.commons:commons-text:$commons_text_version"
+    api libs.commonsText
 
-    implementation 'com.miglayout:miglayout:3.7.4'
+    implementation libs.miglayout
 
     // jxbrowser plugin can detect the current platform and adds the corresponding Chromium binaries.
     // implementation(jxbrowser.currentPlatform)
     // We use SiriusPlatform instead to allow for cross-platform builds
-    implementation "com.teamdev.jxbrowser:jxbrowser-${siriusTargetPlatform.jxClassifier().orElseThrow()}:${jxbrowser.version.get()}"
+    implementation "com.teamdev.jxbrowser:jxbrowser-${siriusTargetPlatform.jxClassifier().orElseThrow()}:${libs.versions.jxbrowser.get()}"
 
     // Adds dependency to the Swing UI toolkit integration.
     implementation(jxbrowser.swing)
