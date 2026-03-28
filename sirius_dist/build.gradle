@@ -2,15 +2,17 @@ import org.gradle.crypto.checksum.Checksum
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import java.nio.file.*
 import java.util.stream.Collectors
+import javax.inject.Inject
+import org.gradle.process.ExecOperations
 
 plugins {
     id "de.undercouch.download" version "5.6.0"
-    id 'edu.sc.seis.launch4j' version '2.5.4'
+    id 'edu.sc.seis.launch4j' version '4.0.0'
     id 'org.gradle.crypto.checksum' version '1.4.0'
 }
 
 dependencies {
-    implementation "org.junit.jupiter:junit-jupiter:$junit_version"
+    implementation libs.junitJupiter
 }
 
 version = siriusFrontendVersion
@@ -27,6 +29,7 @@ ext {
 //                     '-XX:+UseZGC',
 //                     '-XX:+ZGenerational',
                      '-XX:+ExitOnOutOfMemoryError',
+                     '-Dspring.aot.enabled=true', // start sirius with spring aot optimization
                      '--add-opens=java.desktop/java.awt=ALL-UNNAMED' // needed to run jxbrowser properly
     ]
     OS = DefaultNativePlatform.currentOperatingSystem
@@ -48,35 +51,34 @@ ext {
     // configure infos for bundled JRE
     def distJre = siriusTargetPlatform.isLinux() ? DistJRE.JBR_FT :
             (siriusTargetPlatform.isWin() ? DistJRE.MICROSOFT : DistJRE.TEMURIN)
-    jre_version = '21.0.10'
+    jre_version = '25.0.2'
     jre_major = jre_version.split("[.]")[0]
 
     switch (distJre) {
         case DistJRE.LIBERICA:
-            jre_distributor_version = "$jre_version+10"
+            jre_distributor_version = "$jre_version+9"
             jre_mac_prefix = null
             jre_fname = "bellsoft-jre${jre_distributor_version}-${siriusTargetPlatform.bellsoftClassifier().get()}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
             jre_download_base_link = "https://download.bell-sw.com/java/${jre_distributor_version}/"
             break
         case DistJRE.JBR_JCEF:
         case DistJRE.JBR_FT:
-            jre_distributor_version = 'b1163.110'//'b1038.71'//'b1138.52'
+            jre_distributor_version = 'b329.72'//'b895.149'//'b1038.71'//'b1138.52'
             jre_mac_prefix = "Contents/Home"
             jre_fname = "jbr_${DistJRE.JBR_FT?"ft":jcef}-${jre_version}-${siriusTargetPlatform.jbrClassifier().get()}-${jre_distributor_version}.tar.gz"
             jre_download_base_link = "https://cache-redirector.jetbrains.com/intellij-jbr/"
             break
         case DistJRE.ZULU_JRE:
-            jre_distributor_version = '21.48.17'
+            jre_distributor_version = '25.32.21'
             jre_mac_prefix = "zulu-${jre_major}.jre/Contents/Home"
             jre_fname = "zulu${jre_distributor_version}-ca-jre${jre_version}-${siriusTargetPlatform.zuluClassifier().get()}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
             jre_download_base_link = "https://cdn.azul.com/zulu/bin/"
             break
         case DistJRE.TEMURIN:
             //https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.8%2B9/OpenJDK21U-jre_x64_mac_hotspot_21.0.8_9.tar.gz
-            //https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jre_x64_mac_hotspot_21.0.10_7.tar.gz
             jre_mac_prefix = "Contents/Home"
-            jre_distributor_version = "7"
-            jre_fname = "jdk-${jre_version}%2B7/OpenJDK21U-jre_${siriusTargetPlatform.adoptClassifier().get()}_hotspot_${jre_version}_${jre_distributor_version}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
+            jre_distributor_version = "10"
+            jre_fname = "jdk-${jre_version}%2B9/OpenJDK21U-jre_${siriusTargetPlatform.adoptClassifier().get()}_hotspot_${jre_version}_${jre_distributor_version}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
             jre_download_base_link = "https://github.com/adoptium/temurin21-binaries/releases/download/"
             break;
         case DistJRE.MICROSOFT:
@@ -92,7 +94,7 @@ ext {
 tasks.register('downloadRuntimeImage', Download) {
     group = "runtime"
     src jre_download_link
-    dest getBuildDir().toPath().resolve('runtime').resolve("$jre_fname").toFile()
+    dest layout.buildDirectory.file("runtime/${jre_fname}").get().asFile
     onlyIfModified true
     overwrite false
 }
@@ -109,6 +111,7 @@ subprojects {
     ext {
         // jpackage based distribution output dir
         jpDistDir = getLayout().getBuildDirectory().file("jpDists")
+        mainClassNameGlobal = null
     }
     jar {
         enabled = false
@@ -148,11 +151,8 @@ subprojects {
         libraryDir = libDir == null ? "app" : libDir
 
         jdkPreference = "preferJdk"
-        jreMinVersion = null
+        jreMinVersion = "17"
         jreMaxVersion = null
-        bundledJre64Bit = true
-        jreRuntimeBits = "64"
-        messagesBundledJreError = "Could not Load bundled JRE."
         bundledJrePath = launch4jJDKPath != null ? launch4jJDKPath : ".\\runtime"
     }
 
@@ -162,7 +162,6 @@ subprojects {
             dependsOn createAllExecutables
 
         jpackagerBin = Paths.get(System.getProperty("java.home")).resolve('bin').resolve(OS.isWindows() ? 'jpackage.exe' : 'jpackage').toFile()
-        mainClass = mainClassName
         outputDir = jpDistDir.get().getAsFile()
         winConsole = true
 
@@ -215,7 +214,7 @@ subprojects {
                 //delete exes because they are write protected an cannot be ovewritten
                 delete fileTree(dir: launcherTarget, include: "*.exe")
                 copy {
-                    from("${buildDir}/launch4j") {
+                    from("${layout.buildDirectory.dir('launch4j').get().asFile}") {
                         include("*.exe")
                     }
                     into(appRootTarget)
@@ -226,7 +225,7 @@ subprojects {
 
             def templateBinding = [
                     toolName : "SIRIUS",
-                    mainClass: mainClassName
+                    mainClass: mainClassNameGlobal
             ]
 
             def f
@@ -303,28 +302,28 @@ subprojects {
                     getLogger().lifecycle("Boot Jar Path: " + bootJar)
 //                    def bootJar = Path.of("/home/fleisch/Downloads/sirius-6.0.4-SNAPSHOT-osx64/sirius.app/Contents/app/sirius_rest_service-6.0.4-SNAPSHOT-boot.jar").toAbsolutePath()
 
-                    def extractedJars = getBuildDir().toPath().resolve("tmp").resolve("jars")
-                    def extractedLibs = getBuildDir().toPath().resolve("tmp").resolve("jarLibs")
-                    Files.createDirectories(extractedJars)
-                    Files.createDirectories(extractedLibs)
+                    def extractedJars = layout.buildDirectory.dir("tmp/jars").get().asFile
+                    def extractedLibs = layout.buildDirectory.dir("tmp/jarLibs").get().asFile
+                    Files.createDirectories(extractedJars.toPath())
+                    Files.createDirectories(extractedLibs.toPath())
                     try (def bootJarFs = FileSystems.newFileSystem(bootJar, Map.of("compressionMethod", "STORED"))) {
                         for (def inJar : Files.list(bootJarFs.getPath("/BOOT-INF/lib/")).toList()) {
 
-                            Path copiedInJar = extractedJars.resolve(inJar.getFileName().toString())
+                            Path copiedInJar = extractedJars.toPath().resolve(inJar.getFileName().toString())
                             Files.copy(inJar, copiedInJar)
 
                             try (def copiedInJarFs = FileSystems.newFileSystem(copiedInJar, [:])) {
                                 Files.walk(copiedInJarFs.getPath("/"))
                                         .filter { inLib -> inLib.toString().toLowerCase().endsWith(".dylib") || inLib.toString().toLowerCase().endsWith(".jnilib") }
                                         .forEach { inLib ->
-                                            Path copiedInLib = extractedLibs.resolve(inLib.getFileName().toString())
+                                            Path copiedInLib = extractedLibs.toPath().resolve(inLib.getFileName().toString())
                                             Files.copy(inLib, copiedInLib)
 //                                            getLogger().lifecycle("Remove (old) signatures from native lib '${copiedInLib.toFile().getAbsolutePath()}'")
 //                                            project.exec {
 //                                                commandLine(["codesign", "--remove-signature", "${copiedInLib.toFile().getAbsolutePath()}"])
 //                                            }
                                             getLogger().lifecycle("  (Re-)Signing lib: " + inLib.getFileName().toString())
-                                            project.exec {
+                                            execOperations.exec {
                                                 commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                                              "${copiedInLib.toFile().getAbsolutePath()}"])
                                             }
@@ -337,7 +336,7 @@ subprojects {
 //                                commandLine(["codesign", "--remove-signature", "${copiedInJar.toFile().getAbsolutePath()}"])
 //                            }
                             getLogger().lifecycle("Signing nested jars: " + inJar.getFileName().toString())
-                            project.exec {
+                            execOperations.exec {
                                 commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                              "${copiedInJar.toFile().getAbsolutePath()}"])
                             }
@@ -347,14 +346,14 @@ subprojects {
                     }
                     getLogger().lifecycle("")
                     getLogger().lifecycle("Signing boot jar: " + bootJar.getFileName().toString())
-                    project.exec {
+                    execOperations.exec {
                         commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                      "${bootJar.toFile().getAbsolutePath()}"])
                     }
 
                     getLogger().lifecycle("")
                     getLogger().lifecycle("Signing .app dir: ${distImage.getImageDir().getAbsolutePath()}")
-                    project.exec {
+                    execOperations.exec {
                         commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                      "${distImage.getImageDir()}"])
                     }
@@ -421,7 +420,7 @@ subprojects {
                     target = source.getParent().resolve(source.getFileName().toString().replace(".$installerNameType", "-SIGNED.$installerNameType"))
                     getLogger().lifecycle("Signing INSTALLER '$source'")
 
-                    project.exec {
+                    execOperations.exec {
                         commandLine(["/usr/bin/productsign", "--timestamp", "--sign", "${macInstallerIdentity}",
                                      "$source", "$target"
                         ])
@@ -446,7 +445,7 @@ subprojects {
                             .toAbsolutePath().toString()
 
                     getLogger().lifecycle("Testing  signtool.exe found in '$signtoolExe'")
-                    project.exec {
+                    execOperations.exec {
                         commandLine(["$signtoolExe", "/h"])
                         standardOutput = System.out
                     }
@@ -458,7 +457,7 @@ subprojects {
                              "/p", "${findProperty('de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_PW')}", "/v", "/fd", "SHA256",
                              "/tr", "\"${findProperty('de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL')}\"", "/td", "SHA256", "$input"]
                     println(c)
-                    project.exec {
+                    execOperations.exec {
                         commandLine(c)
                         standardOutput = System.out
                     }
@@ -489,7 +488,7 @@ subprojects {
                     String uuid = null
                     def so = new ByteArrayOutputStream()
                     def eo = new ByteArrayOutputStream()
-                    ExecResult execResult = exec {
+                    ExecResult execResult = execOperations.exec {
                         commandLine(["xcrun", "notarytool", "submit", "--wait", "--apple-id", "${appleId}", "--team-id", "${teamId}",
                                      "--password", "${appleIdPw}", "${pkg}"])
                         standardOutput so
@@ -509,7 +508,7 @@ subprojects {
 
 
                     getLogger().lifecycle("Requesting Log of $uuid...")
-                    execResult = exec {
+                    execResult = execOperations.exec {
                         commandLine(["xcrun", "notarytool", "log", "--apple-id", "${appleId}", "--team-id", "${teamId}",
                                      "--password", "${appleIdPw}", "$uuid"])
                     }
@@ -523,7 +522,7 @@ subprojects {
 
 
                     getLogger().lifecycle("Stapling  $pkg...")
-                    execResult = exec {
+                    execResult = execOperations.exec {
                         commandLine(["xcrun", "stapler", "staple", "${pkg}"])
                     }
 
@@ -573,6 +572,10 @@ abstract class ExtractRuntime extends DefaultTask {
         Files.createDirectories(outputDir.toPath())
         project.copy {
             includeEmptyDirs = false
+            // The new Gradle 9+ syntax for setting permissions
+            filePermissions { unix(0755) }
+            dirPermissions { unix(0755) }
+
             if (project.siriusTargetPlatform.isWin() || project.siriusTargetPlatform.isLinux() || (project.siriusTargetPlatform.isMac() && project.jre_mac_prefix == null)) {
                 from(inputArchive.toString().endsWith('.zip')
                         ? project.zipTree(inputArchive)
@@ -604,6 +607,9 @@ abstract class ExtractRuntime extends DefaultTask {
 }
 
 abstract class AppImage extends DefaultTask {
+
+    @Inject
+    abstract ExecOperations getExecOperations()
 
     public File inputDir
     public File jpackagerBin
@@ -643,7 +649,7 @@ abstract class AppImage extends DefaultTask {
         getImageDir().deleteDir()
         String[] p = ['--type', 'app-image']
         p += createParameters()
-        project.exec {
+        execOperations.exec {
             def c = buildCommand(p)
             println c
             commandLine(c)
@@ -718,6 +724,10 @@ abstract class AppImage extends DefaultTask {
 }
 
 abstract class AppInstaller extends DefaultTask {
+
+    @Inject
+    abstract ExecOperations getExecOperations()
+
     public AppImage distImg
     public String[] types
     public File licenseFile
@@ -762,7 +772,7 @@ abstract class AppInstaller extends DefaultTask {
     def execute() {
         String[] p = ['--type', types.join(',')]
         p += createParameters()
-        project.exec {
+        execOperations.exec {
             def c = distImg.buildCommand(p)
             println c
             commandLine(c)

@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
@@ -30,6 +31,7 @@ import java.util.List;
 @Getter
 @Setter
 @SuperBuilder
+@NoArgsConstructor
 abstract class ConsensusAnnotations {
 
     /**

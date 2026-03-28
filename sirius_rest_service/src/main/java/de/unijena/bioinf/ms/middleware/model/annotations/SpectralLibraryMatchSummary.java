@@ -24,11 +24,11 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.extern.jackson.Jacksonized;
+import lombok.AllArgsConstructor;
 
 @Getter
 @Builder
-@Jacksonized
+@AllArgsConstructor
 public class SpectralLibraryMatchSummary {
 
     @Schema(nullable = true)

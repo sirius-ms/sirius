@@ -331,7 +331,7 @@ public class ApiClient {
      * @return ApiClient this client
      */
     public ApiClient addDefaultHeader(String name, String value) {
-        if (defaultHeaders.containsKey(name)) {
+        if (defaultHeaders.containsHeader(name)) {
             defaultHeaders.remove(name);
         }
         defaultHeaders.add(name, value);
@@ -679,7 +679,7 @@ public class ApiClient {
      * @param requestBuilder The current request
      */
     protected void addHeadersToRequest(HttpHeaders headers, WebClient.RequestBodySpec requestBuilder) {
-        for (Entry<String, List<String>> entry : headers.entrySet()) {
+        for (Entry<String, List<String>> entry : headers.headerSet()) {
             List<String> values = entry.getValue();
             for(String value : values) {
                 if (value != null) {
