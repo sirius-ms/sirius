@@ -47,6 +47,8 @@ public class StatisticsTable {
     private String[] columnRightGroups;
 
     private double[][] values;
+    private double[][] leftAbundances;
+    private double[][] rightAbundances;
 
     // for compound classes
     private String[] rowNames;
