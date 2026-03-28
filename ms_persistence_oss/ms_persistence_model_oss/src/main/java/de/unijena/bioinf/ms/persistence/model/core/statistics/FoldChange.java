@@ -32,6 +32,8 @@ import lombok.experimental.SuperBuilder;
 public abstract class FoldChange extends Statistics implements ForeignKey {
 
     protected double foldChange;
+    protected double leftAbundance;
+    protected double rightAbundance;
 
     @NoArgsConstructor
     @SuperBuilder

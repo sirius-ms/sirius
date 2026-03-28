@@ -63,6 +63,8 @@ public class CompoundsFoldChangeJob extends FoldChangeSubToolJJob<FoldChange.Com
                             .builder()
                             .compoundId(c.getCompoundId())
                             .foldChange(foldChange)
+                            .leftAbundance(leftval)
+                            .rightAbundance(rightval)
                             .leftGroup(leftGroupName)
                             .rightGroup(rightGroupName)
                             .aggregation(aggregationType)

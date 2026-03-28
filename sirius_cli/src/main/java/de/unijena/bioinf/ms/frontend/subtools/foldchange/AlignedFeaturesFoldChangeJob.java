@@ -68,6 +68,8 @@ public class AlignedFeaturesFoldChangeJob extends FoldChangeSubToolJJob<FoldChan
                             .builder()
                             .alignedFeatureId(af)
                             .foldChange(foldChange)
+                            .leftAbundance(leftval)
+                            .rightAbundance(rightval)
                             .leftGroup(leftGroupName)
                             .rightGroup(rightGroupName)
                             .aggregation(aggregationType)

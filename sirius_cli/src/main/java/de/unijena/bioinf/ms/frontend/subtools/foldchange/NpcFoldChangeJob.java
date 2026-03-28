@@ -2,23 +2,19 @@ package de.unijena.bioinf.ms.frontend.subtools.foldchange;
 
 import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
-import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
-import de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
-import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class NpcFoldChangeJob extends FoldChangeSubToolJJob<FoldChange.NpcFoldChange> {
     protected final List<AlignedFeatures> alignedFeatures;
@@ -38,35 +34,10 @@ public class NpcFoldChangeJob extends FoldChangeSubToolJJob<FoldChange.NpcFoldCh
 
     @Override
     protected List<FoldChange.NpcFoldChange> compute() throws Exception {
-        Map<Long, List<NPCFingerprintVersion.NPCProperty>> propertiesMap = new HashMap<>();
-        for (List<AlignedFeatures> batch : Partition.ofSize(alignedFeatures, 500)) {
-            Long[] ids = batch.stream().map(AlignedFeatures::getAlignedFeatureId).toArray(Long[]::new);
-            Map<Long, FormulaCandidate> topFormulas = project.getStorage().findStr(
-                    Filter.and(Filter.where("alignedFeatureId").in(ids), Filter.where("formulaRank").eq(1)),
-                    FormulaCandidate.class
-            ).collect(Collectors.toMap(FormulaCandidate::getAlignedFeatureId, f -> f, (a, b) -> a));
-
-            if (!topFormulas.isEmpty()) {
-                project.getStorage().findStr(
-                        Filter.where("formulaId").in(topFormulas.values().stream().map(FormulaCandidate::getFormulaId).toArray(Long[]::new)),
-                        CanopusPrediction.class
-                ).forEach(res -> {
-                    List<NPCFingerprintVersion.NPCProperty> props = new ArrayList<>();
-                    for (FPIter fpIter : res.getNpcFingerprint())
-                        if (fpIter.getProbability() >= probabilityCutoff)
-                            props.add((NPCFingerprintVersion.NPCProperty) fpIter.getMolecularProperty());
-                    propertiesMap.put(res.getAlignedFeatureId(), props);
-                });
-            }
-        }
-
         Map<Integer, List<AlignedFeatures>> classFeaturesMap = new HashMap<>();
         for (AlignedFeatures af : alignedFeatures) {
-            List<NPCFingerprintVersion.NPCProperty> props = propertiesMap.get(af.getAlignedFeatureId());
-            if (props != null) {
-                for (NPCFingerprintVersion.NPCProperty p : props)
-                    classFeaturesMap.computeIfAbsent(p.npcIndex, k -> new ArrayList<>()).add(af);
-            }
+            for (NPCFingerprintVersion.NPCProperty p : getNPCProperties(af))
+                classFeaturesMap.computeIfAbsent(p.npcIndex, k -> new ArrayList<>()).add(af);
         }
 
         total.set(classFeaturesMap.size());
@@ -90,17 +61,18 @@ public class NpcFoldChangeJob extends FoldChangeSubToolJJob<FoldChange.NpcFoldCh
             }
 
             updateProgress(total.get(), progress.addAndGet(1));
-
+            if (leftFeatures.isEmpty() || rightFeatures.isEmpty()) continue;
 
             for (AggregationType aggregationType : aggregationTypes) {
                 for (QuantMeasure quantMeasure : quantMeasures) {
                     double leftval = aggregate(quantify(leftFeatures, quantMeasure), aggregationType);
                     double rightval = aggregate(quantify(rightFeatures, quantMeasure), aggregationType);
                     double foldChange = (rightval > 0) ? (leftval / rightval) : (leftval > 0 ? Double.POSITIVE_INFINITY : 1.0);
-
                     foldChanges.add(FoldChange.NpcFoldChange.builder()
                             .npcIndex(npcIndex)
                             .foldChange(foldChange)
+                            .leftAbundance(leftval)
+                            .rightAbundance(rightval)
                             .leftGroup(leftGroupName)
                             .rightGroup(rightGroupName)
                             .aggregation(aggregationType)
@@ -112,5 +84,18 @@ public class NpcFoldChangeJob extends FoldChangeSubToolJJob<FoldChange.NpcFoldCh
         project.getStorage().insertAll(foldChanges);
         updateProgress(total.get(), progress.addAndGet(1));
         return foldChanges;
+    }
+
+    private List<NPCFingerprintVersion.NPCProperty> getNPCProperties(AlignedFeatures af) {
+        List<NPCFingerprintVersion.NPCProperty> propertyList = new ArrayList<>();
+        Optional<FormulaCandidate> topFormula = project.findTopFormulaCandidateByFeatureId(af.getAlignedFeatureId());
+        if (topFormula.isEmpty()) return propertyList;
+        project.findCanopusResult(af.getAlignedFeatureId(), topFormula.get().getFormulaId()).findFirst()
+                .ifPresent(result -> {
+                    for (FPIter fpIter : result.getNpcFingerprint())
+                        if (fpIter.getProbability() >= probabilityCutoff)
+                            propertyList.add((NPCFingerprintVersion.NPCProperty) fpIter.getMolecularProperty());
+                });
+        return propertyList;
     }
 }
