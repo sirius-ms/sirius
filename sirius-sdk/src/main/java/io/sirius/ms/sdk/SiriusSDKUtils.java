@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -32,7 +33,16 @@ public class SiriusSDKUtils {
 
     public static Process startSirius(@Nullable String configDir, @Nullable Path executable, boolean inheritIo, boolean headless) throws Exception {
         List<String> command = new ArrayList<>();
-        command.add(executable != null ? executable.toAbsolutePath().toString() : findSiriusExecutable());
+        String execPath = executable != null ? executable.toAbsolutePath().toString() : findSiriusExecutable();
+
+        if (execPath.endsWith(".jar")) {
+            String javaExecutable = getJavaExecutable();
+            log.info("Running SIRIUS with java \"{}\"", javaExecutable);
+            command.add(javaExecutable);
+            command.add("-jar");
+        }
+        command.add(execPath);
+
         if (configDir != null) {
             command.add("--workspace");
             command.add(configDir);
@@ -49,6 +59,17 @@ public class SiriusSDKUtils {
         }
 
         return processBuilder.start();
+    }
+
+    public static String getJavaExecutable() {
+        return ProcessHandle.current().info().command().orElseGet(() -> {
+            String javaHome = System.getProperty("java.home");
+            Path javaBin = Paths.get(javaHome, "bin", isWindows() ? "java.exe" : "java");
+            if (Files.exists(javaBin)) {
+                return javaBin.toAbsolutePath().toString();
+            }
+            return "java";
+        });
     }
 
     public static String findSiriusExecutable() {

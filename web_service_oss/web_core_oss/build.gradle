@@ -7,10 +7,10 @@ dependencies {
     api project(':sirius_api')
     api project(':chemical_db_oss:chemdb_utils_oss')
 
-    api group: "org.openscience.cdk", name: "cdk-inchi", version: "$cdk_version"
+    api libs.cdkInchi
     // maven version number parsing
-    api group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
+    api libs.mavenArtifact
     // jason marshalling
-    api "com.squareup.okhttp3:okhttp:$okhttp_version"
-    api "org.jdbi:jdbi3-jackson2:$jdbi_version"
+    api libs.okhttp
+    api libs.jdbi3Jackson2
 }
