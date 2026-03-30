@@ -71,6 +71,8 @@ public class ClassyfireFoldChangeJob extends FoldChangeSubToolJJob<FoldChange.Cl
                             .foldChange(foldChange)
                             .leftAbundance(leftval)
                             .rightAbundance(rightval)
+                            .leftGroup(leftGroupName)
+                            .rightGroup(rightGroupName)
                             .aggregation(aggregationType)
                             .quantification(quantMeasure)
                             .build());
