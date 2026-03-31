@@ -8,20 +8,22 @@ import de.unijena.bioinf.ms.middleware.model.statistics.Statistics;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.DoubleField;
-import org.apache.lucene.document.Field;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.SortField;
+import org.apache.lucene.util.BytesRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils.getDocumentIdFieldName;
+import static org.apache.lucene.util.NumericUtils.doubleToSortableLong;
 
 public abstract class FoldChangeMapper implements FieldMapper<Collection<Statistics>> {
 
@@ -47,8 +49,15 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
                         .append(".").append(stat.getQuantification())
                         .append(".").append(stat.getAggregation());
 
-                indexableFields.add(new DoubleField(nameBuilder.toString(), foldChange.getFoldChange(), Field.Store.YES));
-                //todo we might want sortable field here?
+                indexableFields.add(new DoublePoint(nameBuilder.toString(), foldChange.getFoldChange()));
+                indexableFields.add(new SortedNumericDocValuesField(nameBuilder.toString(), doubleToSortableLong(foldChange.getFoldChange())));
+
+                final byte[] payload = ByteBuffer.allocate(Double.BYTES * 3)
+                        .putDouble(foldChange.getFoldChange())
+                        .putDouble(foldChange.getLeftAbundance())
+                        .putDouble(foldChange.getRightAbundance())
+                        .array();
+                indexableFields.add(new StoredField(nameBuilder.toString(), payload));
             }
         }
         return indexableFields;
@@ -73,10 +82,15 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
         for (IndexableField storedField : document) {
             String name = storedField.name();
             if (name.startsWith(prefix)) {
+                BytesRef binaryValue = storedField.binaryValue();
+                if (binaryValue == null) continue;
+
                 if (stats == null)
                     stats = new ArrayList<>();
                 // fold change only case add more if needed
                 String[] split = name.split("[.]");
+
+                ByteBuffer buffer = ByteBuffer.wrap(binaryValue.bytes, binaryValue.offset, binaryValue.length);
 
                 FoldChange fc = FoldChange.builder()
                         .objectId(objectId)
@@ -85,7 +99,9 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
                         .quantification(QuantMeasure.valueOf(split[split.length - 2]))
                         .rightGroup(split[split.length - 3])
                         .leftGroup(split[split.length - 4])
-                        .foldChange(storedField.numericValue().doubleValue())
+                        .foldChange(buffer.getDouble())
+                        .leftAbundance(buffer.getDouble())
+                        .rightAbundance(buffer.getDouble())
                         .build();
 
                 stats.add(fc);
@@ -98,6 +114,7 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
     public void applyAnalyzersAndPointConfigs(@NotNull String rootFieldName, @NotNull Map<String, PointsConfig> pointsConfigMap, @NotNull Map<String, Analyzer> analyzerMap, @NotNull List<CharSequence> defaultSearchFields, @NotNull Map<String, SortField.Type> sortTypes) {
         // add pointsconfig for foldchange
         pointsConfigMap.put(rootFieldName + ".foldChange.*", LuceneMappingUtils.getPointsConfigForType(Double.class));
+        sortTypes.put(rootFieldName + ".foldChange.*", SortField.Type.DOUBLE);
         //add others if needed
     }
 

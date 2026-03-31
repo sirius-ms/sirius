@@ -46,5 +46,13 @@ public class FoldChange extends Statistics {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     protected Double foldChange;
 
+    @EqualsAndHashCode.Exclude
+    @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected Double leftAbundance;
 
+    @EqualsAndHashCode.Exclude
+    @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected Double rightAbundance;
 }
