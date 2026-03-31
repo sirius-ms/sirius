@@ -11292,6 +11292,26 @@
               }
             }
           },
+          "leftAbundances": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "format": "double"
+              }
+            }
+          },
+          "rightAbundances": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "format": "double"
+              }
+            }
+          },
           "rowNames": {
             "type": "array",
             "items": {
@@ -11601,8 +11621,10 @@
       "FoldChange": {
         "required": [
           "foldChange",
+          "leftAbundance",
           "objectId",
-          "quantType"
+          "quantType",
+          "rightAbundance"
         ],
         "type": "object",
         "properties": {
@@ -11625,6 +11647,14 @@
             "type": "string"
           },
           "foldChange": {
+            "type": "number",
+            "format": "double"
+          },
+          "leftAbundance": {
+            "type": "number",
+            "format": "double"
+          },
+          "rightAbundance": {
             "type": "number",
             "format": "double"
           }

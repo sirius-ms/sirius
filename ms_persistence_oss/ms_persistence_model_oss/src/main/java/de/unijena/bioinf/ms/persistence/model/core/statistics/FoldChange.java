@@ -31,7 +31,13 @@ import lombok.experimental.SuperBuilder;
 @ToString
 public abstract class FoldChange extends Statistics implements ForeignKey {
 
-    protected double foldChange;
+    protected double leftAbundance;
+    protected double rightAbundance;
+
+    @JsonIgnore
+    public double getFoldChange(){
+        return (rightAbundance > 0) ? (leftAbundance / rightAbundance) : (leftAbundance > 0 ? Double.POSITIVE_INFINITY : 1.0);
+    }
 
     @NoArgsConstructor
     @SuperBuilder
