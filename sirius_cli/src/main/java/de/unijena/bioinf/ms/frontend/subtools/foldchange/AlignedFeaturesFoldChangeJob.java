@@ -60,16 +60,14 @@ public class AlignedFeaturesFoldChangeJob extends FoldChangeSubToolJJob<FoldChan
 
             for (AggregationType aggregationType : aggregationTypes) {
                 for (QuantMeasure quantMeasure : quantMeasures) {
-                    double leftval = aggregate(quantify(leftFeatures, quantMeasure), aggregationType);
-                    double rightval = aggregate(quantify(rightFeatures, quantMeasure), aggregationType);
-                    double foldChange = (rightval > 0) ? (leftval / rightval) : (leftval > 0 ? Double.POSITIVE_INFINITY : 1.0);
+                    double leftAbundance = aggregate(quantify(leftFeatures, quantMeasure), aggregationType);
+                    double rightAbundance = aggregate(quantify(rightFeatures, quantMeasure), aggregationType);
 
                     foldChanges.add(FoldChange.AlignedFeaturesFoldChange
                             .builder()
                             .alignedFeatureId(af)
-                            .foldChange(foldChange)
-                            .leftAbundance(leftval)
-                            .rightAbundance(rightval)
+                            .leftAbundance(leftAbundance)
+                            .rightAbundance(rightAbundance)
                             .leftGroup(leftGroupName)
                             .rightGroup(rightGroupName)
                             .aggregation(aggregationType)
