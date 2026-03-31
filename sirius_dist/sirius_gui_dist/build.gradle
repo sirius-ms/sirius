@@ -11,10 +11,6 @@ plugins {
 apply plugin: "application"
 apply plugin: 'org.springframework.boot'
 
-tasks.withType(AbstractCopyTask).configureEach {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
 version = siriusFrontendVersion
 
 evaluationDependsOn(':sirius_rest_service')

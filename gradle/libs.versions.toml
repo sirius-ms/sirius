@@ -8,6 +8,8 @@ trove4j = "3.1.0"  # DEPRECATED -> use fast util instead
 fastutil = "8.5.12"
 commonsMath = "3.6.1"
 commonsText = "1.12.0"
+commonsCompress = "1.26.2"
+commonsIo = "2.16.1"
 jdbi = "3.34.0"
 swagger = "2.2.36"
 picocli = "4.7.7"
@@ -19,6 +21,7 @@ jxbrowserPlugin = "2.0.0"
 jxbrowser = "8.18.1"
 concurrentLocks = "1.0.0"
 minio = "8.6.0"
+okhttp = "5.1.0"  # matches minio
 xz = "1.9"
 googleCloudStorage = "1.118.0"  # todo upgrade to 2 or remove
 zip4j = "2.10.0"
@@ -54,7 +57,6 @@ jmztabm = "1.0.6"
 jbibtex = "1.0.17"
 commonsCollections4 = "4.4"  # todo deprecated, can be removed with old SIRIUS ProjectSpaceManager
 slf4j = "1.7.36"
-jacksonAnnotations = "2.21"
 jewelcli = "0.8.9"
 liblinear = "1.95"
 libsvm = "3.20"
@@ -71,6 +73,7 @@ batikSwing = "1.6-1"
 biotransformerSirius = "3.0.0"
 cmlxom = "3.1"
 grappa = "1.2"
+lucene = "10.0.0"
 
 [libraries]
 # BOMs
@@ -95,10 +98,7 @@ jacksonDatatypeJsr310 = { group = "com.fasterxml.jackson.datatype", name = "jack
 slf4jApi = { group = "org.slf4j", name = "slf4j-api" }
 slf4jJdk14 = { group = "org.slf4j", name = "slf4j-jdk14", version.ref = "slf4j" }
 commonsLang3 = { group = "org.apache.commons", name = "commons-lang3" }
-commonsCompress = { group = "org.apache.commons", name = "commons-compress" }
-commonsIo = { group = "commons-io", name = "commons-io" }
 commonsCodec = { group = "commons-codec", name = "commons-codec" }
-okhttp = { group = "com.squareup.okhttp3", name = "okhttp" }
 jakartaPersistenceApi = { group = "jakarta.persistence", name = "jakarta.persistence-api" }
 jakartaAnnotationApi = { group = "jakarta.annotation", name = "jakarta.annotation-api" }
 jaxbRuntime = { group = "org.glassfish.jaxb", name = "jaxb-runtime" }
@@ -106,8 +106,6 @@ jakartaXmlBindApi = { group = "jakarta.xml.bind", name = "jakarta.xml.bind-api" 
 jakartaValidationApi = { group = "jakarta.validation", name = "jakarta.validation-api" }
 postgresql = { group = "org.postgresql", name = "postgresql" }
 rabbitmqAmqp = { group = "com.rabbitmq", name = "amqp-client" }
-luceneQueryparser = { group = "org.apache.lucene", name = "lucene-queryparser" }
-luceneAnalysisCommon = { group = "org.apache.lucene", name = "lucene-analysis-common" }
 springDataCommons = { group = "org.springframework.data", name = "spring-data-commons" }
 springDataJpa = { group = "org.springframework.data", name = "spring-data-jpa" }
 springDataMongodb = { group = "org.springframework.data", name = "spring-data-mongodb" }
@@ -146,11 +144,14 @@ commonsMath3 = { group = "org.apache.commons", name = "commons-math3", version.r
 commonsText = { group = "org.apache.commons", name = "commons-text", version.ref = "commonsText" }
 commonsConfiguration2 = { group = "org.apache.commons", name = "commons-configuration2", version.ref = "commonsConfiguration2" }
 commonsCollections4 = { group = "org.apache.commons", name = "commons-collections4", version.ref = "commonsCollections4" }
+commonsCompress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commonsCompress"}
+commonsIo = { group = "commons-io", name = "commons-io", version.ref = "commonsIo"}
 springdocOpenapiUi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version.ref = "springDoc" }
 springdocOpenapiApi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-api", version.ref = "springDoc" }
 concurrentLocks = { group = "com.googlecode.concurrent-locks", name = "concurrent-locks", version.ref = "concurrentLocks" }
 trove4j = { group = "net.sf.trove4j", name = "core", version.ref = "trove4j" }
 minio = { group = "io.minio", name = "minio", version.ref = "minio" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 googleCloudStorage = { group = "com.google.cloud", name = "google-cloud-storage", version.ref = "googleCloudStorage" }
 zip4j = { group = "net.lingala.zip4j", name = "zip4j", version.ref = "zip4j" }
@@ -197,6 +198,8 @@ jdbi3Sqlobject = { group = "org.jdbi", name = "jdbi3-sqlobject", version.ref = "
 cpdetector = { group = "com.github.jiangxincode", name = "cpdetector", version.ref = "cpdetector" }
 batikSwing = { group = "batik", name = "batik-swing", version.ref = "batikSwing" }
 biotransformerSirius = { group = "wishartlab.openscience.biotransformer", name = "biotransformer-sirius-mod-relocated-min-no-envi-path", version.ref = "biotransformerSirius" }
+luceneQueryparser = { group = "org.apache.lucene", name = "lucene-queryparser", version.ref = "lucene" }
+luceneAnalysisCommon = { group = "org.apache.lucene", name = "lucene-analysis-common", version.ref = "lucene" }
 
 cdkSmiles = { group = "org.openscience.cdk", name = "cdk-smiles", version.ref = "cdk" }
 cdkSilent = { group = "org.openscience.cdk", name = "cdk-silent", version.ref = "cdk" }
