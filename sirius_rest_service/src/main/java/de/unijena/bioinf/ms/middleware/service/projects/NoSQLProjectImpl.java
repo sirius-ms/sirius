@@ -1379,9 +1379,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .aggregation(foldChange.getAggregation())
                 .quantification(foldChange.getQuantification())
                 .foldChange(foldChange.getFoldChange())
+                .leftAbundance(foldChange.getLeftAbundance())
+                .rightAbundance(foldChange.getRightAbundance())
                 .build();
     }
-
 
     @SneakyThrows
     private FeatureAnnotations extractTopCsiAnnotations(long longAFIf) {
@@ -2267,20 +2268,30 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         LongList rowIds = new LongArrayList();
         List<double[]> values = new ArrayList<>();
+        List<double[]> leftAbundances = new ArrayList<>();
+        List<double[]> rightAbundances = new ArrayList<>();
+
         for (de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange fc : foldChanges) {
             if (rowIds.isEmpty() || fc.getForeignId() != rowIds.getLast()) {
                 rowIds.add(fc.getForeignId());
                 values.add(new double[pairSet.size()]);
+                leftAbundances.add(new double[pairSet.size()]);
+                rightAbundances.add(new double[pairSet.size()]);
             }
             int index = pairs.indexOf(Pair.of(fc.getLeftGroup(), fc.getRightGroup()));
             values.getLast()[index] = fc.getFoldChange();
+            leftAbundances.getLast()[index] = fc.getLeftAbundance();
+            rightAbundances.getLast()[index] = fc.getRightAbundance();
         }
+
+        table.setValues(values.toArray(double[][]::new));
+        table.setLeftAbundances(leftAbundances.toArray(double[][]::new));
+        table.setRightAbundances(rightAbundances.toArray(double[][]::new));
 
         table.setColumnNames(pairs.stream().map(pair -> pair.getLeft() + " / " + pair.getRight()).toArray(String[]::new));
         table.setColumnLeftGroups(pairs.stream().map(Pair::getLeft).toArray(String[]::new));
         table.setColumnRightGroups(pairs.stream().map(Pair::getRight).toArray(String[]::new));
         table.setRowIds(rowIds.stream().map(String::valueOf).toArray(String[]::new));
-        table.setValues(values.toArray(double[][]::new));
 
         // populate class names and levels for compound class types
         switch (table.getRowType()) {
