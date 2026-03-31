@@ -11,8 +11,6 @@ apply plugin: 'org.springframework.boot.aot'
 apply plugin: 'application'
 
 ext['jna.version'] = '5.4.0'  //force correct jna version -> springs is not compatible with ilp solver
-ext['slf4j.version'] = libs.versions.slf4j.get()
-ext['junit-jupiter.version'] = libs.versions.junit.get()
 
 version = siriusFrontendVersion
 
@@ -99,10 +97,6 @@ configurations.configureEach { conf ->
 
 jar {
     enabled = false
-}
-
-tasks.withType(AbstractCopyTask).configureEach {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 // Let Spring Boot handle the fat jar and AOT injection automatically, its enabled just because the plugin is loaded.
