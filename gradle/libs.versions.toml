@@ -8,6 +8,8 @@ trove4j = "3.1.0"  # DEPRECATED -> use fast util instead
 fastutil = "8.5.12"
 commonsMath = "3.6.1"
 commonsText = "1.12.0"
+commonsCompress = "1.26.2"
+commonsIo = "2.16.1"
 jdbi = "3.34.0"
 swagger = "2.2.36"
 picocli = "4.7.7"
@@ -19,6 +21,7 @@ jxbrowserPlugin = "2.0.0"
 jxbrowser = "8.18.1"
 concurrentLocks = "1.0.0"
 minio = "8.6.0"
+okhttp = "5.1.0"  # matches minio
 xz = "1.9"
 googleCloudStorage = "1.118.0"  # todo upgrade to 2 or remove
 zip4j = "2.10.0"
@@ -54,47 +57,23 @@ jmztabm = "1.0.6"
 jbibtex = "1.0.17"
 commonsCollections4 = "4.4"  # todo deprecated, can be removed with old SIRIUS ProjectSpaceManager
 slf4j = "1.7.36"
-jacksonAnnotations = "2.21"
-jackson = "2.21.1"
 jewelcli = "0.8.9"
 liblinear = "1.95"
 libsvm = "3.20"
-jaxbRuntime = "4.0.0"
-jaxbApi = "4.0.0"
-jakartaAnnotation = "3.0.0"
-jakartaPersistence = "3.2.0"
-junit = "5.12.2"
-junitPlatform = "1.12.2"
-mockito = "5.19.0"
-okhttp = "5.1.0"  # matches mockito
-lombok = "1.18.44"
-commonsCompress = "1.26.2"
-commonsIo = "2.16.1"
-commonsLang = "3.15.0"
-postgresql = "42.2.27"
-rabbitmq = "5.11.0"
-lucene = "10.0.0"
-springData = "3.1.3"
 jna = "5.4.0"
-mysql = "9.3.0"
-commonsCodec = "1.15"
 scribejava = "8.3.3"
 nitrite = "4.3.0"
 ejml = "0.41"
 jgrapht = "1.0.1"
 jdom = "2.0.2"
 mavenArtifact = "3.5.0"
-jakartaValidation = "2.0.2"
 openapiGenerator = "7.14.0"
-httpClient5 = "5.1.3"
-springSecurity = "6.5.2"
 cpdetector = "1.0.10"
 batikSwing = "1.6-1"
 biotransformerSirius = "3.0.0"
 cmlxom = "3.1"
 grappa = "1.2"
-reactor = "3.4.3"
-reactorNetty = "1.1.20"
+lucene = "10.0.0"
 
 [libraries]
 # BOMs
@@ -110,34 +89,29 @@ buildscriptJxbrowserPlugin = { group = "com.teamdev.jxbrowser", name = "jxbrowse
 buildscriptOpenapiGenerator = { group = "org.openapitools", name = "openapi-generator-gradle-plugin", version.ref = "openapiGenerator" }
 
 # Common Libraries
-lombok = { group = "org.projectlombok", name = "lombok", version.ref = "lombok" }
-jacksonDatabind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
-jacksonAnnotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jacksonAnnotations" }
-jacksonCore = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson" }
-jacksonJaxrsJsonProvider = { group = "com.fasterxml.jackson.jaxrs", name = "jackson-jaxrs-json-provider", version.ref = "jackson" }
-jacksonDatatypeJsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310", version.ref = "jackson" }
-slf4jApi = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+lombok = { group = "org.projectlombok", name = "lombok" }
+jacksonDatabind = { group = "com.fasterxml.jackson.core", name = "jackson-databind" }
+jacksonAnnotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations" }
+jacksonCore = { group = "com.fasterxml.jackson.core", name = "jackson-core" }
+jacksonJaxrsJsonProvider = { group = "com.fasterxml.jackson.jaxrs", name = "jackson-jaxrs-json-provider" }
+jacksonDatatypeJsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310" }
+slf4jApi = { group = "org.slf4j", name = "slf4j-api" }
 slf4jJdk14 = { group = "org.slf4j", name = "slf4j-jdk14", version.ref = "slf4j" }
-commonsLang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commonsLang" }
-commonsCompress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commonsCompress" }
-commonsIo = { group = "commons-io", name = "commons-io", version.ref = "commonsIo" }
-commonsCodec = { group = "commons-codec", name = "commons-codec", version.ref = "commonsCodec" }
-okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
-jakartaPersistenceApi = { group = "jakarta.persistence", name = "jakarta.persistence-api", version.ref = "jakartaPersistence" }
-jakartaAnnotationApi = { group = "jakarta.annotation", name = "jakarta.annotation-api", version.ref = "jakartaAnnotation" }
-jaxbRuntime = { group = "org.glassfish.jaxb", name = "jaxb-runtime", version.ref = "jaxbRuntime" }
-jakartaXmlBindApi = { group = "jakarta.xml.bind", name = "jakarta.xml.bind-api", version.ref = "jaxbApi" }
-jakartaValidationApi = { group = "jakarta.validation", name = "jakarta.validation-api", version.ref = "jakartaValidation" }
-postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
-rabbitmqAmqp = { group = "com.rabbitmq", name = "amqp-client", version.ref = "rabbitmq" }
-luceneQueryparser = { group = "org.apache.lucene", name = "lucene-queryparser", version.ref = "lucene" }
-luceneAnalysisCommon = { group = "org.apache.lucene", name = "lucene-analysis-common", version.ref = "lucene" }
-springDataCommons = { group = "org.springframework.data", name = "spring-data-commons", version.ref = "springData" }
-springDataJpa = { group = "org.springframework.data", name = "spring-data-jpa", version.ref = "springData" }
-springDataMongodb = { group = "org.springframework.data", name = "spring-data-mongodb", version.ref = "springData" }
-springBootStarterWebflux = { group = "org.springframework.boot", name = "spring-boot-starter-webflux", version.ref = "springBoot" }
+commonsLang3 = { group = "org.apache.commons", name = "commons-lang3" }
+commonsCodec = { group = "commons-codec", name = "commons-codec" }
+jakartaPersistenceApi = { group = "jakarta.persistence", name = "jakarta.persistence-api" }
+jakartaAnnotationApi = { group = "jakarta.annotation", name = "jakarta.annotation-api" }
+jaxbRuntime = { group = "org.glassfish.jaxb", name = "jaxb-runtime" }
+jakartaXmlBindApi = { group = "jakarta.xml.bind", name = "jakarta.xml.bind-api" }
+jakartaValidationApi = { group = "jakarta.validation", name = "jakarta.validation-api" }
+postgresql = { group = "org.postgresql", name = "postgresql" }
+rabbitmqAmqp = { group = "com.rabbitmq", name = "amqp-client" }
+springDataCommons = { group = "org.springframework.data", name = "spring-data-commons" }
+springDataJpa = { group = "org.springframework.data", name = "spring-data-jpa" }
+springDataMongodb = { group = "org.springframework.data", name = "spring-data-mongodb" }
+springBootStarterWebflux = { group = "org.springframework.boot", name = "spring-boot-starter-webflux" }
 jna = { group = "net.java.dev.jna", name = "jna", version.ref = "jna" }
-mysqlConnector = { group = "com.mysql", name = "mysql-connector-j", version.ref = "mysql" }
+mysqlConnector = { group = "com.mysql", name = "mysql-connector-j" }
 scribejavaApis = { group = "com.github.scribejava", name = "scribejava-apis", version.ref = "scribejava" }
 scribejavaHttpclientOkhttp = { group = "com.github.scribejava", name = "scribejava-httpclient-okhttp", version.ref = "scribejava" }
 ejmlFdense = { group = "org.ejml", name = "ejml-fdense", version.ref = "ejml" }
@@ -145,20 +119,20 @@ ejmlSimple = { group = "org.ejml", name = "ejml-simple", version.ref = "ejml" }
 jgraphtCore = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht" }
 jdom = { group = "org.jdom", name = "jdom", version.ref = "jdom" }
 mavenArtifact = { group = "org.apache.maven", name = "maven-artifact", version.ref = "mavenArtifact" }
-httpClient5 = { group = "org.apache.httpcomponents.client5", name = "httpclient5", version.ref = "httpClient5" }
-springSecurityOauth2Jose = { group = "org.springframework.security", name = "spring-security-oauth2-jose", version.ref = "springSecurity" }
-reactorCore = { group = "io.projectreactor", name = "reactor-core", version.ref = "reactor" }
-reactorNettyHttp = { group = "io.projectreactor.netty", name = "reactor-netty-http", version.ref = "reactorNetty" }
+httpClient5 = { group = "org.apache.httpcomponents.client5", name = "httpclient5" }
+springSecurityOauth2Jose = { group = "org.springframework.security", name = "spring-security-oauth2-jose" }
+reactorCore = { group = "io.projectreactor", name = "reactor-core" }
+reactorNettyHttp = { group = "io.projectreactor.netty", name = "reactor-netty-http" }
 
 # Testing
-junitJupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
-junitJupiterParams = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
-junitJupiterEngine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+junitJupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
+junitJupiterParams = { group = "org.junit.jupiter", name = "junit-jupiter-params" }
+junitJupiterEngine = { group = "org.junit.jupiter", name = "junit-jupiter-engine" }
 junitVintageEngine = { group = "org.junit.vintage", name = "junit-vintage-engine" }
-junitPlatformLauncher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatform" }
-mockitoJUnitJupiter = { group = "org.mockito", name = "mockito-junit-jupiter", version.ref = "mockito" }
-slf4jLog4jOverSlf4j = { group = "org.slf4j", name = "log4j-over-slf4j", version.ref = "slf4j" }
-slf4jJclOverSlf4j = { group = "org.slf4j", name = "jcl-over-slf4j", version.ref = "slf4j" }
+junitPlatformLauncher = { group = "org.junit.platform", name = "junit-platform-launcher" }
+mockitoJUnitJupiter = { group = "org.mockito", name = "mockito-junit-jupiter" }
+slf4jLog4jOverSlf4j = { group = "org.slf4j", name = "log4j-over-slf4j" }
+slf4jJclOverSlf4j = { group = "org.slf4j", name = "jcl-over-slf4j" }
 
 # NOT managed by Spring Boot BOM (Explicit version required)
 jetbrainsAnnotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrainsAnnotations" }
@@ -170,11 +144,14 @@ commonsMath3 = { group = "org.apache.commons", name = "commons-math3", version.r
 commonsText = { group = "org.apache.commons", name = "commons-text", version.ref = "commonsText" }
 commonsConfiguration2 = { group = "org.apache.commons", name = "commons-configuration2", version.ref = "commonsConfiguration2" }
 commonsCollections4 = { group = "org.apache.commons", name = "commons-collections4", version.ref = "commonsCollections4" }
+commonsCompress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commonsCompress"}
+commonsIo = { group = "commons-io", name = "commons-io", version.ref = "commonsIo"}
 springdocOpenapiUi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version.ref = "springDoc" }
 springdocOpenapiApi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-api", version.ref = "springDoc" }
 concurrentLocks = { group = "com.googlecode.concurrent-locks", name = "concurrent-locks", version.ref = "concurrentLocks" }
 trove4j = { group = "net.sf.trove4j", name = "core", version.ref = "trove4j" }
 minio = { group = "io.minio", name = "minio", version.ref = "minio" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 googleCloudStorage = { group = "com.google.cloud", name = "google-cloud-storage", version.ref = "googleCloudStorage" }
 zip4j = { group = "net.lingala.zip4j", name = "zip4j", version.ref = "zip4j" }
@@ -221,6 +198,8 @@ jdbi3Sqlobject = { group = "org.jdbi", name = "jdbi3-sqlobject", version.ref = "
 cpdetector = { group = "com.github.jiangxincode", name = "cpdetector", version.ref = "cpdetector" }
 batikSwing = { group = "batik", name = "batik-swing", version.ref = "batikSwing" }
 biotransformerSirius = { group = "wishartlab.openscience.biotransformer", name = "biotransformer-sirius-mod-relocated-min-no-envi-path", version.ref = "biotransformerSirius" }
+luceneQueryparser = { group = "org.apache.lucene", name = "lucene-queryparser", version.ref = "lucene" }
+luceneAnalysisCommon = { group = "org.apache.lucene", name = "lucene-analysis-common", version.ref = "lucene" }
 
 cdkSmiles = { group = "org.openscience.cdk", name = "cdk-smiles", version.ref = "cdk" }
 cdkSilent = { group = "org.openscience.cdk", name = "cdk-silent", version.ref = "cdk" }

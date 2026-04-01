@@ -5,21 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath(libs.buildscriptOpenapiGenerator) {
-            exclude group: "com.fasterxml.jackson.core"
-            exclude group: "com.fasterxml.jackson.dataformat"
-            exclude group: "com.fasterxml.jackson.datatype"
-            exclude group: "com.fasterxml.jackson"
-        }
-
-        classpath "com.fasterxml.jackson:jackson-bom:${libs.versions.jackson.get()}"
-        classpath "com.fasterxml.jackson.core:jackson-core:${libs.versions.jackson.get()}"
-        classpath "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${libs.versions.jackson.get()}"
-        classpath "com.fasterxml.jackson.datatype:jackson-datatype-guava:${libs.versions.jackson.get()}"
-        classpath "com.fasterxml.jackson.datatype:jackson-datatype-joda:${libs.versions.jackson.get()}"
-        classpath "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${libs.versions.jackson.get()}"
-        classpath "com.fasterxml.jackson.core:jackson-databind:${libs.versions.jackson.get()}"
-        classpath "com.fasterxml.jackson.core:jackson-annotations:${libs.versions.jacksonAnnotations.get()}"
+        classpath(libs.buildscriptOpenapiGenerator)
     }
 }
 
