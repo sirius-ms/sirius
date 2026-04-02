@@ -28,13 +28,13 @@ Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jen
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 6.4.4 (2026-03-25)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 6.3.4 (2026-03-25)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (x86-64/amd64/x64): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.4.4/sirius-6.4.4-win-x64.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.4.4/sirius-6.4.4-win-x64.zip)
-- for Mac (x86-64/amd64/x64): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.4.4/sirius-6.4.4-macos-x64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.4.4/sirius-6.4.4-macos-x64.zip)
-- for Mac (arm64/aarch64/apple silicon): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.4.4/sirius-6.4.4-macos-arm64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.4.4/sirius-6.4.4-macos-arm64.zip)
-- for Linux (x86-64/amd64/x64): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.4.4/sirius-6.4.4-linux-x64.zip)
-- for Linux (arm64/aarch64): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.4.4/sirius-6.4.4-linux-arm64.zip)
+- for Windows (x86-64/amd64/x64): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.3.4/sirius-6.3.4-win-x64.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.4/sirius-6.3.4-win-x64.zip)
+- for Mac (x86-64/amd64/x64): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.3.4/sirius-6.3.4-macos-x64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.4/sirius-6.3.4-macos-x64.zip)
+- for Mac (arm64/aarch64/apple silicon): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.3.4/sirius-6.3.4-macos-arm64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.4/sirius-6.3.4-macos-arm64.zip)
+- for Linux (x86-64/amd64/x64): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.4/sirius-6.3.4-linux-x64.zip)
+- for Linux (arm64/aarch64): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.4/sirius-6.3.4-linux-arm64.zip)
 
 
 <!--end download-->
