@@ -71,8 +71,22 @@ if [ -n "$CPLEX_HOME" ]; then
   fi
 fi
 
+# Add location of jar files for Classpath
+JAR_HOME="#jarHome#"
+
 # Add default JVM options here. You can also use JAVA_OPTS and SIRIUS_OPTS to pass JVM options to this script.
 DEFAULT_JVM_OPTS="#jvmOpts#"
+
+# Leyden AOT Cache logic
+LEYDEN_CACHE="$HOME/#siriusWsDir#/sirius.aot"
+if [ -f "$LEYDEN_CACHE" ]; then
+  DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -XX:AOTCache=$LEYDEN_CACHE"
+else
+  # Ensure the directory exists before generating
+  mkdir -p "$(dirname "$LEYDEN_CACHE")"
+  DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -XX:AOTCacheOutput=$LEYDEN_CACHE"
+fi
+
 if [ -n "$JAVA_LIBRARY_PATH" ]; then
   if [ -n "$DEFAULT_JVM_OPTS" ]; then
     DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -Djava.library.path=$JAVA_LIBRARY_PATH"
@@ -83,9 +97,6 @@ fi
 
 # Native library path
 #export #libraryPathKey#="#libraryPathVal#"
-
-# Add location of jar files for Classpath
-JAR_HOME="#jarHome#"
 
 # Add full lib dir to classpath
 CLASSPATH="#classPath#"
