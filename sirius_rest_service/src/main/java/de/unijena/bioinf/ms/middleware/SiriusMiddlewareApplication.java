@@ -58,9 +58,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.ApplicationPidFileWriter;
 import org.springframework.boot.system.ApplicationHome;
+import org.springframework.boot.web.server.PortInUseException;
 import org.springframework.boot.web.server.context.WebServerInitializedEvent;
 import org.springframework.boot.web.server.context.WebServerPortFileWriter;
-import org.springframework.boot.web.server.PortInUseException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.context.ApplicationListener;
@@ -69,7 +69,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import picocli.CommandLine;
 
 import java.awt.*;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -289,7 +288,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         try {
             AuthService as = ApplicationCore.WEB_API().getAuthService();
             if (as.isLoggedIn())
-                AuthServices.writeRefreshToken(ApplicationCore.WEB_API().getAuthService(), ApplicationCore.TOKEN_FILE, true);
+                AuthServices.writeRefreshToken(as, ApplicationCore.TOKEN_FILE, true);
             else
                 Files.deleteIfExists(ApplicationCore.TOKEN_FILE);
         } catch (IOException e) {
@@ -300,6 +299,12 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         try {
             if (RUN != null) {
                 RUN.cancel();
+            }
+
+            if (!GraphicsEnvironment.isHeadless()) {
+                for (Window window : Window.getWindows()) {
+                    window.dispose();
+                }
             }
         } finally {
             if (successfulParsed && PropertyManager.DEFAULTS.createInstanceWithDefaults(PrintCitations.class).value)
