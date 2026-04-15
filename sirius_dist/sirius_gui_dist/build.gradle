@@ -101,111 +101,6 @@ tasks.named('build') {
     dependsOn 'extractForLeyden'
 }
 
-tasks.register('trainLeydenCache') {
-    group = 'build'
-    description = 'Runs the extracted app in the background, polls /api/guis to ensure UI is loaded, and shuts it down via Actuator.'
-    dependsOn 'extractForLeyden'
-    dependsOn parent.tasks.named('extractRuntimeImage')
-
-    doLast {
-        def outputDir = getTasksByName("extractForLeyden", false).outputs.files.getFirst().singleFile
-        def extractedJarName = bootJarTask.get().outputs.files.singleFile.getName()
-        // todo use bunlde jdk for testrun when moved to dist package.
-        def javaExe = new File(parent.tasks.getByName('extractRuntimeImage').outputs.files.singleFile, 'bin/java').absolutePath
-
-        // Launch with the specific args to expose Actuator (-s) and start the GUI (--gui)
-        def processArgs = [
-                javaExe,
-                "-XX:AOTCacheOutput=app.aot",
-                "-Dspring.aot.enabled=true",
-                "-Djxbrowser.chromium.dir=${layout.buildDirectory.dir("jxbrowser-tmp").get().asFile.absolutePath}" as String,
-                "-jar", extractedJarName,
-                "rest", "-s", "-p", "8080", "--gui"
-        ]
-
-        logger.lifecycle("\n=======================================================")
-        logger.lifecycle(" 🚀 STARTING AUTOMATED LEYDEN TRAINING RUN")
-        logger.lifecycle(" Spawning application in the background...")
-        logger.lifecycle("=======================================================\n")
-
-        // 1. Start the application in the background
-        def processBuilder = new ProcessBuilder(processArgs)
-        processBuilder.directory(outputDir)
-        processBuilder.redirectErrorStream(true) // Merge stdout and stderr
-        def process = processBuilder.start()
-
-        // Consume the output stream so the OS buffer doesn't hang the process
-        Thread.start {
-            process.inputStream.eachLine { line ->
-                println "[Training App] $line"
-            }
-        }
-
-        // 2. Poll the application until both Actuator Health AND the GUI are up
-        def isUp = false
-        def maxTries = 60 // Wait up to 60 seconds for heavy Swing startup
-
-        for (int i = 0; i < maxTries; i++) {
-            sleep(1000)
-            if (!process.isAlive()) {
-                throw new GradleException("Training process died unexpectedly with exit code ${process.exitValue()}")
-            }
-
-            try {
-                // Check if Spring context is serving HTTP
-                def healthCheck = new URL("http://localhost:8080/actuator/health").openConnection()
-                healthCheck.setRequestMethod("GET")
-                healthCheck.connect()
-                println("HEALTHCHECK! ${healthCheck.responseCode}")
-                if (healthCheck.responseCode == 200) {
-                    // Spring is up. Now check if the GUI is registered!
-                    def guiCheck = new URL("http://localhost:8080/api/guis").openConnection()
-                    guiCheck.setRequestMethod("GET")
-                    guiCheck.connect()
-                    println("GUI! ${guiCheck.responseCode}")
-
-                    if (guiCheck.responseCode == 200) {
-                        isUp = true
-                        logger.lifecycle("\n✅ REST API and GUI are fully initialized! Triggering graceful shutdown...")
-                        break
-                    }
-                }
-            } catch (Exception e) {
-                // Connection refused, app is still starting up
-            }
-        }
-
-        if (!isUp) {
-            process.destroyForcibly()
-            throw new GradleException("Application failed to become healthy on port 8080 within ${maxTries} seconds.")
-        }
-
-        // 3. Trigger the Actuator Shutdown
-        try {
-            def shutdownConn = new URL("http://localhost:8080/actuator/shutdown").openConnection()
-            shutdownConn.setRequestMethod("POST")
-            shutdownConn.setRequestProperty("Content-Type", "application/json")
-            shutdownConn.setDoOutput(true)
-            shutdownConn.getInputStream().text
-            logger.lifecycle("🛑 Shutdown request accepted. Waiting for JVM to dump AOT cache...")
-        } catch (Exception e) {
-            logger.warn("⚠️ Shutdown request threw an error (process might be terminating too fast to return a response): ${e.message}")
-        }
-
-        // 4. Wait for the JVM to exit and write the app.aot file to disk
-        def exitCode = process.waitFor()
-
-        if (exitCode != 0 && exitCode != 143) { // 143 is standard SIGTERM, which is fine
-            logger.warn("⚠️ Training process exited with code ${exitCode}. Check the logs above.")
-        } else {
-            logger.lifecycle("\n🎉 Leyden cache 'app.aot' successfully generated in ${outputDir.absolutePath}!\n")
-        }
-    }
-}
-
-//###################################### AOT post processing END #######################################
-
-
 
 application {
     mainClass = mainClassNameGlobal
@@ -250,6 +145,7 @@ startScripts {
             templateBinding.jvmOpts = "${application.applicationDefaultJvmArgs.stream().collect(Collectors.joining(' '))}"
             templateBinding.javaCommand = "\$APP_HOME/runtime/bin/java"
             templateBinding.jarHome = libDir == null ? "\$APP_HOME/app" : libDir
+            templateBinding.siriusWsDir = project.siriusWsDir
 
             String script = sf.text
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
@@ -272,6 +168,7 @@ startScripts {
             templateBinding.jarHome = libDir == null ? "%APP_HOME%\\app" : libDir
             templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
             templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
+            templateBinding.siriusWsDir = project.siriusWsDir
 
             String script = sf.text
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
@@ -289,9 +186,7 @@ distributions {
     sirius {
         contents {
             into('app') {
-                from(tasks.named('extractForLeyden')){
-                    exclude('app.aot')
-                }
+                from(tasks.named('extractForLeyden'))
             }
             if (siriusTargetPlatform.isWin()) {
                 from startScripts

@@ -61,6 +61,9 @@ ext {
     gurobi_version = props.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
     cplex_version = props.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
 
+    siriusWsDirPrefix = props.getProperty('de.unijena.bioinf.sirius.ws.default.name')
+    siriusWsDir = siriusWsDirPrefix + '-' + (siriusFrontendVersion.toString().split('[.]').take(2).join('.'))
+
     siriusTargetPlatform = SiriusPlatform.fromDescriptor((
             project.findProperty('build.sirius.platform') ?:
                     "${DefaultNativePlatform.getCurrentOperatingSystem().getName()}-${DefaultNativePlatform.getCurrentArchitecture().getName()}"
