@@ -39,6 +39,18 @@ set JAR_HOME=#jarHome#
 
 @rem Add default JVM options here. You can also use JAVA_OPTS and SIRIUS_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS=#jvmOpts#
+
+@rem Leyden AOT Cache logic
+set LEYDEN_CACHE="%USERPROFILE%\#siriusWsDir#\sirius.aot"
+if exist %LEYDEN_CACHE% (
+    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCache=%LEYDEN_CACHE%
+) else (
+    @rem Ensure the directory exists before generating
+    for %%i in (%LEYDEN_CACHE%) do set LEYDEN_CACHE_DIR=%%~dpi
+    if not exist "!LEYDEN_CACHE_DIR!" mkdir "!LEYDEN_CACHE_DIR!"
+    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCacheOutput=%LEYDEN_CACHE%
+)
+
 set JAVA_EXE=%APP_HOME%\runtime\bin\java.exe
 set MAIN_CLASS="#mainClass#"
 
