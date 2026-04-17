@@ -138,7 +138,7 @@ public class NoSqlSpectrumSummaryWriter extends SummaryTable {
 
             row.add(reference.getName());
 
-            row.add(DatabaseLinkUtil.links(Map.of(reference.getLibraryName(), List.of(reference.getLibraryId())))); //this ensures same output format as for 'links' in NoSqlStructureSummaryWriter. However, currently, there is only 1 link.
+            row.add(DatabaseLinkUtil.links(Map.of(reference.getLibraryName(), Collections.singletonList(reference.getLibraryId())))); //this ensures same output format as for 'links' in NoSqlStructureSummaryWriter. However, currently, there is only 1 link. Do not use List.of, it fails if reference.getLibraryId() is null
 
             row.add(reference.getCandidateInChiKey());
         }
