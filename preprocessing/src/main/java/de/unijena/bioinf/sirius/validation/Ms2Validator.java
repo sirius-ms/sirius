@@ -170,10 +170,115 @@ public class Ms2Validator extends Ms1Validator {
                     }
                 }
             }
+        } else {
+            // check ms2 and ms1 spectra to double-check if m/z is correct
+            double givenMass = input.getIonMass();
+            final int precision = getDecimalPlaces(givenMass);
+            double correctedMass =0d;
+            final Deviation largeDev = new Deviation(10, Math.max(new Deviation(10).getAbsolute(), Math.pow(10, -precision)));
+            final Deviation smallDev = new Deviation(largeDev.getPpm()/2, largeDev.getAbsolute()/2);
+            if (input.getMergedMs1Spectrum()!=null && input.getMergedMs1Spectrum().size()>0) {
+                // search in merged Ms1
+                int peak = Spectrums.mostIntensivePeakWithin(input.getMergedMs1Spectrum(), givenMass, smallDev);
+                if (peak<0) {
+                    peak = Spectrums.mostIntensivePeakWithin(input.getMergedMs1Spectrum(), givenMass, largeDev);
+                }
+                if (peak>=0) {
+                    correctedMass = input.getMergedMs1Spectrum().getMzAt(peak);
+                }
+            } else if (input.getMs1Spectra()!=null && input.getMs1Spectra().size()>0) {
+                double maxInt = 0d;
+                for (SimpleSpectrum spectrum : input.getMs1Spectra()) {
+                    int peak = Spectrums.mostIntensivePeakWithin(spectrum, givenMass, smallDev);
+                    if (peak<0) {
+                        peak = Spectrums.mostIntensivePeakWithin(spectrum, givenMass, largeDev);
+                    }
+                    if (peak>=0 && spectrum.getIntensityAt(peak)>maxInt) {
+                        correctedMass = spectrum.getMzAt(peak);
+                        maxInt = spectrum.getIntensityAt(peak);
+                    }
+                }
+            }
+
+            if (correctedMass > 0) {
+                // we can always trust the MS1
+                if (Math.abs(correctedMass-givenMass) >= 2e-4) {
+                    warn.warn("Ion mass specified in input deviates from ion mass found in MS1. Correct ion mass from " + givenMass+ " to " + correctedMass);
+                }
+                if (repair) {
+                    input.setIonMass(correctedMass);
+                }
+            } else if (precision < 4) {
+                // we also look into MsMs
+                if (input.getMergedMs2Spectrum()!=null && input.getMergedMs2Spectrum().size()>0) {
+                    // search in merged Ms1
+                    int peak = Spectrums.mostIntensivePeakWithin(input.getMergedMs2Spectrum(), givenMass, smallDev);
+                    if (peak<0) {
+                        peak = Spectrums.mostIntensivePeakWithin(input.getMergedMs2Spectrum(), givenMass, largeDev);
+                    }
+                    if (peak>=0) {
+                        correctedMass = input.getMergedMs2Spectrum().getMzAt(peak);
+                    }
+                } else if (input.getMs2Spectra()!=null && input.getMs2Spectra().size()>0) {
+                    double maxInt = 0d;
+                    for (Ms2Spectrum<?> spectrum : input.getMs2Spectra()) {
+                        int peak = Spectrums.mostIntensivePeakWithin(spectrum, givenMass, smallDev);
+                        if (peak<0) {
+                            peak = Spectrums.mostIntensivePeakWithin(spectrum, givenMass, largeDev);
+                        }
+                        if (peak>=0 && spectrum.getIntensityAt(peak)>maxInt) {
+                            correctedMass = spectrum.getMzAt(peak);
+                            maxInt = spectrum.getIntensityAt(peak);
+                        }
+                    }
+                }
+                if (correctedMass > 0) {
+                    // we do not trust MsMs that easily. We check if it only deviates at a higher precision
+                    // than the input mass
+                    if (matchWithUserPrecision(givenMass, correctedMass)) {
+                        if (Math.abs(correctedMass-givenMass) >= 2e-4) {
+                            warn.warn("Ion mass specified in input deviates from ion mass found in MS2. Correct ion mass from " + givenMass+ " to " + correctedMass);
+                        }
+                        if (repair) {
+                            input.setIonMass(correctedMass);
+                        }
+                    }
+                }
+            }
         }
     }
 
     private boolean validDouble(double val, boolean mayNegative) {
         return !Double.isInfinite(val) && !Double.isNaN(val) && (mayNegative || val > 0d);
+    }
+
+    public static int getDecimalPlaces(double value) {
+        double epsilon = 1e-6;
+        for (int i = 0; i <= 5; i++) {
+            double multiplied = value * Math.pow(10, i);
+            if (Math.abs(multiplied - Math.round(multiplied)) < epsilon) {
+                return i;
+            }
+        }
+        return 6;
+    }
+    // check if a estimated value from data matches to a user input either on the first digits after decimal place or
+    // via rounding.
+    public static boolean matchWithUserPrecision(double userInput, double estimatedFromData) {
+        int k = getDecimalPlaces(userInput);
+        if (k > 5) k = 5;
+
+        double factor = Math.pow(10, k);
+        double epsilon = 1e-6;
+
+        double roundedMeasurement = Math.round(estimatedFromData * factor) / factor;
+        boolean matchesRounded = Math.abs(roundedMeasurement - userInput) < epsilon;
+
+        double shifted = estimatedFromData * factor;
+        shifted += Math.signum(shifted) * epsilon;
+        double truncatedMeasurement = ((long) shifted) / factor;
+        boolean matchesTruncated = Math.abs(truncatedMeasurement - userInput) < epsilon;
+
+        return matchesRounded || matchesTruncated;
     }
 }
