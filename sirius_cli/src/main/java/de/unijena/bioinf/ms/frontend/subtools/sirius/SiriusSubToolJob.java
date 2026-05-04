@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
 import de.unijena.bioinf.fingerid.FormulaWhiteListJob;
@@ -33,6 +34,7 @@ import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.validation.Ms2Validator;
 import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
 import de.unijena.bioinf.spectraldb.SpectraMatchingJJob;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
@@ -66,19 +68,8 @@ public class SiriusSubToolJob extends InstanceJob {
 
         {
             checkForInterruption();
-
-            // If Ms1 only, IonMass is NaN here. That is getting fixed later in Ms2Validator, but we already need it for DB whitelists
-            if(mut.getMs2Spectra().isEmpty() && !mut.getMergedMs1Spectrum().isEmpty()){
-                final Spectrum<Peak> ms1 = mut.getMergedMs1Spectrum();
-                int index = Spectrums.getIndexOfPeakWithMaximalIntensity(ms1);
-                // move backward, maybe you are in the middle of an isotope pattern
-                while (index > 0) {
-                    if (Math.abs(ms1.getMzAt(index) - ms1.getMzAt(index - 1)) > 1.1d) break;
-                    --index;
-                }
-                mut.setIonMass(ms1.getMzAt(index));
-            }
-            exp = mut;
+            new Ms2Validator().validate(mut, Warning.Logger, true); // run ms2 validator already here because we need it for correct ion mass
+            exp=mut;
 
             // extract additional candidates from library matches
             if (searchResults != null && !searchResults.isEmpty()){
