@@ -5,25 +5,26 @@ import java.nio.file.StandardOpenOption
 
 buildscript {
     repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url = "https://plugins.gradle.org/m2/" }
         mavenCentral()
     }
     dependencies {
-        classpath 'commons-configuration:commons-configuration:1.10'
-        classpath 'com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE'
-        classpath 'org.yaml:snakeyaml:1.29'
-        classpath "com.teamdev.jxbrowser:jxbrowser-gradle-plugin:2.0.0"
+        classpath libs.buildscriptSpringBootPlugin
+        classpath libs.buildscriptCommonsConfiguration
+        classpath libs.buildscriptGradleUtilPlugins
+        classpath libs.buildscriptSnakeyaml
+        classpath libs.buildscriptJxbrowserPlugin
     }
 }
 
 plugins {
-    id 'org.sonatype.gradle.plugins.scan' version '3.1.3'
+    alias(libs.plugins.sonatypeScan)
 }
 
 //this task is used to update the gradle wrapper properties to a new version
 // it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
 wrapper {
-    gradleVersion = '8.14'
+    gradleVersion = '9.4.1'
 }
 
 ossIndexAudit {
@@ -55,58 +56,13 @@ ext {
     appName = props.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
     mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
 
-    //version for external libraries
-    jjobs_version = '0.10.0'
-    slf4j_version = '1.7.36'
-    jackson_version = '2.18.4'
-    lombok_version = '1.18.34'
-
     cbc_version = props.getProperty('de.unijena.bioinf.sirius.build.cbc_version')
     glpk_version = props.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
     gurobi_version = props.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
     cplex_version = props.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
-    cdk_version = "2.9"
-    jetbrains_version = "26.0.1"
-    okhttp_version = "4.12.0"
-    trove_version = '3.1.0' //DEPRECATED -> user fast util instead
-    fastutil_version = '8.5.12' //replaces trove
 
-    //not recommended anymore -> use pico cli instead
-    jewelcli_version = '0.8.9'
-
-    //apache commons
-    commons_math_version = '3.6.1'
-    commons_email_version = '1.6.0'
-    commons_text_version = '1.12.0'
-    commons_lang_version = '3.15.0'
-    commons_compress_version = '1.26.2'
-    commons_io_version = '2.16.1'//'2.11.0'
-    commons_configuration_version = '2.11.0'
-
-    json_version = '1.0'
-    json_impl_version = "1.0.4"
-    psql_version = "42.2.1"
-    jdbi_version = '3.34.0'
-
-    liblinear_version = "1.95"
-    libsvm_version = "3.20"
-
-    swagger_version = "2.2.36"
-
-    jaxb_version = "2.3.9"
-    picocli_version = '4.7.7'
-    jakarta_version = '3.2.0'
-    jakarta_annotation_version = "3.0.0"
-
-
-    spring_boot_version = "3.5.5"
-    springdoc_version = "2.8.13"
-
-    auth0_version = '3.16.0'
-
-    junit_version = '5.12.2'
-    junit_mockito_version = '5.19.0'
-    junit_platform_version = '1.12.2'//''1.13.4'
+    siriusWsDirPrefix = props.getProperty('de.unijena.bioinf.sirius.ws.default.name')
+    siriusWsDir = siriusWsDirPrefix + '-' + (siriusFrontendVersion.toString().split('[.]').take(2).join('.'))
 
     siriusTargetPlatform = SiriusPlatform.fromDescriptor((
             project.findProperty('build.sirius.platform') ?:
@@ -160,8 +116,6 @@ allprojects {
     apply plugin: 'maven-publish'
     apply plugin: "com.teamdev.jxbrowser"
 
-    targetCompatibility = 21
-
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"
     javadoc.options.encoding = 'UTF-8'
@@ -169,9 +123,7 @@ allprojects {
     group = 'io.sirius-ms'
 
     jxbrowser {
-        //there is a rendering bug in 8.12 on linux. until this is fixed we use the switch.
-//        version = siriusTargetPlatform.isLinux() ? '8.11.0' : '8.12.1'
-        version = '8.17.0'
+        version = libs.versions.jxbrowser.get()
     }
 
     repositories {
@@ -230,86 +182,69 @@ allprojects {
     }
 
     dependencies {
-        compileOnly "org.projectlombok:lombok:$lombok_version"
-        annotationProcessor "org.projectlombok:lombok:$lombok_version"
-        // Annotations
-        api "org.jetbrains:annotations:$jetbrains_version"
-        api "io.swagger.core.v3:swagger-annotations:$swagger_version"
+        // Import Spring Boot BOM
+        implementation platform(libs.springBootDependencies)
+        annotationProcessor platform(libs.springBootDependencies)
+        testAnnotationProcessor platform(libs.springBootDependencies)
 
-        api "it.unimi.dsi:fastutil:$fastutil_version"
+        compileOnly libs.lombok
+        annotationProcessor libs.lombok
+        
+        api libs.jetbrainsAnnotations
+        api libs.swaggerAnnotations
 
-        api "org.apache.commons:commons-lang3:$commons_lang_version"
-        api "org.apache.commons:commons-math3:$commons_math_version"
-        api "org.apache.commons:commons-compress:$commons_compress_version"
-        api "commons-io:commons-io:$commons_io_version"
+        api libs.fastutil
 
-        api "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
-        api "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
+        api libs.commonsLang3
+        api libs.commonsMath3
+        api libs.commonsCompress
+        api libs.commonsIo
 
-        api 'com.googlecode.concurrent-locks:concurrent-locks:1.0.0'
+        api libs.jacksonDatabind
+        api libs.jacksonAnnotations
 
-        api "de.unijena.bioinf:jjobs-core:$jjobs_version"
-        api "org.slf4j:slf4j-api:$slf4j_version"
+        api libs.concurrentLocks
 
-        //NOTE: cannot be provided as transitive dependency
-        implementation "jakarta.persistence:jakarta.persistence-api:$jakarta_version"
-        implementation "jakarta.annotation:jakarta.annotation-api:$jakarta_annotation_version"
+        api libs.jjobsCore
+        api libs.slf4jApi
 
-        implementation "org.glassfish.jaxb:jaxb-runtime:$jaxb_version"
+        implementation libs.jakartaPersistenceApi
+        implementation libs.jakartaAnnotationApi
+
+        implementation libs.jaxbRuntime
 
         // TEST DEPENDENCIES
-        testCompileOnly "org.projectlombok:lombok:$lombok_version"
-        testAnnotationProcessor "org.projectlombok:lombok:$lombok_version"
+        testCompileOnly libs.lombok
+        testAnnotationProcessor libs.lombok
 
-        testImplementation "org.slf4j:log4j-over-slf4j:$slf4j_version"
-        testImplementation "org.slf4j:jcl-over-slf4j:$slf4j_version"
-        // Aggregator dependency that also brings JUnit 5 parameterized tests etc.
-        testImplementation "org.junit.jupiter:junit-jupiter:$junit_version"
-        testImplementation "org.junit.jupiter:junit-jupiter-params:$junit_version"
-        testImplementation "org.mockito:mockito-junit-jupiter:$junit_mockito_version"
-        // The Vintage engine is needed to be able to run JUnit 4 tests
-        testImplementation "org.junit.vintage:junit-vintage-engine:$junit_version"
-        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_version"
-        testImplementation "org.junit.platform:junit-platform-launcher:$junit_platform_version"
-
-
-
+        testImplementation libs.slf4jLog4jOverSlf4j
+        testImplementation libs.slf4jJclOverSlf4j
+        
+        testImplementation libs.junitJupiter
+        testImplementation libs.junitJupiterParams
+        testImplementation libs.mockitoJUnitJupiter
+        testImplementation libs.junitVintageEngine
+        testRuntimeOnly libs.junitJupiterEngine
+        testImplementation libs.junitPlatformLauncher
     }
 
-    //there are some outdated incompatible trove dependencies in some libs.
-    // this is to exclude them and enforce the one we need.
     configurations.configureEach {
         //replaced by log4j-over-slf4j
         it.exclude group: "log4j", module: "log4j"
         //replaced by jcl-over-slf4j
         it.exclude group: "commons-logging", module: "commons-logging"
         it.exclude module: 'trove4j'
-
-        resolutionStrategy {
-            eachDependency { DependencyResolveDetails details ->
-                // Force all JUnit 4 and 5 artifacts to use the version defined in gradle.properties
-                if (details.requested.group.startsWith('org.junit.jupiter')) {
-                    details.useVersion "$junit_version"
-                    details.because 'Enforce consistent JUnit version across all subprojects'
-                }else if(details.requested.group.startsWith('org.junit.jupiter')){
-                    details.useVersion "$junit_platform_version"
-                    details.because 'Enforce consistent JUnit version across all subprojects'
-                }
-            }
-        }
     }
 
+    //there are some outdated incompatible trove dependencies in some libs.
+    // this is to exclude them and enforce the one we need.
     configurations {
         compileClasspath {
-            resolutionStrategy.force 'net.sf.trove4j:core:3.1.0'
+            resolutionStrategy.force libs.trove4j
         }
     }
 
-    test {
-        useJUnitPlatform()
-    }
-
-    tasks.named('test') {
+    tasks.named('test', Test) {
         useJUnitPlatform {
             filter { //filter test groups that do not have to run on every commit
                 excludeTestsMatching "*IntegrationTest"
@@ -324,6 +259,8 @@ allprojects {
     //We usually just do them for the sirius-sdk. Maybe also for the cli
     def integrationTest = tasks.register("integrationTest", Test) {
         group = 'verification'
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
         useJUnitPlatform {
             filter {
                 includeTestsMatching "*IntegrationTest"
@@ -335,6 +272,8 @@ allprojects {
 
     def acceptanceTest = tasks.register("acceptanceTest", Test) {
         group = 'verification'
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
         useJUnitPlatform {
             filter {
                 includeTestsMatching "*AcceptanceTest"
@@ -342,6 +281,10 @@ allprojects {
             }
             maxHeapSize = "16G"
         }
+    }
+
+    tasks.withType(AbstractCopyTask).configureEach {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }
 
@@ -405,7 +348,7 @@ subprojects {
 }
 
 tasks.register('refreshDownloadLinks') {
-    File webPath = getBuildDir().toPath().resolve('tmp/webSite/').toFile()
+    File webPath = layout.buildDirectory.dir('tmp/webSite/').get().asFile
     group = 'publishing'
     File outfile = new File(webPath, "sirius-download.md")
     outputs.file(outfile)
@@ -440,7 +383,7 @@ String cleanVersion = fingeridVersion.toString().replace('-SNAPSHOT', '')
 String minorVersion = "${cleanVersion.split('[.]')[0]}.${cleanVersion.split('[.]')[1]}"
 
 tasks.register('refreshTrainingLinks') {
-    File webPath = getBuildDir().toPath().resolve('tmp/webSite/').toFile()
+    File webPath = layout.buildDirectory.dir('tmp/webSite/').get().asFile
     group = 'publishing'
     File outfile = new File(webPath, "sirius-training.md")
     outputs.file(outfile)

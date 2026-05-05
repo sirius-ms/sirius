@@ -24,7 +24,7 @@ allprojects {
 
 dependencies {
     // deprecated for removal ->  use fastutil instead
-    implementation "net.sf.trove4j:core:$trove_version"
+    implementation libs.trove4j
 
     //project
     api project(':fingerid_base_oss')

@@ -26,14 +26,14 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.jackson.Jacksonized;
+import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ToString
 @Getter
 @Builder
-@Jacksonized
+@AllArgsConstructor
 @EqualsAndHashCode
 public class DetectedAdduct implements Comparable<DetectedAdduct> {
     public static de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct empty(@NotNull de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {

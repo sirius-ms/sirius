@@ -30,7 +30,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.jackson.Jacksonized;
+import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +39,7 @@ import java.util.List;
 
 @Getter
 @Builder
-@Jacksonized
+@AllArgsConstructor
 public class SpectralLibraryMatch {
 
     @Schema(name = "SpectralLibraryMatchOptField", nullable = true)

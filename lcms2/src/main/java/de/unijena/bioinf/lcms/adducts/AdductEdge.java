@@ -2,10 +2,12 @@ package de.unijena.bioinf.lcms.adducts;
 
 import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractFeature;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 import java.util.Locale;
 
+@Slf4j
 public class AdductEdge {
 
     public boolean isValid() {
@@ -56,9 +58,9 @@ public class AdductEdge {
         this.extraSampleCorrelation=Float.NaN;
         this.interSampleCorrelation = Float.NaN;
         this.interSampleCorrelationRepresentative = Float.NaN;
-        if (explanations.length>1) {
-            System.err.println("multiple explanations: " + Arrays.toString(explanations));
-        }
+        if (explanations.length > 1)
+            log.debug("multiple explanations: {}", Arrays.toString(explanations));
+
         this.edgeType = EdgeType.OTHER;
         for (KnownMassDelta m : explanations) {
             if (m instanceof AdductRelationship) {

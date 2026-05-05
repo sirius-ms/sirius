@@ -39,10 +39,11 @@ dependencies {
     api project(':biotransformations')
     implementation project(':structure_matching')
 
-    testImplementation "io.hypersistence:hypersistence-tsid:2.1.1"
+    testImplementation libs.hypersistenceTsid
 
-
-
-    for (module in ["interfaces", "data", "io", "interfaces", "smiles", "silent"])
-        api "org.openscience.cdk:cdk-$module:$cdk_version"
+    api libs.cdkInterfaces
+    api libs.cdkData
+    api libs.cdkIo
+    api libs.cdkSmiles
+    api libs.cdkSilent
 }

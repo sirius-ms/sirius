@@ -20,13 +20,17 @@
 version =  siriusVersion
 dependencies {
     // deprecated for removal ->  use fastutil instead
-    implementation 'net.sf.trove4j:core:3.1.0'
+    implementation libs.trove4j
 
     annotationProcessor project(':default_properties:processor')
     api project(':chemistry_base')
     api project(':mass_decomposition:mass_decomposer')
 
-    for (module in ["fingerprint", "data", "interfaces", "smiles", "core", "silent", "isomorphism"]) {
-        api "org.openscience.cdk:cdk-$module:$cdk_version"
-    }
+    api libs.cdkFingerprint
+    api libs.cdkData
+    api libs.cdkInterfaces
+    api libs.cdkSmiles
+    api libs.cdkCore
+    api libs.cdkSilent
+    api libs.cdkIsomorphism
 }

@@ -3,7 +3,7 @@ package de.unijena.bioinf.storage.db.nosql;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-import javax.validation.constraints.NotNull;
+import org.jetbrains.annotations.NotNull;
 
 @Getter
 @EqualsAndHashCode

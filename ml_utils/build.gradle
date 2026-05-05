@@ -22,6 +22,6 @@ group = 'de.unijena.bioinf.utils'
 version =  fingeridVersion
 dependencies {
     // external
-    implementation group: "de.bwaldvogel", name: "liblinear", version: "$liblinear_version"
-    implementation group: "tw.edu.ntu.csie", name: "libsvm", version: "$libsvm_version"
+    implementation libs.liblinear
+    implementation libs.libsvm
 }
