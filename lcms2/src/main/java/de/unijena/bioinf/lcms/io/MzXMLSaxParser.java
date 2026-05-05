@@ -56,6 +56,7 @@ import java.util.Base64;
 import java.util.Calendar;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -142,7 +143,7 @@ class MzXMLSaxParser extends DefaultHandler {
     @Override
     public void characters(char[] ch, int start, int length) {
         if (handler.listening) {
-            buffer.append(ch, start,length);
+            buffer.append(ch, start, length);
         }
     }
 
@@ -150,10 +151,24 @@ class MzXMLSaxParser extends DefaultHandler {
         if (scanids.isEmpty()) {
             throw new RuntimeException("No spectra imported from " + sourcePath);
         }
-        if (surpressEmptySpectraScanNumbers.size()>100) {
-            log.error("There were " + surpressEmptySpectraScanNumbers.size() + " spectra without any spectral data.");
+        if (surpressEmptySpectraScanNumbers.size() > 100) {
+            log.warn("There were {} spectra without any spectral data. Scan numbers: {}...{}",
+                    surpressEmptySpectraScanNumbers.size(),
+                    surpressEmptySpectraScanNumbers.intStream()
+                            .sorted()
+                            .limit(50)
+                            .mapToObj(String::valueOf)
+                            .collect(Collectors.joining(",")),
+                    surpressEmptySpectraScanNumbers.intStream()
+                            .sorted()
+                            .skip(surpressEmptySpectraScanNumbers.size() - 50)
+                            .mapToObj(String::valueOf)
+                            .collect(Collectors.joining(",")));
         } else {
-            log.error("The following spectra did not contain any spectral data: " + surpressEmptySpectraScanNumbers.toString());
+            log.warn("The following spectra did not contain any spectral data. Scan numbers: {}",
+                    surpressEmptySpectraScanNumbers.intStream()
+                            .mapToObj(String::valueOf)
+                            .collect(Collectors.joining(",")));
         }
         surpressEmptySpectraScanNumbers.clear();
 
@@ -177,7 +192,7 @@ class MzXMLSaxParser extends DefaultHandler {
             this.listening = true;
         }
 
-        public void listen(boolean value){
+        public void listen(boolean value) {
             this.listening = value;
         }
 
@@ -208,7 +223,7 @@ class MzXMLSaxParser extends DefaultHandler {
         }
 
         public void pop() {
-            handler = stack.remove(stack.size()-1);
+            handler = stack.remove(stack.size() - 1);
         }
     }
 
@@ -221,7 +236,7 @@ class MzXMLSaxParser extends DefaultHandler {
                     push(new MsInstrumentHandler());
                     break;
                 case "dataProcessing":
-                    if (!isTrue(attrs,"centroided")) {
+                    if (!isTrue(attrs, "centroided")) {
                         log.warn("Spectra in file " + sourcePath + "are possibly not centroided! Please check the input data.");
                     } else {
                         centroided = true;
@@ -234,7 +249,8 @@ class MzXMLSaxParser extends DefaultHandler {
         }
 
         @Override
-        public void leaveElement(String elementName, String content) {}
+        public void leaveElement(String elementName, String content) {
+        }
 
     }
 
@@ -265,7 +281,7 @@ class MzXMLSaxParser extends DefaultHandler {
 
     public class ScanHandler extends Handler {
         double retentionTime;
-        CollisionEnergy collisionEnergy ;
+        CollisionEnergy collisionEnergy;
         byte msLevel;
         int npeaks;
         int scanNumber;
@@ -283,18 +299,18 @@ class MzXMLSaxParser extends DefaultHandler {
 
         public ScanHandler(Attributes attr) {
             retentionTime = get(attr, "retentionTime", 0d, (s) -> datatypeFactory.newDuration(s).getTimeInMillis(Calendar.getInstance()) / 1000d);
-            collisionEnergy = get(attr,"collisionEnergy", CollisionEnergy.none(), x -> new CollisionEnergy(Double.parseDouble(x)));
+            collisionEnergy = get(attr, "collisionEnergy", CollisionEnergy.none(), x -> new CollisionEnergy(Double.parseDouble(x)));
             msLevel = get(attr, "msLevel", (byte) 1, Byte::parseByte);
-            npeaks = get(attr,"peaksCount",0, Integer::parseInt);
+            npeaks = get(attr, "peaksCount", 0, Integer::parseInt);
             scanNumber = get(attr, "num", -1, Integer::parseInt);
             polarity = switch (get(attr, "polarity", "any")) {
                 case "+" -> Polarity.POSITIVE;
                 case "-" -> Polarity.NEGATIVE;
                 default -> Polarity.UNKNOWN;
             };
-            if (samplePolarity == 0)  {
+            if (samplePolarity == 0) {
                 samplePolarity = polarity.charge;
-            } else if (polarity.charge != 0 && (polarity.charge > 0) != (samplePolarity > 0) ) {
+            } else if (polarity.charge != 0 && (polarity.charge > 0) != (samplePolarity > 0)) {
                 throw new RuntimeException("Preprocessing does not support LCMS runs with different polarities.");
             }
         }
@@ -380,7 +396,7 @@ class MzXMLSaxParser extends DefaultHandler {
                                     ms1Ids.put(scanNumber, scan.getScanId());
                                 }
 
-                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(),scanNumber, Integer.toString(scanNumber), polarity.charge, centroided);
+                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), scanNumber, Integer.toString(scanNumber), polarity.charge, centroided);
                                 retentionTimes.add(retentionTime);
                                 idmap.put(scanNumber, scanids.size());
                                 scanids.add(scanNumber);
@@ -426,7 +442,7 @@ class MzXMLSaxParser extends DefaultHandler {
             totalBuffer.clear();
             final Inflater inflater = new Inflater();
             inflater.setInput(Base64.getDecoder().decode(content));
-            while (true){
+            while (true) {
                 try {
                     int written = inflater.inflate(bytebuffer);
                     if (written == 0) return totalBuffer.toArray(new byte[0]);
