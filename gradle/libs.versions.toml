@@ -1,6 +1,6 @@
 [versions]
-springBoot = "4.0.4"
-springDoc = "3.0.2"
+springBoot = "4.0.6"
+springDoc = "3.0.3"
 jjobs = "0.10.0"
 cdk = "2.9"
 jetbrainsAnnotations = "26.0.1"
@@ -172,8 +172,6 @@ jsvg = { group = "com.github.weisj", name = "jsvg", version.ref = "jsvg" }
 spinnerProgress = { group = "raven.swing", name = "spinner-progress", version.ref = "spinnerProgress" }
 miglayout = { group = "com.miglayout", name = "miglayout", version.ref = "miglayout" }
 secureApi = { group = "com.brightgiant", name = "secure-api", version.ref = "secureApi" }
-jmzml = { group = "uk.ac.ebi.jmzml", name = "jmzml", version.ref = "jmzml" }
-xxindex = { group = "psidev.psi.tools", name = "xxindex", version.ref = "xxindex" }
 hypersistenceTsid = { group = "io.hypersistence", name = "hypersistence-tsid", version.ref = "hypersistenceTsid" }
 ssj = { group = "ca.umontreal.iro.simul", name = "ssj", version.ref = "ssj" }
 commonsBeanutils = { group = "commons-beanutils", name = "commons-beanutils", version.ref = "commonsBeanutils" }
@@ -227,6 +225,11 @@ cdkSmarts = { group = "org.openscience.cdk", name = "cdk-smarts", version.ref = 
 
 cmlxom = { group = "org.xml-cml", name = "cmlxom", version.ref = "cmlxom" }
 grappa = { group = "att.grappa", name = "grappa", version.ref = "grappa" }
+
+#jmzml is very OLD and need legacy jmzml with different namespace. Do only use as runtimeOnly
+jmzml = { group = "uk.ac.ebi.jmzml", name = "jmzml", version.ref = "jmzml" }
+xxindex = { group = "psidev.psi.tools", name = "xxindex", version.ref = "xxindex" }
+legacyJaxbImpl = { group = "stealth.com.sun.xml.bind", name = "jaxb-impl", version = { strictly = "2.3.9" } }
 
 [plugins]
 sonatypeScan = { id = "org.sonatype.gradle.plugins.scan", version = "3.1.3" }
