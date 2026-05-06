@@ -201,6 +201,7 @@ distributions {
             } else {
                 into('bin') {
                     from startScripts
+                    filePermissions { unix(0755) }
                 }
             }
             from("${rootDir}") {
@@ -214,6 +215,11 @@ distributions {
                 into('runtime') {
                     from {
                         "${parent.tasks.getByName('extractRuntimeImage').outputs.files.singleFile}"
+                    }
+                    eachFile { f ->
+                        if (f.relativePath.segments.contains('bin')) {
+                            f.permissions.unix(0755)
+                        }
                     }
                 }
             }
