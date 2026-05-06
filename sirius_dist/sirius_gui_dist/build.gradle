@@ -6,9 +6,11 @@ import java.util.stream.Collectors
 
 plugins {
     id 'com.github.jk1.dependency-license-report' version '2.8'
+    id 'edu.sc.seis.launch4j' version '4.0.0'
 }
 
 apply plugin: "application"
+apply plugin: 'edu.sc.seis.launch4j'
 apply plugin: 'org.springframework.boot'
 
 version = siriusFrontendVersion
@@ -122,7 +124,7 @@ tasks.register('createGuiExe', Launch4jLibraryTask) {
     headerType = "gui"
     cmdLine = "rest -s --gui"
 }
-createGuiExe.dependsOn 'launch4j'
+createGuiExe.dependsOn 'createExe'
 
 
 startScripts {
@@ -228,9 +230,9 @@ siriusDistZip.dependsOn 'generateLicenseReport'
 siriusDistTar.dependsOn 'generateLicenseReport'
 
 if (siriusTargetPlatform.isWin()) {
-    installSiriusDist.dependsOn('launch4j')
-    siriusDistZip.dependsOn('launch4j')
-    siriusDistTar.dependsOn('launch4j')
+    installSiriusDist.dependsOn('createExe')
+    siriusDistZip.dependsOn('createExe')
+    siriusDistTar.dependsOn('createExe')
 
     installSiriusDist.dependsOn('createGuiExe')
     siriusDistZip.dependsOn('createGuiExe')
