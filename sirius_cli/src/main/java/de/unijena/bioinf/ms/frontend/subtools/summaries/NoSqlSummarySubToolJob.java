@@ -399,8 +399,8 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             }
 
 
-                            boolean idNothingWritten = true;
-                            boolean analogNothingWritten = true;
+                            boolean idNothingWritten = false;
+                            boolean analogNothingWritten = false;
                             if (match.isIdentity()) {
                                 idNothingWritten = writeSpectraMatches(idSpecMatches, idSpecMatchesAll, idSpecMatchesTopK, feature, idRank, match, query, reference);
                                 idRank++;
