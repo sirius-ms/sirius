@@ -272,7 +272,7 @@ distImage {
     macPackageName = 'SIRIUS'
     if (siriusTargetPlatform.isWin()) {
         //HACK additional windows launchers are imported from launch4j, this is just fake to register it for the start menu. must be a valid path but file must not exists
-        launchers = ["sirius-gui": "${createGuiExe.outfile}"]
+        launchers = ["sirius-gui": createGuiExe.outfile.get()]
     }
 }
 
