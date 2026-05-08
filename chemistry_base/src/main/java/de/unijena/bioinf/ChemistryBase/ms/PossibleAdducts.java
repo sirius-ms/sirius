@@ -89,15 +89,15 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Proces
     }
 
     public PossibleAdducts keepOnlyPositive() {
-        return new PossibleAdducts(value.stream().filter(it -> it.getCharge() > 1).collect(Collectors.toSet()));
+        return new PossibleAdducts(value.stream().filter(it -> it.getCharge() > 1).collect(Collectors.toList()));
     }
 
     public PossibleAdducts keepOnlyNegative() {
-        return new PossibleAdducts(value.stream().filter(it -> it.getCharge() < 1).collect(Collectors.toSet()));
+        return new PossibleAdducts(value.stream().filter(it -> it.getCharge() < 1).collect(Collectors.toList()));
     }
 
     public PossibleAdducts keepOnly(final int charge) {
-        return new PossibleAdducts(value.stream().filter(it -> it.getCharge() == charge).collect(Collectors.toSet()));
+        return new PossibleAdducts(value.stream().filter(it -> it.getCharge() == charge).collect(Collectors.toList()));
     }
 
     public Set<IonMode> getIonModes() {
@@ -124,19 +124,23 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Proces
     }
 
     public static PossibleAdducts union(PossibleAdducts p1, Set<PrecursorIonType> p2) {
-        return new PossibleAdducts(Stream.concat(p1.value.stream(),p2.stream()).collect(Collectors.toSet()));
+        return new PossibleAdducts(Stream.concat(p1.value.stream(),p2.stream()).collect(Collectors.toList()));
+    }
+
+    public static PossibleAdducts union(Set<PrecursorIonType> p1, PossibleAdducts p2) {
+        return new PossibleAdducts(Stream.concat(p1.stream(),p2.value.stream()).collect(Collectors.toList()));
     }
 
     public static PossibleAdducts union(PossibleAdducts p1, PossibleAdducts p2) {
-        return new PossibleAdducts(Stream.concat(p1.value.stream(),p2.value.stream()).collect(Collectors.toSet()));
+        return new PossibleAdducts(Stream.concat(p1.value.stream(),p2.value.stream()).collect(Collectors.toList()));
     }
 
     public static PossibleAdducts intersection(PossibleAdducts p1, Set<PrecursorIonType> p2) {
-        return new PossibleAdducts(p1.value.stream().filter(p2::contains).collect(Collectors.toSet()));
+        return new PossibleAdducts(p1.value.stream().filter(p2::contains).collect(Collectors.toList()));
     }
 
     public static PossibleAdducts intersection(PossibleAdducts p1, PossibleAdducts p2) {
-        return new PossibleAdducts(p1.value.stream().filter(p2::contains).collect(Collectors.toSet()));
+        return new PossibleAdducts(p1.value.stream().filter(p2::contains).collect(Collectors.toList()));
     }
 
     public int size() {
