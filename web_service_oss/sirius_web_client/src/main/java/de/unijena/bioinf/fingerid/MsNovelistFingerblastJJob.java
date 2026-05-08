@@ -50,12 +50,8 @@ import de.unijena.bioinf.webapi.WebAPI;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.aromaticity.Aromaticity;
-import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.graph.CycleFinder;
-import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -149,20 +145,23 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
                             protected List<Pair<FingerprintCandidate, MsNovelistCandidate>> compute() {
                                 List<Pair<FingerprintCandidate, MsNovelistCandidate>> result = new ArrayList<>(l.size());
                                 l.forEach(candidate -> {
-                                    InChI inchi = InChISMILESUtils.getInchiFromSmilesOrThrow(candidate.getSmiles(), false);
-                                    FingerprintCandidate fingerprintCandidate = dbCandidates.get(inchi.key2D());
+                                    try {
+                                        InChI inchi = InChISMILESUtils.getInchiFromSmiles(candidate.getSmiles(), false);
+                                        FingerprintCandidate fingerprintCandidate = dbCandidates.get(inchi.key2D());
+                                        if (fingerprintCandidate == null) {
+                                            IAtomContainer molecule = deNovoStructureUtils.perceiveAromaticityOnSMILES(candidate.getSmiles());
+                                            if (Objects.isNull(molecule)) return;
 
-                                    if (fingerprintCandidate == null) {
-                                        IAtomContainer molecule = deNovoStructureUtils.perceiveAromaticityOnSMILES(candidate.getSmiles());
-                                        if (Objects.isNull(molecule)) return;
-
-                                        fingerprintCandidate = new FingerprintCandidate(
-                                                inchi,
-                                                Objects.requireNonNull(fpMask.mask(fixedFingerprinter.computeFingerprint(molecule)))
-                                        );
-                                        fingerprintCandidate.setSmiles(candidate.getSmiles());
+                                            fingerprintCandidate = new FingerprintCandidate(
+                                                    inchi,
+                                                    Objects.requireNonNull(fpMask.mask(fixedFingerprinter.computeFingerprint(molecule)))
+                                            );
+                                            fingerprintCandidate.setSmiles(candidate.getSmiles());
+                                        }
+                                        result.add(Pair.of(fingerprintCandidate, candidate));
+                                    } catch (CDKException | RuntimeException e) {
+                                        logError("Cannot add MSNovelist-generate molecule structure '{}'.", candidate.getSmiles(), e);
                                     }
-                                    result.add(Pair.of(fingerprintCandidate, candidate));
                                 });
                                 return result;
                             }
