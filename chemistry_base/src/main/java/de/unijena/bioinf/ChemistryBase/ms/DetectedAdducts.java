@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
@@ -140,7 +141,7 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
             if (inputAdducts.isEmpty()){
                 warnIsEmpty(Source.INPUT_FILE);
             } else if (!inputAdducts.hasUnknownIontype()) {
-                return inputAdducts;
+                return cleanAdducts(inputAdducts);
             } else {
                 //input file detected adduct annotation contains unknown adduct.
                 //Probably a very uncommon way to specify this
@@ -148,17 +149,17 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
         }
         if (adductSettings.isIgnoreDetectedAdducts()) {
             //use fallback plus enforced. Enforced adducts are added in processwithAdductSettingsAndClean
-            return processwithAdductSettingsAndClean(new PossibleAdducts(adductSettings.getEnforced(charge)), adductSettings, charge);
+            return cleanAdducts(new PossibleAdducts(adductSettings.getEnforced(charge)));
         }
         PossibleAdducts primaryAdductsOrFallback = getPrimaryAdducts()
-                .map(pa -> (allowFallbackAdducts(pa)) ? PossibleAdducts.union(pa, adductSettings.getFallback(charge)) : pa)
+                .map(pa -> (allowFallbackAdducts(pa)) ? PossibleAdducts.union(pa, adductSettings.getFallback(charge)) : pa)  //respect order (first primary, then fallback) when removing adducts with duplicate MF - kept in order for cleaning
                 .orElse(new PossibleAdducts(adductSettings.getFallback(charge)));
 
         if (hasPrimarySourceThatForbidsAdditionalSources()) return processwithAdductSettingsAndClean(primaryAdductsOrFallback, adductSettings, charge);
 
         Optional<PossibleAdducts> additionalAdducts = getAdditionalAdducts();
         if (additionalAdducts.isEmpty()) return processwithAdductSettingsAndClean(primaryAdductsOrFallback, adductSettings, charge);
-        else return processwithAdductSettingsAndClean(PossibleAdducts.union(primaryAdductsOrFallback, additionalAdducts.get()), adductSettings, charge);
+        else return processwithAdductSettingsAndClean(PossibleAdducts.union(primaryAdductsOrFallback, additionalAdducts.get()), adductSettings, charge); //respect order (first primary+fallback, additional) when removing adducts with duplicate MF - kept in order for cleaning
     }
 
     private boolean allowFallbackAdducts(PossibleAdducts pa) {
@@ -179,14 +180,31 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
 
     /**
      * 1. remove unknown and not supported adducts
+     * 2. ensure that there are no 2 adducts that would result in the same compound formula.
      * 2. guarantees that for intrinsically charged compounds, never both, "[M]+ and [M+H]+" or "[M]- and [M-H]-", are contained. This prevents issues with duplicate structure candidates in subsequent steps. [M+H]+ and [M-H]- are favored.
      * @param possibleAdducts
      * @return
      */
     private PossibleAdducts cleanAdducts(PossibleAdducts possibleAdducts) {
-        Set<PrecursorIonType> adducts = possibleAdducts.getAdducts().stream().filter(a -> !a.isIonizationUnknown() && a.isSupportedForFragmentationTreeComputation()).collect(Collectors.toCollection(HashSet::new));
+        HashMap<MolecularFormula, PrecursorIonType> formulaToAdduct = new LinkedHashMap<>();
+
+        possibleAdducts.value.stream().filter(a -> !a.isIonizationUnknown() && a.isSupportedForFragmentationTreeComputation()).forEachOrdered(a -> {
+            MolecularFormula mf = a.precursorIonToNeutralMolecule(MolecularFormula.emptyFormula());
+            if (formulaToAdduct.containsKey(mf)) {
+                LoggerFactory.getLogger(this.getClass()).debug("Adduct that would result in the identical compound molecular formula already present '{}', skipping '{}'.", formulaToAdduct.get(mf), a);
+            } else {
+                formulaToAdduct.put(mf, a);
+            }
+        });
+
+
+        Collection<PrecursorIonType> adducts = formulaToAdduct.values();
         if (adducts.contains(M_PLUS) && adducts.contains(M_H_PLUS)) adducts.remove(M_PLUS);
         if (adducts.contains(M_MINUS) && adducts.contains(M_MINUS_H_MINUS)) adducts.remove(M_MINUS);
+
+        if (adducts.isEmpty())
+            LoggerFactory.getLogger(this.getClass()).debug("No supported adduct present."); //can be the case for multimeres and multiple charged.
+
         return new PossibleAdducts(adducts);
     }
 
@@ -199,12 +217,9 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
      */
     private PossibleAdducts processwithAdductSettingsAndClean(PossibleAdducts possibleAdducts, AdductSettings as, int charge) {
         if (!as.getEnforced(charge).isEmpty())
-            possibleAdducts = PossibleAdducts.union(possibleAdducts, as.getEnforced(charge));
+            possibleAdducts = PossibleAdducts.union(as.getEnforced(charge), possibleAdducts); //respect order (prefer enforced) when removing adducts with duplicate MF - in order to ensure enforced are kept when cleaning (could be arguably also changed so that primary/fallback are kept)
 
         possibleAdducts = cleanAdducts(possibleAdducts);
-
-        if (possibleAdducts.isEmpty())
-            LoggerFactory.getLogger(this.getClass()).debug("No supported adduct present."); //can be the case for multimeres and multiple charged.
 
         return possibleAdducts;
     }
