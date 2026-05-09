@@ -35,7 +35,8 @@ done
 SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.." >/dev/null
 APP_HOME="`pwd -P`"
-cd "$SAVED" >/dev/null
+
+#resetWorkingDir#
 
 #configure java library path
 JAVA_LIBRARY_PATH="#javaLibPath#"
