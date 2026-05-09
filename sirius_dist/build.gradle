@@ -235,6 +235,7 @@ subprojects {
                 f = file("$appRootTarget/bin/sirius")
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "sh"
+                templateBinding.resetWorkingDir = "cd \"\$SAVED\" >/dev/null"
                 templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
                 templateBinding.javaLibPath = ""//includeRuntime ? "\$APP_HOME/lib/runtime/lib" : ""
                 templateBinding.gurobiHome = "/lib"
@@ -246,6 +247,16 @@ subprojects {
                 f = file("$appRootTarget/MacOS/sirius")
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "zsh"
+                templateBinding.resetWorkingDir =
+                        "# If the current directory is the root (/), we are likely being\n" +
+                                "# launched by Finder/macOS. Move to APP_HOME to find resources.\n" +
+                                "if [ \"\$SAVED\" = \"/\" ]; then\n" +
+                                "  cd \"\$APP_HOME\" >/dev/null\n" +
+                                "else\n" +
+                                "  # If we are anywhere else, the user likely launched this\n" +
+                                "  # from a Terminal and wants to stay in their current folder.\n" +
+                                "  cd \"\$SAVED\" >/dev/null\n" +
+                                "fi"
                 templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
                 templateBinding.javaLibPath = ""//includeRuntime ? "\$APP_HOME/runtime/Contents/Home/lib" : ""
                 templateBinding.gurobiHome = "/lib"

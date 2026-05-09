@@ -70,8 +70,8 @@ distributions {
             into('bin') {
                 from("build/install/${project.name}/bin") {
                     exclude("*.bat")
+                    filePermissions { unix(0755) }
                 }
-
             }
         }
 

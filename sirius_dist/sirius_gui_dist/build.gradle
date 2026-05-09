@@ -140,6 +140,19 @@ startScripts {
             ]
             def sf = file("${rootDir}/scripts/sirius.sh.templ")
             templateBinding.shell = "sh"
+            if (siriusTargetPlatform.isLinux())
+                templateBinding.resetWorkingDir = "cd \"\$SAVED\" >/dev/null"
+            else if (siriusTargetPlatform.isMac())
+                templateBinding.resetWorkingDir =
+                        "# If the current directory is the root (/), we are likely being\n" +
+                        "# launched by Finder/macOS. Move to APP_HOME to find resources.\n" +
+                        "if [ \"\$SAVED\" = \"/\" ]; then\n" +
+                        "  cd \"\$APP_HOME\" >/dev/null\n" +
+                        "else\n" +
+                        "  # If we are anywhere else, the user likely launched this\n" +
+                        "  # from a Terminal and wants to stay in their current folder.\n" +
+                        "  cd \"\$SAVED\" >/dev/null\n" +
+                        "fi"
             templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
             templateBinding.javaLibPath = ""
             templateBinding.gurobiHome = "/lib"
@@ -201,6 +214,7 @@ distributions {
             } else {
                 into('bin') {
                     from startScripts
+                    filePermissions { unix(0755) }
                 }
             }
             from("${rootDir}") {
@@ -214,6 +228,11 @@ distributions {
                 into('runtime') {
                     from {
                         "${parent.tasks.getByName('extractRuntimeImage').outputs.files.singleFile}"
+                    }
+                    eachFile { f ->
+                        if (f.relativePath.segments.contains('bin')) {
+                            f.permissions.unix(0755)
+                        }
                     }
                 }
             }
