@@ -160,7 +160,7 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
                                         }
                                         result.add(Pair.of(fingerprintCandidate, candidate));
                                     } catch (CDKException | RuntimeException e) {
-                                        logError("Cannot add MSNovelist-generate molecule structure '{}'.", candidate.getSmiles(), e);
+                                        logError("Cannot add MSNovelist-generated molecule structure '{}'.", candidate.getSmiles(), e);
                                     }
                                 });
                                 return result;
