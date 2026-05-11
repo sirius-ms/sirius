@@ -231,7 +231,9 @@ distributions {
                     }
                     eachFile { f ->
                         if (f.relativePath.segments.contains('bin')) {
-                            f.permissions.unix(0755)
+                            f.permissions {
+                                unix(0755)
+                            }
                         }
                     }
                 }
