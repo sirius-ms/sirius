@@ -20,6 +20,6 @@
 
 dependencies {
     api project(':retention_order_prediction_oss')
-    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    implementation libs.slf4jJdk14
     implementation "com.gurobi:gurobi-jar:$gurobi_version"
 }

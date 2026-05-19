@@ -4,22 +4,14 @@ import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
 
 import java.util.stream.Collectors
 
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:$spring_boot_version")
-    }
-}
-
 plugins {
     id 'com.github.jk1.dependency-license-report' version '2.8'
+    id 'edu.sc.seis.launch4j' version '4.0.0'
 }
 
 apply plugin: "application"
+apply plugin: 'edu.sc.seis.launch4j'
 apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
 
 version = siriusFrontendVersion
 
@@ -71,19 +63,57 @@ dependencies {
     testImplementation project(':sirius_dist').sourceSets.test.output //needed for the TestLocal tests
 }
 
-mainClassName = 'org.springframework.boot.loader.launch.JarLauncher'
+ext {
+//    mainClassNameGlobal = 'org.springframework.boot.loader.launch.JarLauncher'
+    mainClassNameGlobal = 'de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication'
+}
+
 def bootJarTask = project(':sirius_rest_service').tasks.named('bootJar')
 
+//###################################### AOT post processing #########################################
+
+// 1. Define the extraction task
+tasks.register('extractForLeyden', Exec) {
+    group = 'build'
+    description = 'Extracts the Spring Boot fat JAR into a flat structure for Project Leyden'
+
+    // Ensure this runs AFTER the fat jar is fully built
+    dependsOn bootJarTask
+
+    // Grab the built jar file and define the output folder
+    def jarFile = bootJarTask.get().outputs.files.singleFile
+    def outputDir = layout.buildDirectory.dir("optimized-app").get().asFile
+    outputs.dir(outputDir)
+
+    // Clear the old extracted folder if it exists
+    doFirst {
+        delete(outputDir)
+    }
+
+    // Execute the exact extraction command
+    commandLine "java",
+            "-Djarmode=tools",
+            "-jar", jarFile.absolutePath,
+            "extract",
+            "--destination", outputDir.absolutePath
+}
+
+// 2. Hook it into the standard build lifecycle
+tasks.named('build') {
+    dependsOn 'extractForLeyden'
+}
+
+
 application {
-    mainClass = project.mainClassName
+    mainClass = mainClassNameGlobal
     applicationDefaultJvmArgs = project.siriusJvmArgs
     executableDir = 'bin'
 }
 
 
 launch4j {
-    mainClassName = project.mainClassName
-    jar = bootJarTask.map { getLibraryDir() + File.separator + it.archiveFileName.get() }
+    mainClassName = mainClassNameGlobal
+    jarTask = bootJarTask
     jvmOptions = project.siriusJvmArgs as Set
 }
 
@@ -94,7 +124,7 @@ tasks.register('createGuiExe', Launch4jLibraryTask) {
     headerType = "gui"
     cmdLine = "rest -s --gui"
 }
-createGuiExe.dependsOn 'launch4j'
+createGuiExe.dependsOn 'createExe'
 
 
 startScripts {
@@ -106,10 +136,23 @@ startScripts {
         if (!siriusTargetPlatform.isWin()) {
             def templateBinding = [
                     toolName : "SIRIUS",
-                    mainClass: project.mainClassName
+                    mainClass: mainClassNameGlobal
             ]
             def sf = file("${rootDir}/scripts/sirius.sh.templ")
             templateBinding.shell = "sh"
+            if (siriusTargetPlatform.isLinux())
+                templateBinding.resetWorkingDir = "cd \"\$SAVED\" >/dev/null"
+            else if (siriusTargetPlatform.isMac())
+                templateBinding.resetWorkingDir =
+                        "# If the current directory is the root (/), we are likely being\n" +
+                        "# launched by Finder/macOS. Move to APP_HOME to find resources.\n" +
+                        "if [ \"\$SAVED\" = \"/\" ]; then\n" +
+                        "  cd \"\$APP_HOME\" >/dev/null\n" +
+                        "else\n" +
+                        "  # If we are anywhere else, the user likely launched this\n" +
+                        "  # from a Terminal and wants to stay in their current folder.\n" +
+                        "  cd \"\$SAVED\" >/dev/null\n" +
+                        "fi"
             templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
             templateBinding.javaLibPath = ""
             templateBinding.gurobiHome = "/lib"
@@ -117,6 +160,7 @@ startScripts {
             templateBinding.jvmOpts = "${application.applicationDefaultJvmArgs.stream().collect(Collectors.joining(' '))}"
             templateBinding.javaCommand = "\$APP_HOME/runtime/bin/java"
             templateBinding.jarHome = libDir == null ? "\$APP_HOME/app" : libDir
+            templateBinding.siriusWsDir = project.siriusWsDir
 
             String script = sf.text
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
@@ -130,7 +174,7 @@ startScripts {
             //reset binding and create windows bat
             def templateBinding = [
                     toolName : "SIRIUS",
-                    mainClass: project.mainClassName
+                    mainClass: mainClassNameGlobal
             ]
             // write bat
             def sf = file("${rootDir}/scripts/sirius.bat.templ")
@@ -139,6 +183,7 @@ startScripts {
             templateBinding.jarHome = libDir == null ? "%APP_HOME%\\app" : libDir
             templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
             templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
+            templateBinding.siriusWsDir = project.siriusWsDir
 
             String script = sf.text
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
@@ -150,15 +195,17 @@ startScripts {
     }
 }
 
+
+
 distributions {
     sirius {
         contents {
             into('app') {
-                from(bootJarTask)
+                from(tasks.named('extractForLeyden'))
             }
             if (siriusTargetPlatform.isWin()) {
                 from startScripts
-                from("${buildDir}/launch4j") {
+                from(layout.buildDirectory.dir("launch4j").get().asFile) {
                     include("*.exe")
                 }
                 into('ExplorerLicTester') {
@@ -167,19 +214,27 @@ distributions {
             } else {
                 into('bin') {
                     from startScripts
+                    filePermissions { unix(0755) }
                 }
             }
             from("${rootDir}") {
                 include('COPYING.txt')
                 include('LICENSE.txt')
             }
-            from("${buildDir}/reports/dependency-license") {
+            from(layout.buildDirectory.dir("reports/dependency-license").get().asFile) {
                 include('licenses.md')
             }
             if (includeRuntime) {
-                into('runtime'){
+                into('runtime') {
                     from {
                         "${parent.tasks.getByName('extractRuntimeImage').outputs.files.singleFile}"
+                    }
+                    eachFile { f ->
+                        if (f.relativePath.segments.contains('bin')) {
+                            f.permissions {
+                                unix(0755)
+                            }
+                        }
                     }
                 }
             }
@@ -187,18 +242,18 @@ distributions {
     }
 }
 
-installSiriusDist.dependsOn bootJarTask
-siriusDistZip.dependsOn bootJarTask
-siriusDistTar.dependsOn bootJarTask
+installSiriusDist.dependsOn('extractForLeyden')
+siriusDistZip.dependsOn('extractForLeyden')
+siriusDistTar.dependsOn('extractForLeyden')
 
 installSiriusDist.dependsOn('generateLicenseReport')
 siriusDistZip.dependsOn 'generateLicenseReport'
 siriusDistTar.dependsOn 'generateLicenseReport'
 
-if(siriusTargetPlatform.isWin()){
-    installSiriusDist.dependsOn('launch4j')
-    siriusDistZip.dependsOn('launch4j')
-    siriusDistTar.dependsOn('launch4j')
+if (siriusTargetPlatform.isWin()) {
+    installSiriusDist.dependsOn('createExe')
+    siriusDistZip.dependsOn('createExe')
+    siriusDistTar.dependsOn('createExe')
 
     installSiriusDist.dependsOn('createGuiExe')
     siriusDistZip.dependsOn('createGuiExe')
@@ -206,7 +261,7 @@ if(siriusTargetPlatform.isWin()){
 }
 
 
-if (includeRuntime){
+if (includeRuntime) {
     installSiriusDist.dependsOn parent.tasks.named('extractRuntimeImage')
     siriusDistZip.dependsOn parent.tasks.named('extractRuntimeImage')
     siriusDistTar.dependsOn parent.tasks.named('extractRuntimeImage')
@@ -231,14 +286,14 @@ distImage {
     runtimeImageDirectory = installSiriusDist.outputs.files.singleFile.toPath().resolve("runtime").toFile()
     inputDir = installSiriusDist.outputs.files.singleFile.toPath().resolve("app").toFile()
     imageName = 'sirius'
-    mainClass = project.mainClassName
+    mainClass = mainClassNameGlobal
     jvmArgs = application.applicationDefaultJvmArgs
-    mainJarName =  bootJarTask.flatMap { it.archiveFileName }
+    mainJarName = bootJarTask.flatMap { it.archiveFileName }
     winConsole = true
     macPackageName = 'SIRIUS'
     if (siriusTargetPlatform.isWin()) {
         //HACK additional windows launchers are imported from launch4j, this is just fake to register it for the start menu. must be a valid path but file must not exists
-        launchers = ["sirius-gui": "${createGuiExe.outfile}"]
+        launchers = ["sirius-gui": createGuiExe.outfile.get()]
     }
 }
 

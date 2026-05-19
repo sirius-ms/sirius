@@ -69,11 +69,13 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
     @CommandLine.Option(names = {"--enable-rest-shutdown", "-s"}, description = "Allows to shut down the SIRIUS REST Service via a rest api call (/actuator/shutdown)", defaultValue = "false")
     private void setShutdown(boolean enableRestShutdown) {
-        if (enableRestShutdown)
+        if (enableRestShutdown) {
             System.setProperty("management.endpoints.web.exposure.include", "health,shutdown");
-        else
+            System.setProperty("management.endpoint.shutdown.access", "unrestricted");
+        } else {
             System.setProperty("management.endpoints.web.exposure.include", "health");
-
+            System.setProperty("management.endpoint.shutdown.access", "none");
+        }
     }
 
     @CommandLine.Option(names = {"--in-memory-index", "--inMemoryIndex"}, description = "Use volatile in-memory lucene search index for projects.")

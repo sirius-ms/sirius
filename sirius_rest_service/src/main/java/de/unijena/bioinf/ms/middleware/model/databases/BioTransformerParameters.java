@@ -7,7 +7,7 @@ import de.unijena.bioinf.ms.biotransformer.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.extern.jackson.Jacksonized;
+import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import static de.unijena.bioinf.ms.biotransformer.MetabolicTransformation.HUMAN_
 
 @Getter
 @Builder
-@Jacksonized
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BioTransformerParameters {

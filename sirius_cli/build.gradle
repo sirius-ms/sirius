@@ -7,18 +7,18 @@ dependencies {
     annotationProcessor project(':default_properties:processor')
 
     // wrong place START (should be in dist) but IDEA does not recognize dependency from no code modules //todo find alternative
-    implementation 'org.slf4j:slf4j-jdk14:2.0.7'
+    implementation libs.slf4jJdk14
     implementation "de.unijena.bioinf.cbc-java:cbc-java-jni:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}"
     implementation "de.unijena.bioinf.cbc-java:cbc-java-native:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}"
-    implementation 'org.apache.commons:commons-collections4:4.4' //todo deprecated, can be removed with old SIRIUS ProjectSpaceManager
-    implementation "org.apache.commons:commons-configuration2:$commons_configuration_version"
-    implementation "com.auth0:java-jwt:$auth0_version" //jwt decoder
-    implementation 'org.apache.poi:poi-ooxml:5.3.0' // for exporting xlsx summaries
+    implementation libs.commonsCollections4
+    implementation libs.commonsConfiguration2
+    implementation libs.auth0Jwt
+    implementation libs.poiOoxml
 
     // wrong place END
 
 
-    api "info.picocli:picocli:$picocli_version"
+    api libs.picocli
     //internal
     api project(":gibbs_sampling")
     api project(":sirius_api")
@@ -52,14 +52,16 @@ dependencies {
     api project(":fragmentation_tree:ft_gurobi")
 
     //cdk
-    for (module in ["silent", "smiles", "data", "formula"])
-        api "org.openscience.cdk:cdk-$module:$cdk_version"
+    api libs.cdkSilent
+    api libs.cdkSmiles
+    api libs.cdkData
+    api libs.cdkFormula
 
     //mztabm
-    api "de.isas.mztab:jmztabm-api:$mztabm_version"
-    api "de.isas.mztab:jmztabm-io:$mztabm_version"
+    api libs.jmztabmApi
+    api libs.jmztabmIo
 
-    api 'org.jbibtex:jbibtex:1.0.17'
+    api libs.jbibtex
 
     api project(":chemical_db_oss")
     api project(":chemical_db_oss:chemdb_nitrite_oss")

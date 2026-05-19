@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 @Getter
 @Setter
 @SuperBuilder
-@Jacksonized
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TagSubmission extends Tag {

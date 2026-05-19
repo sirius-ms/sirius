@@ -29,7 +29,6 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import lombok.Builder;
-import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -40,7 +39,6 @@ import java.util.Iterator;
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
 @Builder
-@Jacksonized
 public class MutableMs2Spectrum implements Ms2Spectrum<Peak>, MutableSpectrum<Peak> {
 
     public static class Header implements Cloneable {

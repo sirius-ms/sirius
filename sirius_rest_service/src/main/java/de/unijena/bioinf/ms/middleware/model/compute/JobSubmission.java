@@ -36,7 +36,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
+import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
@@ -50,7 +50,7 @@ import java.util.stream.Stream;
 @Getter
 @Setter
 @SuperBuilder
-@Jacksonized
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JobSubmission extends AbstractSubmission {

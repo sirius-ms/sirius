@@ -24,12 +24,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
+import lombok.AllArgsConstructor;
 
 @Getter
 @Setter
 @SuperBuilder
-@Jacksonized
+@AllArgsConstructor
 public class ConsensusAnnotationsDeNovo extends ConsensusAnnotations{
 
     @Schema(name = "ConsensusCriterionDeNovo")
