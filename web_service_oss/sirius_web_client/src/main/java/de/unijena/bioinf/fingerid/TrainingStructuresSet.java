@@ -25,13 +25,13 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingStructures;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.extern.jackson.Jacksonized;
+import lombok.AllArgsConstructor;
 
 import java.util.Set;
 
 @Getter
 @Builder
-@Jacksonized
+@AllArgsConstructor
 @JsonAutoDetect(
         fieldVisibility = JsonAutoDetect.Visibility.ANY,
         getterVisibility = JsonAutoDetect.Visibility.NONE,

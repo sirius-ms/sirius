@@ -56,9 +56,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.ApplicationPidFileWriter;
 import org.springframework.boot.system.ApplicationHome;
-import org.springframework.boot.web.context.WebServerInitializedEvent;
-import org.springframework.boot.web.context.WebServerPortFileWriter;
 import org.springframework.boot.web.server.PortInUseException;
+import org.springframework.boot.web.server.context.WebServerInitializedEvent;
+import org.springframework.boot.web.server.context.WebServerPortFileWriter;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.context.ApplicationListener;
@@ -96,6 +96,14 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     public static void main(String[] args) {
         System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
 
+        // --- AOT BYPASS for build time scanning aot scanning ---
+        if (Boolean.getBoolean("spring.aot.processing")) {
+            System.setProperty("java.awt.headless", "true"); // Enforce headless just to be safe during build
+            new SpringApplicationBuilder(SiriusMiddlewareApplication.class)
+                    .web(WebApplicationType.SERVLET) // Ensures REST beans are processed!
+                    .run(args);
+            return;
+        }
 
         measureTime("Init Job Manager");
         // The spring app classloader seems not to be correctly inherited to sub thread
@@ -187,9 +195,11 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
                 ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
-                //just store the sirius base dir
-                PropertyManager.setProperty("de.unijena.bioinf.sirius.homeDir", Path.of(new ApplicationHome().getDir().getAbsolutePath()).getParent().toString());
-
+                // Finds directory where the sirius executable/startscript is located and adds it to properties.
+                // On windows this directory corresponds to the sirius base/home directory.
+                // On linux and mac the executables are located in subdirectories.
+                // Keep this in mind when using this property.
+                PropertyManager.setProperty("io.sirius-ms.exeDir", Path.of(new ApplicationHome().getDir().getAbsolutePath()).toString());
                 // remove old pid and port file as early as possible
                 Files.deleteIfExists(Workspace.PORT_FILE);
                 Files.deleteIfExists(Workspace.PID_FILE);
@@ -277,7 +287,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         try {
             AuthService as = ApplicationCore.WEB_API().getAuthService();
             if (as.isLoggedIn())
-                AuthServices.writeRefreshToken(ApplicationCore.WEB_API().getAuthService(), ApplicationCore.TOKEN_FILE, true);
+                AuthServices.writeRefreshToken(as, ApplicationCore.TOKEN_FILE, true);
             else
                 Files.deleteIfExists(ApplicationCore.TOKEN_FILE);
         } catch (IOException e) {
@@ -288,6 +298,12 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         try {
             if (RUN != null) {
                 RUN.cancel();
+            }
+
+            if (!GraphicsEnvironment.isHeadless()) {
+                for (Window window : Window.getWindows()) {
+                    window.dispose();
+                }
             }
         } finally {
             if (successfulParsed && PropertyManager.getBoolean("de.unijena.bioinf.sirius.printCitations", true))

@@ -22,8 +22,8 @@ version =  siriusVersion
 
 dependencies {
     // deprecated for removal ->  use fastutil instead
-    implementation 'net.sf.trove4j:core:3.1.0'
-    api 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
+    implementation libs.trove4j
+    api libs.jakartaXmlBindApi
 
     annotationProcessor project(':default_properties:processor')
     api project(':chemistry_base')
@@ -31,6 +31,9 @@ dependencies {
     api project(':lcms')
     api project(':elgordo')
 
-    for (module in ["data", "smiles", "formula", "qsarmolecular", "bundle"])
-        api "org.openscience.cdk:cdk-$module:$cdk_version"
+    api libs.cdkData
+    api libs.cdkSmiles
+    api libs.cdkFormula
+    api libs.cdkQsarmolecular
+    api libs.cdkBundle
 }

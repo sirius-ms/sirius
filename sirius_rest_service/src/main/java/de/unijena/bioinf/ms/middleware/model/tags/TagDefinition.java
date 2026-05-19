@@ -25,13 +25,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
+import lombok.AllArgsConstructor;
 
 @Getter
 @Setter
 @SuperBuilder
-@Jacksonized
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@AllArgsConstructor
 public class TagDefinition extends TagDefinitionImport {
 
     @Builder.Default

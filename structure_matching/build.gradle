@@ -4,10 +4,10 @@ plugins {
 }
 version =  siriusVersion
 dependencies{
-    api "org.openscience.cdk:cdk-bundle:$cdk_version"
+    api libs.cdkBundle
     implementation project(":chemistry_base")
 
-    testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
+    testImplementation libs.cdkBundle
     testImplementation project(":chemistry_base")
     testImplementation project(":io")
     testImplementation project(":sirius_api")

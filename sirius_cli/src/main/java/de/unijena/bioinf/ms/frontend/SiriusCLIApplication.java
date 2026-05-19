@@ -73,6 +73,7 @@ public class SiriusCLIApplication {
 
             configureShutDownHook(shutdownWebservice());
             measureTime("Start Run method");
+            ApplicationCore.WEB_API();
             run(args, () -> new WorkflowBuilder(
                     PropertyManager.getProperty("sirius.middleware.project-space", null, "NITRITE-NOSQL").equals("NITRITE-NOSQL")
                             ? new CLIRootOptions(new DefaultParameterConfigLoader(), new NitriteProjectSpaceManagerFactory())

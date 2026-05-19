@@ -3,9 +3,6 @@ manual/source/bibtex/
 manual/source/version.txt
 ### Gradle ###
 .gradle
-gradle
-!gradle/wrapper/gradle-wrapper.properties
-!gradle/wrapper/gradle-wrapper.jar
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/

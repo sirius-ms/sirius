@@ -260,11 +260,11 @@ public class MzMLParser implements LCMSParser {
                 }
                  */
                 if (!skipList.isEmpty()) {
-                    log.error("Spectrum with ID '" + sid  + "' contains parameters that indicate non Mass Spectrometry data (e.g. EMR spectra). Skipping! Parameters: " + skipList.stream().map(CVParam::getAccession).collect(Collectors.joining(", ")) );
+                    log.error("Spectrum with ID '{}' contains parameters that indicate non Mass Spectrometry data (e.g. EMR spectra). Skipping! Parameters: {}", sid, skipList.stream().map(CVParam::getAccession).collect(Collectors.joining(", ")));
                     continue;
                 }
                 if (msLevel < 1 && polarity == Polarity.UNKNOWN) {
-                    log.error("Spectrum with ID '" + sid  + "' does neither contain mslevel nor polarity information. Spectrum is likely to not be an Mass Spectrum. Skipping this entry." + System.lineSeparator() + "Spectrum information: " + spectrum.getCvParam().stream().map(CVParam::toString).collect(Collectors.joining(System.lineSeparator())));
+                    log.error("Spectrum with ID '{}' does neither contain mslevel nor polarity information. Spectrum is likely to not be an Mass Spectrum. Skipping this entry.{}Spectrum information: {}", sid, System.lineSeparator(), spectrum.getCvParam().stream().map(CVParam::toString).collect(Collectors.joining(System.lineSeparator())));
                     continue;
                 }
 
@@ -306,9 +306,9 @@ public class MzMLParser implements LCMSParser {
 
                 if (mzArray == null || intArray == null || mzArray.length != intArray.length || mzArray.length == 0) {
                     if (surpressEmptySpectrumLog.isEmpty()) {
-                        log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                        log.debug("No spectrum data found in Spectrum with id: {} Skipping!", spectrum.getId());
                     }
-                    surpressEmptySpectrumLog.add(spectrum.getId());
+                    surpressEmptySpectrumLog.add(spectrum.getId().replace("scan=",""));
                     continue;
                 }
 
@@ -321,9 +321,9 @@ public class MzMLParser implements LCMSParser {
 
                 if (peaks.isEmpty()) {
                     if (surpressEmptySpectrumLog.isEmpty()) {
-                        log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                        log.debug("No spectrum data found in Spectrum with id: {} Skipping!", spectrum.getId());
                     }
-                    surpressEmptySpectrumLog.add(spectrum.getId());
+                    surpressEmptySpectrumLog.add(spectrum.getId().replace("scan=",""));
                     continue;
                 }
                 if (msLevel == 1) {
@@ -353,12 +353,12 @@ public class MzMLParser implements LCMSParser {
 
                 } else {
                     if (spectrum.getPrecursorList() == null || spectrum.getPrecursorList().getPrecursor() == null || spectrum.getPrecursorList().getPrecursor().isEmpty()) {
-                        log.error("No precursor information given for MS/MS spectrum with id: " + spectrum.getId() + " Skipping!");
+                        log.error("No precursor information given for MS/MS spectrum with id: {} Skipping!", spectrum.getId());
                         continue;
                     }
                     uk.ac.ebi.jmzml.model.mzml.Precursor precursor = spectrum.getPrecursorList().getPrecursor().get(0);
                     if (precursor == null) {
-                        log.error("No precursor information given for MS/MS spectrum with id: " + spectrum.getId() + " Skipping!");
+                        log.error("No precursor information given for MS/MS spectrum with id: {} Skipping!", spectrum.getId());
                         continue;
                     }
                     double collisionEnergy = precursor.getActivation().getCvParam().stream().filter(cv -> cv.getAccession().equals("MS:1000045"))
@@ -423,11 +423,21 @@ public class MzMLParser implements LCMSParser {
             if (scanids.isEmpty()) {
                 throw new RuntimeException("No spectra imported from " + fileName);
             }
+
             if (surpressEmptySpectrumLog.size()>1) {
-                if (surpressEmptySpectrumLog.size()>100) {
-                    log.error("There were " + surpressEmptySpectrumLog.size() + " spectra without any spectral data.");
+                if (surpressEmptySpectrumLog.size() > 50) {
+                    log.warn("There were {} spectra without any spectral data. Scan numbers: {} ... {}",
+                            surpressEmptySpectrumLog.size(),
+                            surpressEmptySpectrumLog.stream()
+                                    .limit(25)
+                                    .collect(Collectors.joining(",")),
+                            surpressEmptySpectrumLog.stream()
+                                    .sorted()
+                                    .skip(surpressEmptySpectrumLog.size() - 25)
+                                    .collect(Collectors.joining(",")));
                 } else {
-                    log.error("The following spectra did not contain any spectral data: " + String.join(", ", surpressEmptySpectrumLog));
+                    log.warn("The following spectra did not contain any spectral data. Scan numbers: {}",
+                            String.join(",", surpressEmptySpectrumLog));
                 }
             }
 

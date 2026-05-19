@@ -5,21 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.openapitools:openapi-generator-gradle-plugin:7.14.0") {
-            exclude group: "com.fasterxml.jackson.core"
-            exclude group: "com.fasterxml.jackson.dataformat"
-            exclude group: "com.fasterxml.jackson.datatype"
-            exclude group: "com.fasterxml.jackson"
-        }
-
-        classpath "com.fasterxml.jackson:jackson-bom:2.12.3"
-        classpath "com.fasterxml.jackson.core:jackson-core:2.12.3"
-        classpath "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.3"
-        classpath "com.fasterxml.jackson.datatype:jackson-datatype-guava:2.12.3"
-        classpath "com.fasterxml.jackson.datatype:jackson-datatype-joda:2.12.3"
-        classpath "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.3"
-        classpath "com.fasterxml.jackson.core:jackson-databind:2.12.3"
-        classpath "com.fasterxml.jackson.core:jackson-annotations:2.12.3"
+        classpath(libs.buildscriptOpenapiGenerator)
     }
 }
 
@@ -30,11 +16,6 @@ apply plugin: 'java-library'
 allprojects {
     group = 'io.sirius-ms'
     version = "${siriusAPIVersion}+sirius${siriusFrontendVersion}"
-
-    ext {
-        reactor_version = "3.4.3"
-        reactor_netty_version = "1.1.20"
-    }
 
     publishing {
         publications {
@@ -87,9 +68,9 @@ allprojects {
 
 dependencies {
     api project(":sirius-sdk:sirius-sdk.openapi")
-    api "org.springframework.boot:spring-boot-starter-webflux:$spring_boot_version"
-    api "io.projectreactor.netty:reactor-netty-http:$reactor_netty_version"
-    api "org.apache.lucene:lucene-core:$lucene_version"
+    api libs.springBootStarterWebflux
+    api libs.reactorNettyHttp
+    api libs.luceneCore
 }
 
 openApiGenerate {

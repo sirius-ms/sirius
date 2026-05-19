@@ -20,9 +20,9 @@
 
 package de.unijena.bioinf.storage.db.nosql;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.function.IORunnable;
 
-import javax.validation.constraints.NotNull;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Field;
