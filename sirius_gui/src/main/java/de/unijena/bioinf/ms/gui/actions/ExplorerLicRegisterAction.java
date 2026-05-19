@@ -51,10 +51,22 @@ public class ExplorerLicRegisterAction extends AbstractGuiAction {
     public void actionPerformed(ActionEvent e) {
         try {
             ResultMessage resultMessage = Jobs.runInBackgroundAndLoad(mainFrame, "Checking for Explorer license...", () -> {
-                Path siriusHome = Path.of(PropertyManager.getProperty("de.unijena.bioinf.sirius.homeDir"));
+                Path siriusHome = Path.of(PropertyManager.getProperty("io.sirius-ms.exeDir"));
                 Path checkerExe = Path.of(PropertyManager.getProperty("de.unijena.bioinf.sirius.explorer.licenseChecker", null, "ExplorerLicTester/ExplorerLicTester.exe"));
 
-                Process proc = Runtime.getRuntime().exec(siriusHome.resolve(checkerExe).toAbsolutePath().toString());
+                String binaryPath = siriusHome.resolve(checkerExe).toAbsolutePath().toString();
+                ProcessBuilder pb = new ProcessBuilder(binaryPath); //process builder correctly handles paths with whitespaces.
+                Process proc = pb.start();
+
+                //Wait first to handle hangs. If it times out, kill it.
+                boolean finished = proc.waitFor(30, TimeUnit.SECONDS);
+                if (!finished) {
+                    proc.destroyForcibly();
+                }
+
+                int exitValue = finished ? proc.exitValue() : -1;
+
+                //Read info and error stream safely (process is already done or dead)
                 List<String> info;
                 try (BufferedReader reader = proc.inputReader()) {
                     info = reader.lines().toList();
@@ -63,8 +75,6 @@ public class ExplorerLicRegisterAction extends AbstractGuiAction {
                 try (BufferedReader reader = proc.errorReader()) {
                     errorOutput = reader.lines().toList();
                 }
-                boolean finished = proc.waitFor(30, TimeUnit.SECONDS);
-                int exitValue = proc.exitValue();
 
                 String licenseInfo = info.stream().filter(l -> l.startsWith("LicenseInfo:")).findFirst()
                         .map(k -> k.split(":")[1]).orElse(null);
@@ -83,6 +93,7 @@ public class ExplorerLicRegisterAction extends AbstractGuiAction {
                             .flatMap(s -> (Stream<String>) s).toArray(String[]::new));
                 }
             }).awaitResult();
+
             if (!resultMessage.success) {
                 log.warn(String.join(" | ", resultMessage.message));
                 new WarningDialog(mainFrame, GuiUtils.formatToolTip("No valid MassHunter Explorer license found on your system. Please ensure that MassHunter Explorer is installed and activated.", "For details, please see the 'Log' in the top-right corner."));
