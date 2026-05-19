@@ -198,9 +198,11 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
                 ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
-                //just store the sirius base dir
-                PropertyManager.setProperty("de.unijena.bioinf.sirius.homeDir", Path.of(new ApplicationHome().getDir().getAbsolutePath()).getParent().toString());
-
+                // Finds directory where the sirius executable/startscript is located and adds it to properties.
+                // On windows this directory corresponds to the sirius base/home directory.
+                // On linux and mac the executables are located in subdirectories.
+                // Keep this in mind when using this property.
+                PropertyManager.setProperty("io.sirius-ms.exeDir", Path.of(new ApplicationHome().getDir().getAbsolutePath()).toString());
                 // remove old pid and port file as early as possible
                 Files.deleteIfExists(Workspace.PORT_FILE);
                 Files.deleteIfExists(Workspace.PID_FILE);
