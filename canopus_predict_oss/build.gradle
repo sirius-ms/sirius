@@ -20,7 +20,9 @@
 
 apply plugin: "application"
 version =  fingeridVersion
-mainClassName = "de.unijena.bioinf.canopus.Main"
+application {
+    mainClass = "de.unijena.bioinf.canopus.Main"
+}
 
 ext {
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
@@ -36,13 +38,17 @@ dependencies() {
     api project(':chemical_db_oss:chemdb_sql_oss')
 
     // external
-    implementation group: 'org.ejml', name: 'ejml-fdense', version: '0.41'
-    implementation group: 'org.ejml', name: 'ejml-simple', version: '0.41'
+    implementation libs.ejmlFdense
+    implementation libs.ejmlSimple
 
     // CDK
-    for (module in ["fingerprint", "qsarmolecular", "data", "inchi", "interfaces", "smiles", "core"]) {
-        api "org.openscience.cdk:cdk-$module:$cdk_version"
-    }
+    api libs.cdkFingerprint
+    api libs.cdkQsarmolecular
+    api libs.cdkData
+    api libs.cdkInchi
+    api libs.cdkInterfaces
+    api libs.cdkSmiles
+    api libs.cdkCore
 }
 
 
@@ -64,8 +70,8 @@ distributions {
             into('bin') {
                 from("build/install/${project.name}/bin") {
                     exclude("*.bat")
+                    filePermissions { unix(0755) }
                 }
-
             }
         }
 

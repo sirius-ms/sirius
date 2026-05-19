@@ -28,13 +28,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.ToString;
-import lombok.extern.jackson.Jacksonized;
+import lombok.experimental.SuperBuilder;
+import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-@Builder
-@Jacksonized
+@SuperBuilder
+@AllArgsConstructor
 @Getter
 @ToString
 public class TagDefinition {

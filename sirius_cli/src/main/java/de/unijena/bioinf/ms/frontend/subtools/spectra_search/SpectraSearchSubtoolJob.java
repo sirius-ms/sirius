@@ -19,10 +19,8 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -31,6 +29,8 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.sirius.validation.Ms1Validator;
+import de.unijena.bioinf.sirius.validation.Ms2Validator;
 import de.unijena.bioinf.spectraldb.*;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
@@ -99,7 +99,9 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         if (!inst.hasMsMs()) {
             return;
         }
-        final Ms2Experiment exp = inst.getExperiment();
+        final MutableMs2Experiment exp = inst.getExperiment().mutate();
+        // ensure that precursor mass is correct
+        new Ms2Validator().validate(exp, Warning.Logger, true);
 
         double precursorMz = exp.getIonMass();
 

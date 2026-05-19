@@ -89,42 +89,32 @@ public abstract class ApplicationCore {
     public static final SiriusFactory SIRIUS_PROVIDER = StorageUtils.siriusProvider();
     private static volatile WebAPI<?> WEB_API;
 
-    public static WebAPI<?> WEB_API(){
-        if (WEB_API == null){
-            synchronized (ApplicationCore.class){
-                if (WEB_API == null){
+    public static WebAPI<?> WEB_API() {
+        if (WEB_API == null) {
+            synchronized (ApplicationCore.class) {
+                if (WEB_API == null) {
                     try {
                         StopWatch stopWatch = StopWatch.createStarted();
                         AuthService service = ProxyManager.applyClient(c -> AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, c));
                         WEB_API = new RestAPI(service, (Subscription) null);
-                        final CountDownLatch waiter = new CountDownLatch(1);
 
-                        SiriusJobs.runInBackground((Callable<Void>) () -> {
-                            synchronized (WEB_API) {
-                                waiter.countDown();
-                                Subscription sub = null; //web connection
-                                try {
-                                    sub = NetUtils.tryAndWait(() -> WEB_API.getAuthService().getToken().map(AccessTokens.ACCESS_TOKENS::getActiveSubscription).orElse(null),
-                                            () -> NetUtils.checkThreadInterrupt(Thread.currentThread()), 5000) ;
-                                    WEB_API.changeActiveSubscription(sub);
-                                } catch (Exception e) {
-                                    DEFAULT_LOGGER.debug("Error when refreshing token", e);
-                                    DEFAULT_LOGGER.warn("Error when refreshing token: {} Cleaning login information. Please re-login!", e.getMessage());
-                                    AuthServices.clearRefreshToken(WEB_API.getAuthService(), TOKEN_FILE); // in case the token is corrupted or the account has been deleted
-                                }
-                            }
+                        try { //web connection
+                            Subscription sub = NetUtils.tryAndWait(() -> WEB_API.getAuthService().getToken().map(AccessTokens.ACCESS_TOKENS::getActiveSubscription).orElse(null),
+                                    () -> NetUtils.checkThreadInterrupt(Thread.currentThread()), 5000);
+                            WEB_API.changeActiveSubscription(sub);
+                        } catch (Exception e) {
+                            DEFAULT_LOGGER.debug("Error when refreshing token", e);
+                            DEFAULT_LOGGER.warn("Error when refreshing token: {} Cleaning login information. Please re-login!", e.getMessage());
+                            AuthServices.clearRefreshToken(WEB_API.getAuthService(), TOKEN_FILE); // in case the token is corrupted or the account has been deleted
+                        }
 
-                            CustomDBPropertyUtils.loadAllCustomDBs(WEB_API.getCDKChemDBFingerprintVersion());
-                            DEFAULT_LOGGER.info("Custom databases loaded.");
-                            return null;
-                        });
-                        waiter.await();
+                        CustomDBPropertyUtils.loadAllCustomDBs(WEB_API.getCDKChemDBFingerprintVersion());
+                        DEFAULT_LOGGER.info("Custom databases loaded.");
+
 
                         DEFAULT_LOGGER.info("Web API initialized in {}. Started loading active subscription in background...", stopWatch);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
-                    } catch (InterruptedException e) {
-                        //ignore
                     }
                 }
             }

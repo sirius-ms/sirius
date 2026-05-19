@@ -1,0 +1,236 @@
+[versions]
+springBoot = "4.0.6"
+springDoc = "3.0.3"
+jjobs = "0.10.0"
+cdk = "2.9"
+jetbrainsAnnotations = "26.0.1"
+trove4j = "3.1.0"  # DEPRECATED -> use fast util instead
+fastutil = "8.5.12"
+commonsMath = "3.6.1"
+commonsText = "1.12.0"
+commonsCompress = "1.26.2"
+commonsIo = "2.16.1"
+jdbi = "3.34.0"
+swagger = "2.2.36"
+picocli = "4.7.7"
+commonsConfiguration = "1.10"
+commonsConfiguration2 = "2.11.0"
+gradleUtilPlugins = "0.1.0-RELEASE"
+snakeyaml = "1.29"
+jxbrowserPlugin = "2.0.0"
+jxbrowser = "9.0.1"
+concurrentLocks = "1.0.0"
+minio = "8.6.0"
+okhttp = "5.1.0"  # matches minio
+xz = "1.9"
+googleCloudStorage = "1.118.0"  # todo upgrade to 2 or remove
+zip4j = "2.10.0"
+zip4jvm = "1.8"
+jimfs = "1.3.0"
+therapi = "0.15.0"
+splash = "1.8"
+secureApi = "1.2.1"
+timingframework = "0.55"
+opencsv = "2.3"
+swingx = "1.6.5-1"
+glazedlists = "1.11.0"
+batik = "1.16"
+fop = "2.7"
+flatlaf = "3.5.2"
+jsvg = "1.6.1"
+spinnerProgress = "1.0.0"
+miglayout = "3.7.4"
+jmzml = "1.7.11"
+xxindex = "0.23"
+hypersistenceTsid = "2.1.1"
+ssj = "3.1.0"
+commonsBeanutils = "1.9.4"
+reflections8 = "0.11.7"
+args4j = "2.33"
+jfreechart = "1.5.2"
+jfreechartLegacy = "1.0.19"
+joptSimple = "4.8"
+vecmath = "1.3.1"
+auth0 = "3.16.0"
+poi = "5.3.0"
+jmztabm = "1.0.6"
+jbibtex = "1.0.17"
+commonsCollections4 = "4.4"  # todo deprecated, can be removed with old SIRIUS ProjectSpaceManager
+slf4j = "1.7.36"
+jewelcli = "0.8.9"
+liblinear = "1.95"
+libsvm = "3.20"
+jna = "5.4.0"
+scribejava = "8.3.3"
+nitrite = "4.3.0"
+ejml = "0.41"
+jgrapht = "1.0.1"
+jdom = "2.0.2"
+mavenArtifact = "3.5.0"
+openapiGenerator = "7.14.0"
+cpdetector = "1.0.10"
+batikSwing = "1.6-1"
+biotransformerSirius = "3.0.0"
+cmlxom = "3.1"
+grappa = "1.2"
+lucene = "10.4.0" #10.3.2
+
+[libraries]
+# BOMs
+springBootDependencies = { group = "org.springframework.boot", name = "spring-boot-dependencies", version.ref = "springBoot" }
+nitriteBom = { group = "org.dizitart", name = "nitrite-bom", version.ref = "nitrite" }
+
+# Buildscript Dependencies
+buildscriptSpringBootPlugin = { group = "org.springframework.boot", name = "spring-boot-gradle-plugin", version.ref = "springBoot" }
+buildscriptCommonsConfiguration = { group = "commons-configuration", name = "commons-configuration", version.ref = "commonsConfiguration" }
+buildscriptGradleUtilPlugins = { group = "com.github.viswaramamoorthy", name = "gradle-util-plugins", version.ref = "gradleUtilPlugins" }
+buildscriptSnakeyaml = { group = "org.yaml", name = "snakeyaml", version.ref = "snakeyaml" }
+buildscriptJxbrowserPlugin = { group = "com.teamdev.jxbrowser", name = "jxbrowser-gradle-plugin", version.ref = "jxbrowserPlugin" }
+buildscriptOpenapiGenerator = { group = "org.openapitools", name = "openapi-generator-gradle-plugin", version.ref = "openapiGenerator" }
+
+# Common Libraries
+lombok = { group = "org.projectlombok", name = "lombok" }
+jacksonDatabind = { group = "com.fasterxml.jackson.core", name = "jackson-databind" }
+jacksonAnnotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations" }
+jacksonCore = { group = "com.fasterxml.jackson.core", name = "jackson-core" }
+jacksonJaxrsJsonProvider = { group = "com.fasterxml.jackson.jaxrs", name = "jackson-jaxrs-json-provider" }
+jacksonDatatypeJsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310" }
+slf4jApi = { group = "org.slf4j", name = "slf4j-api" }
+slf4jJdk14 = { group = "org.slf4j", name = "slf4j-jdk14", version.ref = "slf4j" }
+commonsLang3 = { group = "org.apache.commons", name = "commons-lang3" }
+commonsCodec = { group = "commons-codec", name = "commons-codec" }
+jakartaPersistenceApi = { group = "jakarta.persistence", name = "jakarta.persistence-api" }
+jakartaAnnotationApi = { group = "jakarta.annotation", name = "jakarta.annotation-api" }
+jaxbRuntime = { group = "org.glassfish.jaxb", name = "jaxb-runtime" }
+jakartaXmlBindApi = { group = "jakarta.xml.bind", name = "jakarta.xml.bind-api" }
+jakartaValidationApi = { group = "jakarta.validation", name = "jakarta.validation-api" }
+postgresql = { group = "org.postgresql", name = "postgresql" }
+rabbitmqAmqp = { group = "com.rabbitmq", name = "amqp-client" }
+springDataCommons = { group = "org.springframework.data", name = "spring-data-commons" }
+springDataJpa = { group = "org.springframework.data", name = "spring-data-jpa" }
+springDataMongodb = { group = "org.springframework.data", name = "spring-data-mongodb" }
+springBootStarterWebflux = { group = "org.springframework.boot", name = "spring-boot-starter-webflux" }
+jna = { group = "net.java.dev.jna", name = "jna", version.ref = "jna" }
+mysqlConnector = { group = "com.mysql", name = "mysql-connector-j" }
+scribejavaApis = { group = "com.github.scribejava", name = "scribejava-apis", version.ref = "scribejava" }
+scribejavaHttpclientOkhttp = { group = "com.github.scribejava", name = "scribejava-httpclient-okhttp", version.ref = "scribejava" }
+ejmlFdense = { group = "org.ejml", name = "ejml-fdense", version.ref = "ejml" }
+ejmlSimple = { group = "org.ejml", name = "ejml-simple", version.ref = "ejml" }
+jgraphtCore = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht" }
+jdom = { group = "org.jdom", name = "jdom", version.ref = "jdom" }
+mavenArtifact = { group = "org.apache.maven", name = "maven-artifact", version.ref = "mavenArtifact" }
+httpClient5 = { group = "org.apache.httpcomponents.client5", name = "httpclient5" }
+springSecurityOauth2Jose = { group = "org.springframework.security", name = "spring-security-oauth2-jose" }
+reactorCore = { group = "io.projectreactor", name = "reactor-core" }
+reactorNettyHttp = { group = "io.projectreactor.netty", name = "reactor-netty-http" }
+
+# Testing
+junitJupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
+junitJupiterParams = { group = "org.junit.jupiter", name = "junit-jupiter-params" }
+junitJupiterEngine = { group = "org.junit.jupiter", name = "junit-jupiter-engine" }
+junitVintageEngine = { group = "org.junit.vintage", name = "junit-vintage-engine" }
+junitPlatformLauncher = { group = "org.junit.platform", name = "junit-platform-launcher" }
+mockitoJUnitJupiter = { group = "org.mockito", name = "mockito-junit-jupiter" }
+slf4jLog4jOverSlf4j = { group = "org.slf4j", name = "log4j-over-slf4j" }
+slf4jJclOverSlf4j = { group = "org.slf4j", name = "jcl-over-slf4j" }
+
+# NOT managed by Spring Boot BOM (Explicit version required)
+jetbrainsAnnotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrainsAnnotations" }
+swaggerAnnotations = { group = "io.swagger.core.v3", name = "swagger-annotations", version.ref = "swagger" }
+fastutil = { group = "it.unimi.dsi", name = "fastutil", version.ref = "fastutil" }
+jjobsCore = { group = "de.unijena.bioinf", name = "jjobs-core", version.ref = "jjobs" }
+jjobsSwing = { group = "de.unijena.bioinf", name = "jjobs-swing", version.ref = "jjobs" }
+commonsMath3 = { group = "org.apache.commons", name = "commons-math3", version.ref = "commonsMath" }
+commonsText = { group = "org.apache.commons", name = "commons-text", version.ref = "commonsText" }
+commonsConfiguration2 = { group = "org.apache.commons", name = "commons-configuration2", version.ref = "commonsConfiguration2" }
+commonsCollections4 = { group = "org.apache.commons", name = "commons-collections4", version.ref = "commonsCollections4" }
+commonsCompress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commonsCompress"}
+commonsIo = { group = "commons-io", name = "commons-io", version.ref = "commonsIo"}
+springdocOpenapiUi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version.ref = "springDoc" }
+springdocOpenapiApi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-api", version.ref = "springDoc" }
+concurrentLocks = { group = "com.googlecode.concurrent-locks", name = "concurrent-locks", version.ref = "concurrentLocks" }
+trove4j = { group = "net.sf.trove4j", name = "core", version.ref = "trove4j" }
+minio = { group = "io.minio", name = "minio", version.ref = "minio" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
+googleCloudStorage = { group = "com.google.cloud", name = "google-cloud-storage", version.ref = "googleCloudStorage" }
+zip4j = { group = "net.lingala.zip4j", name = "zip4j", version.ref = "zip4j" }
+zip4jvm = { group = "ru.oleg-cherednik.zip4jvm", name = "zip4jvm", version.ref = "zip4jvm" }
+jimfs = { group = "com.google.jimfs", name = "jimfs", version.ref = "jimfs" }
+therapiRuntimeJavadoc = { group = "com.github.therapi", name = "therapi-runtime-javadoc", version.ref = "therapi" }
+therapiRuntimeJavadocScribe = { group = "com.github.therapi", name = "therapi-runtime-javadoc-scribe", version.ref = "therapi" }
+splashCore = { group = "edu.ucdavis.fiehnlab.splash", name = "core", version.ref = "splash" }
+timingframework = { group = "org.jdesktop", name = "timingframework", version.ref = "timingframework" }
+opencsv = { group = "net.sf.opencsv", name = "opencsv", version.ref = "opencsv" }
+swingx = { group = "org.swinglabs.swingx", name = "swingx-all", version.ref = "swingx" }
+glazedlists = { group = "com.glazedlists", name = "glazedlists", version.ref = "glazedlists" }
+batikRasterizer = { group = "org.apache.xmlgraphics", name = "batik-rasterizer", version.ref = "batik" }
+fop = { group = "org.apache.xmlgraphics", name = "fop", version.ref = "fop" }
+flatlaf = { group = "com.formdev", name = "flatlaf", version.ref = "flatlaf" }
+flatlafExtras = { group = "com.formdev", name = "flatlaf-extras", version.ref = "flatlaf" }
+jsvg = { group = "com.github.weisj", name = "jsvg", version.ref = "jsvg" }
+spinnerProgress = { group = "raven.swing", name = "spinner-progress", version.ref = "spinnerProgress" }
+miglayout = { group = "com.miglayout", name = "miglayout", version.ref = "miglayout" }
+secureApi = { group = "com.brightgiant", name = "secure-api", version.ref = "secureApi" }
+hypersistenceTsid = { group = "io.hypersistence", name = "hypersistence-tsid", version.ref = "hypersistenceTsid" }
+ssj = { group = "ca.umontreal.iro.simul", name = "ssj", version.ref = "ssj" }
+commonsBeanutils = { group = "commons-beanutils", name = "commons-beanutils", version.ref = "commonsBeanutils" }
+reflections8 = { group = "net.oneandone.reflections8", name = "reflections8", version.ref = "reflections8" }
+args4j = { group = "args4j", name = "args4j", version.ref = "args4j" }
+jfreechart = { group = "org.jfree", name = "jfreechart", version.ref = "jfreechart" }
+jfreechartLegacy = { group = "org.jfree", name = "jfreechart", version.ref = "jfreechartLegacy" }
+joptSimple = { group = "net.sf.jopt-simple", name = "jopt-simple", version.ref = "joptSimple" }
+vecmath = { group = "java3d", name = "vecmath", version.ref = "vecmath" }
+auth0Jwt = { group = "com.auth0", name = "java-jwt", version.ref = "auth0" }
+poiOoxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "poi" }
+picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
+jmztabmApi = { group = "de.isas.mztab", name = "jmztabm-api", version.ref = "jmztabm" }
+jmztabmIo = { group = "de.isas.mztab", name = "jmztabm-io", version.ref = "jmztabm" }
+jbibtex = { group = "org.jbibtex", name = "jbibtex", version.ref = "jbibtex" }
+jewelcli = { group = "com.lexicalscope.jewelcli", name = "jewelcli", version.ref = "jewelcli" }
+liblinear = { group = "de.bwaldvogel", name = "liblinear", version.ref = "liblinear" }
+libsvm = { group = "tw.edu.ntu.csie", name = "libsvm", version.ref = "libsvm" }
+jdbi3Jackson2 = { group = "org.jdbi", name = "jdbi3-jackson2", version.ref = "jdbi" }
+jdbi3Core = { group = "org.jdbi", name = "jdbi3-core", version.ref = "jdbi" }
+jdbi3Sqlobject = { group = "org.jdbi", name = "jdbi3-sqlobject", version.ref = "jdbi" }
+cpdetector = { group = "com.github.jiangxincode", name = "cpdetector", version.ref = "cpdetector" }
+batikSwing = { group = "batik", name = "batik-swing", version.ref = "batikSwing" }
+biotransformerSirius = { group = "wishartlab.openscience.biotransformer", name = "biotransformer-sirius-mod-relocated-min-no-envi-path", version.ref = "biotransformerSirius" }
+luceneQueryparser = { group = "org.apache.lucene", name = "lucene-queryparser", version.ref = "lucene" }
+luceneAnalysisCommon = { group = "org.apache.lucene", name = "lucene-analysis-common", version.ref = "lucene" }
+luceneCore = { group = "org.apache.lucene", name = "lucene-core", version.ref = "lucene" }
+luceneBackwardCodecs = { group = "org.apache.lucene", name = "lucene-backward-codecs", version.ref = "lucene" }
+cdkSmiles = { group = "org.openscience.cdk", name = "cdk-smiles", version.ref = "cdk" }
+cdkSilent = { group = "org.openscience.cdk", name = "cdk-silent", version.ref = "cdk" }
+cdkQsarmolecular = { group = "org.openscience.cdk", name = "cdk-qsarmolecular", version.ref = "cdk" }
+cdkQsaratomic = { group = "org.openscience.cdk", name = "cdk-qsaratomic", version.ref = "cdk" }
+cdkData = { group = "org.openscience.cdk", name = "cdk-data", version.ref = "cdk" }
+cdkFormula = { group = "org.openscience.cdk", name = "cdk-formula", version.ref = "cdk" }
+cdkBundle = { group = "org.openscience.cdk", name = "cdk-bundle", version.ref = "cdk" }
+cdkInchi = { group = "org.openscience.cdk", name = "cdk-inchi", version.ref = "cdk" }
+cdkFingerprint = { group = "org.openscience.cdk", name = "cdk-fingerprint", version.ref = "cdk" }
+cdkIo = { group = "org.openscience.cdk", name = "cdk-io", version.ref = "cdk" }
+cdkInterfaces = { group = "org.openscience.cdk", name = "cdk-interfaces", version.ref = "cdk" }
+cdkCore = { group = "org.openscience.cdk", name = "cdk-core", version.ref = "cdk" }
+cdkIsomorphism = { group = "org.openscience.cdk", name = "cdk-isomorphism", version.ref = "cdk" }
+cdkLegacy = { group = "org.openscience.cdk", name = "cdk-legacy", version.ref = "cdk" }
+cdkDepict = { group = "org.openscience.cdk", name = "cdk-depict", version.ref = "cdk" }
+cdkCtab = { group = "org.openscience.cdk", name = "cdk-ctab", version.ref = "cdk" }
+cdkQsarbond = { group = "org.openscience.cdk", name = "cdk-qsarbond", version.ref = "cdk" }
+cdkRender = { group = "org.openscience.cdk", name = "cdk-render", version.ref = "cdk" }
+cdkRenderextra = { group = "org.openscience.cdk", name = "cdk-renderextra", version.ref = "cdk" }
+cdkRenderawt = { group = "org.openscience.cdk", name = "cdk-renderawt", version.ref = "cdk" }
+cdkIoformats = { group = "org.openscience.cdk", name = "cdk-ioformats", version.ref = "cdk" }
+cdkSdg = { group = "org.openscience.cdk", name = "cdk-sdg", version.ref = "cdk" }
+cdkSmarts = { group = "org.openscience.cdk", name = "cdk-smarts", version.ref = "cdk" }
+
+cmlxom = { group = "org.xml-cml", name = "cmlxom", version.ref = "cmlxom" }
+grappa = { group = "att.grappa", name = "grappa", version.ref = "grappa" }
+
+#jmzml is very OLD and need legacy jmzml with different namespace. Do only use as runtimeOnly
+jmzml = { group = "uk.ac.ebi.jmzml", name = "jmzml", version.ref = "jmzml" }
+xxindex = { group = "psidev.psi.tools", name = "xxindex", version.ref = "xxindex" }
+legacyJaxbImpl = { group = "stealth.com.sun.xml.bind", name = "jaxb-impl", version = { strictly = "2.3.9" } }
+
+[plugins]
+sonatypeScan = { id = "org.sonatype.gradle.plugins.scan", version = "3.1.5" }
