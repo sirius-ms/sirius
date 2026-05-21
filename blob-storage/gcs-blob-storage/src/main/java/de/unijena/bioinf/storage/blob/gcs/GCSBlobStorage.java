@@ -42,7 +42,7 @@ public class GCSBlobStorage implements BlobStorage {
     private Bucket bucket;
 
 
-    public GCSBlobStorage(String bucketName, Path credentials) {
+    public GCSBlobStorage(String bucketName, @Nullable Path credentials) {
         this(GCSUtils.storageOptions(credentials).getService().get(bucketName));
     }
 
@@ -80,7 +80,11 @@ public class GCSBlobStorage implements BlobStorage {
             com.google.cloud.storage.Blob blob = bucket.get(path.toString());
             if (blob == null || !blob.exists())
                 return null;
-            return Channels.newInputStream(blob.reader());
+
+            com.google.cloud.ReadChannel reader = blob.reader();
+            // Optimize for large files by increasing the chunk size to 2MB
+            reader.setChunkSize(2 * 1024 * 1024);
+            return Channels.newInputStream(reader);
         } catch (StorageException e) {
             throw new IOException(e);
         }
