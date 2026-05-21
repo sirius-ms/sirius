@@ -30,6 +30,8 @@ import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStrea
 import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorOutputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream;
+import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
+import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +44,7 @@ public interface Compressible {
     String TAG_COMPRESSION="compression";
 
     enum Compression {
-        NONE(""), GZIP(".gz"), XZ(".xz"), LZ4(".lz4"), BZIP2(".bz2");
+        NONE(""), GZIP(".gz"), XZ(".xz"), LZ4(".lz4"), BZIP2(".bz2"), ZSTD(".zst");
         public final String ext;
 
         Compression(@NotNull String ext) {
@@ -70,6 +72,8 @@ public interface Compressible {
                 return LZ4;
             if (s.endsWith(BZIP2.ext()))
                 return BZIP2;
+            if (s.endsWith(ZSTD.ext()))
+                return ZSTD;
             return NONE;
         }
     }
@@ -104,18 +108,14 @@ public interface Compressible {
     }
 
     static Optional<InputStream> decompressRawStream(@Nullable final InputStream rawStream, @NotNull final Compression compression) throws IOException {
-        switch (compression) {
-            case GZIP:
-                return wrap(rawStream, GZIPInputStream::new);
-            case XZ:
-                return wrap(rawStream, XZCompressorInputStream::new);
-            case LZ4:
-                return wrap(rawStream, FramedLZ4CompressorInputStream::new);
-            case BZIP2:
-                return wrap(rawStream, BZip2CompressorInputStream::new);
-            default:
-                return Optional.ofNullable(rawStream);
-        }
+        return switch (compression) {
+            case GZIP -> wrap(rawStream, GZIPInputStream::new);
+            case XZ -> wrap(rawStream, XZCompressorInputStream::new);
+            case LZ4 -> wrap(rawStream, FramedLZ4CompressorInputStream::new);
+            case BZIP2 -> wrap(rawStream, BZip2CompressorInputStream::new);
+            case ZSTD -> wrap(rawStream, ZstdCompressorInputStream::new);
+            default -> Optional.ofNullable(rawStream);
+        };
     }
 
     static InputStream toCompressedStream(@NotNull final IOFunctions.IOConsumer<OutputStream> streamConsumer, @NotNull final Compression compression) throws IOException {
@@ -135,17 +135,13 @@ public interface Compressible {
 
 
     static OutputStream compress(@NotNull OutputStream out, @NotNull Compression compression) throws IOException {
-        switch (compression) {
-            case GZIP:
-                return new GzipCompressorOutputStream(out);
-            case XZ:
-                return new XZCompressorOutputStream(out);
-            case LZ4:
-                return new FramedLZ4CompressorOutputStream(out);
-            case BZIP2:
-                return new BZip2CompressorOutputStream(out);
-            default:
-                return out;
-        }
+        return switch (compression) {
+            case GZIP -> new GzipCompressorOutputStream(out);
+            case XZ -> new XZCompressorOutputStream(out);
+            case LZ4 -> new FramedLZ4CompressorOutputStream(out);
+            case BZIP2 -> new BZip2CompressorOutputStream(out);
+            case ZSTD -> new ZstdCompressorOutputStream(out);
+            default -> out;
+        };
     }
 }
