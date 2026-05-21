@@ -23,7 +23,8 @@ concurrentLocks = "1.0.0"
 minio = "8.6.0"
 okhttp = "5.1.0"  # matches minio
 xz = "1.9"
-googleCloudStorage = "1.118.0"  # todo upgrade to 2 or remove
+zstd = "1.5.7-8"
+googleCloudStorage = "2.68.0"
 zip4j = "2.10.0"
 zip4jvm = "1.8"
 jimfs = "1.3.0"
@@ -153,6 +154,7 @@ trove4j = { group = "net.sf.trove4j", name = "core", version.ref = "trove4j" }
 minio = { group = "io.minio", name = "minio", version.ref = "minio" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
+zstdJni = { group = "com.github.luben", name = "zstd-jni", version.ref = "zstd" }
 googleCloudStorage = { group = "com.google.cloud", name = "google-cloud-storage", version.ref = "googleCloudStorage" }
 zip4j = { group = "net.lingala.zip4j", name = "zip4j", version.ref = "zip4j" }
 zip4jvm = { group = "ru.oleg-cherednik.zip4jvm", name = "zip4jvm", version.ref = "zip4jvm" }
