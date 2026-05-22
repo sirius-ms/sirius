@@ -111,7 +111,8 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
                     // unmarshall the compound
                     Compound compound = unmarshaller.unmarshal(xmlEventReader, Compound.class).getValue();
                     iterator = experimentFromCompound(compound).iterator();
-                    return iterator.hasNext() ? iterator.next() : null;
+                    if (iterator.hasNext())
+                        return iterator.next();
                 } else {
                     xmlEventReader.next();
                 }
