@@ -21,7 +21,6 @@
 package de.unijena.bioinf.storage.blob.gcs;
 
 
-import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -37,36 +36,37 @@ import java.util.Base64;
 
 public class GCSUtils {
     public static final String URL_PREFIX = "gc://";
-    public static final String CREDENTIALS_KEY = "de.unijena.bioinf.chemdb.gcs.credentials";
 
-    public static StorageOptions storageOptions(Path credentials) {
+    public static StorageOptions storageOptions(@Nullable Path credentials) {
+        if (credentials == null)
+            return StorageOptions.getDefaultInstance();
+
         try (InputStream stream = Files.newInputStream(credentials)) {
-            FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(ServiceAccountCredentials
-                    .fromStream((PropertyManager.isB64Credentials() ? Base64.getDecoder().wrap(stream) : stream)));
-            return StorageOptions.newBuilder().setCredentials(credentialsProvider.getCredentials()).build();
+            return StorageOptions.newBuilder().setCredentials(ServiceAccountCredentials
+                    .fromStream((PropertyManager.isB64Credentials() ? Base64.getDecoder().wrap(stream) : stream))).build();
         } catch (IOException e) {
-            throw new RuntimeException("Could not found google cloud credentials json at: " + credentials, e);
+            throw new RuntimeException("Could not find google cloud credentials json at: " + credentials, e);
         }
     }
 
     public static boolean bucketExists(@Nullable String propertyPrefix, String name) {
-        return bucketExists(name, getDefaultGCCredentials(propertyPrefix));
+        return bucketExists(name, tryGetGCCredentials(propertyPrefix));
     }
 
-    public static boolean bucketExists(String name, Path credentials) {
+    public static boolean bucketExists(String name, @Nullable Path credentials) {
         final Bucket b = storageOptions(credentials).getService().get(name);
         return b != null && b.exists();
     }
 
 
     public static GCSBlobStorage openDefaultGCStorage(@Nullable String propertyPrefix, @NotNull String bucketName) {
-        return new GCSBlobStorage(bucketName, getDefaultGCCredentials(propertyPrefix));
+        return new GCSBlobStorage(bucketName, tryGetGCCredentials(propertyPrefix));
     }
 
     public static BlobStorage createDefaultGCS(@Nullable String propertyPrefix, @NotNull String name) throws IOException {
         try {
 
-            StorageOptions opts = GCSUtils.storageOptions(getDefaultGCCredentials(propertyPrefix));
+            StorageOptions opts = GCSUtils.storageOptions(tryGetGCCredentials(propertyPrefix));
             Bucket b = opts.getService().create(BucketInfo.newBuilder(name)
                     .setStorageClass(StorageClass.STANDARD)
                     .setLocation("EU")
@@ -77,11 +77,15 @@ public class GCSUtils {
         }
     }
 
-    public static Path getDefaultGCCredentials(@Nullable String propertyPrefix) {
-        Path p = propertyPrefix == null || propertyPrefix.isBlank() ? null : PropertyManager.getPath(propertyPrefix + ".gcs.credentials");
-        if (p != null && p.isAbsolute())
+    @Nullable
+    public static Path tryGetGCCredentials(@Nullable String propertyPrefix) {
+        String key = (propertyPrefix == null || propertyPrefix.isBlank() ? "" : propertyPrefix + ".") + "gcs.credentials";
+        Path p = PropertyManager.getPath(key);
+        if (p == null)
+            return null;
+
+        if (p.isAbsolute())
             return p;
         return Path.of(System.getProperty("user.home")).resolve(p);
     }
-
 }

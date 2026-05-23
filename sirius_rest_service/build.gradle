@@ -63,6 +63,9 @@ dependencies {
     implementation libs.luceneQueryparser
     implementation libs.luceneAnalysisCommon
 
+    // needed to einforce swagger core version that is compatible with springdoc 3
+    implementation libs.swaggerCore
+
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
     implementation 'org.springframework.security:spring-security-oauth2-jose'
