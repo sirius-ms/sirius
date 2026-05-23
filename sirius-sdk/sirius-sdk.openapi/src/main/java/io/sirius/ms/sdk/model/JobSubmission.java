@@ -49,8 +49,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Object to submit a job to be executed by SIRIUS
  */
 @JsonPropertyOrder({
-  JobSubmission.JSON_PROPERTY_COMPOUND_IDS,
-  JobSubmission.JSON_PROPERTY_ALIGNED_FEATURE_IDS,
   JobSubmission.JSON_PROPERTY_FALLBACK_ADDUCTS,
   JobSubmission.JSON_PROPERTY_ENFORCED_ADDUCTS,
   JobSubmission.JSON_PROPERTY_DETECTABLE_ADDUCTS,
@@ -62,18 +60,12 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   JobSubmission.JSON_PROPERTY_CANOPUS_PARAMS,
   JobSubmission.JSON_PROPERTY_STRUCTURE_DB_SEARCH_PARAMS,
   JobSubmission.JSON_PROPERTY_MS_NOVELIST_PARAMS,
-  JobSubmission.JSON_PROPERTY_CONFIG_MAP
+  JobSubmission.JSON_PROPERTY_CONFIG_MAP,
+  JobSubmission.JSON_PROPERTY_COMPOUND_IDS,
+  JobSubmission.JSON_PROPERTY_ALIGNED_FEATURE_IDS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class JobSubmission {
-  public static final String JSON_PROPERTY_COMPOUND_IDS = "compoundIds";
-  @jakarta.annotation.Nullable
-  private List<String> compoundIds;
-
-  public static final String JSON_PROPERTY_ALIGNED_FEATURE_IDS = "alignedFeatureIds";
-  @jakarta.annotation.Nullable
-  private List<String> alignedFeatureIds;
-
   public static final String JSON_PROPERTY_FALLBACK_ADDUCTS = "fallbackAdducts";
   @jakarta.annotation.Nullable
   private List<String> fallbackAdducts;
@@ -122,73 +114,15 @@ public class JobSubmission {
   @jakarta.annotation.Nullable
   private Map<String, String> configMap;
 
+  public static final String JSON_PROPERTY_COMPOUND_IDS = "compoundIds";
+  @jakarta.annotation.Nullable
+  private List<String> compoundIds;
+
+  public static final String JSON_PROPERTY_ALIGNED_FEATURE_IDS = "alignedFeatureIds";
+  @jakarta.annotation.Nullable
+  private List<String> alignedFeatureIds;
+
   public JobSubmission() {
-  }
-
-  public JobSubmission compoundIds(@jakarta.annotation.Nullable List<String> compoundIds) {
-    
-    this.compoundIds = compoundIds;
-    return this;
-  }
-
-  public JobSubmission addCompoundIdsItem(String compoundIdsItem) {
-    if (this.compoundIds == null) {
-      this.compoundIds = new ArrayList<>();
-    }
-    this.compoundIds.add(compoundIdsItem);
-    return this;
-  }
-
-  /**
-   * Compounds that should be the input for this Job  Will be converted to the respective alignedFeatureIds for computation.   At least one compoundId or alignedFeatureId needs to be specified.
-   * @return compoundIds
-   */
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public List<String> getCompoundIds() {
-    return compoundIds;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCompoundIds(@jakarta.annotation.Nullable List<String> compoundIds) {
-    this.compoundIds = compoundIds;
-  }
-
-  public JobSubmission alignedFeatureIds(@jakarta.annotation.Nullable List<String> alignedFeatureIds) {
-    
-    this.alignedFeatureIds = alignedFeatureIds;
-    return this;
-  }
-
-  public JobSubmission addAlignedFeatureIdsItem(String alignedFeatureIdsItem) {
-    if (this.alignedFeatureIds == null) {
-      this.alignedFeatureIds = new ArrayList<>();
-    }
-    this.alignedFeatureIds.add(alignedFeatureIdsItem);
-    return this;
-  }
-
-  /**
-   * Features (aligned over runs) that should be the input for this Job   At least one compoundId or alignedFeatureId needs to be specified.
-   * @return alignedFeatureIds
-   */
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public List<String> getAlignedFeatureIds() {
-    return alignedFeatureIds;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAlignedFeatureIds(@jakarta.annotation.Nullable List<String> alignedFeatureIds) {
-    this.alignedFeatureIds = alignedFeatureIds;
   }
 
   public JobSubmission fallbackAdducts(@jakarta.annotation.Nullable List<String> fallbackAdducts) {
@@ -523,6 +457,72 @@ public class JobSubmission {
     this.configMap = configMap;
   }
 
+  public JobSubmission compoundIds(@jakarta.annotation.Nullable List<String> compoundIds) {
+    
+    this.compoundIds = compoundIds;
+    return this;
+  }
+
+  public JobSubmission addCompoundIdsItem(String compoundIdsItem) {
+    if (this.compoundIds == null) {
+      this.compoundIds = new ArrayList<>();
+    }
+    this.compoundIds.add(compoundIdsItem);
+    return this;
+  }
+
+  /**
+   * Compounds that should be the input for this Job  Will be converted to the respective alignedFeatureIds for computation.   At least one compoundId or alignedFeatureId needs to be specified.
+   * @return compoundIds
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<String> getCompoundIds() {
+    return compoundIds;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCompoundIds(@jakarta.annotation.Nullable List<String> compoundIds) {
+    this.compoundIds = compoundIds;
+  }
+
+  public JobSubmission alignedFeatureIds(@jakarta.annotation.Nullable List<String> alignedFeatureIds) {
+    
+    this.alignedFeatureIds = alignedFeatureIds;
+    return this;
+  }
+
+  public JobSubmission addAlignedFeatureIdsItem(String alignedFeatureIdsItem) {
+    if (this.alignedFeatureIds == null) {
+      this.alignedFeatureIds = new ArrayList<>();
+    }
+    this.alignedFeatureIds.add(alignedFeatureIdsItem);
+    return this;
+  }
+
+  /**
+   * Features (aligned over runs) that should be the input for this Job   At least one compoundId or alignedFeatureId needs to be specified.
+   * @return alignedFeatureIds
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<String> getAlignedFeatureIds() {
+    return alignedFeatureIds;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAlignedFeatureIds(@jakarta.annotation.Nullable List<String> alignedFeatureIds) {
+    this.alignedFeatureIds = alignedFeatureIds;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -533,9 +533,7 @@ public class JobSubmission {
       return false;
     }
     JobSubmission jobSubmission = (JobSubmission) o;
-    return Objects.equals(this.compoundIds, jobSubmission.compoundIds) &&
-        Objects.equals(this.alignedFeatureIds, jobSubmission.alignedFeatureIds) &&
-        Objects.equals(this.fallbackAdducts, jobSubmission.fallbackAdducts) &&
+    return Objects.equals(this.fallbackAdducts, jobSubmission.fallbackAdducts) &&
         Objects.equals(this.enforcedAdducts, jobSubmission.enforcedAdducts) &&
         Objects.equals(this.detectableAdducts, jobSubmission.detectableAdducts) &&
         Objects.equals(this.recompute, jobSubmission.recompute) &&
@@ -546,20 +544,20 @@ public class JobSubmission {
         Objects.equals(this.canopusParams, jobSubmission.canopusParams) &&
         Objects.equals(this.structureDbSearchParams, jobSubmission.structureDbSearchParams) &&
         Objects.equals(this.msNovelistParams, jobSubmission.msNovelistParams) &&
-        Objects.equals(this.configMap, jobSubmission.configMap);
+        Objects.equals(this.configMap, jobSubmission.configMap) &&
+        Objects.equals(this.compoundIds, jobSubmission.compoundIds) &&
+        Objects.equals(this.alignedFeatureIds, jobSubmission.alignedFeatureIds);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compoundIds, alignedFeatureIds, fallbackAdducts, enforcedAdducts, detectableAdducts, recompute, spectraSearchParams, formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams, msNovelistParams, configMap);
+    return Objects.hash(fallbackAdducts, enforcedAdducts, detectableAdducts, recompute, spectraSearchParams, formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams, msNovelistParams, configMap, compoundIds, alignedFeatureIds);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class JobSubmission {\n");
-    sb.append("    compoundIds: ").append(toIndentedString(compoundIds)).append("\n");
-    sb.append("    alignedFeatureIds: ").append(toIndentedString(alignedFeatureIds)).append("\n");
     sb.append("    fallbackAdducts: ").append(toIndentedString(fallbackAdducts)).append("\n");
     sb.append("    enforcedAdducts: ").append(toIndentedString(enforcedAdducts)).append("\n");
     sb.append("    detectableAdducts: ").append(toIndentedString(detectableAdducts)).append("\n");
@@ -572,6 +570,8 @@ public class JobSubmission {
     sb.append("    structureDbSearchParams: ").append(toIndentedString(structureDbSearchParams)).append("\n");
     sb.append("    msNovelistParams: ").append(toIndentedString(msNovelistParams)).append("\n");
     sb.append("    configMap: ").append(toIndentedString(configMap)).append("\n");
+    sb.append("    compoundIds: ").append(toIndentedString(compoundIds)).append("\n");
+    sb.append("    alignedFeatureIds: ").append(toIndentedString(alignedFeatureIds)).append("\n");
     sb.append("}");
     return sb.toString();
   }

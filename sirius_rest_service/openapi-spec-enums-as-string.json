@@ -8626,6 +8626,9 @@
         ],
         "type": "object",
         "properties": {
+          "editable": {
+            "type": "boolean"
+          },
           "tagName": {
             "type": "string",
             "description": "Name of this tag defined by this definition (key)"
@@ -8667,9 +8670,6 @@
           "maxValue": {
             "type": "object",
             "nullable": true
-          },
-          "editable": {
-            "type": "boolean"
           }
         }
       },
@@ -9137,6 +9137,8 @@
         "type": "object",
         "properties": {
           "displayName": {
+            "maxLength": 15,
+            "minLength": 1,
             "type": "string",
             "description": "display name of the database\n Should be short",
             "nullable": true
@@ -9163,22 +9165,6 @@
         ],
         "type": "object",
         "properties": {
-          "displayName": {
-            "type": "string",
-            "description": "display name of the database\n Should be short",
-            "nullable": true
-          },
-          "location": {
-            "type": "string",
-            "description": "Storage location of user database\n Might be NULL for non-user databases or if default location is used.",
-            "nullable": true
-          },
-          "matchRtOfReferenceSpectra": {
-            "type": "boolean",
-            "description": "Indicates whether this database shall be used to use retention time information for library matching.\n Typically used for in-house spectral libraries that have been measured on",
-            "nullable": true,
-            "default": false
-          },
           "databaseId": {
             "type": "string",
             "description": "A unique identifier or name of the database.\n Should only contain file path and url save characters\n For user databases this is usually the file name."
@@ -9228,6 +9214,24 @@
             "type": "string",
             "description": "Error message if the database could not be loaded",
             "nullable": true
+          },
+          "displayName": {
+            "maxLength": 15,
+            "minLength": 1,
+            "type": "string",
+            "description": "display name of the database\n Should be short",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "description": "Storage location of user database\n Might be NULL for non-user databases or if default location is used.",
+            "nullable": true
+          },
+          "matchRtOfReferenceSpectra": {
+            "type": "boolean",
+            "description": "Indicates whether this database shall be used to use retention time information for library matching.\n Typically used for in-house spectral libraries that have been measured on",
+            "nullable": true,
+            "default": false
           }
         }
       },
@@ -9395,24 +9399,6 @@
       "JobSubmission": {
         "type": "object",
         "properties": {
-          "compoundIds": {
-            "type": "array",
-            "description": "Compounds that should be the input for this Job\n Will be converted to the respective alignedFeatureIds for computation.\n\n At least one compoundId or alignedFeatureId needs to be specified.",
-            "nullable": true,
-            "items": {
-              "type": "string",
-              "nullable": true
-            }
-          },
-          "alignedFeatureIds": {
-            "type": "array",
-            "description": "Features (aligned over runs) that should be the input for this Job\n\n At least one compoundId or alignedFeatureId needs to be specified.",
-            "nullable": true,
-            "items": {
-              "type": "string",
-              "nullable": true
-            }
-          },
           "fallbackAdducts": {
             "type": "array",
             "description": "Describes how to deal with Adducts: Fallback adducts are considered if the auto detection did not find any indication for an ion mode.\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
@@ -9474,6 +9460,24 @@
             },
             "description": "As an alternative to the object based parameters, this map allows to store key value pairs\n of ALL SIRIUS parameters. All possible parameters can be retrieved from SIRIUS via the respective endpoint.",
             "nullable": true
+          },
+          "compoundIds": {
+            "type": "array",
+            "description": "Compounds that should be the input for this Job\n Will be converted to the respective alignedFeatureIds for computation.\n\n At least one compoundId or alignedFeatureId needs to be specified.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "alignedFeatureIds": {
+            "type": "array",
+            "description": "Features (aligned over runs) that should be the input for this Job\n\n At least one compoundId or alignedFeatureId needs to be specified.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
           }
         },
         "description": "Object to submit a job to be executed by SIRIUS"
@@ -9867,6 +9871,12 @@
         ],
         "type": "object",
         "properties": {
+          "command": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "compoundIds": {
             "type": "array",
             "description": "Compounds that should be the input for this Job\n Will be converted to the respective alignedFeatureIds for computation.\n\n At least one compoundId or alignedFeatureId needs to be specified.",
@@ -9883,12 +9893,6 @@
             "items": {
               "type": "string",
               "nullable": true
-            }
-          },
-          "command": {
-            "type": "array",
-            "items": {
-              "type": "string"
             }
           }
         }
@@ -10497,23 +10501,6 @@
       "ConsensusAnnotationsCSI": {
         "type": "object",
         "properties": {
-          "molecularFormula": {
-            "type": "string",
-            "description": "Molecular formula of the consensus annotation\n Might be null if no consensus formula is available.",
-            "nullable": true
-          },
-          "compoundClasses": {
-            "$ref": "#/components/schemas/CompoundClasses"
-          },
-          "supportingFeatureIds": {
-            "type": "array",
-            "description": "FeatureIds where the topAnnotation supports this annotation.",
-            "nullable": true,
-            "items": {
-              "type": "string",
-              "nullable": true
-            }
-          },
           "selectionCriterion": {
             "type": "string",
             "description": "Null if this is a custom selection",
@@ -10541,13 +10528,7 @@
             "description": "Confidence value that represents the certainty that the exact consensus structure or a very similar\n structure (e.g. measured by Maximum Common Edge Subgraph Distance) is the measured one.\n If multiple features support this consensus structure the maximum confidence is reported",
             "format": "double",
             "nullable": true
-          }
-        },
-        "nullable": true
-      },
-      "ConsensusAnnotationsDeNovo": {
-        "type": "object",
-        "properties": {
+          },
           "molecularFormula": {
             "type": "string",
             "description": "Molecular formula of the consensus annotation\n Might be null if no consensus formula is available.",
@@ -10564,7 +10545,13 @@
               "type": "string",
               "nullable": true
             }
-          },
+          }
+        },
+        "nullable": true
+      },
+      "ConsensusAnnotationsDeNovo": {
+        "type": "object",
+        "properties": {
           "selectionCriterion": {
             "type": "string",
             "description": "Criterion that was used to select the consensus annotation.",
@@ -10574,6 +10561,23 @@
               "TOP_FORMULA",
               "SINGLETON_FORMULA"
             ]
+          },
+          "molecularFormula": {
+            "type": "string",
+            "description": "Molecular formula of the consensus annotation\n Might be null if no consensus formula is available.",
+            "nullable": true
+          },
+          "compoundClasses": {
+            "$ref": "#/components/schemas/CompoundClasses"
+          },
+          "supportingFeatureIds": {
+            "type": "array",
+            "description": "FeatureIds where the topAnnotation supports this annotation.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
           }
         },
         "nullable": true
@@ -11447,7 +11451,8 @@
             }
           }
         },
-        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
+        "nullable": true
       },
       "AdductNodeExperimental": {
         "type": "object",
@@ -11474,6 +11479,7 @@
         "properties": {
           "scanNumber": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "integer",
               "format": "int32"
@@ -11481,6 +11487,7 @@
           },
           "scanIds": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             }
@@ -11689,6 +11696,20 @@
         ],
         "type": "object",
         "properties": {
+          "quantType": {
+            "type": "string",
+            "enum": [
+              "FEATURES",
+              "COMPOUNDS"
+            ]
+          },
+          "objectId": {
+            "type": "string"
+          },
+          "foldChange": {
+            "type": "number",
+            "format": "double"
+          },
           "leftGroup": {
             "type": "string"
           },
@@ -11709,20 +11730,6 @@
               "APEX_INTENSITY",
               "AREA_UNDER_CURVE"
             ]
-          },
-          "quantType": {
-            "type": "string",
-            "enum": [
-              "FEATURES",
-              "COMPOUNDS"
-            ]
-          },
-          "objectId": {
-            "type": "string"
-          },
-          "foldChange": {
-            "type": "number",
-            "format": "double"
           }
         }
       },

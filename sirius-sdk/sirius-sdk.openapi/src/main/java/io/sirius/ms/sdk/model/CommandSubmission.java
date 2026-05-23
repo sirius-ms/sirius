@@ -40,12 +40,16 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * CommandSubmission
  */
 @JsonPropertyOrder({
+  CommandSubmission.JSON_PROPERTY_COMMAND,
   CommandSubmission.JSON_PROPERTY_COMPOUND_IDS,
-  CommandSubmission.JSON_PROPERTY_ALIGNED_FEATURE_IDS,
-  CommandSubmission.JSON_PROPERTY_COMMAND
+  CommandSubmission.JSON_PROPERTY_ALIGNED_FEATURE_IDS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class CommandSubmission {
+  public static final String JSON_PROPERTY_COMMAND = "command";
+  @jakarta.annotation.Nonnull
+  private List<String> command = new ArrayList<>();
+
   public static final String JSON_PROPERTY_COMPOUND_IDS = "compoundIds";
   @jakarta.annotation.Nullable
   private List<String> compoundIds;
@@ -54,11 +58,40 @@ public class CommandSubmission {
   @jakarta.annotation.Nullable
   private List<String> alignedFeatureIds;
 
-  public static final String JSON_PROPERTY_COMMAND = "command";
-  @jakarta.annotation.Nonnull
-  private List<String> command = new ArrayList<>();
-
   public CommandSubmission() {
+  }
+
+  public CommandSubmission command(@jakarta.annotation.Nonnull List<String> command) {
+    
+    this.command = command;
+    return this;
+  }
+
+  public CommandSubmission addCommandItem(String commandItem) {
+    if (this.command == null) {
+      this.command = new ArrayList<>();
+    }
+    this.command.add(commandItem);
+    return this;
+  }
+
+  /**
+   * Get command
+   * @return command
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_COMMAND)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public List<String> getCommand() {
+    return command;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_COMMAND)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setCommand(@jakarta.annotation.Nonnull List<String> command) {
+    this.command = command;
   }
 
   public CommandSubmission compoundIds(@jakarta.annotation.Nullable List<String> compoundIds) {
@@ -127,39 +160,6 @@ public class CommandSubmission {
     this.alignedFeatureIds = alignedFeatureIds;
   }
 
-  public CommandSubmission command(@jakarta.annotation.Nonnull List<String> command) {
-    
-    this.command = command;
-    return this;
-  }
-
-  public CommandSubmission addCommandItem(String commandItem) {
-    if (this.command == null) {
-      this.command = new ArrayList<>();
-    }
-    this.command.add(commandItem);
-    return this;
-  }
-
-  /**
-   * Get command
-   * @return command
-   */
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_COMMAND)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public List<String> getCommand() {
-    return command;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_COMMAND)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setCommand(@jakarta.annotation.Nonnull List<String> command) {
-    this.command = command;
-  }
-
 
   @Override
   public boolean equals(Object o) {
@@ -170,23 +170,23 @@ public class CommandSubmission {
       return false;
     }
     CommandSubmission commandSubmission = (CommandSubmission) o;
-    return Objects.equals(this.compoundIds, commandSubmission.compoundIds) &&
-        Objects.equals(this.alignedFeatureIds, commandSubmission.alignedFeatureIds) &&
-        Objects.equals(this.command, commandSubmission.command);
+    return Objects.equals(this.command, commandSubmission.command) &&
+        Objects.equals(this.compoundIds, commandSubmission.compoundIds) &&
+        Objects.equals(this.alignedFeatureIds, commandSubmission.alignedFeatureIds);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compoundIds, alignedFeatureIds, command);
+    return Objects.hash(command, compoundIds, alignedFeatureIds);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class CommandSubmission {\n");
+    sb.append("    command: ").append(toIndentedString(command)).append("\n");
     sb.append("    compoundIds: ").append(toIndentedString(compoundIds)).append("\n");
     sb.append("    alignedFeatureIds: ").append(toIndentedString(alignedFeatureIds)).append("\n");
-    sb.append("    command: ").append(toIndentedString(command)).append("\n");
     sb.append("}");
     return sb.toString();
   }
