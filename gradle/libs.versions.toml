@@ -11,7 +11,7 @@ commonsText = "1.12.0"
 commonsCompress = "1.26.2"
 commonsIo = "2.16.1"
 jdbi = "3.34.0"
-swagger = "2.2.36"
+swagger = "2.2.49"
 picocli = "4.7.7"
 commonsConfiguration = "1.10"
 commonsConfiguration2 = "2.11.0"
@@ -138,6 +138,7 @@ slf4jJclOverSlf4j = { group = "org.slf4j", name = "jcl-over-slf4j" }
 # NOT managed by Spring Boot BOM (Explicit version required)
 jetbrainsAnnotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrainsAnnotations" }
 swaggerAnnotations = { group = "io.swagger.core.v3", name = "swagger-annotations", version.ref = "swagger" }
+swaggerCore = { group = "io.swagger.core.v3", name = "swagger-core", version.ref = "swagger" }
 fastutil = { group = "it.unimi.dsi", name = "fastutil", version.ref = "fastutil" }
 jjobsCore = { group = "de.unijena.bioinf", name = "jjobs-core", version.ref = "jjobs" }
 jjobsSwing = { group = "de.unijena.bioinf", name = "jjobs-swing", version.ref = "jjobs" }
