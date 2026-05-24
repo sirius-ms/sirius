@@ -116,6 +116,9 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *ActuatorApi* | [**health**](docs/ActuatorApi.md#health) | **GET** /actuator/health | Actuator web endpoint &#39;health&#39;
 *ActuatorApi* | [**shutdown**](docs/ActuatorApi.md#shutdown) | **POST** /actuator/shutdown | Actuator web endpoint &#39;shutdown&#39;
+*ClassyFireClassStatisticsApi* | [**computeClassyfireClassFoldChangesExperimental**](docs/ClassyFireClassStatisticsApi.md#computeClassyfireClassFoldChangesExperimental) | **PUT** /api/projects/{projectId}/classyfire-classes/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs
+*ClassyFireClassStatisticsApi* | [**deleteClassyfireClassFoldChangesExperimental**](docs/ClassyFireClassStatisticsApi.md#deleteClassyfireClassFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/classyfire-classes/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes
+*ClassyFireClassStatisticsApi* | [**getClassyfireClassFoldChangeTableExperimental**](docs/ClassyFireClassStatisticsApi.md#getClassyfireClassFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/classyfire-classes/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
 *CompoundStatisticsApi* | [**computeCompoundFoldChangesExperimental**](docs/CompoundStatisticsApi.md#computeCompoundFoldChangesExperimental) | **PUT** /api/projects/{projectId}/compounds/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs
 *CompoundStatisticsApi* | [**deleteCompoundFoldChangesExperimental**](docs/CompoundStatisticsApi.md#deleteCompoundFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/compounds/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes
 *CompoundStatisticsApi* | [**getCompoundFoldChangeTableExperimental**](docs/CompoundStatisticsApi.md#getCompoundFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
@@ -211,6 +214,9 @@ Class | Method | HTTP request | Description
 *LoginAndAccountApi* | [**openPortal**](docs/LoginAndAccountApi.md#openPortal) | **GET** /api/account/openPortal | Open User portal in browser.
 *LoginAndAccountApi* | [**selectSubscription**](docs/LoginAndAccountApi.md#selectSubscription) | **PUT** /api/account/subscriptions/select-active | Select a subscription as active subscription to be used for computations.
 *LoginAndAccountApi* | [**signUp**](docs/LoginAndAccountApi.md#signUp) | **GET** /api/account/signUp | Open SignUp window in system browser and return signUp link.
+*NpcClassStatisticsApi* | [**computeNpcClassFoldChangesExperimental**](docs/NpcClassStatisticsApi.md#computeNpcClassFoldChangesExperimental) | **PUT** /api/projects/{projectId}/npc-classes/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs
+*NpcClassStatisticsApi* | [**deleteNpcClassFoldChangesExperimental**](docs/NpcClassStatisticsApi.md#deleteNpcClassFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/npc-classes/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes
+*NpcClassStatisticsApi* | [**getNpcClassFoldChangeTableExperimental**](docs/NpcClassStatisticsApi.md#getNpcClassFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/npc-classes/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
 *ProjectsApi* | [**buildSearchIndex**](docs/ProjectsApi.md#buildSearchIndex) | **PUT** /api/projects/{projectId}/index | Create a search index for the given project.
 *ProjectsApi* | [**closeProject**](docs/ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from the application
 *ProjectsApi* | [**copyProject**](docs/ProjectsApi.md#copyProject) | **PUT** /api/projects/{projectId}/copy | [DEPRECATED] [INTERNAL] This endpoint is based on local file paths and will likely be removed in future versions of this API.
@@ -230,6 +236,7 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
 *ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
 *ProjectsApi* | [**openProject**](docs/ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
+*ReactionsApi* | [**applyReactions**](docs/ReactionsApi.md#applyReactions) | **POST** /api/reactions | Apply a sequence of reactions to a list of SMILES strings or structures from a database.
 *RunsApi* | [**addTagsToRunExperimental**](docs/RunsApi.md#addTagsToRunExperimental) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | [EXPERIMENTAL] Add tags to a run in the project
 *RunsApi* | [**addTagsToRunsExperimental**](docs/RunsApi.md#addTagsToRunsExperimental) | **PUT** /api/projects/{projectId}/runs/tags | [EXPERIMENTAL] Add tags to a run in the project
 *RunsApi* | [**getRunExperimental**](docs/RunsApi.md#getRunExperimental) | **GET** /api/projects/{projectId}/runs/{runId} | [EXPERIMENTAL] Get run with the given identifier from the specified project-space
@@ -244,6 +251,7 @@ Class | Method | HTTP request | Description
 *SearchableDatabasesApi* | [**getDatabases**](docs/SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases | 
 *SearchableDatabasesApi* | [**getDownloadableDatabases**](docs/SearchableDatabasesApi.md#getDownloadableDatabases) | **GET** /api/databases/downloadable | Get list of curated custom databases downloadable from the SIRIUS web service for local use
 *SearchableDatabasesApi* | [**getIncludedDatabases**](docs/SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included | 
+*SearchableDatabasesApi* | [**getStructuresExperimental**](docs/SearchableDatabasesApi.md#getStructuresExperimental) | **GET** /api/databases/{databaseId}/structures | 
 *SearchableDatabasesApi* | [**importIntoDatabase**](docs/SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database.
 *SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | 
@@ -305,6 +313,7 @@ Class | Method | HTTP request | Description
  - [DBLink](docs/DBLink.md)
  - [DataImportEvent](docs/DataImportEvent.md)
  - [DataQuality](docs/DataQuality.md)
+ - [DatabaseStructure](docs/DatabaseStructure.md)
  - [Deviation](docs/Deviation.md)
  - [DownloadableDatabase](docs/DownloadableDatabase.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
@@ -331,20 +340,25 @@ Class | Method | HTTP request | Description
  - [LcmsSubmissionParameters](docs/LcmsSubmissionParameters.md)
  - [LicenseInfo](docs/LicenseInfo.md)
  - [LipidAnnotation](docs/LipidAnnotation.md)
+ - [LoopStep](docs/LoopStep.md)
  - [LossEdge](docs/LossEdge.md)
  - [MetabolicTransformation](docs/MetabolicTransformation.md)
+ - [Metadata](docs/Metadata.md)
  - [MsData](docs/MsData.md)
  - [MsNovelist](docs/MsNovelist.md)
  - [P2Mode](docs/P2Mode.md)
  - [PageMetadata](docs/PageMetadata.md)
  - [PagedModelAlignedFeature](docs/PagedModelAlignedFeature.md)
  - [PagedModelCompound](docs/PagedModelCompound.md)
+ - [PagedModelDatabaseStructure](docs/PagedModelDatabaseStructure.md)
  - [PagedModelFormulaCandidate](docs/PagedModelFormulaCandidate.md)
  - [PagedModelJob](docs/PagedModelJob.md)
  - [PagedModelRun](docs/PagedModelRun.md)
  - [PagedModelSpectralLibraryMatch](docs/PagedModelSpectralLibraryMatch.md)
+ - [PagedModelString](docs/PagedModelString.md)
  - [PagedModelStructureCandidateFormula](docs/PagedModelStructureCandidateFormula.md)
  - [PagedModelStructureCandidateScored](docs/PagedModelStructureCandidateScored.md)
+ - [ParallelStep](docs/ParallelStep.md)
  - [ParentPeak](docs/ParentPeak.md)
  - [PeakAnnotation](docs/PeakAnnotation.md)
  - [PeakPair](docs/PeakPair.md)
@@ -358,6 +372,10 @@ Class | Method | HTTP request | Description
  - [QuantMeasure](docs/QuantMeasure.md)
  - [QuantRowType](docs/QuantRowType.md)
  - [QuantTableExperimental](docs/QuantTableExperimental.md)
+ - [Reaction](docs/Reaction.md)
+ - [ReactionRequest](docs/ReactionRequest.md)
+ - [ReactionSequence](docs/ReactionSequence.md)
+ - [ReactionSequenceStepsInner](docs/ReactionSequenceStepsInner.md)
  - [Run](docs/Run.md)
  - [RunOptField](docs/RunOptField.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
@@ -377,6 +395,7 @@ Class | Method | HTTP request | Description
  - [SpectrumType](docs/SpectrumType.md)
  - [StatisticsTable](docs/StatisticsTable.md)
  - [StatisticsType](docs/StatisticsType.md)
+ - [Step](docs/Step.md)
  - [StoredJobSubmission](docs/StoredJobSubmission.md)
  - [StructureCandidate](docs/StructureCandidate.md)
  - [StructureCandidateFormula](docs/StructureCandidateFormula.md)

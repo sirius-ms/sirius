@@ -37,12 +37,16 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * TagSubmission
  */
 @JsonPropertyOrder({
+  TagSubmission.JSON_PROPERTY_TAGGED_OBJECT_ID,
   TagSubmission.JSON_PROPERTY_TAG_NAME,
-  TagSubmission.JSON_PROPERTY_VALUE,
-  TagSubmission.JSON_PROPERTY_TAGGED_OBJECT_ID
+  TagSubmission.JSON_PROPERTY_VALUE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class TagSubmission {
+  public static final String JSON_PROPERTY_TAGGED_OBJECT_ID = "taggedObjectId";
+  @jakarta.annotation.Nonnull
+  private String taggedObjectId;
+
   public static final String JSON_PROPERTY_TAG_NAME = "tagName";
   @jakarta.annotation.Nonnull
   private String tagName;
@@ -51,11 +55,32 @@ public class TagSubmission {
   @jakarta.annotation.Nullable
   private Object value;
 
-  public static final String JSON_PROPERTY_TAGGED_OBJECT_ID = "taggedObjectId";
-  @jakarta.annotation.Nonnull
-  private String taggedObjectId;
-
   public TagSubmission() {
+  }
+
+  public TagSubmission taggedObjectId(@jakarta.annotation.Nonnull String taggedObjectId) {
+    
+    this.taggedObjectId = taggedObjectId;
+    return this;
+  }
+
+  /**
+   * ID of the object where the tag should be added.  Then Object type is taken from context of the API endpoint.
+   * @return taggedObjectId
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_TAGGED_OBJECT_ID)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public String getTaggedObjectId() {
+    return taggedObjectId;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_TAGGED_OBJECT_ID)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setTaggedObjectId(@jakarta.annotation.Nonnull String taggedObjectId) {
+    this.taggedObjectId = taggedObjectId;
   }
 
   public TagSubmission tagName(@jakarta.annotation.Nonnull String tagName) {
@@ -108,31 +133,6 @@ public class TagSubmission {
     this.value = value;
   }
 
-  public TagSubmission taggedObjectId(@jakarta.annotation.Nonnull String taggedObjectId) {
-    
-    this.taggedObjectId = taggedObjectId;
-    return this;
-  }
-
-  /**
-   * ID of the object where the tag should be added.  Then Object type is taken from context of the API endpoint.
-   * @return taggedObjectId
-   */
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_TAGGED_OBJECT_ID)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public String getTaggedObjectId() {
-    return taggedObjectId;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_TAGGED_OBJECT_ID)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setTaggedObjectId(@jakarta.annotation.Nonnull String taggedObjectId) {
-    this.taggedObjectId = taggedObjectId;
-  }
-
 
   @Override
   public boolean equals(Object o) {
@@ -143,23 +143,23 @@ public class TagSubmission {
       return false;
     }
     TagSubmission tagSubmission = (TagSubmission) o;
-    return Objects.equals(this.tagName, tagSubmission.tagName) &&
-        Objects.equals(this.value, tagSubmission.value) &&
-        Objects.equals(this.taggedObjectId, tagSubmission.taggedObjectId);
+    return Objects.equals(this.taggedObjectId, tagSubmission.taggedObjectId) &&
+        Objects.equals(this.tagName, tagSubmission.tagName) &&
+        Objects.equals(this.value, tagSubmission.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tagName, value, taggedObjectId);
+    return Objects.hash(taggedObjectId, tagName, value);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class TagSubmission {\n");
+    sb.append("    taggedObjectId: ").append(toIndentedString(taggedObjectId)).append("\n");
     sb.append("    tagName: ").append(toIndentedString(tagName)).append("\n");
     sb.append("    value: ").append(toIndentedString(value)).append("\n");
-    sb.append("    taggedObjectId: ").append(toIndentedString(taggedObjectId)).append("\n");
     sb.append("}");
     return sb.toString();
   }
