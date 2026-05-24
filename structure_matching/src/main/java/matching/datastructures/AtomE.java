@@ -325,6 +325,26 @@ public class AtomE implements IAtom {
     }
 
     @Override
+    public void set(int i) {
+        this.atom.set(i);
+    }
+
+    @Override
+    public void clear(int i) {
+        this.atom.clear(i);
+    }
+
+    @Override
+    public boolean is(int i) {
+        return this.atom.is(i);
+    }
+
+    @Override
+    public int flags() {
+        return this.atom.flags();
+    }
+
+    @Override
     public IAtom clone() throws CloneNotSupportedException{
         AtomE atomCopy = new AtomE(this.atom.clone());
         atomCopy.setColor(this.color);
@@ -450,7 +470,7 @@ public class AtomE implements IAtom {
 
     @Override
     public void setAtomicNumber(Integer atomicNumber) {
-        this.atom.setMassNumber(atomicNumber);
+        this.atom.setAtomicNumber(atomicNumber);
     }
 
     @Override
