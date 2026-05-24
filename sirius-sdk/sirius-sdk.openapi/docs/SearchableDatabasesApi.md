@@ -11,6 +11,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getDatabases**](SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases |  |
 | [**getDownloadableDatabases**](SearchableDatabasesApi.md#getDownloadableDatabases) | **GET** /api/databases/downloadable | Get list of curated custom databases downloadable from the SIRIUS web service for local use |
 | [**getIncludedDatabases**](SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included |  |
+| [**getStructuresExperimental**](SearchableDatabasesApi.md#getStructuresExperimental) | **GET** /api/databases/{databaseId}/structures |  |
 | [**importIntoDatabase**](SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database. |
 | [**removeDatabase**](SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} |  |
 | [**updateDatabase**](SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} |  |
@@ -454,6 +455,76 @@ public class Example {
 ### Return type
 
 [**List&lt;SearchableDatabase&gt;**](SearchableDatabase.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## getStructuresExperimental
+
+> PagedModelDatabaseStructure getStructuresExperimental(databaseId, page, size, sort)
+
+
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.SearchableDatabasesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
+        String databaseId = "databaseId_example"; // String | 
+        Integer page = 0; // Integer | Zero-based page index (0..N)
+        Integer size = 20; // Integer | The size of the page to be returned
+        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        try {
+            PagedModelDatabaseStructure result = apiInstance.getStructuresExperimental(databaseId, page, size, sort);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling SearchableDatabasesApi#getStructuresExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **databaseId** | **String**|  | |
+| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
+| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
+| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+
+### Return type
+
+[**PagedModelDatabaseStructure**](PagedModelDatabaseStructure.md)
 
 ### Authorization
 
