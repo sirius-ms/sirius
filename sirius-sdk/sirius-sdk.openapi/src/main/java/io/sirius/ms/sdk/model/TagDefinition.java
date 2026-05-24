@@ -41,17 +41,21 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * TagDefinition
  */
 @JsonPropertyOrder({
+  TagDefinition.JSON_PROPERTY_EDITABLE,
   TagDefinition.JSON_PROPERTY_TAG_NAME,
   TagDefinition.JSON_PROPERTY_DESCRIPTION,
   TagDefinition.JSON_PROPERTY_TAG_TYPE,
   TagDefinition.JSON_PROPERTY_VALUE_TYPE,
   TagDefinition.JSON_PROPERTY_POSSIBLE_VALUES,
   TagDefinition.JSON_PROPERTY_MIN_VALUE,
-  TagDefinition.JSON_PROPERTY_MAX_VALUE,
-  TagDefinition.JSON_PROPERTY_EDITABLE
+  TagDefinition.JSON_PROPERTY_MAX_VALUE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class TagDefinition {
+  public static final String JSON_PROPERTY_EDITABLE = "editable";
+  @jakarta.annotation.Nullable
+  private Boolean editable;
+
   public static final String JSON_PROPERTY_TAG_NAME = "tagName";
   @jakarta.annotation.Nonnull
   private String tagName;
@@ -80,11 +84,32 @@ public class TagDefinition {
   @jakarta.annotation.Nullable
   private Object maxValue;
 
-  public static final String JSON_PROPERTY_EDITABLE = "editable";
-  @jakarta.annotation.Nullable
-  private Boolean editable;
-
   public TagDefinition() {
+  }
+
+  public TagDefinition editable(@jakarta.annotation.Nullable Boolean editable) {
+    
+    this.editable = editable;
+    return this;
+  }
+
+  /**
+   * Get editable
+   * @return editable
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_EDITABLE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isEditable() {
+    return editable;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_EDITABLE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setEditable(@jakarta.annotation.Nullable Boolean editable) {
+    this.editable = editable;
   }
 
   public TagDefinition tagName(@jakarta.annotation.Nonnull String tagName) {
@@ -270,31 +295,6 @@ public class TagDefinition {
     this.maxValue = maxValue;
   }
 
-  public TagDefinition editable(@jakarta.annotation.Nullable Boolean editable) {
-    
-    this.editable = editable;
-    return this;
-  }
-
-  /**
-   * Get editable
-   * @return editable
-   */
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EDITABLE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isEditable() {
-    return editable;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_EDITABLE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEditable(@jakarta.annotation.Nullable Boolean editable) {
-    this.editable = editable;
-  }
-
 
   @Override
   public boolean equals(Object o) {
@@ -305,25 +305,26 @@ public class TagDefinition {
       return false;
     }
     TagDefinition tagDefinition = (TagDefinition) o;
-    return Objects.equals(this.tagName, tagDefinition.tagName) &&
+    return Objects.equals(this.editable, tagDefinition.editable) &&
+        Objects.equals(this.tagName, tagDefinition.tagName) &&
         Objects.equals(this.description, tagDefinition.description) &&
         Objects.equals(this.tagType, tagDefinition.tagType) &&
         Objects.equals(this.valueType, tagDefinition.valueType) &&
         Objects.equals(this.possibleValues, tagDefinition.possibleValues) &&
         Objects.equals(this.minValue, tagDefinition.minValue) &&
-        Objects.equals(this.maxValue, tagDefinition.maxValue) &&
-        Objects.equals(this.editable, tagDefinition.editable);
+        Objects.equals(this.maxValue, tagDefinition.maxValue);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tagName, description, tagType, valueType, possibleValues, minValue, maxValue, editable);
+    return Objects.hash(editable, tagName, description, tagType, valueType, possibleValues, minValue, maxValue);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class TagDefinition {\n");
+    sb.append("    editable: ").append(toIndentedString(editable)).append("\n");
     sb.append("    tagName: ").append(toIndentedString(tagName)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    tagType: ").append(toIndentedString(tagType)).append("\n");
@@ -331,7 +332,6 @@ public class TagDefinition {
     sb.append("    possibleValues: ").append(toIndentedString(possibleValues)).append("\n");
     sb.append("    minValue: ").append(toIndentedString(minValue)).append("\n");
     sb.append("    maxValue: ").append(toIndentedString(maxValue)).append("\n");
-    sb.append("    editable: ").append(toIndentedString(editable)).append("\n");
     sb.append("}");
     return sb.toString();
   }

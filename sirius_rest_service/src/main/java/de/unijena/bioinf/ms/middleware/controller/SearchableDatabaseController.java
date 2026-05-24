@@ -22,9 +22,9 @@ package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
 import de.unijena.bioinf.ms.middleware.model.databases.BioTransformerParameters;
+import de.unijena.bioinf.ms.middleware.model.databases.DatabaseStructure;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
-import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.rest.client.databases.DownloadableDatabase;
 import de.unijena.bioinf.webapi.WebAPI;
@@ -35,6 +35,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -163,6 +166,13 @@ public class SearchableDatabaseController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error getting downloadable databases: " + e.getMessage(), e);
         }
     }
+
+    @Operation(operationId = "getStructuresExperimental")
+    @GetMapping(value = "{databaseId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<DatabaseStructure> getStructures(@PathVariable String databaseId, @ParameterObject Pageable pageable) {
+        return chemDbService.findAllStructures(databaseId, pageable);
+    }
+
 
     //todo TBD whether we want to implement this endpoint
 //    /**

@@ -42,13 +42,17 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * ConsensusAnnotationsDeNovo
  */
 @JsonPropertyOrder({
+  ConsensusAnnotationsDeNovo.JSON_PROPERTY_SELECTION_CRITERION,
   ConsensusAnnotationsDeNovo.JSON_PROPERTY_MOLECULAR_FORMULA,
   ConsensusAnnotationsDeNovo.JSON_PROPERTY_COMPOUND_CLASSES,
-  ConsensusAnnotationsDeNovo.JSON_PROPERTY_SUPPORTING_FEATURE_IDS,
-  ConsensusAnnotationsDeNovo.JSON_PROPERTY_SELECTION_CRITERION
+  ConsensusAnnotationsDeNovo.JSON_PROPERTY_SUPPORTING_FEATURE_IDS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ConsensusAnnotationsDeNovo {
+  public static final String JSON_PROPERTY_SELECTION_CRITERION = "selectionCriterion";
+  @jakarta.annotation.Nullable
+  private ConsensusCriterionDeNovo selectionCriterion;
+
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
   @jakarta.annotation.Nullable
   private String molecularFormula;
@@ -61,11 +65,32 @@ public class ConsensusAnnotationsDeNovo {
   @jakarta.annotation.Nullable
   private List<String> supportingFeatureIds;
 
-  public static final String JSON_PROPERTY_SELECTION_CRITERION = "selectionCriterion";
-  @jakarta.annotation.Nullable
-  private ConsensusCriterionDeNovo selectionCriterion;
-
   public ConsensusAnnotationsDeNovo() {
+  }
+
+  public ConsensusAnnotationsDeNovo selectionCriterion(@jakarta.annotation.Nullable ConsensusCriterionDeNovo selectionCriterion) {
+    
+    this.selectionCriterion = selectionCriterion;
+    return this;
+  }
+
+  /**
+   * Get selectionCriterion
+   * @return selectionCriterion
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public ConsensusCriterionDeNovo getSelectionCriterion() {
+    return selectionCriterion;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSelectionCriterion(@jakarta.annotation.Nullable ConsensusCriterionDeNovo selectionCriterion) {
+    this.selectionCriterion = selectionCriterion;
   }
 
   public ConsensusAnnotationsDeNovo molecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
@@ -151,31 +176,6 @@ public class ConsensusAnnotationsDeNovo {
     this.supportingFeatureIds = supportingFeatureIds;
   }
 
-  public ConsensusAnnotationsDeNovo selectionCriterion(@jakarta.annotation.Nullable ConsensusCriterionDeNovo selectionCriterion) {
-    
-    this.selectionCriterion = selectionCriterion;
-    return this;
-  }
-
-  /**
-   * Get selectionCriterion
-   * @return selectionCriterion
-   */
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public ConsensusCriterionDeNovo getSelectionCriterion() {
-    return selectionCriterion;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSelectionCriterion(@jakarta.annotation.Nullable ConsensusCriterionDeNovo selectionCriterion) {
-    this.selectionCriterion = selectionCriterion;
-  }
-
 
   @Override
   public boolean equals(Object o) {
@@ -186,25 +186,25 @@ public class ConsensusAnnotationsDeNovo {
       return false;
     }
     ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo = (ConsensusAnnotationsDeNovo) o;
-    return Objects.equals(this.molecularFormula, consensusAnnotationsDeNovo.molecularFormula) &&
+    return Objects.equals(this.selectionCriterion, consensusAnnotationsDeNovo.selectionCriterion) &&
+        Objects.equals(this.molecularFormula, consensusAnnotationsDeNovo.molecularFormula) &&
         Objects.equals(this.compoundClasses, consensusAnnotationsDeNovo.compoundClasses) &&
-        Objects.equals(this.supportingFeatureIds, consensusAnnotationsDeNovo.supportingFeatureIds) &&
-        Objects.equals(this.selectionCriterion, consensusAnnotationsDeNovo.selectionCriterion);
+        Objects.equals(this.supportingFeatureIds, consensusAnnotationsDeNovo.supportingFeatureIds);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(molecularFormula, compoundClasses, supportingFeatureIds, selectionCriterion);
+    return Objects.hash(selectionCriterion, molecularFormula, compoundClasses, supportingFeatureIds);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ConsensusAnnotationsDeNovo {\n");
+    sb.append("    selectionCriterion: ").append(toIndentedString(selectionCriterion)).append("\n");
     sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
     sb.append("    compoundClasses: ").append(toIndentedString(compoundClasses)).append("\n");
     sb.append("    supportingFeatureIds: ").append(toIndentedString(supportingFeatureIds)).append("\n");
-    sb.append("    selectionCriterion: ").append(toIndentedString(selectionCriterion)).append("\n");
     sb.append("}");
     return sb.toString();
   }

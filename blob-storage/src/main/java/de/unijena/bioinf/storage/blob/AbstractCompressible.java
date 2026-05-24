@@ -49,6 +49,9 @@ public abstract class AbstractCompressible implements Compressible {
     }
 
     protected Path addExt(Path relative){
-        return Path.of(relative.toString() + getCompression().ext());
+        if (relative.toString().endsWith(getCompression().ext())) {
+            return relative;
+        }
+        return Path.of(relative + getCompression().ext());
     }
 }

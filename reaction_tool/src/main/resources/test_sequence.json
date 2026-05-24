@@ -1,0 +1,28 @@
+{
+  "sequenceName": "Parallel Loop Test Sequence",
+  "metadata": {
+    "exportedAt": "2026-04-20T10:00:00Z",
+    "rowCount": 2
+  },
+  "steps": [
+    {
+      "type": "LOOP",
+      "iterations": 3,
+      "steps": [
+        {
+          "type": "PARALLEL",
+          "reactions": [
+            {
+              "name": "Demethylation",
+              "smarts": "[O:1]C>>[O:1][H]"
+            },
+            {
+              "name": "Deethylation",
+              "smarts": "[O:1]CC>>[O:1][H]"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

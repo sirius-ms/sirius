@@ -40,16 +40,28 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * FoldChange
  */
 @JsonPropertyOrder({
+  FoldChange.JSON_PROPERTY_QUANT_TYPE,
+  FoldChange.JSON_PROPERTY_OBJECT_ID,
+  FoldChange.JSON_PROPERTY_FOLD_CHANGE,
   FoldChange.JSON_PROPERTY_LEFT_GROUP,
   FoldChange.JSON_PROPERTY_RIGHT_GROUP,
   FoldChange.JSON_PROPERTY_AGGREGATION,
-  FoldChange.JSON_PROPERTY_QUANTIFICATION,
-  FoldChange.JSON_PROPERTY_QUANT_TYPE,
-  FoldChange.JSON_PROPERTY_OBJECT_ID,
-  FoldChange.JSON_PROPERTY_FOLD_CHANGE
+  FoldChange.JSON_PROPERTY_QUANTIFICATION
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class FoldChange {
+  public static final String JSON_PROPERTY_QUANT_TYPE = "quantType";
+  @jakarta.annotation.Nonnull
+  private QuantRowType quantType;
+
+  public static final String JSON_PROPERTY_OBJECT_ID = "objectId";
+  @jakarta.annotation.Nonnull
+  private String objectId;
+
+  public static final String JSON_PROPERTY_FOLD_CHANGE = "foldChange";
+  @jakarta.annotation.Nonnull
+  private Double foldChange;
+
   public static final String JSON_PROPERTY_LEFT_GROUP = "leftGroup";
   @jakarta.annotation.Nullable
   private String leftGroup;
@@ -66,19 +78,82 @@ public class FoldChange {
   @jakarta.annotation.Nullable
   private QuantMeasure quantification;
 
-  public static final String JSON_PROPERTY_QUANT_TYPE = "quantType";
-  @jakarta.annotation.Nonnull
-  private QuantRowType quantType;
-
-  public static final String JSON_PROPERTY_OBJECT_ID = "objectId";
-  @jakarta.annotation.Nonnull
-  private String objectId;
-
-  public static final String JSON_PROPERTY_FOLD_CHANGE = "foldChange";
-  @jakarta.annotation.Nonnull
-  private Double foldChange;
-
   public FoldChange() {
+  }
+
+  public FoldChange quantType(@jakarta.annotation.Nonnull QuantRowType quantType) {
+    
+    this.quantType = quantType;
+    return this;
+  }
+
+  /**
+   * Get quantType
+   * @return quantType
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_QUANT_TYPE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public QuantRowType getQuantType() {
+    return quantType;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_QUANT_TYPE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setQuantType(@jakarta.annotation.Nonnull QuantRowType quantType) {
+    this.quantType = quantType;
+  }
+
+  public FoldChange objectId(@jakarta.annotation.Nonnull String objectId) {
+    
+    this.objectId = objectId;
+    return this;
+  }
+
+  /**
+   * Get objectId
+   * @return objectId
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_OBJECT_ID)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public String getObjectId() {
+    return objectId;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_OBJECT_ID)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setObjectId(@jakarta.annotation.Nonnull String objectId) {
+    this.objectId = objectId;
+  }
+
+  public FoldChange foldChange(@jakarta.annotation.Nonnull Double foldChange) {
+    
+    this.foldChange = foldChange;
+    return this;
+  }
+
+  /**
+   * Get foldChange
+   * @return foldChange
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_FOLD_CHANGE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Double getFoldChange() {
+    return foldChange;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_FOLD_CHANGE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setFoldChange(@jakarta.annotation.Nonnull Double foldChange) {
+    this.foldChange = foldChange;
   }
 
   public FoldChange leftGroup(@jakarta.annotation.Nullable String leftGroup) {
@@ -181,81 +256,6 @@ public class FoldChange {
     this.quantification = quantification;
   }
 
-  public FoldChange quantType(@jakarta.annotation.Nonnull QuantRowType quantType) {
-    
-    this.quantType = quantType;
-    return this;
-  }
-
-  /**
-   * Get quantType
-   * @return quantType
-   */
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_QUANT_TYPE)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public QuantRowType getQuantType() {
-    return quantType;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_QUANT_TYPE)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setQuantType(@jakarta.annotation.Nonnull QuantRowType quantType) {
-    this.quantType = quantType;
-  }
-
-  public FoldChange objectId(@jakarta.annotation.Nonnull String objectId) {
-    
-    this.objectId = objectId;
-    return this;
-  }
-
-  /**
-   * Get objectId
-   * @return objectId
-   */
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_OBJECT_ID)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public String getObjectId() {
-    return objectId;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_OBJECT_ID)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setObjectId(@jakarta.annotation.Nonnull String objectId) {
-    this.objectId = objectId;
-  }
-
-  public FoldChange foldChange(@jakarta.annotation.Nonnull Double foldChange) {
-    
-    this.foldChange = foldChange;
-    return this;
-  }
-
-  /**
-   * Get foldChange
-   * @return foldChange
-   */
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_FOLD_CHANGE)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public Double getFoldChange() {
-    return foldChange;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_FOLD_CHANGE)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setFoldChange(@jakarta.annotation.Nonnull Double foldChange) {
-    this.foldChange = foldChange;
-  }
-
 
   @Override
   public boolean equals(Object o) {
@@ -266,31 +266,31 @@ public class FoldChange {
       return false;
     }
     FoldChange foldChange = (FoldChange) o;
-    return Objects.equals(this.leftGroup, foldChange.leftGroup) &&
+    return Objects.equals(this.quantType, foldChange.quantType) &&
+        Objects.equals(this.objectId, foldChange.objectId) &&
+        Objects.equals(this.foldChange, foldChange.foldChange) &&
+        Objects.equals(this.leftGroup, foldChange.leftGroup) &&
         Objects.equals(this.rightGroup, foldChange.rightGroup) &&
         Objects.equals(this.aggregation, foldChange.aggregation) &&
-        Objects.equals(this.quantification, foldChange.quantification) &&
-        Objects.equals(this.quantType, foldChange.quantType) &&
-        Objects.equals(this.objectId, foldChange.objectId) &&
-        Objects.equals(this.foldChange, foldChange.foldChange);
+        Objects.equals(this.quantification, foldChange.quantification);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(leftGroup, rightGroup, aggregation, quantification, quantType, objectId, foldChange);
+    return Objects.hash(quantType, objectId, foldChange, leftGroup, rightGroup, aggregation, quantification);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class FoldChange {\n");
+    sb.append("    quantType: ").append(toIndentedString(quantType)).append("\n");
+    sb.append("    objectId: ").append(toIndentedString(objectId)).append("\n");
+    sb.append("    foldChange: ").append(toIndentedString(foldChange)).append("\n");
     sb.append("    leftGroup: ").append(toIndentedString(leftGroup)).append("\n");
     sb.append("    rightGroup: ").append(toIndentedString(rightGroup)).append("\n");
     sb.append("    aggregation: ").append(toIndentedString(aggregation)).append("\n");
     sb.append("    quantification: ").append(toIndentedString(quantification)).append("\n");
-    sb.append("    quantType: ").append(toIndentedString(quantType)).append("\n");
-    sb.append("    objectId: ").append(toIndentedString(objectId)).append("\n");
-    sb.append("    foldChange: ").append(toIndentedString(foldChange)).append("\n");
     sb.append("}");
     return sb.toString();
   }

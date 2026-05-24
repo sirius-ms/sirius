@@ -6,4 +6,5 @@ dependencies{
     api project(':chemistry_base')
     implementation libs.minio
     implementation libs.xz
+    implementation libs.zstdJni
 }
