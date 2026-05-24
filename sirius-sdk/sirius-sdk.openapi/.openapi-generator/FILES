@@ -23,6 +23,7 @@ docs/BioTransformerSequenceStep.md
 docs/Canopus.md
 docs/CanopusPrediction.md
 docs/Category.md
+docs/ClassyFireClassStatisticsApi.md
 docs/CommandSubmission.md
 docs/Compound.md
 docs/CompoundClass.md
@@ -85,6 +86,7 @@ docs/MetabolicTransformation.md
 docs/Metadata.md
 docs/MsData.md
 docs/MsNovelist.md
+docs/NpcClassStatisticsApi.md
 docs/P2Mode.md
 docs/PageMetadata.md
 docs/PagedModelAlignedFeature.md
@@ -167,6 +169,7 @@ docs/ZodiacAnalogueNodes.md
 docs/ZodiacEdgeFilterThresholds.md
 docs/ZodiacEpochs.md
 docs/ZodiacLibraryScoring.md
+src/main/java/io/sirius/ms/sdk/api/ClassyFireClassStatisticsApi.java
 src/main/java/io/sirius/ms/sdk/api/CompoundStatisticsApi.java
 src/main/java/io/sirius/ms/sdk/api/CompoundsApi.java
 src/main/java/io/sirius/ms/sdk/api/FeatureStatisticsApi.java
@@ -175,6 +178,7 @@ src/main/java/io/sirius/ms/sdk/api/GuiApi.java
 src/main/java/io/sirius/ms/sdk/api/InfoApi.java
 src/main/java/io/sirius/ms/sdk/api/JobsApi.java
 src/main/java/io/sirius/ms/sdk/api/LoginAndAccountApi.java
+src/main/java/io/sirius/ms/sdk/api/NpcClassStatisticsApi.java
 src/main/java/io/sirius/ms/sdk/api/ProjectsApi.java
 src/main/java/io/sirius/ms/sdk/api/ReactionsApi.java
 src/main/java/io/sirius/ms/sdk/api/RunsApi.java
@@ -343,4 +347,7 @@ src/main/java/io/sirius/ms/sdk/model/ZodiacAnalogueNodes.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacLibraryScoring.java
-src/test/java/io/sirius/ms/sdk/api/ReactionsApiTest.java
+src/test/java/io/sirius/ms/sdk/api/ClassyFireClassStatisticsApiTest.java
+src/test/java/io/sirius/ms/sdk/api/CompoundStatisticsApiTest.java
+src/test/java/io/sirius/ms/sdk/api/FeatureStatisticsApiTest.java
+src/test/java/io/sirius/ms/sdk/api/NpcClassStatisticsApiTest.java
