@@ -7,13 +7,13 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
+|**quantType** | **QuantRowType** |  |  |
+|**objectId** | **String** |  |  |
+|**foldChange** | **Double** |  |  |
 |**leftGroup** | **String** |  |  [optional] |
 |**rightGroup** | **String** |  |  [optional] |
 |**aggregation** | **AggregationType** |  |  [optional] |
 |**quantification** | **QuantMeasure** |  |  [optional] |
-|**quantType** | **QuantRowType** |  |  |
-|**objectId** | **String** |  |  |
-|**foldChange** | **Double** |  |  |
 
 
 
