@@ -5,6 +5,7 @@ import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.model.BioTransformerParameters;
 import io.sirius.ms.sdk.model.DownloadableDatabase;
 import java.io.File;
+import io.sirius.ms.sdk.model.PagedModelDatabaseStructure;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import io.sirius.ms.sdk.model.SearchableDatabaseParameters;
 
@@ -578,6 +579,97 @@ public class SearchableDatabasesApi {
      */
     public ResponseSpec getIncludedDatabasesWithResponseSpec(@jakarta.annotation.Nullable Boolean includeStats) throws WebClientResponseException {
         return getIncludedDatabasesRequestCreation(includeStats);
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param databaseId The databaseId parameter
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return PagedModelDatabaseStructure
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getStructuresExperimentalRequestCreation(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'databaseId' is set
+        if (databaseId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling getStructuresExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("databaseId", databaseId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<PagedModelDatabaseStructure> localVarReturnType = new ParameterizedTypeReference<PagedModelDatabaseStructure>() {};
+        return apiClient.invokeAPI("/api/databases/{databaseId}/structures", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param databaseId The databaseId parameter
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return PagedModelDatabaseStructure
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public PagedModelDatabaseStructure getStructuresExperimental(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelDatabaseStructure> localVarReturnType = new ParameterizedTypeReference<PagedModelDatabaseStructure>() {};
+        return getStructuresExperimentalRequestCreation(databaseId, page, size, sort).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param databaseId The databaseId parameter
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return ResponseEntity&lt;PagedModelDatabaseStructure&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<PagedModelDatabaseStructure> getStructuresExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelDatabaseStructure> localVarReturnType = new ParameterizedTypeReference<PagedModelDatabaseStructure>() {};
+        return getStructuresExperimentalRequestCreation(databaseId, page, size, sort).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param databaseId The databaseId parameter
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getStructuresExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+        return getStructuresExperimentalRequestCreation(databaseId, page, size, sort);
     }
 
     /**

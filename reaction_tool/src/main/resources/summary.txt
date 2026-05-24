@@ -1,0 +1,24 @@
+Project Overview: Reaction Sequencing Engine
+  We have implemented a recursive, drag-and-drop UI for sequencing chemical reactions. The engine supports parallel execution (multiple reactions in one row)
+  and nested loops (repeating a sequence of rows).
+
+  1. The Data Contract (JSON Schema)
+  The frontend exports a recursive, polymorphic JSON structure. Every execution unit is a "Step" identified by a type discriminator.
+
+  Root Structure:
+
+   1 {
+   2   "sequenceName": "String",
+   3   "metadata": {
+   4     "exportedAt": "ISO8601 String",
+   5     "rowCount": "Integer"
+   6   },
+   7   "steps": [ StepObjects... ]
+   8 }
+
+  Step Object Types:
+   - PARALLEL: Represents a single row in the UI. All reactions in the reactions array should be applied to the current pool of molecules.
+     - reactions: Array of { name: String, smarts: String }
+   - LOOP: Represents a repeating sequence of nested steps.
+     - iterations: Integer
+     - steps: Array of StepObjects (Recursive)

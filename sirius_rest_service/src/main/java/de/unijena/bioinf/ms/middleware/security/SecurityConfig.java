@@ -62,6 +62,8 @@ public class SecurityConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
+                registry.addResourceHandler("/**/*.wasm")
+                                 .addResourceLocations("classpath:/static/");
                 //assets for React views
                 registry.addResourceHandler("/assets/**")
                         .addResourceLocations("classpath:/templates/sirius_java_integrated/assets/");
@@ -99,7 +101,8 @@ public class SecurityConfig {
                 // exclude endpoints from security filters and authorities
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/sse", "/actuator/**", "/api/account/**", "/api/info", "/api/connection-status",
-                                "/", "/api", "/api/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
+                                "/", "/api", "/api/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error",
+                                "/reactionTool", "/reactionTool/**", "/*.js", "/*.wasm", "/*.woff2", "/assets/**", "/sirius_java_integrated/**").permitAll()
                         // configure authorities to check for general api access
                         .anyRequest().hasAnyAuthority(
                                 ALLOWED_FEATURE__API.getAuthority(),

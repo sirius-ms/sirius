@@ -2,7 +2,7 @@
 springBoot = "4.0.6"
 springDoc = "3.0.3"
 jjobs = "0.10.0"
-cdk = "2.9"
+cdk = "2.12"
 jetbrainsAnnotations = "26.0.1"
 trove4j = "3.1.0"  # DEPRECATED -> use fast util instead
 fastutil = "8.5.12"
@@ -225,6 +225,8 @@ cdkRenderawt = { group = "org.openscience.cdk", name = "cdk-renderawt", version.
 cdkIoformats = { group = "org.openscience.cdk", name = "cdk-ioformats", version.ref = "cdk" }
 cdkSdg = { group = "org.openscience.cdk", name = "cdk-sdg", version.ref = "cdk" }
 cdkSmarts = { group = "org.openscience.cdk", name = "cdk-smarts", version.ref = "cdk" }
+cdkSmirks = { group = "org.openscience.cdk", name = "cdk-smirks", version.ref = "cdk" }
+
 
 cmlxom = { group = "org.xml-cml", name = "cmlxom", version.ref = "cmlxom" }
 grappa = { group = "att.grappa", name = "grappa", version.ref = "grappa" }

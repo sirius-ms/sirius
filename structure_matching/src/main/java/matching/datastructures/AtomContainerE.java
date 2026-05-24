@@ -42,10 +42,12 @@ public class AtomContainerE implements IAtomContainer {
     public AtomContainerE(IAtomContainer container){
         this.container = container;
         this.convertImplicitToExplicitHydrogens();
-        Iterable<IAtom> atoms = this.atoms();
-        for(IAtom atom : atoms){
-            AtomE atomE = new AtomE(atom);
-            AtomContainerManipulator.replaceAtomByAtom(this.container, atom, atomE);
+        for (int i = 0; i < this.container.getAtomCount(); i++) {
+            IAtom atom = this.container.getAtom(i);
+            if (!(atom instanceof AtomE)) {
+                AtomE atomE = new AtomE(atom);
+                AtomContainerManipulator.replaceAtomByAtom(this.container, atom, atomE);
+            }
         }
     }
 
@@ -407,7 +409,7 @@ public class AtomContainerE implements IAtomContainer {
 
     @Override
     public ISingleElectron removeSingleElectron(int position) {
-        return this.container.getSingleElectron(position);
+        return this.container.removeSingleElectron(position);
     }
 
     @Override
@@ -458,6 +460,11 @@ public class AtomContainerE implements IAtomContainer {
     @Override
     public void addBond(int atom1, int atom2, IBond.Order order, IBond.Stereo stereo) {
         this.container.addBond(atom1, atom2, order, stereo);
+    }
+
+    @Override
+    public void addBond(int i, int i1, IBond.Order order, IBond.Display display) {
+        this.container.addBond(i, i1, order, display);
     }
 
     @Override
@@ -618,6 +625,26 @@ public class AtomContainerE implements IAtomContainer {
     @Override
     public Number getFlagValue() {
         return this.container.getFlagValue();
+    }
+
+    @Override
+    public void set(int i) {
+        this.container.set(i);
+    }
+
+    @Override
+    public void clear(int i) {
+        this.container.clear(i);
+    }
+
+    @Override
+    public boolean is(int i) {
+        return this.container.is(i);
+    }
+
+    @Override
+    public int flags() {
+        return this.container.flags();
     }
 
     @Override

@@ -229,6 +229,7 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
 *ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
 *ProjectsApi* | [**openProject**](docs/ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
+*ReactionsApi* | [**applyReactions**](docs/ReactionsApi.md#applyReactions) | **POST** /api/reactions | Apply a sequence of reactions to a list of SMILES strings or structures from a database.
 *RunsApi* | [**addTagsToRunExperimental**](docs/RunsApi.md#addTagsToRunExperimental) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | [EXPERIMENTAL] Add tags to a run in the project
 *RunsApi* | [**computeFoldChangeForBlankSubtraction**](docs/RunsApi.md#computeFoldChangeForBlankSubtraction) | **PUT** /api/projects/{projectId}/runs/blanksubtract/compute | [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter
 *RunsApi* | [**getRunExperimental**](docs/RunsApi.md#getRunExperimental) | **GET** /api/projects/{projectId}/runs/{runId} | [EXPERIMENTAL] Get run with the given identifier from the specified project-space
@@ -244,6 +245,7 @@ Class | Method | HTTP request | Description
 *SearchableDatabasesApi* | [**getDatabases**](docs/SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases | 
 *SearchableDatabasesApi* | [**getDownloadableDatabases**](docs/SearchableDatabasesApi.md#getDownloadableDatabases) | **GET** /api/databases/downloadable | Get list of curated custom databases downloadable from the SIRIUS web service for local use
 *SearchableDatabasesApi* | [**getIncludedDatabases**](docs/SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included | 
+*SearchableDatabasesApi* | [**getStructuresExperimental**](docs/SearchableDatabasesApi.md#getStructuresExperimental) | **GET** /api/databases/{databaseId}/structures | 
 *SearchableDatabasesApi* | [**importIntoDatabase**](docs/SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database.
 *SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | 
@@ -304,6 +306,7 @@ Class | Method | HTTP request | Description
  - [DBLink](docs/DBLink.md)
  - [DataImportEvent](docs/DataImportEvent.md)
  - [DataQuality](docs/DataQuality.md)
+ - [DatabaseStructure](docs/DatabaseStructure.md)
  - [Deviation](docs/Deviation.md)
  - [DownloadableDatabase](docs/DownloadableDatabase.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
@@ -329,20 +332,25 @@ Class | Method | HTTP request | Description
  - [LcmsSubmissionParameters](docs/LcmsSubmissionParameters.md)
  - [LicenseInfo](docs/LicenseInfo.md)
  - [LipidAnnotation](docs/LipidAnnotation.md)
+ - [LoopStep](docs/LoopStep.md)
  - [LossEdge](docs/LossEdge.md)
  - [MetabolicTransformation](docs/MetabolicTransformation.md)
+ - [Metadata](docs/Metadata.md)
  - [MsData](docs/MsData.md)
  - [MsNovelist](docs/MsNovelist.md)
  - [P2Mode](docs/P2Mode.md)
  - [PageMetadata](docs/PageMetadata.md)
  - [PagedModelAlignedFeature](docs/PagedModelAlignedFeature.md)
  - [PagedModelCompound](docs/PagedModelCompound.md)
+ - [PagedModelDatabaseStructure](docs/PagedModelDatabaseStructure.md)
  - [PagedModelFormulaCandidate](docs/PagedModelFormulaCandidate.md)
  - [PagedModelJob](docs/PagedModelJob.md)
  - [PagedModelRun](docs/PagedModelRun.md)
  - [PagedModelSpectralLibraryMatch](docs/PagedModelSpectralLibraryMatch.md)
+ - [PagedModelString](docs/PagedModelString.md)
  - [PagedModelStructureCandidateFormula](docs/PagedModelStructureCandidateFormula.md)
  - [PagedModelStructureCandidateScored](docs/PagedModelStructureCandidateScored.md)
+ - [ParallelStep](docs/ParallelStep.md)
  - [ParentPeak](docs/ParentPeak.md)
  - [PeakAnnotation](docs/PeakAnnotation.md)
  - [PeakPair](docs/PeakPair.md)
@@ -356,6 +364,10 @@ Class | Method | HTTP request | Description
  - [QuantMeasure](docs/QuantMeasure.md)
  - [QuantRowType](docs/QuantRowType.md)
  - [QuantTableExperimental](docs/QuantTableExperimental.md)
+ - [Reaction](docs/Reaction.md)
+ - [ReactionRequest](docs/ReactionRequest.md)
+ - [ReactionSequence](docs/ReactionSequence.md)
+ - [ReactionSequenceStepsInner](docs/ReactionSequenceStepsInner.md)
  - [Run](docs/Run.md)
  - [RunOptField](docs/RunOptField.md)
  - [SampleTypeFoldChangeRequest](docs/SampleTypeFoldChangeRequest.md)
@@ -376,6 +388,7 @@ Class | Method | HTTP request | Description
  - [SpectrumType](docs/SpectrumType.md)
  - [StatisticsTable](docs/StatisticsTable.md)
  - [StatisticsType](docs/StatisticsType.md)
+ - [Step](docs/Step.md)
  - [StoredJobSubmission](docs/StoredJobSubmission.md)
  - [StructureCandidate](docs/StructureCandidate.md)
  - [StructureCandidateFormula](docs/StructureCandidateFormula.md)

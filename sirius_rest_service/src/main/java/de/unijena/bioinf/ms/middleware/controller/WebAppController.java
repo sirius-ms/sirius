@@ -19,7 +19,9 @@ public class WebAppController {
             "/epi", "/epi/**",
             "/lcms", "/lcms/**",
             "/libmatch", "/libmatch/**",
-            "/structEdit", "/structEdit/**"
+            "/structEdit", "/structEdit/**",
+            "/reactionTool", "/reactionTool/**",
+            "/database", "/database/**"
 
     })
     public String serveReactViewsApp(Model model, HttpServletRequest request) {
@@ -58,6 +60,17 @@ public class WebAppController {
     @GetMapping({"/treeViewer.js"})
     public String treeViewerJs() {
         return "forward:/sirius_java_integrated/treeViewer.js";
+    }
+
+    @GetMapping({"/RDKit_minimal.js"})
+    public String rdkitMinimalJs() {
+        return "forward:/sirius_java_integrated/RDKit_minimal.js";
+    }
+
+    @GetMapping(value = "/RDKit_minimal.wasm", produces = "application/wasm")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public org.springframework.core.io.Resource rdkitMinimalWasm() {
+        return new org.springframework.core.io.ClassPathResource("templates/sirius_java_integrated/RDKit_minimal.wasm");
     }
 
     @GetMapping({"/Roboto-Regular.woff2"})
