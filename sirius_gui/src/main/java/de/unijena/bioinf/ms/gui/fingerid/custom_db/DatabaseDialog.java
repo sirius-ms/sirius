@@ -26,11 +26,12 @@ import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
-import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
 import de.unijena.bioinf.ms.gui.table.SiriusListCellRenderer;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
+import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
@@ -82,6 +83,8 @@ public class DatabaseDialog extends JDialog {
         JButton editDB = Buttons.getEditButton16("Edit custom database");
         JButton openDB = Buttons.getPlainFolderButton16("Add existing database");
         JButton exportDB = Buttons.getExportButton16("Export database");
+        JButton transformationDB = new ToolbarButton(Icons.GEAR.derive(16,16), "Create Transformation product database");
+        JButton showContentsDB = new ToolbarButton(Icons.DB_LENS.derive(16,16), "Show database contents");
         JButton downloadableDBs = Buttons.getDownloadButton16("Download curated custom databases for local use");
 
         downloadableDBs.addActionListener(e -> new DownloadableDBsDialog(owner, this, gui));
@@ -157,6 +160,8 @@ public class DatabaseDialog extends JDialog {
             editDB.setEnabled(editSelectedDb.isEnabled());
             deleteDB.setEnabled(deleteSelectedDb.isEnabled());
             exportDB.setEnabled(deleteSelectedDb.isEnabled());
+            transformationDB.setEnabled(editSelectedDb.isEnabled());
+            showContentsDB.setEnabled(db != null && !db.isUpdateNeeded());
         });
 
         JScrollPane scroll = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -168,12 +173,16 @@ public class DatabaseDialog extends JDialog {
         but.add(deleteDB);
         but.add(editDB);
         but.add(exportDB);
+        but.add(transformationDB);
+        but.add(showContentsDB);
         but.add(openDB);
         but.add(downloadableDBs);
         but.add(addCustomDb);
         editDB.setEnabled(false);
         deleteDB.setEnabled(false);
         exportDB.setEnabled(false);
+        transformationDB.setEnabled(false);
+        showContentsDB.setEnabled(false);
 
         add(but, BorderLayout.SOUTH);
         add(pane, BorderLayout.CENTER);
@@ -183,6 +192,48 @@ public class DatabaseDialog extends JDialog {
         editDB.addActionListener(editSelectedDb);
         deleteDB.addActionListener(deleteSelectedDb);
         exportDB.addActionListener(exportSelectedDb);
+
+        showContentsDB.addActionListener(e -> {
+            SearchableDatabase db = dbList.getSelectedValue();
+            if (db != null) {
+                DatabaseContentPanel contentPanel = new DatabaseContentPanel(db.getDatabaseId(), gui);
+                JDialog dialog = new JDialog(this, "Database Contents: " + db.getDisplayName(), true);
+                dialog.setLayout(new BorderLayout());
+                dialog.add(contentPanel, BorderLayout.CENTER);
+
+
+                // Necessary to ensure rdkit loads correctly at 2nd+ use
+                dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+                // Set to fullscreen (maximized bounds)
+                Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+                dialog.setBounds(bounds);
+
+                dialog.setLocationRelativeTo(this);
+                dialog.setVisible(true);
+            }
+        });
+
+transformationDB.addActionListener(e -> {
+    SearchableDatabase db = dbList.getSelectedValue();
+    if (db != null) {
+        ReactionToolPanel rtPanel = new ReactionToolPanel(db.getDatabaseId(), gui);
+        JDialog dialog = new JDialog(this, "Create Transformation product database", true);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(rtPanel, BorderLayout.CENTER);
+
+        // Necessary to ensure rdkit loads correctly at 2nd+ use
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        // Set to fullscreen (maximized bounds)
+        Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        dialog.setBounds(bounds);
+
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+        loadDatabaseList();
+    }
+});
 
         JFileChooser openDbFileChooser = new JFileChooser();
         openDbFileChooser.setFileFilter(new FileNameExtensionFilter("SIRIUS custom database files", CustomDatabases.CUSTOM_DB_SUFFIX.replace(".", "")));

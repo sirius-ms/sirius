@@ -280,6 +280,10 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
         return storage.findAllStr(FingerprintCandidateWrapper.class);
     }
 
+    public Stream<FingerprintCandidateWrapper> getAll(long offset, int pageSize) throws IOException {
+        return storage.findAllStr(FingerprintCandidateWrapper.class, offset, pageSize);
+    }
+
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
