@@ -48,11 +48,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 public class Axes {
   public static final String JSON_PROPERTY_SCAN_NUMBER = "scanNumber";
   @jakarta.annotation.Nullable
-  private List<Integer> scanNumber = new ArrayList<>();
+  private List<Integer> scanNumber;
 
   public static final String JSON_PROPERTY_SCAN_IDS = "scanIds";
   @jakarta.annotation.Nullable
-  private List<String> scanIds = new ArrayList<>();
+  private List<String> scanIds;
 
   public static final String JSON_PROPERTY_RETENTION_TIME_IN_SECONDS = "retentionTimeInSeconds";
   @jakarta.annotation.Nullable

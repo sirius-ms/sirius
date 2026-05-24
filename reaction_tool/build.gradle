@@ -1,0 +1,22 @@
+
+apply plugin: 'java-library'
+apply plugin: 'application'
+
+group = 'reactionTool.sirius-ms'
+version = siriusVersion
+
+application {
+    mainClass = 'reactionTool.sirius.Main'
+}
+
+dependencies {
+    api libs.cdkBundle
+    api libs.cdkSmarts
+    api libs.cdkSilent
+    api libs.jacksonDatabind
+    api libs.junitJupiter
+    implementation project(':web_service_oss:sirius_web_client')
+    implementation project(':sirius_cli')
+
+}
+

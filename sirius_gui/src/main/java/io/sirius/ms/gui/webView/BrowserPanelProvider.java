@@ -41,6 +41,11 @@ public abstract class BrowserPanelProvider<BP extends BrowserPanel> {
     }
 
 
+    public BP makeReactPanel(@NotNull String appPath, @NotNull String paramName, @NotNull String paramValue){
+        String url = baseUrl.resolve(appPath) + THEME_REST_PARA + "&" + paramName + "=" + paramValue;
+        return newBrowserPanel(url);
+    }
+
     public BP makeReactPanel(@NotNull String appPath, @NotNull String projectId){
         return makeReactPanel(appPath, projectId, null, null, null, null);
     }

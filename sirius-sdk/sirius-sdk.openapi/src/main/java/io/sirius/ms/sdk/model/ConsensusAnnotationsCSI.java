@@ -43,28 +43,16 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * ConsensusAnnotationsCSI
  */
 @JsonPropertyOrder({
-  ConsensusAnnotationsCSI.JSON_PROPERTY_MOLECULAR_FORMULA,
-  ConsensusAnnotationsCSI.JSON_PROPERTY_COMPOUND_CLASSES,
-  ConsensusAnnotationsCSI.JSON_PROPERTY_SUPPORTING_FEATURE_IDS,
   ConsensusAnnotationsCSI.JSON_PROPERTY_SELECTION_CRITERION,
   ConsensusAnnotationsCSI.JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE,
   ConsensusAnnotationsCSI.JSON_PROPERTY_CONFIDENCE_EXACT_MATCH,
-  ConsensusAnnotationsCSI.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH
+  ConsensusAnnotationsCSI.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH,
+  ConsensusAnnotationsCSI.JSON_PROPERTY_MOLECULAR_FORMULA,
+  ConsensusAnnotationsCSI.JSON_PROPERTY_COMPOUND_CLASSES,
+  ConsensusAnnotationsCSI.JSON_PROPERTY_SUPPORTING_FEATURE_IDS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ConsensusAnnotationsCSI {
-  public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
-  @jakarta.annotation.Nullable
-  private String molecularFormula;
-
-  public static final String JSON_PROPERTY_COMPOUND_CLASSES = "compoundClasses";
-  @jakarta.annotation.Nullable
-  private CompoundClasses compoundClasses;
-
-  public static final String JSON_PROPERTY_SUPPORTING_FEATURE_IDS = "supportingFeatureIds";
-  @jakarta.annotation.Nullable
-  private List<String> supportingFeatureIds;
-
   public static final String JSON_PROPERTY_SELECTION_CRITERION = "selectionCriterion";
   @jakarta.annotation.Nullable
   private ConsensusCriterionCSI selectionCriterion;
@@ -81,90 +69,19 @@ public class ConsensusAnnotationsCSI {
   @jakarta.annotation.Nullable
   private Double confidenceApproxMatch;
 
+  public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  @jakarta.annotation.Nullable
+  private String molecularFormula;
+
+  public static final String JSON_PROPERTY_COMPOUND_CLASSES = "compoundClasses";
+  @jakarta.annotation.Nullable
+  private CompoundClasses compoundClasses;
+
+  public static final String JSON_PROPERTY_SUPPORTING_FEATURE_IDS = "supportingFeatureIds";
+  @jakarta.annotation.Nullable
+  private List<String> supportingFeatureIds;
+
   public ConsensusAnnotationsCSI() {
-  }
-
-  public ConsensusAnnotationsCSI molecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
-    
-    this.molecularFormula = molecularFormula;
-    return this;
-  }
-
-  /**
-   * Molecular formula of the consensus annotation  Might be null if no consensus formula is available.
-   * @return molecularFormula
-   */
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public String getMolecularFormula() {
-    return molecularFormula;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
-    this.molecularFormula = molecularFormula;
-  }
-
-  public ConsensusAnnotationsCSI compoundClasses(@jakarta.annotation.Nullable CompoundClasses compoundClasses) {
-    
-    this.compoundClasses = compoundClasses;
-    return this;
-  }
-
-  /**
-   * Get compoundClasses
-   * @return compoundClasses
-   */
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public CompoundClasses getCompoundClasses() {
-    return compoundClasses;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCompoundClasses(@jakarta.annotation.Nullable CompoundClasses compoundClasses) {
-    this.compoundClasses = compoundClasses;
-  }
-
-  public ConsensusAnnotationsCSI supportingFeatureIds(@jakarta.annotation.Nullable List<String> supportingFeatureIds) {
-    
-    this.supportingFeatureIds = supportingFeatureIds;
-    return this;
-  }
-
-  public ConsensusAnnotationsCSI addSupportingFeatureIdsItem(String supportingFeatureIdsItem) {
-    if (this.supportingFeatureIds == null) {
-      this.supportingFeatureIds = new ArrayList<>();
-    }
-    this.supportingFeatureIds.add(supportingFeatureIdsItem);
-    return this;
-  }
-
-  /**
-   * FeatureIds where the topAnnotation supports this annotation.
-   * @return supportingFeatureIds
-   */
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public List<String> getSupportingFeatureIds() {
-    return supportingFeatureIds;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSupportingFeatureIds(@jakarta.annotation.Nullable List<String> supportingFeatureIds) {
-    this.supportingFeatureIds = supportingFeatureIds;
   }
 
   public ConsensusAnnotationsCSI selectionCriterion(@jakarta.annotation.Nullable ConsensusCriterionCSI selectionCriterion) {
@@ -267,6 +184,89 @@ public class ConsensusAnnotationsCSI {
     this.confidenceApproxMatch = confidenceApproxMatch;
   }
 
+  public ConsensusAnnotationsCSI molecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
+    
+    this.molecularFormula = molecularFormula;
+    return this;
+  }
+
+  /**
+   * Molecular formula of the consensus annotation  Might be null if no consensus formula is available.
+   * @return molecularFormula
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getMolecularFormula() {
+    return molecularFormula;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
+    this.molecularFormula = molecularFormula;
+  }
+
+  public ConsensusAnnotationsCSI compoundClasses(@jakarta.annotation.Nullable CompoundClasses compoundClasses) {
+    
+    this.compoundClasses = compoundClasses;
+    return this;
+  }
+
+  /**
+   * Get compoundClasses
+   * @return compoundClasses
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public CompoundClasses getCompoundClasses() {
+    return compoundClasses;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCompoundClasses(@jakarta.annotation.Nullable CompoundClasses compoundClasses) {
+    this.compoundClasses = compoundClasses;
+  }
+
+  public ConsensusAnnotationsCSI supportingFeatureIds(@jakarta.annotation.Nullable List<String> supportingFeatureIds) {
+    
+    this.supportingFeatureIds = supportingFeatureIds;
+    return this;
+  }
+
+  public ConsensusAnnotationsCSI addSupportingFeatureIdsItem(String supportingFeatureIdsItem) {
+    if (this.supportingFeatureIds == null) {
+      this.supportingFeatureIds = new ArrayList<>();
+    }
+    this.supportingFeatureIds.add(supportingFeatureIdsItem);
+    return this;
+  }
+
+  /**
+   * FeatureIds where the topAnnotation supports this annotation.
+   * @return supportingFeatureIds
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<String> getSupportingFeatureIds() {
+    return supportingFeatureIds;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSupportingFeatureIds(@jakarta.annotation.Nullable List<String> supportingFeatureIds) {
+    this.supportingFeatureIds = supportingFeatureIds;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -277,31 +277,31 @@ public class ConsensusAnnotationsCSI {
       return false;
     }
     ConsensusAnnotationsCSI consensusAnnotationsCSI = (ConsensusAnnotationsCSI) o;
-    return Objects.equals(this.molecularFormula, consensusAnnotationsCSI.molecularFormula) &&
-        Objects.equals(this.compoundClasses, consensusAnnotationsCSI.compoundClasses) &&
-        Objects.equals(this.supportingFeatureIds, consensusAnnotationsCSI.supportingFeatureIds) &&
-        Objects.equals(this.selectionCriterion, consensusAnnotationsCSI.selectionCriterion) &&
+    return Objects.equals(this.selectionCriterion, consensusAnnotationsCSI.selectionCriterion) &&
         Objects.equals(this.csiFingerIdStructure, consensusAnnotationsCSI.csiFingerIdStructure) &&
         Objects.equals(this.confidenceExactMatch, consensusAnnotationsCSI.confidenceExactMatch) &&
-        Objects.equals(this.confidenceApproxMatch, consensusAnnotationsCSI.confidenceApproxMatch);
+        Objects.equals(this.confidenceApproxMatch, consensusAnnotationsCSI.confidenceApproxMatch) &&
+        Objects.equals(this.molecularFormula, consensusAnnotationsCSI.molecularFormula) &&
+        Objects.equals(this.compoundClasses, consensusAnnotationsCSI.compoundClasses) &&
+        Objects.equals(this.supportingFeatureIds, consensusAnnotationsCSI.supportingFeatureIds);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(molecularFormula, compoundClasses, supportingFeatureIds, selectionCriterion, csiFingerIdStructure, confidenceExactMatch, confidenceApproxMatch);
+    return Objects.hash(selectionCriterion, csiFingerIdStructure, confidenceExactMatch, confidenceApproxMatch, molecularFormula, compoundClasses, supportingFeatureIds);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ConsensusAnnotationsCSI {\n");
-    sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
-    sb.append("    compoundClasses: ").append(toIndentedString(compoundClasses)).append("\n");
-    sb.append("    supportingFeatureIds: ").append(toIndentedString(supportingFeatureIds)).append("\n");
     sb.append("    selectionCriterion: ").append(toIndentedString(selectionCriterion)).append("\n");
     sb.append("    csiFingerIdStructure: ").append(toIndentedString(csiFingerIdStructure)).append("\n");
     sb.append("    confidenceExactMatch: ").append(toIndentedString(confidenceExactMatch)).append("\n");
     sb.append("    confidenceApproxMatch: ").append(toIndentedString(confidenceApproxMatch)).append("\n");
+    sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
+    sb.append("    compoundClasses: ").append(toIndentedString(compoundClasses)).append("\n");
+    sb.append("    supportingFeatureIds: ").append(toIndentedString(supportingFeatureIds)).append("\n");
     sb.append("}");
     return sb.toString();
   }

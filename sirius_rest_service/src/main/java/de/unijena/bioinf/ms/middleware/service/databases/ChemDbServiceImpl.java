@@ -24,14 +24,13 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.custom.*;
+import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBPropertyUtils;
-import de.unijena.bioinf.ms.middleware.model.databases.BioTransformerParameters;
-import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
-import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
-import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabases;
+import de.unijena.bioinf.ms.middleware.model.databases.*;
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -240,6 +239,40 @@ public class ChemDbServiceImpl implements ChemDbService {
                 return null;
             }
         }).filter(Objects::nonNull).toList();
+    }
+
+    @Override
+    public Page<DatabaseStructure> findAllStructures(String databaseId, Pageable pageable) {
+        //todo implement for non custom dbs
+        CustomDatabase db = CustomDatabases.getCustomDatabaseByName(databaseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Database with id '" + databaseId + "' does not exist. " +
+                                "Currently structure retrieval is only supported for custom databases."));
+
+        try {
+            if (pageable.isUnpaged()) {
+                List<DatabaseStructure> content = CustomDatabases.getContents(db).map(this::toDbStructure).toList();
+                return new PageImpl<>(content, pageable, content.size());
+            } else {
+                List<DatabaseStructure> content = CustomDatabases.getContentsPaged(db, pageable.getOffset(), pageable.getPageSize()).map(this::toDbStructure).toList();
+                long total = db.getStatistics().getCompounds();
+                return new PageImpl<>(content, pageable, total);
+            }
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error exporting from " + databaseId, e);
+        }
+    }
+
+    private DatabaseStructure toDbStructure(FingerprintCandidateWrapper cw) {
+        CompoundCandidate c = cw.getCandidate(null, null);
+        return DatabaseStructure.builder()
+                .name(c.getName())
+                .smiles(c.getSmiles())
+                .inchiKey2d(c.getInchiKey2D())
+                .inchi2d(c.getInchi().in2D)
+                .formula(cw.getFormula())
+                .mass(cw.getMass())
+                .build();
     }
 
     @Override
