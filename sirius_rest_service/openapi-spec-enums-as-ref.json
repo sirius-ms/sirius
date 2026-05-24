@@ -29,6 +29,10 @@
       "description": "This compound based API allows to retrieve all AlignedFeatures that belong to the same compound (also known as a group of ion identities). It also provides for each AlignedFeature the corresponding annotation results (which are usually computed on a per-feature basis)"
     },
     {
+      "name": "Reactions",
+      "description": "[EXPERIMENTAL] Perform chemical reactions."
+    },
+    {
       "name": "Gui",
       "description": "GUI Control: Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects."
     },
@@ -1156,6 +1160,50 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reactions": {
+      "post": {
+        "tags": [
+          "Reactions"
+        ],
+        "summary": "Apply a sequence of reactions to a list of SMILES strings or structures from a database.",
+        "description": "[EXPERIMENTAL] Returns the final pool of SMILES strings.",
+        "operationId": "applyReactions",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1000
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelString"
                 }
               }
             }
@@ -7392,6 +7440,70 @@
         }
       }
     },
+    "/api/databases/{databaseId}/structures": {
+      "get": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "operationId": "getStructuresExperimental",
+        "parameters": [
+          {
+            "name": "databaseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelDatabaseStructure"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/databases/included": {
       "get": {
         "tags": [
@@ -8925,6 +9037,164 @@
           },
           "allowedFeatures": {
             "$ref": "#/components/schemas/AllowedFeatures"
+          }
+        }
+      },
+      "LoopStep": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Step"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "iterations": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Step"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Metadata": {
+        "type": "object",
+        "properties": {
+          "exportedAt": {
+            "type": "string"
+          },
+          "rowCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ParallelStep": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Step"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "reactions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Reaction"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Reaction": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "smarts": {
+            "type": "string"
+          }
+        }
+      },
+      "ReactionRequest": {
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "$ref": "#/components/schemas/ReactionSequence"
+          },
+          "initialSmiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "databaseName": {
+            "type": "string"
+          },
+          "productDatabaseName": {
+            "type": "string"
+          }
+        }
+      },
+      "ReactionSequence": {
+        "type": "object",
+        "properties": {
+          "sequenceName": {
+            "type": "string"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/LoopStep"
+                },
+                {
+                  "$ref": "#/components/schemas/ParallelStep"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Step": {
+        "required": [
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "discriminator": {
+          "propertyName": "type"
+        }
+      },
+      "PageMetadata": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PagedModelString": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
           }
         }
       },
@@ -10941,27 +11211,6 @@
           }
         }
       },
-      "PageMetadata": {
-        "type": "object",
-        "properties": {
-          "size": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "number": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
       "PagedModelRun": {
         "type": "object",
         "properties": {
@@ -11673,6 +11922,45 @@
           "projectId": {
             "type": "string",
             "description": "The project this instance is running on"
+          }
+        }
+      },
+      "DatabaseStructure": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "smiles": {
+            "type": "string"
+          },
+          "inchiKey2d": {
+            "type": "string"
+          },
+          "inchi2d": {
+            "type": "string"
+          },
+          "formula": {
+            "type": "string"
+          },
+          "mass": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "PagedModelDatabaseStructure": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatabaseStructure"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
           }
         }
       },

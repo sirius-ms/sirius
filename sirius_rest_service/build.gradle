@@ -18,6 +18,7 @@ dependencies {
 
     implementation project(':sirius_cli')
     implementation project(':sirius_gui')
+    implementation project(':reaction_tool')
 
     //////////// configure logging ///////////////////
     implementation libs.slf4jLog4jOverSlf4j
