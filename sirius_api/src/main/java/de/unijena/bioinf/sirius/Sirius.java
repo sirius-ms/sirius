@@ -76,6 +76,7 @@ public class Sirius {
 
     private void addDefaultPlugins() {
         this.getMs2Analyzer().registerPlugin(new DefaultPlugin());
+
         this.getMs2Analyzer().registerPlugin(new TreeStatisticPlugin());
         this.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs2Plugin());
@@ -85,7 +86,7 @@ public class Sirius {
         this.getMs2Analyzer().registerPlugin(new PredefinedPeakPlugin());
         this.getMs2Analyzer().registerPlugin(new AminoAcidPlugin());
         this.getMs2Analyzer().registerPlugin(new AdductNeutralizationPlugin());
-
+        this.getMs2Analyzer().registerPlugin(new IntrinsicRadicalsPlugin());
         this.getMs2Analyzer().registerPlugin(new BottomUpSearch());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin(getMs1Analyzer())); //must be executed after BottomUpSearch, so it can also filter these formulas
         this.getMs2Analyzer().registerPlugin(new ElGordoPlugin()); //must be executed after IsotopePatternInMs1Plugin, so it is not filtered out

@@ -25,4 +25,8 @@ public class FourierEncoder {
         }
         return outp;
     }
+
+    public int size() {
+        return frequencies.length*2;
+    }
 }
