@@ -210,7 +210,7 @@ public class CommonLossEdgeScorer implements LossScorer {
     }
 
     private double getScoreForFormulaWithLossSize(MolecularFormula formula) {
-        return getRecombinatedList().get(formula) - normalization + lossSizeScorer.score(formula);
+        return Math.max(getRecombinatedList().get(formula), commonLosses.get(formula)) - normalization + lossSizeScorer.score(formula);
     }
 
     @Override
