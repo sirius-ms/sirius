@@ -24,8 +24,10 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
@@ -38,6 +40,8 @@ import gnu.trove.procedure.TObjectDoubleProcedure;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 // TODO: Add normalization as field
 @Called("Common Fragments")
@@ -185,12 +189,22 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
 
     @Override
     public double score(MolecularFormula formula, Ionization ion, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
-        return getRecombinatedFragments().get(formula);
+        TObjectDoubleHashMap<MolecularFormula> map = getRecombinatedFragments();
+        return substituteFluor(formula, map::get);
+    }
+
+
+    private static Element H= PeriodicTable.getInstance().getByName("H"), F = PeriodicTable.getInstance().getByName("F");
+    private Double substituteFluor(MolecularFormula f, Function<MolecularFormula, Double> function) {
+        MolecularFormula g = f.substitute(H, F);
+        if (g==f) return function.apply(f);
+        else return Math.max(function.apply(f), function.apply(g));
     }
 
     @Override
     public double score(MolecularFormula formula) {
-        final Double val = getRecombinatedFragments().get(formula);
+        TObjectDoubleHashMap<MolecularFormula> map = getRecombinatedFragments();
+        final Double val = substituteFluor(formula, map::get);
         if (val == null) return -normalization;
         else return val.doubleValue()-normalization;
     }

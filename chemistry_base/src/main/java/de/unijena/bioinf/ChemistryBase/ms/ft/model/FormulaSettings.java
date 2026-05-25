@@ -23,11 +23,14 @@ package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -49,20 +52,24 @@ public class FormulaSettings implements Ms2ExperimentAnnotation {
     @NotNull protected final FormulaConstraints fallback;
     @NotNull protected final ChemicalAlphabet detectable;
 
+    protected final boolean pfasDetectionEnabled;
+
     /**
      * @param enforced   Enforced elements are always considered
      * @param detectable Detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)
      * @param fallback   Fallback elements are used, if the auto-detection fails (e.g. no isotope pattern available)
      */
     @DefaultInstanceProvider
-    public static FormulaSettings newInstance(@DefaultProperty(propertyKey = "enforced") FormulaConstraints enforced, @DefaultProperty(propertyKey = "detectable") ChemicalAlphabet detectable, @DefaultProperty(propertyKey = "fallback") FormulaConstraints fallback) {
-        return new FormulaSettings(enforced, detectable, fallback);
+    public static FormulaSettings newInstance(@DefaultProperty(propertyKey = "enforced") FormulaConstraints enforced, @DefaultProperty(propertyKey = "detectable") ChemicalAlphabet detectable, @DefaultProperty(propertyKey = "fallback") FormulaConstraints fallback,
+                                              @DefaultProperty(propertyKey = "pfasDetectionEnabled") boolean pfasDetectionEnabled) {
+        return new FormulaSettings(enforced, detectable, fallback, pfasDetectionEnabled);
     }
 
-    public FormulaSettings(@NotNull FormulaConstraints enforced, @NotNull ChemicalAlphabet detectable, @NotNull FormulaConstraints fallback) {
+    public FormulaSettings(@NotNull FormulaConstraints enforced, @NotNull ChemicalAlphabet detectable, @NotNull FormulaConstraints fallback, boolean pfasDetectionEnabled) {
         this.enforced = enforced;
         this.fallback = fallback;
         this.detectable = detectable;
+        this.pfasDetectionEnabled = pfasDetectionEnabled;
     }
 
     public FormulaConstraints getEnforcedAlphabet() {
@@ -83,11 +90,11 @@ public class FormulaSettings implements Ms2ExperimentAnnotation {
     }
 
     @NotNull public FormulaSettings autoDetect(Element... elems) {
-        return new FormulaSettings(enforced,detectable.extend(elems),fallback);
+        return new FormulaSettings(enforced,detectable.extend(elems),fallback, pfasDetectionEnabled);
     }
 
     @NotNull public FormulaSettings withoutAutoDetect() {
-        return new FormulaSettings(enforced, new ChemicalAlphabet(new Element[0]), fallback);
+        return new FormulaSettings(enforced, new ChemicalAlphabet(new Element[0]), fallback, pfasDetectionEnabled);
     }
 
     public ChemicalAlphabet getAutoDetectionAlphabet() {
@@ -95,10 +102,17 @@ public class FormulaSettings implements Ms2ExperimentAnnotation {
     }
 
     public FormulaSettings enforce(FormulaConstraints constraints) {
-        return new FormulaSettings(constraints, detectable, fallback);
+        return new FormulaSettings(constraints, detectable, fallback, pfasDetectionEnabled);
     }
 
     public FormulaSettings withFallback(FormulaConstraints constraints) {
-        return new FormulaSettings(enforced, detectable, constraints);
+        return new FormulaSettings(enforced, detectable, constraints, pfasDetectionEnabled);
+    }
+
+    public Set<Element> getAutoDetectionElementsWithPFAS() {
+        if (!pfasDetectionEnabled) return getAutoDetectionElements();
+        final HashSet<Element> elems = new HashSet<>(getAutoDetectionElements());
+        elems.add(PeriodicTable.getInstance().getByName("F"));
+        return elems;
     }
 }

@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.plugins;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
@@ -15,10 +16,12 @@ import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.elementdetection.DetectedFormulaConstraints;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.PrintStream;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -42,6 +45,18 @@ public class BottomUpSearch extends SiriusPlugin {
             throw new RuntimeException(e);
         }
         MOLECULAR_FORMULA_MAP = map;
+
+
+        List<MolecularFormula> formulas = new ArrayList<>();
+        for (MolecularFormula f : map) {
+            formulas.add(f);
+        }
+        formulas.sort(Comparator.comparingDouble(x->x.getMass()));
+        try (final PrintStream out = new PrintStream("/home/kaidu/temp/fs.txt")) {
+            for (MolecularFormula f : formulas) out.println(f);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -56,11 +71,15 @@ public class BottomUpSearch extends SiriusPlugin {
      * @return
      */
     private static List<Decomposition> generateDecompositions(ProcessedInput input, boolean addToWhiteset) {
+
+        FormulaConstraints formulaConstraints = input.getAnnotationOrDefault(FormulaConstraints.class);
+        ElementsDetectedAsAbsent elementsDetectedAsAbsent = input.getAnnotation(ElementsDetectedAsAbsent.class).orElse(ElementsDetectedAsAbsent.empty());
         if (addToWhiteset && input.getAnnotationOrThrow(Whiteset.class).isFinalized()) return null;
         final PossibleAdducts possibleAdducts = input.getAnnotationOrThrow(PossibleAdducts.class);
         final ValenceFilter filter = new ValenceFilter(ValenceFilter.MIN_VALENCE_DEFAULT, possibleAdducts.getAdducts());
 
         final Object2DoubleOpenHashMap<Decomposition> weighting = new Object2DoubleOpenHashMap<>();
+        final Object2IntOpenHashMap<Decomposition> counting = new Object2IntOpenHashMap<>();
         final Deviation dev = input.getAnnotation(MS2MassDeviation.class).map(x->x.allowedMassDeviation).orElse(new Deviation(5));
         final Set<IonMode> ionModes = input.getAnnotationOrThrow(PossibleAdducts.class).getIonModes();
         if (!input.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) { //todo ElementFilter this should be already decided. This is the wrong location to check again. Or has this to do with recalibration?
@@ -78,21 +97,34 @@ public class BottomUpSearch extends SiriusPlugin {
                         final MolecularFormula together = fragment.add(loss);
                         if (dev.inErrorWindow(input.getExperimentInformation().getIonMass(), ionMode.addToMass(together.getMass())) && !together.maybeCharged() && filter.isValid(together, ionMode)) {
                             weighting.addTo(new Decomposition(together, ionMode, 0d), Math.max(peak.getRelativeIntensity(),  1e-3));
+                            counting.addTo(new Decomposition(together, ionMode, 0d), 1);
                         }
                     }
                 }
             }
         }
         final HashSet<Decomposition> decompositions = new HashSet<>();
-        for (Ionization ionMode : ionModes) {
-            final double mz = ionMode.subtractFromMass(input.getExperimentInformation().getIonMass());
-            Arrays.stream(MOLECULAR_FORMULA_MAP.searchMass(mz, dev)).forEach(x -> decompositions.add(new Decomposition(x,ionMode,0d)));
-        }
+        HashSet<Element> consideredRareElements = new HashSet<>();
         weighting.forEach((formula, weight)->{
-            if (weight >= 0.05) {
-                decompositions.add(formula);
+            final int count = counting.getOrDefault(formula, 0);
+            if (formula.getCandidate().isCHNOPS() || formulaConstraints.isSatisfied(formula.getCandidate(), PrecursorIonType.getPrecursorIonType(formula.getIon()))) {
+                if (weight >= COMMON_INTENSITY && count >= COMMON_N_PEAKS) {
+                    decompositions.add(formula);
+                }
+            } else {
+                if (weight >= RARE_ELEMENT_INTENSITY && count >= RARE_ELEMENT_N_PEAKS) {
+                    decompositions.add(formula);
+                    consideredRareElements.addAll(formula.getCandidate().elements());
+                }
             }
         });
+        FormulaConstraints extendedConstraints = formulaConstraints.getExtendedConstraints(consideredRareElements.toArray(Element[]::new));
+
+        for (Ionization ionMode : ionModes) {
+            final double mz = ionMode.subtractFromMass(input.getExperimentInformation().getIonMass());
+            Arrays.stream(MOLECULAR_FORMULA_MAP.searchMass(mz, dev)).filter(f->extendedConstraints.isSatisfied(f,PrecursorIonType.getPrecursorIonType(ionMode))).forEach(x -> decompositions.add(new Decomposition(x,ionMode,0d)));
+        }
+
         if (addToWhiteset) {
             Set<MolecularFormula> formulas = decompositions.stream().map(Decomposition::getCandidate).collect(Collectors.toSet());
             Whiteset ws = input.getAnnotationOrThrow(Whiteset.class);
@@ -104,7 +136,6 @@ public class BottomUpSearch extends SiriusPlugin {
             //      * Additionally, if element detection has been performed (for 2+ MS1 isotope peaks), all elements that were detectable but have not been detected are forbidden and such formulas removed.
             //        This, keeps e.g. 'F' even if 'F' is not in enforced, since 'F' is not detectable.
             FormulaSearchSettings formulaSearchSettings = input.getAnnotation(FormulaSearchSettings.class, FormulaSearchSettings::bottomUpOnly);
-            final FormulaConstraints formulaConstraints = input.getAnnotationOrThrow(FormulaConstraints.class);
             if (formulaSearchSettings.applyFormulaConstraintsToBottomUp) { //case 1
                 formulas = Whiteset.filterMeasuredFormulas(formulas, formulaConstraints, possibleAdducts.getAdducts().stream().filter(x->x.isSupportedForFragmentationTreeComputation()).collect(Collectors.toSet()));
             } else { //case 2
@@ -112,9 +143,9 @@ public class BottomUpSearch extends SiriusPlugin {
                 FormulaConstraints formulaConstraintsWithAllElements = new FormulaConstraints(formulaConstraints.getChemicalAlphabet().extend(formulas.stream().flatMap(mf -> mf.elements().stream()).filter(Predicate.not(Objects::isNull)).distinct().toArray(Element[]::new)), formulaConstraints.getFilters());
                 formulas = Whiteset.filterMeasuredFormulas(formulas, formulaConstraintsWithAllElements, possibleAdducts.getAdducts().stream().filter(x->x.isSupportedForFragmentationTreeComputation()).collect(Collectors.toSet()));
 
-                final FormulaConstraints fc = input.getAnnotationOrDefault(FormulaConstraints.class);
+                final FormulaConstraints fc = formulaConstraints;
                 final FormulaSettings settings = input.getAnnotationOrDefault(FormulaSettings.class);
-                formulas = filterUndetectedElements(settings, fc, formulas);
+                formulas = formulas.stream().filter(elementsDetectedAsAbsent::isSatisfied).collect(Collectors.toSet());//formulas = filterUndetectedElements(settings, fc, formulas);
             }
 
             Whiteset bottomUpWs = Whiteset.ofMeasuredFormulas(formulas, BottomUpSearch.class);
@@ -122,27 +153,6 @@ public class BottomUpSearch extends SiriusPlugin {
             input.setAnnotation(Whiteset.class, ws);
         }
         return new ArrayList<>(decompositions);
-    }
-
-    /**
-     * Even if we don't apply general FormulaConstraints to bottom up search, we want to forbid elements that are detectable but not detected (if element detection was applied)
-     */
-    private static Set<MolecularFormula> filterUndetectedElements(final FormulaSettings settings, FormulaConstraints fc, Set<MolecularFormula> formulas) {
-        boolean filterUndetectedElements;
-        if (fc instanceof DetectedFormulaConstraints dfc) {
-            filterUndetectedElements = dfc.isDetectionPerformed();
-        } else {
-            //should not happen
-            LoggerFactory.getLogger(BottomUpSearch.class).warn("Information on performed element not found. Unexpected FormulaConstraints annotation.");
-            filterUndetectedElements = false;
-        }
-        if (filterUndetectedElements) {
-            //this removes all elements that would have been detectable but weren't detected.
-            //this does not properly work if FormulaSettings.detectable contains elements that are actually not predictable by the ElementDetection (e.g. wrong CLI input). The Ms1Preprocessor should warn about it.
-            final Set<Element> notDetectedElements = settings.getAutoDetectionElements().stream().filter(e -> fc.getUpperbound(e)<=0).collect(Collectors.toSet());
-            formulas = formulas.stream().filter(mf -> !notDetectedElements.stream().anyMatch(e -> mf.numberOf(e)>0)).collect(Collectors.toSet());
-        }
-        return formulas;
     }
 
     public static boolean generateDecompositionsAndSaveToWhiteset(ProcessedInput input) {

@@ -46,7 +46,7 @@ public final class AdductSwitchPlugin extends SiriusPlugin {
 
     @Override
     public void initializePlugin(PluginInitializer initializer) {
-        initializer.addLossScorer(new AdductSwitchLossScorer(FragmentationPatternAnalysis.getByClassName(LossSizeScorer.class, initializer.getAnalysis().getPeakPairScorers())));
+        initializer.addLossScorer(new AdductSwitchLossScorer());
     }
 
     @Override

@@ -4,17 +4,20 @@ import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedElements;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleElement;
 
+import java.util.Arrays;
 import java.util.HashMap;
+
+import static de.unijena.bioinf.sirius.elementdetection.transformer.TransformerBasedPredictor.FLUOR_THRESHOLD;
+import static de.unijena.bioinf.sirius.elementdetection.transformer.TransformerBasedPredictor.PREDICTOR_THRESHOLDS;
 
 public class TransformerPrediction {
 
-    private static final float PROB_THRESHOLD = 0.33f;
-
-    private final int monoisotopicPeak;
+    private final int monoisotopicPeak, patternLen;
     private final Element[] predictableElements;
     private final float[] logits,probabilities;
-    private final float chnopfOdd;
     private final float fluorinated;
     private final float patternLogit, patternProb;
 
@@ -27,16 +30,15 @@ public class TransformerPrediction {
             buf.append(String.format("%.2f %% \t(%.4f)", probabilities[i]*100, logits[i]));
             buf.append("\n");
         }
-        buf.append("CHNOPF odds: ").append(chnopfOdd).append("\n");
         buf.append("PFAS: ").append(String.format("%.2f",100d*Activation.SIGMOID.apply(fluorinated))).append(" %\n");
         return buf.toString();
     }
 
-    TransformerPrediction(int monoisotopicPeak, float patternLogit, Element[] predictableElements, float[] logits, float chnopfOdd, float fluorinated) {
+    TransformerPrediction(int monoisotopicPeak, int patternLen, float patternLogit, Element[] predictableElements, float[] logits, float fluorinated) {
         this.monoisotopicPeak = monoisotopicPeak;
+        this.patternLen = patternLen;
         this.predictableElements = predictableElements;
         this.logits = logits;
-        this.chnopfOdd = chnopfOdd;
         this.fluorinated = fluorinated;
         this.patternLogit = patternLogit;
         this.patternProb = Activation.SIGMOID.apply(patternLogit);
@@ -44,6 +46,23 @@ public class TransformerPrediction {
         for (int i=0; i < probabilities.length; ++i) probabilities[i] = Activation.SIGMOID.apply(logits[i]);
     }
 
+    public int getPatternLen() {
+        return patternLen;
+    }
+
+    public PossibleElement[] getPredictions() {
+
+        // special rule for pfas: if we predict the pattern as NOT PFAS this does not mean it contains no fluorine
+        final float pfasLogit = getPolyFluorinatedLogit();
+        final boolean includePfas = DetectedElements.pfasNotDetectedDoesNotMeanFluorIsNotDetected(pfasLogit);
+
+        final PossibleElement[] elems = new PossibleElement[predictableElements.length + (includePfas ? 1 : 0)]; // elements + pfas
+        for (int k=0; k < predictableElements.length; ++k) {
+            elems[k] = new PossibleElement(predictableElements[k], logits[k]);
+        }
+        if (includePfas) elems[elems.length-1] = new PossibleElement(F, Math.max(pfasLogit,0));
+        return elems;
+    }
 
     public float[] getLogits() {
         return logits;
@@ -55,10 +74,6 @@ public class TransformerPrediction {
 
     public float[] getProbabilities() {
         return probabilities;
-    }
-
-    public float getLogOddForCHNOPF() {
-        return chnopfOdd;
     }
 
     public float getPolyFluorinatedLogit() {
@@ -73,18 +88,18 @@ public class TransformerPrediction {
 
     public boolean hasAnyPredictions() {
         for (int i=0; i < probabilities.length; ++i) {
-            if (probabilities[i] >= PROB_THRESHOLD) return true;
+            if (probabilities[i] >= PREDICTOR_THRESHOLDS[i]) return true;
         }
         return false;
     }
 
     public FormulaConstraints getConstraints() {
         final HashMap<Element, Integer> elements = new HashMap<>(10);
-        if (Activation.SIGMOID.apply(fluorinated)>=PROB_THRESHOLD) {
+        if (Activation.SIGMOID.apply(fluorinated)>=FLUOR_THRESHOLD) {
             elements.put(F, Integer.MAX_VALUE);
         }
         for (int k=0; k < predictableElements.length; ++k) {
-            if (probabilities[k]>=PROB_THRESHOLD) {
+            if (probabilities[k]>=PREDICTOR_THRESHOLDS[k]) {
                 elements.put(predictableElements[k], (predictableElements[k].getSymbol().equals("Cl") ? 5 : (predictableElements[k].getSymbol().equals("Br") )? 3
                         : (predictableElements[k].getSymbol().equals("S") ? Integer.MAX_VALUE : 1)));
             }

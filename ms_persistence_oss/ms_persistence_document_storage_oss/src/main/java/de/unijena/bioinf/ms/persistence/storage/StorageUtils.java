@@ -28,12 +28,12 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.babelms.cef.P;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.persistence.model.core.DataSource;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
+import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
-import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedElements;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
@@ -43,6 +43,7 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +87,10 @@ public class StorageUtils {
                 exp.setSource(new SpectrumFileSource(Path.of(s.getSource()).toUri()));
         });
         exp.setAnnotation(RetentionTime.class, feature.getRetentionTime());
-        exp.setAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class, toMs2ExpAnnotation(feature.getDetectedAdducts()));
+        de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts adduct = toMs2ExpAnnotation(feature.getDetectedAdducts());
+        if (adduct!=null) exp.setAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class, adduct);
+        de.unijena.bioinf.ChemistryBase.ms.DetectedElements elems = toMs2ExpAnnotation(feature.getDetectedElements());
+        if (elems!=null) exp.setAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedElements.class, elems);
         return exp;
     }
 
@@ -149,6 +153,9 @@ public class StorageUtils {
         de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts det = exp
                 .getAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class)
                 .orElse(new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts());
+        de.unijena.bioinf.ChemistryBase.ms.DetectedElements el = exp
+                .getAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedElements.class)
+                .orElse(null);
 
         PossibleAdducts ionTypeAdducts = new PossibleAdducts(exp.getPrecursorIonType());
         if (!exp.getPrecursorIonType().isIonizationUnknown()) {
@@ -172,6 +179,7 @@ public class StorageUtils {
         alignedFeature.setExternalFeatureId(exp.getFeatureId());
         alignedFeature.setMolecularFormula(exp.getMolecularFormula());
         alignedFeature.setDetectedAdducts(StorageUtils.fromMs2ExpAnnotation(det));
+        if (el!=null) alignedFeature.setDetectedElements(StorageUtils.fromMs2ExpAnnotation(el));
         alignedFeature.setHasMs1(msData.getMergedMs1Spectrum() != null);
         alignedFeature.setHasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
 
@@ -206,6 +214,14 @@ public class StorageUtils {
         featureDetectedAdducts.addAll(featureAdducts);
         return featureDetectedAdducts;
     }
+    public static DetectedElements fromMs2ExpAnnotation(@Nullable de.unijena.bioinf.ChemistryBase.ms.DetectedElements elements) {
+        if (elements == null)
+            return null;
+
+        DetectedElements el = new DetectedElements();
+        el.addDetectedElements(elements);
+        return el;
+    }
 
     public static de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts toMs2ExpAnnotation(@Nullable DetectedAdducts adducts) {
         if (adducts == null)
@@ -218,6 +234,21 @@ public class StorageUtils {
 
         adductsBySource.forEach((s, v) -> dA.put(s, new PossibleAdducts(v.stream().filter(Objects::nonNull).distinct().toArray(PrecursorIonType[]::new))));
         return dA;
+    }
+    public static de.unijena.bioinf.ChemistryBase.ms.DetectedElements toMs2ExpAnnotation(@Nullable DetectedElements elements) {
+        if (elements == null)
+            return null;
+        final HashMap<de.unijena.bioinf.ChemistryBase.ms.DetectedElements.Source, PossibleElement[]> map = new HashMap<>();
+        for (Map.Entry<de.unijena.bioinf.ChemistryBase.ms.DetectedElements.Source, DetectedElementalComposition> entry : elements.getDetectedElements().entrySet()) {
+            DetectedElementalComposition e = entry.getValue();
+            PossibleElement[] elems = new PossibleElement[e.getElements().length];
+            Integer[] ups = e.getUpperbounds();
+            for (int i=0; i < e.getElements().length; ++i) {
+                elems[i] = new PossibleElement(e.getElements()[i], e.getLogits()[i], 0, ups==null || ups[i]==null ? -1 : ups[i]);
+            }
+            map.put(entry.getKey(), elems);
+        }
+        return new de.unijena.bioinf.ChemistryBase.ms.DetectedElements(map);
     }
 
     public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum cleanMergedMs1DataForImport(S mergedMs1Spectrum) {
