@@ -21,9 +21,7 @@
 package de.unijena.bioinf.sirius.plugins;
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.SiriusPlugin;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.BeautificationScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CarbohydrogenScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.MultimereLossScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 
 /**
  * Initializes SIRIUS.
@@ -39,5 +37,27 @@ public class DefaultPlugin extends SiriusPlugin {
         initializer.addRootScorer(new CarbohydrogenScorer.CarbohydrogenRootScorer());
         initializer.addFragmentScorer(new CarbohydrogenScorer.CarbohydrogenFragmentScorer());
         //initializer.addLossScorer(new CarbohydrogenScorer.CarbohydrogenLossScorer());
+
+        /*
+         * This fixes various problems with LossSizeScorer uses the masses instead of the formula's exact mass for scoring
+         * formulas
+         */
+        LossSizeScorer scorer = null;
+        for (PeakPairScorer s : initializer.getAnalysis().getPeakPairScorers()) {
+            if (s instanceof LossSizeScorer) {
+                scorer=(LossSizeScorer) s;
+            }
+        }
+        CommonLossEdgeScorer commonLosses = null;
+        for (LossScorer s : initializer.getAnalysis().getLossScorers()) {
+            if (s instanceof CommonLossEdgeScorer) {
+                commonLosses=(CommonLossEdgeScorer) s;
+            }
+        }
+        if (scorer!=null && commonLosses!=null) {
+            initializer.getAnalysis().getPeakPairScorers().remove(scorer);
+            commonLosses.setLossSizeScorer(scorer);
+        }
+
     }
 }

@@ -1,10 +1,11 @@
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class MassMap<T> {
+public class MassMap<T> implements Iterable<T> {
 
     private final HashMap<Long, Entry<T>> map;
     private final double blowupFactor;
@@ -115,6 +116,27 @@ public class MassMap<T> {
             }
             e = e.successor;
         }
+    }
+
+    @Override
+    public @NotNull Iterator<T> iterator() {
+        Iterator<Map.Entry<Long, Entry<T>>> iterator = map.entrySet().iterator();
+        return new Iterator<T>() {
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public T next() {
+                return iterator.next().getValue().getValue();
+            }
+
+            @Override
+            public void remove() {
+                iterator.remove();
+            }
+        };
     }
 
     private static class Entry<T> implements Map.Entry<Double, T> {
