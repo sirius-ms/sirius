@@ -52,11 +52,6 @@ public class BottomUpSearch extends SiriusPlugin {
             formulas.add(f);
         }
         formulas.sort(Comparator.comparingDouble(x->x.getMass()));
-        try (final PrintStream out = new PrintStream("/home/kaidu/temp/fs.txt")) {
-            for (MolecularFormula f : formulas) out.println(f);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
