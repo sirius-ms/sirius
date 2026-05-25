@@ -152,7 +152,8 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             "/api/projects/*/runs/tags/*",
             "/api/projects/*/runs/tags/*/*",
             "/api/projects/*/tags",
-            "/api/projects/*/tags/*"
+            "/api/projects/*/tags/*",
+            "/api/reactions"
     );
 
     private static final List<String> ADVANCED_EXCLUSIONS = List.of("/api/projects/*/gui/advanced");
