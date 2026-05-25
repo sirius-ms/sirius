@@ -422,7 +422,7 @@ public final class BackgroundRuns {
                 logInfo("Assign computed affected ids...");
                 updateProgress(-1, "Updating search index...");
                 if (instances != null) {
-                    logInfo("Unlocking Instances after Computation...");
+                    logInfo("Updating search-index after Computation...");
                     ArrayList<String> affIds = new ArrayList<>();
                     instances.forEach(i -> affIds.add(i.getId()));
                     try {
@@ -430,6 +430,7 @@ public final class BackgroundRuns {
                             affectedFeatureIds = affIds;
                             submitJob(() -> project.updateSearchIndex(affectedFeatureIds), JobType.CPU).awaitResult();
                         }
+                        logInfo("Unlocking Instances after Computation...");
                     } finally {
                         withWriteLock(() -> affectedFeatureIds.forEach(computingInstances::remove));
                     }
