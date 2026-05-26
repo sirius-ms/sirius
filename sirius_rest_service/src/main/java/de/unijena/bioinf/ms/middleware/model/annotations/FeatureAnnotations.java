@@ -71,6 +71,14 @@ public class FeatureAnnotations {
     protected CompoundClasses compoundClassAnnotation; // CANOPUS
 
     /**
+     * Names of predicted compound classes (ClassyFire lineage).
+     * NOTE: This field is mainly for search index building and therefore hidden from the api
+     */
+    @IndexField(fullTextSearch = true)
+    @Schema(nullable = true, hidden = true)
+    protected List<String> classes;
+
+    /**
      * Confidence Score that represents the confidence whether the top hit is correct.
      */
     @IndexField(sortable = true)

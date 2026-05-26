@@ -475,27 +475,40 @@ public class FeatureFilterModel implements SiriusPCS {
                 }
                 return super.getFieldQuery("topAnnotations.inchiKey", inchiKey, quoted);
             }
+
+            if ("class".equals(field)) {
+                return super.getFieldQuery("topAnnotations.classes", queryText, quoted);
+            }
+
             return super.getFieldQuery(field, queryText, quoted);
         }
 
         @Override
         protected Query getWildcardQuery(String field, String termStr) throws ParseException {
-            return super.getWildcardQuery("name".equals(field) ? "topAnnotations.inchiKey" : field, termStr);
+            if ("name".equals(field)) return super.getWildcardQuery("topAnnotations.inchiKey", termStr);
+            if ("class".equals(field)) return super.getWildcardQuery("topAnnotations.classes", termStr);
+            return super.getWildcardQuery(field, termStr);
         }
 
         @Override
         protected Query getPrefixQuery(String field, String termStr) throws ParseException {
-            return super.getPrefixQuery("name".equals(field) ? "topAnnotations.inchiKey" : field, termStr);
+            if ("name".equals(field)) return super.getPrefixQuery("topAnnotations.inchiKey", termStr);
+            if ("class".equals(field)) return super.getPrefixQuery("topAnnotations.classes", termStr);
+            return super.getPrefixQuery(field, termStr);
         }
 
         @Override
         protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive, boolean endInclusive) throws ParseException {
-            return super.getRangeQuery("name".equals(field) ? "topAnnotations.inchiKey" : field, part1, part2, startInclusive, endInclusive);
+            if ("name".equals(field)) return super.getRangeQuery("topAnnotations.inchiKey", part1, part2, startInclusive, endInclusive);
+            if ("class".equals(field)) return super.getRangeQuery("topAnnotations.classes", part1, part2, startInclusive, endInclusive);
+            return super.getRangeQuery(field, part1, part2, startInclusive, endInclusive);
         }
 
         @Override
         protected Query getFuzzyQuery(String field, String termStr, float minSimilarity) throws ParseException {
-            return super.getFuzzyQuery("name".equals(field) ? "topAnnotations.inchiKey" : field, termStr, minSimilarity);
+            if ("name".equals(field)) return super.getFuzzyQuery("topAnnotations.inchiKey", termStr, minSimilarity);
+            if ("class".equals(field)) return super.getFuzzyQuery("topAnnotations.classes", termStr, minSimilarity);
+            return super.getFuzzyQuery(field, termStr, minSimilarity);
         }
     };
 
