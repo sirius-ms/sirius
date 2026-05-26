@@ -1425,8 +1425,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (formulaCandidate == null)
             formulaCandidate = project().findTopFormulaCandidateByFeatureId(longAFIf).orElse(null);
 
-        if (formulaCandidate != null)
+        if (formulaCandidate != null) {
             cSum.setFormulaAnnotation(convertFormulaCandidate(formulaCandidate));
+
+            storage().getByPrimaryKey(formulaCandidate.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
+                    .map(cc -> CompoundClasses.of(cc.getNpcFingerprint(), cc.getCfFingerprint()))
+                    .ifPresent(cc -> {
+                        cSum.setCompoundClassAnnotation(cc);
+                        if (cc.getClassyFireLineage() != null) {
+                            cSum.setClasses(cc.getClassyFireLineage().stream().map(CompoundClass::getName).toList());
+                        }
+                    });
+        }
 
         return cSum;
     }
