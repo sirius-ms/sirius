@@ -1415,8 +1415,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
             StructureMatch structureMatch = project().findTopStructureMatchByFeatureId(longAFIf, CsiStructureMatch.class).orElse(null);
 
-            formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
-                    .orElse(null);
+            if (structureMatch != null) {
+                cSum.setInchiKey(structureMatch.getCandidateInChiKey());
+                formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                        .orElse(null);
+            }
         }
 
         if (formulaCandidate == null)

@@ -51,6 +51,14 @@ public class FeatureAnnotations {
     protected FormulaCandidate formulaAnnotation; // SIRIUS + ZODIAC
 
     /**
+     * InChIKey of the best matching structure candidate.
+     * NOTE: This field is mainly for search index building and therefore hidden from the api
+     */
+    @IndexField(fullTextSearch = true)
+    @Schema(nullable = true, hidden = true)
+    protected String inchiKey;
+
+    /**
      * Best matching StructureCandidate ranked by CSI:FingerID Score over all FormulaCandidates.
      */
     @Schema(nullable = true)
