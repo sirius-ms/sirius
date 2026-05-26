@@ -452,7 +452,38 @@ public class FeatureFilterModel implements SiriusPCS {
 
     private static final String FAKE_FIELD = "__FAKE_FIELD__";
     private static final String FAKE_FIELD_REPLACE = FAKE_FIELD + ":";
-    private final QueryParser textFieldParser = new QueryParser(FAKE_FIELD, analyzer);
+    private final QueryParser textFieldParser = new QueryParser(FAKE_FIELD, analyzer) {
+        @Override
+        protected Query getFieldQuery(String field, String queryText, boolean quoted) throws ParseException {
+            if ("name".equals(field)) {
+                if (queryText != null && queryText.length() == 14 && !queryText.contains("-")) {
+                    return super.getPrefixQuery("topAnnotations.inchiKey", queryText);
+                }
+                return super.getFieldQuery("topAnnotations.inchiKey", queryText, quoted);
+            }
+            return super.getFieldQuery(field, queryText, quoted);
+        }
+
+        @Override
+        protected Query getWildcardQuery(String field, String termStr) throws ParseException {
+            return super.getWildcardQuery("name".equals(field) ? "topAnnotations.inchiKey" : field, termStr);
+        }
+
+        @Override
+        protected Query getPrefixQuery(String field, String termStr) throws ParseException {
+            return super.getPrefixQuery("name".equals(field) ? "topAnnotations.inchiKey" : field, termStr);
+        }
+
+        @Override
+        protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive, boolean endInclusive) throws ParseException {
+            return super.getRangeQuery("name".equals(field) ? "topAnnotations.inchiKey" : field, part1, part2, startInclusive, endInclusive);
+        }
+
+        @Override
+        protected Query getFuzzyQuery(String field, String termStr, float minSimilarity) throws ParseException {
+            return super.getFuzzyQuery("name".equals(field) ? "topAnnotations.inchiKey" : field, termStr, minSimilarity);
+        }
+    };
 
     public Optional<String> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode) {
         if (!isActive())
