@@ -101,7 +101,7 @@ public class CompoundList {
         searchField = new PlaceholderTextField();
         searchField.setDocument(filterModel.getSearchTextDoc());
         searchField.setPlaceholder("Type and hit enter to search");
-        searchField.setToolTipText("Type text to perform a full text search on the data below. Hit enter to start searching. Use 'name: x' to filter by InChIKey (2D).");
+        searchField.setToolTipText("Type text to perform a full text search on the data below. Hit enter to start searching. Use 'name: x' to filter by InChIKey (2D) or structure name (via PubChem).");
         searchField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {

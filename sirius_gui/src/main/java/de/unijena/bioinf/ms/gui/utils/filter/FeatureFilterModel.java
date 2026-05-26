@@ -23,11 +23,15 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.persistence.model.core.tags.Groups;
+import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
+import de.unijena.bioinf.rest.ProxyManager;
 import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Synchronized;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DoublePoint;
@@ -43,6 +47,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -456,10 +461,19 @@ public class FeatureFilterModel implements SiriusPCS {
         @Override
         protected Query getFieldQuery(String field, String queryText, boolean quoted) throws ParseException {
             if ("name".equals(field)) {
-                if (queryText != null && queryText.length() == 14 && !queryText.contains("-")) {
-                    return super.getPrefixQuery("topAnnotations.inchiKey", queryText);
+                String inchiKey = queryText;
+                if (queryText != null && (queryText.length() != 14 || queryText.contains("-"))) {
+                    // It's not a 2D InChIKey, so treat it as a name and try to resolve via PubChem
+                    String resolved = resolveInchiKeyFromPubChem(queryText);
+                    if (resolved != null) {
+                        inchiKey = resolved;
+                    }
                 }
-                return super.getFieldQuery("topAnnotations.inchiKey", queryText, quoted);
+
+                if (inchiKey != null && inchiKey.length() == 14 && !inchiKey.contains("-")) {
+                    return super.getPrefixQuery("topAnnotations.inchiKey", inchiKey);
+                }
+                return super.getFieldQuery("topAnnotations.inchiKey", inchiKey, quoted);
             }
             return super.getFieldQuery(field, queryText, quoted);
         }
@@ -484,6 +498,27 @@ public class FeatureFilterModel implements SiriusPCS {
             return super.getFuzzyQuery("name".equals(field) ? "topAnnotations.inchiKey" : field, termStr, minSimilarity);
         }
     };
+
+    @Nullable
+    private String resolveInchiKeyFromPubChem(@NotNull String name) {
+        final String url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/" + name + "/property/InChIKey/TXT";
+        try {
+            return ProxyManager.applyClient(client -> {
+                Request request = new Request.Builder().url(url).build();
+                try (Response response = client.newCall(request).execute()) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        String fullInchiKey = response.body().string().trim();
+                        if (fullInchiKey.length() >= 14) {
+                            return fullInchiKey.substring(0, 14);
+                        }
+                    }
+                }
+                return null;
+            });
+        } catch (IOException e) {
+            return null;
+        }
+    }
 
     public Optional<String> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode) {
         if (!isActive())
