@@ -461,77 +461,65 @@ public class FeatureFilterModel implements SiriusPCS {
         @Override
         protected Query getFieldQuery(String field, String queryText, boolean quoted) throws ParseException {
             if ("name".equals(field)) {
-                String inchiKey = queryText;
-                if (queryText != null && (queryText.length() != 14 || queryText.contains("-"))) {
-                    // It's not a 2D InChIKey, so treat it as a name and try to resolve via PubChem
-                    String resolved = resolveInchiKeyFromPubChem(queryText);
-                    if (resolved != null) {
-                        inchiKey = resolved;
-                    }
-                }
-
-                if (inchiKey != null && inchiKey.length() == 14 && !inchiKey.contains("-")) {
-                    return super.getPrefixQuery("topAnnotations.inchiKey", inchiKey);
-                }
-                return super.getFieldQuery("topAnnotations.inchiKey", inchiKey, quoted);
+                BooleanQuery.Builder b = new BooleanQuery.Builder();
+                b.add(super.getFieldQuery("name", queryText, quoted), BooleanClause.Occur.SHOULD);
+                b.add(super.getFieldQuery("inchiKey", queryText, quoted), BooleanClause.Occur.SHOULD);
+                return b.build();
             }
-
             if ("class".equals(field)) {
                 return super.getFieldQuery("topAnnotations.classes", queryText, quoted);
             }
-
             return super.getFieldQuery(field, queryText, quoted);
         }
 
         @Override
         protected Query getWildcardQuery(String field, String termStr) throws ParseException {
-            if ("name".equals(field)) return super.getWildcardQuery("topAnnotations.inchiKey", termStr);
+            if ("name".equals(field)) {
+                BooleanQuery.Builder b = new BooleanQuery.Builder();
+                b.add(super.getWildcardQuery("name", termStr), BooleanClause.Occur.SHOULD);
+                b.add(super.getWildcardQuery("inchiKey", termStr), BooleanClause.Occur.SHOULD);
+                return b.build();
+            }
             if ("class".equals(field)) return super.getWildcardQuery("topAnnotations.classes", termStr);
             return super.getWildcardQuery(field, termStr);
         }
 
         @Override
         protected Query getPrefixQuery(String field, String termStr) throws ParseException {
-            if ("name".equals(field)) return super.getPrefixQuery("topAnnotations.inchiKey", termStr);
+            if ("name".equals(field)) {
+                BooleanQuery.Builder b = new BooleanQuery.Builder();
+                b.add(super.getPrefixQuery("name", termStr), BooleanClause.Occur.SHOULD);
+                b.add(super.getPrefixQuery("inchiKey", termStr), BooleanClause.Occur.SHOULD);
+                return b.build();
+            }
             if ("class".equals(field)) return super.getPrefixQuery("topAnnotations.classes", termStr);
             return super.getPrefixQuery(field, termStr);
         }
 
         @Override
         protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive, boolean endInclusive) throws ParseException {
-            if ("name".equals(field)) return super.getRangeQuery("topAnnotations.inchiKey", part1, part2, startInclusive, endInclusive);
+            if ("name".equals(field)) {
+                BooleanQuery.Builder b = new BooleanQuery.Builder();
+                b.add(super.getRangeQuery("name", part1, part2, startInclusive, endInclusive), BooleanClause.Occur.SHOULD);
+                b.add(super.getRangeQuery("inchiKey", part1, part2, startInclusive, endInclusive), BooleanClause.Occur.SHOULD);
+                return b.build();
+            }
             if ("class".equals(field)) return super.getRangeQuery("topAnnotations.classes", part1, part2, startInclusive, endInclusive);
             return super.getRangeQuery(field, part1, part2, startInclusive, endInclusive);
         }
 
         @Override
         protected Query getFuzzyQuery(String field, String termStr, float minSimilarity) throws ParseException {
-            if ("name".equals(field)) return super.getFuzzyQuery("topAnnotations.inchiKey", termStr, minSimilarity);
+            if ("name".equals(field)) {
+                BooleanQuery.Builder b = new BooleanQuery.Builder();
+                b.add(super.getFuzzyQuery("name", termStr, minSimilarity), BooleanClause.Occur.SHOULD);
+                b.add(super.getFuzzyQuery("inchiKey", termStr, minSimilarity), BooleanClause.Occur.SHOULD);
+                return b.build();
+            }
             if ("class".equals(field)) return super.getFuzzyQuery("topAnnotations.classes", termStr, minSimilarity);
             return super.getFuzzyQuery(field, termStr, minSimilarity);
         }
     };
-
-    @Nullable
-    private String resolveInchiKeyFromPubChem(@NotNull String name) {
-        final String url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/" + name + "/property/InChIKey/TXT";
-        try {
-            return ProxyManager.applyClient(client -> {
-                Request request = new Request.Builder().url(url).build();
-                try (Response response = client.newCall(request).execute()) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        String fullInchiKey = response.body().string().trim();
-                        if (fullInchiKey.length() >= 14) {
-                            return fullInchiKey.substring(0, 14);
-                        }
-                    }
-                }
-                return null;
-            });
-        } catch (IOException e) {
-            return null;
-        }
-    }
 
     public Optional<String> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode) {
         if (!isActive())
