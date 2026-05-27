@@ -22,6 +22,9 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.ClassesMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.InchiKeyMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -54,7 +57,7 @@ public class FeatureAnnotations {
      * InChIKey of the best matching structure candidate.
      * NOTE: This field is mainly for search index building and therefore hidden from the api
      */
-    @IndexField(fullTextSearch = true)
+    @IndexFieldWithMapper(mapper = InchiKeyMapper.class, name = "name")
     @Schema(nullable = true, hidden = true)
     protected String inchiKey;
 
@@ -74,7 +77,7 @@ public class FeatureAnnotations {
      * Names of predicted compound classes (ClassyFire lineage).
      * NOTE: This field is mainly for search index building and therefore hidden from the api
      */
-    @IndexField(fullTextSearch = true)
+    @IndexFieldWithMapper(mapper = ClassesMapper.class, name = "class")
     @Schema(nullable = true, hidden = true)
     protected List<String> classes;
 
