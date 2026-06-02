@@ -56,21 +56,26 @@ public class ReactionToolHandler {
 
     public List<String> process(ReactionSequence sequence, List<String> initialSmiles) {
         Set<String> currentPool = new HashSet<>(initialSmiles);
+        Set<String> allProducts = new HashSet<>(initialSmiles);
 
         for (Step step : sequence.getSteps()) {
-            currentPool = executeStep(step, currentPool);
+            currentPool = executeStep(step, currentPool, allProducts);
         }
 
-        return deduplicateSmiles(currentPool);
+        return deduplicateSmiles(allProducts);
     }
 
-    private Set<String> executeStep(Step step, Set<String> currentPool) {
+    private Set<String> executeStep(Step step, Set<String> currentPool, Set<String> allProducts) {
+        Set<String> result;
         if (step instanceof ParallelStep parallelStep) {
-            return executeParallelStep(parallelStep, currentPool);
+            result = executeParallelStep(parallelStep, currentPool);
         } else if (step instanceof LoopStep loopStep) {
-            return executeLoopStep(loopStep, currentPool);
+            result = executeLoopStep(loopStep, currentPool, allProducts);
+        } else {
+            result = currentPool;
         }
-        return currentPool;
+        allProducts.addAll(result);
+        return result;
     }
 
     private Set<String> executeParallelStep(ParallelStep step, Set<String> currentPool) {
@@ -116,11 +121,11 @@ public class ReactionToolHandler {
         return nextPool;
     }
 
-    private Set<String> executeLoopStep(LoopStep step, Set<String> currentPool) {
+    private Set<String> executeLoopStep(LoopStep step, Set<String> currentPool, Set<String> allProducts) {
         Set<String> resultPool = new HashSet<>(currentPool);
         for (int i = 0; i < step.getIterations(); i++) {
             for (Step innerStep : step.getSteps()) {
-                resultPool = executeStep(innerStep, resultPool);
+                resultPool = executeStep(innerStep, resultPool, allProducts);
             }
         }
         return resultPool;
