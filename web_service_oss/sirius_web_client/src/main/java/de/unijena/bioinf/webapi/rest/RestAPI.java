@@ -240,7 +240,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
             if (!accessTokens.isUserEmailVerified(token)) {
                 String email = accessTokens.getUserEmail(token).orElse("N/A");
                 return Optional.of(new ConnectionError(51,
-                        "Your accounts (primary) email address '" + email + "' has not been verified."
+                        "Your accounts (primary) email address '" + email + "' has not been verified. "
                                 + "Please verify this email address by clicking on the verification " +
                                 "link we sent to your inbox and re-login or refresh your access_token afterwards. " +
                                 "Please contact support if you have not received a verification email.",
@@ -260,21 +260,21 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
             @Nullable Subscription sub = accessTokens.getActiveSubscription(subs, accessTokens.getDefaultSubscriptionId(token));
             if (sub == null)
                 return Optional.of(new ConnectionError(53,
-                        "Could not determine an active subscription, but there are'"
+                        "Could not determine an active subscription, but there are '"
                                 + subs.size() + "' subscriptions available for your account. This is likely to be a bug. " +
                                 "Please contact support.", ConnectionError.Klass.LICENSE));
 
             java.sql.Date expDate = sub.getExpirationDate();
             if (expDate != null && expDate.getTime() < System.currentTimeMillis())
                 return Optional.of(new ConnectionError(54,
-                        "The active subscription expired at '"
+                        "The active subscription expired on '"
                                 + sub.getExpirationDate() + "'. Please renew your subscription or choose another non expired subscription if available." +
                                 "Please contact support.", ConnectionError.Klass.LICENSE));
 
             java.sql.Date startDate = sub.getStartDate();
             if (startDate != null && startDate.getTime() > System.currentTimeMillis())
                 return Optional.of(new ConnectionError(55,
-                        "Subscription not yet active. The given subscription starts at:'" + startDate + "'. Please wait until your subscription starts or contact support.", ConnectionError.Klass.LICENSE));
+                        "Subscription not yet active. The given subscription starts on '" + startDate + "'. Please wait until your subscription starts or contact support.", ConnectionError.Klass.LICENSE));
 
             @NotNull List<Term> terms = accessTokens.getAcceptedTerms(token);
             String pp = sub.getPp();
