@@ -17,15 +17,15 @@ public class ReactionToolHandlerTest {
     public void testIntermediateRetention() {
         ReactionToolHandler handler = new ReactionToolHandler(null, null);
 
-        // R1: C -> CO
+        // R1: Chlorination (C -> CCl)
         Reaction r1 = new Reaction();
         r1.setName("R1");
-        r1.setSmarts("[C:1]>>[C:1][O:2]");
+        r1.setSmarts("[C:1][H]>>[C:1]Cl");
 
-        // R2: CO -> C=O
+        // R2: Hydrolysis (CCl -> CO)
         Reaction r2 = new Reaction();
         r2.setName("R2");
-        r2.setSmarts("[C:1][O:2]>>[C:1]=[O:2]");
+        r2.setSmarts("[C:1]Cl>>[C:1][OH]");
 
         ParallelStep step1 = new ParallelStep();
         step1.setReactions(List.of(r1));
@@ -39,15 +39,39 @@ public class ReactionToolHandlerTest {
         List<String> initialSmiles = List.of("C");
         List<String> results = handler.process(sequence, initialSmiles);
 
-        System.out.println("Results: " + results);
+        System.out.println("Retention Results: " + results);
 
-        // Currently, we expect "CO" to be missing if it reacted in step 2
-        // We want both "CO" and "C=O" (and maybe "C")
-        
+        boolean hasChloromethane = results.stream().anyMatch(s -> s.contains("CCl") || s.contains("ClC"));
         boolean hasMethanol = results.stream().anyMatch(s -> s.contains("CO") || s.contains("OC"));
-        boolean hasFormaldehyde = results.stream().anyMatch(s -> s.contains("C=O") || s.contains("O=C"));
 
-        assertTrue(hasFormaldehyde, "Should have formaldehyde (final product)");
-        assertTrue(hasMethanol, "Should have methanol (intermediate)");
+        assertTrue(hasMethanol, "Should have methanol (final product)");
+        assertTrue(hasChloromethane, "Should have chloromethane (intermediate)");
+    }
+
+    @Test
+    public void testProductSplitting() {
+        ReactionToolHandler handler = new ReactionToolHandler(null, null);
+
+        // R1: Ether Cleavage (COCC -> CO + CCO)
+        Reaction r1 = new Reaction();
+        r1.setName("Cleavage");
+        r1.setSmarts("[C:1][O:2][C:3]>>[C:1][OH].[C:3][OH]");
+
+        ParallelStep step1 = new ParallelStep();
+        step1.setReactions(List.of(r1));
+
+        ReactionSequence sequence = new ReactionSequence();
+        sequence.setSteps(List.of(step1));
+
+        // Note: Using a simple ether for testing
+        List<String> results = handler.process(sequence, List.of("COCC"));
+
+        System.out.println("Splitting Results: " + results);
+
+        boolean hasMethanol = results.stream().anyMatch(s -> s.contains("CO") || s.contains("OC"));
+        boolean hasEthanol = results.stream().anyMatch(s -> s.contains("CCO") || s.contains("OCC"));
+
+        assertTrue(hasMethanol, "Should have methanol fragment");
+        assertTrue(hasEthanol, "Should have ethanol fragment");
     }
 }

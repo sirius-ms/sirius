@@ -117,6 +117,7 @@ public class ReactionToolHandler {
                         transformedInThisStep.add(smiles);
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
