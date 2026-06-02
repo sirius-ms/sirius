@@ -11,8 +11,10 @@ import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBPropertyUtils;
 import de.unijena.bioinf.webapi.WebAPI;
+import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.isomorphism.Transform;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -56,21 +58,26 @@ public class ReactionToolHandler {
 
     public List<String> process(ReactionSequence sequence, List<String> initialSmiles) {
         Set<String> currentPool = new HashSet<>(initialSmiles);
+        Set<String> allProducts = new HashSet<>(initialSmiles);
 
         for (Step step : sequence.getSteps()) {
-            currentPool = executeStep(step, currentPool);
+            currentPool = executeStep(step, currentPool, allProducts);
         }
 
-        return deduplicateSmiles(currentPool);
+        return deduplicateSmiles(allProducts);
     }
 
-    private Set<String> executeStep(Step step, Set<String> currentPool) {
+    private Set<String> executeStep(Step step, Set<String> currentPool, Set<String> allProducts) {
+        Set<String> result;
         if (step instanceof ParallelStep parallelStep) {
-            return executeParallelStep(parallelStep, currentPool);
+            result = executeParallelStep(parallelStep, currentPool);
         } else if (step instanceof LoopStep loopStep) {
-            return executeLoopStep(loopStep, currentPool);
+            result = executeLoopStep(loopStep, currentPool, allProducts);
+        } else {
+            result = currentPool;
         }
-        return currentPool;
+        allProducts.addAll(result);
+        return result;
     }
 
     private Set<String> executeParallelStep(ParallelStep step, Set<String> currentPool) {
@@ -82,26 +89,35 @@ public class ReactionToolHandler {
             for (String smiles : currentPool) {
                 try {
                     IAtomContainer mol = smilesParser.parseSmiles(smiles);
+                    AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
+                    CDKHydrogenAdder.getInstance(mol.getBuilder()).addImplicitHydrogens(mol);
+
                     // Use Mode.All to get one product per matching site
                     Iterable<IAtomContainer> products = Smirks.apply(mol, reaction.getSmarts(), Transform.Mode.All);
                     
                     boolean matched = false;
                     for (IAtomContainer product : products) {
                         matched = true;
-                        for (IAtom atom : product.atoms()) {
-                            atom.setImplicitHydrogenCount(-1);
+
+                        // Partition product into unconnected molecules
+                        IAtomContainerSet components = ConnectivityChecker.partitionIntoMolecules(product);
+                        for (IAtomContainer component : components.atomContainers()) {
+                            for (IAtom atom : component.atoms()) {
+                                atom.setImplicitHydrogenCount(-1);
+                            }
+                            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(component);
+                            CDKHydrogenAdder.getInstance(component.getBuilder()).addImplicitHydrogens(component);
+
+                            String productSmiles = smilesGenerator.create(component);
+                            nextPool.add(productSmiles);
                         }
-                        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(product);
-                        CDKHydrogenAdder.getInstance(product.getBuilder()).addImplicitHydrogens(product);
-                        
-                        String productSmiles = smilesGenerator.create(product);
-                        nextPool.add(productSmiles);
                     }
                     
                     if (matched) {
                         transformedInThisStep.add(smiles);
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -116,11 +132,11 @@ public class ReactionToolHandler {
         return nextPool;
     }
 
-    private Set<String> executeLoopStep(LoopStep step, Set<String> currentPool) {
+    private Set<String> executeLoopStep(LoopStep step, Set<String> currentPool, Set<String> allProducts) {
         Set<String> resultPool = new HashSet<>(currentPool);
         for (int i = 0; i < step.getIterations(); i++) {
             for (Step innerStep : step.getSteps()) {
-                resultPool = executeStep(innerStep, resultPool);
+                resultPool = executeStep(innerStep, resultPool, allProducts);
             }
         }
         return resultPool;
