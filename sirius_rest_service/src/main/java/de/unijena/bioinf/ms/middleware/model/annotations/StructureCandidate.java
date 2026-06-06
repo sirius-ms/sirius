@@ -23,6 +23,8 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.chemdb.DBLink;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.PubChemSynonymQueryRewriter;
+import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,10 +37,12 @@ import java.util.List;
 @JsonIgnoreProperties(value = { "molecularFormula", "adduct", "csiScore", "tanimotoSimilarity", "confidenceExactMatch", "confidenceApproxMatch", "fingerprint"}, ignoreUnknown = true)
 public class StructureCandidate {
 
+    @IndexField(defaultSearchField = true)
     protected String inchiKey;
 
     protected String smiles;
 
+    @IndexField(defaultSearchField = true, fullTextSearch = true, queryRewriter = PubChemSynonymQueryRewriter.class)
     @Schema(nullable = true)
     protected String structureName;
 

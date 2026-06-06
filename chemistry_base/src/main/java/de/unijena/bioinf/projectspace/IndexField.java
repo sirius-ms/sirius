@@ -37,4 +37,9 @@ public @interface IndexField {
      * Whether a field shall be used as fallback search field for queries that do not specify a field to search in. Simple fulltext search.
      */
     boolean defaultSearchField() default false;
+
+    /**
+     * Optional: A custom query rewriter class used to dynamically transform query terms/phrases for this field at parse-time.
+     */
+    Class<? extends QueryRewriter> queryRewriter() default QueryRewriter.NoOp.class;
 }
