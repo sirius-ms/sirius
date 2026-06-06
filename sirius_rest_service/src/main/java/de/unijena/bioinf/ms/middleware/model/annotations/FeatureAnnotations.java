@@ -20,10 +20,8 @@
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.ClassesMapper;
-import de.unijena.bioinf.ms.middleware.service.search.mappers.InchiKeyMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -54,32 +52,18 @@ public class FeatureAnnotations {
     protected FormulaCandidate formulaAnnotation; // SIRIUS + ZODIAC
 
     /**
-     * InChIKey of the best matching structure candidate.
-     * NOTE: This field is mainly for search index building and therefore hidden from the api
-     */
-    @IndexFieldWithMapper(mapper = InchiKeyMapper.class, name = "name")
-    @Schema(nullable = true, hidden = true)
-    protected String inchiKey;
-
-    /**
      * Best matching StructureCandidate ranked by CSI:FingerID Score over all FormulaCandidates.
      */
+    @IndexField
     @Schema(nullable = true)
     protected StructureCandidateScored structureAnnotation; // CSI:FingerID or MSNovelist
 
     /**
      * Best matching compound classes that correspond to the formulaAnnotation
      */
+    @IndexFieldWithMapper(mapper = ClassesMapper.class)
     @Schema(nullable = true)
     protected CompoundClasses compoundClassAnnotation; // CANOPUS
-
-    /**
-     * Names of predicted compound classes (ClassyFire lineage).
-     * NOTE: This field is mainly for search index building and therefore hidden from the api
-     */
-    @IndexFieldWithMapper(mapper = ClassesMapper.class, name = "class")
-    @Schema(nullable = true, hidden = true)
-    protected List<String> classes;
 
     /**
      * Confidence Score that represents the confidence whether the top hit is correct.

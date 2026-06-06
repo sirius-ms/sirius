@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.Pair;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
+import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
@@ -59,6 +60,8 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     private final GenericPojoMapper<T> pojoMapper;
 
+    private final Map<String, QueryRewriter> queryRewriters = new HashMap<>();
+
     // Base analyzer and dynamic (per-field) analyzer:
     private final Analyzer baseAnalyzer = SIRIUS_TEXT_ANALYZER;
     private final Map<String, Analyzer> fieldAnalyzers = new PrefixAwareString2ObjectHashMap<>();
@@ -94,7 +97,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             // Scans the bean class’s @IndexField annotations to set PointConfigs and Analyzers.
             // Adds PointsConfig entries to the query parser.
             // Adds default search fields to query parser
-            pojoMapper.detectAnalyzersAndPointConfigs(pointsConfigMap, fieldAnalyzers, defaultSearchFields, sortTypes);
+            pojoMapper.detectAnalyzersAndPointConfigs(pointsConfigMap, fieldAnalyzers, defaultSearchFields, sortTypes, queryRewriters);
             // Initialize the query with  points config map and default search fields.
             queryParser.setMultiFields(defaultSearchFields.toArray(CharSequence[]::new));
             queryParser.setPointsConfigMap(pointsConfigMap);
@@ -301,7 +304,8 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     @SneakyThrows
     public synchronized Page<T> search(@Nullable String query, Pageable pageable) {
-        return search(Utils.isNullOrBlank(query) ? new MatchAllDocsQuery() : queryParser.parse(query, null), pageable);
+        Query parsedQuery = Utils.isNullOrBlank(query) ? new MatchAllDocsQuery() : queryParser.parse(query, null);
+        return search(rewriteQuery(parsedQuery), pageable);
     }
 
     /**
@@ -315,7 +319,8 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     @SneakyThrows
     public synchronized Page<String> searchIds(@Nullable String query, Pageable pageable) {
-        return searchIds(Utils.isNullOrBlank(query) ? new MatchAllDocsQuery() : queryParser.parse(query, null), pageable);
+        Query parsedQuery = Utils.isNullOrBlank(query) ? new MatchAllDocsQuery() : queryParser.parse(query, null);
+        return searchIds(rewriteQuery(parsedQuery), pageable);
     }
 
     /**
@@ -324,6 +329,58 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     @SneakyThrows
     public synchronized Page<String> searchIds(Query query, Pageable pageable) {
         return searchAndTransform(query, pageable, doc -> doc.get(pojoMapper.getPojoIdField()));
+    }
+
+    private Query rewriteQuery(Query query) {
+        if (query instanceof BooleanQuery) {
+            BooleanQuery bq = (BooleanQuery) query;
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
+            builder.setMinimumNumberShouldMatch(bq.getMinimumNumberShouldMatch());
+            for (BooleanClause clause : bq.clauses()) {
+                builder.add(rewriteQuery(clause.query()), clause.occur());
+            }
+            return builder.build();
+        } else if (query instanceof TermQuery) {
+            TermQuery tq = (TermQuery) query;
+            return rewriteTermOrPhrase(tq.getTerm().field(), tq.getTerm().text(), false);
+        } else if (query instanceof PhraseQuery) {
+            PhraseQuery pq = (PhraseQuery) query;
+            Term[] terms = pq.getTerms();
+            if (terms.length > 0) {
+                String text = Arrays.stream(terms).map(Term::text).collect(Collectors.joining(" "));
+                return rewriteTermOrPhrase(terms[0].field(), text, true);
+            }
+        }
+        return query;
+    }
+
+    private Query rewriteTermOrPhrase(String field, String text, boolean isPhrase) {
+        QueryRewriter rewriter = queryRewriters.get(field);
+        String targetField = field;
+
+        if (rewriter == null) {
+            for (Map.Entry<String, QueryRewriter> entry : queryRewriters.entrySet()) {
+                String fullPath = entry.getKey();
+                if (fullPath.endsWith("." + field) || fullPath.equals(field)) {
+                    rewriter = entry.getValue();
+                    targetField = fullPath;
+                    break;
+                }
+            }
+        }
+
+        if (rewriter != null) {
+            Query rewritten = rewriter.rewrite(targetField, text, isPhrase);
+            if (rewritten != null) return rewritten;
+        }
+
+        if (!targetField.equals(field)) {
+            return isPhrase ? 
+                new PhraseQuery(targetField, text.split("\\s+")) : 
+                new TermQuery(new Term(targetField, text));
+        }
+
+        return isPhrase ? new PhraseQuery(field, text.split("\\s+")) : new TermQuery(new Term(field, text));
     }
 
     @SneakyThrows
