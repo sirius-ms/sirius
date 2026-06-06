@@ -23,17 +23,15 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.persistence.model.core.tags.Groups;
-import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
-import de.unijena.bioinf.rest.ProxyManager;
-import io.sirius.ms.sdk.model.*;
-import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.model.AggregationType;
+import io.sirius.ms.sdk.model.DataQuality;
+import io.sirius.ms.sdk.model.QuantMeasure;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.Synchronized;
-import okhttp3.Request;
-import okhttp3.Response;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.custom.CustomAnalyzer;
 import org.apache.lucene.document.DoublePoint;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
@@ -47,7 +45,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -58,7 +55,7 @@ import static de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory
  */
 public class FeatureFilterModel implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
-    private final Analyzer analyzer = new StandardAnalyzer();
+    private final Analyzer analyzer;
     /*
     currently selected values
      */
@@ -146,8 +143,15 @@ public class FeatureFilterModel implements SiriusPCS {
      * the filter model is initialized with the min / max possible values
      * MAX VALUES SHOULD BE USED FOR DISPLAY ONLY. AND IF SELECTED VALUES EQUAL THE MAXIMUM, INFINITY SHOULD BE ASSUMED, see is[...]Active() methods.
      */
+    @SneakyThrows
     private FeatureFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
         this.inverted = false;
+        //this querybuilder is just to create the query string.
+        // Therefore, we need to ensure values are not lowercased as in the default builder.
+        this.analyzer = CustomAnalyzer.builder()
+                .withTokenizer("standard")
+                .build();
+        this.textFieldParser = new QueryParser(FAKE_FIELD, analyzer);
 
         this.searchTextDoc = new PlainDocument();
 
@@ -457,69 +461,7 @@ public class FeatureFilterModel implements SiriusPCS {
 
     private static final String FAKE_FIELD = "__FAKE_FIELD__";
     private static final String FAKE_FIELD_REPLACE = FAKE_FIELD + ":";
-    private final QueryParser textFieldParser = new QueryParser(FAKE_FIELD, analyzer) {
-        @Override
-        protected Query getFieldQuery(String field, String queryText, boolean quoted) throws ParseException {
-            if ("name".equals(field)) {
-                BooleanQuery.Builder b = new BooleanQuery.Builder();
-                b.add(super.getFieldQuery("name", queryText, quoted), BooleanClause.Occur.SHOULD);
-                b.add(super.getFieldQuery("inchiKey", queryText, quoted), BooleanClause.Occur.SHOULD);
-                return b.build();
-            }
-            if ("class".equals(field)) {
-                return super.getFieldQuery("topAnnotations.classes", queryText, quoted);
-            }
-            return super.getFieldQuery(field, queryText, quoted);
-        }
-
-        @Override
-        protected Query getWildcardQuery(String field, String termStr) throws ParseException {
-            if ("name".equals(field)) {
-                BooleanQuery.Builder b = new BooleanQuery.Builder();
-                b.add(super.getWildcardQuery("name", termStr), BooleanClause.Occur.SHOULD);
-                b.add(super.getWildcardQuery("inchiKey", termStr), BooleanClause.Occur.SHOULD);
-                return b.build();
-            }
-            if ("class".equals(field)) return super.getWildcardQuery("topAnnotations.classes", termStr);
-            return super.getWildcardQuery(field, termStr);
-        }
-
-        @Override
-        protected Query getPrefixQuery(String field, String termStr) throws ParseException {
-            if ("name".equals(field)) {
-                BooleanQuery.Builder b = new BooleanQuery.Builder();
-                b.add(super.getPrefixQuery("name", termStr), BooleanClause.Occur.SHOULD);
-                b.add(super.getPrefixQuery("inchiKey", termStr), BooleanClause.Occur.SHOULD);
-                return b.build();
-            }
-            if ("class".equals(field)) return super.getPrefixQuery("topAnnotations.classes", termStr);
-            return super.getPrefixQuery(field, termStr);
-        }
-
-        @Override
-        protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive, boolean endInclusive) throws ParseException {
-            if ("name".equals(field)) {
-                BooleanQuery.Builder b = new BooleanQuery.Builder();
-                b.add(super.getRangeQuery("name", part1, part2, startInclusive, endInclusive), BooleanClause.Occur.SHOULD);
-                b.add(super.getRangeQuery("inchiKey", part1, part2, startInclusive, endInclusive), BooleanClause.Occur.SHOULD);
-                return b.build();
-            }
-            if ("class".equals(field)) return super.getRangeQuery("topAnnotations.classes", part1, part2, startInclusive, endInclusive);
-            return super.getRangeQuery(field, part1, part2, startInclusive, endInclusive);
-        }
-
-        @Override
-        protected Query getFuzzyQuery(String field, String termStr, float minSimilarity) throws ParseException {
-            if ("name".equals(field)) {
-                BooleanQuery.Builder b = new BooleanQuery.Builder();
-                b.add(super.getFuzzyQuery("name", termStr, minSimilarity), BooleanClause.Occur.SHOULD);
-                b.add(super.getFuzzyQuery("inchiKey", termStr, minSimilarity), BooleanClause.Occur.SHOULD);
-                return b.build();
-            }
-            if ("class".equals(field)) return super.getFuzzyQuery("topAnnotations.classes", termStr, minSimilarity);
-            return super.getFuzzyQuery(field, termStr, minSimilarity);
-        }
-    };
+    private final QueryParser textFieldParser;
 
     public Optional<String> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode) {
         if (!isActive())

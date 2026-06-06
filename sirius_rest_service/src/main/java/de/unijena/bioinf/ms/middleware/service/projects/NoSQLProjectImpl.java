@@ -1415,11 +1415,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
             StructureMatch structureMatch = project().findTopStructureMatchByFeatureId(longAFIf, CsiStructureMatch.class).orElse(null);
 
-            if (structureMatch != null) {
-                cSum.setInchiKey(structureMatch.getCandidateInChiKey());
-                formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
-                        .orElse(null);
-            }
+            formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                    .orElse(null);
+            cSum.setStructureAnnotation(convertStructureMatch(structureMatch, EnumSet.noneOf(StructureCandidateScored.OptField.class)));
         }
 
         if (formulaCandidate == null)
@@ -1430,12 +1428,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
             storage().getByPrimaryKey(formulaCandidate.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
                     .map(cc -> CompoundClasses.of(cc.getNpcFingerprint(), cc.getCfFingerprint()))
-                    .ifPresent(cc -> {
-                        cSum.setCompoundClassAnnotation(cc);
-                        if (cc.getClassyFireLineage() != null) {
-                            cSum.setClasses(cc.getClassyFireLineage().stream().map(CompoundClass::getName).toList());
-                        }
-                    });
+                    .ifPresent(cSum::setCompoundClassAnnotation);
         }
 
         return cSum;

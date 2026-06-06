@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
+import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClass;
+import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClasses;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
@@ -17,38 +19,50 @@ import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappi
 /**
  * Mapper for predicted compound classes (ClassyFire lineage).
  */
-public class ClassesMapper implements FieldMapper<List<String>> {
+public class ClassesMapper implements FieldMapper<CompoundClasses> {
 
     @Override
-    public Iterable<IndexableField> toIndexableFields(@NotNull String rootFieldName, @Nullable List<String> pojo) {
+    public Iterable<IndexableField> toIndexableFields(@NotNull String rootFieldName, @org.jspecify.annotations.Nullable CompoundClasses pojo) {
         List<IndexableField> indexableFields = new ArrayList<>();
         if (pojo == null)
             return indexableFields;
 
-        for (String cl : pojo) {
-            // 1. Index under the provided field name (e.g., topAnnotations.class)
-            indexableFields.addAll(getIndexedFieldsFromSimpleValue(rootFieldName, cl, false, false, true, false));
+        String classyfireFieldName = rootFieldName + ".cfClass";
 
-            // 2. Also index under "classes" (sibling) for compatibility if rootFieldName ends with .class
-            if (rootFieldName.endsWith(".class")) {
-                String sibling = rootFieldName.substring(0, rootFieldName.lastIndexOf('.') + 1) + "classes";
-                indexableFields.addAll(getIndexedFieldsFromSimpleValue(sibling, cl, false, false, true, false));
-            }
+        if (pojo.getClassyFireLineage() != null)
+            pojo.getClassyFireLineage().stream()
+                    .map(CompoundClass::getName)
+                    .map(cn -> getIndexedFieldsFromSimpleValue(classyfireFieldName, cn, false, false, true, false))
+                    .forEach(indexableFields::addAll);
+        if (pojo.getClassyFireAlternatives() != null)
+            pojo.getClassyFireAlternatives().stream()
+                    .map(CompoundClass::getName)
+                    .map(cn -> getIndexedFieldsFromSimpleValue(classyfireFieldName, cn, false, false, true, false))
+                    .forEach(indexableFields::addAll);
 
-            // 3. Also index under top-level "class" for easy searching via "class: x"
-            indexableFields.addAll(getIndexedFieldsFromSimpleValue("class", cl, false, false, true, false));
-        }
+
+        indexableFields.addAll(getIndexedFieldsFromSimpleValue(
+                rootFieldName + ".npcPathway",
+                pojo.getNpcPathway().getName(),
+                false, false, true, false));
+
+        indexableFields.addAll(getIndexedFieldsFromSimpleValue(
+                rootFieldName + ".npcSuperclass",
+                pojo.getNpcPathway().getName(),
+                false, false, true, false));
+
+        indexableFields.addAll(getIndexedFieldsFromSimpleValue(
+                rootFieldName + ".npcClass",
+                pojo.getNpcPathway().getName(),
+                false, false, true, false));
 
         return indexableFields;
     }
 
+
     @Override
-    public @Nullable List<String> toPojo(@NotNull String rootFieldName, @NotNull Iterable<IndexableField> document) {
-        List<String> results = new ArrayList<>();
-        for (IndexableField field : document)
-            if (rootFieldName.equals(field.name()))
-                results.add(field.stringValue());
-        return results.isEmpty() ? null : results;
+    public @Nullable CompoundClasses toPojo(@NotNull String rootFieldName, @NotNull Iterable<IndexableField> document) {
+        return null;
     }
 
     @Override
@@ -59,14 +73,14 @@ public class ClassesMapper implements FieldMapper<List<String>> {
             @NotNull List<CharSequence> defaultSearchFields,
             @NotNull Map<String, SortField.Type> sortTypes
     ) {
-        analyzerMap.put(rootFieldName, SIRIUS_TEXT_ANALYZER);
-        analyzerMap.put("class", SIRIUS_TEXT_ANALYZER);
-        
-        if (rootFieldName.endsWith(".class")) {
-            String sibling = rootFieldName.substring(0, rootFieldName.lastIndexOf('.') + 1) + "classes";
-            analyzerMap.put(sibling, SIRIUS_TEXT_ANALYZER);
-        }
-        
-        defaultSearchFields.add(rootFieldName);
+        analyzerMap.put(rootFieldName + ".cfClass", SIRIUS_TEXT_ANALYZER);
+        analyzerMap.put(rootFieldName + ".npcPathway", SIRIUS_TEXT_ANALYZER);
+        analyzerMap.put(rootFieldName + ".npcSuperClass", SIRIUS_TEXT_ANALYZER);
+        analyzerMap.put(rootFieldName + ".npcClass", SIRIUS_TEXT_ANALYZER);
+
+        defaultSearchFields.add(rootFieldName + ".cfClass");
+        defaultSearchFields.add(rootFieldName + ".npcPathway");
+        defaultSearchFields.add(rootFieldName + ".npcSuperClass");
+        defaultSearchFields.add(rootFieldName + ".npcClass");
     }
 }
