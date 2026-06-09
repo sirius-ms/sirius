@@ -1,6 +1,6 @@
-package de.unijena.bioinf.ms.middleware.service.search;
+package de.unijena.bioinf.chemdb;
 
-import de.unijena.bioinf.rest.ProxyManager;
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;import de.unijena.bioinf.rest.ProxyManager;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,8 @@ public class PubChemNameResolver {
 
     @Nullable
     public static String resolveInchiKeyFromPubChem(@NotNull String name) {
-        if (isInchiKey2D(name)) return name;
+        if (InChIs.isInchiKey(name))
+            return name.length() >= 14 ? name.substring(0, 14) : name;
 
         final String url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/" + name + "/property/InChIKey/TXT";
         try {
@@ -28,7 +29,8 @@ public class PubChemNameResolver {
                             // The line might be the full InChIKey or just the connectivity part
                             if (line.length() >= 14) {
                                 String part = line.substring(0, 14);
-                                if (isInchiKey2D(part)) return part;
+                                if (InChIs.isInchiKey(part))
+                                    return part;
                             }
                         }
                     }
@@ -38,9 +40,5 @@ public class PubChemNameResolver {
         } catch (IOException e) {
             return null;
         }
-    }
-
-    public static boolean isInchiKey2D(String s) {
-        return s != null && s.length() == 14 && s.chars().allMatch(c -> (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
     }
 }
