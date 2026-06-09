@@ -11,8 +11,12 @@ import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBPropertyUtils;
 import de.unijena.bioinf.webapi.WebAPI;
+import org.openscience.cdk.aromaticity.Aromaticity;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.ConnectivityChecker;
+import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
@@ -23,6 +27,7 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.smirks.Smirks;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
+import org.openscience.cdk.tools.CDKValencyChecker;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import reactionTool.sirius.model.*;
 
@@ -52,7 +57,7 @@ public class ReactionToolHandler {
     }
 
     public List<String> process(String jsonPath, List<String> initialSmiles) throws IOException {
-            ReactionSequence sequence = objectMapper.readValue(new File(jsonPath), ReactionSequence.class);
+        ReactionSequence sequence = objectMapper.readValue(new File(jsonPath), ReactionSequence.class);
         return process(sequence, initialSmiles);
     }
 
@@ -94,7 +99,7 @@ public class ReactionToolHandler {
 
                     // Use Mode.All to get one product per matching site
                     Iterable<IAtomContainer> products = Smirks.apply(mol, reaction.getSmarts(), Transform.Mode.All);
-                    
+
                     boolean matched = false;
                     for (IAtomContainer product : products) {
                         matched = true;
@@ -102,17 +107,17 @@ public class ReactionToolHandler {
                         // Partition product into unconnected molecules
                         IAtomContainerSet components = ConnectivityChecker.partitionIntoMolecules(product);
                         for (IAtomContainer component : components.atomContainers()) {
-                            for (IAtom atom : component.atoms()) {
-                                atom.setImplicitHydrogenCount(-1);
-                            }
-                            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(component);
-                            CDKHydrogenAdder.getInstance(component.getBuilder()).addImplicitHydrogens(component);
+
+
+                            configureAtomContainer(component);
 
                             String productSmiles = smilesGenerator.create(component);
-                            nextPool.add(productSmiles);
+                            if(isValencesValid(component)) {
+                                nextPool.add(productSmiles);
+                            }
                         }
                     }
-                    
+
                     if (matched) {
                         transformedInThisStep.add(smiles);
                     }
@@ -172,6 +177,48 @@ public class ReactionToolHandler {
             }
         }
         return deduplicatedSmiles;
+    }
+
+    public boolean isValencesValid(IAtomContainer container) throws CDKException {
+
+        CDKValencyChecker valencyChecker = CDKValencyChecker.getInstance(container.getBuilder());
+
+        for (IAtom atom : container.atoms()) {
+
+            if (!valencyChecker.isSaturated(atom, container)){
+                return false;
+            }
+
+        }
+        return true;
+    }
+
+    public static void configureAtomContainer(IAtomContainer molecule) throws CDKException {
+
+        // 1. Clear out the stale properties leftover from the reactants.
+        // This forces CDK to look at the molecule fresh based only on its new connectivity.
+        for (IAtom atom : molecule.atoms()) {
+            atom.setAtomTypeName(null);
+            atom.setHybridization(null);
+            atom.setValency(null);
+            atom.setImplicitHydrogenCount(null);
+        }
+
+        // 2. Perceive types and configure ALL properties, forcefully overwriting old data
+        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(molecule);
+
+        // 3. Now that the atom types are correct, calculate implicit hydrogens
+        final CDKHydrogenAdder hydrogenAdder = CDKHydrogenAdder.getInstance(molecule.getBuilder());
+        hydrogenAdder.addImplicitHydrogens(molecule);
+
+        // 4. Finally, apply aromaticity.
+        // Doing this last should eliminate all those annoying warnings!
+        Aromaticity aromaticity = new Aromaticity(Aromaticity.Model.CDK_2x, Cycles.all());
+        boolean aromaticityApplied = aromaticity.apply(molecule);
+
+        // if(!aromaticityApplied){
+        //     LOGGER.warning("IAtomContainer Configuration - the aromaticity model couldn't be fully applied.");
+        // }
     }
 
     /**
