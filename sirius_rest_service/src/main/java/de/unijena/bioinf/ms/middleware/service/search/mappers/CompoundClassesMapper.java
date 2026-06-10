@@ -19,7 +19,7 @@ import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappi
 /**
  * Mapper for predicted compound classes (ClassyFire lineage).
  */
-public class ClassesMapper implements FieldMapper<CompoundClasses> {
+public class CompoundClassesMapper implements FieldMapper<CompoundClasses> {
 
     @Override
     public Iterable<IndexableField> toIndexableFields(@NotNull String rootFieldName, @org.jspecify.annotations.Nullable CompoundClasses pojo) {
