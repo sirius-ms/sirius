@@ -356,28 +356,10 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     private Query rewriteTermOrPhrase(String field, String text, boolean isPhrase) {
         QueryRewriter rewriter = queryRewriters.get(field);
-        String targetField = field;
-
-        if (rewriter == null) {
-            for (Map.Entry<String, QueryRewriter> entry : queryRewriters.entrySet()) {
-                String fullPath = entry.getKey();
-                if (fullPath.endsWith("." + field) || fullPath.equals(field)) {
-                    rewriter = entry.getValue();
-                    targetField = fullPath;
-                    break;
-                }
-            }
-        }
 
         if (rewriter != null) {
-            Query rewritten = rewriter.rewrite(targetField, text, isPhrase);
+            Query rewritten = rewriter.rewrite(field, text, isPhrase);
             if (rewritten != null) return rewritten;
-        }
-
-        if (!targetField.equals(field)) {
-            return isPhrase ? 
-                new PhraseQuery(targetField, text.split("\\s+")) : 
-                new TermQuery(new Term(targetField, text));
         }
 
         return isPhrase ? new PhraseQuery(field, text.split("\\s+")) : new TermQuery(new Term(field, text));
