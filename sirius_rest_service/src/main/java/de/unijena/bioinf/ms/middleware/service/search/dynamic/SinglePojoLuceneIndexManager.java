@@ -334,21 +334,42 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     private Query rewriteQuery(Query query) {
         if (query instanceof BooleanQuery) {
             BooleanQuery bq = (BooleanQuery) query;
-            BooleanQuery.Builder builder = new BooleanQuery.Builder();
-            builder.setMinimumNumberShouldMatch(bq.getMinimumNumberShouldMatch());
-            for (BooleanClause clause : bq.clauses()) {
-                builder.add(rewriteQuery(clause.query()), clause.occur());
+            boolean changed = false;
+            List<BooleanClause> clauses = bq.clauses();
+            List<BooleanClause> newClauses = new ArrayList<>(clauses.size());
+
+            for (BooleanClause clause : clauses) {
+                Query originalSub = clause.query();
+                Query rewrittenSub = rewriteQuery(originalSub);
+
+                if (rewrittenSub != originalSub) {
+                    changed = true;
+                    newClauses.add(new BooleanClause(rewrittenSub, clause.occur()));
+                } else {
+                    newClauses.add(clause);
+                }
             }
-            return builder.build();
-        } else if (query instanceof TermQuery) {
-            TermQuery tq = (TermQuery) query;
-            return rewriteTermOrPhrase(tq.getTerm().field(), tq.getTerm().text(), false);
-        } else if (query instanceof PhraseQuery) {
-            PhraseQuery pq = (PhraseQuery) query;
+
+            if (changed) {
+                BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                builder.setMinimumNumberShouldMatch(bq.getMinimumNumberShouldMatch());
+                for (BooleanClause c : newClauses) {
+                    builder.add(c);
+                }
+                return builder.build();
+            }
+            return query;
+        } else if (query instanceof TermQuery tq) {
+            Query rewritten = rewriteTermOrPhrase(tq.getTerm().field(), tq.getTerm().text(), false);
+            if (rewritten != null)
+                return rewritten;
+        } else if (query instanceof PhraseQuery pq) {
             Term[] terms = pq.getTerms();
             if (terms.length > 0) {
                 String text = Arrays.stream(terms).map(Term::text).collect(Collectors.joining(" "));
-                return rewriteTermOrPhrase(terms[0].field(), text, true);
+                Query rewritten = rewriteTermOrPhrase(terms[0].field(), text, true);
+                if (rewritten != null)
+                    return rewritten;
             }
         }
         return query;
@@ -356,13 +377,10 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     private Query rewriteTermOrPhrase(String field, String text, boolean isPhrase) {
         QueryRewriter rewriter = queryRewriters.get(field);
+        if (rewriter != null)
+            return rewriter.rewrite(field, text, isPhrase);
 
-        if (rewriter != null) {
-            Query rewritten = rewriter.rewrite(field, text, isPhrase);
-            if (rewritten != null) return rewritten;
-        }
-
-        return isPhrase ? new PhraseQuery(field, text.split("\\s+")) : new TermQuery(new Term(field, text));
+        return null;
     }
 
     @SneakyThrows
