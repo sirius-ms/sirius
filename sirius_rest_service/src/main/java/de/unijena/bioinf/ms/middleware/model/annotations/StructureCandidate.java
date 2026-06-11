@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.chemdb.DBLink;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.InchiKey2DQueryRewriter;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PubChemSynonymQueryRewriter;
 import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -37,7 +38,7 @@ import java.util.List;
 @JsonIgnoreProperties(value = { "molecularFormula", "adduct", "csiScore", "tanimotoSimilarity", "confidenceExactMatch", "confidenceApproxMatch", "fingerprint"}, ignoreUnknown = true)
 public class StructureCandidate {
 
-    @IndexField(defaultSearchField = true)
+    @IndexField(defaultSearchField = true, queryRewriter = InchiKey2DQueryRewriter.class)
     protected String inchiKey;
 
     protected String smiles;
