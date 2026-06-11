@@ -250,4 +250,47 @@ public class FullTextSearchTest {
         assertEquals(1, results.getTotalElements(), 
             "Should find document when searching default fields for 'BH4'");
     }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NestedPojo {
+        @IndexField(name = "nestedField")
+        public String nestedField;
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ParentPojo {
+        @IndexField(name = "id", documentId = true)
+        public String id;
+
+        @IndexField(name = "nested")
+        public NestedPojo nested;
+    }
+
+    @Test
+    public void testNoUnqualifiedSuffixMatchingForNestedFields() {
+        ParentPojo parent = new ParentPojo("parent-1", new NestedPojo("nested-value"));
+        searchService.addDocument(projectId, parent);
+
+        // 1. Fully qualified query should succeed
+        Page<ParentPojo> fqResults = searchService.search(
+            projectId, 
+            "nested.nestedField:nested-value", 
+            PageRequest.of(0, 10), 
+            ParentPojo.class
+        );
+        assertEquals(1, fqResults.getTotalElements(), 
+            "Fully qualified nested field query should find the document");
+
+        // 2. Unqualified query (just suffix) should fail (0 hits) now that unqualified matching is removed
+        Page<ParentPojo> uqResults = searchService.search(
+            projectId, 
+            "nestedField:nested-value", 
+            PageRequest.of(0, 10), 
+            ParentPojo.class
+        );
+        assertEquals(0, uqResults.getTotalElements(), 
+            "Unqualified nested field query should NOT find the document since unqualified matching has been removed");
+    }
 }
