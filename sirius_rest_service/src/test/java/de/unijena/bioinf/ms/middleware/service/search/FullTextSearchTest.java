@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.middleware.service.search;
 import static org.junit.jupiter.api.Assertions.*;
 
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.InchiKey2DQueryRewriter;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoProjectSearchContext;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
 import de.unijena.bioinf.projectspace.IndexField;
@@ -249,5 +250,84 @@ public class FullTextSearchTest {
         
         assertEquals(1, results.getTotalElements(), 
             "Should find document when searching default fields for 'BH4'");
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NestedPojo {
+        @IndexField(name = "nestedField")
+        public String nestedField;
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ParentPojo {
+        @IndexField(name = "id", documentId = true)
+        public String id;
+
+        @IndexField(name = "nested")
+        public NestedPojo nested;
+    }
+
+    @Test
+    public void testNoUnqualifiedSuffixMatchingForNestedFields() {
+        ParentPojo parent = new ParentPojo("parent-1", new NestedPojo("nested-value"));
+        searchService.addDocument(projectId, parent);
+
+        // 1. Fully qualified query should succeed
+        Page<ParentPojo> fqResults = searchService.search(
+            projectId, 
+            "nested.nestedField:nested-value", 
+            PageRequest.of(0, 10), 
+            ParentPojo.class
+        );
+        assertEquals(1, fqResults.getTotalElements(), 
+            "Fully qualified nested field query should find the document");
+
+        // 2. Unqualified query (just suffix) should fail (0 hits) now that unqualified matching is removed
+        Page<ParentPojo> uqResults = searchService.search(
+            projectId, 
+            "nestedField:nested-value", 
+            PageRequest.of(0, 10), 
+            ParentPojo.class
+        );
+        assertEquals(0, uqResults.getTotalElements(), 
+            "Unqualified nested field query should NOT find the document since unqualified matching has been removed");
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InchiKeyPojo {
+        @IndexField(name = "id", documentId = true)
+        public String id;
+
+        @IndexField(name = "inchiKey", queryRewriter = InchiKey2DQueryRewriter.class)
+        public String inchiKey;
+    }
+
+    @Test
+    public void testInchiKeyQueryRewriterAndOptimization() {
+        InchiKeyPojo pojo = new InchiKeyPojo("inchikey-1", "WZPVREJFMGASTU");
+        searchService.addDocument(projectId, pojo);
+
+        // 1. Fully qualified, full-length (27 chars) InChIKey search should get rewritten to 14 chars and find the document
+        Page<InchiKeyPojo> fullResults = searchService.search(
+            projectId, 
+            "inchiKey:WZPVREJFMGASTU-UHFFFAOYSA-N", 
+            PageRequest.of(0, 10), 
+            InchiKeyPojo.class
+        );
+        assertEquals(1, fullResults.getTotalElements(), 
+            "Full-length InChIKey query should be rewritten to 14 chars and successfully find the document");
+
+        // 2. Already 14-char InChIKey search should not need rewriting (retaining query object reference via optimization) and succeed
+        Page<InchiKeyPojo> shortResults = searchService.search(
+            projectId, 
+            "inchiKey:WZPVREJFMGASTU", 
+            PageRequest.of(0, 10), 
+            InchiKeyPojo.class
+        );
+        assertEquals(1, shortResults.getTotalElements(), 
+            "Already truncated 14-char InChIKey query should not require rewriting and successfully find the document");
     }
 }
