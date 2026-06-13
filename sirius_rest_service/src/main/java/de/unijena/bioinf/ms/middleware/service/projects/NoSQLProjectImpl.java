@@ -1417,13 +1417,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
             formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
                     .orElse(null);
+            cSum.setStructureAnnotation(convertStructureMatch(structureMatch, EnumSet.noneOf(StructureCandidateScored.OptField.class)));
         }
 
         if (formulaCandidate == null)
             formulaCandidate = project().findTopFormulaCandidateByFeatureId(longAFIf).orElse(null);
 
-        if (formulaCandidate != null)
+        if (formulaCandidate != null) {
             cSum.setFormulaAnnotation(convertFormulaCandidate(formulaCandidate));
+
+            storage().getByPrimaryKey(formulaCandidate.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
+                    .map(cc -> CompoundClasses.of(cc.getNpcFingerprint(), cc.getCfFingerprint()))
+                    .ifPresent(cSum::setCompoundClassAnnotation);
+        }
 
         return cSum;
     }
