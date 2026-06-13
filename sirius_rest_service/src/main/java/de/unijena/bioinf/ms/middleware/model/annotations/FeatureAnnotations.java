@@ -20,8 +20,9 @@
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.CompoundClassesMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -53,12 +54,14 @@ public class FeatureAnnotations {
     /**
      * Best matching StructureCandidate ranked by CSI:FingerID Score over all FormulaCandidates.
      */
+    @IndexField
     @Schema(nullable = true)
     protected StructureCandidateScored structureAnnotation; // CSI:FingerID or MSNovelist
 
     /**
      * Best matching compound classes that correspond to the formulaAnnotation
      */
+    @IndexFieldWithMapper(mapper = CompoundClassesMapper.class)
     @Schema(nullable = true)
     protected CompoundClasses compoundClassAnnotation; // CANOPUS
 

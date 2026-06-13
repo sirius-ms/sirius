@@ -1,8 +1,10 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
 import de.unijena.bioinf.projectspace.IndexField;
+import de.unijena.bioinf.projectspace.QueryRewriter;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Document;
@@ -41,7 +43,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
             String pojoIdFieldTmp = null;
             boolean unStoredTmp = false;
 
-            for (Field f : pojoClass.getDeclaredFields()) {
+            for (Field f : FieldUtils.getAllFields(pojoClass)) {
                 if (f.isAnnotationPresent(IndexField.class)) {
                     IndexField indexField = f.getAnnotation(IndexField.class);
                     String fieldName = indexField.name().isEmpty() ? f.getName() : indexField.name();
@@ -109,9 +111,10 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
             @NotNull final Map<String, PointsConfig> pointsConfigMap,
             @NotNull final Map<String, Analyzer> analyzerMap,
             @NotNull final List<CharSequence> defaultSearchFields,
-            @NotNull final Map<String, SortField.Type> sortTypes
+            @NotNull final Map<String, SortField.Type> sortTypes,
+            @NotNull final Map<String, QueryRewriter> queryRewriters
     ){
-        detectAnalyzersAndPointConfigs("", pojoClass, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+        detectAnalyzersAndPointConfigs("", pojoClass, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters);
     }
 
     public void detectAnalyzersAndPointConfigs(
@@ -120,9 +123,10 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
             @NotNull final Map<String, PointsConfig> pointsConfigMap,
             @NotNull final Map<String, Analyzer> analyzerMap,
             @NotNull final List<CharSequence> defaultSearchFields,
-            @NotNull final Map<String, SortField.Type> sortTypes
+            @NotNull final Map<String, SortField.Type> sortTypes,
+            @NotNull final Map<String, QueryRewriter> queryRewriters
     ) {
-        for (Field field : pojoClass.getDeclaredFields()) {
+        for (Field field : FieldUtils.getAllFields(pojoClass)) {
             if (field.isAnnotationPresent(IndexField.class)) {
                 field.setAccessible(true);
                 IndexField indexField = field.getAnnotation(IndexField.class);
@@ -139,7 +143,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 }
 
                 if (!isSimpleType(elementType)) {
-                    detectAnalyzersAndPointConfigs(fieldName + ".", elementType, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+                    detectAnalyzersAndPointConfigs(fieldName + ".", elementType, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters);
                 } else {
                     PointsConfig pointsConfig = getPointsConfigForType(elementType);
                     if (pointsConfig != null)
@@ -156,6 +160,14 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                         SortField.Type sortType = getSortTypeForType(elementType);
                         if (sortType != null)
                             sortTypes.put(fieldName, sortType);
+                    }
+
+                    if (indexField.queryRewriter() != QueryRewriter.NoOp.class) {
+                        try {
+                            queryRewriters.put(fieldName, indexField.queryRewriter().getDeclaredConstructor().newInstance());
+                        } catch (Exception e) {
+                            throw new RuntimeException("Could not instantiate QueryRewriter: " + indexField.queryRewriter().getName(), e);
+                        }
                     }
                 }
             } else if (field.isAnnotationPresent(IndexFieldWithMapper.class)) {
@@ -220,7 +232,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
         // Handle nested objects (if not a simple type).
         if (!isSimpleType(value.getClass())) {
             boolean hasNestedIndexFields = false;
-            for (Field nested : value.getClass().getDeclaredFields()) {
+            for (Field nested : FieldUtils.getAllFields(value.getClass())) {
                 if (nested.isAnnotationPresent(IndexField.class) || nested.isAnnotationPresent(IndexFieldWithMapper.class)) {
                     hasNestedIndexFields = true;
                     break;
@@ -228,7 +240,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
             }
             if (hasNestedIndexFields) {
                 try {
-                    for (Field nested : value.getClass().getDeclaredFields()) {
+                    for (Field nested : FieldUtils.getAllFields(value.getClass())) {
                         if (nested.isAnnotationPresent(IndexField.class)) {
                             nested.setAccessible(true);
                             Object nestedValue = nested.get(value);
@@ -296,7 +308,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
 //        System.out.println("=========================> FIELD_PREFIX_TO_PoJo: " + fieldPrefix);
         try {
             C instance = clazz.getDeclaredConstructor().newInstance();
-            for (Field field : clazz.getDeclaredFields()) {
+            for (Field field : FieldUtils.getAllFields(clazz)) {
                 if (field.isAnnotationPresent(IndexField.class)) {
                     field.setAccessible(true);
                     IndexField ann = field.getAnnotation(IndexField.class);

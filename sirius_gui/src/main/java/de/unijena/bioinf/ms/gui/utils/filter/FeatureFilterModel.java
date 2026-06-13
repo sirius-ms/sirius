@@ -23,13 +23,15 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.persistence.model.core.tags.Groups;
-import io.sirius.ms.sdk.model.*;
-import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.model.AggregationType;
+import io.sirius.ms.sdk.model.DataQuality;
+import io.sirius.ms.sdk.model.QuantMeasure;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.Synchronized;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.custom.CustomAnalyzer;
 import org.apache.lucene.document.DoublePoint;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
@@ -53,7 +55,7 @@ import static de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory
  */
 public class FeatureFilterModel implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
-    private final Analyzer analyzer = new StandardAnalyzer();
+    private final Analyzer analyzer;
     /*
     currently selected values
      */
@@ -141,8 +143,15 @@ public class FeatureFilterModel implements SiriusPCS {
      * the filter model is initialized with the min / max possible values
      * MAX VALUES SHOULD BE USED FOR DISPLAY ONLY. AND IF SELECTED VALUES EQUAL THE MAXIMUM, INFINITY SHOULD BE ASSUMED, see is[...]Active() methods.
      */
+    @SneakyThrows
     private FeatureFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
         this.inverted = false;
+        //this querybuilder is just to create the query string.
+        // Therefore, we need to ensure values are not lowercased as in the default builder.
+        this.analyzer = CustomAnalyzer.builder()
+                .withTokenizer("standard")
+                .build();
+        this.textFieldParser = new QueryParser(FAKE_FIELD, analyzer);
 
         this.searchTextDoc = new PlainDocument();
 
@@ -452,7 +461,7 @@ public class FeatureFilterModel implements SiriusPCS {
 
     private static final String FAKE_FIELD = "__FAKE_FIELD__";
     private static final String FAKE_FIELD_REPLACE = FAKE_FIELD + ":";
-    private final QueryParser textFieldParser = new QueryParser(FAKE_FIELD, analyzer);
+    private final QueryParser textFieldParser;
 
     public Optional<String> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode) {
         if (!isActive())
