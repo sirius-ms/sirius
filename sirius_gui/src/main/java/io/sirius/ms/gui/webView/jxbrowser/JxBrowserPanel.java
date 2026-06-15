@@ -54,6 +54,9 @@ public class JxBrowserPanel extends BrowserPanel {
 
     private static final int POPUP_DEFAULT_WIDTH = 1280;
     private static final int POPUP_DEFAULT_HEIGHT = 800;
+    // Shown until the popup page reports its own title via TitleChanged, and as the fallback for
+    // pages that never set one.
+    private static final String POPUP_FALLBACK_TITLE = "SIRIUS";
 
     /**
      * Hosts JavaScript popups (e.g. {@code window.open(...)}) in their own Swing window.
@@ -108,7 +111,7 @@ public class JxBrowserPanel extends BrowserPanel {
         popupDialog.setSize(POPUP_DEFAULT_WIDTH, POPUP_DEFAULT_HEIGHT);
         popupDialog.setLocationRelativeTo(owner);
 
-        applyPopupTitle(popupDialog, popupBrowser.title());
+        popupDialog.setTitle(POPUP_FALLBACK_TITLE);
         popupBrowser.on(TitleChanged.class, e -> {
             final String title = e.title();
             SwingUtilities.invokeLater(() -> applyPopupTitle(popupDialog, title));
@@ -144,7 +147,7 @@ public class JxBrowserPanel extends BrowserPanel {
     }
 
     private static void applyPopupTitle(@NotNull JDialog dialog, String title) {
-        dialog.setTitle(title == null || title.isBlank() ? "SIRIUS" : title);
+        dialog.setTitle(title == null || title.isBlank() ? POPUP_FALLBACK_TITLE : title);
     }
 
     private record Popup(String name, @NotNull JDialog frame, @NotNull Browser browser) {
