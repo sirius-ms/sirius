@@ -1,10 +1,9 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
-import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,8 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -37,33 +34,27 @@ import java.util.function.Function;
 @Slf4j
 public class SearchServiceImpl implements SearchService {
 
-    // Base directory for all project indices.
-    @Nullable
-    private final Path indexHome;
-    private final ProjectSearchContext.Factory<?> projectSearchContextFactory;
-    private final Map<String, ProjectSearchContext> projectSearchContexts = new HashMap<>();
+    private final SearchContextProvider searchContextFactory;
+
+    private final Map<String, SearchContext> projectSearchContexts = new HashMap<>();
     private final ReadWriteLock projectLock = new ReentrantReadWriteLock();
 
-    public SearchServiceImpl(@Nullable Path indexHome, @NotNull ProjectSearchContext.Factory<?> projectSearchContextFactory) throws IOException {
-        this.indexHome = indexHome;
-        this.projectSearchContextFactory = projectSearchContextFactory;
-        if (indexHome != null && !Files.exists(indexHome)) {
-            Files.createDirectories(indexHome);
-        }
+    public SearchServiceImpl(SearchContextProvider searchContextProvider) throws IOException {
+        this.searchContextFactory = searchContextProvider;
     }
 
 
     public void close() {
-        System.out.println("DESTROYING SEARCH SERVICE!!!");
         projectLock.writeLock().lock();
         try {
-            for (ProjectSearchContext context : projectSearchContexts.values()) {
+            for (SearchContext context : projectSearchContexts.values()) {
                 try {
                     context.close();
                 } catch (IOException e) {
                     log.error("Error closing project search context", e);
                 }
             }
+            projectSearchContexts.clear();
         } finally {
             projectLock.writeLock().unlock();
         }
@@ -73,34 +64,20 @@ public class SearchServiceImpl implements SearchService {
     public void openOrCreateProjectIndex(Project<?> project) throws IOException {
         projectLock.writeLock().lock();
         try {
-            final Path projectDir;
-            if (!project.isTempProject() && indexHome != null) {
-                String projectSystemId = project.getSystemUID(); //used as index name.
-                projectDir = indexHome.resolve(projectSystemId);
-                Files.createDirectories(projectDir);
-            } else {
-                projectDir = null;
-            }
-
-            projectSearchContexts.computeIfAbsent(project.getProjectId(), pid ->
-                    projectSearchContextFactory.create(projectDir, project));
+            projectSearchContexts.computeIfAbsent(project.getProjectId(),
+                    pid -> searchContextFactory.create(project));
         } finally {
             projectLock.writeLock().unlock();
         }
     }
 
     @Override
-    public void closeProjectIndex(String projectId, boolean deleteIndexFromDisk) throws IOException {
+    public void closeProjectIndex(@NotNull Project<?> project, boolean deleteIndex) throws IOException {
         projectLock.writeLock().lock();
         try {
-            ProjectSearchContext projectContext = projectSearchContexts.remove(projectId);
-            if (projectContext != null) {
-                projectContext.close();
-                if (projectContext.getProjectIndexRootDir() != null){
-                    if (deleteIndexFromDisk || Files.list(projectContext.getProjectIndexRootDir()).findAny().isEmpty())
-                        FileUtils.deleteRecursively(projectContext.getProjectIndexRootDir());
-                }
-            }
+            SearchContext projectContext = projectSearchContexts.remove(project.getProjectId());
+            if (projectContext != null)
+                projectContext.close(deleteIndex);
         } finally {
             projectLock.writeLock().unlock();
         }
@@ -110,7 +87,7 @@ public class SearchServiceImpl implements SearchService {
     public void clearIndex(@NotNull Project<?> project) throws IOException {
         projectLock.writeLock().lock();
         try {
-            closeProjectIndex(project.getProjectId(), true);
+            closeProjectIndex(project, true);
             openOrCreateProjectIndex(project);
         } finally {
             projectLock.writeLock().unlock();
@@ -226,7 +203,7 @@ public class SearchServiceImpl implements SearchService {
 
     // region HELPER
 
-    private <T> T withProjectContext(String projectId, Function<ProjectSearchContext, T> function) {
+    private <T> T withProjectContext(String projectId, Function<SearchContext, T> function) {
         projectLock.readLock().lock();
         try {
             return function.apply(projectSearchContexts.get(projectId));
@@ -235,7 +212,7 @@ public class SearchServiceImpl implements SearchService {
         }
     }
 
-    private void consumeProjectContext(String projectId, Consumer<ProjectSearchContext> consumer) {
+    private void consumeProjectContext(String projectId, Consumer<SearchContext> consumer) {
         projectLock.readLock().lock();
         try {
             consumer.accept(projectSearchContexts.get(projectId));

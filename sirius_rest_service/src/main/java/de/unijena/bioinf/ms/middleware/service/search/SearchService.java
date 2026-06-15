@@ -21,12 +21,12 @@ public interface SearchService extends AutoCloseable {
     void openOrCreateProjectIndex(Project<?> project) throws IOException;
 
     @SneakyThrows
-    default void closeProjectIndex(String projectId) {
+    default void closeProjectIndex(@NotNull Project<?> project) {
         //sneaky throws is fine since no deletion will happen.
-        closeProjectIndex(projectId, false);
+        closeProjectIndex(project, false);
     }
 
-    void closeProjectIndex(String projectId, boolean deleteIndexFromDisk) throws IOException;
+    void closeProjectIndex(Project<?> project, boolean deleteIndex) throws IOException;
 
     void clearIndex(@NotNull Project<?> project) throws IOException;
 

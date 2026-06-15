@@ -405,7 +405,7 @@ public class SiriusTest {
         FormulaConstraints fallback = FormulaConstraints.fromString("S");
         ChemicalAlphabet detectable = new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("S","Br","Cl","B","Se"));
 
-        FormulaSettings settingsOnlyDenovoElementFilter = FormulaSettings.newInstance(enforced, detectable, fallback);
+        FormulaSettings settingsOnlyDenovoElementFilter = FormulaSettings.newInstance(enforced, detectable, fallback, false);
 
         final MutableMs2Experiment experiment = getStandardExperiment();
         final MutableMs2Experiment experimentNoMs1Data = getStandardExperiment();

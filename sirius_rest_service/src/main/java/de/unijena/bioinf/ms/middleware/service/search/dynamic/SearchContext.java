@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,14 +8,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public interface ProjectSearchContext extends Closeable {
-    Path getProjectIndexRootDir();
+public interface SearchContext extends Closeable {
+    Path getIndexRootDir();
 
     <T> Integer getNumberOfDocuments(Class<T> clazz);
 
@@ -56,14 +56,9 @@ public interface ProjectSearchContext extends Closeable {
 
     boolean removeTagValueType(String tagName);
 
-    interface Factory<C extends ProjectSearchContext> {
-        /**
-         * Creates a ProjectSearchContext for the given project.
-         * @param indexDir Parent location to store indexing data.
-         *                       If null the index will be stored in memory if supported by indexing backend.
-         * @param project project that shall be indexed.
-         * @return ProjectSearchContext for the given project.
-         */
-        C create(@Nullable Path indexDir, @NotNull Project<?> project);
+    void close(boolean delete) throws IOException;
+
+    default void close() throws IOException{
+        close(false);
     }
 }
