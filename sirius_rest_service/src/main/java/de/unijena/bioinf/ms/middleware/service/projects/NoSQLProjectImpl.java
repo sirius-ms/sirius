@@ -166,7 +166,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                 } catch (IOException e) {
                     log.error("Error while initializing project space index. Closing index.", e);
-                    searchService.closeProjectIndex(projectId);
+                    searchService.closeProjectIndex(this);
                 }
             }
         }
@@ -2749,6 +2749,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                         throw new ResponseStatusException(BAD_REQUEST, "Tree exists but FormulaID does not belong to the requested FeatureID. Are you using the correct Ids?");
                     return new FTJsonWriter().treeToJsonString(ftreeRes.getFTree());
                 }).orElse(null);
+    }
+
+    @Override
+    public void close() throws IOException {
+        searchService.closeProjectIndex(this);
+        projectSpaceManager.close();
     }
 
     @Override

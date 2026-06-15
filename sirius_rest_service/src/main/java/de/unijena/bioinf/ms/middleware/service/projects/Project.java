@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.io.IOException;
 import java.util.*;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
@@ -328,4 +329,6 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     @Deprecated
     String findSiriusFtreeJsonById(String formulaId, String alignedFeatureId);
+
+    void close() throws IOException;
 }

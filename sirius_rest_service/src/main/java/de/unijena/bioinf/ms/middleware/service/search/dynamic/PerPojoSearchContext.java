@@ -1,10 +1,13 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.lucene.store.ByteBuffersDirectory;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
@@ -21,22 +24,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 @Slf4j
-public class PerPojoProjectSearchContext implements ProjectSearchContext {
+public class PerPojoSearchContext implements SearchContext {
     @Getter
     @Nullable
-    private final Path projectIndexRootDir;
+    protected final Path indexRootDir;
 
-    // Map from projectId → (bean class → IndexManager)
-    private final ConcurrentHashMap<Class<?>, SinglePojoLuceneIndexManager<?>> indices;
-    // Map from projectId → (tagName → ValueType)
-    private final Map<String, ValueType> tagDefs;
+    protected final ConcurrentHashMap<Class<?>, SinglePojoLuceneIndexManager<?>> indices;
+    protected final Map<String, ValueType> tagDefs;
 
-    public PerPojoProjectSearchContext(@Nullable Path projectIndexRootDir, @Nullable Collection<TagDefinition> tagDefinitions) {
-        this.projectIndexRootDir = projectIndexRootDir;
+    public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions) {
+        this.indexRootDir = indexRootDir;
         indices = new ConcurrentHashMap<>();
-        tagDefs = new HashMap<>();
-        if (tagDefinitions != null)
-                tagDefinitions.forEach(tagDef -> tagDefs.put(tagDef.getTagName(), tagDef.getValueType()));
+        tagDefs = tagDefinitions != null ? tagDefinitions : new HashMap<>();
     }
 
     @Override
@@ -107,12 +106,12 @@ public class PerPojoProjectSearchContext implements ProjectSearchContext {
     }
 
     @Override
-    public <T extends Taggable> void addTagsToDocument(Object docId, Collection<Tag> tags, @NotNull Class<T> clazz){
+    public <T extends Taggable> void addTagsToDocument(Object docId, Collection<Tag> tags, @NotNull Class<T> clazz) {
         getIndexManager(clazz).addTagsToDocument(docId, tags);
     }
 
     @Override
-    public <T extends Taggable> void removeTagsFromDocument(Object docId, Collection<String> tagNames, @NotNull Class<T> clazz){
+    public <T extends Taggable> void removeTagsFromDocument(Object docId, Collection<String> tagNames, @NotNull Class<T> clazz) {
         getIndexManager(clazz).removeTagsFromDocument(docId, tagNames);
     }
 
@@ -182,32 +181,52 @@ public class PerPojoProjectSearchContext implements ProjectSearchContext {
         return false;
     }
 
+    protected <T> Directory createIndexDirectory(Class<T> pojoClass) {
+        //init lucene index.
+        Directory directory = null;
+        if (this.getIndexRootDir() != null) {
+            try {
+                Path indexPath = this.getIndexRootDir().resolve(pojoClass.getSimpleName());
+                Files.createDirectories(indexPath);
+                directory = FSDirectory.open(indexPath);
+            } catch (IOException e) {
+                log.error("Error when creating/opening index directory. Falling back to in memory index!", e);
+            }
+        }
+
+        if (directory == null) {
+            directory = new ByteBuffersDirectory();
+            //todo move to debug
+            log.info("Using in memory index for: {}", pojoClass.getSimpleName());
+        }
+
+        return directory;
+    }
+
     @SuppressWarnings("unchecked")
     private <T> SinglePojoLuceneIndexManager<T> getIndexManager(T pojo) {
         return getIndexManager((Class<T>) pojo.getClass());
     }
 
     @SuppressWarnings("unchecked")
-    private <T> SinglePojoLuceneIndexManager<T> getIndexManager(Class<T> clazz) {
-            return (SinglePojoLuceneIndexManager<T>) indices.computeIfAbsent(clazz,
-                    c -> new SinglePojoLuceneIndexManager<>(this, tagDefs, c));
+    private  <T> SinglePojoLuceneIndexManager<T> getIndexManager(Class<T> pojoClass) {
+        return (SinglePojoLuceneIndexManager<T>) indices.computeIfAbsent(pojoClass,
+                pc -> new SinglePojoLuceneIndexManager<>(createIndexDirectory(pc), pc, tagDefs, this::getTagValueType));
     }
 
-    public static final Factory<PerPojoProjectSearchContext> FACTORY = (projectDir, project) -> {
-        if (projectDir != null && !Files.exists(projectDir)) {
-            try {
-                Files.createDirectories(projectDir);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return new PerPojoProjectSearchContext(projectDir, project.findTags());
-    };
-
     @Override
-    public void close() throws IOException {
-        for (SinglePojoLuceneIndexManager<?> im : indices.values().stream().toList())
-            if (im != null)
-                im.close();
+    public void close(boolean delete) throws IOException {
+        indices.forEachEntry(Long.MAX_VALUE, it -> {
+            if (it.getValue() != null) {
+                try {
+                    it.getValue().close();
+                } catch (IOException e) {
+                    log.error("Error when closing index manager for pojo: {}", it.getKey().getSimpleName(), e);
+                }
+            }
+        });
+
+        if (delete && indexRootDir != null)
+            FileUtils.deleteRecursively(indexRootDir);
     }
 }

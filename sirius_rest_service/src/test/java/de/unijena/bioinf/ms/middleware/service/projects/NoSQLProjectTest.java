@@ -35,8 +35,7 @@ import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsType;
 import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoProjectSearchContext;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.*;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
@@ -80,7 +79,14 @@ public class NoSQLProjectTest {
 
     @SneakyThrows
     private static SearchService makeSearchService() {
-        return new SearchServiceImpl(null, PerPojoProjectSearchContext.FACTORY);
+        return new SearchServiceImpl(project -> {
+            Map<String, ValueType> tagDefinitions = new HashMap<>();
+            for (Object item : project.findTags()) {
+                TagDefinition td = (TagDefinition) item;
+                tagDefinitions.put(td.getTagName(), td.getValueType());
+            }
+            return new PerPojoSearchContext(null, tagDefinitions);
+        });
     }
 
     @SneakyThrows

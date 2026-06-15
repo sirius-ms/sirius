@@ -20,13 +20,13 @@
 
 package de.unijena.bioinf.ms.middleware.configuration.project;
 
-import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectProviderImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoProjectSearchContext;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.NoSqlProjectSearchContextProvider;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchContextProvider;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
 import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
@@ -54,26 +54,24 @@ public class NitriteNoSqlProjectConfig {
     }
 
     @Bean(destroyMethod = "close")
-    public SearchService searchService(@Value("${de.unijena.bioinf.sirius.indexing.homeDir:#{null}}") Path indexingHome, @Value("${de.unijena.bioinf.sirius.project.inMemoryIndex:#{false}}") boolean inMemoryIndex) throws IOException {
-        if (inMemoryIndex) {
-            indexingHome = null;
-        } else {
-            if (indexingHome == null)
-                indexingHome = Workspace.WORKSPACE.resolve("search-indexes").resolve("lucene");
-        }
+    public SearchService searchService(SearchContextProvider<?,?> searchContextProvider) throws IOException {
+        return new SearchServiceImpl(searchContextProvider);
+    }
 
-        if (indexingHome == null)
-            log.warn("Running in in-memory search index mode.");
 
-        return new SearchServiceImpl(indexingHome, PerPojoProjectSearchContext.FACTORY);
+    @Bean(destroyMethod = "destroy")
+    SearchContextProvider<?, ?> searchContextProvider(@Value("${io.sirius-ms.project.index.homeDir:#{null}}") Path indexingHome,
+                                                      @Value("${io.sirius-ms.project.index.inMemory:#{true}}") boolean inMemoryIndex
+    ) {
+        return new NoSqlProjectSearchContextProvider(inMemoryIndex, indexingHome, true);
     }
 
     @Bean
     @DependsOn({"jobManager"})
     @SuppressWarnings("unchecked")
     public ProjectsProvider<?> projectsProvider(ComputeService computeService,
-                                                SearchService searchService,
                                                 EventService<?> eventService,
+                                                SearchService searchService,
                                                 @Autowired(required = false) ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory
     ) {
         return new NoSQLProjectProviderImpl((ProjectSpaceManagerFactory<NoSQLProjectSpaceManager>) projectSpaceManagerFactory, eventService, computeService, searchService);
