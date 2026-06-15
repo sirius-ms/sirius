@@ -1,16 +1,24 @@
 package de.unijena.bioinf.ms.middleware.service.search;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.*;
+import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.InchiKey2DQueryRewriter;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoProjectSearchContext;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.LuceneDirectoryPersistenceUtils;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
+import de.unijena.bioinf.ms.persistence.model.core.PersistentSearchIndex;
+import de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase;
+import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.projectspace.IndexField;
-
+import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
+import de.unijena.bioinf.storage.db.nosql.Metadata;
+import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.apache.lucene.analysis.*;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -32,9 +40,16 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FullTextSearchTest {
 
@@ -69,13 +84,20 @@ public class FullTextSearchTest {
         Mockito.when(mockProject.findTags()).thenReturn(Collections.emptyList());
 
         // Create a search service with in-memory indices
-        searchService = new SearchServiceImpl(null, PerPojoProjectSearchContext.FACTORY);
+        searchService = new SearchServiceImpl(project -> {
+            Map<String, ValueType> tagDefinitions = new HashMap<>();
+            for (Object item : project.findTags()) {
+                TagDefinition td = (TagDefinition) item;
+                tagDefinitions.put(td.getTagName(), td.getValueType());
+            }
+            return new PerPojoSearchContext(null, tagDefinitions);
+        });
         searchService.openOrCreateProjectIndex(mockProject);
     }
 
     @AfterEach
     public void cleanup() throws IOException {
-        searchService.closeProjectIndex(projectId, true);
+        searchService.closeProjectIndex(mockProject, true);
     }
 
     @Test
@@ -329,5 +351,188 @@ public class FullTextSearchTest {
         );
         assertEquals(1, shortResults.getTotalElements(), 
             "Already truncated 14-char InChIKey query should not require rewriting and successfully find the document");
+    }
+
+    @Test
+    public void testLuceneDirectoryPersistenceUtilsSerialization() throws IOException, QueryNodeException {
+        // 1. Create a directory and add some test document
+        Directory sourceDir = new ByteBuffersDirectory();
+        Analyzer analyzer = new SiriusStandardAnalyzer();
+        try (IndexWriter writer = new IndexWriter(sourceDir, new IndexWriterConfig(analyzer))) {
+            Document doc = new Document();
+            doc.add(new TextField("content", "persistence test success", Field.Store.YES));
+            writer.addDocument(doc);
+            writer.commit();
+        }
+
+        // 2. Serialize directory directly to in-memory byte array
+        byte[] serializedData = LuceneDirectoryPersistenceUtils.serialize(sourceDir);
+        assertNotNull(serializedData);
+        assertTrue(serializedData.length > 0);
+
+        // 3. Deserialize into a completely new directory
+        Directory targetDir = new ByteBuffersDirectory();
+        LuceneDirectoryPersistenceUtils.deserialize(serializedData, targetDir);
+
+        // 4. Assert the deserialized directory is identical and searchable
+        try (IndexReader reader = DirectoryReader.open(targetDir)) {
+            IndexSearcher searcher = new IndexSearcher(reader);
+            StandardQueryParser parser = new StandardQueryParser(analyzer);
+            Query query = parser.parse("persistence", "content");
+            TopDocs hits = searcher.search(query, 10);
+            assertEquals(1, hits.totalHits.value(), 
+                "Search on deserialized directory should successfully find the indexed document");
+        }
+    }
+
+    @Test
+    public void testFullTextSearchIndexDatabaseLifecyclePersistence() throws Exception {
+        java.nio.file.Path dbFile = Files.createTempFile("nitrite-lifecycle-test", ".db");
+        try {
+            Metadata metadata = MsProjectDocumentDatabase.buildMetadata();
+            NitriteDatabase db = new NitriteDatabase(dbFile, metadata);
+
+            // Mock the project and space manager to return our database
+            NoSQLProjectImpl project = Mockito.mock(NoSQLProjectImpl.class);
+            NoSQLProjectSpaceManager mockSpaceManager = Mockito.mock(NoSQLProjectSpaceManager.class);
+            SiriusProjectDatabaseImpl mockProjDb = Mockito.mock(SiriusProjectDatabaseImpl.class);
+
+            Mockito.when(project.getProjectId()).thenReturn("lifecycle-project");
+            Mockito.when(project.getSystemUID()).thenReturn("lifecycle-system-uid");
+            Mockito.when(project.findTags()).thenReturn(Collections.emptyList());
+            Mockito.when(project.isTempProject()).thenReturn(false);
+            Mockito.when(project.getProjectSpaceManager()).thenReturn(mockSpaceManager);
+            Mockito.when(mockSpaceManager.getProject()).thenReturn(mockProjDb);
+            Mockito.when(mockProjDb.getStorage()).thenReturn(db);
+
+            // 1. Start the search service and add a document
+            SearchContextProvider<NoSQLProjectImpl, PerPojoDatabaseSearchContext<?>> provider1 =
+                proj -> new PerPojoDatabaseSearchContext<>(db, null, Collections.emptyMap());
+            SearchService service1 = new SearchServiceImpl(provider1);
+            service1.openOrCreateProjectIndex(project);
+
+            TestPojo pojo = new TestPojo("lifecycle-pojo-1", "normal-val", "full-val", "This matches lifecycle-bh4");
+            service1.addDocument("lifecycle-project", pojo);
+
+            // Verify it is there
+            Page<TestPojo> initialResults = service1.search("lifecycle-project", "lifecycle-bh4", Pageable.unpaged(), TestPojo.class);
+            assertEquals(1, initialResults.getTotalElements());
+
+            // 2. Close the search service. This should trigger serialization and upsert to db!
+            service1.close();
+
+            // Verify the index data is written into the Nitrite database
+            Optional<PersistentSearchIndex> savedIndex = db.getByPrimaryKey("TestPojo", PersistentSearchIndex.class);
+            assertTrue(savedIndex.isPresent(), "Index must be persisted to the database upon close");
+            assertNotNull(savedIndex.get().getIndexData());
+            assertTrue(savedIndex.get().getIndexData().length > 0);
+
+            // 3. Start a new search service and open the same project. It should restore from db!
+            SearchContextProvider<NoSQLProjectImpl, PerPojoDatabaseSearchContext<?>> provider2 =
+                proj -> new PerPojoDatabaseSearchContext<>(db, null, Collections.emptyMap());
+            SearchService service2 = new SearchServiceImpl(provider2);
+            service2.openOrCreateProjectIndex(project);
+
+            // Search without rebuilding the index - it must be loaded from DB!
+            Page<TestPojo> restoredResults = service2.search("lifecycle-project", "lifecycle-bh4", Pageable.unpaged(), TestPojo.class);
+            assertEquals(1, restoredResults.getTotalElements(), "Index should be restored from Nitrite database on startup");
+
+            service2.close();
+            db.close();
+        } finally {
+            Files.deleteIfExists(dbFile);
+        }
+    }
+
+    @Test
+    public void testEmptyIndexDeletion() throws Exception {
+        java.nio.file.Path dbFile = Files.createTempFile("nitrite-empty-test", ".db");
+        try {
+            Metadata metadata = MsProjectDocumentDatabase.buildMetadata();
+            NitriteDatabase db = new NitriteDatabase(dbFile, metadata);
+
+            NoSQLProjectImpl project = Mockito.mock(NoSQLProjectImpl.class);
+            NoSQLProjectSpaceManager mockSpaceManager = Mockito.mock(NoSQLProjectSpaceManager.class);
+            SiriusProjectDatabaseImpl mockProjDb = Mockito.mock(SiriusProjectDatabaseImpl.class);
+
+            Mockito.when(project.getProjectId()).thenReturn("empty-test-project");
+            Mockito.when(project.getSystemUID()).thenReturn("empty-test-system-uid");
+            Mockito.when(project.findTags()).thenReturn(Collections.emptyList());
+            Mockito.when(project.isTempProject()).thenReturn(false);
+            Mockito.when(project.getProjectSpaceManager()).thenReturn(mockSpaceManager);
+            Mockito.when(mockSpaceManager.getProject()).thenReturn(mockProjDb);
+            Mockito.when(mockProjDb.getStorage()).thenReturn(db);
+
+            // 1. Open project index, insert a document, and close (should save to DB)
+            SearchContextProvider<NoSQLProjectImpl, PerPojoDatabaseSearchContext<?>> provider1 =
+                proj -> new PerPojoDatabaseSearchContext<>(db, null, Collections.emptyMap());
+            SearchService service1 = new SearchServiceImpl(provider1);
+            service1.openOrCreateProjectIndex(project);
+
+            TestPojo pojo = new TestPojo("empty-pojo-1", "normal-val", "full-val", "matches bh4-empty-test");
+            service1.addDocument("empty-test-project", pojo);
+            service1.close();
+
+            // Verify index is saved
+            Optional<PersistentSearchIndex> savedIndex1 = db.getByPrimaryKey("TestPojo", PersistentSearchIndex.class);
+            assertTrue(savedIndex1.isPresent(), "Index must exist in DB initially");
+
+            // 2. Open project index, remove the document (index becomes empty), and close (should remove from DB)
+            SearchService service2 = new SearchServiceImpl(provider1);
+            service2.openOrCreateProjectIndex(project);
+            service2.removeDocumentById("empty-test-project", "empty-pojo-1", TestPojo.class);
+            service2.close();
+
+            // Verify index is deleted from DB
+            Optional<PersistentSearchIndex> savedIndex2 = db.getByPrimaryKey("TestPojo", PersistentSearchIndex.class);
+            assertFalse(savedIndex2.isPresent(), "Index must be deleted from Nitrite database when empty");
+
+            db.close();
+        } finally {
+            Files.deleteIfExists(dbFile);
+        }
+    }
+
+    @Test
+    public void testCorruptionFallback() throws Exception {
+        java.nio.file.Path dbFile = Files.createTempFile("nitrite-corruption-test", ".db");
+        try {
+            Metadata metadata = MsProjectDocumentDatabase.buildMetadata();
+            NitriteDatabase db = new NitriteDatabase(dbFile, metadata);
+
+            NoSQLProjectImpl project = Mockito.mock(NoSQLProjectImpl.class);
+            NoSQLProjectSpaceManager mockSpaceManager = Mockito.mock(NoSQLProjectSpaceManager.class);
+            SiriusProjectDatabaseImpl mockProjDb = Mockito.mock(SiriusProjectDatabaseImpl.class);
+
+            Mockito.when(project.getProjectId()).thenReturn("corruption-project");
+            Mockito.when(project.getSystemUID()).thenReturn("corruption-system-uid");
+            Mockito.when(project.findTags()).thenReturn(Collections.emptyList());
+            Mockito.when(project.isTempProject()).thenReturn(false);
+            Mockito.when(project.getProjectSpaceManager()).thenReturn(mockSpaceManager);
+            Mockito.when(mockSpaceManager.getProject()).thenReturn(mockProjDb);
+            Mockito.when(mockProjDb.getStorage()).thenReturn(db);
+
+            // Insert corrupted bytes into PersistentSearchIndex
+            byte[] corruptedBytes = new byte[]{1, 2, 3, 4, 5, 6, 7, 8};
+            db.upsert(new PersistentSearchIndex("TestPojo", corruptedBytes));
+
+            // Setup search service with database provider
+            SearchContextProvider<NoSQLProjectImpl, PerPojoDatabaseSearchContext<?>> provider =
+                proj -> new PerPojoDatabaseSearchContext<>(db, null, Collections.emptyMap());
+            SearchService service = new SearchServiceImpl(provider);
+
+            // This should not crash, it should gracefully fall back to a fresh/empty index!
+            assertDoesNotThrow(() -> service.openOrCreateProjectIndex(project),
+                "Corruption fallback should handle deserialization failure gracefully and not crash openOrCreateProjectIndex");
+
+            // Verify search works on the fallback index (is empty but functional)
+            Page<TestPojo> results = service.search("corruption-project", "bh4", Pageable.unpaged(), TestPojo.class);
+            assertEquals(0, results.getTotalElements(), "Fallback index should be empty");
+
+            service.close();
+            db.close();
+        } finally {
+            Files.deleteIfExists(dbFile);
+        }
     }
 }

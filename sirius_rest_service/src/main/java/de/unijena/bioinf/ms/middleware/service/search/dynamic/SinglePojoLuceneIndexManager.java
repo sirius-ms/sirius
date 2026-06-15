@@ -5,11 +5,11 @@ import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import de.unijena.bioinf.projectspace.QueryRewriter;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
-import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
@@ -21,9 +21,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.*;
-import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +31,6 @@ import org.springframework.data.domain.Pageable;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -57,7 +53,6 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     private final IndexWriter writer;
     private final SearcherManager searcherManager;
 
-
     private final GenericPojoMapper<T> pojoMapper;
 
     private final Map<String, QueryRewriter> queryRewriters = new HashMap<>();
@@ -73,26 +68,20 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     private final List<CharSequence> defaultSearchFields = new ArrayList<>();
     private final StandardQueryParser queryParser = new StandardQueryParser(dynamicAnalyzer);
 
-    public SinglePojoLuceneIndexManager(ProjectSearchContext projectContext, Map<String, ValueType> initialValueTypes, Class<T> pojoClass) {
+    public SinglePojoLuceneIndexManager(@NotNull Directory directory,
+                                        @NotNull Class<T> pojoClass,
+                                        @Nullable Map<String, ValueType> initialValueTypes,
+                                        @NotNull Function<String, ValueType> tagValueTypeProvider
+    ) {
         try {
-            this.pojoMapper = new GenericPojoMapper<>(pojoClass, new TagMapper(projectContext::getTagValueType));
-
-
-            //init lucene index.
-            if (projectContext.getProjectIndexRootDir() != null) {
-                Path indexPath = projectContext.getProjectIndexRootDir().resolve(pojoClass.getSimpleName());
-                Files.createDirectories(indexPath);
-                this.directory = FSDirectory.open(indexPath);
-            } else {
-                this.directory = new ByteBuffersDirectory();
-                System.out.println("Using in memory index for: " + pojoClass.getSimpleName());
-            }
-
+            this.directory = directory;
+            this.pojoMapper = new GenericPojoMapper<>(pojoClass, new TagMapper(tagValueTypeProvider));
             this.writer = new IndexWriter(directory, new IndexWriterConfig(dynamicAnalyzer));
             this.searcherManager = new SearcherManager(writer, null);
 
             // Scans add all existing TagDefinitions to set PointConfigs and Analyzers
-            initialValueTypes.forEach(this::addTagValueType);
+            if (initialValueTypes != null)
+                initialValueTypes.forEach(this::addTagValueType);
 
             // Scans the bean class’s @IndexField annotations to set PointConfigs and Analyzers.
             // Adds PointsConfig entries to the query parser.
@@ -112,6 +101,17 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     public boolean isTaggable() {
         return Taggable.class.isAssignableFrom(pojoMapper.getPojoClass());
+    }
+
+    public synchronized byte[] getIndexData(){
+        return getIndexData(false);
+    }
+
+    @SneakyThrows
+    public synchronized byte[] getIndexData(boolean zipped){
+        // Ensure all pending Lucene writes are flushed & committed before we read the directory files
+        writer.commit();
+        return LuceneDirectoryPersistenceUtils.serialize(directory, zipped);
     }
 
     @SneakyThrows
@@ -167,7 +167,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     @SneakyThrows
     public synchronized void updateDocument(@NotNull T pojo) {
-        Document doc =  pojoMapper.toDocument(pojo);
+        Document doc = pojoMapper.toDocument(pojo);
         writer.updateDocument(new Term(pojoMapper.getPojoIdField(), doc.get(pojoMapper.getPojoIdField())), doc);
         writer.commit();
 //        System.out.println("AFTER UPDATE DOCUMENT");
@@ -221,7 +221,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         getNumOfDocs();
     }
 
-   public synchronized void updateDocumentsFields(Collection<?> docIds, Consumer<T> modifier) throws IllegalArgumentException {
+    public synchronized void updateDocumentsFields(Collection<?> docIds, Consumer<T> modifier) throws IllegalArgumentException {
         Query q = new TermInSetQuery(pojoMapper.getPojoIdField(), docIds.stream()
                 .map(Object::toString).map(BytesRef::new)
                 .collect(Collectors.toSet()));
@@ -236,12 +236,13 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     private static final String NON_STORED_FIELDS_MESSAGE = "Indexed object (%s) with id '%s' contains indexed fields that are not stored! "
             + "Partial update not supported. Please provide the full object to perform an Update.";
+
     /**
      * Updates the stored fields of a document.
      * If any indexed field is not stored, an exception is thrown.
      */
     public synchronized Optional<T> updateDocumentFields(Object docId, Consumer<T> modifier) throws IllegalArgumentException {
-        if (pojoMapper.isNonStoredFields()){
+        if (pojoMapper.isNonStoredFields()) {
             String msg = String.format(NON_STORED_FIELDS_MESSAGE, pojoMapper.getPojoClass().getSimpleName(), docId);
             log.warn(msg);
             throw new UnsupportedOperationException(msg);

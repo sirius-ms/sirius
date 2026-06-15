@@ -223,11 +223,11 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     public void closeProjectSpace(String projectId) throws IOException {
         projectSpaceLock.writeLock().lock();
         try {
-            final ProjectSpaceManager space = projectSpaces.get(projectId).getProjectSpaceManager();
-            if (space == null) {
+            final P project = projectSpaces.get(projectId);
+            if (project == null)
                 throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Project space with name '" + projectId + "' not found!");
-            }
-            space.close();
+
+            project.close();
             projectSpaces.remove(projectId);
         } finally {
             projectSpaceLock.writeLock().unlock();
@@ -260,10 +260,10 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
             LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Closing Projects...'");
             projectSpaces.values().forEach(ps -> {
                 try {
-                    ps.getProjectSpaceManager().close();
-                    LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Project: '" + ps.getProjectSpaceManager().getLocation() + "' successfully closed.");
+                    ps.close();
+                    LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Project: '{}' successfully closed.", ps.getProjectSpaceManager().getLocation());
                 } catch (IOException e) {
-                    LoggerFactory.getLogger(getClass()).error("Error when closing Project-Space '" + ps.getProjectSpaceManager().getLocation() + "'. Data might be corrupted.");
+                    LoggerFactory.getLogger(getClass()).error("Error when closing Project-Space '{}'. Data might be corrupted.", ps.getProjectSpaceManager().getLocation());
                 }
             });
             projectSpaces.clear();

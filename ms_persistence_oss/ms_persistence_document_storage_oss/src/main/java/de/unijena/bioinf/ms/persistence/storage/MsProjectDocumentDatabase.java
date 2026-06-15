@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.ms.persistence.model.core.PersistentSearchIndex;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -115,6 +116,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(RetentionTimeAxis.class)
 
                 .addRepository(QualityReport.class,"alignedFeatureId")
+
+                .addRepository(PersistentSearchIndex.class)
 
                 ;
 

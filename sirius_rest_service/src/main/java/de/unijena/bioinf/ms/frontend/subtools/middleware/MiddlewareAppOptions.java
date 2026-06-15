@@ -80,7 +80,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
     @CommandLine.Option(names = {"--in-memory-index", "--inMemoryIndex"}, description = "Use volatile in-memory lucene search index for projects.")
     private void setInMemoryIndex(boolean inMemoryIndex) {
-        System.setProperty("de.unijena.bioinf.sirius.project.inMemoryIndex", String.valueOf(inMemoryIndex));
+        System.setProperty("io.sirius-ms.project.index.inMemory", String.valueOf(inMemoryIndex));
     }
 
     public enum ApiDocMode {STABLE, BASIC, STABLE_ADVANCED, ADVANCED}
