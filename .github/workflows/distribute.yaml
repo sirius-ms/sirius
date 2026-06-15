@@ -4,8 +4,7 @@ on:
     branches:
       - stable
       - master
-      - 727-add-api-endpoint-to-add-structure-to-de-novo-list
-    #      - stable-service-api
+      - master-lucene-prototype
     paths-ignore:
       - '**/README.md'
       - 'sirius_doc/**/*'
