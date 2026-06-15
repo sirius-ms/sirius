@@ -78,7 +78,6 @@ public class CompoundClassesMapper implements FieldMapper<CompoundClasses> {
         analyzerMap.put(rootFieldName + ".npcSuperclass", SIRIUS_TEXT_ANALYZER);
         analyzerMap.put(rootFieldName + ".npcClass", SIRIUS_TEXT_ANALYZER);
 
-        System.out.println(rootFieldName + ".cfClass");
         defaultSearchFields.add(rootFieldName + ".cfClass");
         defaultSearchFields.add(rootFieldName + ".npcPathway");
         defaultSearchFields.add(rootFieldName + ".npcSuperclass");
