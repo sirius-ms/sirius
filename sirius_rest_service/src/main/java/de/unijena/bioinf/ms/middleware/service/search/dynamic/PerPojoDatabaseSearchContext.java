@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 import de.unijena.bioinf.ms.persistence.model.core.PersistentSearchIndex;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.store.Directory;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -66,7 +68,7 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
         System.out.println("CLOSING SEARCH CONTEXT!!!");
 
         if (delete) {
-            database.removeAll(indices.keySet().stream().map(Class::getSimpleName).toList());
+            removeIndicesFromDb();
         } else {
             try {
                 indices.forEachEntry(Long.MAX_VALUE, e -> {
@@ -91,9 +93,14 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
                 });
             } catch (Exception e) {
                 log.error("Error during index storage! Clearing index. Reindexing will be performed on next project usage!", e);
-                database.removeAll(indices.keySet().stream().map(Class::getSimpleName).toList());
+                removeIndicesFromDb();
             }
         }
         super.close(delete);
+    }
+
+    private void removeIndicesFromDb() throws IOException {
+        String[] indexIds = indices.keySet().stream().map(Class::getSimpleName).toArray(String[]::new);
+        database.removeAll(Filter.where("indexKey").in(indexIds), PersistentSearchIndex.class);
     }
 }
