@@ -60,7 +60,9 @@ public class FormulaSettings implements Ms2ExperimentAnnotation {
      * @param fallback   Fallback elements are used, if the auto-detection fails (e.g. no isotope pattern available)
      */
     @DefaultInstanceProvider
-    public static FormulaSettings newInstance(@DefaultProperty(propertyKey = "enforced") FormulaConstraints enforced, @DefaultProperty(propertyKey = "detectable") ChemicalAlphabet detectable, @DefaultProperty(propertyKey = "fallback") FormulaConstraints fallback,
+    public static FormulaSettings newInstance(@DefaultProperty(propertyKey = "enforced") FormulaConstraints enforced,
+                                              @DefaultProperty(propertyKey = "detectable") ChemicalAlphabet detectable,
+                                              @DefaultProperty(propertyKey = "fallback") FormulaConstraints fallback,
                                               @DefaultProperty(propertyKey = "pfasDetectionEnabled") boolean pfasDetectionEnabled) {
         return new FormulaSettings(enforced, detectable, fallback, pfasDetectionEnabled);
     }
