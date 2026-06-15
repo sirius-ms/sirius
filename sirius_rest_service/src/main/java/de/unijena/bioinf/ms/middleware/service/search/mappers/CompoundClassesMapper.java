@@ -48,12 +48,12 @@ public class CompoundClassesMapper implements FieldMapper<CompoundClasses> {
 
         indexableFields.addAll(getIndexedFieldsFromSimpleValue(
                 rootFieldName + ".npcSuperclass",
-                pojo.getNpcPathway().getName(),
+                pojo.getNpcSuperclass().getName(),
                 false, false, true, false));
 
         indexableFields.addAll(getIndexedFieldsFromSimpleValue(
                 rootFieldName + ".npcClass",
-                pojo.getNpcPathway().getName(),
+                pojo.getNpcClass().getName(),
                 false, false, true, false));
 
         return indexableFields;
@@ -75,12 +75,13 @@ public class CompoundClassesMapper implements FieldMapper<CompoundClasses> {
     ) {
         analyzerMap.put(rootFieldName + ".cfClass", SIRIUS_TEXT_ANALYZER);
         analyzerMap.put(rootFieldName + ".npcPathway", SIRIUS_TEXT_ANALYZER);
-        analyzerMap.put(rootFieldName + ".npcSuperClass", SIRIUS_TEXT_ANALYZER);
+        analyzerMap.put(rootFieldName + ".npcSuperclass", SIRIUS_TEXT_ANALYZER);
         analyzerMap.put(rootFieldName + ".npcClass", SIRIUS_TEXT_ANALYZER);
 
+        System.out.println(rootFieldName + ".cfClass");
         defaultSearchFields.add(rootFieldName + ".cfClass");
         defaultSearchFields.add(rootFieldName + ".npcPathway");
-        defaultSearchFields.add(rootFieldName + ".npcSuperClass");
+        defaultSearchFields.add(rootFieldName + ".npcSuperclass");
         defaultSearchFields.add(rootFieldName + ".npcClass");
     }
 }
