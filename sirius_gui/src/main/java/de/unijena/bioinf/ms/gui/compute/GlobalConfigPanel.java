@@ -32,14 +32,22 @@ import static de.unijena.bioinf.ChemistryBase.utils.Utils.getIfIdenticalOrNull;
 public class GlobalConfigPanel extends ConfigPanel {
 
     public enum Instrument {
-        QTOF("Q-TOF", MsInstrumentation.Instrument.QTOF, "qtof", 10),
-        ORBI("Orbitrap", MsInstrumentation.Instrument.ORBI, "orbitrap", 5);
+        QTOF("Q-TOF", MsInstrumentation.Instrument.QTOF),
+        ORBI("Orbitrap", MsInstrumentation.Instrument.ORBI),
+        QTOF_EAD("Q-TOF EAD", MsInstrumentation.Instrument.QTOF_EAD);
 //        BRUKER("Q-TOF (isotopes)", MsInstrumentation.Instrument.BRUKER_MAXIS, "qtof", 10); // there is now if separate MS/MS isotope setting
 
         public final String name, profile;
         public final MsInstrumentation instrument;
         public final int ppm;
 
+        Instrument(String name, MsInstrumentation instrument) {
+            this.name = name;
+            this.instrument = instrument;
+            this.profile = instrument.getRecommendedProfile();
+            this.ppm = (int) instrument.getExpectedMassDeviation().getPpm();
+
+        }
         Instrument(String name, MsInstrumentation instrument, String profile, int ppm) {
             this.name = name;
             this.profile = profile;
