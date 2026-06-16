@@ -41,6 +41,7 @@ import java.io.IOException;
  */
 @DefaultProperty(propertyParent = "AlgorithmProfile")
 public class Profile {
+    public final String name;
     public final FragmentationPatternAnalysis fragmentationPatternAnalysis;
     public final IsotopePatternAnalysis isotopePatternAnalysis;
     public final Ms2Preprocessor ms2Preprocessor;
@@ -59,6 +60,7 @@ public class Profile {
         else isotopePatternAnalysis=null;
         this.ms2Preprocessor = new Ms2Preprocessor();
         this.ms1Preprocessor = new Ms1Preprocessor();
+        this.name = name.toLowerCase();
     }
 
     @DefaultInstanceProvider
@@ -68,14 +70,6 @@ public class Profile {
         } catch (IOException e) {
             throw new RuntimeException("Could not find profile JSON", e);
         }
-    }
-
-
-    public Profile(IsotopePatternAnalysis ms1, FragmentationPatternAnalysis ms2) {
-        this.fragmentationPatternAnalysis = ms2;
-        this.isotopePatternAnalysis = ms1;
-        this.ms2Preprocessor = new Ms2Preprocessor();
-        this.ms1Preprocessor = new Ms1Preprocessor();
     }
 
     public void writeToFile(@NotNull final String fileName) throws IOException  {
