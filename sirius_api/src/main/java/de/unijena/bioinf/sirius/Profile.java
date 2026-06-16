@@ -72,15 +72,6 @@ public class Profile {
         }
     }
 
-
-    public Profile(IsotopePatternAnalysis ms1, FragmentationPatternAnalysis ms2) {
-        this.fragmentationPatternAnalysis = ms2;
-        this.isotopePatternAnalysis = ms1;
-        this.ms2Preprocessor = new Ms2Preprocessor();
-        this.ms1Preprocessor = new Ms1Preprocessor();
-        this.name = "custom";
-    }
-
     public void writeToFile(@NotNull final String fileName) throws IOException  {
         writeToFile(new File(fileName));
     }
