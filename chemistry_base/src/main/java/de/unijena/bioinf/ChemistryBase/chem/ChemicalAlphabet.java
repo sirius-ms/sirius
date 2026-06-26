@@ -63,9 +63,13 @@ public class ChemicalAlphabet implements Iterable<Element> {
     }
 
     public static ChemicalAlphabet fromString(String value) throws UnknownElementException {
-        if (value.indexOf(',')>0) {
+        if (value.trim().equals(",")) {
+            return ChemicalAlphabet.empty();
+        } else if (value.indexOf(',')>0) {
             final PeriodicTable T = PeriodicTable.getInstance();
-            return new ChemicalAlphabet(Arrays.stream(value.split(",")).map(s->T.getByName(s)).toArray(Element[]::new));
+            Element[] elements = Arrays.stream(value.split(",")).map(T::getByName).toArray(Element[]::new);
+            if (Arrays.stream(elements).anyMatch(Objects::isNull)) throw new UnknownElementException("Unknown element in '"+value+"'.");
+            return new ChemicalAlphabet(elements);
         } else {
             return new ChemicalAlphabet(MolecularFormula.parse(value).elementArray());
         }
