@@ -120,7 +120,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     @Option(names = {"--database", "-d", "--db"}, descriptionKey = "FormulaSearchDB" , paramLabel = DataSourceCandidates.PARAM_LABEL, completionCandidates = DataSourceCandidates.class,
-            description = {"Search formulas in the Union of the given databases. If no database is given all possible molecular formulas will be respected (no database is used).", DataSourceCandidates.VALID_DATA_STRING})
+            description = {"Search formulas in the union of the given databases. Selecting any database disables de novo and bottom-up search.\nUse config parameters to allow combination of de novo, bottom-up and database search.", DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
         defaultConfigOptions.changeOption("FormulaSearchDB", dbList);
         defaultConfigOptions.changeOption("FormulaSearchSettings.performDeNovoBelowMz", "0"); //don't perform de novo
