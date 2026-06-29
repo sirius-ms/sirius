@@ -123,6 +123,8 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
             description = {"Search formulas in the Union of the given databases. If no database is given all possible molecular formulas will be respected (no database is used).", DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
         defaultConfigOptions.changeOption("FormulaSearchDB", dbList);
+        defaultConfigOptions.changeOption("FormulaSearchSettings.performDeNovoBelowMz", "0"); //don't perform de novo
+        defaultConfigOptions.changeOption("FormulaSearchSettings.performBottomUpAboveMz", "Infinity"); //don't perform bottom up
     }
 
     @Option(names = {"-f", "--formulas"}, description = "Specify a list of candidate formulas the method should use. Omit this option if you want to consider all possible molecular formulas")
