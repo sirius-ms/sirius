@@ -58,6 +58,10 @@ public class Sirius {
     protected Profile profile;
     protected PeriodicTable table;
 
+    public String getProfileName(){
+        return profile.name;
+    }
+
     public Sirius(@NotNull String profile) {
         this(Profile.fromString(profile));
     }

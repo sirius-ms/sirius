@@ -17,6 +17,7 @@ dependencies {
     api libs.junitJupiter
     implementation project(':web_service_oss:sirius_web_client')
     implementation project(':sirius_cli')
+    implementation project(':document-storage')
 
 }
 
