@@ -97,7 +97,8 @@ public interface MsInstrumentation extends Ms2ExperimentAnnotation {
         ORBI("Orbitrap (LCMS)", "orbitrap", new Deviation(5), false, "orbi|(?:q-)?exactive|velos|Lumos"),
         FTICR("FTICR (LCMS)", "orbitrap"/*"fticr"*/, new Deviation(5), false, "ft-?icr|Hybrid FT|LTQ-FTICR|ft"),
         IONTRAP("Ion Trap (LCMS)", "default", new Deviation(20), false, "ion\\s*trap|trap|lcq|QqIT|QqLIT|IT|LIT"),
-        QQQ("Tripple-Quadrupole", "default", new Deviation(100,0.1), false, "QQQ|quadrupole|QQ|Q");
+        QQQ("Tripple-Quadrupole", "default", new Deviation(100,0.1), false, "QQQ|quadrupole|QQ|Q"),
+        QTOF_EAD("Q-ToF EAD (LCMS)", "qtof_ead", new Deviation(10), false, "(?i)(?=.*tof)(?=.*(ead|eid|eieio)).*");
 
         protected boolean isotopes;
         protected String profile, description;
