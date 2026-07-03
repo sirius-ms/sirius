@@ -21,6 +21,8 @@
 package de.unijena.bioinf.ms.persistence.model.core.statistics;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -34,9 +36,34 @@ public abstract class FoldChange extends Statistics implements ForeignKey {
     protected double leftAbundance;
     protected double rightAbundance;
 
+    /**
+     * @deprecated This field is retained strictly for backward compatibility with older database schemas and software versions.
+     * It should not be used in new code. Use {@link #getFoldChange()} or {@link #leftAbundance} and {@link #rightAbundance} instead.
+     */
+    @Deprecated
+    private Double foldChange;
+
     @JsonIgnore
     public double getFoldChange(){
+        if (leftAbundance == 0.0 && rightAbundance == 0.0 && foldChange != null) {
+            return foldChange;
+        }
         return (rightAbundance > 0) ? (leftAbundance / rightAbundance) : (leftAbundance > 0 ? Double.POSITIVE_INFINITY : 1.0);
+    }
+
+    @JsonGetter("foldChange")
+    @Deprecated
+    private Double getFoldChangeForJackson() {
+        if (foldChange != null) {
+            return foldChange;
+        }
+        return (rightAbundance > 0) ? (leftAbundance / rightAbundance) : (leftAbundance > 0 ? Double.POSITIVE_INFINITY : 1.0);
+    }
+
+    @JsonSetter("foldChange")
+    @Deprecated
+    private void setFoldChangeForJackson(Double foldChange) {
+        this.foldChange = foldChange;
     }
 
     @NoArgsConstructor
