@@ -46,6 +46,14 @@ public class TagGroup {
     private String groupType;
 
     @Builder.Default
-    private boolean editable = true;
+    private Boolean editable = true;
+
+    public boolean isEditable() {
+        return editable == null ? true : editable;
+    }
+
+    public Boolean getEditable() {
+        return isEditable();
+    }
 
 }
