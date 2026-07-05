@@ -41,20 +41,23 @@ public class CompoundClassesMapper implements FieldMapper<CompoundClasses> {
                     .forEach(indexableFields::addAll);
 
 
-        indexableFields.addAll(getIndexedFieldsFromSimpleValue(
-                rootFieldName + ".npcPathway",
-                pojo.getNpcPathway().getName(),
-                false, false, true, false));
+        if (pojo.getNpcPathway() != null)
+            indexableFields.addAll(getIndexedFieldsFromSimpleValue(
+                    rootFieldName + ".npcPathway",
+                    pojo.getNpcPathway().getName(),
+                    false, false, true, false));
 
-        indexableFields.addAll(getIndexedFieldsFromSimpleValue(
-                rootFieldName + ".npcSuperclass",
-                pojo.getNpcSuperclass().getName(),
-                false, false, true, false));
+        if (pojo.getNpcSuperclass() != null)
+            indexableFields.addAll(getIndexedFieldsFromSimpleValue(
+                    rootFieldName + ".npcSuperclass",
+                    pojo.getNpcSuperclass().getName(),
+                    false, false, true, false));
 
-        indexableFields.addAll(getIndexedFieldsFromSimpleValue(
-                rootFieldName + ".npcClass",
-                pojo.getNpcClass().getName(),
-                false, false, true, false));
+        if (pojo.getNpcClass() != null)
+            indexableFields.addAll(getIndexedFieldsFromSimpleValue(
+                    rootFieldName + ".npcClass",
+                    pojo.getNpcClass().getName(),
+                    false, false, true, false));
 
         return indexableFields;
     }
