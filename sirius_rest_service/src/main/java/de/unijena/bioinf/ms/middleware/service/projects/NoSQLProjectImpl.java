@@ -2761,14 +2761,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @Override
     public void close(boolean compact) throws IOException {
-        searchService.closeProjectIndex(this);
-        if (compact) {
-            projectSpaceManager.compact();
-            if (searchService != null) {
-                searchService.reanchorStorageCommitVersion(this);
+        try {
+            if (searchService != null)
+                searchService.closeProjectIndex(this);
+            if (compact) {
+                projectSpaceManager.compact();
+                if (searchService != null) {
+                    searchService.reanchorStorageCommitVersion(this);
+                }
             }
+        } finally {
+            projectSpaceManager.close();
         }
-        projectSpaceManager.close();
     }
 
     @Override
