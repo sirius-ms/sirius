@@ -9,12 +9,10 @@ import de.unijena.bioinf.projectspace.QueryRewriter;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.StopWatch;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
@@ -54,6 +52,11 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     private final SearcherManager searcherManager;
 
     private final GenericPojoMapper<T> pojoMapper;
+
+    // Guards the (non-thread-safe) query parser and the query-config maps (pointsConfigMap, fieldAnalyzers)
+    // against concurrent query parsing and tag-config mutation. Index writes serialize on 'this' instead;
+    // reads run lock-free via the thread-safe SearcherManager.
+    private final Object configLock = new Object();
 
     private final Map<String, QueryRewriter> queryRewriters = new HashMap<>();
 
@@ -121,58 +124,31 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         try {
             int numdocs = searcher.getIndexReader().numDocs();
             int maxdocs = searcher.getIndexReader().maxDoc();
-
-            System.out.println("Number of docs im index: " + numdocs + "/" + maxdocs);
             return Pair.of(numdocs, maxdocs);
         } finally {
             searcherManager.release(searcher);
         }
     }
 
-    // low level lucene document handling
+    // low level lucene document handling.
+    // NOTE: writes are not committed per call; visibility for readers is provided by the NRT SearcherManager
+    // (maybeRefresh on read). Durability is ensured on close()/getIndexData(). This makes bulk ingest fast.
     @SneakyThrows
     public synchronized void addDocument(@NotNull T pojo) {
-        Document doc = pojoMapper.toDocument(pojo);
-        writer.addDocument(doc);
-        writer.commit();
-        getNumOfDocs();
-//        System.out.println("AFTER ADD DOCUMENT");
-//        printDocs();
+        writer.addDocument(pojoMapper.toDocument(pojo));
     }
 
     @SneakyThrows
     public synchronized void addDocuments(@NotNull Collection<T> pojos) {
         if (pojos.isEmpty())
             return;
-        getNumOfDocs();
-        StopWatch watch = StopWatch.createStarted();
-        List<Document> docs = pojos.stream()
-                .map(pojoMapper::toDocument)
-                .toList();
-        System.out.println("Creating " + docs.size() + " Docs took: " + watch);
-        watch.stop();
-        watch.reset();
-        watch.start();
-
-        writer.addDocuments(docs);
-        writer.commit();
-        System.out.println("Writing " + docs.size() + " Docs to Index took: " + watch);
-        watch.stop();
-        watch.reset();
-        watch.start();
-//        System.out.println("AFTER MULTI ADD DOCUMENT");
-//        printDocs();
-        getNumOfDocs();
+        writer.addDocuments(pojos.stream().map(pojoMapper::toDocument).toList());
     }
 
     @SneakyThrows
     public synchronized void updateDocument(@NotNull T pojo) {
         Document doc = pojoMapper.toDocument(pojo);
         writer.updateDocument(new Term(pojoMapper.getPojoIdField(), doc.get(pojoMapper.getPojoIdField())), doc);
-        writer.commit();
-//        System.out.println("AFTER UPDATE DOCUMENT");
-//        printDocs();
-        getNumOfDocs();
     }
 
     @SneakyThrows
@@ -190,10 +166,6 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                 .collect(Collectors.toSet()));
 
         writer.updateDocuments(q, docs);
-        writer.commit();
-//        System.out.println("AFTER MULTI UPDATE DOCUMENTS");
-//        printDocs();
-        getNumOfDocs();
     }
 
     public synchronized void deleteDocument(@NotNull T pojoToRemove) {
@@ -207,8 +179,6 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     @SneakyThrows
     public synchronized void deleteDocumentById(@NotNull Object id) {
         writer.deleteDocuments(new Term(pojoMapper.getPojoIdField(), String.valueOf(id)));
-        writer.commit();
-        getNumOfDocs();
     }
 
     @SneakyThrows
@@ -217,8 +187,6 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             return;
         Query q = new TermInSetQuery(pojoMapper.getPojoIdField(), ids.stream().map(Object::toString).map(BytesRef::new).collect(Collectors.toSet()));
         writer.deleteDocuments(q);
-        writer.commit();
-        getNumOfDocs();
     }
 
     public synchronized void updateDocumentsFields(Collection<?> docIds, Consumer<T> modifier) throws IllegalArgumentException {
@@ -310,32 +278,41 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     }
 
     @SneakyThrows
-    public synchronized Page<T> search(@Nullable String query, Pageable pageable) {
-        Query parsedQuery = Utils.isNullOrBlank(query) ? new MatchAllDocsQuery() : queryParser.parse(query, null);
-        return search(rewriteQuery(parsedQuery), pageable);
+    public Page<T> search(@Nullable String query, Pageable pageable) {
+        // parse under configLock (parser + config maps are not thread-safe); rewrite (may resolve
+        // synonyms via network) and the actual search run lock-free.
+        return search(rewriteQuery(parseQuery(query)), pageable);
     }
 
     /**
      * Searches the index using the given query and returns a Spring Data Page of beans.
      */
     @SneakyThrows
-    public synchronized Page<T> search(Query query, Pageable pageable) {
+    public Page<T> search(Query query, Pageable pageable) {
         return searchAndTransform(query, pageable, pojoMapper::toPojo);
     }
 
 
     @SneakyThrows
-    public synchronized Page<String> searchIds(@Nullable String query, Pageable pageable) {
-        Query parsedQuery = Utils.isNullOrBlank(query) ? new MatchAllDocsQuery() : queryParser.parse(query, null);
-        return searchIds(rewriteQuery(parsedQuery), pageable);
+    public Page<String> searchIds(@Nullable String query, Pageable pageable) {
+        return searchIds(rewriteQuery(parseQuery(query)), pageable);
     }
 
     /**
      * Searches the index using the given query and returns a Spring Data Page of beans.
      */
     @SneakyThrows
-    public synchronized Page<String> searchIds(Query query, Pageable pageable) {
+    public Page<String> searchIds(Query query, Pageable pageable) {
         return searchAndTransform(query, pageable, doc -> doc.get(pojoMapper.getPojoIdField()));
+    }
+
+    @SneakyThrows
+    private Query parseQuery(@Nullable String query) {
+        if (Utils.isNullOrBlank(query))
+            return new MatchAllDocsQuery();
+        synchronized (configLock) {
+            return queryParser.parse(query, null);
+        }
     }
 
     private Query rewriteQuery(Query query) {
@@ -391,7 +368,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     }
 
     @SneakyThrows
-    private synchronized <R> Page<R> searchAndTransform(Query query, Pageable pageable, Function<Document, R> function) {
+    private <R> Page<R> searchAndTransform(Query query, Pageable pageable, Function<Document, R> function) {
         searcherManager.maybeRefresh();
         IndexSearcher searcher = searcherManager.acquire();
         try {
@@ -403,22 +380,15 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             int numHits = pageable.isUnpaged() ? numDocs : Math.min(numDocs, (int) (pageable.getOffset() + pageable.getPageSize()));
             //todo add search after mechanism for better deep pagination
 
-            StopWatch stopWatch = new StopWatch();
-            stopWatch.start();
             TopDocs topDocs = sort != null ? searcher.search(query, numHits, sort) : searcher.search(query, numHits);
-            System.out.println("LUCENE: REAL SEARCHING with " + numHits + " took: " + stopWatch);
-            stopWatch.stop();
-            stopWatch.reset();
-            stopWatch.start();
 
             ScoreDoc[] hits = topDocs.scoreDocs;
             int start = pageable.isUnpaged() ? 0 : (int) pageable.getOffset();
             int end = pageable.isUnpaged() ? hits.length : Math.min(start + pageable.getPageSize(), hits.length);
+            org.apache.lucene.index.StoredFields storedFields = searcher.storedFields();
             List<R> results = new ArrayList<>(end - start);
             for (int i = start; i < end; i++)
-                results.add(function.apply(searcher.storedFields().document(hits[i].doc)));
-
-            System.out.println("LUCENE: Collecting results took: " + stopWatch);
+                results.add(function.apply(storedFields.document(hits[i].doc)));
 
             return new PageImpl<>(results, pageable, topDocs.totalHits.value());
         } finally {
@@ -429,7 +399,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     @SneakyThrows
     @Nullable
-    private synchronized Document searchDocumentById(Object id) {
+    private Document searchDocumentById(Object id) {
         searcherManager.maybeRefresh();
         IndexSearcher searcher = searcherManager.acquire();
         try {
@@ -457,15 +427,17 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
         String fieldName = Taggable.makeTagFieldName(tagName);
 
-        PointsConfig pc = getPointsConfigForValueType(vt);
-        if (pc != null)
-            pointsConfigMap.put(fieldName, pc);
+        synchronized (configLock) {
+            PointsConfig pc = getPointsConfigForValueType(vt);
+            if (pc != null)
+                pointsConfigMap.put(fieldName, pc);
 
-        // For non-text tag types, use KeywordAnalyzer.
-        if (vt != ValueType.TEXT)
-            fieldAnalyzers.put(fieldName, new KeywordAnalyzer());
-        else
-            fieldAnalyzers.put(fieldName, SIRIUS_TEXT_ANALYZER);
+            // For non-text tag types, use KeywordAnalyzer.
+            if (vt != ValueType.TEXT)
+                fieldAnalyzers.put(fieldName, new KeywordAnalyzer());
+            else
+                fieldAnalyzers.put(fieldName, SIRIUS_TEXT_ANALYZER);
+        }
     }
 
     /**
@@ -477,8 +449,11 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             throw new UnsupportedOperationException(String.format("Cannot remove tags from non Taggable Object! %s does not implement Taggable!", pojoMapper.getPojoName()));
 
         String fieldName = Taggable.makeTagFieldName(tagName);
-        queryParser.getPointsConfigMap().remove(fieldName);
-        Analyzer analyzer = fieldAnalyzers.remove(fieldName);
+        Analyzer analyzer;
+        synchronized (configLock) {
+            pointsConfigMap.remove(fieldName);
+            analyzer = fieldAnalyzers.remove(fieldName);
+        }
         // Only close per-field analyzers we own. TEXT tag fields reuse the shared base analyzer
         // (SIRIUS_TEXT_ANALYZER); closing it would break all further indexing and search.
         if (analyzer != null && analyzer != baseAnalyzer)
