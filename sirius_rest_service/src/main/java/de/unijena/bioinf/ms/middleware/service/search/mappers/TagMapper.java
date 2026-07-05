@@ -61,7 +61,7 @@ public class TagMapper implements FieldMapper<Map<String, Tag>> {
 
         switch (valueType) {
             case BOOLEAN -> formattedValue = Boolean.valueOf(tagField.stringValue());
-            case INTEGER -> formattedValue = Integer.valueOf(tagField.stringValue());
+            case INTEGER -> formattedValue = tagField.numericValue().intValue();
             case REAL -> formattedValue = tagField.numericValue().doubleValue();
             case TEXT, DATE, TIME -> formattedValue = tagField.stringValue();
         }
