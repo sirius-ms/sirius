@@ -1898,7 +1898,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         List<CompoundImport> cis = features.stream().map(f -> CompoundImport.builder().name(f.getName()).features(List.of(f)).build()).toList();
         List<AlignedFeature> importedFeatures = addCompounds(cis, profile, EnumSet.of(Compound.OptField.none), optFields, importSource).stream()
                 .flatMap(c -> c.getFeatures().stream()).toList();
-        searchService.addDocuments(projectId, importedFeatures);
+        if (searchService != null)
+            searchService.addDocuments(projectId, importedFeatures);
         //todo fire import event?
         return importedFeatures;
     }
@@ -2088,7 +2089,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class);
 
         //todo optimize performance / find better solution
-        searchService.removeTagsFromDocument(projectId, taggedObjectId, tagNames, (Class<? extends Taggable>) taggedOobjectClass);
+        if (searchService != null)
+            searchService.removeTagsFromDocument(projectId, taggedObjectId, tagNames, (Class<? extends Taggable>) taggedOobjectClass);
     }
 
     @SneakyThrows
@@ -2156,7 +2158,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         storage().remove(tagDef);
         //todo optimize find different solution
 
-        searchService.removeTagValueType(projectId, tagName);
+        if (searchService != null)
+            searchService.removeTagValueType(projectId, tagName);
     }
 
     @SuppressWarnings("unchecked")
@@ -2372,14 +2375,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
        // delete fold changes from index.
        switch (statsTarget) {
-            case FEATURES -> searchService.updateDocumentsFields(projectId, foldChanges.keySet(), af -> {
-                if (af.getStats() != null)
-                    af.getStats().removeAll(foldChanges.get(af.getAlignedFeatureId()));
-            }, AlignedFeature.class);
-            case COMPOUNDS -> searchService.updateDocumentsFields(projectId, foldChanges.keySet(), af -> {
-                if (af.getStats() != null)
-                    af.getStats().removeAll(foldChanges.get(af.getCompoundId()));
-            }, Compound.class);
+            case FEATURES -> {
+                if (searchService != null)
+                    searchService.updateDocumentsFields(projectId, foldChanges.keySet(), af -> {
+                        if (af.getStats() != null)
+                            af.getStats().removeAll(foldChanges.get(af.getAlignedFeatureId()));
+                    }, AlignedFeature.class);
+            }
+            case COMPOUNDS -> {
+                if (searchService != null)
+                    searchService.updateDocumentsFields(projectId, foldChanges.keySet(), af -> {
+                        if (af.getStats() != null)
+                            af.getStats().removeAll(foldChanges.get(af.getCompoundId()));
+                    }, Compound.class);
+            }
             case NPC_CLASSES, CLASSYFIRE_CLASSES -> {} // no index to update
             default -> throw new IllegalArgumentException("Unknown fold change target!");
         }
