@@ -210,6 +210,10 @@ public class CommonLossEdgeScorer implements LossScorer {
     }
 
     private double getScoreForFormulaWithLossSize(MolecularFormula formula) {
+        if (lossSizeScorer == null)
+            throw new IllegalStateException("CommonLossEdgeScorer requires a LossSizeScorer but none was set. " +
+                    "Since the LossSizeScorer refactor it must be folded into the CommonLossEdgeScorer " +
+                    "(this is done by DefaultPlugin) or set explicitly via setLossSizeScorer() before scoring.");
         return Math.max(getRecombinatedList().get(formula), commonLosses.get(formula)) - normalization + lossSizeScorer.score(formula);
     }
 
