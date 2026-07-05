@@ -403,10 +403,10 @@ public class NitriteDatabase implements Database<Document> {
 
     private <T> T callIfOpen(Callable<T> callable) throws IOException {
         stateReadLock.lock();
-        if (this.db.isClosed()) {
-            throw new IOException("Nitrite database is closed!");
-        }
         try {
+            if (this.db.isClosed()) {
+                throw new IOException("Nitrite database is closed!");
+            }
             return callable.call();
         } catch (IOException e) {
             throw e;
@@ -442,6 +442,39 @@ public class NitriteDatabase implements Database<Document> {
     @Override
     public Set<Class<?>> getAllRegisteredClasses() {
         return this.repositories.keySet();
+    }
+
+    @Override
+    public long getStorageCommitId() {
+        try {
+            var store = this.db.getStore();
+            if (store != null) {
+                for (java.lang.reflect.Method method : store.getClass().getMethods()) {
+                    if (method.getReturnType().equals(org.h2.mvstore.MVStore.class) && method.getParameterCount() == 0) {
+                        org.h2.mvstore.MVStore mvStore = (org.h2.mvstore.MVStore) method.invoke(store);
+                        if (mvStore != null) {
+                            return mvStore.getCurrentVersion();
+                        }
+                    }
+                }
+                Class<?> current = store.getClass();
+                while (current != null && current != Object.class) {
+                    for (java.lang.reflect.Field field : current.getDeclaredFields()) {
+                        if (field.getType().equals(org.h2.mvstore.MVStore.class)) {
+                            field.setAccessible(true);
+                            org.h2.mvstore.MVStore mvStore = (org.h2.mvstore.MVStore) field.get(store);
+                            if (mvStore != null) {
+                                return mvStore.getCurrentVersion();
+                            }
+                        }
+                    }
+                    current = current.getSuperclass();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to get MVStore version from NitriteDatabase", e);
+        }
+        return -1;
     }
 
     @SuppressWarnings("unchecked")

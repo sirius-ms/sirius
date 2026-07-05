@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -46,9 +45,19 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
                     .getByPrimaryKey(pojoClass.getSimpleName(), PersistentSearchIndex.class);
 
             if (savedIndex.isPresent()) {
-                //todo remove debug
-                log.info("Loading {} index from Sirius project...", pojoClass.getSimpleName());
-                LuceneDirectoryPersistenceUtils.deserialize(savedIndex.get().getIndexData(), directory);
+                long currentDbVersion = database.getStorageCommitId();
+                long savedIndexVersion = savedIndex.get().getStorageCommitId();
+                long diff = currentDbVersion - savedIndexVersion;
+
+                if (currentDbVersion != -1 && (diff < 0 || diff > 5)) {
+                    log.warn("Search index for {} is out of sync (saved index version: {}, current DB version: {}). This project was modified without updating index (likely by an older version of SIRIUS). Rebuilding index...",
+                            pojoClass.getSimpleName(), savedIndexVersion, currentDbVersion);
+                    database.remove(savedIndex.get());
+                    // Do not load the index. Leaving directory empty triggers a rebuilt/re-index dynamically.
+                } else {
+                    log.info("Loading {} index from Sirius project...", pojoClass.getSimpleName());
+                    LuceneDirectoryPersistenceUtils.deserialize(savedIndex.get().getIndexData(), directory);
+                }
             }
         } catch (Exception e) {
             log.error("Failed to restore index for {} from database. Clearing corrupted directory files.", pojoClass.getSimpleName(), e);
@@ -82,8 +91,10 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
                             } else {
                                 byte[] data = im.getIndexData();
                                 log.info("Saving {} index to Nitrite database...", clazz.getSimpleName());
-                                //todo print in debug level.
-                                database.upsert(new PersistentSearchIndex(clazz.getSimpleName(), data));
+                                // Predict the version of the database after this save is committed
+                                long currentVersion = database.getStorageCommitId();
+                                long targetVersion = currentVersion != -1 ? currentVersion + 1 : -1;
+                                database.upsert(new PersistentSearchIndex(clazz.getSimpleName(), data, targetVersion));
                             }
                         }
                     } catch (IOException ioe) {

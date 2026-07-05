@@ -456,4 +456,8 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     Set<Class<?>> getAllRegisteredClasses();
 
+    default long getStorageCommitId() {
+        return -1;
+    }
+
 }

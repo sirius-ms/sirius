@@ -28,6 +28,8 @@ public interface SearchService extends AutoCloseable {
 
     void closeProjectIndex(Project<?> project, boolean deleteIndex) throws IOException;
 
+    void reanchorStorageCommitVersion(Project<?> project) throws IOException;
+
     void clearIndex(@NotNull Project<?> project) throws IOException;
 
     <T> int getNumberOfDocuments(String projectId, Class<T> clazz);

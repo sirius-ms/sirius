@@ -390,6 +390,12 @@ public class FullTextSearchTest {
         java.nio.file.Path dbFile = Files.createTempFile("nitrite-lifecycle-test", ".db");
         try {
             Metadata metadata = MsProjectDocumentDatabase.buildMetadata();
+            
+            // Warm-up: open and close once to permanently create all collections and indices on disk first!
+            try (NitriteDatabase warmupDb = new NitriteDatabase(dbFile, metadata)) {
+                warmupDb.flush();
+            }
+
             NitriteDatabase db = new NitriteDatabase(dbFile, metadata);
 
             // Mock the project and space manager to return our database
@@ -421,15 +427,22 @@ public class FullTextSearchTest {
             // 2. Close the search service. This should trigger serialization and upsert to db!
             service1.close();
 
+            db.close(); // Close database to commit changes and increment MVStore version
+
+            // Re-open database
+            NitriteDatabase db2 = new NitriteDatabase(dbFile, metadata);
+
+            Mockito.when(mockProjDb.getStorage()).thenReturn(db2);
+
             // Verify the index data is written into the Nitrite database
-            Optional<PersistentSearchIndex> savedIndex = db.getByPrimaryKey("TestPojo", PersistentSearchIndex.class);
+            Optional<PersistentSearchIndex> savedIndex = db2.getByPrimaryKey("TestPojo", PersistentSearchIndex.class);
             assertTrue(savedIndex.isPresent(), "Index must be persisted to the database upon close");
             assertNotNull(savedIndex.get().getIndexData());
             assertTrue(savedIndex.get().getIndexData().length > 0);
 
             // 3. Start a new search service and open the same project. It should restore from db!
             SearchContextProvider<NoSQLProjectImpl, PerPojoDatabaseSearchContext<?>> provider2 =
-                proj -> new PerPojoDatabaseSearchContext<>(db, null, Collections.emptyMap());
+                proj -> new PerPojoDatabaseSearchContext<>(db2, null, Collections.emptyMap());
             SearchService service2 = new SearchServiceImpl(provider2);
             service2.openOrCreateProjectIndex(project);
 
@@ -438,7 +451,7 @@ public class FullTextSearchTest {
             assertEquals(1, restoredResults.getTotalElements(), "Index should be restored from Nitrite database on startup");
 
             service2.close();
-            db.close();
+            db2.close();
         } finally {
             Files.deleteIfExists(dbFile);
         }
@@ -531,6 +544,171 @@ public class FullTextSearchTest {
 
             service.close();
             db.close();
+        } finally {
+            Files.deleteIfExists(dbFile);
+        }
+    }
+
+    @Test
+    public void testIndexStaleStateDetectionAndRebuilt() throws Exception {
+        java.nio.file.Path dbFile = Files.createTempFile("nitrite-stale-test", ".db");
+        try {
+            Metadata metadata = MsProjectDocumentDatabase.buildMetadata();
+
+            // Warm-up: open and close once to permanently create all collections and indices on disk first!
+            try (NitriteDatabase warmupDb = new NitriteDatabase(dbFile, metadata)) {
+                warmupDb.flush();
+            }
+
+            // 1. First run: save a valid index
+            try (NitriteDatabase db = new NitriteDatabase(dbFile, metadata)) {
+                NoSQLProjectImpl project = Mockito.mock(NoSQLProjectImpl.class);
+                NoSQLProjectSpaceManager mockSpaceManager = Mockito.mock(NoSQLProjectSpaceManager.class);
+                SiriusProjectDatabaseImpl mockProjDb = Mockito.mock(SiriusProjectDatabaseImpl.class);
+
+                Mockito.when(project.getProjectId()).thenReturn("stale-project");
+                Mockito.when(project.getSystemUID()).thenReturn("stale-system-uid");
+                Mockito.when(project.findTags()).thenReturn(Collections.emptyList());
+                Mockito.when(project.isTempProject()).thenReturn(false);
+                Mockito.when(project.getProjectSpaceManager()).thenReturn(mockSpaceManager);
+                Mockito.when(mockSpaceManager.getProject()).thenReturn(mockProjDb);
+                Mockito.when(mockProjDb.getStorage()).thenReturn(db);
+
+                SearchContextProvider<NoSQLProjectImpl, PerPojoDatabaseSearchContext<?>> provider =
+                    proj -> new PerPojoDatabaseSearchContext<>(db, null, Collections.emptyMap());
+                SearchService service = new SearchServiceImpl(provider);
+                service.openOrCreateProjectIndex(project);
+
+                TestPojo pojo = new TestPojo("pojo-1", "normal-val", "full-val", "stale-bh4-test");
+                service.addDocument("stale-project", pojo);
+
+                service.close(); // Saves index and commits V_close version
+            }
+
+            // 2. Simulate legacy software modification (untracked commit)
+            try (NitriteDatabase legacyDb = new NitriteDatabase(dbFile, metadata)) {
+                // Perform multiple separate writes and flushes to simulate extensive legacy software modifications
+                for (int i = 0; i < 10; i++) {
+                    legacyDb.upsert(new PersistentSearchIndex("FakeClass" + i, new byte[]{1, 2, 3}));
+                    legacyDb.flush(); // Bumps MVStore version
+                }
+            }
+
+            // 3. Open project index again on new service. It should detect stale index and gracefully reindex/empty it
+            try (NitriteDatabase db = new NitriteDatabase(dbFile, metadata)) {
+                NoSQLProjectImpl project = Mockito.mock(NoSQLProjectImpl.class);
+                NoSQLProjectSpaceManager mockSpaceManager = Mockito.mock(NoSQLProjectSpaceManager.class);
+                SiriusProjectDatabaseImpl mockProjDb = Mockito.mock(SiriusProjectDatabaseImpl.class);
+
+                Mockito.when(project.getProjectId()).thenReturn("stale-project");
+                Mockito.when(project.getSystemUID()).thenReturn("stale-system-uid");
+                Mockito.when(project.findTags()).thenReturn(Collections.emptyList());
+                Mockito.when(project.isTempProject()).thenReturn(false);
+                Mockito.when(project.getProjectSpaceManager()).thenReturn(mockSpaceManager);
+                Mockito.when(mockSpaceManager.getProject()).thenReturn(mockProjDb);
+                Mockito.when(mockProjDb.getStorage()).thenReturn(db);
+
+                SearchContextProvider<NoSQLProjectImpl, PerPojoDatabaseSearchContext<?>> provider =
+                    proj -> new PerPojoDatabaseSearchContext<>(db, null, Collections.emptyMap());
+                SearchService service = new SearchServiceImpl(provider);
+                service.openOrCreateProjectIndex(project);
+
+                // Since it detected a mismatch, it gracefully cleared/emptied the stale index directory to trigger rebuilding
+                Page<TestPojo> results = service.search("stale-project", "stale-bh4-test", Pageable.unpaged(), TestPojo.class);
+                assertEquals(0, results.getTotalElements(), "Stale index should have been discarded and cleared");
+
+                service.close();
+            }
+        } finally {
+            Files.deleteIfExists(dbFile);
+        }
+    }
+
+    @Test
+    public void testCompactionIndexPreservation() throws Exception {
+        java.nio.file.Path dbFile = Files.createTempFile("nitrite-compact-test", ".db");
+        try {
+            Metadata metadata = MsProjectDocumentDatabase.buildMetadata();
+
+            // Warm-up: open and close once to permanently create all collections and indices on disk first!
+            try (NitriteDatabase warmupDb = new NitriteDatabase(dbFile, metadata)) {
+                warmupDb.flush();
+            }
+
+            try (NitriteDatabase db = new NitriteDatabase(dbFile, metadata)) {
+                NoSQLProjectImpl project = Mockito.mock(NoSQLProjectImpl.class);
+                NoSQLProjectSpaceManager mockSpaceManager = Mockito.mock(NoSQLProjectSpaceManager.class);
+                SiriusProjectDatabaseImpl mockProjDb = Mockito.mock(SiriusProjectDatabaseImpl.class);
+
+                Mockito.when(project.getProjectId()).thenReturn("compact-project");
+                Mockito.when(project.getSystemUID()).thenReturn("compact-system-uid");
+                Mockito.when(project.findTags()).thenReturn(Collections.emptyList());
+                Mockito.when(project.isTempProject()).thenReturn(false);
+                Mockito.when(project.getProjectSpaceManager()).thenReturn(mockSpaceManager);
+                Mockito.when(mockSpaceManager.getProject()).thenReturn(mockProjDb);
+                Mockito.when(mockProjDb.getStorage()).thenReturn(db);
+
+                SearchContextProvider<NoSQLProjectImpl, PerPojoDatabaseSearchContext<?>> provider =
+                    proj -> new PerPojoDatabaseSearchContext<>(db, null, Collections.emptyMap());
+                SearchService service = new SearchServiceImpl(provider);
+                service.openOrCreateProjectIndex(project);
+
+                TestPojo pojo = new TestPojo("pojo-1", "normal-val", "full-val", "compact-bh4-test");
+                service.addDocument("compact-project", pojo);
+
+                service.close();
+            }
+
+            System.out.println("COMPACT STEP START");
+
+            // Perform compaction (this will rewrite file and re-anchor index versions)
+            try (NitriteDatabase db = new NitriteDatabase(dbFile, metadata)) {
+                System.out.println("COMPACTING...");
+                db.compact();
+                System.out.println("COMPACTED.");
+
+                NoSQLProjectImpl project = Mockito.mock(NoSQLProjectImpl.class);
+                Mockito.doReturn(db).when(project).storage();
+
+                NoSQLProjectSpaceManager mockSpaceManager = Mockito.mock(NoSQLProjectSpaceManager.class);
+                Mockito.when(project.getProjectSpaceManager()).thenReturn(mockSpaceManager);
+                Mockito.when(mockSpaceManager.getLocation()).thenReturn(dbFile.toAbsolutePath().toString());
+
+                SearchContextProvider<NoSQLProjectImpl, PerPojoDatabaseSearchContext<?>> provider =
+                    proj -> new PerPojoDatabaseSearchContext<>(db, null, Collections.emptyMap());
+                SearchService service = new SearchServiceImpl(provider);
+                System.out.println("RE-ANCHORING...");
+                service.reanchorStorageCommitVersion(project);
+                System.out.println("RE-ANCHORED.");
+            }
+
+            System.out.println("COMPACT STEP END");
+
+            // Verify index is still loaded successfully and searchable
+            try (NitriteDatabase db = new NitriteDatabase(dbFile, metadata)) {
+                NoSQLProjectImpl project = Mockito.mock(NoSQLProjectImpl.class);
+                NoSQLProjectSpaceManager mockSpaceManager = Mockito.mock(NoSQLProjectSpaceManager.class);
+                SiriusProjectDatabaseImpl mockProjDb = Mockito.mock(SiriusProjectDatabaseImpl.class);
+
+                Mockito.when(project.getProjectId()).thenReturn("compact-project");
+                Mockito.when(project.getSystemUID()).thenReturn("compact-system-uid");
+                Mockito.when(project.findTags()).thenReturn(Collections.emptyList());
+                Mockito.when(project.isTempProject()).thenReturn(false);
+                Mockito.when(project.getProjectSpaceManager()).thenReturn(mockSpaceManager);
+                Mockito.when(mockSpaceManager.getProject()).thenReturn(mockProjDb);
+                Mockito.when(mockProjDb.getStorage()).thenReturn(db);
+
+                SearchContextProvider<NoSQLProjectImpl, PerPojoDatabaseSearchContext<?>> provider =
+                    proj -> new PerPojoDatabaseSearchContext<>(db, null, Collections.emptyMap());
+                SearchService service = new SearchServiceImpl(provider);
+                service.openOrCreateProjectIndex(project);
+
+                // Verify the index was preserved perfectly after compact and we can still search the restored index
+                Page<TestPojo> results = service.search("compact-project", "compact-bh4-test", Pageable.unpaged(), TestPojo.class);
+                assertEquals(1, results.getTotalElements(), "Index should have been preserved and restored perfectly after compaction");
+
+                service.close();
+            }
         } finally {
             Files.deleteIfExists(dbFile);
         }
