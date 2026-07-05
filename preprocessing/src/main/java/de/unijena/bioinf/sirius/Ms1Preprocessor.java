@@ -103,6 +103,9 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
     public void elementDetection(ProcessedInput pinput) {
         detectElementsFromIsotopePattern(pinput);
         final FormulaSettings settings = pinput.getAnnotationOrDefault(FormulaSettings.class);
+        //check if enforced elements are not empty. We cannot check earlier because some DefaultInstances may have no elements.
+        if (FormulaConstraints.empty().equals(settings.getEnforcedAlphabet())) throw new IllegalArgumentException("Specify at least one element that is always enforced during molecular formula generation.");
+
         checkDetectableElementSettings(settings);
         final DetectedElements detectedElements = pinput.getAnnotationOrNull(DetectedElements.class);
         if (detectedElements==null) {
