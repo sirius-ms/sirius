@@ -141,8 +141,12 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 String fieldName = fieldPrefix + (indexField.name().isEmpty() ? field.getName() : indexField.name());
                 // Handle get element type and take care about collections/arrays.
                 Class<?> elementType = field.getType();
-                if (isCollection(elementType))
+                if (isCollection(elementType)) {
+                    if (indexField.sortable())
+                        throw new IllegalArgumentException("Sortable collections/arrays are not supported: field '" + fieldName
+                                + "'. Remove sortable=true or use a single-valued field.");
                     elementType = getCollectionElementType(field);
+                }
                 else if (isMap(elementType)){
                     elementType = getMapValueType(field);
                     if (!isSimpleType(elementType))

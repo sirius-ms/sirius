@@ -9,13 +9,19 @@ import de.unijena.bioinf.ms.middleware.service.search.mappers.LipidAnnotationMap
 import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.projectspace.IndexField;
+import de.unijena.bioinf.projectspace.QueryRewriter;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
+import org.apache.lucene.search.SortField;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *   <li>H6 — TagMapper integer tags round-trip (numeric read-back, not stringValue()).</li>
  *   <li>H8 — LipidAnnotationMapper indexes the correct getters; CompoundClassesMapper tolerates null NPC;
  *       GenericPojoMapper.getIdValue works for renamed and inherited id fields.</li>
+ *   <li>H9 — sortable collections are rejected with a clear error.</li>
  * </ul>
  */
 public class MapperFixesTest {
@@ -109,5 +116,30 @@ public class MapperFixesTest {
         child.id = "ID-2";
         assertEquals("ID-2", mapper.getIdValue(child),
                 "getIdValue must resolve an inherited id field (H8)");
+    }
+
+    // ---- H9: sortable collections are rejected ----
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SortableCollectionPojo {
+        @IndexField(name = "id", documentId = true)
+        public String id;
+        @IndexField(name = "aliases", sortable = true)
+        public List<String> aliases;
+    }
+
+    @Test
+    public void sortableCollectionIsRejected_H9() {
+        GenericPojoMapper<SortableCollectionPojo> mapper = new GenericPojoMapper<>(SortableCollectionPojo.class);
+        Map<String, PointsConfig> pointsConfigs = new HashMap<>();
+        Map<String, Analyzer> analyzers = new HashMap<>();
+        List<CharSequence> defaultSearchFields = new ArrayList<>();
+        Map<String, SortField.Type> sortTypes = new HashMap<>();
+        Map<String, QueryRewriter> queryRewriters = new HashMap<>();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mapper.detectAnalyzersAndPointConfigs(pointsConfigs, analyzers, defaultSearchFields, sortTypes, queryRewriters),
+                "a sortable collection field must be rejected with a clear IllegalArgumentException (H9)");
     }
 }
