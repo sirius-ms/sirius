@@ -222,6 +222,12 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     }
 
     public synchronized void updateDocumentsFields(Collection<?> docIds, Consumer<T> modifier) throws IllegalArgumentException {
+        if (pojoMapper.isNonStoredFields()) {
+            String msg = String.format(NON_STORED_FIELDS_MESSAGE, pojoMapper.getPojoClass().getSimpleName(), docIds);
+            log.warn(msg);
+            throw new UnsupportedOperationException(msg);
+        }
+
         Query q = new TermInSetQuery(pojoMapper.getPojoIdField(), docIds.stream()
                 .map(Object::toString).map(BytesRef::new)
                 .collect(Collectors.toSet()));
