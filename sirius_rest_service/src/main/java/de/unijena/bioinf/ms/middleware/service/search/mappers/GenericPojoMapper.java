@@ -354,11 +354,17 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                             field.set(instance, converted);
                         }
                     } else { // Otherwise, assume nested object.
-                        try {
-                            Object nestedInstance = convertDocumentToPojo(fieldName + ".", doc, fieldType);
-                            field.set(instance, nestedInstance);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
+                        String nestedPrefix = fieldName + ".";
+                        boolean hasNestedFields = doc.getFields().stream()
+                                .anyMatch(f -> f.name().startsWith(nestedPrefix));
+                        // A null nested object indexes no fields; keep it null instead of resurrecting an empty instance.
+                        if (hasNestedFields) {
+                            try {
+                                Object nestedInstance = convertDocumentToPojo(nestedPrefix, doc, fieldType);
+                                field.set(instance, nestedInstance);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
                         }
                     }
                 } else if (field.isAnnotationPresent(IndexFieldWithMapper.class)) {
