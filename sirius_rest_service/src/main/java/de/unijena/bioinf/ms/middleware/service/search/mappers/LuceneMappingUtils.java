@@ -87,6 +87,7 @@ public class LuceneMappingUtils {
                 || type.equals(String.class)
                 || Number.class.isAssignableFrom(type)
                 || type.equals(Boolean.class)
+                || type.equals(Date.class)
                 || type.isEnum();
     }
 
@@ -164,6 +165,8 @@ public class LuceneMappingUtils {
             return value.numericValue().floatValue();
         else if (type.equals(Boolean.class) || type.equals(boolean.class))
             return Boolean.parseBoolean(value.stringValue());
+        else if (type.equals(Date.class))
+            return new Date(value.numericValue().longValue());
         else if (type.isEnum()) {
             @SuppressWarnings("unchecked")
             Class<? extends Enum> enumType = (Class<? extends Enum>) type;
@@ -247,6 +250,8 @@ public class LuceneMappingUtils {
             return SortField.Type.DOUBLE;
         } else if (type.equals(float.class) || type.equals(Float.class)) {
             return SortField.Type.FLOAT;
+        } else if (type.equals(Date.class)) {
+            return SortField.Type.LONG;
         } else if (type.equals(boolean.class) || type.equals(Boolean.class) || type.equals(String.class)) {
             return SortField.Type.STRING;
         }
@@ -321,6 +326,14 @@ public class LuceneMappingUtils {
                 fields.add(new StringField(fieldName, s, storeOption));
                 if (sorted)
                     fields.add(new SortedDocValuesField(fieldName, new BytesRef(s)));
+            }
+            case Date d -> {
+                long millis = d.getTime();
+                fields.add(new LongPoint(fieldName, millis));
+                if (store)
+                    fields.add(new StoredField(fieldName, millis));
+                if (sorted)
+                    fields.add(inCollection ? new SortedNumericDocValuesField(fieldName, millis) : new NumericDocValuesField(fieldName, millis));
             }
             default -> {
                 // Fallback: use the object's toString() (also covers String!).
