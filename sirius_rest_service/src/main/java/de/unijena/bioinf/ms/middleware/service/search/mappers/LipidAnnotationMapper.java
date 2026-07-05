@@ -31,8 +31,8 @@ public class LipidAnnotationMapper implements FieldMapper<LipidAnnotation> {
         // only store species because this is enough to restore all other information
         indexableFields.addAll(getIndexedFieldsFromSimpleValue(rootFieldName + ".lipidSpecies", pojo.getLipidSpecies(), true, false, false, false));
 
-        indexableFields.addAll(getIndexedFieldsFromSimpleValue(rootFieldName + ".lipidMapsId", pojo.getLipidSpecies(), false, false, false, false));
-        indexableFields.addAll(getIndexedFieldsFromSimpleValue(rootFieldName + ".lipidClassName", pojo.getLipidSpecies(), false, false, true, false));
+        indexableFields.addAll(getIndexedFieldsFromSimpleValue(rootFieldName + ".lipidMapsId", pojo.getLipidMapsId(), false, false, false, false));
+        indexableFields.addAll(getIndexedFieldsFromSimpleValue(rootFieldName + ".lipidClassName", pojo.getLipidClassName(), false, false, true, false));
 
         return indexableFields;
     }

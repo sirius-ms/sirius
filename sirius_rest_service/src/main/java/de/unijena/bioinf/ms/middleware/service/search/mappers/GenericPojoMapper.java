@@ -29,6 +29,12 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
     @Getter
     private final String pojoIdField;
     /**
+     * The actual reflective accessor for the document-id field (resolved once at construction).
+     * Uses the real Java field found via {@link FieldUtils#getAllFields} so it also works for
+     * renamed ({@code @IndexField(name=...)}) and inherited id fields.
+     */
+    private final Field pojoIdFieldAccessor;
+    /**
      * True if any field annotated with @IndexField in the bean class is not stored.
      */
     @Getter
@@ -41,6 +47,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
 
         { // detect pojo id field, check for non-stored fields
             String pojoIdFieldTmp = null;
+            Field pojoIdAccessorTmp = null;
             boolean unStoredTmp = false;
 
             for (Field f : FieldUtils.getAllFields(pojoClass)) {
@@ -55,11 +62,14 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                         if (pojoIdFieldTmp != null)
                             throw new IllegalStateException("Document ID field already set. Only one ID field is allowed!");
                         pojoIdFieldTmp = fieldName;
+                        pojoIdAccessorTmp = f;
+                        pojoIdAccessorTmp.setAccessible(true);
                     }
                 }
             }
             nonStoredFields = unStoredTmp;
             pojoIdField = pojoIdFieldTmp;
+            pojoIdFieldAccessor = pojoIdAccessorTmp;
 
             if (pojoIdField == null)
                 throw new IllegalArgumentException("No document ID field defined! ID field is mandatory!");
@@ -71,9 +81,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
     }
     @SneakyThrows
     public Object getIdValue(T pojo) {
-        Field f = pojo.getClass().getDeclaredField(pojoIdField);
-        f.setAccessible(true);
-        return f.get(pojo);
+        return pojoIdFieldAccessor.get(pojo);
     }
 
 
