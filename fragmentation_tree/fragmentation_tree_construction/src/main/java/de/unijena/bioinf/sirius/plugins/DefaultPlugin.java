@@ -54,7 +54,10 @@ public class DefaultPlugin extends SiriusPlugin {
                 commonLosses=(CommonLossEdgeScorer) s;
             }
         }
-        if (scorer!=null && commonLosses!=null) {
+        if (commonLosses != null) {
+            if (scorer == null)
+                throw new IllegalStateException("A CommonLossEdgeScorer is registered but no LossSizeScorer peak-pair scorer " +
+                        "was found to fold into it. Since the LossSizeScorer refactor both must be present together in the profile.");
             initializer.getAnalysis().getPeakPairScorers().remove(scorer);
             commonLosses.setLossSizeScorer(scorer);
         }
