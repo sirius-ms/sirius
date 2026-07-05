@@ -18,7 +18,7 @@ import org.springframework.data.domain.Sort;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
-import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -67,9 +67,9 @@ public class LuceneMappingUtils {
      */
     public static PointsConfig getPointsConfigForValueType(ValueType valueType) {
         return switch (valueType) {
-            case INTEGER -> new PointsConfig(DecimalFormat.getInstance(), Integer.class);
+            case INTEGER -> new PointsConfig(NumberFormat.getInstance(Locale.ROOT), Integer.class);
 
-            case REAL -> new PointsConfig(DecimalFormat.getInstance(), Double.class);
+            case REAL -> new PointsConfig(NumberFormat.getInstance(Locale.ROOT), Double.class);
 
             case DATE -> new PointsConfig(new NumberDateFormat(new SimpleDateFormat("yyyy-MM-dd")), Long.class);
 
@@ -220,13 +220,13 @@ public class LuceneMappingUtils {
     @Nullable
     public static PointsConfig getPointsConfigForType(Class<?> type) {
         if (type.equals(int.class) || type.equals(Integer.class)) {
-            return new PointsConfig(DecimalFormat.getInstance(), Integer.class);
+            return new PointsConfig(NumberFormat.getInstance(Locale.ROOT), Integer.class);
         } else if (type.equals(long.class) || type.equals(Long.class)) {
-            return new PointsConfig(DecimalFormat.getInstance(), Long.class);
+            return new PointsConfig(NumberFormat.getInstance(Locale.ROOT), Long.class);
         } else if (type.equals(double.class) || type.equals(Double.class)) {
-            return new PointsConfig(DecimalFormat.getInstance(), Double.class);
+            return new PointsConfig(NumberFormat.getInstance(Locale.ROOT), Double.class);
         } else if (type.equals(float.class) || type.equals(Float.class)) {
-            return new PointsConfig(DecimalFormat.getInstance(), Float.class);
+            return new PointsConfig(NumberFormat.getInstance(Locale.ROOT), Float.class);
         } else if (type.equals(java.util.Date.class)) {  // Optionally, if we want to support dates as normal fields:
             return new PointsConfig(new NumberDateFormat(new SimpleDateFormat("yyyy-MM-dd")), Long.class);
         }
