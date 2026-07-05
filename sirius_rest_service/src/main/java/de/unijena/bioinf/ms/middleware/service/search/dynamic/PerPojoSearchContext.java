@@ -210,8 +210,15 @@ public class PerPojoSearchContext implements SearchContext {
 
     @SuppressWarnings("unchecked")
     private  <T> SinglePojoLuceneIndexManager<T> getIndexManager(Class<T> pojoClass) {
-        return (SinglePojoLuceneIndexManager<T>) indices.computeIfAbsent(pojoClass,
-                pc -> new SinglePojoLuceneIndexManager<>(createIndexDirectory(pc), pc, tagDefs, this::getTagValueType));
+        return (SinglePojoLuceneIndexManager<T>) indices.computeIfAbsent(pojoClass, pc -> {
+            // Pass an immutable snapshot of the tag definitions: the manager iterates them during
+            // construction, which would otherwise race with concurrent addTagValueType/removeTagValueType.
+            Map<String, ValueType> tagDefSnapshot;
+            synchronized (tagDefs) {
+                tagDefSnapshot = new HashMap<>(tagDefs);
+            }
+            return new SinglePojoLuceneIndexManager<>(createIndexDirectory(pc), pc, tagDefSnapshot, this::getTagValueType);
+        });
     }
 
     @Override
