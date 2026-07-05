@@ -221,13 +221,18 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     }
 
     public void closeProjectSpace(String projectId) throws IOException {
+        closeProjectSpace(projectId, false);
+    }
+
+    @Override
+    public void closeProjectSpace(String projectId, boolean compact) throws IOException {
         projectSpaceLock.writeLock().lock();
         try {
             final P project = projectSpaces.get(projectId);
             if (project == null)
                 throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Project space with name '" + projectId + "' not found!");
 
-            project.close();
+            project.close(compact);
             projectSpaces.remove(projectId);
         } finally {
             projectSpaceLock.writeLock().unlock();

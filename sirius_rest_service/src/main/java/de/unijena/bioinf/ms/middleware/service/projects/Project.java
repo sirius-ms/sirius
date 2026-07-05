@@ -331,4 +331,8 @@ public interface Project<PSM extends ProjectSpaceManager> {
     String findSiriusFtreeJsonById(String formulaId, String alignedFeatureId);
 
     void close() throws IOException;
+
+    default void close(boolean compact) throws IOException {
+        close();
+    }
 }

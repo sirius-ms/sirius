@@ -1,8 +1,10 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
+import de.unijena.bioinf.ms.persistence.model.core.PersistentSearchIndex;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +82,34 @@ public class SearchServiceImpl implements SearchService {
                 projectContext.close(deleteIndex);
         } finally {
             projectLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void reanchorStorageCommitVersion(Project<?> project) throws IOException {
+        if (project instanceof NoSQLProjectImpl nosqlProj) {
+            java.nio.file.Path file = java.nio.file.Path.of(nosqlProj.getProjectSpaceManager().getLocation());
+            de.unijena.bioinf.storage.db.nosql.Metadata metadata = de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase.buildMetadata();
+
+            // Re-open a temporary database on the compacted file to update versions cleanly and safely
+            try (de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase tempDb = new de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase(file, metadata)) {
+                long currentVersion = tempDb.getStorageCommitId();
+                if (currentVersion != -1) {
+                    long targetVersion = currentVersion + 1;
+
+                    // Eagerly load existing indices into a list to prevent concurrent modification / cursor infinite loops
+                    List<PersistentSearchIndex> list = new ArrayList<>();
+                    for (PersistentSearchIndex index : tempDb.findAll(PersistentSearchIndex.class)) {
+                        list.add(index);
+                    }
+
+                    for (PersistentSearchIndex index : list) {
+                        index.setStorageCommitId(targetVersion);
+                        tempDb.upsert(index);
+                    }
+                    tempDb.flush();
+                }
+            }
         }
     }
 
