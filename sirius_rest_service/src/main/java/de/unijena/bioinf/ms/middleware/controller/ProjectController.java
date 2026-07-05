@@ -135,10 +135,7 @@ public class ProjectController {
         Project<?> ps = projectsProvider.getProjectOrThrow(projectId);
         computeService.deleteJobs(ps, true, true, true, EnumSet.noneOf(Job.OptField.class));
         //todo check if we can make wait for deletion aync
-        projectsProvider.closeProjectSpace(projectId);
-        if (compact) {
-            ps.getProjectSpaceManager().compact();
-        }
+        projectsProvider.closeProjectSpace(projectId, compact);
     }
 
     /**
