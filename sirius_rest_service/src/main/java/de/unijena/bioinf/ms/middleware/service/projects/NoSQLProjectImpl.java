@@ -164,9 +164,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             tagDef -> searchService.removeTagValueType(projectId, tagDef.getTagName()));
 
 
-                } catch (IOException e) {
-                    log.error("Error while initializing project space index. Closing index.", e);
-                    searchService.closeProjectIndex(this);
+                } catch (Exception e) {
+                    log.error("Error while initializing project space index. Search will be unavailable for this project.", e);
+                    try {
+                        searchService.closeProjectIndex(this);
+                    } catch (Exception closeError) {
+                        log.error("Error while closing partially initialized project search index.", closeError);
+                    }
                 }
             }
         }

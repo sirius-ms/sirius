@@ -12,6 +12,7 @@ import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
  * <ul>
  *   <li>B2 — {@code close(boolean)} must not NPE and must still close the project-space manager.</li>
  *   <li>H1 — write/delete paths must guard {@code searchService} instead of dereferencing it blindly.</li>
+ *   <li>H12 — a failure while initializing the index must not abort project construction.</li>
  * </ul>
  */
 public class NullSafetyTest {
@@ -94,5 +96,15 @@ public class NullSafetyTest {
         NoSQLProjectImpl project = projectWithSearchService(null);
         assertDoesNotThrow(() -> project.removeTagsFromObject(AlignedFeature.class, "1", List.of("someTag")),
                 "removeTagsFromObject must not NPE when search is disabled (H1)");
+    }
+
+    @Test
+    public void constructionSurvivesSearchIndexInitFailure_H12() throws IOException {
+        SearchService throwing = Mockito.mock(SearchService.class);
+        Mockito.doThrow(new RuntimeException("simulated index init failure"))
+                .when(throwing).openOrCreateProjectIndex(Mockito.any());
+
+        assertDoesNotThrow(() -> projectWithSearchService(throwing),
+                "a RuntimeException during index initialization must not abort project construction (H12)");
     }
 }
