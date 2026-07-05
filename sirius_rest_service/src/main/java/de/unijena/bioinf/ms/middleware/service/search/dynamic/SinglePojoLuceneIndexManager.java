@@ -13,8 +13,11 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexCommit;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.KeepOnlyLastCommitDeletionPolicy;
+import org.apache.lucene.index.SnapshotDeletionPolicy;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
@@ -50,6 +53,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     private final Directory directory;
     private final IndexWriter writer;
     private final SearcherManager searcherManager;
+    private final SnapshotDeletionPolicy snapshotDeletionPolicy;
 
     private final GenericPojoMapper<T> pojoMapper;
 
@@ -79,7 +83,11 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         try {
             this.directory = directory;
             this.pojoMapper = new GenericPojoMapper<>(pojoClass, new TagMapper(tagValueTypeProvider));
-            this.writer = new IndexWriter(directory, new IndexWriterConfig(dynamicAnalyzer));
+            IndexWriterConfig writerConfig = new IndexWriterConfig(dynamicAnalyzer);
+            // Protect commit files from background-merge deletion while we serialize a snapshot (see getIndexData).
+            this.snapshotDeletionPolicy = new SnapshotDeletionPolicy(new KeepOnlyLastCommitDeletionPolicy());
+            writerConfig.setIndexDeletionPolicy(snapshotDeletionPolicy);
+            this.writer = new IndexWriter(directory, writerConfig);
             this.searcherManager = new SearcherManager(writer, null);
 
             // Scans add all existing TagDefinitions to set PointConfigs and Analyzers
@@ -114,7 +122,13 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     public synchronized byte[] getIndexData(boolean zipped){
         // Ensure all pending Lucene writes are flushed & committed before we read the directory files
         writer.commit();
-        return LuceneDirectoryPersistenceUtils.serialize(directory, zipped);
+        // Snapshot the commit so its files cannot be deleted by a concurrent background merge while we copy them.
+        IndexCommit commit = snapshotDeletionPolicy.snapshot();
+        try {
+            return LuceneDirectoryPersistenceUtils.serialize(directory, commit.getFileNames(), zipped);
+        } finally {
+            snapshotDeletionPolicy.release(commit);
+        }
     }
 
     @SneakyThrows

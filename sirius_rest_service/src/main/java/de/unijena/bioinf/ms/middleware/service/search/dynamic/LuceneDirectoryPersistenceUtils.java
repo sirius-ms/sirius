@@ -2,6 +2,8 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import org.apache.lucene.store.*;
 import java.io.*;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.zip.*;
 
 public class LuceneDirectoryPersistenceUtils {
@@ -14,6 +16,15 @@ public class LuceneDirectoryPersistenceUtils {
 
     public static byte[] serialize(Directory dir, boolean compress) throws IOException {
         return compress ? serializeZipped(dir) : serializeUncompressed(dir);
+    }
+
+    /**
+     * Serialize an explicit set of directory files (e.g. the files of a snapshotted {@code IndexCommit}).
+     * Using a fixed file list taken from a snapshot avoids racing with background merges that may delete
+     * segment files between listing and reading them.
+     */
+    public static byte[] serialize(Directory dir, Collection<String> fileNames, boolean compress) throws IOException {
+        return compress ? serializeZipped(dir, fileNames) : serializeUncompressed(dir, fileNames);
     }
 
     public static void deserialize(byte[] bytes, Directory targetDir) throws IOException {
@@ -31,9 +42,13 @@ public class LuceneDirectoryPersistenceUtils {
     // --- ZIPPED METHODS (Original behavior) ---
 
     public static byte[] serializeZipped(Directory dir) throws IOException {
+        return serializeZipped(dir, Arrays.asList(dir.listAll()));
+    }
+
+    public static byte[] serializeZipped(Directory dir, Collection<String> fileNames) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-            for (String file : dir.listAll()) {
+            for (String file : fileNames) {
                 // EXTREMELY IMPORTANT: Never persist the write.lock file
                 if ("write.lock".equals(file)) {
                     continue;
@@ -76,9 +91,13 @@ public class LuceneDirectoryPersistenceUtils {
     // --- UNCOMPRESSED METHODS (New behavior) ---
 
     public static byte[] serializeUncompressed(Directory dir) throws IOException {
+        return serializeUncompressed(dir, Arrays.asList(dir.listAll()));
+    }
+
+    public static byte[] serializeUncompressed(Directory dir, Collection<String> fileNames) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (DataOutputStream dos = new DataOutputStream(baos)) {
-            String[] files = dir.listAll();
+            Collection<String> files = fileNames;
 
             // Count files first to write the header (ignoring write.lock)
             int fileCount = 0;
