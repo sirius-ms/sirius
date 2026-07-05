@@ -338,13 +338,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 System.out.println();
                 System.out.println("Removing deleted data from index...");
 
-                //Handle FEATURES
+                // Delete by id per POJO type. removeDocuments(beans) would infer the index type from
+                // the element type (Long) and thus target a bogus index, so we must use removeDocumentsById.
                 if (Utils.notNullOrEmpty(alignedFeaturesIds))
-                    searchService.removeDocuments(projectId, alignedFeaturesIds);
+                    searchService.removeDocumentsById(projectId, alignedFeaturesIds, AlignedFeature.class);
                 if (Utils.notNullOrEmpty(compoundIds))
-                    searchService.removeDocuments(projectId, compoundIds);
+                    searchService.removeDocumentsById(projectId, compoundIds, Compound.class);
                 if (Utils.notNullOrEmpty(runIds))
-                    searchService.removeDocuments(projectId, runIds);
+                    searchService.removeDocumentsById(projectId, runIds, Run.class);
 
                 System.out.println("Removing deleted data from index took: " + stopWatch);
             }
@@ -1687,8 +1688,24 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public void deleteCompoundById(String compoundId) {
+        // Collect the compound's aligned-feature ids before deletion; those are the documents in the
+        // search index (the compound itself is not part of the searchable index).
+        List<String> affectedFeatureIds = List.of();
+        if (searchService != null) {
+            try {
+                Compound compound = findCompoundById(compoundId, false,
+                        EnumSet.noneOf(Compound.OptField.class), EnumSet.noneOf(AlignedFeature.OptField.class));
+                if (compound.getFeatures() != null)
+                    affectedFeatureIds = compound.getFeatures().stream()
+                            .map(AlignedFeature::getAlignedFeatureId)
+                            .filter(Objects::nonNull)
+                            .toList();
+            } catch (ResponseStatusException ignored) {
+                // compound does not exist -> nothing to remove from the index
+            }
+        }
         project().cascadeDeleteCompound(Long.parseLong(compoundId));
-        //todo update index.
+        removeFromSearchIndex(affectedFeatureIds, null, null);
     }
 
 
@@ -1929,14 +1946,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public void deleteAlignedFeaturesById(String alignedFeatureId) {
         project().cascadeDeleteAlignedFeatures(Long.parseLong(alignedFeatureId));
-        //todo update index
+        removeFromSearchIndex(List.of(alignedFeatureId), null, null);
     }
 
     @Override
     @SneakyThrows
     public void deleteAlignedFeaturesByIds(List<String> alignedFeatureIds) {
         project().cascadeDeleteAlignedFeatures(alignedFeatureIds.stream().map(Long::parseLong).sorted().toList());
-        //todo update index
+        removeFromSearchIndex(alignedFeatureIds, null, null);
     }
 
     @SneakyThrows
