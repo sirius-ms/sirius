@@ -479,26 +479,21 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         String fieldName = Taggable.makeTagFieldName(tagName);
         queryParser.getPointsConfigMap().remove(fieldName);
         Analyzer analyzer = fieldAnalyzers.remove(fieldName);
-        if (analyzer != null)
+        // Only close per-field analyzers we own. TEXT tag fields reuse the shared base analyzer
+        // (SIRIUS_TEXT_ANALYZER); closing it would break all further indexing and search.
+        if (analyzer != null && analyzer != baseAnalyzer)
             analyzer.close();
 
-        //searching for docs with the tag to be removed.
-        //update only the modified ones!
-        List<T> modifiedPojos = new ArrayList<>();
-        searcherManager.maybeRefresh();
-        IndexSearcher searcher = searcherManager.acquire();
-        try {
-            IndexReader reader = searcher.getIndexReader();
-            for (int i = 0; i < reader.maxDoc(); i++) {
-                Document doc = reader.storedFields().document(i);
-                T pojo = pojoMapper.toPojo(doc);
-                if (((Taggable) pojo).getTags().remove(tagName) != null)
-                    modifiedPojos.add(pojo);
-            }
-        } finally {
-            // Always release the searcher when done.
-            searcherManager.release(searcher);
-        }
+        // Search for live docs carrying the tag and update only the modified ones.
+        // NOTE: iterating reader.maxDoc() directly would also read logically-deleted documents and
+        // resurrect them via updateDocuments; searching only ever returns live documents.
+        List<T> modifiedPojos = search(new MatchAllDocsQuery(), Pageable.unpaged())
+                .stream()
+                .filter(pojo -> {
+                    Map<String, Tag> tags = ((Taggable) pojo).getTags();
+                    return tags != null && tags.remove(tagName) != null;
+                })
+                .toList();
 
         updateDocuments(modifiedPojos);
     }
