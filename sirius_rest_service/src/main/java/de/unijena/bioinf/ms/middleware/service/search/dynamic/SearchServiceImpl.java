@@ -236,7 +236,7 @@ public class SearchServiceImpl implements SearchService {
     private <T> T withProjectContext(String projectId, Function<SearchContext, T> function) {
         projectLock.readLock().lock();
         try {
-            return function.apply(projectSearchContexts.get(projectId));
+            return function.apply(requireContext(projectId));
         } finally {
             projectLock.readLock().unlock();
         }
@@ -245,10 +245,19 @@ public class SearchServiceImpl implements SearchService {
     private void consumeProjectContext(String projectId, Consumer<SearchContext> consumer) {
         projectLock.readLock().lock();
         try {
-            consumer.accept(projectSearchContexts.get(projectId));
+            consumer.accept(requireContext(projectId));
         } finally {
             projectLock.readLock().unlock();
         }
+    }
+
+    @NotNull
+    private SearchContext requireContext(String projectId) {
+        SearchContext context = projectSearchContexts.get(projectId);
+        if (context == null)
+            throw new IllegalStateException("No open search index for project '" + projectId
+                    + "'. The project index was not initialized or failed to open.");
+        return context;
     }
 
     //endregion
