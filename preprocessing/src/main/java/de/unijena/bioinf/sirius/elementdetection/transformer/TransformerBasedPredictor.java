@@ -214,23 +214,6 @@ public class TransformerBasedPredictor {
     }
 
     /**
-     * Predict the elemental composition of an isotope pattern from the most intensive peak of the spectrum.
-     * The advantage of this method is that it does not have to know the monoisotopic peak at all. However,
-     * it predicts only the pattern containing the base peak (in case the spectrum has multiple overlapping patterns).
-     * This method is recommended for isotopes like Selenium or Ferrum where the monoisotopic peak might get lost
-     * in noise.
-     */
-    public Optional<TransformerPrediction> predictFromBasePeak(SimpleSpectrum pattern) {
-        int basePeak = Spectrums.getIndexOfPeakWithMinimalIntensity(pattern);
-        float[][] transformedPeaks = new float[1][];
-        transformedPeaks[0] = transform(pattern, 1)[basePeak];
-        basePeakPredictor.compute( transformedPeaks, null);
-
-        float[] prediction = projOut.compute(transformedPeaks[0]);
-        return Optional.of(builtPredictionResult(basePeak, pattern.size(), 0f, prediction));
-    }
-
-    /**
      * Predict the elemental composition of an isotope pattern. The pattern consists of consecutive peaks that
      * may be noise or isotope peaks belonging to possibly overlapping patterns. The method returns a list of predictions
      * where each prediction assumes a different monoisopic peak. Only the most likely predictions (usually just one)
