@@ -349,8 +349,25 @@ public class FullTextSearchTest {
             PageRequest.of(0, 10), 
             InchiKeyPojo.class
         );
-        assertEquals(1, shortResults.getTotalElements(), 
+        assertEquals(1, shortResults.getTotalElements(),
             "Already truncated 14-char InChIKey query should not require rewriting and successfully find the document");
+    }
+
+    @Test
+    public void testInchiKeyRewriteAppliesThroughBoostQuery_M7() {
+        searchService.addDocument(projectId, new InchiKeyPojo("inchikey-1", "WZPVREJFMGASTU"));
+
+        // The trailing ^2 makes the parser wrap the term in a BoostQuery. The InChIKey rewriter (27 -> 14
+        // chars) must still be applied through that wrapper, otherwise the 27-char term misses the 14-char
+        // indexed key.
+        Page<InchiKeyPojo> results = searchService.search(
+            projectId,
+            "inchiKey:WZPVREJFMGASTU-UHFFFAOYSA-N^2",
+            PageRequest.of(0, 10),
+            InchiKeyPojo.class
+        );
+        assertEquals(1, results.getTotalElements(),
+            "InChIKey rewrite must be applied through a BoostQuery wrapper (M7)");
     }
 
     @Test
