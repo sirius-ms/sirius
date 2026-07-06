@@ -44,6 +44,11 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
             Optional<PersistentSearchIndex> savedIndex = database
                     .getByPrimaryKey(pojoClass.getSimpleName(), PersistentSearchIndex.class);
 
+            // The Nitrite-persisted index is authoritative. Discard any stale files left on disk from a
+            // previous session so a load can deserialize into a clean directory (createOutput would
+            // otherwise collide with existing files) and a rebuild starts from a truly empty directory.
+            clearDirectory(directory);
+
             if (savedIndex.isPresent()) {
                 long currentDbVersion = database.getStorageCommitId();
                 long savedIndexVersion = savedIndex.get().getStorageCommitId();
@@ -113,5 +118,10 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
     private void removeIndicesFromDb() throws IOException {
         String[] indexIds = indices.keySet().stream().map(Class::getSimpleName).toArray(String[]::new);
         database.removeAll(Filter.where("indexKey").in(indexIds), PersistentSearchIndex.class);
+    }
+
+    private static void clearDirectory(Directory directory) throws IOException {
+        for (String file : directory.listAll())
+            directory.deleteFile(file);
     }
 }
