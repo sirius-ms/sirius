@@ -55,6 +55,13 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     private final SearcherManager searcherManager;
     private final SnapshotDeletionPolicy snapshotDeletionPolicy;
 
+    /**
+     * Whether this index is known to fully reflect the source data. Defaults to true (a loaded or empty index
+     * is trusted); set to false while it is being (re)built and whenever a write fails, so an incomplete index
+     * is not persisted and gets rebuilt on the next open. See M5/M4.
+     */
+    private volatile boolean complete = true;
+
     private final GenericPojoMapper<T> pojoMapper;
 
     // Guards the (non-thread-safe) query parser and the query-config maps (pointsConfigMap, fieldAnalyzers)
@@ -114,6 +121,14 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         return Taggable.class.isAssignableFrom(pojoMapper.getPojoClass());
     }
 
+    public boolean isComplete() {
+        return complete;
+    }
+
+    public void setComplete(boolean complete) {
+        this.complete = complete;
+    }
+
     public synchronized byte[] getIndexData(){
         return getIndexData(false);
     }
@@ -144,28 +159,44 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         }
     }
 
+    /**
+     * Runs a Lucene write, marking the index incomplete if it fails so the drift is not persisted and the
+     * index is rebuilt on the next open (M4). Checked exceptions are rethrown transparently.
+     */
+    private void doWrite(WriterAction action) {
+        try {
+            action.run();
+        } catch (Throwable t) {
+            complete = false;
+            throw lombok.Lombok.sneakyThrow(t);
+        }
+    }
+
+    @FunctionalInterface
+    private interface WriterAction {
+        void run() throws IOException;
+    }
+
     // low level lucene document handling.
     // NOTE: writes are not committed per call; visibility for readers is provided by the NRT SearcherManager
     // (maybeRefresh on read). Durability is ensured on close()/getIndexData(). This makes bulk ingest fast.
-    @SneakyThrows
     public synchronized void addDocument(@NotNull T pojo) {
-        writer.addDocument(pojoMapper.toDocument(pojo));
+        Document doc = pojoMapper.toDocument(pojo);
+        doWrite(() -> writer.addDocument(doc));
     }
 
-    @SneakyThrows
     public synchronized void addDocuments(@NotNull Collection<T> pojos) {
         if (pojos.isEmpty())
             return;
-        writer.addDocuments(pojos.stream().map(pojoMapper::toDocument).toList());
+        List<Document> docs = pojos.stream().map(pojoMapper::toDocument).toList();
+        doWrite(() -> writer.addDocuments(docs));
     }
 
-    @SneakyThrows
     public synchronized void updateDocument(@NotNull T pojo) {
         Document doc = pojoMapper.toDocument(pojo);
-        writer.updateDocument(new Term(pojoMapper.getPojoIdField(), doc.get(pojoMapper.getPojoIdField())), doc);
+        doWrite(() -> writer.updateDocument(new Term(pojoMapper.getPojoIdField(), doc.get(pojoMapper.getPojoIdField())), doc));
     }
 
-    @SneakyThrows
     public synchronized void updateDocuments(@NotNull Collection<T> pojos) {
         if (pojos.isEmpty())
             return;
@@ -179,7 +210,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                 .map(BytesRef::new)
                 .collect(Collectors.toSet()));
 
-        writer.updateDocuments(q, docs);
+        doWrite(() -> writer.updateDocuments(q, docs));
     }
 
     public synchronized void deleteDocument(@NotNull T pojoToRemove) {
@@ -190,17 +221,15 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         deleteDocumentsById(pojosToRemove.stream().map(pojoMapper::getIdValue).toList());
     }
 
-    @SneakyThrows
     public synchronized void deleteDocumentById(@NotNull Object id) {
-        writer.deleteDocuments(new Term(pojoMapper.getPojoIdField(), String.valueOf(id)));
+        doWrite(() -> writer.deleteDocuments(new Term(pojoMapper.getPojoIdField(), String.valueOf(id))));
     }
 
-    @SneakyThrows
     public synchronized void deleteDocumentsById(@NotNull Collection<?> ids) {
         if (ids.isEmpty())
             return;
         Query q = new TermInSetQuery(pojoMapper.getPojoIdField(), ids.stream().map(Object::toString).map(BytesRef::new).collect(Collectors.toSet()));
-        writer.deleteDocuments(q);
+        doWrite(() -> writer.deleteDocuments(q));
     }
 
     public synchronized void updateDocumentsFields(Collection<?> docIds, Consumer<T> modifier) throws IllegalArgumentException {

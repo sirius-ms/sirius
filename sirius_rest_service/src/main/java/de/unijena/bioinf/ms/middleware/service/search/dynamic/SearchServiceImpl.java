@@ -207,6 +207,11 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
+    public <T> void setIndexComplete(String projectId, Class<T> clazz, boolean complete) {
+        consumeProjectContext(projectId, ps -> ps.setIndexComplete(clazz, complete));
+    }
+
+    @Override
     public <T> Page<T> search(String projectId, @Nullable String query, Pageable pageable, Class<T> pojoClass) {
         return withProjectContext(projectId, ps -> ps.search(query, pageable, pojoClass));
     }

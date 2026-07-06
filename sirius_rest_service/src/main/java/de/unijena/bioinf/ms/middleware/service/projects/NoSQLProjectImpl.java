@@ -201,10 +201,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 //load feature index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, AlignedFeature.class)) {
                     System.out.println("Create new Aligned Feature index...");
+                    // Mark incomplete for the duration of the (re)build so an interrupted build is not
+                    // persisted and gets rebuilt on the next open (M5).
+                    searchService.setIndexComplete(projectId, AlignedFeature.class, false);
                     Pages.forEach(
                             pageable -> Utils.withTimeR("===> Loaded feature page for Indexing", w -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS)),
                             page -> Utils.withTime("===> Added feature page to Index", w -> searchService.addDocuments(projectId, page.getContent()))
                     );
+                    searchService.setIndexComplete(projectId, AlignedFeature.class, true);
 
                     System.out.println("...Indexing Features took: " + stopWatch);
                     stopWatch.reset();
@@ -215,10 +219,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 if (searchService.isEmpty(projectId, Run.class)) {
                     System.out.println("Create new Run index...");
 
+                    searchService.setIndexComplete(projectId, Run.class, false);
                     Pages.forEach(
                             pageable -> findRuns(pageable, Run.OptField.tags),
                             page -> searchService.addDocuments(projectId, page.getContent())
                     );
+                    searchService.setIndexComplete(projectId, Run.class, true);
 
                     System.out.println("...Indexing Runs took: " + stopWatch);
                     stopWatch.reset();

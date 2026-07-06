@@ -138,6 +138,11 @@ public class PerPojoSearchContext implements SearchContext {
     }
 
     @Override
+    public <T> void setIndexComplete(Class<T> clazz, boolean complete) {
+        getIndexManager(clazz).setComplete(complete);
+    }
+
+    @Override
     public <T> Page<T> search(@Nullable String query, Pageable pageable, Class<T> beanClass) {
         return getIndexManager(beanClass).search(query, pageable);
     }

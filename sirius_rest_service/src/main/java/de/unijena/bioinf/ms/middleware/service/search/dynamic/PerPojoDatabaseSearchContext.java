@@ -90,8 +90,10 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
                     var im = e.getValue();
                     try {
                         if (im != null) {
-                            if (im.isEmpty()) {
-                                log.info("Removing empty {} index from Nitrite database...", clazz.getSimpleName());
+                            if (im.isEmpty() || !im.isComplete()) {
+                                // Do not persist an empty or incomplete index (interrupted build / failed
+                                // write). Dropping the stale record forces a clean rebuild on the next open.
+                                log.info("Removing empty/incomplete {} index from Nitrite database...", clazz.getSimpleName());
                                 database.removeByPrimaryKey(clazz.getSimpleName(), PersistentSearchIndex.class);
                             } else {
                                 byte[] data = im.getIndexData();

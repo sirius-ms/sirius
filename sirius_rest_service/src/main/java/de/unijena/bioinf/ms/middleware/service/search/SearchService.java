@@ -77,6 +77,12 @@ public interface SearchService extends AutoCloseable {
 
     <T> void removeDocumentsById(@NotNull String projectId, @NotNull Collection<?> docIds, Class<T> pojoClass);
 
+    /**
+     * Mark the index for the given type complete/incomplete for a project. An incomplete index is not
+     * persisted on close and is rebuilt on the next open (used to bracket (re)builds).
+     */
+    <T> void setIndexComplete(String projectId, Class<T> clazz, boolean complete);
+
     <T> Page<T> search(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
     <T> Page<String> searchIds(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
 
