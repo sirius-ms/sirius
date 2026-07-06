@@ -26,6 +26,7 @@ import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
@@ -526,9 +527,9 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     }
 
     public void close() throws IOException {
-        writer.close();
-        searcherManager.close();
-        directory.close();
+        // Close all resources even if one fails (IOUtils rethrows the first error with the rest suppressed),
+        // and close the SearcherManager before the writer it wraps.
+        IOUtils.close(searcherManager, writer, directory);
     }
 
 }

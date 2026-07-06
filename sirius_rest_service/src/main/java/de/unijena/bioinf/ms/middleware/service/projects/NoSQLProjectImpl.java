@@ -2772,7 +2772,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         java.nio.file.Path projectFile = java.nio.file.Path.of(projectSpaceManager.getLocation());
         try {
             if (searchService != null)
-                searchService.closeProjectIndex(this);
+                // Delete a temp project's (ephemeral) index on close so its on-disk index dir does not linger
+                // until app shutdown; persistent projects keep their index for a fast reopen.
+                searchService.closeProjectIndex(this, isTempProject());
             if (compact)
                 projectSpaceManager.compact();
         } finally {
