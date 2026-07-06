@@ -177,6 +177,10 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     // low level lucene document handling.
     // NOTE: writes are not committed per call; visibility for readers is provided by the NRT SearcherManager
     // (maybeRefresh on read). Durability is ensured on close()/getIndexData(). This makes bulk ingest fast.
+    /**
+     * Add-only: appends a new document and does NOT deduplicate by id. Calling this twice for the same id
+     * creates duplicate documents; use {@link #updateDocument} for upsert semantics.
+     */
     public synchronized void addDocument(@NotNull T pojo) {
         Document doc = pojoMapper.toDocument(pojo);
         doWrite(() -> writer.addDocument(doc));
@@ -430,13 +434,19 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                 return Page.empty(pageable);
 
             org.apache.lucene.search.Sort sort = convertToLuceneSort(pageable, sortTypes);
-            int numHits = pageable.isUnpaged() ? numDocs : Math.min(numDocs, (int) (pageable.getOffset() + pageable.getPageSize()));
+            // Clamp in long space before the int cast: offset + pageSize can exceed Integer.MAX_VALUE for very
+            // deep pages, which would otherwise overflow to a negative numHits.
+            int numHits = pageable.isUnpaged() ? numDocs : (int) Math.min(numDocs, pageable.getOffset() + pageable.getPageSize());
             //todo add search after mechanism for better deep pagination
 
             TopDocs topDocs = sort != null ? searcher.search(query, numHits, sort) : searcher.search(query, numHits);
 
             ScoreDoc[] hits = topDocs.scoreDocs;
-            int start = pageable.isUnpaged() ? 0 : (int) pageable.getOffset();
+            long offset = pageable.isUnpaged() ? 0 : pageable.getOffset();
+            // A page past the end of the results is empty (and avoids overflowing the int offset cast).
+            if (offset >= hits.length)
+                return new PageImpl<>(List.of(), pageable, topDocs.totalHits.value());
+            int start = (int) offset; // safe: offset < hits.length <= numHits <= numDocs (int)
             int end = pageable.isUnpaged() ? hits.length : Math.min(start + pageable.getPageSize(), hits.length);
             org.apache.lucene.index.StoredFields storedFields = searcher.storedFields();
             List<R> results = new ArrayList<>(end - start);

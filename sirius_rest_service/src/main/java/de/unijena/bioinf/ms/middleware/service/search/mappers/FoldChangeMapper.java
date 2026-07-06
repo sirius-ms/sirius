@@ -133,7 +133,7 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
     }
 
     public static class AlignedFeatureFoldChange extends FoldChangeMapper {
-        final static String OBJECT_ID_FIELD_NAME = getDocumentIdFieldName(AlignedFeature.class).orElseThrow();;
+        final static String OBJECT_ID_FIELD_NAME = getDocumentIdFieldName(AlignedFeature.class).orElseThrow();
 
         @Override
         protected String getObjectIdFieldName() {
