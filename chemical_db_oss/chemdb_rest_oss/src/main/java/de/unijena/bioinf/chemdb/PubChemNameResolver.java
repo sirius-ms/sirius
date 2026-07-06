@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 public class PubChemNameResolver {
 
@@ -15,7 +17,9 @@ public class PubChemNameResolver {
         if (InChIs.isInchiKey(name))
             return name.length() >= 14 ? name.substring(0, 14) : name;
 
-        final String url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/" + name + "/property/InChIKey/TXT";
+        // Encode the name as a URL path segment: names may contain spaces, '/', '#', etc.
+        final String encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8).replace("+", "%20");
+        final String url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/" + encodedName + "/property/InChIKey/TXT";
         try {
             return ProxyManager.applyClient(client -> {
                 Request request = new Request.Builder().url(url).build();
