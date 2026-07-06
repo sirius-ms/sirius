@@ -330,7 +330,17 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     }
 
     private Query rewriteQuery(Query query) {
-        if (query instanceof BooleanQuery) {
+        // Wrapper queries: recurse into the wrapped query and preserve the wrapper (including its boost),
+        // so a field rewriter still applies to a boosted or constant-score term/phrase.
+        if (query instanceof BoostQuery boost) {
+            Query inner = boost.getQuery();
+            Query rewritten = rewriteQuery(inner);
+            return rewritten == inner ? query : new BoostQuery(rewritten, boost.getBoost());
+        } else if (query instanceof ConstantScoreQuery csq) {
+            Query inner = csq.getQuery();
+            Query rewritten = rewriteQuery(inner);
+            return rewritten == inner ? query : new ConstantScoreQuery(rewritten);
+        } else if (query instanceof BooleanQuery) {
             BooleanQuery bq = (BooleanQuery) query;
             boolean changed = false;
             List<BooleanClause> clauses = bq.clauses();
@@ -370,6 +380,9 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                     return rewritten;
             }
         }
+        // WildcardQuery/PrefixQuery/range/MultiPhraseQuery are intentionally passed through: the registered
+        // QueryRewriters operate on plain term/phrase text, so feeding them wildcard/range text would corrupt
+        // the query (e.g. turn `name:foo*` into a literal term `foo*`). Such queries already work natively.
         return query;
     }
 
