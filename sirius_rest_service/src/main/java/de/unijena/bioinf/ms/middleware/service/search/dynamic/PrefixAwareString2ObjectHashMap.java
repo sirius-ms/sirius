@@ -4,7 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A custom Map that supports prefix-based lookups.
+ * A custom Map that supports prefix-based lookups. NOTE: only {@link #get(Object)} is prefix-aware (matching a
+ * stored {@code "<prefix>.*"} key); {@code getOrDefault}/{@code containsKey} keep plain HashMap semantics.
+ * Values are expected to be non-null (a null value is treated the same as an absent key).
  */
 public class PrefixAwareString2ObjectHashMap<V> extends HashMap<String, V> {
 

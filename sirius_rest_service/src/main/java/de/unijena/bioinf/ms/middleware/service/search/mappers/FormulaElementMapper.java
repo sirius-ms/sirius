@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.index.IndexableField;
@@ -16,6 +17,7 @@ import java.util.Map;
 import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils.getIndexedFieldsFromSimpleValue;
 import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils.getPointsConfigForType;
 
+@Slf4j
 public class FormulaElementMapper implements FieldMapper<String> {
     @Override
     public Iterable<IndexableField> toIndexableFields(@NotNull String rootFieldName, @Nullable String pojo) {
@@ -27,10 +29,14 @@ public class FormulaElementMapper implements FieldMapper<String> {
         // simple formula as keyword
         indexableFields.addAll(getIndexedFieldsFromSimpleValue(rootFieldName, pojo, true, false, false, false));
 
-        //elementFilter
-        MolecularFormula formula = MolecularFormula.parseOrThrow(pojo);
-        formula.forEach(e ->
-                indexableFields.addAll(getIndexedFieldsFromSimpleValue(rootFieldName + "." + e.getSymbol(), formula.numberOf(e), false, false, false, false)));
+        // elementFilter: index per-element counts for range filtering. A single malformed formula must not
+        // abort indexing of the whole document, so skip just the element breakdown when it cannot be parsed.
+        MolecularFormula formula = MolecularFormula.parseOrNull(pojo);
+        if (formula != null)
+            formula.forEach(e ->
+                    indexableFields.addAll(getIndexedFieldsFromSimpleValue(rootFieldName + "." + e.getSymbol(), formula.numberOf(e), false, false, false, false)));
+        else
+            log.debug("Could not parse molecular formula '{}' for field '{}'; skipping element breakdown.", pojo, rootFieldName);
 
         return indexableFields;
     }

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
@@ -203,6 +204,22 @@ public class MapperRoundTripTest {
 
             ParentPojo out = single(service.search(PROJECT_ID, null, Pageable.unpaged(), ParentPojo.class));
             assertNull(out.child, "a null nested object must remain null after round-trip (M11)");
+        } finally {
+            service.closeProjectIndex(mockProject, true);
+        }
+    }
+
+    @Test
+    public void deepPaginationDoesNotOverflow_C6() throws IOException {
+        SearchService service = newService();
+        try {
+            service.addDocument(PROJECT_ID, mz("1", 1.0));
+
+            // offset = page * size = 3_000_000 * 1000 = 3e9, which exceeds Integer.MAX_VALUE.
+            Page<NumericPojo> page = service.search(PROJECT_ID, null, PageRequest.of(3_000_000, 1000), NumericPojo.class);
+
+            assertEquals(1, page.getTotalElements(), "total hits must still be reported");
+            assertTrue(page.getContent().isEmpty(), "a page far past the end must be empty, not overflow (C6)");
         } finally {
             service.closeProjectIndex(mockProject, true);
         }

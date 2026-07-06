@@ -169,7 +169,7 @@ public class PerPojoSearchContext implements SearchContext {
                 indices.values().stream().filter(SinglePojoLuceneIndexManager::isTaggable)
                         .forEach(im -> im.addTagValueType(tagName, valueType));
             else
-                log.warn("Valuetype already existed bug was updated? should not happen.");
+                log.debug("Tag value type '{}' is already registered; ignoring re-registration.", tagName);
         }
     }
 

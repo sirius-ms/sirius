@@ -5,8 +5,10 @@ import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.Statistics;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FoldChangeMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.FormulaElementMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils;
+import org.apache.lucene.index.IndexableField;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.projectspace.IndexField;
@@ -77,6 +79,20 @@ public class MapperEdgeCaseTest {
                 "reconstructing a POJO without a no-arg constructor must give a clear error (M11)");
         assertTrue(ex.getMessage().toLowerCase().contains("no-arg"),
                 "error should mention the missing no-arg constructor, was: " + ex.getMessage());
+    }
+
+    // ---- malformed formula must not abort indexing (C3) ----
+
+    @Test
+    public void malformedFormulaDoesNotAbortIndexing_C3() {
+        FormulaElementMapper mapper = new FormulaElementMapper();
+        Iterable<IndexableField> fields = assertDoesNotThrow(() -> mapper.toIndexableFields("formula", "not-a-formula!"),
+                "a malformed formula must not throw and abort the whole document (C3)");
+        boolean hasKeyword = false;
+        for (IndexableField f : fields)
+            if (f.name().equals("formula"))
+                hasKeyword = true;
+        assertTrue(hasKeyword, "the raw formula keyword field must still be indexed even if the element breakdown is skipped (C3)");
     }
 
     // ---- FoldChange group name containing '.' ----
