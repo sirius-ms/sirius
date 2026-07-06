@@ -2791,18 +2791,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @Override
     public void close(boolean compact) throws IOException {
+        // Capture the project file while the manager is still open; reanchor runs after it is closed.
+        java.nio.file.Path projectFile = java.nio.file.Path.of(projectSpaceManager.getLocation());
         try {
             if (searchService != null)
                 searchService.closeProjectIndex(this);
-            if (compact) {
+            if (compact)
                 projectSpaceManager.compact();
-                if (searchService != null) {
-                    searchService.reanchorStorageCommitVersion(this);
-                }
-            }
         } finally {
             projectSpaceManager.close();
         }
+        // Reanchor the persisted index versions to the compacted DB commit AFTER the project-space manager
+        // is closed, so we never hold two Nitrite handles on the same file at once. reanchor opens its own
+        // short-lived handle on the (now closed) compacted file.
+        if (compact && searchService != null)
+            searchService.reanchorStorageCommitVersion(this, projectFile);
     }
 
     @Override
