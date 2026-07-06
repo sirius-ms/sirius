@@ -45,12 +45,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrBlank;
@@ -61,6 +61,15 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     private final ProjectSpaceManagerFactory<PSM> projectSpaceManagerFactory;
 
     private final HashMap<String, P> projectSpaces = new HashMap<>();
+
+    /**
+     * Ids that are currently being opened/created (index build in progress) but not yet published into
+     * {@link #projectSpaces}. Guarded by {@link #projectSpaceLock}. Reserving an id here lets the (possibly
+     * slow) index build run WITHOUT holding the write lock, so it never freezes other project operations,
+     * while still preventing two concurrent opens of the same id. A project only becomes visible/usable once
+     * its build finishes and it moves from here into {@link #projectSpaces}.
+     */
+    private final Set<String> openingProjects = new HashSet<>();
 
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
 
@@ -93,28 +102,6 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
         return getProjectSpaceManager(projectId).map(x -> createProjectInfo(projectId, x, optFields));
     }
 
-    /**
-     * either use the suggested name, or add some suffix to the name such that it becomes unique during the call
-     * of the provided function
-     */
-    public <S> S ensureUniqueName(String suggestion, Function<String, S> useUniqueName) {
-        final Lock lock = projectSpaceLock.writeLock();
-        lock.lock();
-        try {
-            if (!projectSpaces.containsKey(suggestion)) {
-                return useUniqueName.apply(suggestion);
-            } else {
-                int index = 2;
-                while (projectSpaces.containsKey(suggestion + "_" + index)) {
-                    ++index;
-                }
-                return useUniqueName.apply(suggestion + "_" + index);
-            }
-        } finally {
-            lock.unlock();
-        }
-    }
-
     private ProjectInfo createProjectInfo(String projectId, PSM psm,
                                           @NotNull EnumSet<ProjectInfo.OptField> optFields) {
         ProjectInfo.ProjectInfoBuilder b = ProjectInfo.builder()
@@ -137,24 +124,14 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     }
 
     protected ProjectInfo openProject(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean tmpProject) throws IOException {
-        projectId = ensureUniqueProjectId(validateId(projectId));
-        final Lock lock = projectSpaceLock.writeLock();
-        lock.lock();
-        try {
-            if (projectSpaces.containsKey(projectId)) {
-                throw new ResponseStatusException(HttpStatus.SEE_OTHER, "A project with id '" + projectId + "' is already opened.");
-            }
-
-            Path location = pathToProject != null && !pathToProject.isBlank() ? Path.of(pathToProject) : defaultProjectDir().resolve(projectId);
+        return reserveBuildPublish(validateId(projectId), optFields, tmpProject, id -> {
+            Path location = pathToProject != null && !pathToProject.isBlank() ? Path.of(pathToProject) : defaultProjectDir().resolve(id);
             // zip test does also work for nosql projects.
             if (!isZipProjectSpace(location) && !isExistingProjectspaceDirectory(location)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "'" + projectId + "' is no valid SIRIUS project space.");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "'" + id + "' is no valid SIRIUS project space.");
             }
-
-            return createOrOpen(projectId, location, optFields, tmpProject);
-        } finally {
-            lock.unlock();
-        }
+            return location;
+        });
     }
 
     @Override
@@ -163,8 +140,8 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     }
 
     protected ProjectInfo createProject(@NotNull String projectIdSuggestion, @Nullable String path, @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean failIfExists, boolean tempProject) {
-        return ensureUniqueName(validateId(projectIdSuggestion), (projectId) -> {
-            try {
+        try {
+            return reserveBuildPublish(validateId(projectIdSuggestion), optFields, tempProject, projectId -> {
                 Path location;
                 if (notNullOrBlank(path)) {
                     location = Path.of(path);
@@ -181,26 +158,89 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
                         validateExistingLocation(location);
                     }
                 }
-                return createOrOpen(projectId, location, optFields, tempProject);
-            } catch (IOException e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when accessing file system to create project.", e);
-            }
-        });
+                return location;
+            });
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when accessing file system to create project.", e);
+        }
     }
 
     protected abstract void validateExistingLocation(Path location) throws IOException;
 
-    private ProjectInfo createOrOpen(String projectId, Path location, @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean tempProject) throws IOException {
+    /**
+     * Resolves (and validates) the on-disk location for a finally-reserved project id.
+     */
+    @FunctionalInterface
+    private interface LocationResolver {
+        Path resolve(String projectId) throws IOException;
+    }
+
+    /**
+     * Reserve a unique project id, then build the project (open the storage + construct it, which includes the
+     * potentially slow search-index build) WITHOUT holding the global write lock, and finally publish it.
+     * <p>
+     * Blocking/sync: returns only once the project is fully built and ready. Because the build runs outside the
+     * write lock, a long index build no longer freezes other project operations (list/open/close/get); the
+     * {@link #openingProjects} reservation still prevents two concurrent opens of the same id. The project only
+     * becomes visible via {@link #getProject}/{@link #listAllProjectSpaces} after it is ready.
+     */
+    private ProjectInfo reserveBuildPublish(@NotNull String idSuggestion, @NotNull EnumSet<ProjectInfo.OptField> optFields,
+                                            boolean tempProject, @NotNull LocationResolver locationResolver) throws IOException {
+        // Phase 1: reserve a concrete, unique id under the lock.
+        final String projectId;
+        projectSpaceLock.writeLock().lock();
         try {
-            PSM psm = projectSpaceManagerFactory.createOrOpen(location);
+            String id = idSuggestion;
+            if (isReserved(id)) {
+                String base = id.replaceAll("_[0-9]+$", "");
+                int index = 2;
+                do {
+                    id = base + "_" + (index++);
+                } while (isReserved(id));
+            }
+            openingProjects.add(id);
+            projectId = id;
+        } finally {
+            projectSpaceLock.writeLock().unlock();
+        }
+
+        // Phase 2: heavy work OUTSIDE the lock (resolve location, open storage, build the project + index).
+        try {
+            Path location = locationResolver.resolve(projectId);
+            final PSM psm;
+            try {
+                psm = projectSpaceManagerFactory.createOrOpen(location);
+            } catch (NitriteIOException e) {
+                throw new ResponseStatusException(HttpStatus.LOCKED, String.format("Project with ID '%s' could not be opened. Cause: %s", projectId, e.getMessage()), e);
+            }
             psm.setTempProject(tempProject);
             registerEventListeners(projectId, psm);
-            projectSpaces.put(projectId, createProject(projectId, psm));
+            P project = createProject(projectId, psm);
+
+            // Phase 3: publish under the lock (only the map mutation needs it).
+            projectSpaceLock.writeLock().lock();
+            try {
+                projectSpaces.put(projectId, project);
+            } finally {
+                projectSpaceLock.writeLock().unlock();
+            }
             eventService.sendEvent(ServerEvents.newProjectEvent(projectId, PROJECT_OPENED));
             return createProjectInfo(projectId, psm, optFields);
-        } catch (NitriteIOException e) {
-            throw new ResponseStatusException(HttpStatus.LOCKED, String.format("Project with ID '%s' could not be opened. Cause: %s", projectId, e.getMessage()) , e);
+        } finally {
+            projectSpaceLock.writeLock().lock();
+            try {
+                openingProjects.remove(projectId);
+            } finally {
+                projectSpaceLock.writeLock().unlock();
+            }
         }
+    }
+
+    /**
+     * Whether an id is already open or currently being opened. Must be called while holding the write lock.
+     */
+    private boolean isReserved(String id) {
+        return projectSpaces.containsKey(id) || openingProjects.contains(id);
     }
 
     protected abstract P createProject(String projectId, PSM managerToWrap);
