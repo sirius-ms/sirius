@@ -112,7 +112,12 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
             pinput.setAnnotation(FormulaConstraints.class, settings.getFallbackAlphabet().getExtendedConstraints(settings.getEnforcedAlphabet()));
         } else {
             final DetectedElements.DetectionResult result = detectedElements.getFormulaConstraints(settings.getFallbackAlphabet());
-            pinput.setAnnotation(FormulaConstraints.class, new DetectedFormulaConstraints(result.constraints().intersection(settings.getAutoDetectionElementsWithPFAS().toArray(Element[]::new)).getExtendedConstraints(settings.getEnforcedAlphabet()), true));
+            // detection counts as "performed" only if isotope-pattern detection actually contributed predictions.
+            // An empty ISOTOPE_PATTERN_DETECTION source is produced when no MS1 data was available (see the detectors);
+            // in that case the constraints fall back to the fallback alphabet and detectionPerformed must stay false.
+            final PossibleElement[] isotopePredictions = detectedElements.getDetections().get(DetectedElements.Source.ISOTOPE_PATTERN_DETECTION);
+            final boolean detectionPerformed = isotopePredictions != null && isotopePredictions.length > 0;
+            pinput.setAnnotation(FormulaConstraints.class, new DetectedFormulaConstraints(result.constraints().intersection(settings.getAutoDetectionElementsWithPFAS().toArray(Element[]::new)).getExtendedConstraints(settings.getEnforcedAlphabet()), detectionPerformed));
             pinput.setAnnotation(ElementsDetectedAsAbsent.class, new ElementsDetectedAsAbsent(result.forbiddenElements()));
         }
     }
