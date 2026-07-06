@@ -7,6 +7,8 @@ import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.projectspace.QueryRewriter;
 import it.unimi.dsi.fastutil.Pair;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.Analyzer;
@@ -60,6 +62,8 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
      * is trusted); set to false while it is being (re)built and whenever a write fails, so an incomplete index
      * is not persisted and gets rebuilt on the next open. See M5/M4.
      */
+    @Setter
+    @Getter
     private volatile boolean complete = true;
 
     private final GenericPojoMapper<T> pojoMapper;
@@ -119,14 +123,6 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     public boolean isTaggable() {
         return Taggable.class.isAssignableFrom(pojoMapper.getPojoClass());
-    }
-
-    public boolean isComplete() {
-        return complete;
-    }
-
-    public void setComplete(boolean complete) {
-        this.complete = complete;
     }
 
     public synchronized byte[] getIndexData(){
