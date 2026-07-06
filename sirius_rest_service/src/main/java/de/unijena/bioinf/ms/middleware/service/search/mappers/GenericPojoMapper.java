@@ -158,12 +158,20 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                     detectAnalyzersAndPointConfigs(fieldName + ".", elementType, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters);
                 } else {
                     PointsConfig pointsConfig = getPointsConfigForType(elementType);
-                    if (pointsConfig != null)
+                    if (pointsConfig != null) {
+                        // int/long/double/float and java.util.Date
                         pointsConfigMap.put(fieldName, pointsConfig);
-                    else if (indexField.fullTextSearch() && (elementType.equals(String.class) || elementType.isEnum()))
-                        analyzerMap.put(fieldName, SIRIUS_TEXT_ANALYZER);
-                    else // this covers the boolean values as well
+                    } else if (elementType.equals(String.class) || elementType.isEnum()) {
+                        analyzerMap.put(fieldName, indexField.fullTextSearch() ? SIRIUS_TEXT_ANALYZER : new KeywordAnalyzer());
+                    } else if (elementType.equals(Boolean.class) || elementType.equals(boolean.class)) {
                         analyzerMap.put(fieldName, new KeywordAnalyzer());
+                    } else {
+                        // Other "simple" types (short, byte, char, BigDecimal, BigInteger, ...) are not round-trippable
+                        // and were previously keyword-indexed silently. Reject them with a clear error instead.
+                        throw new IllegalArgumentException("Unsupported field type '" + elementType.getName()
+                                + "' for indexed field '" + fieldName + "'. Supported types: String, boolean, enum, int, "
+                                + "long, double, float, java.util.Date (and collections/maps/nested objects of these).");
+                    }
 
                     if (indexField.defaultSearchField())
                         defaultSearchFields.add(fieldName);
@@ -316,10 +324,21 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
 
 
 
-    private <C> C convertDocumentToPojo(String fieldPrefix, Document doc, Class<C> clazz) {
-//        System.out.println("=========================> FIELD_PREFIX_TO_PoJo: " + fieldPrefix);
+    private static <C> C newInstance(Class<C> clazz) {
         try {
-            C instance = clazz.getDeclaredConstructor().newInstance();
+            return clazz.getDeclaredConstructor().newInstance();
+        } catch (NoSuchMethodException e) {
+            throw new IllegalArgumentException("Indexed type '" + clazz.getName() + "' must have a no-argument constructor to be "
+                    + "reconstructed from the search index. Records and @Builder-only classes are not supported; add a no-arg "
+                    + "constructor (e.g. Lombok @NoArgsConstructor).", e);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Could not instantiate indexed type '" + clazz.getName() + "'.", e);
+        }
+    }
+
+    private <C> C convertDocumentToPojo(String fieldPrefix, Document doc, Class<C> clazz) {
+        try {
+            C instance = newInstance(clazz);
             for (Field field : FieldUtils.getAllFields(clazz)) {
                 if (field.isAnnotationPresent(IndexField.class)) {
                     field.setAccessible(true);
@@ -374,6 +393,8 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                             try {
                                 Object nestedInstance = convertDocumentToPojo(nestedPrefix, doc, fieldType);
                                 field.set(instance, nestedInstance);
+                            } catch (RuntimeException e) {
+                                throw e; // preserve clear errors (e.g. missing no-arg constructor)
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
@@ -387,6 +408,8 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 }
             }
             return instance;
+        } catch (RuntimeException e) {
+            throw e; // preserve clear errors (e.g. missing no-arg constructor)
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
