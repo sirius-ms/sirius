@@ -44,8 +44,10 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
                     throw new IllegalArgumentException("Unsupported statistics type: " + stat.getClass());
                 }
 
-                nameBuilder.append(".").append(stat.getLeftGroup())
-                        .append(".").append(stat.getRightGroup())
+                // Group names are user-defined and may contain '.', which is the field-name delimiter used by the
+                // positional split in toPojo. Escape them so the segment count stays fixed.
+                nameBuilder.append(".").append(encodeSegment(stat.getLeftGroup()))
+                        .append(".").append(encodeSegment(stat.getRightGroup()))
                         .append(".").append(stat.getQuantification())
                         .append(".").append(stat.getAggregation());
 
@@ -97,8 +99,8 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
                         .quantType(getQuantRowType())
                         .aggregation(AggregationType.valueOf(split[split.length - 1]))
                         .quantification(QuantMeasure.valueOf(split[split.length - 2]))
-                        .rightGroup(split[split.length - 3])
-                        .leftGroup(split[split.length - 4])
+                        .rightGroup(decodeSegment(split[split.length - 3]))
+                        .leftGroup(decodeSegment(split[split.length - 4]))
                         .foldChange(buffer.getDouble())
                         .leftAbundance(buffer.getDouble())
                         .rightAbundance(buffer.getDouble())
@@ -108,6 +110,18 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
             }
         }
         return stats;
+    }
+
+    /**
+     * Escape '.' (the field-name delimiter) and the escape char itself in a group name so the field name keeps a
+     * fixed segment count. Reversible via {@link #decodeSegment(String)}.
+     */
+    private static String encodeSegment(String segment) {
+        return segment == null ? "" : segment.replace("%", "%25").replace(".", "%2E");
+    }
+
+    private static String decodeSegment(String segment) {
+        return segment.replace("%2E", ".").replace("%25", "%");
     }
 
     @Override
