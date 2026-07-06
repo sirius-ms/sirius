@@ -678,7 +678,7 @@ public class FullTextSearchTest {
                     proj -> new PerPojoDatabaseSearchContext<>(db, null, Collections.emptyMap());
                 SearchService service = new SearchServiceImpl(provider);
                 System.out.println("RE-ANCHORING...");
-                service.reanchorStorageCommitVersion(project);
+                service.reanchorStorageCommitVersion(project, dbFile.toAbsolutePath());
                 System.out.println("RE-ANCHORED.");
             }
 
