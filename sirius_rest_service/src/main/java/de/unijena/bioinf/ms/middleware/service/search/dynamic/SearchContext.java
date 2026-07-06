@@ -46,6 +46,12 @@ public interface SearchContext extends Closeable {
 
     <T> void removeDocumentsById(@NotNull Collection<?> documentId, Class<T> clazz);
 
+    /**
+     * Mark the index for the given type complete/incomplete. An incomplete index (e.g. during a rebuild) is
+     * not persisted on close and is rebuilt on the next open.
+     */
+    <T> void setIndexComplete(Class<T> clazz, boolean complete);
+
     <T> Page<T> search(@Nullable String query, Pageable pageable, Class<T> beanClass);
 
     <T> Page<String> searchIds(@Nullable String query, Pageable pageable, Class<T> beanClass);
