@@ -79,8 +79,6 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
 
     @Override
     public void close(boolean delete) throws IOException {
-        System.out.println("CLOSING SEARCH CONTEXT!!!");
-
         if (delete) {
             removeIndicesFromDb();
         } else {

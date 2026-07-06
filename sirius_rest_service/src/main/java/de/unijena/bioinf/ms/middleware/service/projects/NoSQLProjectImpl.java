@@ -89,7 +89,6 @@ import it.unimi.dsi.fastutil.longs.*;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
 import org.jetbrains.annotations.NotNull;
@@ -147,21 +146,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         this.computeStateProvider = computeStateProvider;
         this.searchService = searchService;
 
-        //todo this is protoype testing code. move to a better place real implementation
         if (this.searchService != null) {
             synchronized (searchIndexLock) {
                 try {
-                    //todo fix wildcard search
                     //todo fix event actions so that new tags are added to features
                     //todo think whether we want store tags on the tagged object because we have lucene index..
-
-                    StopWatch stopWatch = new StopWatch();
-                    stopWatch.start();
                     searchService.openOrCreateProjectIndex(this);
-                    System.out.println("Open/Create Index took: " + stopWatch);
-                    stopWatch.reset();
-                    stopWatch.start();
-
                     createSearchIndex(false);
 
                     //handle tag valuetype cache
@@ -191,44 +181,30 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public void createSearchIndex(boolean force) {
         if (searchService != null) {
             synchronized (searchIndexLock) {
-                StopWatch stopWatch = StopWatch.createStarted();
-                System.out.println();
-                System.out.println("Init new search index...");
                 if (force)
                     searchService.clearIndex(this);
 
                 //todo finde good page size.
                 //load feature index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, AlignedFeature.class)) {
-                    System.out.println("Create new Aligned Feature index...");
                     // Mark incomplete for the duration of the (re)build so an interrupted build is not
                     // persisted and gets rebuilt on the next open (M5).
                     searchService.setIndexComplete(projectId, AlignedFeature.class, false);
                     Pages.forEach(
-                            pageable -> Utils.withTimeR("===> Loaded feature page for Indexing", w -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS)),
-                            page -> Utils.withTime("===> Added feature page to Index", w -> searchService.addDocuments(projectId, page.getContent()))
+                            pageable -> Utils.withTimeR("Loaded feature page for Indexing", w -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS)),
+                            page -> Utils.withTime("Added feature page to Index", w -> searchService.addDocuments(projectId, page.getContent()))
                     );
                     searchService.setIndexComplete(projectId, AlignedFeature.class, true);
-
-                    System.out.println("...Indexing Features took: " + stopWatch);
-                    stopWatch.reset();
-                    stopWatch.start();
                 }
 
                 //load Run index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, Run.class)) {
-                    System.out.println("Create new Run index...");
-
                     searchService.setIndexComplete(projectId, Run.class, false);
                     Pages.forEach(
                             pageable -> findRuns(pageable, Run.OptField.tags),
                             page -> searchService.addDocuments(projectId, page.getContent())
                     );
                     searchService.setIndexComplete(projectId, Run.class, true);
-
-                    System.out.println("...Indexing Runs took: " + stopWatch);
-                    stopWatch.reset();
-                    stopWatch.start();
                 }
 
                 //load compound index
@@ -264,11 +240,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         if (searchService != null) {
             synchronized (searchIndexLock) {
-                StopWatch stopWatch = StopWatch.createStarted();
-                System.out.println();
-                System.out.println("Inserting imported data...");
-
-
                 //Handle FEATURES
                 if (Utils.notNullOrEmpty(alignedFeaturesToUpdate)) {
                     Partition<Long> partition = Partition.ofSize(alignedFeaturesToUpdate.stream().sorted().toList(), LARGE_BATCH_SIZE);
@@ -288,8 +259,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             .toList();
                     searchService.addDocuments(projectId, runsToUpdate);
                 }
-
-                System.out.println("Indexing imported Data took: " + stopWatch);
             }
         }
 
@@ -312,23 +281,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public void updateSearchIndexLongIds(Collection<Long> alignedFeaturesToUpdate) {
         if (searchService != null) {
             synchronized (searchIndexLock) {
-                StopWatch stopWatch = StopWatch.createStarted();
-                System.out.println();
-                System.out.println("Updating search index...");
-
                 LongList idsToUpdate = alignedFeaturesToUpdate.stream().sorted().collect(Collectors.toCollection(LongArrayList::new));
 
                 // request results from db.
                 if (!idsToUpdate.isEmpty()) {
                     Partition<Long> partition = Partition.ofSize(idsToUpdate, LARGE_BATCH_SIZE);
                     for (List<Long> ids : partition) {
-                        List<AlignedFeature> alfs = Utils.withTimeRIo("===> Loaded feature page for Indexing", w ->
+                        List<AlignedFeature> alfs = Utils.withTimeRIo("Loaded feature page for Indexing", w ->
                                 findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS)
                         );
-                        Utils.withTime("===> Updated features from page in Index", w -> searchService.updateDocuments(projectId, alfs));
+                        Utils.withTime("Updated features from page in Index", w -> searchService.updateDocuments(projectId, alfs));
                     }
                 }
-                System.out.println("Updating search index took: " + stopWatch);
             }
         }
 
@@ -347,10 +311,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public void removeFromSearchIndexLongIds(@Nullable Collection<Long> alignedFeaturesIds, @Nullable Collection<Long> compoundIds, @Nullable Collection<Long> runIds) {
         if (searchService != null) {
             synchronized (searchIndexLock) {
-                StopWatch stopWatch = StopWatch.createStarted();
-                System.out.println();
-                System.out.println("Removing deleted data from index...");
-
                 // Delete by id per POJO type. removeDocuments(beans) would infer the index type from
                 // the element type (Long) and thus target a bogus index, so we must use removeDocumentsById.
                 if (Utils.notNullOrEmpty(alignedFeaturesIds))
@@ -359,8 +319,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     searchService.removeDocumentsById(projectId, compoundIds, Compound.class);
                 if (Utils.notNullOrEmpty(runIds))
                     searchService.removeDocumentsById(projectId, runIds, Run.class);
-
-                System.out.println("Removing deleted data from index took: " + stopWatch);
             }
         }
     }
@@ -1790,19 +1748,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
 
-        StopWatch w = StopWatch.createStarted();
         Page<AlignedFeature> features = searchService.search(projectId, searchQuery, pageable, AlignedFeature.class);
-
-        System.out.println("Lucene search took: " + w);
-        w.reset();
-        w.start();
 
         if (features.isEmpty())
             return Page.empty(pageable);
 
         if (!AlignedFeature.INDEXED_OPT_FIELDS.equals(optFields)) {
-            System.out.println("====> CORRECTING OPT FIELDS: " + AlignedFeature.INDEXED_OPT_FIELDS + "   VS   " + optFields);
-
             features.stream().parallel().forEach(f ->
                     annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, msDataSearchPrepared, optFields));
         }
@@ -1827,12 +1778,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 msDataAsCosineQuery,
                 optFields);
 
-        StopWatch w = new StopWatch();
-        w.start();
-
         long total = pageable.isUnpaged() ? features.size() : storage().countAll(AlignedFeatures.class);
-
-        System.out.println("Counting features took: " + w);
 
         return new PageImpl<>(features, pageable, total);
     }
@@ -1846,25 +1792,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private List<AlignedFeature> annotateApiFeatures(@NotNull Stream<AlignedFeatures> apifeatures, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        StopWatch w = new StopWatch();
-        w.start();
-
         //third
         Long2ObjectOpenHashMap<AlignedFeatures> dbalf = apifeatures.collect(Collectors.toMap(AlignedFeatures::getAlignedFeatureId, Function.identity(),
                 (existing, replacement) -> existing, Long2ObjectOpenHashMap::new));
-
-        System.out.println("FAST_FEATURES: Loading features took: " + w);
-        w.reset();
-        w.start();
 
         if (dbalf.isEmpty())
             return List.of();
 
         Long[] ids = dbalf.keySet().stream().sorted().toArray(Long[]::new);
-
-        System.out.println("FAST_FEATURES: Extract feature Ids took: " + w);
-        w.reset();
-        w.start();
 
         TinyBackgroundJJob<Long2ObjectOpenHashMap<QualityReport>> qualJob = null;
         if (optFields.contains(AlignedFeature.OptField.qualities)) {
@@ -1936,11 +1871,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         @NotNull Long2ObjectOpenHashMap<CsiStructureSearchResult> csires = csiJob != null ? csiJob.getResult() : new Long2ObjectOpenHashMap<>();
 
-        System.out.println("FAST_FEATURES: Extract BULK Annotations took: " + w);
-        w.reset();
-        w.start();
-
-
         List<AlignedFeature> features = dbalf.values().stream()
                 .parallel()
                 .map(alf -> {
@@ -1956,8 +1886,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     annotateApiFeature(fid, apiFeture, msDataAsCosineQuery, optFields);
                     return apiFeture;
                 }).toList();
-
-        System.out.println("FAST_FEATURES: Build API features and Extract per feature annotations: " + w);
 
         return features;
     }
@@ -2104,8 +2032,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> upsertTags = new ArrayList<>();
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> insertTags = new ArrayList<>();
 
-            StopWatch w = StopWatch.createStarted();
-
             //todo add would be 20% faster if we would separate update an insert of tags to object.
             //todo can be upsert without knowing the primary key?
             for (Map.Entry<String, ? extends Collection<? extends Tag>> entry : objectToTags.entrySet()) {
@@ -2142,15 +2068,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 storage().upsertAll(upsertTags);
             if (!insertTags.isEmpty())
                 storage().insertAll(insertTags);
-            System.out.println("Added/Updated Tags To NITRITE in: " + w);
-            w.reset();
-            w.start();
 
             if (searchService != null)
                 searchService.addTagsToDocuments(projectId, objectToTags, taggedObjectClass);
-            System.out.println("Added/Updated Tags To LUCENE in: " + w);
-
-
         } catch (IOException e) {
             log.error("Error when assigning tags to Object", e);
             throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
