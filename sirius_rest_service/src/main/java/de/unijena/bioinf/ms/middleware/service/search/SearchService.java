@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,12 @@ public interface SearchService extends AutoCloseable {
 
     void closeProjectIndex(Project<?> project, boolean deleteIndex) throws IOException;
 
-    void reanchorStorageCommitVersion(Project<?> project) throws IOException;
+    /**
+     * Reanchor the persisted index versions to the given (already-closed) project file. The caller must pass
+     * the project file path, captured while the project was still open, so this never depends on the project
+     * being open and never holds a second handle on a file that another connection still owns.
+     */
+    void reanchorStorageCommitVersion(Project<?> project, Path projectFile) throws IOException;
 
     void clearIndex(@NotNull Project<?> project) throws IOException;
 

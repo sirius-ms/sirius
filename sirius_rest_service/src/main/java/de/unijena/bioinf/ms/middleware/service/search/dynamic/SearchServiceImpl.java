@@ -86,13 +86,14 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    public void reanchorStorageCommitVersion(Project<?> project) throws IOException {
-        if (project instanceof NoSQLProjectImpl nosqlProj) {
-            java.nio.file.Path file = java.nio.file.Path.of(nosqlProj.getProjectSpaceManager().getLocation());
+    public void reanchorStorageCommitVersion(Project<?> project, java.nio.file.Path projectFile) throws IOException {
+        if (project instanceof NoSQLProjectImpl) {
             de.unijena.bioinf.storage.db.nosql.Metadata metadata = de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase.buildMetadata();
 
-            // Re-open a temporary database on the compacted file to update versions cleanly and safely
-            try (de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase tempDb = new de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase(file, metadata)) {
+            // Re-open a temporary database on the compacted file to update versions cleanly and safely.
+            // The path was captured by the caller while the project was still open, so we neither depend on
+            // the (now closed) project handle nor open a second handle on a file another connection owns.
+            try (de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase tempDb = new de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase(projectFile, metadata)) {
                 long currentVersion = tempDb.getStorageCommitId();
                 if (currentVersion != -1) {
                     long targetVersion = currentVersion + 1;
