@@ -1630,7 +1630,51 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(groupName), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
         if (tagGroup.isEmpty())
             return Page.empty(pageable);
-        return findCompounds(tagGroup.get().getLuceneQuery(), pageable, msDataSearchPrepared, optFields, optFeatureFields);
+
+        if (searchService == null)
+            throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform group query. Search service not available!");
+
+        // INTERMEDIATE SOLUTION: compound-level tagging and indexing are not supported yet, so a tag group
+        // can only match aligned features. We resolve the group on the aligned-feature index and aggregate
+        // the matching features up to their (distinct) compounds. Replace this with a real compound-level
+        // search once compound-based tagging and indexing are implemented.
+        List<String> matchingFeatureIds = searchService
+                .searchIds(projectId, tagGroup.get().getLuceneQuery(), Pageable.unpaged(), AlignedFeature.class)
+                .getContent();
+        if (matchingFeatureIds.isEmpty())
+            return Page.empty(pageable);
+
+        Long[] featureIds = matchingFeatureIds.stream().map(Long::parseLong).toArray(Long[]::new);
+        // distinct compound ids of the matching features, in feature-match order (stable paging)
+        List<Long> compoundIds = storage()
+                .findStr(Filter.where("alignedFeatureId").in(featureIds), AlignedFeatures.class)
+                .map(AlignedFeatures::getCompoundId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (compoundIds.isEmpty())
+            return Page.empty(pageable);
+
+        List<Long> pageIds = pageable.isUnpaged()
+                ? compoundIds
+                : compoundIds.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).toList();
+
+        Map<Long, de.unijena.bioinf.ms.persistence.model.core.Compound> byId = storage()
+                .findStr(Filter.where("compoundId").in(pageIds.toArray(Long[]::new)), de.unijena.bioinf.ms.persistence.model.core.Compound.class)
+                .collect(Collectors.toMap(de.unijena.bioinf.ms.persistence.model.core.Compound::getCompoundId, Function.identity()));
+
+        List<Compound> compounds = pageIds.stream()
+                .map(byId::get)
+                .filter(Objects::nonNull)
+                .peek(project()::fetchAdductFeatures)
+                .peek(c -> {
+                    if (optFeatureFields.contains(AlignedFeature.OptField.msData))
+                        c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData));
+                })
+                .map(c -> convertToApiCompound(c, msDataSearchPrepared, optFields, optFeatureFields))
+                .toList();
+
+        return new PageImpl<>(compounds, pageable, compoundIds.size());
     }
 
     private void setProjectTypeOrThrow(SiriusProjectDocumentDatabase<? extends Database<?>> ps) {
