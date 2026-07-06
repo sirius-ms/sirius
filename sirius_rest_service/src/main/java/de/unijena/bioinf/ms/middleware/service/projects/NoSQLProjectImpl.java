@@ -131,6 +131,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Getter
     private final SearchService searchService;
 
+    /**
+     * Per-project lock serializing this project's search-index build/update/remove operations against each
+     * other (they do check-then-act on the same index). It is intentionally NOT the shared searchService
+     * monitor: different projects have independent indices and must be able to (re)build concurrently.
+     */
+    private final Object searchIndexLock = new Object();
+
     private final @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
 
     @SneakyThrows
@@ -142,7 +149,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         //todo this is protoype testing code. move to a better place real implementation
         if (this.searchService != null) {
-            synchronized (this.searchService) {
+            synchronized (searchIndexLock) {
                 try {
                     //todo fix wildcard search
                     //todo fix event actions so that new tags are added to features
@@ -183,7 +190,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public void createSearchIndex(boolean force) {
         if (searchService != null) {
-            synchronized (searchService) {
+            synchronized (searchIndexLock) {
                 StopWatch stopWatch = StopWatch.createStarted();
                 System.out.println();
                 System.out.println("Init new search index...");
@@ -250,7 +257,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public void addToSearchIndexLongIds(@Nullable Collection<Long> alignedFeaturesToUpdate, @Nullable Collection<Long> runIds) {
 
         if (searchService != null) {
-            synchronized (searchService) {
+            synchronized (searchIndexLock) {
                 StopWatch stopWatch = StopWatch.createStarted();
                 System.out.println();
                 System.out.println("Inserting imported data...");
@@ -298,7 +305,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     public void updateSearchIndexLongIds(Collection<Long> alignedFeaturesToUpdate) {
         if (searchService != null) {
-            synchronized (searchService) {
+            synchronized (searchIndexLock) {
                 StopWatch stopWatch = StopWatch.createStarted();
                 System.out.println();
                 System.out.println("Updating search index...");
@@ -333,7 +340,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     public void removeFromSearchIndexLongIds(@Nullable Collection<Long> alignedFeaturesIds, @Nullable Collection<Long> compoundIds, @Nullable Collection<Long> runIds) {
         if (searchService != null) {
-            synchronized (searchService) {
+            synchronized (searchIndexLock) {
                 StopWatch stopWatch = StopWatch.createStarted();
                 System.out.println();
                 System.out.println("Removing deleted data from index...");
