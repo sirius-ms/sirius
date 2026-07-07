@@ -9,6 +9,7 @@
 |------------ | ------------- | ------------- | -------------|
 |**name** | **String** |  |  [optional] |
 |**smarts** | **String** |  |  [optional] |
+|**preshipped** | **Boolean** |  |  [optional] |
 
 
 
