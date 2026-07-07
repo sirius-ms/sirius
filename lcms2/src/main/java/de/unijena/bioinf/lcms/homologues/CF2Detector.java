@@ -15,7 +15,6 @@ import de.unijena.bionf.fastcosine.FastCosine;
 import de.unijena.bionf.fastcosine.SearchPreparedMergedSpectrum;
 import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
-import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
 import java.util.*;
@@ -98,7 +97,6 @@ public class CF2Detector {
             if (fls <= 0 && length < 4) continue;
             List<AlignedFeatures> ms2 = compl.stream().flatMap(x->x.features.stream()).filter(AbstractAlignedFeatures::isHasMsMs).toList();
             List<SearchPreparedSpectrum> specs = ms2.stream().map(x-> fastCosine.prepareQuery(x.getAverageMass(), provider.getMsMsSpectrumOf(x).get())).toList();
-            final FloatArrayList sameMz = new FloatArrayList(), differentMz = new FloatArrayList();
             List<Node> ms2Nodes = ms2.stream().map(x->{Node n = new Node(); n.features.add(x); return n;}).toList();
             for (int i=0; i < ms2.size(); ++i) {
                 final SearchPreparedSpectrum l = specs.get(i);
@@ -107,29 +105,12 @@ public class CF2Detector {
                     SpectralSimilarity spectralSimilarity = fastCosine.fastModifiedCosine(l, r);
                     if (Math.abs(l.getParentMass()-r.getParentMass()) > 0.25) {
                         final float cosine = (float)(spectralSimilarity.similarity - Math.max(0,6-spectralSimilarity.sharedPeaks)*0.05);
-                        differentMz.add(cosine);
                         if (cosine>=0.65) {
                             ms2Nodes.get(i).nextNeighbors.add(ms2Nodes.get(j));
                             ms2Nodes.get(j).nextNeighbors.add(ms2Nodes.get(i));
                         }
-                    } else {
-                        sameMz.add(spectralSimilarity.sharedPeaks<6 ? 0 : spectralSimilarity.similarity);
                     }
                 }
-            }
-            sameMz.sort(null);
-            differentMz.sort(null);
-            {
-                FloatArrayList f = sameMz;
-                System.out.printf("\tsame m/z cosine similarities: avg = %.2f, median = %.2f, max = %.2f, #threshold(0.5) = %d, #threshold(0.75) = %d\n", f.doubleStream().average().orElse(0d),
-                        f.isEmpty() ? 0d : f.getFloat(f.size()/2), f.isEmpty() ? 0d : f.getFloat(f.size()-1), f.doubleStream().filter(x->x>=0.5).count(),
-                        f.doubleStream().filter(x->x>=0.75).count());
-            }
-            {
-                FloatArrayList f = differentMz;
-                System.out.printf("\tdifferent m/z cosine similarities: avg = %.2f, median = %.2f, max = %.2f, #threshold(0.5) = %d, #threshold(0.75) = %d\n", f.doubleStream().average().orElse(0d),
-                        f.isEmpty() ? 0d : f.getFloat(f.size()/2), f.isEmpty() ? 0d : f.getFloat(f.size()-1), f.doubleStream().filter(x->x>=0.5).count(),
-                        f.doubleStream().filter(x->x>=0.75).count());
             }
             final Element F = PeriodicTable.getInstance().getByName("F");
             // check if we have a series
