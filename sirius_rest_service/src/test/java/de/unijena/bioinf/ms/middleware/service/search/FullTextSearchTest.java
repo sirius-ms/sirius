@@ -354,7 +354,7 @@ public class FullTextSearchTest {
     }
 
     @Test
-    public void testInchiKeyRewriteAppliesThroughBoostQuery_M7() {
+    public void testInchiKeyRewriteAppliesThroughBoostQuery() {
         searchService.addDocument(projectId, new InchiKeyPojo("inchikey-1", "WZPVREJFMGASTU"));
 
         // The trailing ^2 makes the parser wrap the term in a BoostQuery. The InChIKey rewriter (27 -> 14

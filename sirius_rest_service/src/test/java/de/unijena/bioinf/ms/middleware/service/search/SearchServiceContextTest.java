@@ -22,7 +22,7 @@ public class SearchServiceContextTest {
     }
 
     @Test
-    public void searchOnUnopenedProjectThrowsClearException_H12() throws IOException {
+    public void searchOnUnopenedProjectThrowsClearException() throws IOException {
         SearchService service = serviceWithNoOpenProjects();
         assertThrows(IllegalStateException.class,
                 () -> service.search("never-opened", "anything", Pageable.unpaged(), Object.class),
@@ -30,7 +30,7 @@ public class SearchServiceContextTest {
     }
 
     @Test
-    public void addDocumentToUnopenedProjectThrowsClearException_H12() throws IOException {
+    public void addDocumentToUnopenedProjectThrowsClearException() throws IOException {
         SearchService service = serviceWithNoOpenProjects();
         assertThrows(IllegalStateException.class,
                 () -> service.addDocument("never-opened", new Object()),

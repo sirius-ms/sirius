@@ -46,7 +46,7 @@ public class IndexCompletenessTest {
     }
 
     @Test
-    public void completeIndexIsPersisted_M5() throws Exception {
+    public void completeIndexIsPersisted() throws Exception {
         Path dbFile = Files.createTempFile("m5-complete", ".db");
         try {
             Metadata md = MsProjectDocumentDatabase.buildMetadata();
@@ -71,7 +71,7 @@ public class IndexCompletenessTest {
     }
 
     @Test
-    public void incompleteIndexIsNotPersisted_M5() throws Exception {
+    public void incompleteIndexIsNotPersisted() throws Exception {
         Path dbFile = Files.createTempFile("m5-incomplete", ".db");
         try {
             Metadata md = MsProjectDocumentDatabase.buildMetadata();
@@ -98,7 +98,7 @@ public class IndexCompletenessTest {
     }
 
     @Test
-    public void failedWriteMarksIndexIncomplete_M4() throws Exception {
+    public void failedWriteMarksIndexIncomplete() throws Exception {
         SinglePojoLuceneIndexManager<TestPojo> mgr = new SinglePojoLuceneIndexManager<>(
                 new ByteBuffersDirectory(), TestPojo.class, null, name -> ValueType.TEXT);
         assertTrue(mgr.isComplete(), "a fresh index is complete by default");

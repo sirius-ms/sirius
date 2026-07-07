@@ -40,7 +40,7 @@ public class MapperFixesTest {
     // ---- H6: TagMapper integer round-trip ----
 
     @Test
-    public void integerTagRoundTrip_H6() {
+    public void integerTagRoundTrip() {
         TagMapper mapper = new TagMapper(name -> ValueType.INTEGER);
         Map<String, Tag> tags = Map.of("count", Tag.builder().tagName("count").value(42).build());
 
@@ -55,7 +55,7 @@ public class MapperFixesTest {
     // ---- H8a: LipidAnnotationMapper reads the correct getters ----
 
     @Test
-    public void lipidAnnotationIndexesCorrectFields_H8() {
+    public void lipidAnnotationIndexesCorrectFields() {
         LipidAnnotation lipid = LipidAnnotation.builder()
                 .lipidSpecies("PC 34:1")
                 .lipidMapsId("LMGP01010005")
@@ -75,7 +75,7 @@ public class MapperFixesTest {
     // ---- H8b: CompoundClassesMapper tolerates missing NPC classification ----
 
     @Test
-    public void compoundClassesWithoutNpcDoesNotThrow_H8() {
+    public void compoundClassesWithoutNpcDoesNotThrow() {
         CompoundClasses cc = new CompoundClasses(); // no NPC, no ClassyFire
         assertDoesNotThrow(() -> new CompoundClassesMapper().toIndexableFields("classes", cc),
                 "indexing a compound without NPC classification must not NPE (H8)");
@@ -91,7 +91,7 @@ public class MapperFixesTest {
     }
 
     @Test
-    public void getIdValueWorksForRenamedField_H8() {
+    public void getIdValueWorksForRenamedField() {
         GenericPojoMapper<RenamedIdPojo> mapper = new GenericPojoMapper<>(RenamedIdPojo.class);
         assertEquals("ID-1", mapper.getIdValue(new RenamedIdPojo("ID-1")),
                 "getIdValue must resolve a field whose @IndexField name differs from the Java field name (H8)");
@@ -110,7 +110,7 @@ public class MapperFixesTest {
     }
 
     @Test
-    public void getIdValueWorksForInheritedField_H8() {
+    public void getIdValueWorksForInheritedField() {
         GenericPojoMapper<ChildPojo> mapper = new GenericPojoMapper<>(ChildPojo.class);
         ChildPojo child = new ChildPojo();
         child.id = "ID-2";
@@ -130,7 +130,7 @@ public class MapperFixesTest {
     }
 
     @Test
-    public void sortableCollectionIsRejected_H9() {
+    public void sortableCollectionIsRejected() {
         GenericPojoMapper<SortableCollectionPojo> mapper = new GenericPojoMapper<>(SortableCollectionPojo.class);
         Map<String, PointsConfig> pointsConfigs = new HashMap<>();
         Map<String, Analyzer> analyzers = new HashMap<>();

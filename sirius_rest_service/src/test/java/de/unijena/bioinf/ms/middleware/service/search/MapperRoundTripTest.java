@@ -150,7 +150,7 @@ public class MapperRoundTripTest {
      * range query returns wrong results. Expected to fail until B4 is fixed (Locale.ROOT).
      */
     @Test
-    public void testNumericRangeQueryUnderGermanLocale_RED_B4() throws IOException {
+    public void testNumericRangeQueryUnderGermanLocale() throws IOException {
         java.util.Locale previous = java.util.Locale.getDefault();
         java.util.Locale.setDefault(java.util.Locale.GERMANY);
         try {
@@ -177,7 +177,7 @@ public class MapperRoundTripTest {
      * LongPoint nor restored on read-back. Expected to fail until H2 is fixed.
      */
     @Test
-    public void testDateFieldRoundTrip_RED_H2() throws IOException {
+    public void testDateFieldRoundTrip() throws IOException {
         SearchService service = newService();
         try {
             Date created = new Date(1_600_000_000_000L);
@@ -197,7 +197,7 @@ public class MapperRoundTripTest {
      * Expected to fail until M11 is fixed.
      */
     @Test
-    public void testNullNestedStaysNull_RED_M11() throws IOException {
+    public void testNullNestedStaysNull() throws IOException {
         SearchService service = newService();
         try {
             service.addDocument(PROJECT_ID, new ParentPojo("1", null));
@@ -210,7 +210,7 @@ public class MapperRoundTripTest {
     }
 
     @Test
-    public void deepPaginationDoesNotOverflow_C6() throws IOException {
+    public void deepPaginationDoesNotOverflow() throws IOException {
         SearchService service = newService();
         try {
             service.addDocument(PROJECT_ID, mz("1", 1.0));

@@ -42,7 +42,7 @@ public class TempProjectIndexCleanupTest {
     }
 
     @Test
-    public void tempProjectIndexDirIsDeletedOnClose_B3() throws Exception {
+    public void tempProjectIndexDirIsDeletedOnClose() throws Exception {
         Path indexingHome = Files.createTempDirectory("b3-index-home");
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try {
