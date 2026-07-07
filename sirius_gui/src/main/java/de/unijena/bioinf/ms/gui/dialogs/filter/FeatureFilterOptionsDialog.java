@@ -498,7 +498,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         hasMs1.setSelected(false);
         hasMsMs.setSelected(false);
 
-        blankFilter.setEnabled(false);
+        blankFilter.setSelected(false);
     }
 
     private void resetSpinnerValues() {
