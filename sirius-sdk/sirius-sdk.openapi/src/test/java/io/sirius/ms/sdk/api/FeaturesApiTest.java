@@ -28,6 +28,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -181,8 +182,9 @@ public class FeaturesApiTest {
                 Arguments.of("[M++H]+", "[M+H]+", true), // Invalid double plus
                 Arguments.of("[M+2(H2O)+H]+","[M+H4O2+H]+", true),  // multiplier before adduct with wrong backets
                 Arguments.of("[M+H]++", "[M+H]+", true), // Invalid charge format
-                Arguments.of("          ", null, true), // Empty string
-                Arguments.of("", null, true), // Empty string
+                // blank input -> no adduct detected -> API reports the unknown ion type as fallback
+                Arguments.of("          ", "[M+?]+", true),
+                Arguments.of("", "[M+?]+", true),
                 //todo they should fail in future but are currently not failing
                 Arguments.of("[M+X+H]+", "[M+H]+", true), // Invalid element
 
@@ -208,11 +210,9 @@ public class FeaturesApiTest {
         assertNotNull(importedFeatures);
         if (shouldSucceed) {
             assertEquals(1, importedFeatures.size());
-            // Verify the imported feature
-            if (expectedResult != null)
-                assertEquals(expectedResult, importedFeatures.getFirst().getDetectedAdducts().iterator().next().replaceAll("\\s+",""));
-            else
-                assertTrue(importedFeatures.getFirst().getDetectedAdducts().isEmpty());
+            // Verify the imported feature. detectedAdducts is never empty: if no (valid) adduct was given,
+            // the unknown ion type ([M+?]+) is reported as fallback.
+            assertEquals(expectedResult, importedFeatures.getFirst().getDetectedAdducts().iterator().next().replaceAll("\\s+",""));
         } else {
             // Test failure cases
             assertEquals(0, importedFeatures.size());
@@ -222,28 +222,69 @@ public class FeaturesApiTest {
 
     private static Stream<Arguments> adductSetProvider() {
         return Stream.of(
+                // no adducts given -> unknown ion type as fallback
+                Arguments.of(Set.of(), Set.of("[M+?]+")),
                 // Standard valid adducts
-                Arguments.of(Set.of(), 0),
-                Arguments.of(Set.of("[M+H]+"), 1),
-                Arguments.of(Set.of("[M+H]+", "[M+Na]+"), 2),
-                Arguments.of(Set.of("[M+H]+", "[M+Na]+", "(M+H)+"), 2),
-                Arguments.of(Set.of("[M+H]+", "[M+Na]+", "(M+K)+"), 3),
-                Arguments.of(Set.of("[M+H]+2", "[M+Na]+", "(M+H)+"), 2),
-                Arguments.of(Set.of("[M+H]+2", "[M-H]-", "(M+H)+"), 1),
-                Arguments.of(Set.of("[M+H]+2", "[M-H]-", "[M+H]2+"), 0)
+                Arguments.of(Set.of("[M+H]+"), Set.of("[M+H]+")),
+                Arguments.of(Set.of("[M+H]+", "[M+Na]+"), Set.of("[M+H]+", "[M+Na]+")),
+                Arguments.of(Set.of("[M+H]+", "[M+Na]+", "(M+H)+"), Set.of("[M+H]+", "[M+Na]+")), // (M+H)+ corrects to duplicate [M+H]+
+                Arguments.of(Set.of("[M+H]+", "[M+Na]+", "(M+K)+"), Set.of("[M+H]+", "[M+Na]+", "[M+K]+")),
+                Arguments.of(Set.of("[M+H]+2", "[M+Na]+", "(M+H)+"), Set.of("[M+Na]+", "[M+H]+")), // invalid [M+H]+2 is dropped
+                Arguments.of(Set.of("[M+H]+2", "[M-H]-", "(M+H)+"), Set.of("[M+H]+")), // only the correctable valid one remains
+                Arguments.of(Set.of("[M+H]+2", "[M-H]-", "[M+H]2+"), Set.of("[M+?]+")) // all invalid -> unknown ion type as fallback
         );
     }
 
 
     @ParameterizedTest
     @MethodSource("adductSetProvider")
-    public void testMultipleAdducts(Set<String> adducts, int expectedValidAdducts){
+    public void testMultipleAdducts(Set<String> adducts, Set<String> expectedAdducts){
         FeatureImport feature = TestSetup.makeProtonatedValium();
         feature.setDetectedAdducts(adducts);
         List<AlignedFeature> importedFeatures = instance.addAlignedFeatures(project.getProjectId(), List.of(feature), null, null);
         assertNotNull(importedFeatures);
         assertEquals(1, importedFeatures.size());
         AlignedFeature featureCreated = importedFeatures.getFirst();
-        assertEquals(expectedValidAdducts, featureCreated.getDetectedAdducts().size());
+        assertEquals(expectedAdducts, stripWhitespace(featureCreated.getDetectedAdducts()));
+    }
+
+    /**
+     * detectedAdducts of an imported feature must never be empty: if no adducts are provided at all,
+     * the unknown ion type matching the feature's charge is reported as fallback.
+     */
+    @Test
+    public void testUnknownAdductFallbackWhenNoAdductsGiven() {
+        FeatureImport feature = TestSetup.makeProtonatedValium();
+        feature.setDetectedAdducts(null);
+
+        List<AlignedFeature> importedFeatures = instance.addAlignedFeatures(project.getProjectId(), List.of(feature), null, null);
+        assertNotNull(importedFeatures);
+        assertEquals(1, importedFeatures.size());
+        assertEquals(Set.of("[M+?]+"), stripWhitespace(importedFeatures.getFirst().getDetectedAdducts()));
+    }
+
+    /**
+     * The unknown ion type fallback must match the ion mode: negative charge -> [M+?]-.
+     */
+    @Test
+    public void testUnknownAdductFallbackMatchesNegativeIonMode() {
+        // Deprotonated valium (C16H13ClN2O, neutral monoisotopic mass 284.0716 Da): [M-H]- at m/z 283.0643
+        BasicSpectrum deprotonatedMs1 = new BasicSpectrum()
+                .addPeaksItem(new SimplePeak().mz(283.0643).intensity(11052.15))
+                .addPeaksItem(new SimplePeak().mz(284.0676).intensity(1908.13))
+                .addPeaksItem(new SimplePeak().mz(285.0614).intensity(3634.36));
+        FeatureImport feature = new FeatureImport().name("Valium deprotonated").externalFeatureId("deprotonatedFeature")
+                .ionMass(283.0643).charge(-1)
+                .mergedMs1(deprotonatedMs1);
+
+        List<AlignedFeature> importedFeatures = instance.addAlignedFeatures(project.getProjectId(), List.of(feature), null, null);
+        assertNotNull(importedFeatures);
+        assertEquals(1, importedFeatures.size());
+        assertEquals(-1, importedFeatures.getFirst().getCharge());
+        assertEquals(Set.of("[M+?]-"), stripWhitespace(importedFeatures.getFirst().getDetectedAdducts()));
+    }
+
+    private static Set<String> stripWhitespace(Set<String> adducts) {
+        return adducts.stream().map(adduct -> adduct.replaceAll("\\s+", "")).collect(Collectors.toSet());
     }
 }

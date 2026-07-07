@@ -90,7 +90,9 @@ public class AlignedFeature implements Taggable {
     protected int charge;
 
     /**
-     *  Adducts of this feature that have been detected during preprocessing.
+     * Adducts of this feature that have been detected during preprocessing.
+     * Never empty: if no adduct could be detected, the unknown ion type matching the feature's
+     * charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.
      */
     @IndexField
     @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
