@@ -191,8 +191,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     // persisted and gets rebuilt on the next open (M5).
                     searchService.setIndexComplete(projectId, AlignedFeature.class, false);
                     Pages.forEach(
-                            pageable -> Utils.withTimeR("Loaded feature page for Indexing", w -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS)),
-                            page -> Utils.withTime("Added feature page to Index", w -> searchService.addDocuments(projectId, page.getContent()))
+                            pageable -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS),
+                            page -> searchService.addDocuments(projectId, page.getContent())
                     );
                     searchService.setIndexComplete(projectId, AlignedFeature.class, true);
                 }
@@ -287,10 +287,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 if (!idsToUpdate.isEmpty()) {
                     Partition<Long> partition = Partition.ofSize(idsToUpdate, LARGE_BATCH_SIZE);
                     for (List<Long> ids : partition) {
-                        List<AlignedFeature> alfs = Utils.withTimeRIo("Loaded feature page for Indexing", w ->
-                                findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS)
-                        );
-                        Utils.withTime("Updated features from page in Index", w -> searchService.updateDocuments(projectId, alfs));
+                        List<AlignedFeature> alfs = findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS);
+                        searchService.updateDocuments(projectId, alfs);
                     }
                 }
             }
