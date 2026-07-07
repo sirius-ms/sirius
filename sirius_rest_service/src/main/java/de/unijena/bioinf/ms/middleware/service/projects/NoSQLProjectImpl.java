@@ -1961,6 +1961,24 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         removeFromSearchIndex(alignedFeatureIds, null, null);
     }
 
+    @Override
+    @SneakyThrows
+    public void deleteAlignedFeaturesByQuery(@NotNull String searchQuery) {
+        if (searchService == null)
+            throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot delete by query. Search service not available!");
+        // Require an explicit query: a blank query matches every feature and would delete the whole project.
+        if (Utils.isNullOrBlank(searchQuery))
+            throw new ResponseStatusException(BAD_REQUEST, "A non-empty search query is required to delete aligned features by query.");
+
+        // Resolve the query against the same index the listing uses, then reuse the id-based delete
+        // (which cascades the DB delete and keeps the search index in sync).
+        List<String> matchingFeatureIds = searchService
+                .searchIds(projectId, searchQuery, Pageable.unpaged(), AlignedFeature.class)
+                .getContent();
+        if (!matchingFeatureIds.isEmpty())
+            deleteAlignedFeaturesByIds(matchingFeatureIds);
+    }
+
     @SneakyThrows
     @Override
     public List<de.unijena.bioinf.ms.middleware.model.features.Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId) {

@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -168,5 +169,41 @@ public class IndexConsistencyTest {
         List<String> indexed = indexedFeatureIds();
         assertFalse(indexed.contains(deletedFeatureId),
                 "aligned feature of a deleted compound must be removed from the search index (B1)");
+    }
+
+    /**
+     * Delete-by-query removes exactly the features matching the query (resolved server-side against the
+     * search index) from both the DB and the index, and leaves the non-matching features untouched.
+     */
+    @Test
+    public void deleteByQueryRemovesMatchingFeaturesAndKeepsTheRest() {
+        addTwoCompounds();
+
+        project.deleteAlignedFeaturesByQuery("name:alpha");
+
+        // DB: only the non-matching feature (beta) remains.
+        List<AlignedFeature> remaining = project.findAlignedFeatures(
+                Pageable.unpaged(), false, EnumSet.noneOf(AlignedFeature.OptField.class)).getContent();
+        assertEquals(1, remaining.size(), "only the non-matching feature must remain in the DB");
+        assertEquals("beta", remaining.getFirst().getName(), "the matching feature (alpha) must be deleted");
+
+        // Index: only the non-matching feature remains, and it is beta.
+        List<String> indexed = indexedFeatureIds();
+        assertEquals(1, indexed.size(), "only the non-matching feature must remain in the index");
+        assertEquals(remaining.getFirst().getAlignedFeatureId(), indexed.getFirst(),
+                "the surviving indexed feature must be the non-matching (beta) one");
+    }
+
+    /**
+     * A blank query would match every feature; delete-by-query must reject it rather than wipe the project.
+     */
+    @Test
+    public void deleteByBlankQueryIsRejectedAndDeletesNothing() {
+        addTwoCompounds();
+
+        assertThrows(ResponseStatusException.class, () -> project.deleteAlignedFeaturesByQuery("   "),
+                "a blank query must be rejected to avoid deleting every feature");
+
+        assertEquals(2, indexedFeatureIds().size(), "no features may be deleted when the query is rejected");
     }
 }
