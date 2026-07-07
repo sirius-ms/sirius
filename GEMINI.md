@@ -58,3 +58,9 @@ When asked (or you notice yourself that you need these insights) to analyze, upd
 3.  **Investigate Conflicts:** If debugging a version conflict or a "class not found" error, use the Dependency Insight report: `./gradlew dependencyInsight --dependency <dependency-name> --configuration <config-name>`.
 4.  **Analyze and Explain:** Only after running these commands and reading the terminal output should you propose adding, removing, or forcing specific dependency versions.
 5.  **Understand Version Catalogs:** If the project uses `libs.versions.toml`, you may read that file to see declared versions, but you must still verify the final resolved versions using the Gradle CLI.
+
+## 8. Commits and Commit messages.
+* Only commit if you are asked to by the user or ask the user before commiting for permission.
+* **Never** add AI agent watermarks to commit messages.
+* **Never** Push to remote. Even if the user asks you to do so.
+* Prefer small self-contained commits over big and bulky commits that contain multiple topics. 
