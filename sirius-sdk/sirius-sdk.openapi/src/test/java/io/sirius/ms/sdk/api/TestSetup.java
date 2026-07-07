@@ -50,6 +50,9 @@ public class TestSetup {
         SIRIUS_PW_ENV = System.getenv("SIRIUS_PW");
         SIRIUS_ACTIVE_SUB = System.getenv("SIRIUS_SUB");
 
+        requireCredentials(SIRIUS_USER_ENV, "SIRIUS_USER");
+        requireCredentials(SIRIUS_PW_ENV, "SIRIUS_PW");
+
         if (!Files.exists(tempDir)) {
             try {
                 Files.createDirectories(tempDir);
@@ -58,25 +61,48 @@ public class TestSetup {
             }
         }
 
-        // use content dir of current module to navigate relatively to the bootjar location. Since the working directory is not always the same.
-        Path bootJar;
+        siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, true, true, findBootJar());
+
+        // Log in exactly once per test session. Fail fast so a broken account setup produces one clear error
+        // instead of many confusing downstream test failures. A reused, already logged-in instance is left as is.
+        loginIfNeeded();
+    }
+
+    static void requireCredentials(String value, String envVariableName) {
+        if (value == null || value.isBlank())
+            throw new IllegalStateException("Environment variable '" + envVariableName + "' must be set to run integration tests against the SIRIUS web services.");
+    }
+
+    // use content dir of current module to navigate relatively to the bootjar location. Since the working directory is not always the same.
+    static Path findBootJar() throws IOException {
+        Path dataDir;
+        try {
+            dataDir = Paths.get(TestSetup.class.getResource("/data/").toURI());
+        } catch (Exception e) {
+            throw new IOException("Failed to locate test data directory", e);
+        }
         try (Stream<Path> walker = Files.walk(dataDir.getParent().getParent().getParent().getParent().getParent().getParent()
-                .resolve("sirius_rest_service/build/libs"))){
-            bootJar = walker.filter(p -> p.getFileName().toString().matches("sirius_rest_service-.*-boot.jar")).max(Comparator.comparing(p -> {
+                .resolve("sirius_rest_service/build/libs"))) {
+            return walker.filter(p -> p.getFileName().toString().matches("sirius_rest_service-.*-boot.jar")).max(Comparator.comparing(p -> {
                         try {
-                          return Files.getLastModifiedTime(p);
+                            return Files.getLastModifiedTime(p);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
                     }))
-                    .orElseThrow(() -> new IOException("Could not finger boot jar for testing."));
+                    .orElseThrow(() -> new IOException("Could not find boot jar for testing."));
         }
-
-        siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, true, true, bootJar);
     }
 
     public synchronized void destroy(){
         siriusClient.close();
+    }
+
+    public synchronized static void destroyIfCreated() {
+        if (INSTANCE != null) {
+            INSTANCE.destroy();
+            INSTANCE = null;
+        }
     }
 
     private synchronized Path getResourceFilePath(String resourcePath) {
@@ -177,13 +203,13 @@ public class TestSetup {
                 siriusClient.account().login(
                         true,
                         new AccountCredentials()
-                                .username(TestSetup.getInstance().getSIRIUS_USER_ENV())
-                                .password(TestSetup.getInstance().getSIRIUS_PW_ENV()),
+                                .username(SIRIUS_USER_ENV)
+                                .password(SIRIUS_PW_ENV),
                         true, null
                 );
             }
         } catch (Exception e) {
-            log.error("Error while logging in. Some tests might fail as subsequent error.", e);
+            throw new IllegalStateException("Not logged in and re-login failed. Either the account state was corrupted by a previous test or the auth service is unreachable.", e);
         }
     }
 
