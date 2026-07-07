@@ -76,14 +76,14 @@ public class NullSafetyTest {
     }
 
     @Test
-    public void closeWithoutSearchServiceDoesNotThrow_B2() {
+    public void closeWithoutSearchServiceDoesNotThrow() {
         NoSQLProjectImpl project = projectWithSearchService(null);
         assertDoesNotThrow(() -> project.close(),
                 "close() must not NPE when search is disabled and must still close the project-space manager (B2)");
     }
 
     @Test
-    public void addAlignedFeaturesWithoutSearchServiceDoesNotThrow_H1() {
+    public void addAlignedFeaturesWithoutSearchServiceDoesNotThrow() {
         NoSQLProjectImpl project = projectWithSearchService(null);
         assertDoesNotThrow(() -> project.addAlignedFeatures(
                         List.of(feature("foo", "FID-A")), null,
@@ -92,14 +92,14 @@ public class NullSafetyTest {
     }
 
     @Test
-    public void removeTagsFromObjectWithoutSearchServiceDoesNotThrow_H1() {
+    public void removeTagsFromObjectWithoutSearchServiceDoesNotThrow() {
         NoSQLProjectImpl project = projectWithSearchService(null);
         assertDoesNotThrow(() -> project.removeTagsFromObject(AlignedFeature.class, "1", List.of("someTag")),
                 "removeTagsFromObject must not NPE when search is disabled (H1)");
     }
 
     @Test
-    public void constructionSurvivesSearchIndexInitFailure_H12() throws IOException {
+    public void constructionSurvivesSearchIndexInitFailure() throws IOException {
         SearchService throwing = Mockito.mock(SearchService.class);
         Mockito.doThrow(new RuntimeException("simulated index init failure"))
                 .when(throwing).openOrCreateProjectIndex(Mockito.any());

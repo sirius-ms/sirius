@@ -57,7 +57,7 @@ public class CompactCloseTest {
     }
 
     @Test
-    public void closeWithCompactReanchorsWithoutHandleConflict_M2() throws Exception {
+    public void closeWithCompactReanchorsWithoutHandleConflict() throws Exception {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         Path indexHome1 = Files.createTempDirectory("compact-index-1");
         Path indexHome2 = Files.createTempDirectory("compact-index-2");

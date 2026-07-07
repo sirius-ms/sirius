@@ -90,7 +90,7 @@ public class CompoundGroupSearchTest {
     }
 
     @Test
-    public void compoundGroupFilteringViaFeatureIndex_M6() {
+    public void compoundGroupFilteringViaFeatureIndex() {
         project.createTags(List.of(
                 TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT)
                         .possibleValues(List.of("sample", "blank")).build()), true);

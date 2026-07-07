@@ -42,7 +42,7 @@ public class IndexConcurrencyTest {
     }
 
     @Test
-    public void concurrentReadsAndWritesAreSafe_H10() throws Exception {
+    public void concurrentReadsAndWritesAreSafe() throws Exception {
         Project<?> mockProject = Mockito.mock(Project.class);
         Mockito.when(mockProject.getProjectId()).thenReturn(PROJECT_ID);
         Mockito.when(mockProject.getSystemUID()).thenReturn("concurrency-uid");

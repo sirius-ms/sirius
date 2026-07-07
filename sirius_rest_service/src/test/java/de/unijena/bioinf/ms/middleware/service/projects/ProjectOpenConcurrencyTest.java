@@ -84,7 +84,7 @@ public class ProjectOpenConcurrencyTest {
     }
 
     @Test
-    public void buildRunsOffTheWriteLockAndProjectIsInvisibleUntilReady_H11() throws Exception {
+    public void buildRunsOffTheWriteLockAndProjectIsInvisibleUntilReady() throws Exception {
         TestProvider provider = newProvider();
         CountDownLatch buildStarted = new CountDownLatch(1);
         CountDownLatch proceed = new CountDownLatch(1);
@@ -115,7 +115,7 @@ public class ProjectOpenConcurrencyTest {
     }
 
     @Test
-    public void reservationIsReleasedWhenBuildFails_H11() throws Exception {
+    public void reservationIsReleasedWhenBuildFails() throws Exception {
         TestProvider provider = newProvider();
 
         // First attempt fails during the build.
@@ -135,7 +135,7 @@ public class ProjectOpenConcurrencyTest {
     }
 
     @Test
-    public void concurrentOpensOfSameIdGetDistinctIds_H11() throws Exception {
+    public void concurrentOpensOfSameIdGetDistinctIds() throws Exception {
         TestProvider provider = newProvider();
         provider.onBuild = id -> await(20); // small overlap window
 
@@ -159,7 +159,7 @@ public class ProjectOpenConcurrencyTest {
     }
 
     @Test
-    public void openingAnAlreadyOpenIdIsRenamed_H11() throws Exception {
+    public void openingAnAlreadyOpenIdIsRenamed() throws Exception {
         TestProvider provider = newProvider();
         assertEquals("p1", open(provider, "p1", freshPath("p1")).getProjectId());
         assertEquals("p1_2", open(provider, "p1", freshPath("p1-again")).getProjectId(),

@@ -53,7 +53,7 @@ public class MapperEdgeCaseTest {
     }
 
     @Test
-    public void unsupportedFieldTypeIsRejected_M11() {
+    public void unsupportedFieldTypeIsRejected() {
         GenericPojoMapper<UnsupportedTypePojo> mapper = new GenericPojoMapper<>(UnsupportedTypePojo.class);
         assertThrows(IllegalArgumentException.class, () -> mapper.detectAnalyzersAndPointConfigs(
                         new HashMap<String, PointsConfig>(), new HashMap<String, Analyzer>(), new ArrayList<CharSequence>(),
@@ -73,7 +73,7 @@ public class MapperEdgeCaseTest {
     }
 
     @Test
-    public void missingNoArgConstructorGivesClearError_M11() {
+    public void missingNoArgConstructorGivesClearError() {
         GenericPojoMapper<NoDefaultCtorPojo> mapper = new GenericPojoMapper<>(NoDefaultCtorPojo.class);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> mapper.toPojo(new Document()),
                 "reconstructing a POJO without a no-arg constructor must give a clear error (M11)");
@@ -84,7 +84,7 @@ public class MapperEdgeCaseTest {
     // ---- malformed formula must not abort indexing (C3) ----
 
     @Test
-    public void malformedFormulaDoesNotAbortIndexing_C3() {
+    public void malformedFormulaDoesNotAbortIndexing() {
         FormulaElementMapper mapper = new FormulaElementMapper();
         Iterable<IndexableField> fields = assertDoesNotThrow(() -> mapper.toIndexableFields("formula", "not-a-formula!"),
                 "a malformed formula must not throw and abort the whole document (C3)");
@@ -98,7 +98,7 @@ public class MapperEdgeCaseTest {
     // ---- FoldChange group name containing '.' ----
 
     @Test
-    public void foldChangeGroupNameWithDotRoundTrips_M11() {
+    public void foldChangeGroupNameWithDotRoundTrips() {
         FoldChangeMapper mapper = new FoldChangeMapper.AlignedFeatureFoldChange();
         String objectIdField = LuceneMappingUtils.getDocumentIdFieldName(AlignedFeature.class).orElseThrow();
 
