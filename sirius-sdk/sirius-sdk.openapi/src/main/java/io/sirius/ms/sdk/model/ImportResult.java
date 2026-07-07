@@ -104,7 +104,7 @@ public class ImportResult {
   }
 
   /**
-   * List of alignedFeatureIds that have been imported..
+   * List of alignedFeatureIds that have been imported.
    * @return affectedAlignedFeatureIds
    */
   @jakarta.annotation.Nonnull

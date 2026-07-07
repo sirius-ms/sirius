@@ -32,11 +32,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LcmsSubmissionParameters {
+    /**
+     * Sample type for each input file to be used to compute fold changes between blank and sample runs
+     * If NULL or empty no fold changes will be computed during preprocessing.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, nullable = true)
+    protected List<String> sampleTypes = null;
+
     /**
      * Specifies whether LC/MS runs should be aligned
      */
@@ -97,6 +106,5 @@ public class LcmsSubmissionParameters {
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "8", hidden = true)
     protected int waveletScale = 8;
-
 
 }

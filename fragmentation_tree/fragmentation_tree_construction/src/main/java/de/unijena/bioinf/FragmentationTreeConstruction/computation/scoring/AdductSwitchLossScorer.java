@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 //todo do we also adjust this for M+K ?
 
@@ -54,16 +55,14 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
 
     private double naHSwitchScore;
     private double naHSwitchChildrenScore;
-    private LossSizeScorer lossSizeScorer;
 
-    public AdductSwitchLossScorer(@NotNull LossSizeScorer lossSizeScorer) {
-        this(DEFAULT_NA_H_SWITCH_SCORE, DEFAULT_NA_H_SWITCH_CHILD_FRAG_SCORE, lossSizeScorer);
+    public AdductSwitchLossScorer() {
+        this(DEFAULT_NA_H_SWITCH_SCORE, DEFAULT_NA_H_SWITCH_CHILD_FRAG_SCORE);
     }
 
-    public AdductSwitchLossScorer(double naHSwitchScore, double naHSwitchChildrenScore, @NotNull LossSizeScorer lossSizeScorer) {
+    public AdductSwitchLossScorer(double naHSwitchScore, double naHSwitchChildrenScore) {
         this.naHSwitchScore = naHSwitchScore;
         this.naHSwitchChildrenScore = naHSwitchChildrenScore;
-        this.lossSizeScorer = lossSizeScorer;
         PeriodicTable T = PeriodicTable.getInstance();
     }
 
@@ -91,21 +90,13 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
                 //this is a child fragment of a adduct switch fragment
                 return naHSwitchChildrenScore;
             } else {
-                //adduct switch is occurring for this specific targetIon
-
-                // first: correct loss size error, because we have different ionizations and this score is based on peak m/z and not formula m/z
-                final double wrongLossSize = lossSizeScorer.scoring(input.getMergedPeaks().get(loss.getSource().getPeakId()).getMass() - input.getMergedPeaks().get(loss.getTarget().getPeakId()).getMass());
-                final double correctLossSize = lossSizeScorer.score(F);
-
-                final double lossScore = naHSwitchScore;
-
-                return lossScore - wrongLossSize + correctLossSize;
+                return naHSwitchScore;
             }
         }
     }
 
     public AdductSwitchLossScorer replaceScores(double naHSwitchScore, double naHSwitchChildrenScore){
-        return new AdductSwitchLossScorer(naHSwitchScore, naHSwitchChildrenScore, lossSizeScorer);
+        return new AdductSwitchLossScorer(naHSwitchScore, naHSwitchChildrenScore);
     }
 
     @Override

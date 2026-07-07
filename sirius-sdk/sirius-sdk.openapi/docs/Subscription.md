@@ -8,7 +8,7 @@
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
 |**sid** | **String** | Unique identifier of this subscription |  [optional] |
-|**subscriberId** | **String** | ID of the owner of the subscription.  This can be the ID of any SubscriptionOwner (e.g.  Group or  User)  depending on the level on which a subscription should be is valid. |  [optional] |
+|**subscriberId** | **String** | ID of the owner of the subscription.  This can be the ID of any SubscriptionOwner (e.g.  TagGroup or  User)  depending on the level on which a subscription should be is valid. |  [optional] |
 |**subscriberName** | **String** | Optional name of the owner of this subscription |  [optional] |
 |**expirationDate** | **Date** |  |  [optional] |
 |**startDate** | **Date** |  |  [optional] |

@@ -52,7 +52,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StatisticsTable.JSON_PROPERTY_COLUMN_NAMES,
   StatisticsTable.JSON_PROPERTY_COLUMN_LEFT_GROUPS,
   StatisticsTable.JSON_PROPERTY_COLUMN_RIGHT_GROUPS,
-  StatisticsTable.JSON_PROPERTY_VALUES
+  StatisticsTable.JSON_PROPERTY_VALUES,
+  StatisticsTable.JSON_PROPERTY_LEFT_ABUNDANCES,
+  StatisticsTable.JSON_PROPERTY_RIGHT_ABUNDANCES,
+  StatisticsTable.JSON_PROPERTY_ROW_NAMES,
+  StatisticsTable.JSON_PROPERTY_ROW_LEVELS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class StatisticsTable {
@@ -91,6 +95,22 @@ public class StatisticsTable {
   public static final String JSON_PROPERTY_VALUES = "values";
   @jakarta.annotation.Nullable
   private List<List<Double>> values = new ArrayList<>();
+
+  public static final String JSON_PROPERTY_LEFT_ABUNDANCES = "leftAbundances";
+  @jakarta.annotation.Nullable
+  private List<List<Double>> leftAbundances = new ArrayList<>();
+
+  public static final String JSON_PROPERTY_RIGHT_ABUNDANCES = "rightAbundances";
+  @jakarta.annotation.Nullable
+  private List<List<Double>> rightAbundances = new ArrayList<>();
+
+  public static final String JSON_PROPERTY_ROW_NAMES = "rowNames";
+  @jakarta.annotation.Nullable
+  private List<String> rowNames = new ArrayList<>();
+
+  public static final String JSON_PROPERTY_ROW_LEVELS = "rowLevels";
+  @jakarta.annotation.Nullable
+  private List<String> rowLevels = new ArrayList<>();
 
   public StatisticsTable() {
   }
@@ -360,6 +380,138 @@ public class StatisticsTable {
     this.values = values;
   }
 
+  public StatisticsTable leftAbundances(@jakarta.annotation.Nullable List<List<Double>> leftAbundances) {
+    
+    this.leftAbundances = leftAbundances;
+    return this;
+  }
+
+  public StatisticsTable addLeftAbundancesItem(List<Double> leftAbundancesItem) {
+    if (this.leftAbundances == null) {
+      this.leftAbundances = new ArrayList<>();
+    }
+    this.leftAbundances.add(leftAbundancesItem);
+    return this;
+  }
+
+  /**
+   * Get leftAbundances
+   * @return leftAbundances
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LEFT_ABUNDANCES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<List<Double>> getLeftAbundances() {
+    return leftAbundances;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LEFT_ABUNDANCES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLeftAbundances(@jakarta.annotation.Nullable List<List<Double>> leftAbundances) {
+    this.leftAbundances = leftAbundances;
+  }
+
+  public StatisticsTable rightAbundances(@jakarta.annotation.Nullable List<List<Double>> rightAbundances) {
+    
+    this.rightAbundances = rightAbundances;
+    return this;
+  }
+
+  public StatisticsTable addRightAbundancesItem(List<Double> rightAbundancesItem) {
+    if (this.rightAbundances == null) {
+      this.rightAbundances = new ArrayList<>();
+    }
+    this.rightAbundances.add(rightAbundancesItem);
+    return this;
+  }
+
+  /**
+   * Get rightAbundances
+   * @return rightAbundances
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_RIGHT_ABUNDANCES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<List<Double>> getRightAbundances() {
+    return rightAbundances;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_RIGHT_ABUNDANCES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setRightAbundances(@jakarta.annotation.Nullable List<List<Double>> rightAbundances) {
+    this.rightAbundances = rightAbundances;
+  }
+
+  public StatisticsTable rowNames(@jakarta.annotation.Nullable List<String> rowNames) {
+    
+    this.rowNames = rowNames;
+    return this;
+  }
+
+  public StatisticsTable addRowNamesItem(String rowNamesItem) {
+    if (this.rowNames == null) {
+      this.rowNames = new ArrayList<>();
+    }
+    this.rowNames.add(rowNamesItem);
+    return this;
+  }
+
+  /**
+   * Get rowNames
+   * @return rowNames
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ROW_NAMES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<String> getRowNames() {
+    return rowNames;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ROW_NAMES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setRowNames(@jakarta.annotation.Nullable List<String> rowNames) {
+    this.rowNames = rowNames;
+  }
+
+  public StatisticsTable rowLevels(@jakarta.annotation.Nullable List<String> rowLevels) {
+    
+    this.rowLevels = rowLevels;
+    return this;
+  }
+
+  public StatisticsTable addRowLevelsItem(String rowLevelsItem) {
+    if (this.rowLevels == null) {
+      this.rowLevels = new ArrayList<>();
+    }
+    this.rowLevels.add(rowLevelsItem);
+    return this;
+  }
+
+  /**
+   * Get rowLevels
+   * @return rowLevels
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ROW_LEVELS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<String> getRowLevels() {
+    return rowLevels;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ROW_LEVELS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setRowLevels(@jakarta.annotation.Nullable List<String> rowLevels) {
+    this.rowLevels = rowLevels;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -378,12 +530,16 @@ public class StatisticsTable {
         Objects.equals(this.columnNames, statisticsTable.columnNames) &&
         Objects.equals(this.columnLeftGroups, statisticsTable.columnLeftGroups) &&
         Objects.equals(this.columnRightGroups, statisticsTable.columnRightGroups) &&
-        Objects.equals(this.values, statisticsTable.values);
+        Objects.equals(this.values, statisticsTable.values) &&
+        Objects.equals(this.leftAbundances, statisticsTable.leftAbundances) &&
+        Objects.equals(this.rightAbundances, statisticsTable.rightAbundances) &&
+        Objects.equals(this.rowNames, statisticsTable.rowNames) &&
+        Objects.equals(this.rowLevels, statisticsTable.rowLevels);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(statisticsType, aggregationType, quantificationMeasure, rowType, rowIds, columnNames, columnLeftGroups, columnRightGroups, values);
+    return Objects.hash(statisticsType, aggregationType, quantificationMeasure, rowType, rowIds, columnNames, columnLeftGroups, columnRightGroups, values, leftAbundances, rightAbundances, rowNames, rowLevels);
   }
 
   @Override
@@ -399,6 +555,10 @@ public class StatisticsTable {
     sb.append("    columnLeftGroups: ").append(toIndentedString(columnLeftGroups)).append("\n");
     sb.append("    columnRightGroups: ").append(toIndentedString(columnRightGroups)).append("\n");
     sb.append("    values: ").append(toIndentedString(values)).append("\n");
+    sb.append("    leftAbundances: ").append(toIndentedString(leftAbundances)).append("\n");
+    sb.append("    rightAbundances: ").append(toIndentedString(rightAbundances)).append("\n");
+    sb.append("    rowNames: ").append(toIndentedString(rowNames)).append("\n");
+    sb.append("    rowLevels: ").append(toIndentedString(rowLevels)).append("\n");
     sb.append("}");
     return sb.toString();
   }

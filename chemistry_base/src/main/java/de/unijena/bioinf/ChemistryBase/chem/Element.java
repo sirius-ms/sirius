@@ -21,12 +21,19 @@
 
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
+
 /**
  * Basic class for chemical elements. Instances of this class are read-only. So there is no possibility
  * to change their information.
  * Elements are immediate values. So two elements are equal if and only if they are the same object in memory.
  * So be careful when serializing elements! (Write them by their symbol and use the PeriodicTable to deserialize).
  */
+@JsonSerialize(using = ToStringSerializer.class)
+@JsonDeserialize(using = SimpleSerializers.ElementTypeDeserializer.class)
 public class Element implements Comparable<Element> {
 
     double mass;

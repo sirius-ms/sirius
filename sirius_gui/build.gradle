@@ -54,6 +54,8 @@ dependencies {
     api libs.commonsText
 
     implementation libs.miglayout
+    implementation libs.luceneQueryparser
+    implementation libs.luceneAnalysisCommon
 
     // jxbrowser plugin can detect the current platform and adds the corresponding Chromium binaries.
     // implementation(jxbrowser.currentPlatform)

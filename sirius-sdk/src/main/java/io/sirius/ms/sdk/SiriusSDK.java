@@ -75,16 +75,43 @@ public final class SiriusSDK extends SiriusClient {
     }
 
     public synchronized static SiriusSDK startAndConnectLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput, boolean headless, @Nullable Path executable) throws Exception {
+        return startAndConnectLocally(shutDownMode, redirectSiriusOutput, headless, false, executable);
+    }
+
+    public synchronized static SiriusSDK startAndConnectLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput, boolean headless, boolean inMemoryIndex, @Nullable Path executable) throws Exception {
         @Nullable SiriusSDK sdk = findAndConnectLocally(shutDownMode, false);
         if (sdk != null)
             return sdk;
 
+        return startLocally(shutDownMode, redirectSiriusOutput, headless, inMemoryIndex, executable, null);
+    }
+
+    /**
+     * Starts a dedicated SIRIUS instance with its own workspace directory instead of reusing an already running one.
+     * Since account state (login token, properties, caches) is stored in the workspace, the started instance is
+     * isolated from the user's default workspace.
+     * <p>
+     * SIRIUS enforces a single running service per user (via the global port file), so this method fails with
+     * {@link InstanceAlreadyRunningException} if a healthy instance is already running. Unresponsive leftovers
+     * are killed and cleaned up before starting.
+     */
+    public synchronized static SiriusSDK startAndConnectLocallyIsolated(ShutdownMode shutDownMode, boolean redirectSiriusOutput, boolean headless, boolean inMemoryIndex, @Nullable Path executable, @NotNull Path workspaceDir) throws Exception {
+        try (SiriusSDK running = findAndConnectLocally(ShutdownMode.NEVER, true)) {
+            if (running != null)
+                throw new InstanceAlreadyRunningException("Cannot start isolated SIRIUS instance with workspace '" + workspaceDir
+                        + "': a healthy SIRIUS service is already running at '" + running.getBasePath() + "' with process id '" + running.getPID()
+                        + "'. Multiple SIRIUS services are not allowed. Shut down the running instance first.");
+        }
+        return startLocally(shutDownMode, redirectSiriusOutput, headless, inMemoryIndex, executable, workspaceDir);
+    }
+
+    private synchronized static SiriusSDK startLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput, boolean headless, boolean inMemoryIndex, @Nullable Path executable, @Nullable Path workspaceDir) throws Exception {
         log.info("Starting SIRIUS process from {}", executable);
         Process process = null;
         int retryAttempts = 3;
         for (int attempt = 1; attempt <= retryAttempts; attempt++) {
             try {
-                process = SiriusSDKUtils.startSirius(null, executable, redirectSiriusOutput, headless);
+                process = SiriusSDKUtils.startSirius(workspaceDir != null ? workspaceDir.toAbsolutePath().toString() : null, executable, redirectSiriusOutput, headless, inMemoryIndex);
                 log.info("Awaiting SIRIUS API to be ready...");
                 long start = System.currentTimeMillis();
                 while (!Files.exists(SIRIUS_PORT_FILE)) {
@@ -188,5 +215,14 @@ public final class SiriusSDK extends SiriusClient {
         AUTO, // Shuts down SIRIUS if it was started by this SiriusClient instance and not otherwise
         ALWAYS, // Always shuts down SIRIUS if this SiriusClient instance is shutdown, no matter it was started elsewhere
         NEVER // Never shuts down SIRIUS if this SiriusClient instance is shutdown, no matter it was started elsewhere
+    }
+
+    /**
+     * Thrown when an isolated SIRIUS instance cannot be started because another healthy instance is already running.
+     */
+    public static class InstanceAlreadyRunningException extends IllegalStateException {
+        public InstanceAlreadyRunningException(String message) {
+            super(message);
+        }
     }
 }

@@ -29,6 +29,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -45,6 +46,11 @@ public class CsiStructureSearchResult extends StructureSearchResult<CsiStructure
     private List<String> specifiedDatabases;
     //usually just pubchem or empty
     private List<String> expandedDatabases;
+
+    /**
+     * A mapping of structural database names (keys) to the rank (value) of the highest-ranked match found in each database.
+     */
+    private Map<String, Integer> matchedDatabases;
 
     @JsonIgnore
     public boolean isExpansionHasHappened(){

@@ -189,7 +189,7 @@ allprojects {
 
         compileOnly libs.lombok
         annotationProcessor libs.lombok
-        
+
         api libs.jetbrainsAnnotations
         api libs.swaggerAnnotations
 
@@ -219,7 +219,7 @@ allprojects {
 
         testImplementation libs.slf4jLog4jOverSlf4j
         testImplementation libs.slf4jJclOverSlf4j
-        
+
         testImplementation libs.junitJupiter
         testImplementation libs.junitJupiterParams
         testImplementation libs.mockitoJUnitJupiter
@@ -262,12 +262,36 @@ allprojects {
         testClassesDirs = sourceSets.test.output.classesDirs
         classpath = sourceSets.test.runtimeClasspath
         useJUnitPlatform {
+            // account-state tests mutate the server-global login state and run in 'accountIntegrationTest' instead
+            excludeTags 'account-state'
             filter {
                 includeTestsMatching "*IntegrationTest"
                 includeTestsMatching "*ApiTest"
                 failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
             }
         }
+    }
+
+    // Account-state tests (login/logout/subscription switching) run against a dedicated SIRIUS instance with an
+    // isolated workspace. Strictly ordered after integrationTest; both tasks belong to the same project, so Gradle
+    // never runs them concurrently and only one test-started SIRIUS server exists at a time.
+    def accountIntegrationTest = tasks.register("accountIntegrationTest", Test) {
+        group = 'verification'
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
+        mustRunAfter integrationTest
+        useJUnitPlatform {
+            includeTags 'account-state'
+            filter {
+                failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
+            }
+        }
+    }
+
+    tasks.register("allIntegrationTests") {
+        group = 'verification'
+        description = 'Runs integrationTest and accountIntegrationTest sequentially.'
+        dependsOn integrationTest, accountIntegrationTest
     }
 
     def acceptanceTest = tasks.register("acceptanceTest", Test) {

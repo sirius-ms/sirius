@@ -9,5 +9,9 @@
 
 * `COMPOUNDS` (value: `"COMPOUNDS"`)
 
+* `NPC_CLASSES` (value: `"NPC_CLASSES"`)
+
+* `CLASSYFIRE_CLASSES` (value: `"CLASSYFIRE_CLASSES"`)
+
 
 

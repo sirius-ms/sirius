@@ -22,20 +22,25 @@ package de.unijena.bioinf.ms.middleware.model.features;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
+import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 
+
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Run {
+public class Run implements Taggable {
 
     @Schema(enumAsRef = true, name = "RunOptField", nullable = true)
     public enum OptField {none, tags}
@@ -43,35 +48,43 @@ public class Run {
     /**
      * Identifier
      */
+    @IndexField(documentId = true, sortable = true, defaultSearchField = true)
     @NotNull
     protected String runId;
 
     /**
      * Informative, human-readable name of this run
      */
+    @IndexField(defaultSearchField = true, fullTextSearch = true, sortable = true)
     protected String name;
 
     /**
      * Source location
      */
+    @IndexField(defaultSearchField = true, fullTextSearch = true)
     protected String source;
 
+    @IndexField
     @Schema(nullable = true)
     protected String chromatography;
 
+    @IndexField
     @Schema(nullable = true)
     protected String ionization;
 
+    @IndexField
     @Schema(nullable = true)
     protected String fragmentation;
 
+    @IndexField
     @Schema(nullable = true)
     protected List<String> massAnalyzers;
 
     /**
      * Key: tagName, value: tag
      */
+    @IndexFieldWithMapper(mapper = TagMapper.class)
     @Schema(nullable = true)
-    protected Map<String, ? extends Tag> tags;
+    protected Map<String, Tag> tags;
 
 }

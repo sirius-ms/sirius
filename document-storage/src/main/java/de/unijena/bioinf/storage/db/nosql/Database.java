@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.storage.db.nosql;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.function.IORunnable;
 
 import java.io.Closeable;
@@ -47,6 +48,19 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         ASCENDING, DESCENDING
     }
 
+    /**
+     * A system-wide unique identifier for this database that is robust against content change, file move or rename.
+     * It should also be unique among mounted network devices. Whereas it is beneficial to be robust against remounts
+     * it is not mandatory.
+     * <p>
+     * It further needs to guaranty that to copies of the database must not have the same identifier.
+     *
+     * @return A system-wide unique identifier for this database.
+     */
+    @NotNull
+    String systemUID();
+
+    @NotNull
     Path location();
 
     //force to write data to disk
@@ -441,5 +455,9 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     //endregion
 
     Set<Class<?>> getAllRegisteredClasses();
+
+    default long getStorageCommitId() {
+        return -1;
+    }
 
 }

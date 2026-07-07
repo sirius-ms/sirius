@@ -22,6 +22,7 @@ version =  siriusVersion
 dependencies {
     // deprecated try to replace with basic java or fastutil
     implementation libs.trove4j
+    implementation libs.luceneQueryparser
 
     annotationProcessor project(':default_properties:processor')
     api project(':default_properties:annotations')

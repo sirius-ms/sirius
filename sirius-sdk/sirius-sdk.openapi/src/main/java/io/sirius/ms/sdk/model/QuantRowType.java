@@ -38,7 +38,11 @@ public enum QuantRowType {
   
   FEATURES("FEATURES"),
   
-  COMPOUNDS("COMPOUNDS");
+  COMPOUNDS("COMPOUNDS"),
+  
+  NPC_CLASSES("NPC_CLASSES"),
+  
+  CLASSYFIRE_CLASSES("CLASSYFIRE_CLASSES");
 
   private String value;
 

@@ -38,6 +38,8 @@ public class ValenceFilter implements FormulaFilter {
     private final int minValenceInt;
     private final double minValence;
 
+    private Element S, P;
+
     private final PossibleAdducts possibleAdducts;
 
     public static final double MIN_VALENCE_DEFAULT  = -0.5d;
@@ -56,6 +58,9 @@ public class ValenceFilter implements FormulaFilter {
         this.minValenceInt = (int)(2*minValence);
         this.minValence = minValence;
         this.possibleAdducts = new PossibleAdducts(possibleAdducts);
+        PeriodicTable t = PeriodicTable.getInstance();
+        S = t.getByName("S");
+        P = t.getByName("P");
     }
 
     public ValenceFilter filterWithoutAdducts(){
@@ -84,7 +89,8 @@ public class ValenceFilter implements FormulaFilter {
 
     @Override
     public boolean isValid(MolecularFormula neutralCompoundFormula) {
-        return neutralCompoundFormula.doubledRDBE()>=MIN_VALENCE_DEFAULT; //todo ElementFilter: this seems wrong
+        int tolerance = getTolerance(neutralCompoundFormula);
+        return neutralCompoundFormula.doubledRDBE()+tolerance>=MIN_VALENCE_DEFAULT; //todo ElementFilter: this seems wrong
     }
 
     @Override
@@ -108,6 +114,14 @@ public class ValenceFilter implements FormulaFilter {
         if (!measuredNeutralFormula.subtract(ionType.getAdduct()).isAllPositiveOrZero()) return false;
 
         final MolecularFormula compoundMF = ionType.measuredNeutralMoleculeToNeutralMolecule(measuredNeutralFormula);
-        return compoundMF.doubledRDBE() >= minValenceInt;
+        int tolerance=getTolerance(measuredNeutralFormula);
+        return compoundMF.doubledRDBE()+tolerance >= minValenceInt;
+    }
+
+    // Sulfur and Phosphor can be in a higher valence state in some cases, in such cases our rdbe calculation is incorrect
+    private int getTolerance(MolecularFormula f) {
+        if (f.numberOf(S)>0) return 4;
+        if (f.numberOf(P)>0) return 2;
+        return 0;
     }
 }

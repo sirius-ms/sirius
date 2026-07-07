@@ -23,13 +23,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
-import de.unijena.bioinf.ms.gui.compute.ParameterBinding;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
-import de.unijena.bioinf.ms.gui.dialogs.input.ImportMSDataDialog;
+import de.unijena.bioinf.ms.gui.dialogs.import5.CombinedImportDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -110,45 +109,33 @@ public class ImportAction extends AbstractGuiAction {
         watch.start();
 
         try {
-            boolean hasLCMS = !input.msInput.lcmsFiles.isEmpty();
-            boolean hasPeakLists = !input.msInput.msParserfiles.isEmpty();
-            boolean alignAllowed = input.msInput.lcmsFiles.size() > 1;
-
-            if (!hasLCMS && !hasPeakLists)
+            if (input.msInput.lcmsFiles.isEmpty() && input.msInput.msParserfiles.isEmpty())
                 return;
 
-            // LC/MS default parameters
-            LcmsSubmissionParameters parameters = new LcmsSubmissionParameters();
-            if (hasLCMS)
-                parameters.setAlignLCMSRuns(false);
+            // Show combined import dialog to configure parameters and sample types
+            CombinedImportDialog dialog = new CombinedImportDialog(popupOwner, input);
+            if (!dialog.isSuccess())
+                return;
 
-            // show dialog
-            {//if (hasPeakLists || alignAllowed) {
-                ImportMSDataDialog dialog = new ImportMSDataDialog(popupOwner, hasLCMS, alignAllowed, hasPeakLists);
-                if (!dialog.isSuccess())
-                    return;
+            // Get parameters from dialog
+            if (dialog.isHasLCMS()) {
+                // LC/MS default parameters
+                LcmsSubmissionParameters parameters = new LcmsSubmissionParameters();
 
-                if (hasLCMS) {
-                    ParameterBinding binding = dialog.getParamterBinding();
-                    binding.getOptBoolean("align").ifPresent(parameters::setAlignLCMSRuns);
-                    binding.getOptBoolean("sensitiveMode").filter(x -> x).ifPresent(x -> parameters.setMinSNR(2d));
-                    Optional<Boolean> autoNoiseDetection = binding.getOptBoolean("autoNoiseDetection");
-                    autoNoiseDetection.filter(x -> x).ifPresent(x -> parameters.setNoiseIntensity(-1d));
-                    Optional<Double> noiseLevel = binding.getOptDouble("noiseLevel");
-                    if (autoNoiseDetection.isEmpty() || !(autoNoiseDetection.get())) {
-                        noiseLevel.ifPresent(parameters::setNoiseIntensity);
-                    }
+                parameters.setAlignLCMSRuns(dialog.isAlign());
+                // Get sample type assignments
+                parameters.setSampleTypes(dialog.getLCMSFilesSampleTypes());
 
+                if(dialog.isSensitiveMode())
+                    parameters.setMinSNR(2d);
 
-                }
-            }
+                parameters.setNoiseIntensity(dialog.getNoiseLevel());
 
-            // handle LC/MS files
-            if (hasLCMS) {
+                // Import LC/MS files with sample type information
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importMsRunDataAsJobLocally(pid,
                             parameters,
-                            input.msInput.lcmsFiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
+                            dialog.getLCMSFiles().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
                             List.of(JobOptField.PROGRESS)
                     );
                     return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Import, find & align...", new SseProgressJJob(gui.getSiriusClient(), pid, job));
@@ -157,12 +144,14 @@ public class ImportAction extends AbstractGuiAction {
                 task.awaitResult();
             }
 
-            // handle non-LC/MS files
-            if (hasPeakLists) {
+            // Handle non-LC/MS files
+            if (dialog.isHasPeakLists()) {
+                boolean ignoreFormulas = PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false);
+
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importPreprocessedDataAsJobLocally(pid,
                             input.msInput.msParserfiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
-                            PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
+                            ignoreFormulas,
                             true,
                             List.of(JobOptField.PROGRESS)
                     );

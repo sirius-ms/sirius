@@ -22,16 +22,19 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ms.middleware.model.common.AnyValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.AllArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @AllArgsConstructor
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Tag {
@@ -51,6 +54,6 @@ public class Tag {
      * Can be Integer, Double, Boolean and String, whereas String values can represent Text, Date (yyyy-MM-dd) or Time (HH:mm:ss).
      */
     @Nullable
-    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, implementation = AnyValue.class)
     private Object value;
 }

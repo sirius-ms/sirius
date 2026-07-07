@@ -29,6 +29,8 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.tags.*;
+import de.unijena.bioinf.ms.middleware.service.search.SearchService;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
@@ -40,17 +42,40 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.io.IOException;
 import java.util.*;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
 public interface Project<PSM extends ProjectSpaceManager> {
+    default boolean isTempProject() {
+        return getProjectSpaceManager().isTempProject();
+    }
+    @Nullable default SearchService getSearchService(){
+        return null;
+    }
 
-    @NotNull
-    String getProjectId();
+    @SneakyThrows
+    void createSearchIndex(boolean force);
 
-    @NotNull
-    PSM getProjectSpaceManager();
+    @SneakyThrows
+    void addToSearchIndex(@Nullable Collection<String> alignedFeaturesToUpdate, @Nullable Collection<String> runIds);
+
+    @SneakyThrows
+    void updateSearchIndex(Collection<String> alignedFeaturesToUpdate);
+
+    @SneakyThrows
+    void removeFromSearchIndex(@Nullable Collection<String> alignedFeaturesIds, @Nullable Collection<String> compoundIds, @Nullable Collection<String> runIds);
+
+    /**
+     * Technical Identifier for the project file/directory on the filesystem/dbms
+     * @return Project system uid
+     */
+    @NotNull String getSystemUID();
+
+    @NotNull String getProjectId();
+
+    @NotNull PSM getProjectSpaceManager();
 
     Optional<QuantTable> getQuantification(QuantMeasure type, QuantRowType rowType);
 
@@ -60,10 +85,16 @@ public interface Project<PSM extends ProjectSpaceManager> {
     Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);
     Optional<TraceSet> getTraceSetsForFeatureWithCorrelatedIons(String alignedFeatureId);
 
+    Page<Compound> findCompounds(@Nullable String searchQuery,
+                                 Pageable pageable,
+                                 boolean msDataSearchPrepared,
+                                 @NotNull EnumSet<Compound.OptField> optFields,
+                                 @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
     Page<Compound> findCompounds(Pageable pageable,
                                  boolean msDataSearchPrepared,
                                  @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
+    Page<Compound> findCompoundsByGroup(@NotNull String groupName, Pageable pageable, boolean msDataSearchPrepared, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
 
     default List<Compound> addCompounds(@NotNull List<CompoundImport> compounds,
                                 @Nullable InstrumentProfile profile,
@@ -96,9 +127,22 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId);
 
+    Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields);
+
+    default Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, boolean msDataAsCosineQuery, @NotNull AlignedFeature.OptField... optFields){
+        return findAlignedFeatures(searchQuery, pageable, msDataAsCosineQuery, toEnumSet(AlignedFeature.OptField.class, optFields));
+    }
+
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataSearchPrepared, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
+    default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataAsCosineQuery, AlignedFeature.OptField... optFields) {
+        return findAlignedFeatures(pageable, msDataAsCosineQuery, toEnumSet(AlignedFeature.OptField.class, optFields));
+    }
+
     List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId);
+
+    Page<AlignedFeature> findAlignedFeaturesByGroup(@NotNull String groupName, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields);
+
 
     /**
      * Imports features without compound grouping. Since grouping is unknows each feature needs to belong to its own compound.
@@ -119,10 +163,6 @@ public interface Project<PSM extends ProjectSpaceManager> {
                                             @NotNull EnumSet<AlignedFeature.OptField> optFields,
                                             @NotNull String importSource);
 
-    default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataSearchPrepared, AlignedFeature.OptField... optFields) {
-        return findAlignedFeatures(pageable, msDataSearchPrepared, toEnumSet(AlignedFeature.OptField.class, optFields));
-    }
-
 
     default AlignedFeature findAlignedFeaturesById(String alignedFeatureId, boolean msDataSearchPrepared, AlignedFeature.OptField... optFields) {
         return findAlignedFeaturesById(alignedFeatureId, msDataSearchPrepared, toEnumSet(AlignedFeature.OptField.class, optFields));
@@ -132,6 +172,9 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     void deleteAlignedFeaturesById(String alignedFeatureId);
     void deleteAlignedFeaturesByIds(List<String> alignedFeatureId);
+    void deleteAlignedFeaturesByQuery(@NotNull String searchQuery);
+
+    Page<Run> findRuns(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
 
     Page<Run> findRuns(Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
 
@@ -139,19 +182,28 @@ public interface Project<PSM extends ProjectSpaceManager> {
         return findRuns(pageable, toEnumSet(Run.OptField.class, optFields));
     }
 
+    Page<Run>  findRunsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
+
     Run findRunById(String runId, @NotNull EnumSet<Run.OptField> optFields);
 
     default Run findRunById(String runId, Run.OptField... optFields) {
         return findRunById(runId, toEnumSet(Run.OptField.class, optFields));
     }
 
-    <T, O extends Enum<O>> Page<T> findObjectsByTagFilter(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields);
+    /**
+     * Add/Updates tags to/of a target object identified by target class und object id.
+     * @param taggedObjectClass class of the target
+     * @param objectId id of the target
+     * @param tags tags to be added
+     * @return return all tags of the target object that has been modified.
+     */
+    List<Tag> addTagsToObject(Class<? extends Taggable> taggedObjectClass, String objectId, List<Tag> tags);
 
-    List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags);
+    void addTagsToObjects(Class<? extends Taggable> taggedObjectClass, List<TagSubmission> tags);
 
-    void removeTagsFromObject(Class<?> taggedObjectClass, String taggedObjectId, List<String> tagNames);
+    void removeTagsFromObject(Class<? extends Taggable> taggedObjectClass, String taggedObjectId, List<String> tagNames);
 
-    List<Tag> findTagsByObject(Class<?> target, String objectId);
+    List<Tag> findTagsByObject(Class<? extends Taggable> taggedObjectClass, String objectId);
 
     List<TagDefinition> findTags();
 
@@ -169,8 +221,6 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     TagDefinition addPossibleValuesToTagDefinition(String tagName, List<?> values);
 
-    <T, O extends Enum<O>> Page<T> findObjectsByTagGroup(Class<?> target, @NotNull String group, Pageable pageable, @NotNull EnumSet<O> optFields);
-
     List<TagGroup> findTagGroups();
 
     List<TagGroup> findTagGroupsByType(String type);
@@ -181,13 +231,13 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     void deleteTagGroup(String name);
 
-    StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantMeasure quantification);
+    StatisticsTable getFoldChangeTable(QuantRowType statsTarget, AggregationType aggregation, QuantMeasure quantification);
 
-    <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable);
+    <F extends FoldChange> Page<F> listFoldChanges(QuantRowType statsTarget, Pageable pageable);
 
-    <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId);
+    <F extends FoldChange> List<F> getFoldChanges(QuantRowType statsTarget, String objectId);
 
-    void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantMeasure quantification);
+    void deleteFoldChange(QuantRowType statsTarget, String left, String right, AggregationType aggregation, QuantMeasure quantification);
 
     SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity);
 
@@ -280,4 +330,10 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     @Deprecated
     String findSiriusFtreeJsonById(String formulaId, String alignedFeatureId);
+
+    void close() throws IOException;
+
+    default void close(boolean compact) throws IOException {
+        close();
+    }
 }

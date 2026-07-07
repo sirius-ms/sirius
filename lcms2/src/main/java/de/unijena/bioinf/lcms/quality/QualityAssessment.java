@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.quality;
 
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.lcms.adducts.TraceProvider;
+import de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
@@ -43,10 +44,10 @@ public class QualityAssessment implements FeatureQualityChecker {
                 ++count;
             }
         }
-        if (report.getCategories().get(QualityReport.MS2_QUALITY).getOverallQuality()==DataQuality.NOT_APPLICABLE &&
-                report.getCategories().get(QualityReport.ADDUCT_QUALITY).getOverallQuality()==DataQuality.NOT_APPLICABLE)
+        if (report.getCategories().get(DefaultQualityCategory.MS2_QUALITY.name()).getOverallQuality()==DataQuality.NOT_APPLICABLE &&
+                report.getCategories().get(DefaultQualityCategory.ADDUCT_QUALITY.name()).getOverallQuality()==DataQuality.NOT_APPLICABLE)
             ++count; // special rule to downweight features that have no purpose (no ms2 nor adduct)
-        float c = report.getCategories().get(QualityReport.MS2_QUALITY).getOverallQuality().getScore();
+        float c = report.getCategories().get(DefaultQualityCategory.MS2_QUALITY.name()).getOverallQuality().getScore();
         if (count==0) {
             report.setOverallQuality(DataQuality.NOT_APPLICABLE);
         } else {
@@ -59,14 +60,13 @@ public class QualityAssessment implements FeatureQualityChecker {
                 report.setOverallQuality(DataQuality.BAD);
             } else report.setOverallQuality(DataQuality.LOWEST);
         }
-
         // we add some additional rules:
         // - whenever we have a good MS2 we KEEP the data. ALWAYS.
         // - if almost everything is bad (including the spectra) we downgrade the quality level to lowest
         //   this essentially marks a compound for "deletion".
-        float c2 = report.getCategories().get(QualityReport.PEAK_QUALITY).getOverallQuality().getScore();
-        float c3 = report.getCategories().get(QualityReport.ADDUCT_QUALITY).getOverallQuality().getScore();
-        float c4 = report.getCategories().get(QualityReport.ISOTOPE_QUALITY).getOverallQuality().getScore();
+        float c2 = report.getCategories().get(DefaultQualityCategory.PEAK_QUALITY.name()).getOverallQuality().getScore();
+        float c3 = report.getCategories().get(DefaultQualityCategory.ADDUCT_QUALITY.name()).getOverallQuality().getScore();
+        float c4 = report.getCategories().get(DefaultQualityCategory.ISOTOPE_QUALITY.name()).getOverallQuality().getScore();
         if (report.getOverallQuality().getScore() > 1 || score > 1 || c >= 2 || Math.max(c2,Math.max(c3,c4))>=3 || (c2+c3+c4) >= 5 ) {
             if (report.getOverallQuality().getScore()<0) report.setOverallQuality(DataQuality.BAD);
         } else {

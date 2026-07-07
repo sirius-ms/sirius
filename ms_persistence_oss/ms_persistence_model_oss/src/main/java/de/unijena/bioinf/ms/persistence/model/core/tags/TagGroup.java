@@ -23,6 +23,11 @@ package de.unijena.bioinf.ms.persistence.model.core.tags;
 import jakarta.persistence.Id;
 import lombok.*;
 
+/**
+ * Defines and stores a group of entities based on a lucene search query.
+ * Allows to access the predefined group by name instead of the search query.
+ * todo: in the future this can be abstracted and groups implementation based on other mechanisms can be implemented.
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -39,5 +44,16 @@ public class TagGroup {
     private String luceneQuery;
 
     private String groupType;
+
+    @Builder.Default
+    private Boolean editable = true;
+
+    public boolean isEditable() {
+        return editable == null ? true : editable;
+    }
+
+    public Boolean getEditable() {
+        return isEditable();
+    }
 
 }

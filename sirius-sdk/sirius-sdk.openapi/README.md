@@ -42,7 +42,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
-  <version>3.1+sirius6.4.0-SNAPSHOT</version>
+  <version>3.1+sirius6.5.2-SNAPSHOT</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -58,7 +58,7 @@ Add this dependency to your project's build file:
   }
 
   dependencies {
-     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.4.0-SNAPSHOT"
+     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.5.2-SNAPSHOT"
   }
 ```
 
@@ -72,7 +72,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius-sdk.openapi-3.1+sirius6.4.0-SNAPSHOT.jar`
+- `target/sirius-sdk.openapi-3.1+sirius6.5.2-SNAPSHOT.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
@@ -116,12 +116,16 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *ActuatorApi* | [**health**](docs/ActuatorApi.md#health) | **GET** /actuator/health | Actuator web endpoint &#39;health&#39;
 *ActuatorApi* | [**shutdown**](docs/ActuatorApi.md#shutdown) | **POST** /actuator/shutdown | Actuator web endpoint &#39;shutdown&#39;
+*ClassyFireClassStatisticsApi* | [**computeClassyfireClassFoldChangesExperimental**](docs/ClassyFireClassStatisticsApi.md#computeClassyfireClassFoldChangesExperimental) | **PUT** /api/projects/{projectId}/classyfire-classes/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs
+*ClassyFireClassStatisticsApi* | [**deleteClassyfireClassFoldChangesExperimental**](docs/ClassyFireClassStatisticsApi.md#deleteClassyfireClassFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/classyfire-classes/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes
+*ClassyFireClassStatisticsApi* | [**getClassyfireClassFoldChangeTableExperimental**](docs/ClassyFireClassStatisticsApi.md#getClassyfireClassFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/classyfire-classes/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
 *CompoundStatisticsApi* | [**computeCompoundFoldChangesExperimental**](docs/CompoundStatisticsApi.md#computeCompoundFoldChangesExperimental) | **PUT** /api/projects/{projectId}/compounds/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs
 *CompoundStatisticsApi* | [**deleteCompoundFoldChangesExperimental**](docs/CompoundStatisticsApi.md#deleteCompoundFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/compounds/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes
 *CompoundStatisticsApi* | [**getCompoundFoldChangeTableExperimental**](docs/CompoundStatisticsApi.md#getCompoundFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
 *CompoundStatisticsApi* | [**getFoldChangesByCompoundExperimental**](docs/CompoundStatisticsApi.md#getFoldChangesByCompoundExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges/{objectId} | [EXPERIMENTAL] List all fold changes that are associated with an object
 *CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features.
 *CompoundsApi* | [**addTagsToCompoundExperimental**](docs/CompoundsApi.md#addTagsToCompoundExperimental) | **PUT** /api/projects/{projectId}/compounds/tags/{compoundId} | [EXPERIMENTAL] Tags with the same name will be overwritten
+*CompoundsApi* | [**addTagsToObjects**](docs/CompoundsApi.md#addTagsToObjects) | **PUT** /api/projects/{projectId}/compounds/tags | Tags with the same name will be overwritten.
 *CompoundsApi* | [**deleteCompound**](docs/CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
 *CompoundsApi* | [**getCompound**](docs/CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space.
 *CompoundsApi* | [**getCompoundQuantTableExperimental**](docs/CompoundsApi.md#getCompoundQuantTableExperimental) | **GET** /api/projects/{projectId}/compounds/quant-table | [EXPERIMENTAL] Returns the full quantification table of compounds
@@ -129,8 +133,7 @@ Class | Method | HTTP request | Description
 *CompoundsApi* | [**getCompoundTracesExperimental**](docs/CompoundsApi.md#getCompoundTracesExperimental) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | [EXPERIMENTAL] Returns the traces of the given compound
 *CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space.
 *CompoundsApi* | [**getCompoundsByGroupExperimental**](docs/CompoundsApi.md#getCompoundsByGroupExperimental) | **GET** /api/projects/{projectId}/compounds/grouped | [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
-*CompoundsApi* | [**getCompoundsByTagExperimental**](docs/CompoundsApi.md#getCompoundsByTagExperimental) | **GET** /api/projects/{projectId}/compounds/tagged | [EXPERIMENTAL] Get compounds (group of ion identities) by tag
-*CompoundsApi* | [**getCompoundsPaged**](docs/CompoundsApi.md#getCompoundsPaged) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space.
+*CompoundsApi* | [**getCompoundsPageExperimental**](docs/CompoundsApi.md#getCompoundsPageExperimental) | **GET** /api/projects/{projectId}/compounds/page | [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space
 *CompoundsApi* | [**getTagsForCompoundExperimental**](docs/CompoundsApi.md#getTagsForCompoundExperimental) | **GET** /api/projects/{projectId}/compounds/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Compound
 *CompoundsApi* | [**removeTagFromCompoundExperimental**](docs/CompoundsApi.md#removeTagFromCompoundExperimental) | **DELETE** /api/projects/{projectId}/compounds/tags/{compoundId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space
 *FeatureStatisticsApi* | [**computeAlignedFeatureFoldChangesExperimental**](docs/FeatureStatisticsApi.md#computeAlignedFeatureFoldChangesExperimental) | **PUT** /api/projects/{projectId}/aligned-features/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs
@@ -140,15 +143,16 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
 *FeaturesApi* | [**addDeNovoStructureCandidate**](docs/FeaturesApi.md#addDeNovoStructureCandidate) | **PUT** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
 *FeaturesApi* | [**addTagsToAlignedFeatureExperimental**](docs/FeaturesApi.md#addTagsToAlignedFeatureExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
+*FeaturesApi* | [**addTagsToAlignedFeaturesExperimental**](docs/FeaturesApi.md#addTagsToAlignedFeaturesExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**deleteAlignedFeatures**](docs/FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space.
+*FeaturesApi* | [**deleteAlignedFeaturesByQueryExperimental**](docs/FeaturesApi.md#deleteAlignedFeaturesByQueryExperimental) | **PUT** /api/projects/{projectId}/aligned-features/delete-by-query | Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
 *FeaturesApi* | [**getAdductNetworkWithMergedTracesExperimental**](docs/FeaturesApi.md#getAdductNetworkWithMergedTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
 *FeaturesApi* | [**getAlignedFeature**](docs/FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**getAlignedFeatureQualityExperimental**](docs/FeaturesApi.md#getAlignedFeatureQualityExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report | [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
 *FeaturesApi* | [**getAlignedFeatures**](docs/FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | Get all available features (aligned over runs) in the given project-space.
 *FeaturesApi* | [**getAlignedFeaturesByGroupExperimental**](docs/FeaturesApi.md#getAlignedFeaturesByGroupExperimental) | **GET** /api/projects/{projectId}/aligned-features/grouped | [EXPERIMENTAL] Get features (aligned over runs) by tag group
-*FeaturesApi* | [**getAlignedFeaturesByTagExperimental**](docs/FeaturesApi.md#getAlignedFeaturesByTagExperimental) | **GET** /api/projects/{projectId}/aligned-features/tagged | [EXPERIMENTAL] Get features (aligned over runs) by tag
-*FeaturesApi* | [**getAlignedFeaturesPaged**](docs/FeaturesApi.md#getAlignedFeaturesPaged) | **GET** /api/projects/{projectId}/aligned-features/page | Get all available features (aligned over runs) in the given project-space.
+*FeaturesApi* | [**getAlignedFeaturesPageExperimental**](docs/FeaturesApi.md#getAlignedFeaturesPageExperimental) | **GET** /api/projects/{projectId}/aligned-features/page | [EXPERIMENTAL] Get features (aligned over runs) in the given project-space
 *FeaturesApi* | [**getBestMatchingCompoundClasses**](docs/FeaturesApi.md#getBestMatchingCompoundClasses) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes | Return Best matching compound classes for given formulaId
 *FeaturesApi* | [**getCanopusPrediction**](docs/FeaturesApi.md#getCanopusPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction | All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
 *FeaturesApi* | [**getDeNovoStructureCandidates**](docs/FeaturesApi.md#getDeNovoStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
@@ -194,7 +198,6 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**getDefaultJobConfig**](docs/JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration
 *JobsApi* | [**getJob**](docs/JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available).
 *JobsApi* | [**getJobConfig**](docs/JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name.
-*JobsApi* | [**getJobConfigNames**](docs/JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | [DEPRECATED] Get all (non-default) job configuration names  
 *JobsApi* | [**getJobConfigs**](docs/JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations
 *JobsApi* | [**getJobs**](docs/JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available).
 *JobsApi* | [**getJobsPaged**](docs/JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available).
@@ -212,8 +215,13 @@ Class | Method | HTTP request | Description
 *LoginAndAccountApi* | [**openPortal**](docs/LoginAndAccountApi.md#openPortal) | **GET** /api/account/openPortal | Open User portal in browser.
 *LoginAndAccountApi* | [**selectSubscription**](docs/LoginAndAccountApi.md#selectSubscription) | **PUT** /api/account/subscriptions/select-active | Select a subscription as active subscription to be used for computations.
 *LoginAndAccountApi* | [**signUp**](docs/LoginAndAccountApi.md#signUp) | **GET** /api/account/signUp | Open SignUp window in system browser and return signUp link.
+*NpcClassStatisticsApi* | [**computeNpcClassFoldChangesExperimental**](docs/NpcClassStatisticsApi.md#computeNpcClassFoldChangesExperimental) | **PUT** /api/projects/{projectId}/npc-classes/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs
+*NpcClassStatisticsApi* | [**deleteNpcClassFoldChangesExperimental**](docs/NpcClassStatisticsApi.md#deleteNpcClassFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/npc-classes/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes
+*NpcClassStatisticsApi* | [**getNpcClassFoldChangeTableExperimental**](docs/NpcClassStatisticsApi.md#getNpcClassFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/npc-classes/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
+*ProjectsApi* | [**buildSearchIndex**](docs/ProjectsApi.md#buildSearchIndex) | **PUT** /api/projects/{projectId}/index | Create a search index for the given project.
 *ProjectsApi* | [**closeProject**](docs/ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from the application
 *ProjectsApi* | [**copyProject**](docs/ProjectsApi.md#copyProject) | **PUT** /api/projects/{projectId}/copy | [DEPRECATED] [INTERNAL] This endpoint is based on local file paths and will likely be removed in future versions of this API.
+*ProjectsApi* | [**create**](docs/ProjectsApi.md#create) | **POST** /api/projects/create | Create and open a new project with unique autogenerated projectId.
 *ProjectsApi* | [**createProject**](docs/ProjectsApi.md#createProject) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId.
 *ProjectsApi* | [**getCanopusClassyFireData**](docs/ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes
 *ProjectsApi* | [**getCanopusNpcData**](docs/ProjectsApi.md#getCanopusNpcData) | **GET** /api/projects/{projectId}/npc-data | Get CANOPUS prediction vector definition for NPC classes
@@ -229,13 +237,20 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
 *ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
 *ProjectsApi* | [**openProject**](docs/ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
+*ReactionsApi* | [**addReaction**](docs/ReactionsApi.md#addReaction) | **POST** /api/reactions/library | Add a new reaction to the library.
+*ReactionsApi* | [**addSequence**](docs/ReactionsApi.md#addSequence) | **POST** /api/reactions/sequences/library | Add a new reaction sequence to the library.
 *ReactionsApi* | [**applyReactions**](docs/ReactionsApi.md#applyReactions) | **POST** /api/reactions | Apply a sequence of reactions to a list of SMILES strings or structures from a database.
+*ReactionsApi* | [**deleteReaction**](docs/ReactionsApi.md#deleteReaction) | **DELETE** /api/reactions/library/{name} | Delete a reaction from the library.
+*ReactionsApi* | [**deleteSequence**](docs/ReactionsApi.md#deleteSequence) | **DELETE** /api/reactions/sequences/library/{name} | Delete a reaction sequence from the library.
+*ReactionsApi* | [**getReaction**](docs/ReactionsApi.md#getReaction) | **GET** /api/reactions/library/{name} | Get a specific reaction from the library by name.
+*ReactionsApi* | [**getReactions**](docs/ReactionsApi.md#getReactions) | **GET** /api/reactions | Get all reactions from the library.
+*ReactionsApi* | [**getSequence**](docs/ReactionsApi.md#getSequence) | **GET** /api/reactions/sequences/{name} | Get a specific reaction sequence from the library by name.
+*ReactionsApi* | [**getSequences**](docs/ReactionsApi.md#getSequences) | **GET** /api/reactions/sequences | Get all reaction sequences from the library.
 *RunsApi* | [**addTagsToRunExperimental**](docs/RunsApi.md#addTagsToRunExperimental) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | [EXPERIMENTAL] Add tags to a run in the project
-*RunsApi* | [**computeFoldChangeForBlankSubtraction**](docs/RunsApi.md#computeFoldChangeForBlankSubtraction) | **PUT** /api/projects/{projectId}/runs/blanksubtract/compute | [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter
+*RunsApi* | [**addTagsToRunsExperimental**](docs/RunsApi.md#addTagsToRunsExperimental) | **PUT** /api/projects/{projectId}/runs/tags | [EXPERIMENTAL] Add tags to a run in the project
 *RunsApi* | [**getRunExperimental**](docs/RunsApi.md#getRunExperimental) | **GET** /api/projects/{projectId}/runs/{runId} | [EXPERIMENTAL] Get run with the given identifier from the specified project-space
-*RunsApi* | [**getRunPageExperimental**](docs/RunsApi.md#getRunPageExperimental) | **GET** /api/projects/{projectId}/runs/page | [EXPERIMENTAL] Get all available runs in the given project-space
 *RunsApi* | [**getRunsByGroupExperimental**](docs/RunsApi.md#getRunsByGroupExperimental) | **GET** /api/projects/{projectId}/runs/grouped | [EXPERIMENTAL] Get runs by tag group
-*RunsApi* | [**getRunsByTagExperimental**](docs/RunsApi.md#getRunsByTagExperimental) | **GET** /api/projects/{projectId}/runs/tagged | [EXPERIMENTAL] Get runs by tag
+*RunsApi* | [**getRunsPageExperimental**](docs/RunsApi.md#getRunsPageExperimental) | **GET** /api/projects/{projectId}/runs/page | [EXPERIMENTAL] Get runs in the given project-space
 *RunsApi* | [**getTagsForRunExperimental**](docs/RunsApi.md#getTagsForRunExperimental) | **GET** /api/projects/{projectId}/runs/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Run
 *RunsApi* | [**removeTagFromRunExperimental**](docs/RunsApi.md#removeTagFromRunExperimental) | **DELETE** /api/projects/{projectId}/runs/tags/{runId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the run with the specified ID in the specified project-space
 *SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
@@ -249,7 +264,7 @@ Class | Method | HTTP request | Description
 *SearchableDatabasesApi* | [**importIntoDatabase**](docs/SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database.
 *SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | 
-*TagsApi* | [**addGroup**](docs/TagsApi.md#addGroup) | **POST** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Group tags in the project
+*TagsApi* | [**addGroup**](docs/TagsApi.md#addGroup) | **POST** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] TagGroup tags in the project
 *TagsApi* | [**addPossibleValuesToTagDefinition**](docs/TagsApi.md#addPossibleValuesToTagDefinition) | **PATCH** /api/projects/{projectId}/tags/{tagName} | [EXPERIMENTAL] Add a possible value to the tag definition in the project
 *TagsApi* | [**createTags**](docs/TagsApi.md#createTags) | **PUT** /api/projects/{projectId}/tags | [EXPERIMENTAL] Add tags to the project
 *TagsApi* | [**deleteGroup**](docs/TagsApi.md#deleteGroup) | **DELETE** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space
@@ -275,6 +290,7 @@ Class | Method | HTTP request | Description
  - [AnnotatedMsMsData](docs/AnnotatedMsMsData.md)
  - [AnnotatedPeak](docs/AnnotatedPeak.md)
  - [AnnotatedSpectrum](docs/AnnotatedSpectrum.md)
+ - [AnyValue](docs/AnyValue.md)
  - [ApiVersion](docs/ApiVersion.md)
  - [Axes](docs/Axes.md)
  - [BackgroundComputationsStateEvent](docs/BackgroundComputationsStateEvent.md)
@@ -313,6 +329,7 @@ Class | Method | HTTP request | Description
  - [FeatureImport](docs/FeatureImport.md)
  - [FingerprintPrediction](docs/FingerprintPrediction.md)
  - [FoldChange](docs/FoldChange.md)
+ - [FoldChangeJobSubmission](docs/FoldChangeJobSubmission.md)
  - [FormulaCandidate](docs/FormulaCandidate.md)
  - [FormulaCandidateOptField](docs/FormulaCandidateOptField.md)
  - [FragmentNode](docs/FragmentNode.md)
@@ -370,7 +387,6 @@ Class | Method | HTTP request | Description
  - [ReactionSequenceStepsInner](docs/ReactionSequenceStepsInner.md)
  - [Run](docs/Run.md)
  - [RunOptField](docs/RunOptField.md)
- - [SampleTypeFoldChangeRequest](docs/SampleTypeFoldChangeRequest.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
  - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)
  - [SecurityContext](docs/SecurityContext.md)
@@ -401,6 +417,7 @@ Class | Method | HTTP request | Description
  - [TagDefinition](docs/TagDefinition.md)
  - [TagDefinitionImport](docs/TagDefinitionImport.md)
  - [TagGroup](docs/TagGroup.md)
+ - [TagSubmission](docs/TagSubmission.md)
  - [Term](docs/Term.md)
  - [Timeout](docs/Timeout.md)
  - [TraceAnnotationExperimental](docs/TraceAnnotationExperimental.md)

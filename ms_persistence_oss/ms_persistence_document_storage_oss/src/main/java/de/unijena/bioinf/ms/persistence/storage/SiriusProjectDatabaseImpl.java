@@ -33,8 +33,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage>, Closeable, AutoCloseable {
+    public static final Metadata SIRIUS_PROJECT_METADATA = buildMetadata();
 
-    protected static Metadata buildMetadata() throws IOException {
+    private static Metadata buildMetadata() {
         Metadata metadata = Metadata.build();
         MsProjectDocumentDatabase.buildMetadata(metadata);
         NetworkingProjectDocumentDatabase.buildMetadata(metadata);
@@ -100,7 +101,7 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
         if (alignedFeatureIds.isEmpty())
             return 0;
         if (alignedFeatureIds.size() == 1)
-            return cascadeDeleteAlignedFeatures(alignedFeatureIds.get(0));
+            return cascadeDeleteAlignedFeatures(alignedFeatureIds.getFirst());
 
         return this.getStorage().write(() -> {
             long count = 0;

@@ -78,6 +78,11 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         }
     }
 
+    @CommandLine.Option(names = {"--in-memory-index", "--inMemoryIndex"}, description = "Use volatile in-memory lucene search index for projects.")
+    private void setInMemoryIndex(boolean inMemoryIndex) {
+        System.setProperty("io.sirius-ms.project.index.inMemory", String.valueOf(inMemoryIndex));
+    }
+
     public enum ApiDocMode {STABLE, BASIC, STABLE_ADVANCED, ADVANCED}
 
     private final static List<String> INTERNAL_EXCLUSIONS = List.of(
@@ -94,7 +99,6 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
     private final static List<String> DEPRECATED_EXCLUSIONS = List.of(
             "/api/databases",
             "/api/databases/downloadable",
-            "/api/job-config-names",
             "/api/projects/*/copy",
             "/api/projects/*/import/ms-data-local-files-job",
             "/api/projects/*/import/ms-local-data-files",
@@ -113,36 +117,43 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             "/api/projects/*/aligned-features/*/spectral-library-matches/*/annotated",
             "/api/projects/*/aligned-features/*/traces",
             "/api/projects/*/aligned-features/grouped",
+            "/api/projects/*/aligned-features/page",
             "/api/projects/*/aligned-features/quant-table",
             "/api/projects/*/aligned-features/statistics/foldchange/compute",
             "/api/projects/*/aligned-features/statistics/foldchanges",
             "/api/projects/*/aligned-features/statistics/foldchanges/*",
             "/api/projects/*/aligned-features/statistics/foldchanges/stats-table",
-            "/api/projects/*/aligned-features/tagged",
+            "/api/projects/*/aligned-features/tags",
             "/api/projects/*/aligned-features/tags/*",
             "/api/projects/*/aligned-features/tags/*/*",
+            "/api/projects/*/classyfire-classes/statistics/foldchange/compute",
+            "/api/projects/*/classyfire-classes/statistics/foldchanges",
+            "/api/projects/*/classyfire-classes/statistics/foldchanges/stats-table",
             "/api/projects/*/compounds/*/quant-table-row",
             "/api/projects/*/compounds/*/traces",
             "/api/projects/*/compounds/grouped",
+            "/api/projects/*/compounds/page",
             "/api/projects/*/compounds/quant-table",
             "/api/projects/*/compounds/statistics/foldchange/compute",
             "/api/projects/*/compounds/statistics/foldchanges",
             "/api/projects/*/compounds/statistics/foldchanges/*",
             "/api/projects/*/compounds/statistics/foldchanges/stats-table",
-            "/api/projects/*/compounds/tagged",
             "/api/projects/*/compounds/tags/*",
             "/api/projects/*/compounds/tags/*/*",
             "/api/projects/*/groups",
             "/api/projects/*/groups/*",
+            "/api/projects/*/npc-classes/statistics/foldchange/compute",
+            "/api/projects/*/npc-classes/statistics/foldchanges",
+            "/api/projects/*/npc-classes/statistics/foldchanges/stats-table",
             "/api/projects/*/runs/*",
-            "/api/projects/*/runs/blanksubtract/compute",
             "/api/projects/*/runs/grouped",
             "/api/projects/*/runs/page",
-            "/api/projects/*/runs/tagged",
+            "/api/projects/*/runs/tags",
             "/api/projects/*/runs/tags/*",
             "/api/projects/*/runs/tags/*/*",
             "/api/projects/*/tags",
-            "/api/projects/*/tags/*"
+            "/api/projects/*/tags/*",
+            "/api/reactions"
     );
 
     private static final List<String> ADVANCED_EXCLUSIONS = List.of("/api/projects/*/gui/advanced");

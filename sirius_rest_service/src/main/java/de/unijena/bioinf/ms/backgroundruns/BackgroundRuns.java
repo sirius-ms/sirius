@@ -33,9 +33,10 @@ import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.JobEffect;
+import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChangeJobSubmission;
+import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
@@ -84,12 +85,10 @@ public final class BackgroundRuns {
     //compute state lock end
 
     private final Project<? extends ProjectSpaceManager> project;
-    private final ProjectSpaceManager psm;
     private final InstanceBufferFactory<?> bufferfactory;
 
     public BackgroundRuns(Project<? extends ProjectSpaceManager> project, InstanceBufferFactory<?> bufferFactory) {
         this.project = project;
-        this.psm = project.getProjectSpaceManager();
         this.bufferfactory = bufferFactory;
     }
 
@@ -264,7 +263,7 @@ public final class BackgroundRuns {
     public BackgroundRunJob runImportMsData(@NotNull AbstractImportSubmission<?> submission,
                                             @Nullable Consumer<BackgroundRunJob> jobDecorator
     ) {
-        Workflow computation = new ImportMsFromResourceWorkflow(psm, submission, true);
+        Workflow computation = new ImportMsFromResourceWorkflow((NoSQLProjectImpl) project, submission, true);
         BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "LC-MS Importer", "Preprocessing", JobEffect.IMPORT);
         if (jobDecorator != null)
             jobDecorator.accept(run);
@@ -274,23 +273,17 @@ public final class BackgroundRuns {
     public BackgroundRunJob runImportPeakData(@NotNull AbstractImportSubmission<?> submission,
                                               @Nullable Consumer<BackgroundRunJob> jobDecorator
     ) {
-        Workflow computation = new ImportPeaksFomResourceWorkflow(psm, submission.asInputResource(), submission.isIgnoreFormulas(), submission.isAllowMs1OnlyData());
+        Workflow computation = new ImportPeaksFomResourceWorkflow((NoSQLProjectImpl) project, submission.asInputResource(), submission.isIgnoreFormulas(), submission.isAllowMs1OnlyData());
         BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Peak list Importer", "Import", JobEffect.IMPORT);
         if (jobDecorator != null)
             jobDecorator.accept(run);
         return submitRunAndLockInstances(run);
     }
 
-    public BackgroundRunJob runFoldChangesForBlankSubtraction(List<String> sampleRunIds, List<String> blankRunIds, List<String> ctrlRunIds) {
-        Workflow computation = new BlankSubtractionWorkflow(project, sampleRunIds, blankRunIds, ctrlRunIds);
+    public BackgroundRunJob runFoldChange(FoldChangeJobSubmission jobSubmission, QuantRowType statsTarget) {
+        Workflow computation = new FoldChangeWorkflow((NoSQLProjectImpl) project, jobSubmission, statsTarget);
         return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", JobEffect.COMPUTATION));
-    }
-
-    public BackgroundRunJob runFoldChange(String left, String right, AggregationType aggregation, QuantMeasure quantification, Class<?> target) {
-        Workflow computation = new FoldChangeWorkflow(psm, left, right, aggregation, quantification, target);
-        return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", JobEffect.COMPUTATION));
+                new BackgroundRunJob(computation, project.getProjectSpaceManager(), RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", JobEffect.COMPUTATION));
     }
 
     private BackgroundRunJob makeBackgroundRun(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
@@ -323,7 +316,7 @@ public final class BackgroundRuns {
                     computingInstances.addAll(fids);
                 log.info("...All instances locked!");
                 if (SiriusJobs.getGlobalJobManager() instanceof SwingJobManager) //todo hacky. get rid of this swing job dependency by solving job progress via api
-                    Jobs.submit(runToSubmit, runToSubmit::getName, psm::getName, runToSubmit::getDescription);
+                    Jobs.submit(runToSubmit, runToSubmit::getName, project.getProjectSpaceManager()::getName, runToSubmit::getDescription);
                 else
                     SiriusJobs.getGlobalJobManager().submitJob(runToSubmit);
                 return runToSubmit;
@@ -338,7 +331,7 @@ public final class BackgroundRuns {
         return ret;
     }
 
-    public class BackgroundRunJob extends BasicJJob<Boolean> {
+    public class BackgroundRunJob extends BasicMasterJJob<Boolean> {
         @Getter
         protected final int runId;
         @Getter
@@ -407,8 +400,8 @@ public final class BackgroundRuns {
 
                 if (instances != null) { //just a sanity check to notice if something with the went wrong before.
                     withReadLock(() -> instances.forEach(i -> {
-                        if(!computingInstances.contains(i.getId()))
-                            System.out.println("WARNING: Unlocked instance is are part of computation: " + i.getId());
+                        if (!computingInstances.contains(i.getId()))
+                            logWarn("Unlocked instance is are part of computation: " + i.getId());
                     }));
                 }
 
@@ -423,33 +416,49 @@ public final class BackgroundRuns {
 
                 checkForInterruption();
 
-                logInfo("Start Computation...");
+                logInfo("Start Background Run...");
                 computation.run();
 
-                logInfo("Computation DONE!");
+                logInfo("Assign computed affected ids...");
+                updateProgress(-1, "Updating search index...");
                 if (instances != null) {
-                    logInfo("Unlocking Instances after Computation...");
-                    withWriteLock(() -> instances.forEach(i -> computingInstances.remove(i.getId())));
+                    logInfo("Updating search-index after Computation...");
+                    ArrayList<String> affIds = new ArrayList<>();
+                    instances.forEach(i -> affIds.add(i.getId()));
+                    try {
+                        if (!affIds.isEmpty()){
+                            affectedFeatureIds = affIds;
+                            submitJob(() -> project.updateSearchIndex(affectedFeatureIds), JobType.CPU).awaitResult();
+                        }
+                        logInfo("Unlocking Instances after Computation...");
+                    } finally {
+                        withWriteLock(() -> affectedFeatureIds.forEach(computingInstances::remove));
+                    }
                     logInfo("All Instances unlocked!");
+                } else if (computation instanceof ImportPeaksFomResourceWorkflow peakImport) {
+                    logInfo("Collecting imported compounds...");
+                    extractIds(peakImport.getImportedInstances());
+                    if (affectedFeatureIds != null)
+                        submitJob(() -> project.addToSearchIndex(affectedFeatureIds, null), JobType.CPU).awaitResult();
+                    logInfo("Imported compounds collected...");
+                } else if (computation instanceof ImportMsFromResourceWorkflow msImport) {
+                    logInfo("Collecting imported compounds...");
+                    affectedFeatureIds = msImport.getImportedFeatureIds().longStream().mapToObj(String::valueOf).toList();
+                    affectedCompoundIds = msImport.getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
+                    if (affectedFeatureIds != null) // MS data import is once from scratch anyway. so rebuilding index is straightforward and fast
+                        submitJob(() -> project.createSearchIndex(true), JobType.CPU).awaitResult();
+
+                    logInfo("Imported compounds collected...");
                 } else if (computation instanceof ToolChainWorkflow) {
-                    logInfo("Collecting imported compounds...");
-                    extractIds(((ToolChainWorkflow) computation).getPreprocessingJob().result());
-                    logInfo("Imported compounds collected...");
-                } else if (computation instanceof ImportPeaksFomResourceWorkflow) {
-                    logInfo("Collecting imported compounds...");
-                    extractIds(((ImportPeaksFomResourceWorkflow) computation).getImportedInstances());
-                    logInfo("Imported compounds collected...");
-                } else if (computation instanceof ImportMsFromResourceWorkflow) {
-                    logInfo("Collecting imported compounds...");
-                    affectedFeatureIds = ((ImportMsFromResourceWorkflow) computation).getImportedFeatureIds().longStream().mapToObj(String::valueOf).toList();
-                    affectedCompoundIds = ((ImportMsFromResourceWorkflow) computation).getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
-                    logInfo("Imported compounds collected...");
+                    logWarn("ToolChainWorkflow without instances? Should no happen! Job name: " + getName());
                 }
 
+                logInfo("Background Run DONE!");
+                updateProgress(1, 1, "Done!");
                 return true;
             } finally {
                 logInfo("Flushing Results to disk in background...");
-                psm.flush();
+                project.getProjectSpaceManager().flush();
                 logInfo("Results flushed!");
             }
         }

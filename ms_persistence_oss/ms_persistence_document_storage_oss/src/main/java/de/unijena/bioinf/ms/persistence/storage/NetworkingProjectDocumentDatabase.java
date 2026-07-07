@@ -24,16 +24,15 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 
 public interface NetworkingProjectDocumentDatabase<Storage extends Database<?>> extends MsProjectDocumentDatabase<Storage> {
 
 
-    static Metadata buildMetadata() throws IOException {
+    static Metadata buildMetadata() {
         return buildMetadata(Metadata.build());
     }
 
-    static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
+    static Metadata buildMetadata(@NotNull Metadata sourceMetadata) {
         return sourceMetadata; //todo fill me with result Objects
 //                .addRepository(SourceFile.class,
 //                        new Index("fileName", IndexType.UNIQUE))

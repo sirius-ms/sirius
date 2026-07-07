@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.Reaction;
 import io.sirius.ms.sdk.model.Step;
+import java.lang.Object;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

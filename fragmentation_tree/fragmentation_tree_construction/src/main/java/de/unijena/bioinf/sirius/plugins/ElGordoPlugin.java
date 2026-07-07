@@ -65,8 +65,8 @@ public class ElGordoPlugin extends SiriusPlugin  {
                 }
             }
         }
-        final LossSizeScorer lossSizeScorer = FragmentationPatternAnalysis.getByClassName(LossSizeScorer.class, initializer.getAnalysis().getPeakPairScorers());
         final CommonLossEdgeScorer commonLossEdgeScorer = FragmentationPatternAnalysis.getByClassName(CommonLossEdgeScorer.class, initializer.getAnalysis().getLossScorers());
+        LossSizeScorer lossSizeScorer = commonLossEdgeScorer.getLossSizeScorer();
         if (lossSizeScorer!=null && commonLossEdgeScorer!=null) {
             initializer.addLossScorer(new FattyAcidChainScorer(lossSizeScorer));
             for (MolecularFormula f : commonLosses) {

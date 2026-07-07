@@ -38,7 +38,7 @@ public class ImportResult {
     List<String> affectedCompoundIds;
 
     /**
-     * List of alignedFeatureIds that have been imported..
+     * List of alignedFeatureIds that have been imported.
      */
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     List<String> affectedAlignedFeatureIds;

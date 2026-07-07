@@ -170,7 +170,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
     public class LoginWorkflow implements Workflow {
         @Override
         public void run() {
-            PropertyManager.DEFAULTS.changeConfig("PrintCitations", "FALSE");
+            PropertyManager.setProperty("de.unijena.bioinf.sirius.printCitations", "false");
             if (clearLogin) {
                 try {
                     AuthServices.clearRefreshToken(ApplicationCore.WEB_API().getAuthService(), ApplicationCore.TOKEN_FILE);

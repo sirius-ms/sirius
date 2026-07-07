@@ -65,6 +65,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO,
   AlignedFeature.JSON_PROPERTY_COMPUTING,
   AlignedFeature.JSON_PROPERTY_COMPUTED_TOOLS,
+  AlignedFeature.JSON_PROPERTY_QUALITIES,
   AlignedFeature.JSON_PROPERTY_TAGS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
@@ -140,6 +141,10 @@ public class AlignedFeature {
   public static final String JSON_PROPERTY_COMPUTED_TOOLS = "computedTools";
   @jakarta.annotation.Nullable
   private ComputedSubtools computedTools;
+
+  public static final String JSON_PROPERTY_QUALITIES = "qualities";
+  @jakarta.annotation.Nullable
+  private Map<String, DataQuality> qualities;
 
   public static final String JSON_PROPERTY_TAGS = "tags";
   @jakarta.annotation.Nullable
@@ -313,7 +318,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Adducts of this feature that have been detected during preprocessing.
+   * Adducts of this feature that have been detected during preprocessing.  Never empty: if no adduct could be detected, the unknown ion type matching the feature&#39;s  charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.
    * @return detectedAdducts
    */
   @jakarta.annotation.Nonnull
@@ -607,6 +612,39 @@ public class AlignedFeature {
     this.computedTools = computedTools;
   }
 
+  public AlignedFeature qualities(@jakarta.annotation.Nullable Map<String, DataQuality> qualities) {
+    
+    this.qualities = qualities;
+    return this;
+  }
+
+  public AlignedFeature putQualitiesItem(String key, DataQuality qualitiesItem) {
+    if (this.qualities == null) {
+      this.qualities = new HashMap<>();
+    }
+    this.qualities.put(key, qualitiesItem);
+    return this;
+  }
+
+  /**
+   * Qualities per top level quality category.
+   * @return qualities
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_QUALITIES)
+  @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Map<String, DataQuality> getQualities() {
+    return qualities;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_QUALITIES)
+  @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
+  public void setQualities(@jakarta.annotation.Nullable Map<String, DataQuality> qualities) {
+    this.qualities = qualities;
+  }
+
   public AlignedFeature tags(@jakarta.annotation.Nullable Map<String, Tag> tags) {
     
     this.tags = tags;
@@ -668,12 +706,13 @@ public class AlignedFeature {
         Objects.equals(this.topAnnotationsDeNovo, alignedFeature.topAnnotationsDeNovo) &&
         Objects.equals(this.computing, alignedFeature.computing) &&
         Objects.equals(this.computedTools, alignedFeature.computedTools) &&
+        Objects.equals(this.qualities, alignedFeature.qualities) &&
         Objects.equals(this.tags, alignedFeature.tags);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing, computedTools, tags);
+    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing, computedTools, qualities, tags);
   }
 
   @Override
@@ -698,6 +737,7 @@ public class AlignedFeature {
     sb.append("    topAnnotationsDeNovo: ").append(toIndentedString(topAnnotationsDeNovo)).append("\n");
     sb.append("    computing: ").append(toIndentedString(computing)).append("\n");
     sb.append("    computedTools: ").append(toIndentedString(computedTools)).append("\n");
+    sb.append("    qualities: ").append(toIndentedString(qualities)).append("\n");
     sb.append("    tags: ").append(toIndentedString(tags)).append("\n");
     sb.append("}");
     return sb.toString();

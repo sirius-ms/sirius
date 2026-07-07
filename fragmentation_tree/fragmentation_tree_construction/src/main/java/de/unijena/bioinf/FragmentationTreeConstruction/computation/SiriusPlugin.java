@@ -66,6 +66,19 @@ public abstract class SiriusPlugin {
     }
 
     /**
+     * This allows to add or remove ion modes for decomposition of fragments (not PMD!). When new ion modes are added,
+     * they have to be added to #addPossibleIonModesToGraph, too, otherwise they won't end up in the fragmentation
+     * graph.
+     * The separation into two methods has the following reason: overriding both methods means that a lot of new
+     * formulas will be added to the graph. Overriding only the transformDecompositionList and the addPossibleIonModesToGraph
+     * while keeping this method empty allows to control which fragments are added to the graph (instead of adding
+     * all de novo)
+     * */
+    public  void addPossibleIonModesToDecomposer(ProcessedInput input,Ionization parentIon, Set<Ionization> ionModes) {
+
+    }
+
+    /**
      * set to true if anything in your plugin clashs with the reduction heuristics
      * @return
      */
