@@ -78,14 +78,110 @@ JAR_HOME="#jarHome#"
 # Add default JVM options here. You can also use JAVA_OPTS and SIRIUS_OPTS to pass JVM options to this script.
 DEFAULT_JVM_OPTS="#jvmOpts#"
 
-# Leyden AOT Cache logic
-LEYDEN_CACHE="$HOME/#siriusWsDir#/sirius.aot"
-if [ -f "$LEYDEN_CACHE" ]; then
-  DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -XX:AOTCache=$LEYDEN_CACHE"
+# Determine the Java command to use to start the JVM. Resolved early because the AOT cache id
+# below depends on the JDK that is actually used.
+JAVACMD="#javaCommand#"
+
+# fallback to java in path
+if [ ! -f "$JAVACMD" ]; then
+  JAVACMD="java"
+fi
+
+# Leyden AOT Cache logic.
+# The cache is identified by two parts:
+#   - #aotCacheId#: a build-time hash isolating version / distribution channel (installer, zip,
+#     conda) / platform / classpath layout, so those builds never share a cache.
+#   - a runtime JDK tag derived from the *actually resolved* JDK's 'release' file, so JAVA_HOME
+#     overrides, symlinks or JDK upgrades all get their own cache and an incompatible cache is
+#     never consumed.
+# Together they let multiple builds/versions/JDKs coexist under the workspace 'aot' directory.
+
+# Resolve the real java binary (follow symlinks) to locate its JDK 'release' file.
+AOT_JAVA_BIN="$JAVACMD"
+if [ "$AOT_JAVA_BIN" = "java" ]; then
+  AOT_JAVA_BIN=$(command -v java 2>/dev/null || echo java)
+fi
+# Portable symlink resolution (readlink -f is unavailable on old macOS).
+while [ -h "$AOT_JAVA_BIN" ]; do
+  aot_ls=$(ls -ld "$AOT_JAVA_BIN")
+  aot_link=$(expr "$aot_ls" : '.*-> \(.*\)$')
+  case "$aot_link" in
+    /*) AOT_JAVA_BIN="$aot_link" ;;
+    *)  AOT_JAVA_BIN="$(dirname "$AOT_JAVA_BIN")/$aot_link" ;;
+  esac
+done
+
+# Derive a filename-safe JDK tag from the 'release' file (cheap; no JVM spawn).
+AOT_JDK_TAG="jdkunknown"
+AOT_RELEASE="$(dirname "$(dirname "$AOT_JAVA_BIN")")/release"
+if [ -f "$AOT_RELEASE" ]; then
+  aot_jdk_line=$(grep -E '^IMPLEMENTOR_VERSION=' "$AOT_RELEASE" 2>/dev/null | head -1)
+  [ -z "$aot_jdk_line" ] && aot_jdk_line=$(grep -E '^JAVA_VERSION=' "$AOT_RELEASE" 2>/dev/null | head -1)
+  if [ -n "$aot_jdk_line" ]; then
+    aot_jdk_val=$(printf '%s' "$aot_jdk_line" | sed -e 's/^[^=]*=//' -e 's/"//g')
+    aot_sanitized=$(printf '%s' "$aot_jdk_val" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-40)
+    [ -n "$aot_sanitized" ] && AOT_JDK_TAG="$aot_sanitized"
+  fi
+fi
+
+# The cache is user-independent build data, so it is resolved across an ordered list of candidate
+# directories, most-shared first:
+#   1. install dir ($APP_HOME/aot) - shared by all users of this install; writable by the installer
+#                                    (root/admin). Not usable on macOS (code-signed read-only bundle).
+#   2. shared system dir           - shared across users, populated at install by root/admin; this is
+#                                    macOS's shared location since its app bundle cannot be written.
+#   3. per-user cache dir          - last resort so lazy self-healing still works for an unprivileged
+#                                    user (and where a normal, non-admin macOS launch lands).
+# Consume = first candidate that already holds the cache; create/train = first candidate that is writable.
+AOT_FILE="sirius-#aotCacheId#-$AOT_JDK_TAG.aot"
+case "$(uname 2>/dev/null)" in
+  Darwin)
+    AOT_SHARED_DIR="/Library/Application Support/sirius-ms/aot"
+    AOT_USER_DIR="$HOME/Library/Caches/sirius-ms/aot" ;;
+  *)
+    AOT_SHARED_DIR="/var/lib/sirius-ms/aot"
+    AOT_USER_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/sirius-ms/aot" ;;
+esac
+
+# Helpers iterate over THEIR OWN arguments (the candidate dirs passed in), so the script's "$@"
+# (the application arguments, needed later) is never touched. Paths are passed individually quoted,
+# so a candidate containing spaces (e.g. macOS "Application Support") is preserved.
+# Print the first candidate that already contains the cache file; otherwise nothing.
+aot_existing_dir() {
+  for d in "$@"; do
+    [ -n "$d" ] && [ -f "$d/$AOT_FILE" ] && { printf '%s' "$d"; return 0; }
+  done
+  return 1
+}
+# Print the first candidate that exists (or can be created) and is writable; otherwise nothing.
+aot_writable_dir() {
+  for d in "$@"; do
+    [ -n "$d" ] && mkdir -p "$d" 2>/dev/null && [ -w "$d" ] && { printf '%s' "$d"; return 0; }
+  done
+  return 1
+}
+
+# Detect the "aot-train" sub-command: always (re)generate so a stale cache never suppresses training.
+AOT_TRAINING=false
+for arg in "$@"; do
+  if [ "$arg" = "aot-train" ]; then AOT_TRAINING=true; break; fi
+done
+
+if [ "$AOT_TRAINING" = "true" ]; then
+  AOT_WDIR="$(aot_writable_dir "$APP_HOME/aot" "$AOT_SHARED_DIR" "$AOT_USER_DIR")"
+  if [ -n "$AOT_WDIR" ]; then
+    rm -f "$AOT_WDIR/$AOT_FILE"
+    DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -XX:AOTCacheOutput=$AOT_WDIR/$AOT_FILE"
+  fi
 else
-  # Ensure the directory exists before generating
-  mkdir -p "$(dirname "$LEYDEN_CACHE")"
-  DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -XX:AOTCacheOutput=$LEYDEN_CACHE"
+  AOT_HIT="$(aot_existing_dir "$APP_HOME/aot" "$AOT_SHARED_DIR" "$AOT_USER_DIR")"
+  if [ -n "$AOT_HIT" ]; then
+    DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -XX:AOTCache=$AOT_HIT/$AOT_FILE"
+  else
+    # Lazily create in the first writable candidate; if none is writable, run without AOT (no error).
+    AOT_WDIR="$(aot_writable_dir "$APP_HOME/aot" "$AOT_SHARED_DIR" "$AOT_USER_DIR")"
+    [ -n "$AOT_WDIR" ] && DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -XX:AOTCacheOutput=$AOT_WDIR/$AOT_FILE"
+  fi
 fi
 
 if [ -n "$JAVA_LIBRARY_PATH" ]; then
@@ -101,14 +197,6 @@ fi
 
 # Add full lib dir to classpath
 CLASSPATH="#classPath#"
-
-# Determine the Java command to use to start the JVM.
-JAVACMD="#javaCommand#"
-
-# fallback to java in path
-if [ ! -f "$JAVACMD" ]; then
-  JAVACMD="java"
-fi
 
 ## Check the session type ->  enalble if native wayland in jbr is more stable
 #if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
