@@ -20,3 +20,11 @@ integrationTest {
         showStandardStreams = false
     }
 }
+
+accountIntegrationTest {
+    dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
+    testLogging {
+        outputs.upToDateWhen {false}
+        showStandardStreams = false
+    }
+}
