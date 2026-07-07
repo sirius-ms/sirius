@@ -24,7 +24,9 @@ import com.brightgiant.secureapi.SiriusGuiHandshake;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.SiriusGuiFactory;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.dialogs.AotTrainingOverlay;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiInfo;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
@@ -114,10 +116,18 @@ public class GuiServiceImpl implements GuiService {
                 }
             });
         }
+        final boolean aotTraining = Boolean.getBoolean(SiriusMiddlewareApplication.AOT_TRAINING_PROPERTY);
         Jobs.runEDTLater(() -> {
             gui.getMainFrame().setVisible(true);
-            gui.getMainFrame().toFront();
-            gui.getMainFrame().checkAndInitSoftwareTour();
+            if (aotTraining) {
+                // Installation-time AOT training run: render the real GUI (so the cache covers the
+                // actual startup path) but make clear this is a one-time install step and block
+                // interaction with the transient window. No software tour during training.
+                AotTrainingOverlay.show(gui.getMainFrame());
+            } else {
+                gui.getMainFrame().toFront();
+                gui.getMainFrame().checkAndInitSoftwareTour();
+            }
         });
     }
 

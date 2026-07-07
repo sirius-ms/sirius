@@ -40,28 +40,76 @@ set JAR_HOME=#jarHome#
 @rem Add default JVM options here. You can also use JAVA_OPTS and SIRIUS_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS=#jvmOpts#
 
-@rem Leyden AOT Cache logic
-set LEYDEN_CACHE="%USERPROFILE%\#siriusWsDir#\sirius.aot"
-if exist %LEYDEN_CACHE% (
+@rem Determine the java executable first: the AOT cache id below depends on the JDK actually used.
+set JAVA_EXE=%APP_HOME%\runtime\bin\java.exe
+if not exist "%JAVA_EXE%" set JAVA_EXE=%JAVA_HOME%\bin\java.exe
+if not exist "%JAVA_EXE%" set JAVA_EXE=java.exe
+set MAIN_CLASS="#mainClass#"
+
+@rem Resolve a full path so we can locate the JDK 'release' file (handles java.exe on PATH).
+set "AOT_JAVA_FULL=%JAVA_EXE%"
+if /I "%JAVA_EXE%"=="java.exe" (
+    for /f "delims=" %%i in ('where java.exe 2^>nul') do if not defined AOT_JAVA_FULL_SET (
+        set "AOT_JAVA_FULL=%%i"
+        set AOT_JAVA_FULL_SET=1
+    )
+)
+
+@rem Derive a filename-safe JDK tag from the JDK 'release' file (cheap; no JVM spawn). This reflects
+@rem the JDK actually used (JAVA_HOME overrides, symlinks, JDK upgrades) so an incompatible cache is
+@rem never consumed.
+set "AOT_JDK_TAG=jdkunknown"
+set "AOT_JDK_HOME="
+for %%i in ("%AOT_JAVA_FULL%") do set "AOT_JDK_BIN=%%~dpi"
+if defined AOT_JDK_BIN (
+    set "AOT_JDK_BIN=!AOT_JDK_BIN:~0,-1!"
+    for %%i in ("!AOT_JDK_BIN!") do set "AOT_JDK_HOME=%%~dpi"
+    if defined AOT_JDK_HOME set "AOT_JDK_HOME=!AOT_JDK_HOME:~0,-1!"
+)
+set "AOT_JDK_RAW="
+if defined AOT_JDK_HOME if exist "!AOT_JDK_HOME!\release" (
+    for /f "usebackq tokens=1,* delims==" %%a in ("!AOT_JDK_HOME!\release") do (
+        if /I "%%a"=="IMPLEMENTOR_VERSION" if not defined AOT_JDK_RAW set "AOT_JDK_RAW=%%~b"
+    )
+    if not defined AOT_JDK_RAW for /f "usebackq tokens=1,* delims==" %%a in ("!AOT_JDK_HOME!\release") do (
+        if /I "%%a"=="JAVA_VERSION" if not defined AOT_JDK_RAW set "AOT_JDK_RAW=%%~b"
+    )
+)
+if defined AOT_JDK_RAW (
+    set "AOT_JDK_TAG=!AOT_JDK_RAW!"
+    set "AOT_JDK_TAG=!AOT_JDK_TAG:+=_!"
+    set "AOT_JDK_TAG=!AOT_JDK_TAG: =_!"
+    set "AOT_JDK_TAG=!AOT_JDK_TAG::=_!"
+    set "AOT_JDK_TAG=!AOT_JDK_TAG:~0,40!"
+)
+
+@rem Leyden AOT Cache logic.
+@rem #aotCacheId# is a build-time hash isolating version / distribution channel (installer, zip,
+@rem conda) / platform / classpath layout; the runtime JDK tag isolates the JDK actually used.
+@rem Builds/versions/JDKs thus coexist under the workspace 'aot' directory.
+set LEYDEN_CACHE="%USERPROFILE%\#siriusWsDir#\aot\sirius-#aotCacheId#-!AOT_JDK_TAG!.aot"
+
+@rem Detect the "aot-train" sub-command. In training mode we always (re)generate the cache, so an
+@rem existing (possibly stale) cache never suppresses training. Any other invocation consumes an
+@rem existing cache or lazily creates one on first run.
+set AOT_TRAINING=false
+for %%a in (%*) do (
+    if /I "%%~a"=="aot-train" set AOT_TRAINING=true
+)
+
+for %%i in (%LEYDEN_CACHE%) do set LEYDEN_CACHE_DIR=%%~dpi
+
+if "!AOT_TRAINING!"=="true" (
+    @rem Force a fresh recording; remove any stale cache so it cannot be consumed instead.
+    if not exist "!LEYDEN_CACHE_DIR!" mkdir "!LEYDEN_CACHE_DIR!"
+    if exist %LEYDEN_CACHE% del /f /q %LEYDEN_CACHE%
+    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCacheOutput=%LEYDEN_CACHE%
+) else if exist %LEYDEN_CACHE% (
     set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCache=%LEYDEN_CACHE%
 ) else (
     @rem Ensure the directory exists before generating
-    for %%i in (%LEYDEN_CACHE%) do set LEYDEN_CACHE_DIR=%%~dpi
     if not exist "!LEYDEN_CACHE_DIR!" mkdir "!LEYDEN_CACHE_DIR!"
     set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCacheOutput=%LEYDEN_CACHE%
-)
-
-set JAVA_EXE=%APP_HOME%\runtime\bin\java.exe
-set MAIN_CLASS="#mainClass#"
-
-if not exist %JAVA_EXE% (
-    set JAVA_EXE=%JAVA_HOME%\bin\java.exe
-@rem    echo using JAVA_HOME java !JAVA_EXE!
-)
-
-if not exist %JAVA_EXE% (
-    set JAVA_EXE=java.exe
-@rem    echo using system java !JAVA_EXE!
 )
 
 %JAVA_EXE% -version >nul 2>&1 && (

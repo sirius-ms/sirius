@@ -78,9 +78,71 @@ JAR_HOME="#jarHome#"
 # Add default JVM options here. You can also use JAVA_OPTS and SIRIUS_OPTS to pass JVM options to this script.
 DEFAULT_JVM_OPTS="#jvmOpts#"
 
-# Leyden AOT Cache logic
-LEYDEN_CACHE="$HOME/#siriusWsDir#/sirius.aot"
-if [ -f "$LEYDEN_CACHE" ]; then
+# Determine the Java command to use to start the JVM. Resolved early because the AOT cache id
+# below depends on the JDK that is actually used.
+JAVACMD="#javaCommand#"
+
+# fallback to java in path
+if [ ! -f "$JAVACMD" ]; then
+  JAVACMD="java"
+fi
+
+# Leyden AOT Cache logic.
+# The cache is identified by two parts:
+#   - #aotCacheId#: a build-time hash isolating version / distribution channel (installer, zip,
+#     conda) / platform / classpath layout, so those builds never share a cache.
+#   - a runtime JDK tag derived from the *actually resolved* JDK's 'release' file, so JAVA_HOME
+#     overrides, symlinks or JDK upgrades all get their own cache and an incompatible cache is
+#     never consumed.
+# Together they let multiple builds/versions/JDKs coexist under the workspace 'aot' directory.
+
+# Resolve the real java binary (follow symlinks) to locate its JDK 'release' file.
+AOT_JAVA_BIN="$JAVACMD"
+if [ "$AOT_JAVA_BIN" = "java" ]; then
+  AOT_JAVA_BIN=$(command -v java 2>/dev/null || echo java)
+fi
+# Portable symlink resolution (readlink -f is unavailable on old macOS).
+while [ -h "$AOT_JAVA_BIN" ]; do
+  aot_ls=$(ls -ld "$AOT_JAVA_BIN")
+  aot_link=$(expr "$aot_ls" : '.*-> \(.*\)$')
+  case "$aot_link" in
+    /*) AOT_JAVA_BIN="$aot_link" ;;
+    *)  AOT_JAVA_BIN="$(dirname "$AOT_JAVA_BIN")/$aot_link" ;;
+  esac
+done
+
+# Derive a filename-safe JDK tag from the 'release' file (cheap; no JVM spawn).
+AOT_JDK_TAG="jdkunknown"
+AOT_RELEASE="$(dirname "$(dirname "$AOT_JAVA_BIN")")/release"
+if [ -f "$AOT_RELEASE" ]; then
+  aot_jdk_line=$(grep -E '^IMPLEMENTOR_VERSION=' "$AOT_RELEASE" 2>/dev/null | head -1)
+  [ -z "$aot_jdk_line" ] && aot_jdk_line=$(grep -E '^JAVA_VERSION=' "$AOT_RELEASE" 2>/dev/null | head -1)
+  if [ -n "$aot_jdk_line" ]; then
+    aot_jdk_val=$(printf '%s' "$aot_jdk_line" | sed -e 's/^[^=]*=//' -e 's/"//g')
+    aot_sanitized=$(printf '%s' "$aot_jdk_val" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-40)
+    [ -n "$aot_sanitized" ] && AOT_JDK_TAG="$aot_sanitized"
+  fi
+fi
+
+LEYDEN_CACHE="$HOME/#siriusWsDir#/aot/sirius-#aotCacheId#-$AOT_JDK_TAG.aot"
+
+# Detect the "aot-train" sub-command. In training mode we always (re)generate the cache, so an
+# existing (possibly stale) cache never suppresses training. Any other invocation consumes an
+# existing cache or lazily creates one on first run.
+AOT_TRAINING=false
+for arg in "$@"; do
+  if [ "$arg" = "aot-train" ]; then
+    AOT_TRAINING=true
+    break
+  fi
+done
+
+if [ "$AOT_TRAINING" = "true" ]; then
+  # Force a fresh recording; remove any stale cache so it cannot be consumed instead.
+  mkdir -p "$(dirname "$LEYDEN_CACHE")"
+  rm -f "$LEYDEN_CACHE"
+  DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -XX:AOTCacheOutput=$LEYDEN_CACHE"
+elif [ -f "$LEYDEN_CACHE" ]; then
   DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS -XX:AOTCache=$LEYDEN_CACHE"
 else
   # Ensure the directory exists before generating
@@ -101,14 +163,6 @@ fi
 
 # Add full lib dir to classpath
 CLASSPATH="#classPath#"
-
-# Determine the Java command to use to start the JVM.
-JAVACMD="#javaCommand#"
-
-# fallback to java in path
-if [ ! -f "$JAVACMD" ]; then
-  JAVACMD="java"
-fi
 
 ## Check the session type ->  enalble if native wayland in jbr is more stable
 #if [ "$XDG_SESSION_TYPE" = "wayland" ]; then

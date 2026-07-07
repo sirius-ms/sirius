@@ -83,6 +83,9 @@ tasks.register('extractForLeyden', Exec) {
     // Grab the built jar file and define the output folder
     def jarFile = bootJarTask.get().outputs.files.singleFile
     def outputDir = layout.buildDirectory.dir("optimized-app").get().asFile
+    // Declare the fat jar as an input so a rebuilt jar re-triggers extraction; without this the task
+    // stays UP-TO-DATE on its existing output and ships a stale extracted app on incremental builds.
+    inputs.file(jarFile)
     outputs.dir(outputDir)
 
     // Clear the old extracted folder if it exists
@@ -131,7 +134,16 @@ startScripts {
     applicationName = "sirius"
     defaultJvmOpts = project.siriusJvmArgs
 
+    // The unix/windows launchers are rewritten from these templates in doLast below. Declare them
+    // as task inputs so editing a template invalidates the task instead of shipping a stale script.
+    inputs.file("${rootDir}/scripts/sirius.sh.templ")
+    inputs.file("${rootDir}/scripts/sirius.bat.templ")
+
     doLast {
+        // Distribution channel for the AOT cache id: explicit property if set, otherwise inferred
+        // (conda uses a custom lib location and no bundled runtime; everything else is a portable zip/install).
+        def aotChannel = project.findProperty("build.sirius.dist.channel") ?:
+                ((!includeRuntime && libDir != null) ? "conda" : "portable")
         // writer sh script
         if (!siriusTargetPlatform.isWin()) {
             def templateBinding = [
@@ -161,6 +173,7 @@ startScripts {
             templateBinding.javaCommand = "\$APP_HOME/runtime/bin/java"
             templateBinding.jarHome = libDir == null ? "\$APP_HOME/app" : libDir
             templateBinding.siriusWsDir = project.siriusWsDir
+            templateBinding.aotCacheId = project(':sirius_dist').aotCacheId.call(aotChannel)
 
             String script = sf.text
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
@@ -184,6 +197,7 @@ startScripts {
             templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
             templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
             templateBinding.siriusWsDir = project.siriusWsDir
+            templateBinding.aotCacheId = project(':sirius_dist').aotCacheId.call(aotChannel)
 
             String script = sf.text
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
@@ -230,7 +244,15 @@ distributions {
                         "${parent.tasks.getByName('extractRuntimeImage').outputs.files.singleFile}"
                     }
                     eachFile { f ->
-                        if (f.relativePath.segments.contains('bin')) {
+                        // Restore the executable bit for the bin/ launchers AND for the native
+                        // helper executables that live in lib/. jspawnhelper in particular is
+                        // required for posix_spawn/subprocess launching (e.g. the JxBrowser
+                        // Chromium process); without +x it fails with EACCES (error 13).
+                        if (f.relativePath.segments.contains('bin')
+                                || f.name == 'jspawnhelper'
+                                || f.name == 'jexec'
+                                || f.name == 'jcef_helper'
+                                || f.name == 'chrome-sandbox') {
                             f.permissions {
                                 unix(0755)
                             }

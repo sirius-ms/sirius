@@ -89,6 +89,24 @@ ext {
             break;
     }
     jre_download_link = "${jre_download_base_link}${jre_fname}"
+
+    // Build-time fingerprint used to isolate Project Leyden AOT caches per build. It is injected
+    // into the launcher templates as #aotCacheId# and combined there with a runtime JDK tag, so
+    // installer / zip / conda builds, platforms and versions never share an incompatible cache.
+    // The JDK is deliberately NOT part of this hash - it is determined at runtime from the actually
+    // resolved JDK's 'release' file so JAVA_HOME overrides, symlinks and JDK upgrades are honored.
+    aotCacheId = { String channel ->
+        def fingerprint = [
+                "v=${siriusFrontendVersion}",
+                "channel=${channel}",
+                "platform=${siriusTargetPlatform}",
+                "libMode=${libDir != null ? 'custom' : 'default'}",
+                "cbcNative=${excludeCbcNative}",
+                "jvmArgs=${siriusJvmArgs.join(' ')}"
+        ].join('|')
+        return java.security.MessageDigest.getInstance("SHA-256")
+                .digest(fingerprint.getBytes("UTF-8")).encodeHex().toString().substring(0, 12)
+    }
 }
 
 tasks.register('downloadRuntimeImage', Download) {
@@ -276,6 +294,7 @@ subprojects {
                 throw new IllegalArgumentException("Cannot determine operating system for build")
             }
             templateBinding.siriusWsDir = project.siriusWsDir
+            templateBinding.aotCacheId = project(':sirius_dist').aotCacheId.call('installer')
             String script = sf.text
             templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
             f.withWriter { it.write(script) }
