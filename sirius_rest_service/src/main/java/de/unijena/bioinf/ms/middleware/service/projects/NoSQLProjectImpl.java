@@ -1680,8 +1680,24 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }).orElse(ProjectSourceFormats.fromDirectImports(importSource));
         project().upsertProjectSourceFormats(format);
 
-        //todo fire import api event
-        //todo handle index update
+        // Data-import (SSE) events are fired by the REST controllers (CompoundController /
+        // AlignedFeatureController) after this call returns; the shared service layer (also used by the
+        // CLI, which has no event service) intentionally does not fire them.
+
+        // Keep the search index in sync with the imported data. importCompounds() assigned ids to the
+        // aligned features in-place, so we can collect them and add them to the index via the dedicated
+        // add path (no-op if no search service is configured). This is the single indexing chokepoint for
+        // direct imports: addAlignedFeatures() delegates here and must NOT index again (addDocument is
+        // add-only and would create duplicate documents).
+        addToSearchIndexLongIds(
+                dbc.stream()
+                        .map(c -> c.getAdductFeatures())
+                        .flatMap(Optional::stream)
+                        .flatMap(List::stream)
+                        .map(AlignedFeatures::getAlignedFeatureId)
+                        .toList(),
+                null);
+
         return dbc.stream().map(c -> convertToApiCompound(c, false, optFields, optFieldsFeatures)).toList();
     }
 
@@ -1902,11 +1918,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields, @NotNull String importSource) {
         List<CompoundImport> cis = features.stream().map(f -> CompoundImport.builder().name(f.getName()).features(List.of(f)).build()).toList();
+        // addCompounds() already keeps the search index in sync for the imported features; do not index
+        // again here (addDocument is add-only and a second pass would create duplicate documents).
         List<AlignedFeature> importedFeatures = addCompounds(cis, profile, EnumSet.of(Compound.OptField.none), optFields, importSource).stream()
                 .flatMap(c -> c.getFeatures().stream()).toList();
-        if (searchService != null)
-            searchService.addDocuments(projectId, importedFeatures);
-        //todo fire import event?
         return importedFeatures;
     }
 
