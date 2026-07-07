@@ -1841,15 +1841,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         TinyBackgroundJJob<Long2ObjectOpenHashMap<Map<String, Tag>>> tagJob = null;
         if (optFields.contains(AlignedFeature.OptField.tags)) {
             tagJob = SiriusJobs.runInBackground(() -> {
+                // Tags are stored with a taggedObjectId (not an alignedFeatureId) field; filtering on the
+                // latter matched nothing, so this bulk query silently returned no tags and the per-feature
+                // path (annotateApiFeature) was the only thing that ever populated them.
                 Filter.FilterClause tagfilter = Filter.and(
                         Filter.where("taggedObjectClass").eq(AlignedFeatures.class.getName()),
-                        Filter.where("alignedFeatureId").in(ids)
+                        Filter.where("taggedObjectId").in(ids)
                 );
 
                 final Long2ObjectOpenHashMap<Map<String, Tag>> tagmap = new Long2ObjectOpenHashMap<>();
                 storage().find(tagfilter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class).forEach(tag ->
                         tagmap.computeIfAbsent(tag.getTaggedObjectId(), id -> new HashMap<>())
-                                .put(tag.getTagName(), Tag.builder().tagName(tag.getTagName()).value(tag.getValue()).build()));
+                                // convert like every other tag path so DATE/TIME values are returned formatted
+                                // (e.g. "yyyy-MM-dd"), not as the raw stored epoch millis.
+                                .put(tag.getTagName(), convertToApiTag(tag)));
                 return tagmap;
             });
         }
