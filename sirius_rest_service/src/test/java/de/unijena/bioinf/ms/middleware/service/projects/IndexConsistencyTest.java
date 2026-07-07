@@ -35,12 +35,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * Phase-0 harness T0.3: guarantees the invariant that the Lucene search index stays consistent with the
  * NoSQL database across CRUD performed through {@link NoSQLProjectImpl}.
  * <p>
- * Tests tagged {@code [RED]} are expected to FAIL on the current branch and pin known drift bugs:
+ * Regression guards for two fixed drift bugs:
  * <ul>
- *   <li>{@code [RED] B1} — per-entity deletes cascade the DB delete but never update the search index,
- *       so deleted features/compounds remain searchable.</li>
+ *   <li>A2 — {@code addCompounds} (the direct-import chokepoint) now adds imported features to the search
+ *       index; imported data is searchable without a manual rebuild step.</li>
+ *   <li>B1 — per-entity deletes cascade the DB delete <em>and</em> remove the entity from the search index,
+ *       so deleted features/compounds are no longer searchable.</li>
  * </ul>
- * The non-RED tests validate the harness itself (indexing on add works) and act as regression guards.
  */
 public class IndexConsistencyTest {
 
@@ -106,43 +107,32 @@ public class IndexConsistencyTest {
                 "src");
     }
 
-    /**
-     * Populate the search index from the current DB state, mirroring what the project-open rebuild
-     * ({@code createSearchIndex}) does. NOTE: {@code addCompounds} itself does not index features
-     * ({@code //todo handle index update} in NoSQLProjectImpl), so this step is required to reach a
-     * realistic "index populated" state before exercising deletes.
-     */
-    private void indexAllFeaturesFromDb() {
-        List<AlignedFeature> features = project.findAlignedFeatures(
-                Pageable.unpaged(), false, EnumSet.noneOf(AlignedFeature.OptField.class)).getContent();
-        project.getSearchService().addDocuments(project.getProjectId(), features);
-    }
-
     private List<String> indexedFeatureIds() {
         Page<String> ids = project.getSearchService()
                 .searchIds(project.getProjectId(), null, Pageable.unpaged(), AlignedFeature.class);
         return ids.getContent();
     }
 
-    /** Baseline (green): once indexed, both features are searchable. Validates the harness. */
+    /**
+     * A2 — {@code addCompounds} must keep the search index in sync: features imported through it are
+     * searchable immediately, with no manual/rebuild indexing step.
+     */
     @Test
-    public void testAddIndexesFeatures() {
+    public void testAddCompoundsIndexesFeatures() {
         List<Compound> compounds = addTwoCompounds();
         assertEquals(2, compounds.size());
 
-        indexAllFeaturesFromDb();
-
         List<String> indexed = indexedFeatureIds();
-        assertEquals(2, indexed.size(), "both aligned features must be present in the search index");
+        assertEquals(2, indexed.size(),
+                "addCompounds must add both imported aligned features to the search index (A2)");
     }
 
     /**
-     * [RED] B1 — deleting an aligned feature must also remove it from the search index.
+     * B1 — deleting an aligned feature must also remove it from the search index.
      */
     @Test
-    public void testDeleteFeatureRemovesFromIndex_RED_B1() {
+    public void testDeleteFeatureRemovesFromIndex() {
         List<Compound> compounds = addTwoCompounds();
-        indexAllFeaturesFromDb();
         String deletedFeatureId = compounds.stream()
                 .flatMap(c -> c.getFeatures().stream())
                 .filter(f -> "alpha".equals(f.getName()))
@@ -165,12 +155,11 @@ public class IndexConsistencyTest {
     }
 
     /**
-     * [RED] B1 — deleting a compound must also remove its aligned features from the search index.
+     * B1 — deleting a compound must also remove its aligned features from the search index.
      */
     @Test
-    public void testDeleteCompoundRemovesFeaturesFromIndex_RED_B1() {
+    public void testDeleteCompoundRemovesFeaturesFromIndex() {
         List<Compound> compounds = addTwoCompounds();
-        indexAllFeaturesFromDb();
         Compound toDelete = compounds.stream().filter(c -> "alpha".equals(c.getName())).findFirst().orElseThrow();
         String deletedFeatureId = toDelete.getFeatures().getFirst().getAlignedFeatureId();
 
