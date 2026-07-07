@@ -14,7 +14,7 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 |**externalFeatureId** | **String** | Externally provided FeatureId (e.g. by some preprocessing tool).  This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source. |  [optional] |
 |**ionMass** | **Double** |  |  [optional] |
 |**charge** | **Integer** | Ion mode (charge) this feature has been measured in. |  |
-|**detectedAdducts** | **Set&lt;String&gt;** | Adducts of this feature that have been detected during preprocessing. |  |
+|**detectedAdducts** | **Set&lt;String&gt;** | Adducts of this feature that have been detected during preprocessing.  Never empty: if no adduct could be detected, the unknown ion type matching the feature&#39;s  charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct. |  |
 |**rtStartSeconds** | **Double** |  |  [optional] |
 |**rtEndSeconds** | **Double** |  |  [optional] |
 |**rtApexSeconds** | **Double** |  |  [optional] |
@@ -26,6 +26,7 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 |**topAnnotationsDeNovo** | [**FeatureAnnotations**](FeatureAnnotations.md) |  |  [optional] |
 |**computing** | **Boolean** | Write lock for this feature. If the feature is locked no write operations are possible.  True if any computation is modifying this feature or its results |  [optional] |
 |**computedTools** | [**ComputedSubtools**](ComputedSubtools.md) |  |  [optional] |
+|**qualities** | **Map&lt;String, DataQuality&gt;** | Qualities per top level quality category. |  [optional] |
 |**tags** | [**Map&lt;String, Tag&gt;**](Tag.md) | Key: tagName, value: tag |  [optional] |
 
 

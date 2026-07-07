@@ -125,7 +125,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         // Use String.format to replace placeholders with actual values
         this.setToolTipText(String.format(TOOLTIP_TEMPLATE,
                 ec.getGUIName(),
-                ec.getQuality() != null ? ec.getQuality().name() : "",
+                ec.getQuality() != null? ec.getQuality().name() : "",
                 ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(" or ")),
                 ec.getIonMass() > 0 ? numberFormatMassLong.format(ec.getIonMass()) + " m/z" : "",
                 ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60).map(numberFormat::format).map(i -> i + " min").orElse(""),
@@ -160,7 +160,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         g2.setFont(compoundFont);
         DataQuality q = ec.getSourceFeature().getQuality();
         int compoundLength;
-        if (q != null) {
+        if (q != null &&  q != DataQuality.NOT_APPLICABLE ) {
             compoundLength = compoundFm.stringWidth(ec.getGUIName()) + 13;
             if (compoundLength + 2 > maxWidth)
                 g2.setPaint(gradientPaint);

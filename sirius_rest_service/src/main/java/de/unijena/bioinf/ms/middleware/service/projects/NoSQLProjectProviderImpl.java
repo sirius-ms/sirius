@@ -35,7 +35,7 @@ import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.storage.db.nosql.Database;
-import it.unimi.dsi.fastutil.Pair;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -49,11 +49,13 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectEventType.*;
+import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
 @Slf4j
 public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLProjectSpaceManager, NoSQLProjectImpl> {
     @Nullable
-    private final SearchService searchService;
+    @Setter
+    private SearchService searchService;
 
 
     public NoSQLProjectProviderImpl(@NotNull ProjectSpaceManagerFactory<NoSQLProjectSpaceManager> projectSpaceManagerFactory, @NotNull EventService<?> eventService, @NotNull ComputeService computeService, @Nullable SearchService searchService) {
@@ -71,8 +73,12 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
 
     @Override
     public ProjectInfo createTempProject(@NotNull EnumSet<ProjectInfo.OptField> optFields) {
-        Pair<String, String> projectData = makeTempProjectData();
-        return createProject(projectData.first(), projectData.second(), optFields, true);
+        Path p = FileUtils.createTmpProjectSpaceLocation(SIRIUS_PROJECT_SUFFIX);
+        String projectId = p.getFileName().toString();
+        projectId = projectId.substring(0, projectId.length() - SIRIUS_PROJECT_SUFFIX.length());
+        projectId = FileUtils.sanitizeFilename(projectId);
+
+        return createProject(projectId, p.toAbsolutePath().toString(), optFields, true, true);
     }
 
     @Override
@@ -84,7 +90,7 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
             Path target = copyPath.normalize();
             Files.copy(source, target);
         } finally {
-            openProject(projectId, source.toString(), EnumSet.noneOf(ProjectInfo.OptField.class));
+            openProject(projectId, source.toString(), EnumSet.noneOf(ProjectInfo.OptField.class), instances.isTempProject());
         }
     }
 
@@ -127,5 +133,4 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
                         .build()
         );
     }
-
 }

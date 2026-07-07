@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.ms.persistence.model.core.PersistentSearchIndex;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -28,8 +29,6 @@ import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
-import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
-import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
@@ -51,27 +50,32 @@ import java.util.stream.StreamSupport;
 public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
 
-    static Metadata buildMetadata() throws IOException {
+    static Metadata buildMetadata() {
         return buildMetadata(Metadata.build());
     }
 
-    static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
+    static Metadata buildMetadata(@NotNull Metadata sourceMetadata) {
         MetadataUtils.addFasUtilCollectionSupport(sourceMetadata);
         return sourceMetadata
-                .addRepository(LCMSRun.class,
-                        Index.nonUnique("name"))
+                .addRepository(LCMSRun.class
+//                        ,Index.nonUnique("name") //todo remove, replace with search index
+                )
 
-                .addRepository(MergedLCMSRun.class, // TODO: das ist doof -_- Wozu überhaupt zwischen beidem unterscheiden?
-                        Index.nonUnique("name"))
+                .addRepository(MergedLCMSRun.class // TODO: das ist doof -_- Wozu überhaupt zwischen beidem unterscheiden?
+//                        ,Index.nonUnique("name") //todo remove, replace with search index
+                )
 
-                .addRepository(Scan.class,
-                        Index.nonUnique("runId", "scanTime"))
-                .setOptionalFields(Scan.class, "peaks")
 
-                .addRepository(MSMSScan.class,
-                        Index.nonUnique("runId", "scanTime"),
-                        Index.nonUnique("precursorScanId"))
-                .setOptionalFields(MSMSScan.class, "peaks")
+                // todo leftovers from old preprocessing?
+//                .addRepository(Scan.class
+//                        ,Index.nonUnique("runId", "scanTime")
+//                )
+//                .setOptionalFields(Scan.class, "peaks")
+//
+//                .addRepository(MSMSScan.class,
+//                        Index.nonUnique("runId", "scanTime"),
+//                        Index.nonUnique("precursorScanId"))
+//                .setOptionalFields(MSMSScan.class, "peaks")
 
                 .addRepository(MergedTrace.class)
 
@@ -83,11 +87,11 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                         Index.nonUnique("alignedFeatureId")
                 )
 
-                .addRepository(AlignedFeatures.class,
-                        Index.nonUnique("compoundId"),
-                        Index.nonUnique("averageMass"),
-                        Index.nonUnique("retentionTime.middle"),
-                        Index.nonUnique("traceRef.traceId")
+                .addRepository(AlignedFeatures.class
+                        ,Index.nonUnique("compoundId")
+                        ,Index.nonUnique("traceRef.traceId")
+//                        ,Index.nonUnique("averageMass") //todo remove, replace with search index
+//                        ,Index.nonUnique("retentionTime.middle") //todo remove, replace with  search index
                 )
 
                 .addRepository(AlignedIsotopicFeatures.class,
@@ -96,20 +100,24 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
                 .addRepository(AdductNetwork.class)
 
-                .addRepository(CorrelatedIonPair.class,
-                        Index.nonUnique("alignedFeatureId1"),
-                        Index.nonUnique("alignedFeatureId2"),
-                        Index.nonUnique("type")
+                .addRepository(CorrelatedIonPair.class
+//                        ,Index.nonUnique("alignedFeatureId1") //add if used needed
+//                        ,Index.nonUnique("alignedFeatureId2") //add if used needed
+//                        ,Index.nonUnique("compoundId") //add if needed
+//                        ,Index.nonUnique("type")
                 )
 
-                .addRepository(Compound.class,
-                        Index.nonUnique("name"),
-                        Index.nonUnique("neutralMass"),
-                        Index.nonUnique("rt.middle"))
+                .addRepository(Compound.class
+//                        ,Index.nonUnique("name") //todo remove, replace with search index
+//                        ,Index.nonUnique("neutralMass") //todo remove, replace with search index
+//                        ,Index.nonUnique("rt.middle") //todo remove, replace with search index
+                )
 
                 .addRepository(RetentionTimeAxis.class)
 
-                .addRepository(QualityReport.class)
+                .addRepository(QualityReport.class,"alignedFeatureId")
+
+                .addRepository(PersistentSearchIndex.class)
 
                 ;
 
@@ -127,12 +135,6 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     @SneakyThrows
     default Compound fetchAdductFeatures(@NotNull final Compound compound) {
         getStorage().fetchAllChildren(compound, "compoundId", "adductFeatures", AlignedFeatures.class);
-        return compound;
-    }
-
-    @SneakyThrows
-    default Compound fetchCorrelatedIonPairs(@NotNull final Compound compound) {
-        getStorage().fetchAllChildren(compound, "compoundId", "correlatedIonPairs", CorrelatedIonPair.class);
         return compound;
     }
 

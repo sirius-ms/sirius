@@ -30,12 +30,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Set;
 
 @Getter
 @Builder
 public final class ProjectInfo {
     @Schema(name = "ProjectInfoOptField", nullable = true)
-    public enum OptField {none, compatibilityInfo, sizeInformation}
+    public enum OptField {none, compatibilityInfo, sizeInformation, detectedAdducts}
 
     /**
      * a user selected unique name of the project for easy access.
@@ -86,6 +87,13 @@ public final class ProjectInfo {
      */
     @Schema(nullable = true)
     public final @Nullable Long numOfBytes;
+
+    /**
+     * Set of all detected adducts available in this projects
+     */
+    @Schema(nullable = true)
+    private Set<String> detectedAdducts;
+
 
 
 

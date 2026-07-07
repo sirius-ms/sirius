@@ -43,6 +43,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FoldChange.JSON_PROPERTY_QUANT_TYPE,
   FoldChange.JSON_PROPERTY_OBJECT_ID,
   FoldChange.JSON_PROPERTY_FOLD_CHANGE,
+  FoldChange.JSON_PROPERTY_LEFT_ABUNDANCE,
+  FoldChange.JSON_PROPERTY_RIGHT_ABUNDANCE,
   FoldChange.JSON_PROPERTY_LEFT_GROUP,
   FoldChange.JSON_PROPERTY_RIGHT_GROUP,
   FoldChange.JSON_PROPERTY_AGGREGATION,
@@ -61,6 +63,14 @@ public class FoldChange {
   public static final String JSON_PROPERTY_FOLD_CHANGE = "foldChange";
   @jakarta.annotation.Nonnull
   private Double foldChange;
+
+  public static final String JSON_PROPERTY_LEFT_ABUNDANCE = "leftAbundance";
+  @jakarta.annotation.Nonnull
+  private Double leftAbundance;
+
+  public static final String JSON_PROPERTY_RIGHT_ABUNDANCE = "rightAbundance";
+  @jakarta.annotation.Nonnull
+  private Double rightAbundance;
 
   public static final String JSON_PROPERTY_LEFT_GROUP = "leftGroup";
   @jakarta.annotation.Nullable
@@ -154,6 +164,56 @@ public class FoldChange {
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setFoldChange(@jakarta.annotation.Nonnull Double foldChange) {
     this.foldChange = foldChange;
+  }
+
+  public FoldChange leftAbundance(@jakarta.annotation.Nonnull Double leftAbundance) {
+    
+    this.leftAbundance = leftAbundance;
+    return this;
+  }
+
+  /**
+   * Get leftAbundance
+   * @return leftAbundance
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_LEFT_ABUNDANCE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Double getLeftAbundance() {
+    return leftAbundance;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LEFT_ABUNDANCE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setLeftAbundance(@jakarta.annotation.Nonnull Double leftAbundance) {
+    this.leftAbundance = leftAbundance;
+  }
+
+  public FoldChange rightAbundance(@jakarta.annotation.Nonnull Double rightAbundance) {
+    
+    this.rightAbundance = rightAbundance;
+    return this;
+  }
+
+  /**
+   * Get rightAbundance
+   * @return rightAbundance
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_RIGHT_ABUNDANCE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Double getRightAbundance() {
+    return rightAbundance;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_RIGHT_ABUNDANCE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setRightAbundance(@jakarta.annotation.Nonnull Double rightAbundance) {
+    this.rightAbundance = rightAbundance;
   }
 
   public FoldChange leftGroup(@jakarta.annotation.Nullable String leftGroup) {
@@ -269,6 +329,8 @@ public class FoldChange {
     return Objects.equals(this.quantType, foldChange.quantType) &&
         Objects.equals(this.objectId, foldChange.objectId) &&
         Objects.equals(this.foldChange, foldChange.foldChange) &&
+        Objects.equals(this.leftAbundance, foldChange.leftAbundance) &&
+        Objects.equals(this.rightAbundance, foldChange.rightAbundance) &&
         Objects.equals(this.leftGroup, foldChange.leftGroup) &&
         Objects.equals(this.rightGroup, foldChange.rightGroup) &&
         Objects.equals(this.aggregation, foldChange.aggregation) &&
@@ -277,7 +339,7 @@ public class FoldChange {
 
   @Override
   public int hashCode() {
-    return Objects.hash(quantType, objectId, foldChange, leftGroup, rightGroup, aggregation, quantification);
+    return Objects.hash(quantType, objectId, foldChange, leftAbundance, rightAbundance, leftGroup, rightGroup, aggregation, quantification);
   }
 
   @Override
@@ -287,6 +349,8 @@ public class FoldChange {
     sb.append("    quantType: ").append(toIndentedString(quantType)).append("\n");
     sb.append("    objectId: ").append(toIndentedString(objectId)).append("\n");
     sb.append("    foldChange: ").append(toIndentedString(foldChange)).append("\n");
+    sb.append("    leftAbundance: ").append(toIndentedString(leftAbundance)).append("\n");
+    sb.append("    rightAbundance: ").append(toIndentedString(rightAbundance)).append("\n");
     sb.append("    leftGroup: ").append(toIndentedString(leftGroup)).append("\n");
     sb.append("    rightGroup: ").append(toIndentedString(rightGroup)).append("\n");
     sb.append("    aggregation: ").append(toIndentedString(aggregation)).append("\n");

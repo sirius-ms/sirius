@@ -54,6 +54,82 @@ public class ProjectsApi {
 
     
     /**
+     * Create a search index for the given project.
+     * Create a search index for the given project.
+     * <p><b>200</b> - OK
+     * @param projectId unique name/identifier of the project to create the index for.
+     * @param force if true an existing index will be deleted and recreated.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec buildSearchIndexRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean force) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling buildSearchIndex", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "force", force));
+        
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/index", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Create a search index for the given project.
+     * Create a search index for the given project.
+     * <p><b>200</b> - OK
+     * @param projectId unique name/identifier of the project to create the index for.
+     * @param force if true an existing index will be deleted and recreated.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void buildSearchIndex(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean force) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        buildSearchIndexRequestCreation(projectId, force).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Create a search index for the given project.
+     * Create a search index for the given project.
+     * <p><b>200</b> - OK
+     * @param projectId unique name/identifier of the project to create the index for.
+     * @param force if true an existing index will be deleted and recreated.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> buildSearchIndexWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean force) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return buildSearchIndexRequestCreation(projectId, force).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Create a search index for the given project.
+     * Create a search index for the given project.
+     * <p><b>200</b> - OK
+     * @param projectId unique name/identifier of the project to create the index for.
+     * @param force if true an existing index will be deleted and recreated.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec buildSearchIndexWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean force) throws WebClientResponseException {
+        return buildSearchIndexRequestCreation(projectId, force);
+    }
+
+    /**
      * Close project-space and remove it from the application
      * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
@@ -224,6 +300,77 @@ public class ProjectsApi {
      */
     public ResponseSpec copyProjectWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String pathToCopiedProject, @jakarta.annotation.Nullable String copyProjectId, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         return copyProjectRequestCreation(projectId, pathToCopiedProject, copyProjectId, optFields);
+    }
+
+    /**
+     * Create and open a new project with unique autogenerated projectId.
+     * Create and open a new project with unique autogenerated projectId. On local filesystems the project will be located in temporary directory.
+     * <p><b>200</b> - OK
+     * @param optFields The optFields parameter
+     * @return ProjectInfo
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec createRequestCreation(@jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
+        return apiClient.invokeAPI("/api/projects/create", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Create and open a new project with unique autogenerated projectId.
+     * Create and open a new project with unique autogenerated projectId. On local filesystems the project will be located in temporary directory.
+     * <p><b>200</b> - OK
+     * @param optFields The optFields parameter
+     * @return ProjectInfo
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ProjectInfo create(@jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
+        return createRequestCreation(optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Create and open a new project with unique autogenerated projectId.
+     * Create and open a new project with unique autogenerated projectId. On local filesystems the project will be located in temporary directory.
+     * <p><b>200</b> - OK
+     * @param optFields The optFields parameter
+     * @return ResponseEntity&lt;ProjectInfo&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<ProjectInfo> createWithHttpInfo(@jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
+        return createRequestCreation(optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Create and open a new project with unique autogenerated projectId.
+     * Create and open a new project with unique autogenerated projectId. On local filesystems the project will be located in temporary directory.
+     * <p><b>200</b> - OK
+     * @param optFields The optFields parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec createWithResponseSpec(@jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+        return createRequestCreation(optFields);
     }
 
     /**
@@ -952,6 +1099,7 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sampleTypes", parameters.getSampleTypes()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignLCMSRuns", parameters.isAlignLCMSRuns()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "noiseIntensity", parameters.getNoiseIntensity()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "traceMaxMassDeviation", parameters.getTraceMaxMassDeviation()));
@@ -1058,6 +1206,7 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sampleTypes", parameters.getSampleTypes()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignLCMSRuns", parameters.isAlignLCMSRuns()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "noiseIntensity", parameters.getNoiseIntensity()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "traceMaxMassDeviation", parameters.getTraceMaxMassDeviation()));

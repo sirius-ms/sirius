@@ -74,7 +74,7 @@ batikSwing = "1.6-1"
 biotransformerSirius = "3.0.0"
 cmlxom = "3.1"
 grappa = "1.2"
-lucene = "10.0.0"
+lucene = "10.4.0" #10.3.2
 
 [libraries]
 # BOMs
@@ -201,7 +201,8 @@ batikSwing = { group = "batik", name = "batik-swing", version.ref = "batikSwing"
 biotransformerSirius = { group = "wishartlab.openscience.biotransformer", name = "biotransformer-sirius-mod-relocated-min-no-envi-path", version.ref = "biotransformerSirius" }
 luceneQueryparser = { group = "org.apache.lucene", name = "lucene-queryparser", version.ref = "lucene" }
 luceneAnalysisCommon = { group = "org.apache.lucene", name = "lucene-analysis-common", version.ref = "lucene" }
-
+luceneCore = { group = "org.apache.lucene", name = "lucene-core", version.ref = "lucene" }
+luceneBackwardCodecs = { group = "org.apache.lucene", name = "lucene-backward-codecs", version.ref = "lucene" }
 cdkSmiles = { group = "org.openscience.cdk", name = "cdk-smiles", version.ref = "cdk" }
 cdkSilent = { group = "org.openscience.cdk", name = "cdk-silent", version.ref = "cdk" }
 cdkQsarmolecular = { group = "org.openscience.cdk", name = "cdk-qsarmolecular", version.ref = "cdk" }

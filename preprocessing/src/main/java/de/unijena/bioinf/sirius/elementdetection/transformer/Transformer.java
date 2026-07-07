@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.elementdetection.transformer;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class Transformer {
 
@@ -8,9 +9,10 @@ public class Transformer {
     private int nheads;
 
     private FullyConnectedLayer mlp1,mlp2;
-    private LayerNorm norm1, norm2;
+    private LayerNorm norm1;
 
-    public Transformer(FullyConnectedLayer q, FullyConnectedLayer k, FullyConnectedLayer v, FullyConnectedLayer proj, int nheads, FullyConnectedLayer mlp1, FullyConnectedLayer mlp2, LayerNorm norm1, LayerNorm norm2) {
+    public Transformer(FullyConnectedLayer q, FullyConnectedLayer k, FullyConnectedLayer v, FullyConnectedLayer proj, int nheads,
+                       FullyConnectedLayer mlp1, FullyConnectedLayer mlp2, LayerNorm norm1) {
         Q = q;
         K = k;
         V = v;
@@ -18,7 +20,6 @@ public class Transformer {
         this.mlp1 = mlp1;
         this.mlp2 = mlp2;
         this.norm1 = norm1;
-        this.norm2 = norm2;
         this.proj = proj;
     }
 
@@ -31,12 +32,11 @@ public class Transformer {
         mlp1.write(buffer);
         mlp2.write(buffer);
         norm1.write(buffer);
-        norm2.write(buffer);
     }
     public static Transformer read(ByteBuffer buffer) {
         int nheads = buffer.getInt();
         FullyConnectedLayer q,k,v,proj,mlp1,mlp2;
-        LayerNorm n1,n2;
+        LayerNorm n1;
         q = FullyConnectedLayer.read(buffer);
         k=FullyConnectedLayer.read(buffer);
         v=FullyConnectedLayer.read(buffer);
@@ -44,20 +44,28 @@ public class Transformer {
         mlp1=FullyConnectedLayer.read(buffer);
         mlp2=FullyConnectedLayer.read(buffer);
         n1=LayerNorm.read(buffer);
-        n2 = LayerNorm.read(buffer);
-        return new Transformer(q,k,v,proj,nheads,mlp1,mlp2,n1,n2);
+        return new Transformer(q,k,v,proj,nheads,mlp1,mlp2,n1);
     }
 
-    public float[][] compute(float[][] input) {
+    public float[][] compute(float[][] input, float[][] fourierFeatures) {
         float[][] output = new float[input.length][];
 
-        float[][] q =  new float[input.length][], k = new float[input.length][], v = new float[input.length][];
-        for (int vec = 0; vec < input.length; vec++) {
-            float[] embed = input[vec].clone();
-            norm1.computeInplace(embed);
-            q[vec] = Q.compute(embed);
-            k[vec] = K.compute(embed);
-            v[vec] = V.compute(embed);
+        float[][] q,k,v;
+
+        if (input.length>0 && input[0].length== Q.inputSize()) {
+            q = new float[input.length][]; k = new float[input.length][]; v = new float[input.length][];
+            for (int vec = 0; vec < input.length; vec++) {
+                float[] embed = input[vec].clone();
+                norm1.computeInplace(embed);
+                q[vec] = Q.compute(embed);
+                k[vec] = K.compute(embed);
+                v[vec] = V.compute(embed);
+            }
+        } else {
+            float[][] embed = Arrays.stream(input).map(x->norm1.compute(x)).toArray(float[][]::new);
+            q = Q.batchComputeConcatenated(embed, fourierFeatures);
+            k = K.batchComputeConcatenated(embed, fourierFeatures);
+            v = V.batchCompute(embed);
         }
         final int headlen = v[0].length/nheads;
         for (int vec = 0; vec < input.length; ++vec) {
@@ -92,11 +100,14 @@ public class Transformer {
             for (int i=0; i < x.length; ++i) {
                 x[i] += context[i];
             }
-            norm2.computeInplace(x);
             addInplace(x, mlp2.compute(mlp1.compute(x)));
             output[vec] = x;
         }
         return output;
+    }
+
+    protected float[] computeAttentionScores(float[][] input, double[] mz, double[] ints) {
+        return null;
     }
 
     private static void addInplace(float[] left, float[] right){

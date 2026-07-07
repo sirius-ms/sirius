@@ -69,6 +69,10 @@ public interface ProjectsProvider<P extends Project> extends DisposableBean {
 
     void closeProjectSpace(String projectId) throws IOException;
 
+    default void closeProjectSpace(String projectId, boolean compact) throws IOException {
+        closeProjectSpace(projectId);
+    }
+
     @Deprecated
     default ProjectInfo copyProject(@NotNull String projectId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
         return copyProject(projectId, pathToProject, null, optFields);

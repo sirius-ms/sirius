@@ -48,6 +48,8 @@ public enum AlignedFeatureOptField {
   
   COMPUTED_TOOLS("computedTools"),
   
+  QUALITIES("qualities"),
+  
   TAGS("tags");
 
   private String value;
