@@ -90,6 +90,10 @@ public class GuiProjectManager implements Closeable {
     final FeatureFilterModel featureFilterModel;
 
     private final AtomicLong totalInstances = new AtomicLong(0);
+    // Monotonic id of the latest requested feature reload. Concurrent reloads (e.g. rapid filter changes) run
+    // in the background and may complete out of order; only the newest one is allowed to apply its result so a
+    // slower earlier reload cannot overwrite the list with stale data.
+    private final AtomicLong reloadGeneration = new AtomicLong(0);
     @Getter
     private @NotNull Set<PrecursorIonType> detectedAdducts;
 
@@ -278,6 +282,7 @@ public class GuiProjectManager implements Closeable {
         FilterableCompoundListPanel loadable = Optional.ofNullable(siriusGui.getMainFrame())
                 .map(MainFrame::getFilterableCompoundListPanel).orElse(null);
 
+        final long generation = reloadGeneration.incrementAndGet();
         Runnable r = () -> {
             String filterQuery = filterQueryProvider != null ? filterQueryProvider.get() : null;
             List<String> sortQuery = sortQueryProvider != null ? sortQueryProvider.get() : null;
@@ -288,6 +293,9 @@ public class GuiProjectManager implements Closeable {
 
             try {
                 Jobs.runEDTAndWait(() -> {
+                    // A newer reload was requested while this one was loading -> drop this (stale) result.
+                    if (generation != reloadGeneration.get())
+                        return;
                     INSTANCE_LIST.clear();
                     INSTANCE_LIST.addAll(tmpInst);
                 });
