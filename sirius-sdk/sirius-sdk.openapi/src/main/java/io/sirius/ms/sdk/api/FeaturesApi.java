@@ -602,6 +602,86 @@ public class FeaturesApi {
     }
 
     /**
+     * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
+     * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space. The query is resolved server-side against the search index, so callers do not need to  page the matching ids to the client and send them back for deletion.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match                     every feature).
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec deleteAlignedFeaturesByQueryExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteAlignedFeaturesByQueryExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'searchQuery' is set
+        if (searchQuery == null) {
+            throw new WebClientResponseException("Missing the required parameter 'searchQuery' when calling deleteAlignedFeaturesByQueryExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
+        
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/delete-by-query", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
+     * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space. The query is resolved server-side against the search index, so callers do not need to  page the matching ids to the client and send them back for deletion.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match                     every feature).
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void deleteAlignedFeaturesByQueryExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        deleteAlignedFeaturesByQueryExperimentalRequestCreation(projectId, searchQuery).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
+     * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space. The query is resolved server-side against the search index, so callers do not need to  page the matching ids to the client and send them back for deletion.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match                     every feature).
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> deleteAlignedFeaturesByQueryExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return deleteAlignedFeaturesByQueryExperimentalRequestCreation(projectId, searchQuery).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
+     * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space. The query is resolved server-side against the search index, so callers do not need to  page the matching ids to the client and send them back for deletion.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match                     every feature).
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec deleteAlignedFeaturesByQueryExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
+        return deleteAlignedFeaturesByQueryExperimentalRequestCreation(projectId, searchQuery);
+    }
+
+    /**
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK

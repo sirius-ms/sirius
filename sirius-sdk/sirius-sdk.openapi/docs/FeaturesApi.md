@@ -10,6 +10,7 @@ All URIs are relative to *http://localhost:8888*
 | [**addTagsToAlignedFeaturesExperimental**](FeaturesApi.md#addTagsToAlignedFeaturesExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project |
 | [**deleteAlignedFeature**](FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**deleteAlignedFeatures**](FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
+| [**deleteAlignedFeaturesByQueryExperimental**](FeaturesApi.md#deleteAlignedFeaturesByQueryExperimental) | **PUT** /api/projects/{projectId}/aligned-features/delete-by-query | Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space. |
 | [**getAdductNetworkWithMergedTracesExperimental**](FeaturesApi.md#getAdductNetworkWithMergedTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network |
 | [**getAlignedFeature**](FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**getAlignedFeatureQualityExperimental**](FeaturesApi.md#getAlignedFeatureQualityExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report | [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)   |
@@ -458,6 +459,73 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## deleteAlignedFeaturesByQueryExperimental
+
+> deleteAlignedFeaturesByQueryExperimental(projectId, searchQuery)
+
+Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
+
+Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space. The query is resolved server-side against the search index, so callers do not need to  page the matching ids to the client and send them back for deletion.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to delete from.
+        String searchQuery = "searchQuery_example"; // String | tag/text/range query in lucene syntax; must be non-empty (a blank query would match                     every feature).
+        try {
+            apiInstance.deleteAlignedFeaturesByQueryExperimental(projectId, searchQuery);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#deleteAlignedFeaturesByQueryExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to delete from. | |
+| **searchQuery** | **String**| tag/text/range query in lucene syntax; must be non-empty (a blank query would match                     every feature). | |
+
+### Return type
+
+null (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: Not defined
 
 

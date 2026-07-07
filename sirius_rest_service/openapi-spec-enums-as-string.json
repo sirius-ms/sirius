@@ -1228,6 +1228,41 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/delete-by-query": {
+      "put": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Delete all features (aligned over runs) that match the given lucene search query from the specified\n project-space.",
+        "description": "Delete all features (aligned over runs) that match the given lucene search query from the specified\n project-space. The query is resolved server-side against the search index, so callers do not need to\n page the matching ids to the client and send them back for deletion.",
+        "operationId": "deleteAlignedFeaturesByQueryExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "tag/text/range query in lucene syntax; must be non-empty (a blank query would match\n                    every feature).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/databases/{databaseId}": {
       "get": {
         "tags": [
@@ -1405,6 +1440,28 @@
       }
     },
     "/api/reactions": {
+      "get": {
+        "tags": [
+          "Reactions"
+        ],
+        "summary": "Get all reactions from the library.",
+        "operationId": "getReactions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Reaction"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "Reactions"
@@ -1444,6 +1501,54 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/reactions/sequences/library": {
+      "post": {
+        "tags": [
+          "Reactions"
+        ],
+        "summary": "Add a new reaction sequence to the library.",
+        "operationId": "addSequence",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactionSequence"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/reactions/library": {
+      "post": {
+        "tags": [
+          "Reactions"
+        ],
+        "summary": "Add a new reaction to the library.",
+        "operationId": "addReaction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Reaction"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -3528,6 +3633,114 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/reactions/sequences": {
+      "get": {
+        "tags": [
+          "Reactions"
+        ],
+        "summary": "Get all reaction sequences from the library.",
+        "operationId": "getSequences",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReactionSequence"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reactions/sequences/{name}": {
+      "get": {
+        "tags": [
+          "Reactions"
+        ],
+        "summary": "Get a specific reaction sequence from the library by name.",
+        "operationId": "getSequence",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReactionSequence"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reactions/library/{name}": {
+      "get": {
+        "tags": [
+          "Reactions"
+        ],
+        "summary": "Get a specific reaction from the library by name.",
+        "operationId": "getReaction",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reaction"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reactions"
+        ],
+        "summary": "Delete a reaction from the library.",
+        "operationId": "deleteReaction",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -8358,6 +8571,30 @@
         }
       }
     },
+    "/api/reactions/sequences/library/{name}": {
+      "delete": {
+        "tags": [
+          "Reactions"
+        ],
+        "summary": "Delete a reaction sequence from the library.",
+        "operationId": "deleteSequence",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/runs/tags/{runId}/{tagName}": {
       "delete": {
         "tags": [
@@ -9832,6 +10069,9 @@
           },
           "smarts": {
             "type": "string"
+          },
+          "preshipped": {
+            "type": "boolean"
           }
         }
       },
@@ -10692,7 +10932,7 @@
           "detectedAdducts": {
             "uniqueItems": true,
             "type": "array",
-            "description": "Adducts of this feature that have been detected during preprocessing.",
+            "description": "Adducts of this feature that have been detected during preprocessing.\n Never empty: if no adduct could be detected, the unknown ion type matching the feature\u0027s\n charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.",
             "items": {
               "type": "string"
             }

@@ -38,7 +38,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   Reaction.JSON_PROPERTY_NAME,
-  Reaction.JSON_PROPERTY_SMARTS
+  Reaction.JSON_PROPERTY_SMARTS,
+  Reaction.JSON_PROPERTY_PRESHIPPED
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class Reaction {
@@ -49,6 +50,10 @@ public class Reaction {
   public static final String JSON_PROPERTY_SMARTS = "smarts";
   @jakarta.annotation.Nullable
   private String smarts;
+
+  public static final String JSON_PROPERTY_PRESHIPPED = "preshipped";
+  @jakarta.annotation.Nullable
+  private Boolean preshipped;
 
   public Reaction() {
   }
@@ -103,6 +108,31 @@ public class Reaction {
     this.smarts = smarts;
   }
 
+  public Reaction preshipped(@jakarta.annotation.Nullable Boolean preshipped) {
+    
+    this.preshipped = preshipped;
+    return this;
+  }
+
+  /**
+   * Get preshipped
+   * @return preshipped
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PRESHIPPED)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isPreshipped() {
+    return preshipped;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PRESHIPPED)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPreshipped(@jakarta.annotation.Nullable Boolean preshipped) {
+    this.preshipped = preshipped;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -114,12 +144,13 @@ public class Reaction {
     }
     Reaction reaction = (Reaction) o;
     return Objects.equals(this.name, reaction.name) &&
-        Objects.equals(this.smarts, reaction.smarts);
+        Objects.equals(this.smarts, reaction.smarts) &&
+        Objects.equals(this.preshipped, reaction.preshipped);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, smarts);
+    return Objects.hash(name, smarts, preshipped);
   }
 
   @Override
@@ -128,6 +159,7 @@ public class Reaction {
     sb.append("class Reaction {\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    smarts: ").append(toIndentedString(smarts)).append("\n");
+    sb.append("    preshipped: ").append(toIndentedString(preshipped)).append("\n");
     sb.append("}");
     return sb.toString();
   }
