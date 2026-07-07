@@ -79,7 +79,7 @@ public class ValueDefinition<T extends Comparable<T>> {
         isValueInstanceOrThrow(minValue);
         isValueInstanceOrThrow(maxValue);
         if (possibleValues != null)
-            possibleValues.stream().findFirst().ifPresent(this::isValueInstanceOrThrow);
+            possibleValues.forEach(this::isValueInstanceOrThrow);
 
         this.minValue = (T) minValue;
         this.maxValue = (T) maxValue;
