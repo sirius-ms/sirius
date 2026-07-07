@@ -79,7 +79,7 @@ public class IndexUpdateConsistencyTest {
     }
 
     @Test
-    public void bulkUpdateFieldsRejectsNonStoredFields_H4() throws IOException {
+    public void bulkUpdateFieldsRejectsNonStoredFields() throws IOException {
         SearchService service = newService(new HashMap<>());
         try {
             service.addDocument(PROJECT_ID, new NonStoredPojo("1", "classified"));
@@ -94,7 +94,7 @@ public class IndexUpdateConsistencyTest {
     }
 
     @Test
-    public void removeTagValueTypeDoesNotResurrectDeletedDocs_H5() throws IOException {
+    public void removeTagValueTypeDoesNotResurrectDeletedDocs() throws IOException {
         Map<String, ValueType> tagDefs = new HashMap<>();
         tagDefs.put("color", ValueType.TEXT);
         SearchService service = newService(tagDefs);

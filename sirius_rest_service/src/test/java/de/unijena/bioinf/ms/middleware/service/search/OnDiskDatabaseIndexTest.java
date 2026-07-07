@@ -40,7 +40,7 @@ public class OnDiskDatabaseIndexTest {
     }
 
     @Test
-    public void onDiskDbIndexRestoresAfterReopenWithStaleFiles_M13() throws Exception {
+    public void onDiskDbIndexRestoresAfterReopenWithStaleFiles() throws Exception {
         Path dbFile = Files.createTempFile("m13-nitrite", ".db");
         Path indexDir = Files.createTempDirectory("m13-index");
         try {
