@@ -172,6 +172,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     void deleteAlignedFeaturesById(String alignedFeatureId);
     void deleteAlignedFeaturesByIds(List<String> alignedFeatureId);
+    void deleteAlignedFeaturesByQuery(@NotNull String searchQuery);
 
     Page<Run> findRuns(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
 

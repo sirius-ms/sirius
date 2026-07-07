@@ -219,6 +219,21 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
+     * Delete all features (aligned over runs) that match the given lucene search query from the specified
+     * project-space. The query is resolved server-side against the search index, so callers do not need to
+     * page the matching ids to the client and send them back for deletion.
+     *
+     * @param projectId   project-space to delete from.
+     * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match
+     *                    every feature).
+     */
+    @Operation(operationId = "deleteAlignedFeaturesByQueryExperimental")
+    @PutMapping(value = "/delete-by-query")
+    public void deleteAlignedFeaturesByQuery(@PathVariable String projectId, @RequestParam String searchQuery) {
+        projectsProvider.getProjectOrThrow(projectId).deleteAlignedFeaturesByQuery(searchQuery);
+    }
+
+    /**
      * Import (aligned) features into the project. Features must not exist in the project.
      * Otherwise, they will exist twice.
      *
