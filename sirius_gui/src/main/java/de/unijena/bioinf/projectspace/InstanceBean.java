@@ -38,7 +38,6 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingCache;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.*;
-import org.apache.commons.lang3.time.StopWatch;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -249,7 +248,6 @@ public class InstanceBean implements SiriusPCS {
                     if (SwingUtilities.isEventDispatchThread())
                         log.warn("Reload Featured '{}' with nu [{}] vs current [{}] in Event Thread. Might cause GUI stutters!", sourceFeature.getAlignedFeatureId(), of.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")), this.optsLoaded.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")));
 
-                    StopWatch w = StopWatch.createStarted();
                     optsLoaded.clear();
                     sourceFeature = withIds((pid, fid) ->
                             getClient().features().getAlignedFeature(pid, fid, false, of.stream().toList()));
@@ -257,8 +255,6 @@ public class InstanceBean implements SiriusPCS {
                     // this is to ensure that TOP_ANNOTATIONS_SUMMARY request do not cause reload if TOPANNOTATIONS have already been loaded
                     if (optsLoaded.contains(TOP_ANNOTATIONS))
                         optsLoaded.add(TOP_ANNOTATIONS_SUMMARY);
-
-                    System.out.println("Loaded data from API for '" + getGUIName() + "' in: " + w);
                 }
                 return sourceFeature;
             }

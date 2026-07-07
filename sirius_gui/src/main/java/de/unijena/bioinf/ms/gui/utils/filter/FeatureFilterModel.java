@@ -354,7 +354,6 @@ public class FeatureFilterModel implements SiriusPCS {
         adducts.addAll(newAdducts.stream().filter(p -> !p.isMultimere() && !p.isMultipleCharged()).collect(Collectors.toSet()));
 
         if (isAdductFilterActive() && !oldAdducts.equals(adducts)) { // if list of adducts in the actual filter changed, we have to refilter.
-            System.out.println("Refiltering due to adducts change!");
             fireUpdateCompleted();
         }else {
             pcs.firePropertyChange("possibleAdductsUpdated", null, this); // just notify gui components that the available adductes have changed.

@@ -42,7 +42,6 @@ import io.sirius.ms.sse.DataObjectEvents;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +105,6 @@ public class GuiProjectManager implements Closeable {
 
         this.featureFilterModel = new FeatureFilterModel();
 
-        StopWatch w = StopWatch.createStarted();
         this.INSTANCE_LIST = new BasicEventList<>();
 
         PropertyChangeListener filterListener = evt -> reloadFeatures();
@@ -148,8 +146,6 @@ public class GuiProjectManager implements Closeable {
                         //import job handling
                         List<String> idsToImport = importEvent.getImportedFeatureIds();
                         if (!idsToImport.isEmpty()) {
-                            StopWatch w = new StopWatch();
-                            w.start();
                             siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(true, true);
                             try {
                                 checkForInterruption();
@@ -216,12 +212,9 @@ public class GuiProjectManager implements Closeable {
                 eventQueue.add(stopper);
             }
         });
-
-        System.out.println("Project loaded in: " + w);
     }
 
     private synchronized void reloadProjectData() {
-        System.out.printf("Remove JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
         ProjectInfo info = siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.SIZE_INFORMATION, ProjectInfoOptField.DETECTED_ADDUCTS));
         totalInstances.set(info.getNumOfFeatures());
         detectedAdducts = info.getDetectedAdducts().stream().map(PrecursorIonType::fromString).collect(Collectors.toSet());
@@ -230,7 +223,6 @@ public class GuiProjectManager implements Closeable {
 
     private InstanceBean jumpToInstanceBean = null;
     public synchronized InstanceBean findAndAddTemporaryJumpToFeature(String alignedFeatureId) {
-        System.out.printf("Add JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
         AlignedFeature feature = siriusClient.features()
                 .getAlignedFeature(projectId, alignedFeatureId, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS);
         if (feature == null)
@@ -256,7 +248,6 @@ public class GuiProjectManager implements Closeable {
     }
 
     public synchronized void removeTemporaryJumpToFeatureIfNotSelected(String selectedFeatureid) {
-        System.out.printf("Remove JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
         if (jumpToInstanceBean != null && !jumpToInstanceBean.getFeatureId().equals(selectedFeatureid)) {
             INSTANCE_LIST.remove(jumpToInstanceBean);
             jumpToInstanceBean = null;
@@ -271,8 +262,6 @@ public class GuiProjectManager implements Closeable {
     // no sync needed because of blocking edt thread call.
     private synchronized void reloadFeatures(@Nullable Supplier<String> filterQueryProvider, @Nullable Supplier<List<String>> sortQueryProvider) {
         //todo LUCENE: handle loading mechanism for compound list.
-        System.out.printf("Reload Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
-
         FilterableCompoundListPanel loadable = Optional.ofNullable(siriusGui.getMainFrame())
                 .map(MainFrame::getFilterableCompoundListPanel).orElse(null);
 
