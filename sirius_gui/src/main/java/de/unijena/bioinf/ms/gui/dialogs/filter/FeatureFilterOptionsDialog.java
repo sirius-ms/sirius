@@ -38,6 +38,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
 
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -437,10 +441,22 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     }
 
     private void deleteSelectedCompoundsAndResetFilter() {
+        // Build the query for the features to DELETE: everything that does NOT match the current filter.
+        // Flipping the filter's inversion turns the "keep" (visible) query into its complement.
+        FeatureFilterModel deleteMatcher = new FeatureFilterModel();
+        applyToModel(deleteMatcher);
+        deleteMatcher.setInverted(!deleteMatcher.isInverted());
+        Optional<String> deleteQuery = deleteMatcher.toLuceneQuery(gui.getProperties().getConfidenceDisplayMode());
 
-        // create deletion matcher
-        FeatureFilterModel tmpModel = new FeatureFilterModel();
-        applyToModel(tmpModel);
+        // A blank/absent query means no filter is active -> everything matches -> nothing is "non-matching"
+        // to delete. Otherwise confirm this destructive, irreversible action before doing anything.
+        if (deleteQuery.isPresent()) {
+            if (!new QuestionDialog(gui.getMainFrame(), "Delete non-matching features",
+                    "<html>This will <b>permanently delete</b> all features that do <b>not</b> match the current filter.<br>This cannot be undone. Continue?</html>",
+                    (String) null).isSuccess())
+                return; // aborted: leave the filter untouched; the dialog is disposed by the caller
+        }
+
         // reset global filter and close
         resetFilter();
         saveChanges();
@@ -449,10 +465,19 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         // clear selection to prevent unnecessary updates during deletions
         gui.getMainFrame().getCompoundList().getCompoundListSelectionModel().clearSelection();
 
-        // collect instances to delete
-        //todo delete features via api by lucene query
-        //delete instances
-//        ((DeleteExperimentAction) SiriusActions.DELETE_EXP.getInstance(gui)).deleteCompounds(toDelete);
+        if (deleteQuery.isEmpty())
+            return;
+
+        // Delete server-side by query (one call; cascades DB + search index) and refresh the project
+        // counters and feature list.
+        final String query = deleteQuery.get();
+        Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Deleting non-matching features...", false, new TinyBackgroundJJob<Boolean>() {
+            @Override
+            protected Boolean compute() {
+                gui.getProjectManager().deleteAlignedFeaturesByQuery(query);
+                return true;
+            }
+        });
     }
 
     /**

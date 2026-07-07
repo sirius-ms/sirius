@@ -259,6 +259,19 @@ public class GuiProjectManager implements Closeable {
                 .orElse(null), null);
     }
 
+    /**
+     * Delete all aligned features matching the given lucene query server-side (single call) and refresh the
+     * project counters and feature list. We do a full {@link #reloadProjectData()} refresh instead of relying
+     * on the incremental {@code FEATURE_DELETED} events, because those only adjust {@link #getTotalInstances()}
+     * for features still present in {@link #INSTANCE_LIST}; a bulk delete followed by a list reload would
+     * otherwise leave the total feature count stale.
+     */
+    public synchronized void deleteAlignedFeaturesByQuery(@NotNull String searchQuery) {
+        siriusClient.features().deleteAlignedFeaturesByQueryExperimental(projectId, searchQuery);
+        reloadProjectData();
+        reloadFeatures();
+    }
+
     // no sync needed because of blocking edt thread call.
     private synchronized void reloadFeatures(@Nullable Supplier<String> filterQueryProvider, @Nullable Supplier<List<String>> sortQueryProvider) {
         //todo LUCENE: handle loading mechanism for compound list.
