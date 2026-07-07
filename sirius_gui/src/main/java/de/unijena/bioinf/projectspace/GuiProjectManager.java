@@ -237,7 +237,21 @@ public class GuiProjectManager implements Closeable {
             return null;
 
         jumpToInstanceBean = new InstanceBean(feature, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this);
-        INSTANCE_LIST.add(jumpToInstanceBean);
+        // INSTANCE_LIST is a Swing-bound BasicEventList. This method is also invoked from REST/service
+        // threads (GuiServiceImpl.applyToGuiInstance), so mutate the list on the EDT under the write lock,
+        // mirroring the FEATURE_DELETED handler. runEDTAndWait ensures the bean is in the list before we return it.
+        try {
+            Jobs.runEDTAndWait(() -> {
+                INSTANCE_LIST.getReadWriteLock().writeLock().lock();
+                try {
+                    INSTANCE_LIST.add(jumpToInstanceBean);
+                } finally {
+                    INSTANCE_LIST.getReadWriteLock().writeLock().unlock();
+                }
+            });
+        } catch (InvocationTargetException | InterruptedException e) {
+            log.warn("Adding temporary jump-to feature to the compound list was interrupted", e);
+        }
         return jumpToInstanceBean;
     }
 
