@@ -70,6 +70,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -83,6 +84,15 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner, DisposableBean {
 
     private static final int PORT_IN_USE_EXIT_CODE = 10;
+
+    /**
+     * Hidden run mode that boots the full "rest -s --gui" startup, waits until the application is
+     * fully initialized and then shuts down cleanly. Combined with a JVM launched with
+     * {@code -XX:AOTCacheOutput=...} (as the SIRIUS launcher does on a cold cache) this records a
+     * representative Project Leyden AOT cache for the user's exact environment.
+     */
+    private static final String AOT_TRAIN_COMMAND = "aot-train";
+    public static final String AOT_TRAINING_PROPERTY = "de.unijena.bioinf.sirius.aot.training";
 
     private static MiddlewareAppOptions<?> middlewareOpts;
     private static CLIRootOptions rootOptions;
@@ -103,6 +113,33 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     .web(WebApplicationType.SERVLET) // Ensures REST beans are processed!
                     .run(args);
             return;
+        }
+
+        // --- Project Leyden AOT training run ---
+        // "aot-train" is a thin routing over the normal service startup: rewrite it to "rest -s"
+        // (plus "--gui" only when NOT running headless) and flag training mode so we can register a
+        // listener that shuts the app down once it is fully initialized. --gui and --headless are a
+        // mutually exclusive picocli ArgGroup, so we must NOT add --gui when the caller asked for
+        // headless training (e.g. the installer's SYSTEM-context run, which has no interactive
+        // desktop) or when the environment itself is headless - otherwise arg parsing fails and no
+        // real training happens.
+        final boolean aotTraining = args != null && Arrays.stream(args).anyMatch(AOT_TRAIN_COMMAND::equalsIgnoreCase);
+        if (aotTraining) {
+            System.setProperty(AOT_TRAINING_PROPERTY, "true");
+            boolean headlessTraining = (GraphicsEnvironment.isHeadless() || Arrays.stream(args).anyMatch("--headless"::equalsIgnoreCase))
+                    && Arrays.stream(args).noneMatch("--no-headless"::equalsIgnoreCase);
+            List<String> rewritten = new ArrayList<>(args.length + 2);
+            for (String a : args) {
+                if (AOT_TRAIN_COMMAND.equalsIgnoreCase(a)) {
+                    rewritten.add("rest");
+                    rewritten.add("-s");
+                    if (!headlessTraining)
+                        rewritten.add("--gui");
+                } else {
+                    rewritten.add(a);
+                }
+            }
+            args = rewritten.toArray(new String[0]);
         }
 
         measureTime("Init Job Manager");
@@ -169,7 +206,9 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 final boolean startGui = !headless && Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui") || it.equalsIgnoreCase("-g"));
 
                 //check for existing sirius instances.
-                try (SiriusSDK sdk = SiriusSDK.findAndConnectLocally(SiriusSDK.ShutdownMode.NEVER, true)) {
+                //Skipped in AOT training mode: we always want to boot our own context (on an
+                //autodetected port) so the training run can record and dump the AOT cache.
+                try (SiriusSDK sdk = aotTraining ? null : SiriusSDK.findAndConnectLocally(SiriusSDK.ShutdownMode.NEVER, true)) {
                     if (sdk != null) {
                         if (startGui) {
                             try {
@@ -208,7 +247,10 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 if (!headless) { // ignore gui option if headless is enabled
                     if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui") || it.equalsIgnoreCase("-g"))) {
                         GuiUtils.initUI();
-                        splashScreen = new Splash(true, false);
+                        // During AOT training use the fake (invisible) splash: it still initializes the
+                        // AWT framework (needed for jxbrowser) but keeps the training-mode overlay the
+                        // single visible indicator instead of flashing the normal splash too.
+                        splashScreen = new Splash(true, aotTraining);
                     } else {
                         splashScreen = new Splash(true, true);
                         Jobs.runEDTLater(splashScreen::dispose);
@@ -245,6 +287,12 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 });
                 app.addListeners(new ApplicationPidFileWriter(Workspace.PID_FILE.toFile()));
                 app.addListeners(new WebServerPortFileWriter(Workspace.PORT_FILE.toFile()));
+
+                if (aotTraining) {
+                    log.info("Starting SIRIUS in Project Leyden AOT training mode. " +
+                            "The application will shut down automatically once fully initialized.");
+                    app.addListeners(new AotTrainingShutdownListener());
+                }
 
                 app.run(args);
             } catch (ApplicationContextException springException) {

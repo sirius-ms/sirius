@@ -134,7 +134,11 @@ public class SelfTestWorkflow implements Workflow {
 
         List<FasterTreeComputationInstance> jobs = new ArrayList<>();
         for (int i = 0; i < 20; ++i) {
-            FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+            // Each instance mutates its ProcessedInput in place (performDecomposition/performPeakScoring
+            // rewrite the per-peak DecompositionList annotations), so every parallel job must get its own
+            // copy. Sharing one input across these concurrent jobs is a data race that intermittently
+            // NPEs in FragmentationPatternAnalysis.performPeakScoring (decomps == null).
+            FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput.clone());
             jobs.add(jobsManager.submitJob(instance));
         }
 

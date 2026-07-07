@@ -40,31 +40,91 @@ set JAR_HOME=#jarHome#
 @rem Add default JVM options here. You can also use JAVA_OPTS and SIRIUS_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS=#jvmOpts#
 
-@rem Leyden AOT Cache logic
-set LEYDEN_CACHE="%USERPROFILE%\#siriusWsDir#\sirius.aot"
-if exist %LEYDEN_CACHE% (
-    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCache=%LEYDEN_CACHE%
-) else (
-    @rem Ensure the directory exists before generating
-    for %%i in (%LEYDEN_CACHE%) do set LEYDEN_CACHE_DIR=%%~dpi
-    if not exist "!LEYDEN_CACHE_DIR!" mkdir "!LEYDEN_CACHE_DIR!"
-    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCacheOutput=%LEYDEN_CACHE%
-)
-
+@rem Determine the java executable first: the AOT cache id below depends on the JDK actually used.
 set JAVA_EXE=%APP_HOME%\runtime\bin\java.exe
+if not exist "%JAVA_EXE%" set JAVA_EXE=%JAVA_HOME%\bin\java.exe
+if not exist "%JAVA_EXE%" set JAVA_EXE=java.exe
 set MAIN_CLASS="#mainClass#"
 
-if not exist %JAVA_EXE% (
-    set JAVA_EXE=%JAVA_HOME%\bin\java.exe
-@rem    echo using JAVA_HOME java !JAVA_EXE!
+@rem Resolve a full path so we can locate the JDK 'release' file (handles java.exe on PATH).
+set "AOT_JAVA_FULL=%JAVA_EXE%"
+if /I "%JAVA_EXE%"=="java.exe" (
+    for /f "delims=" %%i in ('where java.exe 2^>nul') do if not defined AOT_JAVA_FULL_SET (
+        set "AOT_JAVA_FULL=%%i"
+        set AOT_JAVA_FULL_SET=1
+    )
 )
 
-if not exist %JAVA_EXE% (
-    set JAVA_EXE=java.exe
-@rem    echo using system java !JAVA_EXE!
+@rem Derive a filename-safe JDK tag from the JDK 'release' file (cheap; no JVM spawn). This reflects
+@rem the JDK actually used (JAVA_HOME overrides, symlinks, JDK upgrades) so an incompatible cache is
+@rem never consumed.
+set "AOT_JDK_TAG=jdkunknown"
+set "AOT_JDK_HOME="
+for %%i in ("%AOT_JAVA_FULL%") do set "AOT_JDK_BIN=%%~dpi"
+if defined AOT_JDK_BIN (
+    set "AOT_JDK_BIN=!AOT_JDK_BIN:~0,-1!"
+    for %%i in ("!AOT_JDK_BIN!") do set "AOT_JDK_HOME=%%~dpi"
+    if defined AOT_JDK_HOME set "AOT_JDK_HOME=!AOT_JDK_HOME:~0,-1!"
+)
+set "AOT_JDK_RAW="
+if defined AOT_JDK_HOME if exist "!AOT_JDK_HOME!\release" (
+    for /f "usebackq tokens=1,* delims==" %%a in ("!AOT_JDK_HOME!\release") do (
+        if /I "%%a"=="IMPLEMENTOR_VERSION" if not defined AOT_JDK_RAW set "AOT_JDK_RAW=%%~b"
+    )
+    if not defined AOT_JDK_RAW for /f "usebackq tokens=1,* delims==" %%a in ("!AOT_JDK_HOME!\release") do (
+        if /I "%%a"=="JAVA_VERSION" if not defined AOT_JDK_RAW set "AOT_JDK_RAW=%%~b"
+    )
+)
+if defined AOT_JDK_RAW (
+    set "AOT_JDK_TAG=!AOT_JDK_RAW!"
+    set "AOT_JDK_TAG=!AOT_JDK_TAG:+=_!"
+    set "AOT_JDK_TAG=!AOT_JDK_TAG: =_!"
+    set "AOT_JDK_TAG=!AOT_JDK_TAG::=_!"
+    set "AOT_JDK_TAG=!AOT_JDK_TAG:~0,40!"
 )
 
-%JAVA_EXE% -version >nul 2>&1 && (
+@rem Leyden AOT Cache logic.
+@rem The cache is user-independent build data identified by #aotCacheId# (build-time hash isolating
+@rem version / distribution channel / platform / classpath layout) + the runtime JDK tag. On Windows
+@rem it lives in the SHARED, install-relative dir %APP_HOME%\aot - the same directory the native
+@rem launch4j exes reference via %EXEDIR%\aot - so the installer/admin populates it once and every
+@rem user reads it. Only if that dir is not writable do we fall back to a per-user dir so lazy
+@rem self-healing still works for an unprivileged user (the exes cannot use that per-user copy).
+set "AOT_FILE=sirius-#aotCacheId#-!AOT_JDK_TAG!.aot"
+set "AOT_PRIMARY_DIR=%APP_HOME%\aot"
+set "AOT_FALLBACK_DIR=%LOCALAPPDATA%\sirius-ms\aot"
+
+@rem Detect the "aot-train" sub-command: always (re)generate so a stale cache never suppresses training.
+set AOT_TRAINING=false
+for %%a in (%*) do (
+    if /I "%%~a"=="aot-train" set AOT_TRAINING=true
+)
+
+if "!AOT_TRAINING!"=="true" goto aot_create
+if exist "!AOT_PRIMARY_DIR!\!AOT_FILE!" (
+    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCache="!AOT_PRIMARY_DIR!\!AOT_FILE!"
+    goto aot_done
+)
+if exist "!AOT_FALLBACK_DIR!\!AOT_FILE!" (
+    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCache="!AOT_FALLBACK_DIR!\!AOT_FILE!"
+    goto aot_done
+)
+:aot_create
+@rem Pick the first writable dir (shared install dir first, then per-user), probing by writing a temp
+@rem file. If neither is writable, add no flag at all - run without AOT (no error).
+set "AOT_WDIR="
+mkdir "!AOT_PRIMARY_DIR!" 2>nul
+( echo.>"!AOT_PRIMARY_DIR!\.aotwtest" ) 2>nul && ( del "!AOT_PRIMARY_DIR!\.aotwtest" 2>nul & set "AOT_WDIR=!AOT_PRIMARY_DIR!" )
+if defined AOT_WDIR goto aot_create_apply
+mkdir "!AOT_FALLBACK_DIR!" 2>nul
+( echo.>"!AOT_FALLBACK_DIR!\.aotwtest" ) 2>nul && ( del "!AOT_FALLBACK_DIR!\.aotwtest" 2>nul & set "AOT_WDIR=!AOT_FALLBACK_DIR!" )
+:aot_create_apply
+if not defined AOT_WDIR goto aot_done
+if "!AOT_TRAINING!"=="true" if exist "!AOT_WDIR!\!AOT_FILE!" del /f /q "!AOT_WDIR!\!AOT_FILE!"
+set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCacheOutput="!AOT_WDIR!\!AOT_FILE!"
+:aot_done
+
+"%JAVA_EXE%" -version >nul 2>&1 && (
     goto execute
 )
 
@@ -76,21 +136,36 @@ goto fail
 :execute
 @rem Setup the command line and add APP_HOME to user Path
 set Path=%APP_HOME%;%Path%
-set CLASSPATH=#classPath#
-
-set GUROBI_JAR=#gurobiJar#
-if exist "%GUROBI_JAR%" set CLASSPATH=%CLASSPATH%;%GUROBI_JAR%
-
-set CPLEX_JAR=#cplexJar#
-if exist "%CPLEX_JAR%" set CLASSPATH=%CLASSPATH%;%CPLEX_JAR%
+@rem Build the classpath UNCONDITIONALLY (Gurobi/CPLEX appended even if absent), byte-for-byte
+@rem matching the launch4j sirius.exe / sirius-gui.exe classpath. launch4j expands an undefined
+@rem %VAR% to an empty string (so %GUROBI_HOME%\lib\gurobi.jar becomes \lib\gurobi.jar and stays on
+@rem the classpath) - cmd does the same - so both launchers present an identical classpath and the
+@rem AOT cache recorded by this script (aot-train) is accepted by the exes. Non-existent entries are
+@rem silently ignored by the JVM at class-load time. Do NOT reintroduce an "if exist" guard here:
+@rem it would make this classpath diverge from the exe's and invalidate the shared AOT cache.
+set CLASSPATH=#classPath#;#gurobiJar#;#cplexJar#
 
 
 @rem Execute sirius
 "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %SIRIUS_OPTS%  -classpath "%CLASSPATH%" "%MAIN_CLASS%" %*
+set "SIRIUS_RC=!ERRORLEVEL!"
+
+@rem After a training run, point the native launch4j launchers (sirius.exe / sirius-gui.exe) at the
+@rem cache via their .l4j.ini files - but ONLY if training produced the cache in the SHARED install
+@rem dir (%EXEDIR%\aot). If it fell back to the per-user dir, the exes (fixed %EXEDIR%) cannot use it
+@rem and a shared .l4j.ini must not reference a per-user path, so we skip writing it. launch4j reads
+@rem <exe-basename>.l4j.ini at startup and expands %EXEDIR% (written literally as %%..%% below);
+@rem -Xlog:aot=off silences the harmless "cache not found" message on later launches.
+if not "!AOT_TRAINING!"=="true" goto end
+if not exist "!AOT_PRIMARY_DIR!\!AOT_FILE!" goto end
+> "%~dp0sirius.l4j.ini" echo -XX:AOTCache="%%EXEDIR%%\aot\!AOT_FILE!"
+>> "%~dp0sirius.l4j.ini" echo -Xlog:aot=off
+copy /y "%~dp0sirius.l4j.ini" "%~dp0sirius-gui.l4j.ini" >nul 2>&1
 
 :end
 @rem End local scope for the variables with windows NT shell
-if "%ERRORLEVEL%"=="0" goto mainEnd
+@rem Use the captured java exit code (the .l4j.ini writes above would otherwise clobber ERRORLEVEL).
+if "!SIRIUS_RC!"=="0" goto mainEnd
 
 :fail
 rem Set variable SIRIUS_EXIT_CONSOLE if you need the _script_ return code instead of
