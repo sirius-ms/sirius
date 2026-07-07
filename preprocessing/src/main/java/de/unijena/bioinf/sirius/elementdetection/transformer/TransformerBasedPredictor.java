@@ -2,8 +2,11 @@ package de.unijena.bioinf.sirius.elementdetection.transformer;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedElements;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.File;
@@ -15,10 +18,11 @@ import java.util.*;
 
 public class TransformerBasedPredictor {
     private EmbeddingLayer positionalEmbedding, orderedEmbedding, centeredEmbedding;
-    private FourierEncoder fourierMassDefect, fourierPrecursor, fourierIntensity;
+    private FourierEncoder fourierMassDefect, fourierIntensity;
     private FullyConnectedLayer projIn1, projIn2;
     private Transformer[] transformers;
     private FullyConnectedLayer projOut, monoisotopicOut;
+    private Transformer basePeakPredictor;
 
     public static TransformerBasedPredictor read(ByteBuffer buffer) {
         EmbeddingLayer positionalEmbedding, orderedEmbedding, centeredEmbedding;
@@ -30,7 +34,6 @@ public class TransformerBasedPredictor {
         orderedEmbedding=EmbeddingLayer.read(buffer);
         centeredEmbedding=EmbeddingLayer.read(buffer);
         fourierMassDefect=FourierEncoder.read(buffer);
-        fourierPrecursor=FourierEncoder.read(buffer);
         fourierIntensity = FourierEncoder.read(buffer);
         projIn1=FullyConnectedLayer.read(buffer);
         projIn2=FullyConnectedLayer.read(buffer);
@@ -43,15 +46,15 @@ public class TransformerBasedPredictor {
         for (int i=0; i < transformers.length; ++i) {
             transformers[i] = Transformer.read(buffer);
         }
+        Transformer basePeakPredictor = Transformer.read(buffer);
         return new TransformerBasedPredictor(positionalEmbedding,orderedEmbedding,centeredEmbedding,fourierMassDefect,
-                fourierPrecursor,fourierIntensity,projIn1,projIn2,transformers,projOut,monoisotopicOut);
+                fourierIntensity,projIn1,projIn2,transformers,basePeakPredictor, projOut,monoisotopicOut);
     }
     public void write(ByteBuffer buffer) {
         positionalEmbedding.write(buffer);
         orderedEmbedding.write(buffer);
         centeredEmbedding.write(buffer);
         fourierMassDefect.write(buffer);
-        fourierPrecursor.write(buffer);
         fourierIntensity.write(buffer);
         projIn1.write(buffer);
         projIn2.write(buffer);
@@ -62,6 +65,7 @@ public class TransformerBasedPredictor {
         for (int k=0; k < transformers.length; ++k) {
             transformers[k].write(buffer);
         }
+        basePeakPredictor.write(buffer);
     }
 
     public static TransformerBasedPredictor readFromBinary(File file) throws IOException {
@@ -80,7 +84,6 @@ public class TransformerBasedPredictor {
         EmbeddingLayer center = new EmbeddingLayer(readFloatMatrixTxt(dir, "centered_embedding.weight").vectors.toArray(float[][]::new));
         // read fourier frequencies
         FourierEncoder massDefect = new FourierEncoder(readDoubles(dir, "mzfourier"));
-        FourierEncoder precursorDefect = new FourierEncoder(readDoubles(dir, "precursorfourier"));
         FourierEncoder intens = new FourierEncoder(readDoubles(dir, "intfourier"));
         // read fully connected layers
         FullyConnectedLayer projIn1 = new FullyConnectedLayer(
@@ -104,10 +107,10 @@ public class TransformerBasedPredictor {
                 Activation.IDENTITY
         );
         // read transformers
+        final int[] heads = FileUtils.readAsIntVector(FileUtils.getReader(new File(dir, "heads.txt")));
         List<Transformer> transformers = new ArrayList<>();
-        int t=0;
-        while (true) {
-            String T = "transformers." + t + ".";
+        for (int t = 0; t < heads.length; ++t) {
+            String T = (t < heads.length-1) ? "transformers.seq." + t + "." : "basePeakBlock.";
             if (!new File(dir, T + "K.bias.txt").exists()) break;
 
             FullyConnectedLayer Q = new FullyConnectedLayer(
@@ -144,22 +147,14 @@ public class TransformerBasedPredictor {
                     readFloatMatrixTxt(dir, T+"norm1.weight").data,
                     readFloatMatrixTxt(dir, T+"norm1.bias").data
             );
-            LayerNorm NORM2 = new LayerNorm(
-                    readFloatMatrixTxt(dir, T+"norm2.weight").data,
-                    readFloatMatrixTxt(dir, T+"norm2.bias").data
-            );
-
-
 
             transformers.add(new Transformer(
-                    Q, K, V, PROJ, 9, MLP1, MLP2,NORM1, NORM2
+                    Q, K, V, PROJ, heads[t], MLP1, MLP2,NORM1
             ));
-
-            ++t;
-
         }
-        return new TransformerBasedPredictor(pos, order, center, massDefect, precursorDefect, intens, projIn1, projIn2,
-                transformers.toArray(Transformer[]::new), projOut, monoOut);
+        Transformer basePeakPredictor = transformers.removeLast();
+        return new TransformerBasedPredictor(pos, order, center, massDefect, intens, projIn1, projIn2,
+                transformers.toArray(Transformer[]::new), basePeakPredictor, projOut, monoOut);
     }
 
     private record FloatMatrix (int rows, int cols, float[] data, List<float[]> vectors) {
@@ -190,35 +185,48 @@ public class TransformerBasedPredictor {
     }
 
 
-    public TransformerBasedPredictor(EmbeddingLayer positionalEmbedding, EmbeddingLayer orderedEmbedding, EmbeddingLayer centeredEmbedding, FourierEncoder fourierMassDefect, FourierEncoder fourierPrecursor, FourierEncoder fourierIntensity, FullyConnectedLayer projIn1, FullyConnectedLayer projIn2, Transformer[] transformers, FullyConnectedLayer projOut, FullyConnectedLayer monoisotopicOut) {
+    public TransformerBasedPredictor(EmbeddingLayer positionalEmbedding, EmbeddingLayer orderedEmbedding, EmbeddingLayer centeredEmbedding, FourierEncoder fourierMassDefect,
+                                     FourierEncoder fourierIntensity, FullyConnectedLayer projIn1, FullyConnectedLayer projIn2,
+                                     Transformer[] transformers, Transformer basePeakPredictor, FullyConnectedLayer projOut, FullyConnectedLayer monoisotopicOut) {
         this.positionalEmbedding = positionalEmbedding;
         this.orderedEmbedding = orderedEmbedding;
         this.centeredEmbedding = centeredEmbedding;
         this.fourierMassDefect = fourierMassDefect;
-        this.fourierPrecursor = fourierPrecursor;
         this.fourierIntensity = fourierIntensity;
         this.projIn1 = projIn1;
         this.projIn2 = projIn2;
         this.transformers = transformers;
         this.projOut = projOut;
         this.monoisotopicOut = monoisotopicOut;
+        this.basePeakPredictor = basePeakPredictor;
     }
 
+    /**
+     * Predict the elemental composition of an isotope pattern assuming the monoisotopic peak equals to the given parameter.
+     */
     public Optional<TransformerPrediction> predict(SimpleSpectrum pattern, int peak) {
         final float[][] transformed = transform(pattern, 1);
-        final float mono = monoisotopicOut.compute(transformed[peak])[0];
+        final float[] peakType = monoisotopicOut.compute(transformed[peak]);
+        final float mono = peakType[peakType.length-1];
         if (mono < MONOISOTOPIC_THRESHOLD) return Optional.empty();
         float[] prediction = projOut.compute(transformed[peak]);
-        return Optional.of(builtPredictionResult(peak, mono, prediction));
+        return Optional.of(builtPredictionResult(peak, pattern.size(), mono, prediction));
     }
 
+    /**
+     * Predict the elemental composition of an isotope pattern. The pattern consists of consecutive peaks that
+     * may be noise or isotope peaks belonging to possibly overlapping patterns. The method returns a list of predictions
+     * where each prediction assumes a different monoisopic peak. Only the most likely predictions (usually just one)
+     * are returned. May return an empty list of the whole pattern is detected as noise.
+     */
     public TransformerPrediction[] predict(SimpleSpectrum pattern) {
         final float[][] transformed = transform(pattern,1);
 
         // predict monoisotopics
         float[] mono = new float[pattern.size()];
         for (int i=0; i < mono.length; ++i) {
-            mono[i] = monoisotopicOut.compute(transformed[i])[0];
+            float[] compute = monoisotopicOut.compute(transformed[i]);
+            mono[i] = compute[compute.length-1];
         }
         // predict elements
         float[][] elements = new float[pattern.size()][];
@@ -263,6 +271,7 @@ public class TransformerBasedPredictor {
             for (int i=0; i < order_.length; ++i) order[i] = order_[i];
         }
         final float[][] peaks = new float[mz.length][];
+        final float[][] fourierFeatures = new float[mz.length][fourierMassDefect.size() + fourierIntensity.size()];
         double baseInt = 0d;
         for (int i=0; i < peaks.length; ++i) baseInt = Math.max(baseInt, intensity[i]);
         // encode peaks
@@ -270,18 +279,15 @@ public class TransformerBasedPredictor {
             int pos=0;
             final float[] peakvec = new float[projIn1.inputSize()];
             {
-                final float[] massDefects = fourierMassDefect.compute(massDefect(mz[peak]));
+                final float[] massDefects = fourierMassDefect.compute(mz[peak]);
                 System.arraycopy(massDefects, 0, peakvec, pos, massDefects.length);
+                System.arraycopy(massDefects, 0, fourierFeatures[peak], pos, massDefects.length);
                 pos += massDefects.length;
-            }
-            {
-                final float[] precursorMasses = fourierPrecursor.compute(mz[peak]);
-                System.arraycopy(precursorMasses, 0, peakvec, pos, precursorMasses.length);
-                pos += precursorMasses.length;
             }
             {
                 final float[] ints = fourierIntensity.compute(intensity[peak]);
                 System.arraycopy(ints, 0, peakvec, pos, ints.length);
+                System.arraycopy(ints, 0, fourierFeatures[peak], pos, ints.length);
                 pos += ints.length;
             }
             {
@@ -307,16 +313,18 @@ public class TransformerBasedPredictor {
         // run transformers
         float[][] transformed = peaks;
         for (int tr=0; tr < transformers.length; ++tr) {
-            transformed = transformers[tr].compute(transformed);
+            transformed = transformers[tr].compute(transformed, fourierFeatures);
         }
         return transformed;
     }
 
-    private static String[] labels = new String[]{"S","Cl","Br","B","F","Se","Fe","Zn","Mg", "Si", "CHNOPF"};
+    private static String[] labels = new String[]{"S","Cl","Br","B","F","Se","Fe","Zn","Mg", "Si"};
     private static Element[] predictableElements = Arrays.asList("S","Cl", "Br", "B", "Se", "Fe", "Zn", "Mg", "Si").stream().map(x-> PeriodicTable.getInstance().getByName(x)).toArray(Element[]::new);
+    protected static float[] PREDICTOR_THRESHOLDS = MatrixUtils.double2float(Arrays.stream(predictableElements).mapToDouble(x->x.getSymbol().equals("S") || x.getSymbol().equals("F") ? 0.2 : 0.33).toArray());
+    protected static float FLUOR_THRESHOLD = 0.2f;
     private static Set<Element> predictableElementSet = Set.of(predictableElements);
     private static int[] labelPos = new int[]{0,1,2,3,5,6,7,8,9};
-    private static int fluorPos = 4, chnopfPos = 10;
+    private static int fluorPos = 4, sulfurPos = 0;
 
     private static float MONOISOTOPIC_THRESHOLD = 0f;
 
@@ -324,16 +332,22 @@ public class TransformerBasedPredictor {
         return predictableElements;
     }
 
-    private TransformerPrediction builtPredictionResult(int k, float mono, float[] elements) {
+    private TransformerPrediction builtPredictionResult(int k, int patternLen, float mono, float[] elements) {
         final float[] probs = new float[labelPos.length];
         float maxProb = 0f;
         for (int j=0; j < probs.length; ++j) {
             probs[j] = elements[labelPos[j]];
             maxProb = Math.max(probs[j],maxProb);
         }
+
+        // special rule: sulfur predictions requires 3 peaks to be reliable. Even though the predictor might be
+        // confident some time with two peaks, it is not worth the hustle. We rather enable sulfur ALWAYS for
+        // pattern with < 3 peaks as it does not do much damage anyways.
+        // in theory we could check for the REAL pattern length (excluding noise), but again, it's not so important.
+        DetectedElements.patternsWithLessThan3PeaksAlwaysIncludeSulfur(probs,patternLen,sulfurPos);
+
         return new TransformerPrediction(
-                k, mono, predictableElements, probs,
-                (float)(Activation.SIGMOID.apply(elements[chnopfPos])/Activation.SIGMOID.apply(maxProb)),
+                k, patternLen, mono, predictableElements, probs,
                 elements[fluorPos]
         );
     }
@@ -351,23 +365,10 @@ public class TransformerBasedPredictor {
 
         for (int k=0; k < mono.length; ++k) {
             if (mono[k]>=MONOISOTOPIC_THRESHOLD) {
-                predictions.add(builtPredictionResult(k, mono[k], elements[k]));
+                predictions.add(builtPredictionResult(k, originalSpectrum.size(), mono[k], elements[k]));
             }
         }
         return predictions.toArray(TransformerPrediction[]::new);
-    }
-
-
-
-    private double[] massDefect(double[] mz) {
-        final double[] defects = new double[mz.length];
-        for (int i=0; i < mz.length; ++i) {
-            defects[i] = mz[i]-Math.round(mz[i]);
-        }
-        return defects;
-    }
-    private double massDefect(double mz) {
-        return mz-Math.round(mz);
     }
 
 }

@@ -30,7 +30,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.sirius.ms.sdk.model.ProjectType;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -45,7 +48,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ProjectInfo.JSON_PROPERTY_COMPATIBLE,
   ProjectInfo.JSON_PROPERTY_NUM_OF_FEATURES,
   ProjectInfo.JSON_PROPERTY_NUM_OF_COMPOUNDS,
-  ProjectInfo.JSON_PROPERTY_NUM_OF_BYTES
+  ProjectInfo.JSON_PROPERTY_NUM_OF_BYTES,
+  ProjectInfo.JSON_PROPERTY_DETECTED_ADDUCTS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class ProjectInfo {
@@ -80,6 +84,10 @@ public class ProjectInfo {
   public static final String JSON_PROPERTY_NUM_OF_BYTES = "numOfBytes";
   @jakarta.annotation.Nullable
   private Long numOfBytes;
+
+  public static final String JSON_PROPERTY_DETECTED_ADDUCTS = "detectedAdducts";
+  @jakarta.annotation.Nullable
+  private Set<String> detectedAdducts;
 
   public ProjectInfo() {
   }
@@ -284,6 +292,40 @@ public class ProjectInfo {
     this.numOfBytes = numOfBytes;
   }
 
+  public ProjectInfo detectedAdducts(@jakarta.annotation.Nullable Set<String> detectedAdducts) {
+    
+    this.detectedAdducts = detectedAdducts;
+    return this;
+  }
+
+  public ProjectInfo addDetectedAdductsItem(String detectedAdductsItem) {
+    if (this.detectedAdducts == null) {
+      this.detectedAdducts = new LinkedHashSet<>();
+    }
+    this.detectedAdducts.add(detectedAdductsItem);
+    return this;
+  }
+
+  /**
+   * Set of all detected adducts available in this projects
+   * @return detectedAdducts
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Set<String> getDetectedAdducts() {
+    return detectedAdducts;
+  }
+
+
+  @JsonDeserialize(as = LinkedHashSet.class)
+  @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setDetectedAdducts(@jakarta.annotation.Nullable Set<String> detectedAdducts) {
+    this.detectedAdducts = detectedAdducts;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -301,12 +343,13 @@ public class ProjectInfo {
         Objects.equals(this.compatible, projectInfo.compatible) &&
         Objects.equals(this.numOfFeatures, projectInfo.numOfFeatures) &&
         Objects.equals(this.numOfCompounds, projectInfo.numOfCompounds) &&
-        Objects.equals(this.numOfBytes, projectInfo.numOfBytes);
+        Objects.equals(this.numOfBytes, projectInfo.numOfBytes) &&
+        Objects.equals(this.detectedAdducts, projectInfo.detectedAdducts);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(projectId, location, description, type, compatible, numOfFeatures, numOfCompounds, numOfBytes);
+    return Objects.hash(projectId, location, description, type, compatible, numOfFeatures, numOfCompounds, numOfBytes, detectedAdducts);
   }
 
   @Override
@@ -321,6 +364,7 @@ public class ProjectInfo {
     sb.append("    numOfFeatures: ").append(toIndentedString(numOfFeatures)).append("\n");
     sb.append("    numOfCompounds: ").append(toIndentedString(numOfCompounds)).append("\n");
     sb.append("    numOfBytes: ").append(toIndentedString(numOfBytes)).append("\n");
+    sb.append("    detectedAdducts: ").append(toIndentedString(detectedAdducts)).append("\n");
     sb.append("}");
     return sb.toString();
   }

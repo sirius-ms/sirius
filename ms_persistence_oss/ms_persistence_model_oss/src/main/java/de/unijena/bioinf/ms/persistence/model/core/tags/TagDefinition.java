@@ -44,9 +44,14 @@ public class TagDefinition {
 
     private String tagName;
 
+    @Nullable
     private String tagType;
 
+    @Nullable
     private String description;
+
+    @Nullable
+    private String displayName;
 
     @JsonSerialize(using = ValueDefinition.Serializer.class)
     @JsonDeserialize(using = ValueDefinition.Deserializer.class)

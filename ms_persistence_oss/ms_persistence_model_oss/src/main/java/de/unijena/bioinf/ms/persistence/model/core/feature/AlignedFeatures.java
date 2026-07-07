@@ -64,6 +64,11 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
     private DetectedAdducts detectedAdducts;
 
     /**
+     * So far, we perform element detection during Ms1Preprocessor, so this annotation is most likely null...
+     */
+    private DetectedElements detectedElements;
+
+    /**
      * Some human-readable name. Usually parsed from an inputfile, or specified by the user.
      */
     private String name;
@@ -77,10 +82,12 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
      */
     private MolecularFormula molecularFormula;
 
+    @Builder.Default
     protected DataQuality dataQuality = DataQuality.NOT_APPLICABLE;
 
     /**
      * points to an ion network
+     * NOTE: the field is actually called `networkId` as primary key. Unfortunately we cannot change this easily
      */
     protected Long adductNetworkId;
 

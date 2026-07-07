@@ -3,7 +3,9 @@ package io.sirius.ms.sdk.api;
 import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.PagedModelString;
+import io.sirius.ms.sdk.model.Reaction;
 import io.sirius.ms.sdk.model.ReactionRequest;
+import io.sirius.ms.sdk.model.ReactionSequence;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +50,146 @@ public class ReactionsApi {
     }
 
     
+    /**
+     * Add a new reaction to the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param reaction The reaction parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec addReactionRequestCreation(@jakarta.annotation.Nonnull Reaction reaction) throws WebClientResponseException {
+        Object postBody = reaction;
+        // verify the required parameter 'reaction' is set
+        if (reaction == null) {
+            throw new WebClientResponseException("Missing the required parameter 'reaction' when calling addReaction", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/reactions/library", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Add a new reaction to the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param reaction The reaction parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void addReaction(@jakarta.annotation.Nonnull Reaction reaction) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        addReactionRequestCreation(reaction).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Add a new reaction to the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param reaction The reaction parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> addReactionWithHttpInfo(@jakarta.annotation.Nonnull Reaction reaction) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return addReactionRequestCreation(reaction).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Add a new reaction to the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param reaction The reaction parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec addReactionWithResponseSpec(@jakarta.annotation.Nonnull Reaction reaction) throws WebClientResponseException {
+        return addReactionRequestCreation(reaction);
+    }
+
+    /**
+     * Add a new reaction sequence to the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param reactionSequence The reactionSequence parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec addSequenceRequestCreation(@jakarta.annotation.Nonnull ReactionSequence reactionSequence) throws WebClientResponseException {
+        Object postBody = reactionSequence;
+        // verify the required parameter 'reactionSequence' is set
+        if (reactionSequence == null) {
+            throw new WebClientResponseException("Missing the required parameter 'reactionSequence' when calling addSequence", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/reactions/sequences/library", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Add a new reaction sequence to the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param reactionSequence The reactionSequence parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void addSequence(@jakarta.annotation.Nonnull ReactionSequence reactionSequence) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        addSequenceRequestCreation(reactionSequence).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Add a new reaction sequence to the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param reactionSequence The reactionSequence parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> addSequenceWithHttpInfo(@jakarta.annotation.Nonnull ReactionSequence reactionSequence) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return addSequenceRequestCreation(reactionSequence).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Add a new reaction sequence to the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param reactionSequence The reactionSequence parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec addSequenceWithResponseSpec(@jakarta.annotation.Nonnull ReactionSequence reactionSequence) throws WebClientResponseException {
+        return addSequenceRequestCreation(reactionSequence);
+    }
+
     /**
      * Apply a sequence of reactions to a list of SMILES strings or structures from a database.
      * [EXPERIMENTAL] Returns the final pool of SMILES strings.
@@ -127,5 +269,425 @@ public class ReactionsApi {
      */
     public ResponseSpec applyReactionsWithResponseSpec(@jakarta.annotation.Nonnull ReactionRequest reactionRequest, @jakarta.annotation.Nullable Integer limit) throws WebClientResponseException {
         return applyReactionsRequestCreation(reactionRequest, limit);
+    }
+
+    /**
+     * Delete a reaction from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec deleteReactionRequestCreation(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'name' is set
+        if (name == null) {
+            throw new WebClientResponseException("Missing the required parameter 'name' when calling deleteReaction", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("name", name);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/reactions/library/{name}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Delete a reaction from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void deleteReaction(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        deleteReactionRequestCreation(name).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Delete a reaction from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> deleteReactionWithHttpInfo(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return deleteReactionRequestCreation(name).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Delete a reaction from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec deleteReactionWithResponseSpec(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        return deleteReactionRequestCreation(name);
+    }
+
+    /**
+     * Delete a reaction sequence from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec deleteSequenceRequestCreation(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'name' is set
+        if (name == null) {
+            throw new WebClientResponseException("Missing the required parameter 'name' when calling deleteSequence", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("name", name);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/reactions/sequences/library/{name}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Delete a reaction sequence from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void deleteSequence(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        deleteSequenceRequestCreation(name).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Delete a reaction sequence from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> deleteSequenceWithHttpInfo(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return deleteSequenceRequestCreation(name).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Delete a reaction sequence from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec deleteSequenceWithResponseSpec(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        return deleteSequenceRequestCreation(name);
+    }
+
+    /**
+     * Get a specific reaction from the library by name.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @return Reaction
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getReactionRequestCreation(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'name' is set
+        if (name == null) {
+            throw new WebClientResponseException("Missing the required parameter 'name' when calling getReaction", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("name", name);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Reaction> localVarReturnType = new ParameterizedTypeReference<Reaction>() {};
+        return apiClient.invokeAPI("/api/reactions/library/{name}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get a specific reaction from the library by name.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @return Reaction
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public Reaction getReaction(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        ParameterizedTypeReference<Reaction> localVarReturnType = new ParameterizedTypeReference<Reaction>() {};
+        return getReactionRequestCreation(name).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Get a specific reaction from the library by name.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @return ResponseEntity&lt;Reaction&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Reaction> getReactionWithHttpInfo(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        ParameterizedTypeReference<Reaction> localVarReturnType = new ParameterizedTypeReference<Reaction>() {};
+        return getReactionRequestCreation(name).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Get a specific reaction from the library by name.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getReactionWithResponseSpec(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        return getReactionRequestCreation(name);
+    }
+
+    /**
+     * Get all reactions from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @return List&lt;Reaction&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getReactionsRequestCreation() throws WebClientResponseException {
+        Object postBody = null;
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Reaction> localVarReturnType = new ParameterizedTypeReference<Reaction>() {};
+        return apiClient.invokeAPI("/api/reactions", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get all reactions from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @return List&lt;Reaction&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<Reaction> getReactions() throws WebClientResponseException {
+        ParameterizedTypeReference<Reaction> localVarReturnType = new ParameterizedTypeReference<Reaction>() {};
+        return getReactionsRequestCreation().bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * Get all reactions from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @return ResponseEntity&lt;List&lt;Reaction&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<Reaction>> getReactionsWithHttpInfo() throws WebClientResponseException {
+        ParameterizedTypeReference<Reaction> localVarReturnType = new ParameterizedTypeReference<Reaction>() {};
+        return getReactionsRequestCreation().toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * Get all reactions from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getReactionsWithResponseSpec() throws WebClientResponseException {
+        return getReactionsRequestCreation();
+    }
+
+    /**
+     * Get a specific reaction sequence from the library by name.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @return ReactionSequence
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getSequenceRequestCreation(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'name' is set
+        if (name == null) {
+            throw new WebClientResponseException("Missing the required parameter 'name' when calling getSequence", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("name", name);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<ReactionSequence> localVarReturnType = new ParameterizedTypeReference<ReactionSequence>() {};
+        return apiClient.invokeAPI("/api/reactions/sequences/{name}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get a specific reaction sequence from the library by name.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @return ReactionSequence
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ReactionSequence getSequence(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        ParameterizedTypeReference<ReactionSequence> localVarReturnType = new ParameterizedTypeReference<ReactionSequence>() {};
+        return getSequenceRequestCreation(name).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Get a specific reaction sequence from the library by name.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @return ResponseEntity&lt;ReactionSequence&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<ReactionSequence> getSequenceWithHttpInfo(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        ParameterizedTypeReference<ReactionSequence> localVarReturnType = new ParameterizedTypeReference<ReactionSequence>() {};
+        return getSequenceRequestCreation(name).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Get a specific reaction sequence from the library by name.
+     * 
+     * <p><b>200</b> - OK
+     * @param name The name parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getSequenceWithResponseSpec(@jakarta.annotation.Nonnull String name) throws WebClientResponseException {
+        return getSequenceRequestCreation(name);
+    }
+
+    /**
+     * Get all reaction sequences from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @return List&lt;ReactionSequence&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getSequencesRequestCreation() throws WebClientResponseException {
+        Object postBody = null;
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<ReactionSequence> localVarReturnType = new ParameterizedTypeReference<ReactionSequence>() {};
+        return apiClient.invokeAPI("/api/reactions/sequences", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get all reaction sequences from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @return List&lt;ReactionSequence&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<ReactionSequence> getSequences() throws WebClientResponseException {
+        ParameterizedTypeReference<ReactionSequence> localVarReturnType = new ParameterizedTypeReference<ReactionSequence>() {};
+        return getSequencesRequestCreation().bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * Get all reaction sequences from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @return ResponseEntity&lt;List&lt;ReactionSequence&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<ReactionSequence>> getSequencesWithHttpInfo() throws WebClientResponseException {
+        ParameterizedTypeReference<ReactionSequence> localVarReturnType = new ParameterizedTypeReference<ReactionSequence>() {};
+        return getSequencesRequestCreation().toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * Get all reaction sequences from the library.
+     * 
+     * <p><b>200</b> - OK
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getSequencesWithResponseSpec() throws WebClientResponseException {
+        return getSequencesRequestCreation();
     }
 }

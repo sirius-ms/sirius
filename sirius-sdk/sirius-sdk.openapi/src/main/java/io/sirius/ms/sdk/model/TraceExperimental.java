@@ -77,11 +77,11 @@ public class TraceExperimental {
 
   public static final String JSON_PROPERTY_INTENSITIES = "intensities";
   @jakarta.annotation.Nullable
-  private List<Double> intensities;
+  private List<Double> intensities = new ArrayList<>();
 
   public static final String JSON_PROPERTY_ANNOTATIONS = "annotations";
   @jakarta.annotation.Nullable
-  private List<TraceAnnotationExperimental> annotations;
+  private List<TraceAnnotationExperimental> annotations = new ArrayList<>();
 
   public static final String JSON_PROPERTY_MZ = "mz";
   @jakarta.annotation.Nullable

@@ -19,7 +19,9 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -34,6 +36,7 @@ import de.unijena.bioinf.lcms.adducts.assignment.OptimalAssignmentViaBeamSearch;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.align.AlignmentThresholds;
 import de.unijena.bioinf.lcms.align.MoI;
+import de.unijena.bioinf.lcms.homologues.CF2Detector;
 import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
 import de.unijena.bioinf.lcms.quality.*;
 import de.unijena.bioinf.lcms.statistics.UserSpecifiedThresholds;
@@ -50,12 +53,16 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractAlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractFeature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.tags.Tag;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
@@ -65,6 +72,9 @@ import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bionf.fastcosine.FastCosine;
+import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
+import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.longs.*;
 import lombok.Getter;
@@ -83,7 +93,8 @@ import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
     private static final Logger log = LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class);
-    List<Path> inputFiles;
+    private final @Nullable List<String> sampleTypes;
+    private final List<Path> inputFiles;
 
     private final IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier;
 
@@ -102,6 +113,10 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     @Getter
     @Nullable
     private LongLinkedOpenHashSet importedCompoundIds = null;
+
+    @Getter
+    @Nullable
+    private Map<String, LongSet> importedRunIds = null;
 
 
     private final boolean saveImportedCompounds;
@@ -125,6 +140,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     public LcmsAlignSubToolJobNoSql(@NotNull List<Path> inputFiles, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
         super();
         this.inputFiles = inputFiles;
+        this.sampleTypes = null;
         this.projectSupplier = projectSupplier;
         this.alignRuns = !options.noAlign;
         if (options.noiseIntensity>=0) this.userSpecifiedThresholds.setMs1NoiseLevel(options.noiseIntensity);
@@ -166,7 +182,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     }
 
     public LcmsAlignSubToolJobNoSql(
-            @NotNull List<Path> inputFiles,
+            @NotNull List<Path> runFiles,
+            @Nullable List<String> sampleTypes,
             @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier,
             boolean alignRuns,
             DataSmoothing filter,
@@ -180,14 +197,15 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             @NotNull Tracker tracker
     ) {
         super();
-        this.inputFiles = inputFiles;
+        this.inputFiles = runFiles;
+        this.sampleTypes = sampleTypes;
         this.projectSupplier = projectSupplier;
         this.alignRuns = alignRuns;
         this.userSpecifiedThresholds = new UserSpecifiedThresholds();
         if (ms1Massdev!=null) userSpecifiedThresholds.setAllowedMassDeviationInMs1(ms1Massdev);
         if (noiseIntensity>=0) userSpecifiedThresholds.setMs1NoiseLevel(noiseIntensity);
         this.filter = switch (filter) {
-            case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
+            case AUTO -> runFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(sigma);
             case WAVELET -> new WaveletFilter(scale);
@@ -258,6 +276,17 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                     System.out.println(processedSample.getUid() + " (" + ++count + " / " + jobs.size() + ")");
                     updateProgress(totalProgress, ++progress, "Processing Runs");
                 }
+
+                // create sample type tags for runs.
+                Iterator<String> stIt = sampleTypes != null && sampleTypes.size() == inputFiles.size() ? sampleTypes.iterator() : null;
+                List<Tag> sampleTypeTags = jobs.stream()
+                        .map(j -> {
+                            String tagValue = stIt != null ? stIt.next() : TagDefinitions.SAMPLE_TYPE_SAMPLE;
+                            return TagDefinitions.SAMPLE_TYPE.newTagWithValue(tagValue, LCMSRun.class, j.getResult().getRun().getRunId());
+                        })
+                        .peek(tag -> importedRunIds.computeIfAbsent((String) tag.getValue(), k -> new LongLinkedOpenHashSet()).add(tag.getTaggedObjectId()))
+                        .toList();
+                ps.getStorage().insertAll(sampleTypeTags);
             }
 
             updateProgress(totalProgress, progress, "Aligning runs");
@@ -326,7 +355,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                     deleteIsotopicPeak(ps, x);
                     importedFeatureIds.rem(x.getAlignedFeatureId());
                 });
-                network.assignNetworksAndAdductsToFeatures(
+                Set<PrecursorIonType> detectedAdducts = network.assignNetworksAndAdductsToFeatures(
                         SiriusJobs.getGlobalJobManager(),
                         new OptimalAssignmentViaBeamSearch(),
                         merged.getPolarity(),
@@ -334,6 +363,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         (net)->{ps.getStorage().insert(net); return net.getNetworkId();},
                         (feature)->{Compound c = Compound.singleton(feature); ps.getStorage().insert(c); return c.getCompoundId();}
                 );
+                // add to project wide property that holds all detected adducts in the project
+                ps.addToDetectedAdducts(detectedAdducts);
 
                 long TIME3 = System.currentTimeMillis();
                 System.out.printf("Assigning adducts took %f seconds\n", (TIME3-TIME2)/1000d);
@@ -403,6 +434,20 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                     countMap.values().stream().mapToInt(Integer::intValue).sum(),
                     countMapMs2.values().stream().mapToInt(Integer::intValue).sum()
             );
+
+            // PFAS detection
+            {
+                AlignedFeatures[] features = ps.getStorage().findStr(Filter.where("runId").eq(merged.getRun().getRunId()), AlignedFeatures.class).filter(x -> x.getDataQuality().getScore() >= DataQuality.LOWEST.getScore()).toArray(AlignedFeatures[]::new);
+                LongOpenHashSet pfas = new CF2Detector(provider).detectPFASSeries(features);
+                List<Tag> pfasTags = pfas.longStream().mapToObj(feature->
+                    TagDefinitions.PFAS_TYPE.newTagWithValue(TagDefinitions.PFAS_TYPE_0, AlignedFeatures.class, feature)
+                ).toList();
+                ps.getStorage().insertAll(pfasTags);
+                if (!pfas.isEmpty()) {
+                    ps.getStorage().upsertAll(Arrays.asList(Arrays.stream(features).filter(x->pfas.contains(x.getAlignedFeatureId())).toArray(AlignedFeatures[]::new)));
+                }
+            }
+
         } finally {
             processing.closeStorages();
         }
@@ -444,6 +489,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     protected NoSQLProjectSpaceManager compute() throws Exception {
         importedFeatureIds = new LongLinkedOpenHashSet();
         importedCompoundIds = new LongLinkedOpenHashSet();
+        importedRunIds = new HashMap<>();
 
         NoSQLProjectSpaceManager space = projectSupplier.get();
         SiriusProjectDatabaseImpl<? extends Database<?>> ps = space.getProject();

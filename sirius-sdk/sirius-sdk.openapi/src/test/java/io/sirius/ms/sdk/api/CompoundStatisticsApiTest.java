@@ -23,9 +23,16 @@
 
 package io.sirius.ms.sdk.api;
 
-import io.sirius.ms.sdk.model.*;
-import org.junit.Test;
-import org.junit.Ignore;
+import io.sirius.ms.sdk.model.AggregationType;
+import io.sirius.ms.sdk.model.FoldChange;
+import io.sirius.ms.sdk.model.FoldChangeJobSubmission;
+import io.sirius.ms.sdk.model.Job;
+import io.sirius.ms.sdk.model.JobOptField;
+import io.sirius.ms.sdk.model.QuantMeasure;
+import io.sirius.ms.sdk.model.StatisticsTable;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,7 +43,7 @@ import java.util.stream.Collectors;
 /**
  * API tests for CompoundStatisticsApi
  */
-@Ignore
+@Disabled
 public class CompoundStatisticsApiTest {
 
     private final CompoundStatisticsApi api = new CompoundStatisticsApi();
@@ -49,13 +56,11 @@ public class CompoundStatisticsApiTest {
      */
     @Test
     public void computeCompoundFoldChangesExperimentalTest()  {
-        String projectId = null;
-        String leftGroupName = null;
-        String rightGroupName = null;
-        AggregationType aggregation = null;
-        QuantMeasure quantification = null;
-        List<JobOptField> optFields = null;
-        Job response = api.computeCompoundFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
+        // uncomment below to test the function
+        //String projectId = null;
+        //FoldChangeJobSubmission foldChangeJobSubmission = null;
+        //List<JobOptField> optFields = null;
+        //Job response = api.computeCompoundFoldChangesExperimental(projectId, foldChangeJobSubmission, optFields);
 
         // TODO: test validations
     }
@@ -67,12 +72,13 @@ public class CompoundStatisticsApiTest {
      */
     @Test
     public void deleteCompoundFoldChangesExperimentalTest()  {
-        String projectId = null;
-        String leftGroupName = null;
-        String rightGroupName = null;
-        AggregationType aggregation = null;
-        QuantMeasure quantification = null;
-        api.deleteCompoundFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
+        // uncomment below to test the function
+        //String projectId = null;
+        //String leftGroupName = null;
+        //String rightGroupName = null;
+        //AggregationType aggregation = null;
+        //QuantMeasure quantification = null;
+        //api.deleteCompoundFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
 
         // TODO: test validations
     }
@@ -84,11 +90,28 @@ public class CompoundStatisticsApiTest {
      */
     @Test
     public void getCompoundFoldChangeTableExperimentalTest()  {
-        String projectId = null;
-        AggregationType aggregation = null;
-        QuantMeasure quantification = null;
-        StatisticsTable response = api.getCompoundFoldChangeTableExperimental(projectId, aggregation, quantification);
+        // uncomment below to test the function
+        //String projectId = null;
+        //AggregationType aggregation = null;
+        //QuantMeasure quantification = null;
+        //StatisticsTable response = api.getCompoundFoldChangeTableExperimental(projectId, aggregation, quantification);
 
         // TODO: test validations
     }
+    
+    /**
+     * [EXPERIMENTAL] List all fold changes that are associated with an object
+     *
+     * [EXPERIMENTAL] List all fold changes that are associated with an object.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     */
+    @Test
+    public void getFoldChangesByCompoundExperimentalTest()  {
+        // uncomment below to test the function
+        //String projectId = null;
+        //String objectId = null;
+        //List<FoldChange> response = api.getFoldChangesByCompoundExperimental(projectId, objectId);
+
+        // TODO: test validations
+    }
+    
 }

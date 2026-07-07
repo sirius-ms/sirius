@@ -95,25 +95,45 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
     }
 
     /**
-     * Detect elements based on MS spectrum
-     * @param pinput
+     * Extracts all element detection information and determines the final formula constraints
      */
-    @Requires(Ms1IsotopePattern.class)
-    @Requires(PossibleAdducts.class)
+    @Requires(DetectedElements.class)
     @Provides(FormulaConstraints.class)
+    @Provides(ElementsDetectedAsAbsent.class)
     public void elementDetection(ProcessedInput pinput) {
+        detectElementsFromIsotopePattern(pinput);
         final FormulaSettings settings = pinput.getAnnotationOrDefault(FormulaSettings.class);
         //check if enforced elements are not empty. We cannot check earlier because some DefaultInstances may have no elements.
         if (FormulaConstraints.empty().equals(settings.getEnforcedAlphabet())) throw new IllegalArgumentException("Specify at least one element that is always enforced during molecular formula generation.");
 
         checkDetectableElementSettings(settings);
-
-        final DetectedFormulaConstraints fc = elementDetection.detect(pinput);
-        if (fc==null) {
-            DetectedFormulaConstraints dfc = new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()), false);
-            pinput.setAnnotation(FormulaConstraints.class, dfc); //to ensure backwards compatibility, still use FormulaConstraints.class as key
+        final DetectedElements detectedElements = pinput.getAnnotationOrNull(DetectedElements.class);
+        if (detectedElements==null) {
+            pinput.setAnnotation(FormulaConstraints.class, settings.getFallbackAlphabet().getExtendedConstraints(settings.getEnforcedAlphabet()));
         } else {
-            pinput.setAnnotation(FormulaConstraints.class, fc); //to ensure backwards compatibility, still use FormulaConstraints.class as key
+            final DetectedElements.DetectionResult result = detectedElements.getFormulaConstraints(settings.getFallbackAlphabet());
+            // detection counts as "performed" only if isotope-pattern detection actually contributed predictions.
+            // An empty ISOTOPE_PATTERN_DETECTION source is produced when no MS1 data was available (see the detectors);
+            // in that case the constraints fall back to the fallback alphabet and detectionPerformed must stay false.
+            final PossibleElement[] isotopePredictions = detectedElements.getDetections().get(DetectedElements.Source.ISOTOPE_PATTERN_DETECTION);
+            final boolean detectionPerformed = isotopePredictions != null && isotopePredictions.length > 0;
+            pinput.setAnnotation(FormulaConstraints.class, new DetectedFormulaConstraints(result.constraints().intersection(settings.getAutoDetectionElementsWithPFAS().toArray(Element[]::new)).getExtendedConstraints(settings.getEnforcedAlphabet()), detectionPerformed));
+            pinput.setAnnotation(ElementsDetectedAsAbsent.class, new ElementsDetectedAsAbsent(result.forbiddenElements()));
+        }
+    }
+
+    /**
+     * Detect elements based on MS spectrum
+     */
+    @Requires(Ms1IsotopePattern.class)
+    @Requires(PossibleAdducts.class)
+    @Provides(DetectedElements.class)
+    public void detectElementsFromIsotopePattern(ProcessedInput pinput) {
+        final DetectedElements fc = elementDetection.detect(pinput);
+        if (fc!=null) {
+            final DetectedElements el = pinput.getAnnotationOrNull(DetectedElements.class);
+            if (el==null) pinput.setAnnotation(DetectedElements.class, fc);
+            else pinput.setAnnotation(DetectedElements.class, el.with(fc));
         }
     }
 

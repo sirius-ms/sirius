@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -48,7 +47,7 @@ public class DeleteExperimentAction extends AbstractGuiAction {
 
     public DeleteExperimentAction(SiriusGui gui) {
         super("Delete", gui);
-        putValue(Action.SMALL_ICON, Icons.REMOVE_DOC.derive(16,16));
+        putValue(Action.SMALL_ICON, Icons.REMOVE_DOC.derive(16, 16));
         putValue(Action.SHORT_DESCRIPTION, "Delete the selected data");
 
 
@@ -56,12 +55,12 @@ public class DeleteExperimentAction extends AbstractGuiAction {
 
         this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {
+            public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, long totalElements) {
                 setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
             }
 
             @Override
-            public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+            public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, long totalElements) {
                 setEnabled(SiriusActions.notComputingOrEmpty(selected));
             }
         });
@@ -89,15 +88,13 @@ public class DeleteExperimentAction extends AbstractGuiAction {
             protected Boolean compute() {
                 synchronized (this) {
                     final int max = toRemove.size() + 2;
-                    Utils.withTime("Deleting took: ", w -> {
                     updateProgress(0, max, 0);
-                        List<InstanceBean> removed = new ArrayList<>();
-//                        gui.getProjectManager().disbableProjectListener();
-                        try {
-                            gui.acceptSiriusClient((client, pid) ->
+                    List<InstanceBean> removed = new ArrayList<>();
+                    try {
+                        gui.acceptSiriusClient((client, pid) ->
                                 toRemove.forEach(feature -> {
                                     try {
-                                        updateProgress(0, max, removed.size(),"Removing '" + feature.getGUIName() + "'...");
+                                        updateProgress(0, max, removed.size(), "Removing '" + feature.getGUIName() + "'...");
                                         if (!feature.isComputing()) {
                                             client.features().deleteAlignedFeature(pid, feature.getFeatureId());
                                             removed.add(feature);
@@ -108,16 +105,9 @@ public class DeleteExperimentAction extends AbstractGuiAction {
                                         log.error("Could not delete: {}", feature.getFeatureId(), e);
                                     }
                                 }));
-
-                        } finally {
-//                            updateProgress(0, toRemove.size(), removed.size() + 1,"Cleaning up...");
-//                            gui.getProjectManager().INSTANCE_LIST.removeAll(removed);
-//                            gui.getProjectManager().enableProjectListener();
-                            updateProgress(0, toRemove.size(), removed.size() + 2,"DONE!");
-
-                        }
-                    });
-
+                    } finally {
+                        updateProgress(0, toRemove.size(), removed.size() + 2, "DONE!");
+                    }
                     return true;
                 }
             }

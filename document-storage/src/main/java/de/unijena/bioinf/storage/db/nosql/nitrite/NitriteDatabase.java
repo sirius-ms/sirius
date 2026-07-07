@@ -64,7 +64,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -80,6 +85,8 @@ public class NitriteDatabase implements Database<Document> {
     public enum MVStoreCompression{NONE, LZF, DEFLATE}
 
     protected Path file;
+
+    protected final String systemUID;
 
     // NITRITE
     private final Nitrite db;
@@ -126,6 +133,25 @@ public class NitriteDatabase implements Database<Document> {
         this.initRepositories(meta);
         this.initOptionalFields(meta);
         this.nitriteMapper = this.db.getConfig().nitriteMapper();
+
+        try {
+            if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+                //todo whe need a solution that is robust against file moves
+                systemUID = hashString(file.toAbsolutePath().toString(), 32);
+                log.warn("Creating project to index link from file ' {}' to search index '{}' on windows. This link is not robust against file renames/moves. Index will be recreated from scratch each time the project file is renamed/moved/",
+                        file.toAbsolutePath(), systemUID);
+            } else {
+                FileStore fileStore = Files.getFileStore(file);
+                // Get filesystem identifier (not always unique)
+                String fsName = fileStore.name();
+                // Get file ID (works on most platforms)
+                Object fileKey = Files.readAttributes(file, BasicFileAttributes.class).fileKey();
+                // Create a composite UID
+                systemUID = hashString(fsName + "-" + fileKey, 32);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Nitrite initDB(Path file, Metadata meta, MVStoreCompression compress, int cacheSizeMiB, int commitBufferByte, boolean readOnly) {
@@ -208,6 +234,11 @@ public class NitriteDatabase implements Database<Document> {
             stateWriteLock.unlock();
         }
 
+    }
+
+    @Override
+    public String systemUID() {
+       return systemUID;
     }
 
     @SuppressWarnings("unchecked")
@@ -372,10 +403,10 @@ public class NitriteDatabase implements Database<Document> {
 
     private <T> T callIfOpen(Callable<T> callable) throws IOException {
         stateReadLock.lock();
-        if (this.db.isClosed()) {
-            throw new IOException("Nitrite database is closed!");
-        }
         try {
+            if (this.db.isClosed()) {
+                throw new IOException("Nitrite database is closed!");
+            }
             return callable.call();
         } catch (IOException e) {
             throw e;
@@ -411,6 +442,39 @@ public class NitriteDatabase implements Database<Document> {
     @Override
     public Set<Class<?>> getAllRegisteredClasses() {
         return this.repositories.keySet();
+    }
+
+    @Override
+    public long getStorageCommitId() {
+        try {
+            var store = this.db.getStore();
+            if (store != null) {
+                for (java.lang.reflect.Method method : store.getClass().getMethods()) {
+                    if (method.getReturnType().equals(org.h2.mvstore.MVStore.class) && method.getParameterCount() == 0) {
+                        org.h2.mvstore.MVStore mvStore = (org.h2.mvstore.MVStore) method.invoke(store);
+                        if (mvStore != null) {
+                            return mvStore.getCurrentVersion();
+                        }
+                    }
+                }
+                Class<?> current = store.getClass();
+                while (current != null && current != Object.class) {
+                    for (java.lang.reflect.Field field : current.getDeclaredFields()) {
+                        if (field.getType().equals(org.h2.mvstore.MVStore.class)) {
+                            field.setAccessible(true);
+                            org.h2.mvstore.MVStore mvStore = (org.h2.mvstore.MVStore) field.get(store);
+                            if (mvStore != null) {
+                                return mvStore.getCurrentVersion();
+                            }
+                        }
+                    }
+                    current = current.getSuperclass();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to get MVStore version from NitriteDatabase", e);
+        }
+        return -1;
     }
 
     @SuppressWarnings("unchecked")
@@ -1176,6 +1240,16 @@ public class NitriteDatabase implements Database<Document> {
     private static Pair<Object, NitriteFilter> createUniqueFilter(Object object, Field field) throws IOException {
         Object value = getPrimaryKeyValue(object, field).orElseThrow(() -> new IOException("id can not be null"));
         return Pair.of(value, FluentFilter.where(field.getName()).eq(value));
+    }
+
+    private static String hashString(String input, int bits) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash).substring(0, bits);
+        } catch (Exception e) {
+            throw new RuntimeException("Hashing failed", e);
+        }
     }
 
 }

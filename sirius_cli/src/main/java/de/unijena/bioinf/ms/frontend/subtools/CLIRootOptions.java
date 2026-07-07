@@ -133,9 +133,9 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
     public double maxMz;
 
 
-    @Option(names = {"--no-citations", "--noCitations", "--noCite"}, description = "Do not write summary files to the project-space", order = 299)
+    @Option(names = {"--no-citations", "--noCitations", "--noCite"}, description = "Do not print citations after SIRIUS finished.", order = 299)
     private void setNoCitationInfo(boolean noCitations) {
-        PropertyManager.DEFAULTS.changeConfig("PrintCitations", String.valueOf(!noCitations)); //this is a bit hacky
+        PropertyManager.setProperty("de.unijena.bioinf.sirius.printCitations", String.valueOf(!noCitations));
     }
 
     @Deprecated(forRemoval = true)

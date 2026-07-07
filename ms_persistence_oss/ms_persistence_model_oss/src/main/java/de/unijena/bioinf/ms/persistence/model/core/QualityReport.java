@@ -2,42 +2,34 @@ package de.unijena.bioinf.ms.persistence.model.core;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import de.unijena.bioinf.ms.persistence.model.sirius.AlignedFeatureAnnotation;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
 
-public class QualityReport {
-
-    public static final String PEAK_QUALITY = "Peak Quality", ALIGNMENT_QUALITY = "Alignment Quality",
-                                ISOTOPE_QUALITY = "Isotope Pattern Quality", MS2_QUALITY = "Fragmentation Pattern Quality",
-                                ADDUCT_QUALITY = "Adduct Assignment Quality";
-
-    public static final String[] DEFAULT_CATEGORIES = {
-        PEAK_QUALITY, ALIGNMENT_QUALITY, ISOTOPE_QUALITY, MS2_QUALITY
-    };
-
-    private LinkedHashMap<String, Category> categories;
-
-    @Id
-    @Getter
+public class QualityReport extends AlignedFeatureAnnotation {
     @Setter
-    private long alignedFeatureId;
-
+    @Getter
     private DataQuality overallQuality;
+
+    @Getter
+    private LinkedHashMap<String, Category> categories;
 
     public static QualityReport withDefaultCategories() {
         return withDefaultCategories(true);
     }
+
     public static QualityReport withDefaultCategories(boolean includeAlignment) {
         QualityReport r = new QualityReport();
-        for (String d : DEFAULT_CATEGORIES)
-            if (includeAlignment || !Objects.equals(ALIGNMENT_QUALITY, d))
+        for (DefaultQualityCategory d : DefaultQualityCategory.values())
+            if (includeAlignment || d != DefaultQualityCategory.ALIGNMENT_QUALITY)
                 r.addCategory(new Category(d));
         return r;
     }
@@ -52,39 +44,52 @@ public class QualityReport {
     }
 
     public void addCategory(Category category) {
-        if (categories.containsKey(category.categoryName)) {
-            categories.get(category.categoryName).merge(category);
-        } else categories.put(category.categoryName, category);
+        if (categories.containsKey(category.categoryId)) {
+            categories.get(category.categoryId).merge(category);
+        } else categories.put(category.categoryId, category);
     }
 
-    public LinkedHashMap<String, Category> getCategories() {
-        return categories;
-    }
 
-    public DataQuality getOverallQuality() {
-        return overallQuality;
-    }
 
-    public void setOverallQuality(DataQuality overallQuality) {
-        this.overallQuality = overallQuality;
-    }
+
 
     @JsonInclude(JsonInclude.Include.ALWAYS)
     public static class Category {
 
+        private String categoryId;
+
+        public String getCategoryId() {
+            if (categoryId == null || categoryId.isBlank()){
+                return Arrays.stream(DefaultQualityCategory.values())
+                        .filter(dc -> dc.getDisplayName().equals(categoryName)).findAny()
+                        .map(DefaultQualityCategory::name).orElseGet(() -> Utils.toScreamingSnakeCase(categoryName));
+            }
+            return categoryId;
+        }
+
+        @Getter
         private String categoryName;
+        @Setter
+        @Getter
         private DataQuality overallQuality;
+        @Getter
         private List<Item> items;
 
-        public Category() {
-            this("");
+        // just for Jackson
+        private Category() {
+            this(null,"");
         }
 
-        public Category(String categoryName) {
-            this(categoryName, DataQuality.LOWEST, new ArrayList<>());
+        public Category(@NotNull DefaultQualityCategory defaultCategory) {
+            this(defaultCategory.name(), defaultCategory.getDisplayName());
         }
 
-        public Category(String categoryName, DataQuality overallQuality, List<Item> items) {
+        public Category(@NotNull String categoryId, @NotNull String categoryName) {
+            this(categoryId, categoryName, DataQuality.LOWEST, new ArrayList<>());
+        }
+
+        public Category(String categoryId, String categoryName, DataQuality overallQuality, List<Item> items) {
+            this.categoryId = categoryId;
             this.categoryName = categoryName;
             this.overallQuality = overallQuality;
             this.items = items;
@@ -94,21 +99,6 @@ public class QualityReport {
             this.items.addAll(same.items);
         }
 
-        public String getCategoryName() {
-            return categoryName;
-        }
-
-        public DataQuality getOverallQuality() {
-            return overallQuality;
-        }
-
-        public List<Item> getItems() {
-            return items;
-        }
-
-        public void setOverallQuality(DataQuality overallQuality) {
-            this.overallQuality = overallQuality;
-        }
     }
 
     @Schema(name = "QualityWeight")
@@ -136,8 +126,5 @@ public class QualityReport {
             this.quality = quality;
             this.weight = weight;
         }
-
-
     }
-
 }

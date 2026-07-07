@@ -20,8 +20,10 @@
 
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.projectspace.IndexField;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -36,11 +38,28 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ComputedSubtools extends AlignedFeatureAnnotation {
+    @IndexField
     private boolean librarySearch = false;
+    @IndexField
     private boolean formulaSearch = false;
+    @IndexField
     private boolean zodiac = false;
+    @IndexField
     private boolean fingerprint = false;
+    @IndexField
     private boolean canopus = false;
+    @IndexField
     private boolean structureSearch = false;
+    @IndexField
     private boolean deNovoSearch = false;
+
+    @JsonIgnore
+    public boolean hasResults(){
+        return librarySearch || formulaSearch || zodiac || fingerprint || canopus || structureSearch || deNovoSearch;
+    }
+
+    @JsonIgnore
+    public boolean noResults(){
+        return !hasResults();
+    }
 }

@@ -26,6 +26,8 @@ public interface TraceProvider {
 
     public List<MergedMSnSpectrum> getMs2SpectraOf(AbstractAlignedFeatures features);
 
+    public Optional<SimpleSpectrum> getMsMsSpectrumOf(AbstractAlignedFeatures features);
+
     public Optional<SimpleSpectrum> getIsotopes(AbstractAlignedFeatures features);
 
 }

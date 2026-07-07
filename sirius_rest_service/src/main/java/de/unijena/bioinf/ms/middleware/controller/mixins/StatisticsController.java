@@ -21,15 +21,15 @@
 package de.unijena.bioinf.ms.middleware.controller.mixins;
 
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
+import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChangeJobSubmission;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -39,7 +39,7 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 public interface StatisticsController<T> extends ProjectProvidingController, ComputeServiceController {
 
 
-    Class<T> getTarget();
+    QuantRowType getTarget();
 
     /**
      * [EXPERIMENTAL] Compute the fold change between two groups of runs.
@@ -49,23 +49,17 @@ public interface StatisticsController<T> extends ProjectProvidingController, Com
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId      project-space to compute the fold change in.
-     * @param leftGroupName  name of the left tag group.
-     * @param rightGroupName name of the right tag group.
-     * @param aggregation    aggregation type.
-     * @param quantification quantification type.
+     * @param jobSubmission  Parameters of fold change job
      * @param optFields      job opt fields.
      * @return
      */
-    @PutMapping(value = "/foldchange/compute",  produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/foldchange/compute", produces = MediaType.APPLICATION_JSON_VALUE)
     default Job computeFoldChanges(
             @PathVariable String projectId,
-            @NotNull @RequestParam String leftGroupName,
-            @NotNull @RequestParam String rightGroupName,
-            @RequestParam(defaultValue = "AVG") AggregationType aggregation,
-            @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure quantification,
+            @RequestBody FoldChangeJobSubmission jobSubmission,
             @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
-            ) {
-        return getComputeService().createAndSubmitFoldChangeJob(getProjectsProvider().getProjectOrThrow(projectId), leftGroupName, rightGroupName, aggregation, quantification, getTarget(), removeNone(optFields));
+    ) {
+        return getComputeService().createAndSubmitFoldChangeJob(getProjectsProvider().getProjectOrThrow(projectId), jobSubmission, getTarget(), removeNone(optFields));
     }
 
 
@@ -92,8 +86,8 @@ public interface StatisticsController<T> extends ProjectProvidingController, Com
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId      project-space to delete from.
-     * @param leftGroupName           name of the left group.
-     * @param rightGroupName          name of the right group.
+     * @param leftGroupName  name of the left group.
+     * @param rightGroupName name of the right group.
      */
     @DeleteMapping(value = "/foldchanges")
     default void deleteFoldChanges(
@@ -113,7 +107,7 @@ public interface StatisticsController<T> extends ProjectProvidingController, Com
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
-     * @param projectId project-space to read from.
+     * @param projectId      project-space to read from.
      * @param aggregation    aggregation type.
      * @param quantification quantification type.
      * @return table of fold changes.

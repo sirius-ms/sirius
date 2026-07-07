@@ -25,7 +25,9 @@ import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * caches decomposer and corresponding alphabet. If a dataset contains a small number of different alphabets,
@@ -36,39 +38,33 @@ public class DecomposerCache {
     private ChemicalAlphabet[] alphabets;
     private MassToFormulaDecomposer[] decomposers;
     private AtomicInteger[] useCounter;
-    private int dirtyState;
     private int size;
 
-    private ReentrantLock lock = new ReentrantLock();
+    private ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public DecomposerCache(int size) {
         this.alphabets = new ChemicalAlphabet[size];
         this.decomposers = new MassToFormulaDecomposer[size];
         this.useCounter = new AtomicInteger[size];
-        this.dirtyState = 0;
         for (int k=0; k < size; ++k) useCounter[k] = new AtomicInteger(0);
         this.size = 0;
     }
 
     public MassToFormulaDecomposer getDecomposer(ChemicalAlphabet alphabet) {
         while (true) {
-            int state = dirtyState;
-            MassToFormulaDecomposer d = findDecomposer(alphabet,state);
+            lock.readLock().lock();
+            MassToFormulaDecomposer d = findDecomposer(alphabet);
+            lock.readLock().unlock();
             if (d == null) {
-                lock.lock();
+                lock.writeLock().lock();
                 try {
-                    if (state == dirtyState) {
-                        //System.err.println(this.toString() + " will decompose " + alphabet + " from " + Thread.currentThread().getName() + " with state " + state);
-                        d = addNewDecomposer(alphabet);
-                    } else {
-                        //System.err.println(this.toString() + " STATE CHANGED " + alphabet + " from " + Thread.currentThread().getName() + " with state " + state);
-                        continue;
-                    }
+                    d = findDecomposer(alphabet);
+                    if (d==null) d = addNewDecomposer(alphabet);
                 } finally {
-                    lock.unlock();
+                    lock.writeLock().unlock();
                 }
                 return d;
-            } else if (state == dirtyState) return d;
+            } else return d;
         }
     }
 
@@ -80,11 +76,12 @@ public class DecomposerCache {
         return getDecomposer(alphabet.extend(ionType.getAdduct().add(ionType.getInSourceFragmentation()).elementArray()));
     }
 
-    private MassToFormulaDecomposer findDecomposer(ChemicalAlphabet alphabet, int state) {
+    private MassToFormulaDecomposer findDecomposer(ChemicalAlphabet alphabet) {
         for (int i=0; i < size; ++i) {
             if (alphabets[i].equals(alphabet)) {
+                final MassToFormulaDecomposer decomposer = decomposers[i];
                 useCounter[i].incrementAndGet();
-                return decomposers[i];
+                return decomposer;
             }
         }
         //System.err.println("Search " + alphabet + " in " + Arrays.toString(alphabets) + " without success at state " + state + " in thread " + Thread.currentThread().getName() );
@@ -92,8 +89,6 @@ public class DecomposerCache {
     }
 
     private MassToFormulaDecomposer addNewDecomposer(ChemicalAlphabet alphabet) {
-        ++dirtyState;
-        try {
         if (size < alphabets.length) {
             decomposers[size] = new MassToFormulaDecomposer(alphabet);
             decomposers[size].init();
@@ -107,9 +102,6 @@ public class DecomposerCache {
             decomposers[mindex].init();
             alphabets[mindex] = alphabet;
             return decomposers[mindex];
-        } } finally {
-            ++dirtyState;
-            //System.err.println(alphabet.toString() + " IS ADDED BY " + Thread.currentThread().getName() + " with state " + dirtyState);
         }
     }
 

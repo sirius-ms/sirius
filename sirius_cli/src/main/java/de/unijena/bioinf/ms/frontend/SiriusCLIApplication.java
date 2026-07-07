@@ -23,7 +23,6 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
@@ -115,7 +114,7 @@ public class SiriusCLIApplication {
                     e.printStackTrace();
                 } finally {
                     ProxyManager.disconnect();
-                    if (successfulParsed && PropertyManager.DEFAULTS.createInstanceWithDefaults(PrintCitations.class).value)
+                    if (successfulParsed && PropertyManager.getBoolean("de.unijena.bioinf.sirius.printCitations", true))
                         ApplicationCore.BIBTEX.citeToSystemErr();
                 }
 

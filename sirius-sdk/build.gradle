@@ -70,6 +70,7 @@ dependencies {
     api project(":sirius-sdk:sirius-sdk.openapi")
     api libs.springBootStarterWebflux
     api libs.reactorNettyHttp
+    api libs.luceneCore
 }
 
 openApiGenerate {
@@ -83,4 +84,11 @@ openApiGenerate {
     groupId.set("io.sirius-ms")
     version.set(project.version.toString())
     configFile.set("$projectDir/openapi-gen-config.json")
+
+    typeMappings.set([
+            "AnyValue": "Object"
+    ])
+    importMappings.set([
+            "Object": "java.lang.Object"
+    ])
 }
