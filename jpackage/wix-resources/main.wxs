@@ -99,7 +99,19 @@
     <CustomAction Id="JpSetARPCONTACT" Property="ARPCONTACT" Value="$(var.JpAppVendor)" />
     <CustomAction Id="JpSetARPSIZE" Property="ARPSIZE" Value="$(var.JpAppSizeKb)" />
 
-
+    <!-- One-time Project Leyden AOT training after install. Runs the bundled sirius.bat, which is the
+         only launcher able to (a) record the AOT cache into the shared install dir and (b) write the
+         native exes' .l4j.ini pointing at it. Deferred + Impersonate=no so it runs elevated as SYSTEM
+         and can write into the install dir (Program Files); headless mode because the install-time
+         SYSTEM context has no interactive desktop (produces the service-startup cache the exes consume);
+         asyncNoWait so it never blocks or fails the installation and the training runs in the
+         background after the installer completes. -->
+    <CustomAction Id="SiriusAotTrain"
+                  Directory="INSTALLDIR"
+                  ExeCommand="&quot;[System64Folder]cmd.exe&quot; /c &quot;&quot;[INSTALLDIR]sirius.bat&quot; aot-train --headless&quot;"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="asyncNoWait" />
 
     <?ifdef JpHelpURL ?>
       <CustomAction Id="JpSetARPHELPLINK" Property="ARPHELPLINK" Value="$(var.JpHelpURL)" />
@@ -143,6 +155,8 @@
       <?endif?>
       <RemoveExistingProducts Before="CostInitialize"/>
       <Custom Action="JpFindRelatedProducts" After="FindRelatedProducts"/>
+      <!-- Fire the AOT training once files are laid down, only on a fresh install (not uninstall). -->
+      <Custom Action="SiriusAotTrain" After="InstallFiles">NOT Installed</Custom>
     </InstallExecuteSequence>
 
     <InstallUISequence>
