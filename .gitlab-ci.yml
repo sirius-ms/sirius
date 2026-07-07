@@ -46,8 +46,8 @@ build_test_publish_libs:
       echo "===> Running Unit Tests"
       gradle test --stacktrace
     - |
-      echo "===> Running Integration Tests"
-      gradle integrationTest --stacktrace
+      echo "===> Running Integration Tests (incl. account-state tests on an isolated SIRIUS instance)"
+      gradle allIntegrationTests --stacktrace
     - |
       if [[ "$CI_COMMIT_BRANCH" == "master" ||  "$CI_COMMIT_BRANCH" == "stable" ]]; then
          echo "===> Publishing Libraries to Gitlab Registry"
@@ -65,6 +65,7 @@ build_test_publish_libs:
       junit:
         - "**/build/test-results/test/TEST-*.xml"
         - "**/build/test-results/integrationTest/TEST-*.xml"
+        - "**/build/test-results/accountIntegrationTest/TEST-*.xml"
 #unitTests:
 #  variables:
 #    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
