@@ -124,21 +124,36 @@ goto fail
 :execute
 @rem Setup the command line and add APP_HOME to user Path
 set Path=%APP_HOME%;%Path%
-set CLASSPATH=#classPath#
-
-set GUROBI_JAR=#gurobiJar#
-if exist "%GUROBI_JAR%" set CLASSPATH=%CLASSPATH%;%GUROBI_JAR%
-
-set CPLEX_JAR=#cplexJar#
-if exist "%CPLEX_JAR%" set CLASSPATH=%CLASSPATH%;%CPLEX_JAR%
+@rem Build the classpath UNCONDITIONALLY (Gurobi/CPLEX appended even if absent), byte-for-byte
+@rem matching the launch4j sirius.exe / sirius-gui.exe classpath. launch4j expands an undefined
+@rem %VAR% to an empty string (so %GUROBI_HOME%\lib\gurobi.jar becomes \lib\gurobi.jar and stays on
+@rem the classpath) - cmd does the same - so both launchers present an identical classpath and the
+@rem AOT cache recorded by this script (aot-train) is accepted by the exes. Non-existent entries are
+@rem silently ignored by the JVM at class-load time. Do NOT reintroduce an "if exist" guard here:
+@rem it would make this classpath diverge from the exe's and invalidate the shared AOT cache.
+set CLASSPATH=#classPath#;#gurobiJar#;#cplexJar#
 
 
 @rem Execute sirius
 "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %SIRIUS_OPTS%  -classpath "%CLASSPATH%" "%MAIN_CLASS%" %*
+set "SIRIUS_RC=!ERRORLEVEL!"
+
+@rem After a training run, point the native launch4j launchers (sirius.exe / sirius-gui.exe) at the
+@rem cache by writing their .l4j.ini files - but ONLY if the cache file actually exists now, so we
+@rem never advertise a cache that a failed/aborted training run did not produce. launch4j reads
+@rem <exe-basename>.l4j.ini at startup and expands %USERPROFILE% per user (written literally as
+@rem %%..%% below); -Xlog:aot=off silences the harmless "cache not found" message on later launches.
+if not "!AOT_TRAINING!"=="true" goto end
+if not exist %LEYDEN_CACHE% goto end
+set "AOT_INI_CACHE=%%USERPROFILE%%\#siriusWsDir#\aot\sirius-#aotCacheId#-!AOT_JDK_TAG!.aot"
+> "%~dp0sirius.l4j.ini" echo -XX:AOTCache="!AOT_INI_CACHE!"
+>> "%~dp0sirius.l4j.ini" echo -Xlog:aot=off
+copy /y "%~dp0sirius.l4j.ini" "%~dp0sirius-gui.l4j.ini" >nul 2>&1
 
 :end
 @rem End local scope for the variables with windows NT shell
-if "%ERRORLEVEL%"=="0" goto mainEnd
+@rem Use the captured java exit code (the .l4j.ini writes above would otherwise clobber ERRORLEVEL).
+if "!SIRIUS_RC!"=="0" goto mainEnd
 
 :fail
 rem Set variable SIRIUS_EXIT_CONSOLE if you need the _script_ return code instead of
