@@ -231,8 +231,15 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         }
     }
 
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
+
     @Override
     public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
+        if (spec.commandLine().getParseResult().hasMatchedOption("--database")
+                && spec.commandLine().getParseResult().hasMatchedOption("--bottom-up-search"))
+            throw new CommandLine.ParameterException(spec.commandLine(),
+                    "--database and --bottom-up-search must not be combined. Selecting a database already disables de novo and bottom-up search.");
         return new InstanceJob.Factory<>(SiriusSubToolJob::new, getInvalidator());
     }
 
