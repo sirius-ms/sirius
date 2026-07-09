@@ -84,33 +84,45 @@ if defined AOT_JDK_RAW (
 )
 
 @rem Leyden AOT Cache logic.
-@rem #aotCacheId# is a build-time hash isolating version / distribution channel (installer, zip,
-@rem conda) / platform / classpath layout; the runtime JDK tag isolates the JDK actually used.
-@rem Builds/versions/JDKs thus coexist under the workspace 'aot' directory.
-set LEYDEN_CACHE="%USERPROFILE%\#siriusWsDir#\aot\sirius-#aotCacheId#-!AOT_JDK_TAG!.aot"
+@rem The cache is user-independent build data identified by #aotCacheId# (build-time hash isolating
+@rem version / distribution channel / platform / classpath layout) + the runtime JDK tag. On Windows
+@rem it lives in the SHARED, install-relative dir %APP_HOME%\aot - the same directory the native
+@rem launch4j exes reference via %EXEDIR%\aot - so the installer/admin populates it once and every
+@rem user reads it. Only if that dir is not writable do we fall back to a per-user dir so lazy
+@rem self-healing still works for an unprivileged user (the exes cannot use that per-user copy).
+set "AOT_FILE=sirius-#aotCacheId#-!AOT_JDK_TAG!.aot"
+set "AOT_PRIMARY_DIR=%APP_HOME%\aot"
+set "AOT_FALLBACK_DIR=%LOCALAPPDATA%\sirius-ms\aot"
 
-@rem Detect the "aot-train" sub-command. In training mode we always (re)generate the cache, so an
-@rem existing (possibly stale) cache never suppresses training. Any other invocation consumes an
-@rem existing cache or lazily creates one on first run.
+@rem Detect the "aot-train" sub-command: always (re)generate so a stale cache never suppresses training.
 set AOT_TRAINING=false
 for %%a in (%*) do (
     if /I "%%~a"=="aot-train" set AOT_TRAINING=true
 )
 
-for %%i in (%LEYDEN_CACHE%) do set LEYDEN_CACHE_DIR=%%~dpi
-
-if "!AOT_TRAINING!"=="true" (
-    @rem Force a fresh recording; remove any stale cache so it cannot be consumed instead.
-    if not exist "!LEYDEN_CACHE_DIR!" mkdir "!LEYDEN_CACHE_DIR!"
-    if exist %LEYDEN_CACHE% del /f /q %LEYDEN_CACHE%
-    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCacheOutput=%LEYDEN_CACHE%
-) else if exist %LEYDEN_CACHE% (
-    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCache=%LEYDEN_CACHE%
-) else (
-    @rem Ensure the directory exists before generating
-    if not exist "!LEYDEN_CACHE_DIR!" mkdir "!LEYDEN_CACHE_DIR!"
-    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCacheOutput=%LEYDEN_CACHE%
+if "!AOT_TRAINING!"=="true" goto aot_create
+if exist "!AOT_PRIMARY_DIR!\!AOT_FILE!" (
+    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCache="!AOT_PRIMARY_DIR!\!AOT_FILE!"
+    goto aot_done
 )
+if exist "!AOT_FALLBACK_DIR!\!AOT_FILE!" (
+    set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCache="!AOT_FALLBACK_DIR!\!AOT_FILE!"
+    goto aot_done
+)
+:aot_create
+@rem Pick the first writable dir (shared install dir first, then per-user), probing by writing a temp
+@rem file. If neither is writable, add no flag at all - run without AOT (no error).
+set "AOT_WDIR="
+mkdir "!AOT_PRIMARY_DIR!" 2>nul
+( echo.>"!AOT_PRIMARY_DIR!\.aotwtest" ) 2>nul && ( del "!AOT_PRIMARY_DIR!\.aotwtest" 2>nul & set "AOT_WDIR=!AOT_PRIMARY_DIR!" )
+if defined AOT_WDIR goto aot_create_apply
+mkdir "!AOT_FALLBACK_DIR!" 2>nul
+( echo.>"!AOT_FALLBACK_DIR!\.aotwtest" ) 2>nul && ( del "!AOT_FALLBACK_DIR!\.aotwtest" 2>nul & set "AOT_WDIR=!AOT_FALLBACK_DIR!" )
+:aot_create_apply
+if not defined AOT_WDIR goto aot_done
+if "!AOT_TRAINING!"=="true" if exist "!AOT_WDIR!\!AOT_FILE!" del /f /q "!AOT_WDIR!\!AOT_FILE!"
+set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCacheOutput="!AOT_WDIR!\!AOT_FILE!"
+:aot_done
 
 %JAVA_EXE% -version >nul 2>&1 && (
     goto execute
@@ -139,14 +151,14 @@ set CLASSPATH=#classPath#;#gurobiJar#;#cplexJar#
 set "SIRIUS_RC=!ERRORLEVEL!"
 
 @rem After a training run, point the native launch4j launchers (sirius.exe / sirius-gui.exe) at the
-@rem cache by writing their .l4j.ini files - but ONLY if the cache file actually exists now, so we
-@rem never advertise a cache that a failed/aborted training run did not produce. launch4j reads
-@rem <exe-basename>.l4j.ini at startup and expands %USERPROFILE% per user (written literally as
-@rem %%..%% below); -Xlog:aot=off silences the harmless "cache not found" message on later launches.
+@rem cache via their .l4j.ini files - but ONLY if training produced the cache in the SHARED install
+@rem dir (%EXEDIR%\aot). If it fell back to the per-user dir, the exes (fixed %EXEDIR%) cannot use it
+@rem and a shared .l4j.ini must not reference a per-user path, so we skip writing it. launch4j reads
+@rem <exe-basename>.l4j.ini at startup and expands %EXEDIR% (written literally as %%..%% below);
+@rem -Xlog:aot=off silences the harmless "cache not found" message on later launches.
 if not "!AOT_TRAINING!"=="true" goto end
-if not exist %LEYDEN_CACHE% goto end
-set "AOT_INI_CACHE=%%USERPROFILE%%\#siriusWsDir#\aot\sirius-#aotCacheId#-!AOT_JDK_TAG!.aot"
-> "%~dp0sirius.l4j.ini" echo -XX:AOTCache="!AOT_INI_CACHE!"
+if not exist "!AOT_PRIMARY_DIR!\!AOT_FILE!" goto end
+> "%~dp0sirius.l4j.ini" echo -XX:AOTCache="%%EXEDIR%%\aot\!AOT_FILE!"
 >> "%~dp0sirius.l4j.ini" echo -Xlog:aot=off
 copy /y "%~dp0sirius.l4j.ini" "%~dp0sirius-gui.l4j.ini" >nul 2>&1
 
