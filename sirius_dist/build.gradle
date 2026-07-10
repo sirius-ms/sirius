@@ -238,6 +238,14 @@ subprojects {
                     }
                     into(appRootTarget)
                 }
+                //Ship sirius.bat as well: it is the only launcher that can run `aot-train` (which
+                //creates the Leyden AOT cache and writes the exes' .l4j.ini). The msi post-install
+                //custom action (see jpackage/wix-resources/main.wxs) invokes it. It is excluded from
+                //the generic resource copy above, so add it explicitly here.
+                copy {
+                    from(inputDir.getParentFile()) { include("sirius.bat") }
+                    into(appRootTarget)
+                }
             } else if (siriusTargetPlatform.isLinux()) {
                 delete appRootTarget.toPath().resolve("lib/libapplauncher.so").toFile()
             }
