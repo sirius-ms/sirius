@@ -119,19 +119,25 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         }
 
         // --- Project Leyden AOT training run ---
-        // "aot-train" is a thin routing over the normal service startup: rewrite it to
-        // "rest -s --gui" (the exact path a real GUI launch uses) and flag training mode so we can
-        // register a listener that shuts the app down once it is fully initialized. In headless
-        // environments the "--gui" is ignored automatically by the logic below.
+        // "aot-train" is a thin routing over the normal service startup: rewrite it to "rest -s"
+        // (plus "--gui" only when NOT running headless) and flag training mode so we can register a
+        // listener that shuts the app down once it is fully initialized. --gui and --headless are a
+        // mutually exclusive picocli ArgGroup, so we must NOT add --gui when the caller asked for
+        // headless training (e.g. the installer's SYSTEM-context run, which has no interactive
+        // desktop) or when the environment itself is headless - otherwise arg parsing fails and no
+        // real training happens.
         final boolean aotTraining = args != null && Arrays.stream(args).anyMatch(AOT_TRAIN_COMMAND::equalsIgnoreCase);
         if (aotTraining) {
             System.setProperty(AOT_TRAINING_PROPERTY, "true");
+            boolean headlessTraining = (GraphicsEnvironment.isHeadless() || Arrays.stream(args).anyMatch("--headless"::equalsIgnoreCase))
+                    && Arrays.stream(args).noneMatch("--no-headless"::equalsIgnoreCase);
             List<String> rewritten = new ArrayList<>(args.length + 2);
             for (String a : args) {
                 if (AOT_TRAIN_COMMAND.equalsIgnoreCase(a)) {
                     rewritten.add("rest");
                     rewritten.add("-s");
-                    rewritten.add("--gui");
+                    if (!headlessTraining)
+                        rewritten.add("--gui");
                 } else {
                     rewritten.add(a);
                 }

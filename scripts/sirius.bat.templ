@@ -124,7 +124,7 @@ if "!AOT_TRAINING!"=="true" if exist "!AOT_WDIR!\!AOT_FILE!" del /f /q "!AOT_WDI
 set DEFAULT_JVM_OPTS=%DEFAULT_JVM_OPTS% -XX:AOTCacheOutput="!AOT_WDIR!\!AOT_FILE!"
 :aot_done
 
-%JAVA_EXE% -version >nul 2>&1 && (
+"%JAVA_EXE%" -version >nul 2>&1 && (
     goto execute
 )
 

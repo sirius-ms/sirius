@@ -26,6 +26,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import java.awt.GraphicsEnvironment;
+
 /**
  * Drives the {@code aot-train} run mode. Once the embedded web server is up it waits (off the Spring
  * event-dispatch thread) until the application is fully initialized - in GUI mode until a GUI
@@ -60,8 +62,13 @@ public class AotTrainingShutdownListener implements ApplicationListener<WebServe
         GuiService guiService = null;
         try {
             final long deadline = System.currentTimeMillis() + READINESS_TIMEOUT_MS;
-            // The guiService bean only exists in non-headless mode.
-            if (ctx.containsBean("guiService")) {
+            // Gate on the actual headless flag, NOT on guiService bean presence: the AOT-processed
+            // context registers the guiService bean even in headless mode, so a bean-presence check
+            // would make a headless run wait pointlessly for a GUI that never appears (until the hard
+            // timeout). The headless flag is published into the environment by the launcher.
+            boolean headless = ctx.getEnvironment()
+                    .getProperty("de.unijena.bioinf.sirius.headless", Boolean.class, GraphicsEnvironment.isHeadless());
+            if (!headless && ctx.containsBean("guiService")) {
                 guiService = ctx.getBean(GuiService.class);
                 log.info("AOT training: waiting for the GUI to initialize...");
                 while (guiService.findGui().isEmpty() && System.currentTimeMillis() < deadline)
@@ -72,7 +79,7 @@ public class AotTrainingShutdownListener implements ApplicationListener<WebServe
                 else
                     log.info("AOT training: GUI initialized. Letting the application settle before shutdown...");
             } else {
-                log.info("AOT training: running headless (no GUI service). Letting the service settle before shutdown...");
+                log.info("AOT training: running headless. Letting the service settle before shutdown...");
             }
             Thread.sleep(SETTLE_MS);
         } catch (InterruptedException e) {
