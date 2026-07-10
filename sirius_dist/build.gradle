@@ -512,6 +512,42 @@ abstract class AppImage extends DefaultTask {
         return outputDir.toPath().resolve(project.siriusTargetPlatform.isMac() ? "${imageName}.app" : imageName).toFile()
     }
 
+    // Declare the payload and packaging parameters as tracked inputs. Without these the task has
+    // only its @OutputDirectory to reason about, so once the image dir exists Gradle marks the task
+    // UP-TO-DATE and silently packages a STALE image even after the app payload / runtime / options
+    // changed. Tracking them makes the up-to-date check correct (rebuild when any input changes).
+    @InputDirectory
+    File getInputDir() { return inputDir }
+
+    @InputDirectory
+    File getRuntimeImageDirectory() { return runtimeImageDirectory }
+
+    @InputFile
+    File getJpackagerBin() { return jpackagerBin }
+
+    @Input
+    String getImageName() { return imageName }
+
+    @Input
+    String getVersion() { return version }
+
+    @Input
+    String getMainClass() { return mainClass }
+
+    @Input
+    Provider<String> getMainJarName() { return mainJarName }
+
+    @Input
+    @Optional
+    String[] getJvmArgs() { return jvmArgs }
+
+    @Input
+    @Optional
+    String[] getArgs() { return args }
+
+    @Input
+    boolean getWinConsole() { return winConsole }
+
     @TaskAction
     def execute() {
         getImageDir().deleteDir()
@@ -629,13 +665,22 @@ abstract class AppInstaller extends DefaultTask {
     def execute() {
         String[] p = ['--type', types.join(',')]
         p += createParameters()
+
+        // jpackage requires its --temp dir (build/tmp/wix on Windows) to be non-existent or empty,
+        // but the path is fixed and nothing cleans it between runs, so a previous build's leftovers
+        // abort jpackage with "temp ... must be non-existent or empty directory". Clear it up front.
+        if (project.siriusTargetPlatform.isWin())
+            project.delete(project.layout.getBuildDirectory().asFile.get().toPath().resolve('tmp').resolve('wix').toFile())
+
         execOperations.exec {
             def c = distImg.buildCommand(p)
             println c
             commandLine(c)
         }
 
-        Files.move(distImg.outputDir.toPath().resolve(distImg.imageName + project.installerAppendix), getOutputFile().toPath())
+        // REPLACE_EXISTING so a leftover installer from a previous build does not abort the move
+        // with FileAlreadyExistsException (the task's @OutputFile is meant to be regenerated).
+        Files.move(distImg.outputDir.toPath().resolve(distImg.imageName + project.installerAppendix), getOutputFile().toPath(), StandardCopyOption.REPLACE_EXISTING)
     }
 
     @Internal
