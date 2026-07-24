@@ -136,9 +136,9 @@ public class NitriteDatabase implements Database<Document> {
 
         try {
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-                //todo whe need a solution that is robust against file moves
+                //fixe/alternative solution in multi-user branch
                 systemUID = hashString(file.toAbsolutePath().toString(), 32);
-                log.warn("Creating project to index link from file ' {}' to search index '{}' on windows. This link is not robust against file renames/moves. Index will be recreated from scratch each time the project file is renamed/moved/",
+                log.debug("Creating project to index link from file ' {}' to search index '{}' on windows. This link is not robust against file renames/moves. Index will be recreated from scratch each time the project file is renamed/moved/",
                         file.toAbsolutePath(), systemUID);
             } else {
                 FileStore fileStore = Files.getFileStore(file);
