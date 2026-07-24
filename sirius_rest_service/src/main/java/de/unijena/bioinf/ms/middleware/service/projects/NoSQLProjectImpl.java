@@ -73,6 +73,7 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.*;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
+import de.unijena.bioinf.ms.persistence.storage.ProjectSchemaMigrator;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
@@ -152,7 +153,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     //todo fix event actions so that new tags are added to features
                     //todo think whether we want store tags on the tagged object because we have lucene index..
                     searchService.openOrCreateProjectIndex(this);
-                    createSearchIndex(false);
+                    // Upgrade legacy ("pre-index") projects in-place before building the index. Old projects may
+                    // lack fields the index relies on (e.g. hasMs1/hasMsMs, project detected adducts); without
+                    // this backfill the default feature filter would hide everything until a manual filter reset.
+                    // If the migration rewrote index-relevant feature data, force a rebuild so a possibly stale
+                    // index (built by an earlier version from the missing/default values) is regenerated.
+                    createSearchIndex(ProjectSchemaMigrator.migrateIfNeeded(project()));
 
                     //handle tag valuetype cache
                     storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
