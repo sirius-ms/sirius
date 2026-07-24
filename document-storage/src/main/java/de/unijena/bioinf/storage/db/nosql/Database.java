@@ -257,6 +257,14 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     <T> long countAll(Class<T> clazz) throws IOException;
 
+    /**
+     * Checks whether a (representative) stored document of the given repository {@code clazz} actually contains
+     * {@code field}. Intended to distinguish a persisted primitive default (e.g. a stored {@code false}) from a
+     * field that is entirely absent. Implementations inspect a single document; an empty repository is reported as
+     * {@code true} (there is nothing to migrate).
+     */
+    <T> boolean isFieldPresent(String field, Class<T> clazz) throws IOException;
+
     long count(String collectionName, Filter filter) throws IOException;
 
     long count(String collectionName, Filter filter, long offset, int pageSize) throws IOException;

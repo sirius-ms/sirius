@@ -163,6 +163,21 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return upsertJsonProjectProperty("projectSourceFormats", projectSourceFormats);
     }
 
+    /**
+     * Project property tracking the SIRIUS project-data schema version this project's data conforms to.
+     * Independent of the underlying storage/Nitrite {@link #SIRIUS_PROJECT_SCHEMA_VERSION}; it gates the
+     * one-time data conversion of older projects (see {@code ProjectSchemaMigrator}). Absent means "pre-versioning".
+     */
+    String PROJECT_SCHEMA_VERSION_KEY = "projectSchemaVersion";
+
+    default Optional<Integer> findProjectSchemaVersion() {
+        return findProjectPropertyAsInt(PROJECT_SCHEMA_VERSION_KEY);
+    }
+
+    default Optional<Integer> upsertProjectSchemaVersion(int version) {
+        return upsertProjectProperty(PROJECT_SCHEMA_VERSION_KEY, version);
+    }
+
     default Optional<ProjectDetectedAdducts> findDetectedAdducts() {
         return findProjectPropertyAsStringSet("detectedAdducts")
                 .map(it -> ProjectDetectedAdducts.builder().detectedAdducts(it).build());
