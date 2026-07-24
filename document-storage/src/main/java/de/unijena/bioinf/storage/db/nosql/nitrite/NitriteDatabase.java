@@ -984,6 +984,16 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
+    public <T> boolean isFieldPresent(String field, Class<T> clazz) throws IOException {
+        return this.read(() -> {
+            Iterator<Document> it = maybeProjectWithoutConvert(clazz, null, FindOptions.skipBy(0).limit(1), new String[0]).iterator();
+            if (!it.hasNext())
+                return true; // empty repository -> nothing to migrate
+            return it.next().containsKey(field);
+        });
+    }
+
+    @Override
     public long count(String collectionName, Filter filter) throws IOException {
         return this.read(() -> {
             NitriteCollection collection = this.getCollection(collectionName);

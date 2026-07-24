@@ -63,9 +63,26 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
      * is trusted); set to false while it is being (re)built and whenever a write fails, so an incomplete index
      * is not persisted and gets rebuilt on the next open. See M5/M4.
      */
-    @Setter
     @Getter
     private volatile boolean complete = true;
+
+    /**
+     * Marks the (in)completeness of this index. Writes are NRT and only become visible to readers on a refresh;
+     * {@code maybeRefresh()} on the read path is best-effort (it no-ops if a refresh is already in progress), so a
+     * query racing the very first refresh after a fresh build could still see the pre-build (empty) searcher.
+     * When a build is marked complete we therefore force a blocking refresh, guaranteeing the current searcher
+     * reflects the finished build before any query observes it.
+     */
+    public void setComplete(boolean complete) {
+        this.complete = complete;
+        if (complete) {
+            try {
+                searcherManager.maybeRefreshBlocking();
+            } catch (IOException e) {
+                log.warn("Could not refresh searcher after completing index build for '{}'.", pojoMapper.getPojoClass().getSimpleName(), e);
+            }
+        }
+    }
 
     private final GenericPojoMapper<T> pojoMapper;
 
