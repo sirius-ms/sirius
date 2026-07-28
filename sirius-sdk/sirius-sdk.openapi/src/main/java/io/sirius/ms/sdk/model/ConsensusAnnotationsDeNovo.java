@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,7 +48,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ConsensusAnnotationsDeNovo.JSON_PROPERTY_COMPOUND_CLASSES,
   ConsensusAnnotationsDeNovo.JSON_PROPERTY_SUPPORTING_FEATURE_IDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.24.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class ConsensusAnnotationsDeNovo {
   public static final String JSON_PROPERTY_SELECTION_CRITERION = "selectionCriterion";
   @jakarta.annotation.Nullable
@@ -214,7 +215,10 @@ public class ConsensusAnnotationsDeNovo {
    * (except the first line).
    */
   private String toIndentedString(Object o) {
-    return o == null ? "null" : o.toString().replace("\n", "\n    ");
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
   }
 
 }

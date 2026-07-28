@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -56,7 +57,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Subscription.JSON_PROPERTY_PP,
   Subscription.JSON_PROPERTY_ALLOWED_FEATURES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.24.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Subscription {
   public static final String JSON_PROPERTY_SID = "sid";
   @jakarta.annotation.Nullable
@@ -587,7 +588,10 @@ public class Subscription {
    * (except the first line).
    */
   private String toIndentedString(Object o) {
-    return o == null ? "null" : o.toString().replace("\n", "\n    ");
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
   }
 
 }
