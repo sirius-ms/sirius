@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -46,7 +47,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BackgroundComputationsStateEvent.JSON_PROPERTY_NUMBER_OF_RUNNING_JOBS,
   BackgroundComputationsStateEvent.JSON_PROPERTY_NUMBER_OF_FINISHED_JOBS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class BackgroundComputationsStateEvent {
   public static final String JSON_PROPERTY_AFFECTED_JOBS = "affectedJobs";
   @jakarta.annotation.Nonnull
@@ -86,7 +87,7 @@ public class BackgroundComputationsStateEvent {
    * @return affectedJobs
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_AFFECTED_JOBS)
+  @JsonProperty(value = JSON_PROPERTY_AFFECTED_JOBS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public List<Job> getAffectedJobs() {
@@ -94,7 +95,7 @@ public class BackgroundComputationsStateEvent {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_AFFECTED_JOBS)
+  @JsonProperty(value = JSON_PROPERTY_AFFECTED_JOBS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setAffectedJobs(@jakarta.annotation.Nonnull List<Job> affectedJobs) {
     this.affectedJobs = affectedJobs;
@@ -111,7 +112,7 @@ public class BackgroundComputationsStateEvent {
    * @return numberOfJobs
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_JOBS)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_JOBS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getNumberOfJobs() {
@@ -119,7 +120,7 @@ public class BackgroundComputationsStateEvent {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_JOBS)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_JOBS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setNumberOfJobs(@jakarta.annotation.Nonnull Integer numberOfJobs) {
     this.numberOfJobs = numberOfJobs;
@@ -136,7 +137,7 @@ public class BackgroundComputationsStateEvent {
    * @return numberOfRunningJobs
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_RUNNING_JOBS)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_RUNNING_JOBS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getNumberOfRunningJobs() {
@@ -144,7 +145,7 @@ public class BackgroundComputationsStateEvent {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_RUNNING_JOBS)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_RUNNING_JOBS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setNumberOfRunningJobs(@jakarta.annotation.Nonnull Integer numberOfRunningJobs) {
     this.numberOfRunningJobs = numberOfRunningJobs;
@@ -161,7 +162,7 @@ public class BackgroundComputationsStateEvent {
    * @return numberOfFinishedJobs
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_FINISHED_JOBS)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_FINISHED_JOBS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getNumberOfFinishedJobs() {
@@ -169,7 +170,7 @@ public class BackgroundComputationsStateEvent {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_FINISHED_JOBS)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_FINISHED_JOBS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setNumberOfFinishedJobs(@jakarta.annotation.Nonnull Integer numberOfFinishedJobs) {
     this.numberOfFinishedJobs = numberOfFinishedJobs;

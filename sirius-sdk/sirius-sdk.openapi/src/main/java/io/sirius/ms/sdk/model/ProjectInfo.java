@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -32,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.sirius.ms.sdk.model.ProjectType;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -51,7 +53,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ProjectInfo.JSON_PROPERTY_NUM_OF_BYTES,
   ProjectInfo.JSON_PROPERTY_DETECTED_ADDUCTS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class ProjectInfo {
   public static final String JSON_PROPERTY_PROJECT_ID = "projectId";
   @jakarta.annotation.Nullable
@@ -103,7 +105,7 @@ public class ProjectInfo {
    * @return projectId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PROJECT_ID)
+  @JsonProperty(value = JSON_PROPERTY_PROJECT_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getProjectId() {
@@ -111,7 +113,7 @@ public class ProjectInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PROJECT_ID)
+  @JsonProperty(value = JSON_PROPERTY_PROJECT_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setProjectId(@jakarta.annotation.Nullable String projectId) {
     this.projectId = projectId;
@@ -128,7 +130,7 @@ public class ProjectInfo {
    * @return location
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LOCATION)
+  @JsonProperty(value = JSON_PROPERTY_LOCATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getLocation() {
@@ -136,7 +138,7 @@ public class ProjectInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LOCATION)
+  @JsonProperty(value = JSON_PROPERTY_LOCATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLocation(@jakarta.annotation.Nullable String location) {
     this.location = location;
@@ -153,7 +155,7 @@ public class ProjectInfo {
    * @return description
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonProperty(value = JSON_PROPERTY_DESCRIPTION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getDescription() {
@@ -161,7 +163,7 @@ public class ProjectInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonProperty(value = JSON_PROPERTY_DESCRIPTION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDescription(@jakarta.annotation.Nullable String description) {
     this.description = description;
@@ -178,7 +180,7 @@ public class ProjectInfo {
    * @return type
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public ProjectType getType() {
@@ -186,7 +188,7 @@ public class ProjectInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setType(@jakarta.annotation.Nullable ProjectType type) {
     this.type = type;
@@ -203,7 +205,7 @@ public class ProjectInfo {
    * @return compatible
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COMPATIBLE)
+  @JsonProperty(value = JSON_PROPERTY_COMPATIBLE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isCompatible() {
@@ -211,7 +213,7 @@ public class ProjectInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COMPATIBLE)
+  @JsonProperty(value = JSON_PROPERTY_COMPATIBLE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCompatible(@jakarta.annotation.Nullable Boolean compatible) {
     this.compatible = compatible;
@@ -228,7 +230,7 @@ public class ProjectInfo {
    * @return numOfFeatures
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUM_OF_FEATURES)
+  @JsonProperty(value = JSON_PROPERTY_NUM_OF_FEATURES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getNumOfFeatures() {
@@ -236,7 +238,7 @@ public class ProjectInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUM_OF_FEATURES)
+  @JsonProperty(value = JSON_PROPERTY_NUM_OF_FEATURES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNumOfFeatures(@jakarta.annotation.Nullable Integer numOfFeatures) {
     this.numOfFeatures = numOfFeatures;
@@ -253,7 +255,7 @@ public class ProjectInfo {
    * @return numOfCompounds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUM_OF_COMPOUNDS)
+  @JsonProperty(value = JSON_PROPERTY_NUM_OF_COMPOUNDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getNumOfCompounds() {
@@ -261,7 +263,7 @@ public class ProjectInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUM_OF_COMPOUNDS)
+  @JsonProperty(value = JSON_PROPERTY_NUM_OF_COMPOUNDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNumOfCompounds(@jakarta.annotation.Nullable Integer numOfCompounds) {
     this.numOfCompounds = numOfCompounds;
@@ -278,7 +280,7 @@ public class ProjectInfo {
    * @return numOfBytes
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUM_OF_BYTES)
+  @JsonProperty(value = JSON_PROPERTY_NUM_OF_BYTES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Long getNumOfBytes() {
@@ -286,7 +288,7 @@ public class ProjectInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUM_OF_BYTES)
+  @JsonProperty(value = JSON_PROPERTY_NUM_OF_BYTES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNumOfBytes(@jakarta.annotation.Nullable Long numOfBytes) {
     this.numOfBytes = numOfBytes;
@@ -311,7 +313,7 @@ public class ProjectInfo {
    * @return detectedAdducts
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
+  @JsonProperty(value = JSON_PROPERTY_DETECTED_ADDUCTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Set<String> getDetectedAdducts() {
@@ -320,7 +322,7 @@ public class ProjectInfo {
 
 
   @JsonDeserialize(as = LinkedHashSet.class)
-  @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
+  @JsonProperty(value = JSON_PROPERTY_DETECTED_ADDUCTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDetectedAdducts(@jakarta.annotation.Nullable Set<String> detectedAdducts) {
     this.detectedAdducts = detectedAdducts;

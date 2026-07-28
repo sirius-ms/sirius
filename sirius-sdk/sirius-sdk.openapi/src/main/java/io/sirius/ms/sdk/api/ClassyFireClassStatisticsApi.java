@@ -31,7 +31,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class ClassyFireClassStatisticsApi {
     private ApiClient apiClient;
 
@@ -51,7 +51,6 @@ public class ClassyFireClassStatisticsApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * [EXPERIMENTAL] Compute the fold change between two groups of runs
      * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -83,7 +82,7 @@ public class ClassyFireClassStatisticsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -182,7 +181,7 @@ public class ClassyFireClassStatisticsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "rightGroupName", rightGroupName));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
-        
+
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -270,7 +269,7 @@ public class ClassyFireClassStatisticsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };

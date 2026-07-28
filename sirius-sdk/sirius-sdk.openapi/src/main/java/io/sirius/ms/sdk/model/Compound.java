@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -57,7 +58,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Compound.JSON_PROPERTY_CUSTOM_ANNOTATIONS,
   Compound.JSON_PROPERTY_TAGS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Compound {
   public static final String JSON_PROPERTY_COMPOUND_ID = "compoundId";
   @jakarta.annotation.Nullable
@@ -113,7 +114,7 @@ public class Compound {
    * @return compoundId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
+  @JsonProperty(value = JSON_PROPERTY_COMPOUND_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getCompoundId() {
@@ -121,7 +122,7 @@ public class Compound {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
+  @JsonProperty(value = JSON_PROPERTY_COMPOUND_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCompoundId(@jakarta.annotation.Nullable String compoundId) {
     this.compoundId = compoundId;
@@ -138,7 +139,7 @@ public class Compound {
    * @return name
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getName() {
@@ -146,7 +147,7 @@ public class Compound {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
@@ -163,7 +164,7 @@ public class Compound {
    * @return rtStartSeconds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RT_START_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getRtStartSeconds() {
@@ -171,7 +172,7 @@ public class Compound {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RT_START_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRtStartSeconds(@jakarta.annotation.Nullable Double rtStartSeconds) {
     this.rtStartSeconds = rtStartSeconds;
@@ -188,7 +189,7 @@ public class Compound {
    * @return rtEndSeconds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RT_END_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getRtEndSeconds() {
@@ -196,7 +197,7 @@ public class Compound {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RT_END_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRtEndSeconds(@jakarta.annotation.Nullable Double rtEndSeconds) {
     this.rtEndSeconds = rtEndSeconds;
@@ -213,7 +214,7 @@ public class Compound {
    * @return neutralMass
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NEUTRAL_MASS)
+  @JsonProperty(value = JSON_PROPERTY_NEUTRAL_MASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getNeutralMass() {
@@ -221,7 +222,7 @@ public class Compound {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NEUTRAL_MASS)
+  @JsonProperty(value = JSON_PROPERTY_NEUTRAL_MASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNeutralMass(@jakarta.annotation.Nullable Double neutralMass) {
     this.neutralMass = neutralMass;
@@ -246,7 +247,7 @@ public class Compound {
    * @return features
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FEATURES)
+  @JsonProperty(value = JSON_PROPERTY_FEATURES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<AlignedFeature> getFeatures() {
@@ -254,7 +255,7 @@ public class Compound {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FEATURES)
+  @JsonProperty(value = JSON_PROPERTY_FEATURES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFeatures(@jakarta.annotation.Nullable List<AlignedFeature> features) {
     this.features = features;
@@ -271,7 +272,7 @@ public class Compound {
    * @return consensusAnnotations
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS)
+  @JsonProperty(value = JSON_PROPERTY_CONSENSUS_ANNOTATIONS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public ConsensusAnnotationsCSI getConsensusAnnotations() {
@@ -279,7 +280,7 @@ public class Compound {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS)
+  @JsonProperty(value = JSON_PROPERTY_CONSENSUS_ANNOTATIONS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConsensusAnnotations(@jakarta.annotation.Nullable ConsensusAnnotationsCSI consensusAnnotations) {
     this.consensusAnnotations = consensusAnnotations;
@@ -296,7 +297,7 @@ public class Compound {
    * @return consensusAnnotationsDeNovo
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO)
+  @JsonProperty(value = JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public ConsensusAnnotationsDeNovo getConsensusAnnotationsDeNovo() {
@@ -304,7 +305,7 @@ public class Compound {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO)
+  @JsonProperty(value = JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConsensusAnnotationsDeNovo(@jakarta.annotation.Nullable ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo) {
     this.consensusAnnotationsDeNovo = consensusAnnotationsDeNovo;
@@ -321,7 +322,7 @@ public class Compound {
    * @return customAnnotations
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CUSTOM_ANNOTATIONS)
+  @JsonProperty(value = JSON_PROPERTY_CUSTOM_ANNOTATIONS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public ConsensusAnnotationsCSI getCustomAnnotations() {
@@ -329,7 +330,7 @@ public class Compound {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CUSTOM_ANNOTATIONS)
+  @JsonProperty(value = JSON_PROPERTY_CUSTOM_ANNOTATIONS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCustomAnnotations(@jakarta.annotation.Nullable ConsensusAnnotationsCSI customAnnotations) {
     this.customAnnotations = customAnnotations;
@@ -354,7 +355,7 @@ public class Compound {
    * @return tags
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TAGS)
+  @JsonProperty(value = JSON_PROPERTY_TAGS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Map<String, Tag> getTags() {
@@ -362,7 +363,7 @@ public class Compound {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TAGS)
+  @JsonProperty(value = JSON_PROPERTY_TAGS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTags(@jakarta.annotation.Nullable Map<String, Tag> tags) {
     this.tags = tags;

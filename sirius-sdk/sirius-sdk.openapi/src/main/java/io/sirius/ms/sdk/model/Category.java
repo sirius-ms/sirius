@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,7 +48,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Category.JSON_PROPERTY_OVERALL_QUALITY,
   Category.JSON_PROPERTY_ITEMS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Category {
   public static final String JSON_PROPERTY_CATEGORY_ID = "categoryId";
   @jakarta.annotation.Nullable
@@ -79,7 +80,7 @@ public class Category {
    * @return categoryId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CATEGORY_ID)
+  @JsonProperty(value = JSON_PROPERTY_CATEGORY_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getCategoryId() {
@@ -87,7 +88,7 @@ public class Category {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CATEGORY_ID)
+  @JsonProperty(value = JSON_PROPERTY_CATEGORY_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCategoryId(@jakarta.annotation.Nullable String categoryId) {
     this.categoryId = categoryId;
@@ -104,7 +105,7 @@ public class Category {
    * @return categoryName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_CATEGORY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getCategoryName() {
@@ -112,7 +113,7 @@ public class Category {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_CATEGORY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCategoryName(@jakarta.annotation.Nullable String categoryName) {
     this.categoryName = categoryName;
@@ -129,7 +130,7 @@ public class Category {
    * @return overallQuality
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_OVERALL_QUALITY)
+  @JsonProperty(value = JSON_PROPERTY_OVERALL_QUALITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public DataQuality getOverallQuality() {
@@ -137,7 +138,7 @@ public class Category {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_OVERALL_QUALITY)
+  @JsonProperty(value = JSON_PROPERTY_OVERALL_QUALITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setOverallQuality(@jakarta.annotation.Nullable DataQuality overallQuality) {
     this.overallQuality = overallQuality;
@@ -162,7 +163,7 @@ public class Category {
    * @return items
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ITEMS)
+  @JsonProperty(value = JSON_PROPERTY_ITEMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<QualityItem> getItems() {
@@ -170,7 +171,7 @@ public class Category {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ITEMS)
+  @JsonProperty(value = JSON_PROPERTY_ITEMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setItems(@jakarta.annotation.Nullable List<QualityItem> items) {
     this.items = items;

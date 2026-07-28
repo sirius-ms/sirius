@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -43,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibraryMatchSummary.JSON_PROPERTY_REFERENCE_SPECTRA_COUNT,
   SpectralLibraryMatchSummary.JSON_PROPERTY_DATABASE_COMPOUND_COUNT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class SpectralLibraryMatchSummary {
   public static final String JSON_PROPERTY_BEST_MATCH = "bestMatch";
   @jakarta.annotation.Nullable
@@ -75,7 +76,7 @@ public class SpectralLibraryMatchSummary {
    * @return bestMatch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_BEST_MATCH)
+  @JsonProperty(value = JSON_PROPERTY_BEST_MATCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public SpectralLibraryMatch getBestMatch() {
@@ -83,7 +84,7 @@ public class SpectralLibraryMatchSummary {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_BEST_MATCH)
+  @JsonProperty(value = JSON_PROPERTY_BEST_MATCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setBestMatch(@jakarta.annotation.Nullable SpectralLibraryMatch bestMatch) {
     this.bestMatch = bestMatch;
@@ -100,7 +101,7 @@ public class SpectralLibraryMatchSummary {
    * @return spectralMatchCount
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_SPECTRAL_MATCH_COUNT)
+  @JsonProperty(value = JSON_PROPERTY_SPECTRAL_MATCH_COUNT, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Long getSpectralMatchCount() {
@@ -108,7 +109,7 @@ public class SpectralLibraryMatchSummary {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SPECTRAL_MATCH_COUNT)
+  @JsonProperty(value = JSON_PROPERTY_SPECTRAL_MATCH_COUNT, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setSpectralMatchCount(@jakarta.annotation.Nonnull Long spectralMatchCount) {
     this.spectralMatchCount = spectralMatchCount;
@@ -125,7 +126,7 @@ public class SpectralLibraryMatchSummary {
    * @return referenceSpectraCount
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRA_COUNT)
+  @JsonProperty(value = JSON_PROPERTY_REFERENCE_SPECTRA_COUNT, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getReferenceSpectraCount() {
@@ -133,7 +134,7 @@ public class SpectralLibraryMatchSummary {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRA_COUNT)
+  @JsonProperty(value = JSON_PROPERTY_REFERENCE_SPECTRA_COUNT, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setReferenceSpectraCount(@jakarta.annotation.Nonnull Integer referenceSpectraCount) {
     this.referenceSpectraCount = referenceSpectraCount;
@@ -150,7 +151,7 @@ public class SpectralLibraryMatchSummary {
    * @return databaseCompoundCount
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_DATABASE_COMPOUND_COUNT)
+  @JsonProperty(value = JSON_PROPERTY_DATABASE_COMPOUND_COUNT, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getDatabaseCompoundCount() {
@@ -158,7 +159,7 @@ public class SpectralLibraryMatchSummary {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DATABASE_COMPOUND_COUNT)
+  @JsonProperty(value = JSON_PROPERTY_DATABASE_COMPOUND_COUNT, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setDatabaseCompoundCount(@jakarta.annotation.Nonnull Integer databaseCompoundCount) {
     this.databaseCompoundCount = databaseCompoundCount;

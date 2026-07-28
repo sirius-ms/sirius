@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -50,7 +51,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FoldChange.JSON_PROPERTY_AGGREGATION,
   FoldChange.JSON_PROPERTY_QUANTIFICATION
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class FoldChange {
   public static final String JSON_PROPERTY_QUANT_TYPE = "quantType";
   @jakarta.annotation.Nonnull
@@ -102,7 +103,7 @@ public class FoldChange {
    * @return quantType
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_QUANT_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_QUANT_TYPE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public QuantRowType getQuantType() {
@@ -110,7 +111,7 @@ public class FoldChange {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_QUANT_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_QUANT_TYPE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setQuantType(@jakarta.annotation.Nonnull QuantRowType quantType) {
     this.quantType = quantType;
@@ -127,7 +128,7 @@ public class FoldChange {
    * @return objectId
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_OBJECT_ID)
+  @JsonProperty(value = JSON_PROPERTY_OBJECT_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public String getObjectId() {
@@ -135,7 +136,7 @@ public class FoldChange {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_OBJECT_ID)
+  @JsonProperty(value = JSON_PROPERTY_OBJECT_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setObjectId(@jakarta.annotation.Nonnull String objectId) {
     this.objectId = objectId;
@@ -152,7 +153,7 @@ public class FoldChange {
    * @return foldChange
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_FOLD_CHANGE)
+  @JsonProperty(value = JSON_PROPERTY_FOLD_CHANGE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Double getFoldChange() {
@@ -160,7 +161,7 @@ public class FoldChange {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FOLD_CHANGE)
+  @JsonProperty(value = JSON_PROPERTY_FOLD_CHANGE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setFoldChange(@jakarta.annotation.Nonnull Double foldChange) {
     this.foldChange = foldChange;
@@ -177,7 +178,7 @@ public class FoldChange {
    * @return leftAbundance
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_LEFT_ABUNDANCE)
+  @JsonProperty(value = JSON_PROPERTY_LEFT_ABUNDANCE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Double getLeftAbundance() {
@@ -185,7 +186,7 @@ public class FoldChange {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LEFT_ABUNDANCE)
+  @JsonProperty(value = JSON_PROPERTY_LEFT_ABUNDANCE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setLeftAbundance(@jakarta.annotation.Nonnull Double leftAbundance) {
     this.leftAbundance = leftAbundance;
@@ -202,7 +203,7 @@ public class FoldChange {
    * @return rightAbundance
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_RIGHT_ABUNDANCE)
+  @JsonProperty(value = JSON_PROPERTY_RIGHT_ABUNDANCE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Double getRightAbundance() {
@@ -210,7 +211,7 @@ public class FoldChange {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RIGHT_ABUNDANCE)
+  @JsonProperty(value = JSON_PROPERTY_RIGHT_ABUNDANCE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setRightAbundance(@jakarta.annotation.Nonnull Double rightAbundance) {
     this.rightAbundance = rightAbundance;
@@ -227,7 +228,7 @@ public class FoldChange {
    * @return leftGroup
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LEFT_GROUP)
+  @JsonProperty(value = JSON_PROPERTY_LEFT_GROUP, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getLeftGroup() {
@@ -235,7 +236,7 @@ public class FoldChange {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LEFT_GROUP)
+  @JsonProperty(value = JSON_PROPERTY_LEFT_GROUP, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLeftGroup(@jakarta.annotation.Nullable String leftGroup) {
     this.leftGroup = leftGroup;
@@ -252,7 +253,7 @@ public class FoldChange {
    * @return rightGroup
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RIGHT_GROUP)
+  @JsonProperty(value = JSON_PROPERTY_RIGHT_GROUP, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getRightGroup() {
@@ -260,7 +261,7 @@ public class FoldChange {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RIGHT_GROUP)
+  @JsonProperty(value = JSON_PROPERTY_RIGHT_GROUP, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRightGroup(@jakarta.annotation.Nullable String rightGroup) {
     this.rightGroup = rightGroup;
@@ -277,7 +278,7 @@ public class FoldChange {
    * @return aggregation
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_AGGREGATION)
+  @JsonProperty(value = JSON_PROPERTY_AGGREGATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public AggregationType getAggregation() {
@@ -285,7 +286,7 @@ public class FoldChange {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_AGGREGATION)
+  @JsonProperty(value = JSON_PROPERTY_AGGREGATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAggregation(@jakarta.annotation.Nullable AggregationType aggregation) {
     this.aggregation = aggregation;
@@ -302,7 +303,7 @@ public class FoldChange {
    * @return quantification
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_QUANTIFICATION)
+  @JsonProperty(value = JSON_PROPERTY_QUANTIFICATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public QuantMeasure getQuantification() {
@@ -310,7 +311,7 @@ public class FoldChange {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_QUANTIFICATION)
+  @JsonProperty(value = JSON_PROPERTY_QUANTIFICATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setQuantification(@jakarta.annotation.Nullable QuantMeasure quantification) {
     this.quantification = quantification;

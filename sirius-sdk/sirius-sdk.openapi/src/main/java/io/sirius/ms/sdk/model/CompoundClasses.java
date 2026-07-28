@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,7 +48,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CompoundClasses.JSON_PROPERTY_CLASSY_FIRE_LINEAGE,
   CompoundClasses.JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class CompoundClasses {
   public static final String JSON_PROPERTY_NPC_PATHWAY = "npcPathway";
   @jakarta.annotation.Nullable
@@ -83,7 +84,7 @@ public class CompoundClasses {
    * @return npcPathway
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NPC_PATHWAY)
+  @JsonProperty(value = JSON_PROPERTY_NPC_PATHWAY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public CompoundClass getNpcPathway() {
@@ -91,7 +92,7 @@ public class CompoundClasses {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NPC_PATHWAY)
+  @JsonProperty(value = JSON_PROPERTY_NPC_PATHWAY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNpcPathway(@jakarta.annotation.Nullable CompoundClass npcPathway) {
     this.npcPathway = npcPathway;
@@ -108,7 +109,7 @@ public class CompoundClasses {
    * @return npcSuperclass
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NPC_SUPERCLASS)
+  @JsonProperty(value = JSON_PROPERTY_NPC_SUPERCLASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public CompoundClass getNpcSuperclass() {
@@ -116,7 +117,7 @@ public class CompoundClasses {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NPC_SUPERCLASS)
+  @JsonProperty(value = JSON_PROPERTY_NPC_SUPERCLASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNpcSuperclass(@jakarta.annotation.Nullable CompoundClass npcSuperclass) {
     this.npcSuperclass = npcSuperclass;
@@ -133,7 +134,7 @@ public class CompoundClasses {
    * @return npcClass
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NPC_CLASS)
+  @JsonProperty(value = JSON_PROPERTY_NPC_CLASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public CompoundClass getNpcClass() {
@@ -141,7 +142,7 @@ public class CompoundClasses {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NPC_CLASS)
+  @JsonProperty(value = JSON_PROPERTY_NPC_CLASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNpcClass(@jakarta.annotation.Nullable CompoundClass npcClass) {
     this.npcClass = npcClass;
@@ -166,7 +167,7 @@ public class CompoundClasses {
    * @return classyFireLineage
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_LINEAGE)
+  @JsonProperty(value = JSON_PROPERTY_CLASSY_FIRE_LINEAGE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<CompoundClass> getClassyFireLineage() {
@@ -174,7 +175,7 @@ public class CompoundClasses {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_LINEAGE)
+  @JsonProperty(value = JSON_PROPERTY_CLASSY_FIRE_LINEAGE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setClassyFireLineage(@jakarta.annotation.Nullable List<CompoundClass> classyFireLineage) {
     this.classyFireLineage = classyFireLineage;
@@ -199,7 +200,7 @@ public class CompoundClasses {
    * @return classyFireAlternatives
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES)
+  @JsonProperty(value = JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<CompoundClass> getClassyFireAlternatives() {
@@ -207,7 +208,7 @@ public class CompoundClasses {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES)
+  @JsonProperty(value = JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setClassyFireAlternatives(@jakarta.annotation.Nullable List<CompoundClass> classyFireAlternatives) {
     this.classyFireAlternatives = classyFireAlternatives;

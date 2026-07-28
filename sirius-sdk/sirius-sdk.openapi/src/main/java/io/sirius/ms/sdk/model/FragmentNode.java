@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -46,7 +47,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FragmentNode.JSON_PROPERTY_INTENSITY,
   FragmentNode.JSON_PROPERTY_MZ
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class FragmentNode {
   public static final String JSON_PROPERTY_FRAGMENT_ID = "fragmentId";
   @jakarta.annotation.Nullable
@@ -94,7 +95,7 @@ public class FragmentNode {
    * @return fragmentId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FRAGMENT_ID)
+  @JsonProperty(value = JSON_PROPERTY_FRAGMENT_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getFragmentId() {
@@ -102,7 +103,7 @@ public class FragmentNode {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FRAGMENT_ID)
+  @JsonProperty(value = JSON_PROPERTY_FRAGMENT_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFragmentId(@jakarta.annotation.Nullable Integer fragmentId) {
     this.fragmentId = fragmentId;
@@ -119,7 +120,7 @@ public class FragmentNode {
    * @return molecularFormula
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getMolecularFormula() {
@@ -127,7 +128,7 @@ public class FragmentNode {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
@@ -144,7 +145,7 @@ public class FragmentNode {
    * @return adduct
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getAdduct() {
@@ -152,7 +153,7 @@ public class FragmentNode {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAdduct(@jakarta.annotation.Nullable String adduct) {
     this.adduct = adduct;
@@ -169,7 +170,7 @@ public class FragmentNode {
    * @return massDeviationDa
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_DA)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_DA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMassDeviationDa() {
@@ -177,7 +178,7 @@ public class FragmentNode {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_DA)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_DA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMassDeviationDa(@jakarta.annotation.Nullable Double massDeviationDa) {
     this.massDeviationDa = massDeviationDa;
@@ -194,7 +195,7 @@ public class FragmentNode {
    * @return massDeviationPpm
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMassDeviationPpm() {
@@ -202,7 +203,7 @@ public class FragmentNode {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMassDeviationPpm(@jakarta.annotation.Nullable Double massDeviationPpm) {
     this.massDeviationPpm = massDeviationPpm;
@@ -219,7 +220,7 @@ public class FragmentNode {
    * @return score
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getScore() {
@@ -227,7 +228,7 @@ public class FragmentNode {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setScore(@jakarta.annotation.Nullable Double score) {
     this.score = score;
@@ -244,7 +245,7 @@ public class FragmentNode {
    * @return intensity
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INTENSITY)
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getIntensity() {
@@ -252,7 +253,7 @@ public class FragmentNode {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_INTENSITY)
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIntensity(@jakarta.annotation.Nullable Double intensity) {
     this.intensity = intensity;
@@ -269,7 +270,7 @@ public class FragmentNode {
    * @return mz
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MZ)
+  @JsonProperty(value = JSON_PROPERTY_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMz() {
@@ -277,7 +278,7 @@ public class FragmentNode {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MZ)
+  @JsonProperty(value = JSON_PROPERTY_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMz(@jakarta.annotation.Nullable Double mz) {
     this.mz = mz;

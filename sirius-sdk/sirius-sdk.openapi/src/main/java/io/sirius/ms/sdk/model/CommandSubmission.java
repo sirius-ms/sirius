@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -44,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CommandSubmission.JSON_PROPERTY_COMPOUND_IDS,
   CommandSubmission.JSON_PROPERTY_ALIGNED_FEATURE_IDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class CommandSubmission {
   public static final String JSON_PROPERTY_COMMAND = "command";
   @jakarta.annotation.Nonnull
@@ -80,7 +81,7 @@ public class CommandSubmission {
    * @return command
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_COMMAND)
+  @JsonProperty(value = JSON_PROPERTY_COMMAND, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public List<String> getCommand() {
@@ -88,7 +89,7 @@ public class CommandSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COMMAND)
+  @JsonProperty(value = JSON_PROPERTY_COMMAND, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setCommand(@jakarta.annotation.Nonnull List<String> command) {
     this.command = command;
@@ -113,7 +114,7 @@ public class CommandSubmission {
    * @return compoundIds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
+  @JsonProperty(value = JSON_PROPERTY_COMPOUND_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getCompoundIds() {
@@ -121,7 +122,7 @@ public class CommandSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
+  @JsonProperty(value = JSON_PROPERTY_COMPOUND_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCompoundIds(@jakarta.annotation.Nullable List<String> compoundIds) {
     this.compoundIds = compoundIds;
@@ -146,7 +147,7 @@ public class CommandSubmission {
    * @return alignedFeatureIds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_ALIGNED_FEATURE_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getAlignedFeatureIds() {
@@ -154,7 +155,7 @@ public class CommandSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_ALIGNED_FEATURE_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAlignedFeatureIds(@jakarta.annotation.Nullable List<String> alignedFeatureIds) {
     this.alignedFeatureIds = alignedFeatureIds;

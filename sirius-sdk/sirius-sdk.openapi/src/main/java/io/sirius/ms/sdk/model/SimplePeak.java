@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SimplePeak.JSON_PROPERTY_MZ,
   SimplePeak.JSON_PROPERTY_INTENSITY
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class SimplePeak {
   public static final String JSON_PROPERTY_MZ = "mz";
   @jakarta.annotation.Nullable
@@ -64,7 +65,7 @@ public class SimplePeak {
    * @return mz
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MZ)
+  @JsonProperty(value = JSON_PROPERTY_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMz() {
@@ -72,7 +73,7 @@ public class SimplePeak {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MZ)
+  @JsonProperty(value = JSON_PROPERTY_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMz(@jakarta.annotation.Nullable Double mz) {
     this.mz = mz;
@@ -89,7 +90,7 @@ public class SimplePeak {
    * @return intensity
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INTENSITY)
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getIntensity() {
@@ -97,7 +98,7 @@ public class SimplePeak {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_INTENSITY)
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIntensity(@jakarta.annotation.Nullable Double intensity) {
     this.intensity = intensity;

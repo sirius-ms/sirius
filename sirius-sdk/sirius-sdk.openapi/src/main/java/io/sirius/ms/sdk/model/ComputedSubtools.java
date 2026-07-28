@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -45,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ComputedSubtools.JSON_PROPERTY_STRUCTURE_SEARCH,
   ComputedSubtools.JSON_PROPERTY_DE_NOVO_SEARCH
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class ComputedSubtools {
   public static final String JSON_PROPERTY_LIBRARY_SEARCH = "librarySearch";
   @jakarta.annotation.Nullable
@@ -89,7 +90,7 @@ public class ComputedSubtools {
    * @return librarySearch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LIBRARY_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_LIBRARY_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isLibrarySearch() {
@@ -97,7 +98,7 @@ public class ComputedSubtools {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LIBRARY_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_LIBRARY_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLibrarySearch(@jakarta.annotation.Nullable Boolean librarySearch) {
     this.librarySearch = librarySearch;
@@ -114,7 +115,7 @@ public class ComputedSubtools {
    * @return formulaSearch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FORMULA_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_FORMULA_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isFormulaSearch() {
@@ -122,7 +123,7 @@ public class ComputedSubtools {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FORMULA_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_FORMULA_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFormulaSearch(@jakarta.annotation.Nullable Boolean formulaSearch) {
     this.formulaSearch = formulaSearch;
@@ -139,7 +140,7 @@ public class ComputedSubtools {
    * @return zodiac
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ZODIAC)
+  @JsonProperty(value = JSON_PROPERTY_ZODIAC, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isZodiac() {
@@ -147,7 +148,7 @@ public class ComputedSubtools {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ZODIAC)
+  @JsonProperty(value = JSON_PROPERTY_ZODIAC, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setZodiac(@jakarta.annotation.Nullable Boolean zodiac) {
     this.zodiac = zodiac;
@@ -164,7 +165,7 @@ public class ComputedSubtools {
    * @return fingerprint
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FINGERPRINT)
+  @JsonProperty(value = JSON_PROPERTY_FINGERPRINT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isFingerprint() {
@@ -172,7 +173,7 @@ public class ComputedSubtools {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FINGERPRINT)
+  @JsonProperty(value = JSON_PROPERTY_FINGERPRINT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFingerprint(@jakarta.annotation.Nullable Boolean fingerprint) {
     this.fingerprint = fingerprint;
@@ -189,7 +190,7 @@ public class ComputedSubtools {
    * @return canopus
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CANOPUS)
+  @JsonProperty(value = JSON_PROPERTY_CANOPUS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isCanopus() {
@@ -197,7 +198,7 @@ public class ComputedSubtools {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CANOPUS)
+  @JsonProperty(value = JSON_PROPERTY_CANOPUS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCanopus(@jakarta.annotation.Nullable Boolean canopus) {
     this.canopus = canopus;
@@ -214,7 +215,7 @@ public class ComputedSubtools {
    * @return structureSearch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isStructureSearch() {
@@ -222,7 +223,7 @@ public class ComputedSubtools {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureSearch(@jakarta.annotation.Nullable Boolean structureSearch) {
     this.structureSearch = structureSearch;
@@ -239,7 +240,7 @@ public class ComputedSubtools {
    * @return deNovoSearch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DE_NOVO_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_DE_NOVO_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isDeNovoSearch() {
@@ -247,7 +248,7 @@ public class ComputedSubtools {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DE_NOVO_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_DE_NOVO_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDeNovoSearch(@jakarta.annotation.Nullable Boolean deNovoSearch) {
     this.deNovoSearch = deNovoSearch;

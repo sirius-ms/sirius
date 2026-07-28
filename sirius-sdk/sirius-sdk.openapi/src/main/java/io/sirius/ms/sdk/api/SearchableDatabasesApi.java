@@ -31,7 +31,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class SearchableDatabasesApi {
     private ApiClient apiClient;
 
@@ -51,7 +51,6 @@ public class SearchableDatabasesApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
@@ -231,7 +230,7 @@ public class SearchableDatabasesApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeWithErrors", includeWithErrors));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -312,7 +311,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -388,7 +387,7 @@ public class SearchableDatabasesApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeWithErrors", includeWithErrors));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -529,7 +528,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -611,7 +610,7 @@ public class SearchableDatabasesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -704,7 +703,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "bufferSize", bufferSize));
-        
+
         if (inputFiles != null)
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
         if (bioTransformerParameters != null)
@@ -797,7 +796,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "delete", delete));
-        
+
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };

@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,7 +48,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   MsData.JSON_PROPERTY_MS1_SPECTRA,
   MsData.JSON_PROPERTY_MS2_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class MsData {
   public static final String JSON_PROPERTY_ISOTOPE_PATTERN = "isotopePattern";
   @jakarta.annotation.Nullable
@@ -83,7 +84,7 @@ public class MsData {
    * @return isotopePattern
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN)
+  @JsonProperty(value = JSON_PROPERTY_ISOTOPE_PATTERN, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public BasicSpectrum getIsotopePattern() {
@@ -91,7 +92,7 @@ public class MsData {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN)
+  @JsonProperty(value = JSON_PROPERTY_ISOTOPE_PATTERN, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIsotopePattern(@jakarta.annotation.Nullable BasicSpectrum isotopePattern) {
     this.isotopePattern = isotopePattern;
@@ -108,7 +109,7 @@ public class MsData {
    * @return mergedMs1
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MERGED_MS1)
+  @JsonProperty(value = JSON_PROPERTY_MERGED_MS1, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public BasicSpectrum getMergedMs1() {
@@ -116,7 +117,7 @@ public class MsData {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MERGED_MS1)
+  @JsonProperty(value = JSON_PROPERTY_MERGED_MS1, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMergedMs1(@jakarta.annotation.Nullable BasicSpectrum mergedMs1) {
     this.mergedMs1 = mergedMs1;
@@ -133,7 +134,7 @@ public class MsData {
    * @return mergedMs2
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MERGED_MS2)
+  @JsonProperty(value = JSON_PROPERTY_MERGED_MS2, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public BasicSpectrum getMergedMs2() {
@@ -141,7 +142,7 @@ public class MsData {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MERGED_MS2)
+  @JsonProperty(value = JSON_PROPERTY_MERGED_MS2, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMergedMs2(@jakarta.annotation.Nullable BasicSpectrum mergedMs2) {
     this.mergedMs2 = mergedMs2;
@@ -166,7 +167,7 @@ public class MsData {
    * @return ms1Spectra
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
+  @JsonProperty(value = JSON_PROPERTY_MS1_SPECTRA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<BasicSpectrum> getMs1Spectra() {
@@ -174,7 +175,7 @@ public class MsData {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
+  @JsonProperty(value = JSON_PROPERTY_MS1_SPECTRA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs1Spectra(@jakarta.annotation.Nullable List<BasicSpectrum> ms1Spectra) {
     this.ms1Spectra = ms1Spectra;
@@ -199,7 +200,7 @@ public class MsData {
    * @return ms2Spectra
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
+  @JsonProperty(value = JSON_PROPERTY_MS2_SPECTRA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<BasicSpectrum> getMs2Spectra() {
@@ -207,7 +208,7 @@ public class MsData {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
+  @JsonProperty(value = JSON_PROPERTY_MS2_SPECTRA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs2Spectra(@jakarta.annotation.Nullable List<BasicSpectrum> ms2Spectra) {
     this.ms2Spectra = ms2Spectra;

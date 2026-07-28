@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -58,7 +59,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StatisticsTable.JSON_PROPERTY_ROW_NAMES,
   StatisticsTable.JSON_PROPERTY_ROW_LEVELS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class StatisticsTable {
   public static final String JSON_PROPERTY_STATISTICS_TYPE = "statisticsType";
   @jakarta.annotation.Nullable
@@ -126,7 +127,7 @@ public class StatisticsTable {
    * @return statisticsType
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STATISTICS_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_STATISTICS_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public StatisticsType getStatisticsType() {
@@ -134,7 +135,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_STATISTICS_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_STATISTICS_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStatisticsType(@jakarta.annotation.Nullable StatisticsType statisticsType) {
     this.statisticsType = statisticsType;
@@ -151,7 +152,7 @@ public class StatisticsTable {
    * @return aggregationType
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_AGGREGATION_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_AGGREGATION_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public AggregationType getAggregationType() {
@@ -159,7 +160,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_AGGREGATION_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_AGGREGATION_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAggregationType(@jakarta.annotation.Nullable AggregationType aggregationType) {
     this.aggregationType = aggregationType;
@@ -176,7 +177,7 @@ public class StatisticsTable {
    * @return quantificationMeasure
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURE)
+  @JsonProperty(value = JSON_PROPERTY_QUANTIFICATION_MEASURE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public QuantMeasure getQuantificationMeasure() {
@@ -184,7 +185,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURE)
+  @JsonProperty(value = JSON_PROPERTY_QUANTIFICATION_MEASURE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setQuantificationMeasure(@jakarta.annotation.Nullable QuantMeasure quantificationMeasure) {
     this.quantificationMeasure = quantificationMeasure;
@@ -201,7 +202,7 @@ public class StatisticsTable {
    * @return rowType
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ROW_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_ROW_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public QuantRowType getRowType() {
@@ -209,7 +210,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ROW_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_ROW_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRowType(@jakarta.annotation.Nullable QuantRowType rowType) {
     this.rowType = rowType;
@@ -234,7 +235,7 @@ public class StatisticsTable {
    * @return rowIds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ROW_IDS)
+  @JsonProperty(value = JSON_PROPERTY_ROW_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getRowIds() {
@@ -242,7 +243,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ROW_IDS)
+  @JsonProperty(value = JSON_PROPERTY_ROW_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRowIds(@jakarta.annotation.Nullable List<String> rowIds) {
     this.rowIds = rowIds;
@@ -267,7 +268,7 @@ public class StatisticsTable {
    * @return columnNames
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COLUMN_NAMES)
+  @JsonProperty(value = JSON_PROPERTY_COLUMN_NAMES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getColumnNames() {
@@ -275,7 +276,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COLUMN_NAMES)
+  @JsonProperty(value = JSON_PROPERTY_COLUMN_NAMES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setColumnNames(@jakarta.annotation.Nullable List<String> columnNames) {
     this.columnNames = columnNames;
@@ -300,7 +301,7 @@ public class StatisticsTable {
    * @return columnLeftGroups
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COLUMN_LEFT_GROUPS)
+  @JsonProperty(value = JSON_PROPERTY_COLUMN_LEFT_GROUPS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getColumnLeftGroups() {
@@ -308,7 +309,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COLUMN_LEFT_GROUPS)
+  @JsonProperty(value = JSON_PROPERTY_COLUMN_LEFT_GROUPS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setColumnLeftGroups(@jakarta.annotation.Nullable List<String> columnLeftGroups) {
     this.columnLeftGroups = columnLeftGroups;
@@ -333,7 +334,7 @@ public class StatisticsTable {
    * @return columnRightGroups
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COLUMN_RIGHT_GROUPS)
+  @JsonProperty(value = JSON_PROPERTY_COLUMN_RIGHT_GROUPS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getColumnRightGroups() {
@@ -341,7 +342,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COLUMN_RIGHT_GROUPS)
+  @JsonProperty(value = JSON_PROPERTY_COLUMN_RIGHT_GROUPS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setColumnRightGroups(@jakarta.annotation.Nullable List<String> columnRightGroups) {
     this.columnRightGroups = columnRightGroups;
@@ -366,7 +367,7 @@ public class StatisticsTable {
    * @return values
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_VALUES)
+  @JsonProperty(value = JSON_PROPERTY_VALUES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<List<Double>> getValues() {
@@ -374,7 +375,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_VALUES)
+  @JsonProperty(value = JSON_PROPERTY_VALUES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setValues(@jakarta.annotation.Nullable List<List<Double>> values) {
     this.values = values;
@@ -399,7 +400,7 @@ public class StatisticsTable {
    * @return leftAbundances
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LEFT_ABUNDANCES)
+  @JsonProperty(value = JSON_PROPERTY_LEFT_ABUNDANCES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<List<Double>> getLeftAbundances() {
@@ -407,7 +408,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LEFT_ABUNDANCES)
+  @JsonProperty(value = JSON_PROPERTY_LEFT_ABUNDANCES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLeftAbundances(@jakarta.annotation.Nullable List<List<Double>> leftAbundances) {
     this.leftAbundances = leftAbundances;
@@ -432,7 +433,7 @@ public class StatisticsTable {
    * @return rightAbundances
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RIGHT_ABUNDANCES)
+  @JsonProperty(value = JSON_PROPERTY_RIGHT_ABUNDANCES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<List<Double>> getRightAbundances() {
@@ -440,7 +441,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RIGHT_ABUNDANCES)
+  @JsonProperty(value = JSON_PROPERTY_RIGHT_ABUNDANCES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRightAbundances(@jakarta.annotation.Nullable List<List<Double>> rightAbundances) {
     this.rightAbundances = rightAbundances;
@@ -465,7 +466,7 @@ public class StatisticsTable {
    * @return rowNames
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ROW_NAMES)
+  @JsonProperty(value = JSON_PROPERTY_ROW_NAMES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getRowNames() {
@@ -473,7 +474,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ROW_NAMES)
+  @JsonProperty(value = JSON_PROPERTY_ROW_NAMES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRowNames(@jakarta.annotation.Nullable List<String> rowNames) {
     this.rowNames = rowNames;
@@ -498,7 +499,7 @@ public class StatisticsTable {
    * @return rowLevels
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ROW_LEVELS)
+  @JsonProperty(value = JSON_PROPERTY_ROW_LEVELS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getRowLevels() {
@@ -506,7 +507,7 @@ public class StatisticsTable {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ROW_LEVELS)
+  @JsonProperty(value = JSON_PROPERTY_ROW_LEVELS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRowLevels(@jakarta.annotation.Nullable List<String> rowLevels) {
     this.rowLevels = rowLevels;

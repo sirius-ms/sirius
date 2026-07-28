@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ParentPeak.JSON_PROPERTY_PARENT_FRAGMENT_ID,
   ParentPeak.JSON_PROPERTY_LOSS_FORMULA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class ParentPeak {
   public static final String JSON_PROPERTY_PARENT_IDX = "parentIdx";
   @jakarta.annotation.Nonnull
@@ -69,7 +70,7 @@ public class ParentPeak {
    * @return parentIdx
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_PARENT_IDX)
+  @JsonProperty(value = JSON_PROPERTY_PARENT_IDX, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getParentIdx() {
@@ -77,7 +78,7 @@ public class ParentPeak {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PARENT_IDX)
+  @JsonProperty(value = JSON_PROPERTY_PARENT_IDX, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setParentIdx(@jakarta.annotation.Nonnull Integer parentIdx) {
     this.parentIdx = parentIdx;
@@ -94,7 +95,7 @@ public class ParentPeak {
    * @return parentFragmentId
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_PARENT_FRAGMENT_ID)
+  @JsonProperty(value = JSON_PROPERTY_PARENT_FRAGMENT_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getParentFragmentId() {
@@ -102,7 +103,7 @@ public class ParentPeak {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PARENT_FRAGMENT_ID)
+  @JsonProperty(value = JSON_PROPERTY_PARENT_FRAGMENT_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setParentFragmentId(@jakarta.annotation.Nonnull Integer parentFragmentId) {
     this.parentFragmentId = parentFragmentId;
@@ -119,7 +120,7 @@ public class ParentPeak {
    * @return lossFormula
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_LOSS_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_LOSS_FORMULA, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public String getLossFormula() {
@@ -127,7 +128,7 @@ public class ParentPeak {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LOSS_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_LOSS_FORMULA, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setLossFormula(@jakarta.annotation.Nonnull String lossFormula) {
     this.lossFormula = lossFormula;

@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -65,7 +66,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Sirius.JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH,
   Sirius.JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Sirius {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   @jakarta.annotation.Nullable
@@ -161,7 +162,7 @@ public class Sirius {
    * @return enabled
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(value = JSON_PROPERTY_ENABLED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isEnabled() {
@@ -169,7 +170,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(value = JSON_PROPERTY_ENABLED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
@@ -186,7 +187,7 @@ public class Sirius {
    * @return profile
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PROFILE)
+  @JsonProperty(value = JSON_PROPERTY_PROFILE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public InstrumentProfile getProfile() {
@@ -194,7 +195,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PROFILE)
+  @JsonProperty(value = JSON_PROPERTY_PROFILE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setProfile(@jakarta.annotation.Nullable InstrumentProfile profile) {
     this.profile = profile;
@@ -211,7 +212,7 @@ public class Sirius {
    * @return numberOfCandidates
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_CANDIDATES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getNumberOfCandidates() {
@@ -219,7 +220,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_CANDIDATES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNumberOfCandidates(@jakarta.annotation.Nullable Integer numberOfCandidates) {
     this.numberOfCandidates = numberOfCandidates;
@@ -236,7 +237,7 @@ public class Sirius {
    * @return numberOfCandidatesPerIonization
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getNumberOfCandidatesPerIonization() {
@@ -244,7 +245,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNumberOfCandidatesPerIonization(@jakarta.annotation.Nullable Integer numberOfCandidatesPerIonization) {
     this.numberOfCandidatesPerIonization = numberOfCandidatesPerIonization;
@@ -261,7 +262,7 @@ public class Sirius {
    * @return massAccuracyMS2ppm
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MASS_ACCURACY_M_S2PPM)
+  @JsonProperty(value = JSON_PROPERTY_MASS_ACCURACY_M_S2PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMassAccuracyMS2ppm() {
@@ -269,7 +270,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MASS_ACCURACY_M_S2PPM)
+  @JsonProperty(value = JSON_PROPERTY_MASS_ACCURACY_M_S2PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMassAccuracyMS2ppm(@jakarta.annotation.Nullable Double massAccuracyMS2ppm) {
     this.massAccuracyMS2ppm = massAccuracyMS2ppm;
@@ -286,7 +287,7 @@ public class Sirius {
    * @return isotopeMs2Settings
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ISOTOPE_MS2_SETTINGS)
+  @JsonProperty(value = JSON_PROPERTY_ISOTOPE_MS2_SETTINGS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public IsotopeMs2Strategy getIsotopeMs2Settings() {
@@ -294,7 +295,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ISOTOPE_MS2_SETTINGS)
+  @JsonProperty(value = JSON_PROPERTY_ISOTOPE_MS2_SETTINGS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIsotopeMs2Settings(@jakarta.annotation.Nullable IsotopeMs2Strategy isotopeMs2Settings) {
     this.isotopeMs2Settings = isotopeMs2Settings;
@@ -311,7 +312,7 @@ public class Sirius {
    * @return filterByIsotopePattern
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN)
+  @JsonProperty(value = JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isFilterByIsotopePattern() {
@@ -319,7 +320,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN)
+  @JsonProperty(value = JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFilterByIsotopePattern(@jakarta.annotation.Nullable Boolean filterByIsotopePattern) {
     this.filterByIsotopePattern = filterByIsotopePattern;
@@ -336,7 +337,7 @@ public class Sirius {
    * @return enforceElGordoFormula
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ENFORCE_EL_GORDO_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_ENFORCE_EL_GORDO_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isEnforceElGordoFormula() {
@@ -344,7 +345,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ENFORCE_EL_GORDO_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_ENFORCE_EL_GORDO_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setEnforceElGordoFormula(@jakarta.annotation.Nullable Boolean enforceElGordoFormula) {
     this.enforceElGordoFormula = enforceElGordoFormula;
@@ -361,7 +362,7 @@ public class Sirius {
    * @return performBottomUpSearch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PERFORM_BOTTOM_UP_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_PERFORM_BOTTOM_UP_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isPerformBottomUpSearch() {
@@ -369,7 +370,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PERFORM_BOTTOM_UP_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_PERFORM_BOTTOM_UP_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPerformBottomUpSearch(@jakarta.annotation.Nullable Boolean performBottomUpSearch) {
     this.performBottomUpSearch = performBottomUpSearch;
@@ -386,7 +387,7 @@ public class Sirius {
    * @return performDenovoBelowMz
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PERFORM_DENOVO_BELOW_MZ)
+  @JsonProperty(value = JSON_PROPERTY_PERFORM_DENOVO_BELOW_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getPerformDenovoBelowMz() {
@@ -394,7 +395,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PERFORM_DENOVO_BELOW_MZ)
+  @JsonProperty(value = JSON_PROPERTY_PERFORM_DENOVO_BELOW_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPerformDenovoBelowMz(@jakarta.annotation.Nullable Double performDenovoBelowMz) {
     this.performDenovoBelowMz = performDenovoBelowMz;
@@ -419,7 +420,7 @@ public class Sirius {
    * @return formulaSearchDBs
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FORMULA_SEARCH_D_BS)
+  @JsonProperty(value = JSON_PROPERTY_FORMULA_SEARCH_D_BS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getFormulaSearchDBs() {
@@ -427,7 +428,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FORMULA_SEARCH_D_BS)
+  @JsonProperty(value = JSON_PROPERTY_FORMULA_SEARCH_D_BS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFormulaSearchDBs(@jakarta.annotation.Nullable List<String> formulaSearchDBs) {
     this.formulaSearchDBs = formulaSearchDBs;
@@ -444,7 +445,7 @@ public class Sirius {
    * @return applyFormulaConstraintsToDBAndBottomUpSearch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_APPLY_FORMULA_CONSTRAINTS_TO_D_B_AND_BOTTOM_UP_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_APPLY_FORMULA_CONSTRAINTS_TO_D_B_AND_BOTTOM_UP_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isApplyFormulaConstraintsToDBAndBottomUpSearch() {
@@ -452,7 +453,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_APPLY_FORMULA_CONSTRAINTS_TO_D_B_AND_BOTTOM_UP_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_APPLY_FORMULA_CONSTRAINTS_TO_D_B_AND_BOTTOM_UP_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setApplyFormulaConstraintsToDBAndBottomUpSearch(@jakarta.annotation.Nullable Boolean applyFormulaConstraintsToDBAndBottomUpSearch) {
     this.applyFormulaConstraintsToDBAndBottomUpSearch = applyFormulaConstraintsToDBAndBottomUpSearch;
@@ -469,7 +470,7 @@ public class Sirius {
    * @return enforcedFormulaConstraints
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ENFORCED_FORMULA_CONSTRAINTS)
+  @JsonProperty(value = JSON_PROPERTY_ENFORCED_FORMULA_CONSTRAINTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getEnforcedFormulaConstraints() {
@@ -477,7 +478,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ENFORCED_FORMULA_CONSTRAINTS)
+  @JsonProperty(value = JSON_PROPERTY_ENFORCED_FORMULA_CONSTRAINTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setEnforcedFormulaConstraints(@jakarta.annotation.Nullable String enforcedFormulaConstraints) {
     this.enforcedFormulaConstraints = enforcedFormulaConstraints;
@@ -494,7 +495,7 @@ public class Sirius {
    * @return fallbackFormulaConstraints
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FALLBACK_FORMULA_CONSTRAINTS)
+  @JsonProperty(value = JSON_PROPERTY_FALLBACK_FORMULA_CONSTRAINTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getFallbackFormulaConstraints() {
@@ -502,7 +503,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FALLBACK_FORMULA_CONSTRAINTS)
+  @JsonProperty(value = JSON_PROPERTY_FALLBACK_FORMULA_CONSTRAINTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFallbackFormulaConstraints(@jakarta.annotation.Nullable String fallbackFormulaConstraints) {
     this.fallbackFormulaConstraints = fallbackFormulaConstraints;
@@ -527,7 +528,7 @@ public class Sirius {
    * @return detectableElements
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DETECTABLE_ELEMENTS)
+  @JsonProperty(value = JSON_PROPERTY_DETECTABLE_ELEMENTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getDetectableElements() {
@@ -535,7 +536,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DETECTABLE_ELEMENTS)
+  @JsonProperty(value = JSON_PROPERTY_DETECTABLE_ELEMENTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDetectableElements(@jakarta.annotation.Nullable List<String> detectableElements) {
     this.detectableElements = detectableElements;
@@ -552,7 +553,7 @@ public class Sirius {
    * @return ilpTimeout
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ILP_TIMEOUT)
+  @JsonProperty(value = JSON_PROPERTY_ILP_TIMEOUT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Timeout getIlpTimeout() {
@@ -560,7 +561,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ILP_TIMEOUT)
+  @JsonProperty(value = JSON_PROPERTY_ILP_TIMEOUT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIlpTimeout(@jakarta.annotation.Nullable Timeout ilpTimeout) {
     this.ilpTimeout = ilpTimeout;
@@ -577,7 +578,7 @@ public class Sirius {
    * @return useHeuristic
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_USE_HEURISTIC)
+  @JsonProperty(value = JSON_PROPERTY_USE_HEURISTIC, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public UseHeuristic getUseHeuristic() {
@@ -585,7 +586,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_USE_HEURISTIC)
+  @JsonProperty(value = JSON_PROPERTY_USE_HEURISTIC, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setUseHeuristic(@jakarta.annotation.Nullable UseHeuristic useHeuristic) {
     this.useHeuristic = useHeuristic;
@@ -602,7 +603,7 @@ public class Sirius {
    * @return injectSpecLibMatchFormulas
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INJECT_SPEC_LIB_MATCH_FORMULAS)
+  @JsonProperty(value = JSON_PROPERTY_INJECT_SPEC_LIB_MATCH_FORMULAS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isInjectSpecLibMatchFormulas() {
@@ -610,7 +611,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_INJECT_SPEC_LIB_MATCH_FORMULAS)
+  @JsonProperty(value = JSON_PROPERTY_INJECT_SPEC_LIB_MATCH_FORMULAS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setInjectSpecLibMatchFormulas(@jakarta.annotation.Nullable Boolean injectSpecLibMatchFormulas) {
     this.injectSpecLibMatchFormulas = injectSpecLibMatchFormulas;
@@ -627,7 +628,7 @@ public class Sirius {
    * @return minScoreToInjectSpecLibMatch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH)
+  @JsonProperty(value = JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMinScoreToInjectSpecLibMatch() {
@@ -635,7 +636,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH)
+  @JsonProperty(value = JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMinScoreToInjectSpecLibMatch(@jakarta.annotation.Nullable Double minScoreToInjectSpecLibMatch) {
     this.minScoreToInjectSpecLibMatch = minScoreToInjectSpecLibMatch;
@@ -652,7 +653,7 @@ public class Sirius {
    * @return minPeaksToInjectSpecLibMatch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH)
+  @JsonProperty(value = JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getMinPeaksToInjectSpecLibMatch() {
@@ -660,7 +661,7 @@ public class Sirius {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH)
+  @JsonProperty(value = JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMinPeaksToInjectSpecLibMatch(@jakarta.annotation.Nullable Integer minPeaksToInjectSpecLibMatch) {
     this.minPeaksToInjectSpecLibMatch = minPeaksToInjectSpecLibMatch;

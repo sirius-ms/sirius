@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -44,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   DatabaseStructure.JSON_PROPERTY_FORMULA,
   DatabaseStructure.JSON_PROPERTY_MASS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class DatabaseStructure {
   public static final String JSON_PROPERTY_NAME = "name";
   @jakarta.annotation.Nullable
@@ -84,7 +85,7 @@ public class DatabaseStructure {
    * @return name
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getName() {
@@ -92,7 +93,7 @@ public class DatabaseStructure {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
@@ -109,7 +110,7 @@ public class DatabaseStructure {
    * @return smiles
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SMILES)
+  @JsonProperty(value = JSON_PROPERTY_SMILES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getSmiles() {
@@ -117,7 +118,7 @@ public class DatabaseStructure {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SMILES)
+  @JsonProperty(value = JSON_PROPERTY_SMILES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSmiles(@jakarta.annotation.Nullable String smiles) {
     this.smiles = smiles;
@@ -134,7 +135,7 @@ public class DatabaseStructure {
    * @return inchiKey2d
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INCHI_KEY2D)
+  @JsonProperty(value = JSON_PROPERTY_INCHI_KEY2D, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getInchiKey2d() {
@@ -142,7 +143,7 @@ public class DatabaseStructure {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_INCHI_KEY2D)
+  @JsonProperty(value = JSON_PROPERTY_INCHI_KEY2D, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setInchiKey2d(@jakarta.annotation.Nullable String inchiKey2d) {
     this.inchiKey2d = inchiKey2d;
@@ -159,7 +160,7 @@ public class DatabaseStructure {
    * @return inchi2d
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INCHI2D)
+  @JsonProperty(value = JSON_PROPERTY_INCHI2D, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getInchi2d() {
@@ -167,7 +168,7 @@ public class DatabaseStructure {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_INCHI2D)
+  @JsonProperty(value = JSON_PROPERTY_INCHI2D, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setInchi2d(@jakarta.annotation.Nullable String inchi2d) {
     this.inchi2d = inchi2d;
@@ -184,7 +185,7 @@ public class DatabaseStructure {
    * @return formula
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getFormula() {
@@ -192,7 +193,7 @@ public class DatabaseStructure {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFormula(@jakarta.annotation.Nullable String formula) {
     this.formula = formula;
@@ -209,7 +210,7 @@ public class DatabaseStructure {
    * @return mass
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MASS)
+  @JsonProperty(value = JSON_PROPERTY_MASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMass() {
@@ -217,7 +218,7 @@ public class DatabaseStructure {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MASS)
+  @JsonProperty(value = JSON_PROPERTY_MASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMass(@jakarta.annotation.Nullable Double mass) {
     this.mass = mass;
