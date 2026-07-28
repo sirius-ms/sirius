@@ -33,7 +33,7 @@ public class ShowLCMSRunsDialogAction extends AbstractGuiAction {
     public ShowLCMSRunsDialogAction(SiriusGui gui) {
         super("Samples", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.SAMPLE.derive(32,32));
-        putValue(Action.SHORT_DESCRIPTION,"Assign smaple types to LC/MS runs");
+        putValue(Action.SHORT_DESCRIPTION,"Assign sample types to LC/MS runs");
     }
     @Override
     public void actionPerformed(ActionEvent e) {
