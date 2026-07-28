@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -45,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PagedModelRun.JSON_PROPERTY_CONTENT,
   PagedModelRun.JSON_PROPERTY_PAGE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class PagedModelRun {
   public static final String JSON_PROPERTY_CONTENT = "content";
   @jakarta.annotation.Nullable
@@ -77,7 +78,7 @@ public class PagedModelRun {
    * @return content
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONTENT)
+  @JsonProperty(value = JSON_PROPERTY_CONTENT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<Run> getContent() {
@@ -85,7 +86,7 @@ public class PagedModelRun {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CONTENT)
+  @JsonProperty(value = JSON_PROPERTY_CONTENT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setContent(@jakarta.annotation.Nullable List<Run> content) {
     this.content = content;
@@ -102,7 +103,7 @@ public class PagedModelRun {
    * @return page
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PAGE)
+  @JsonProperty(value = JSON_PROPERTY_PAGE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public PageMetadata getPage() {
@@ -110,7 +111,7 @@ public class PagedModelRun {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PAGE)
+  @JsonProperty(value = JSON_PROPERTY_PAGE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPage(@jakarta.annotation.Nullable PageMetadata page) {
     this.page = page;

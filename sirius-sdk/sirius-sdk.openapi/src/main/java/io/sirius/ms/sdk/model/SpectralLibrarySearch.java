@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -52,7 +53,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibrarySearch.JSON_PROPERTY_SCORING,
   SpectralLibrarySearch.JSON_PROPERTY_PEAK_DEVIATION_PPM
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class SpectralLibrarySearch {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   @jakarta.annotation.Nullable
@@ -108,7 +109,7 @@ public class SpectralLibrarySearch {
    * @return enabled
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(value = JSON_PROPERTY_ENABLED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isEnabled() {
@@ -116,7 +117,7 @@ public class SpectralLibrarySearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(value = JSON_PROPERTY_ENABLED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
@@ -141,7 +142,7 @@ public class SpectralLibrarySearch {
    * @return spectraSearchDBs
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_D_BS)
+  @JsonProperty(value = JSON_PROPERTY_SPECTRA_SEARCH_D_BS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getSpectraSearchDBs() {
@@ -149,7 +150,7 @@ public class SpectralLibrarySearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_D_BS)
+  @JsonProperty(value = JSON_PROPERTY_SPECTRA_SEARCH_D_BS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSpectraSearchDBs(@jakarta.annotation.Nullable List<String> spectraSearchDBs) {
     this.spectraSearchDBs = spectraSearchDBs;
@@ -166,7 +167,7 @@ public class SpectralLibrarySearch {
    * @return precursorDeviationPpm
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PRECURSOR_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_PRECURSOR_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getPrecursorDeviationPpm() {
@@ -174,7 +175,7 @@ public class SpectralLibrarySearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PRECURSOR_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_PRECURSOR_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPrecursorDeviationPpm(@jakarta.annotation.Nullable Double precursorDeviationPpm) {
     this.precursorDeviationPpm = precursorDeviationPpm;
@@ -191,7 +192,7 @@ public class SpectralLibrarySearch {
    * @return minSimilarity
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY)
+  @JsonProperty(value = JSON_PROPERTY_MIN_SIMILARITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Float getMinSimilarity() {
@@ -199,7 +200,7 @@ public class SpectralLibrarySearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY)
+  @JsonProperty(value = JSON_PROPERTY_MIN_SIMILARITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMinSimilarity(@jakarta.annotation.Nullable Float minSimilarity) {
     this.minSimilarity = minSimilarity;
@@ -216,7 +217,7 @@ public class SpectralLibrarySearch {
    * @return minNumOfPeaks
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS)
+  @JsonProperty(value = JSON_PROPERTY_MIN_NUM_OF_PEAKS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getMinNumOfPeaks() {
@@ -224,7 +225,7 @@ public class SpectralLibrarySearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS)
+  @JsonProperty(value = JSON_PROPERTY_MIN_NUM_OF_PEAKS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMinNumOfPeaks(@jakarta.annotation.Nullable Integer minNumOfPeaks) {
     this.minNumOfPeaks = minNumOfPeaks;
@@ -241,7 +242,7 @@ public class SpectralLibrarySearch {
    * @return enableAnalogueSearch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ENABLE_ANALOGUE_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_ENABLE_ANALOGUE_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isEnableAnalogueSearch() {
@@ -249,7 +250,7 @@ public class SpectralLibrarySearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ENABLE_ANALOGUE_SEARCH)
+  @JsonProperty(value = JSON_PROPERTY_ENABLE_ANALOGUE_SEARCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setEnableAnalogueSearch(@jakarta.annotation.Nullable Boolean enableAnalogueSearch) {
     this.enableAnalogueSearch = enableAnalogueSearch;
@@ -266,7 +267,7 @@ public class SpectralLibrarySearch {
    * @return minSimilarityAnalogue
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY_ANALOGUE)
+  @JsonProperty(value = JSON_PROPERTY_MIN_SIMILARITY_ANALOGUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Float getMinSimilarityAnalogue() {
@@ -274,7 +275,7 @@ public class SpectralLibrarySearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY_ANALOGUE)
+  @JsonProperty(value = JSON_PROPERTY_MIN_SIMILARITY_ANALOGUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMinSimilarityAnalogue(@jakarta.annotation.Nullable Float minSimilarityAnalogue) {
     this.minSimilarityAnalogue = minSimilarityAnalogue;
@@ -291,7 +292,7 @@ public class SpectralLibrarySearch {
    * @return minNumOfPeaksAnalogue
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS_ANALOGUE)
+  @JsonProperty(value = JSON_PROPERTY_MIN_NUM_OF_PEAKS_ANALOGUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getMinNumOfPeaksAnalogue() {
@@ -299,7 +300,7 @@ public class SpectralLibrarySearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS_ANALOGUE)
+  @JsonProperty(value = JSON_PROPERTY_MIN_NUM_OF_PEAKS_ANALOGUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMinNumOfPeaksAnalogue(@jakarta.annotation.Nullable Integer minNumOfPeaksAnalogue) {
     this.minNumOfPeaksAnalogue = minNumOfPeaksAnalogue;
@@ -316,7 +317,7 @@ public class SpectralLibrarySearch {
    * @return scoring
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SCORING)
+  @JsonProperty(value = JSON_PROPERTY_SCORING, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public SpectralMatchingType getScoring() {
@@ -324,7 +325,7 @@ public class SpectralLibrarySearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SCORING)
+  @JsonProperty(value = JSON_PROPERTY_SCORING, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setScoring(@jakarta.annotation.Nullable SpectralMatchingType scoring) {
     this.scoring = scoring;
@@ -343,7 +344,7 @@ public class SpectralLibrarySearch {
    */
   @Deprecated
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PEAK_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_PEAK_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getPeakDeviationPpm() {
@@ -351,7 +352,7 @@ public class SpectralLibrarySearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PEAK_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_PEAK_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPeakDeviationPpm(@jakarta.annotation.Nullable Double peakDeviationPpm) {
     this.peakDeviationPpm = peakDeviationPpm;

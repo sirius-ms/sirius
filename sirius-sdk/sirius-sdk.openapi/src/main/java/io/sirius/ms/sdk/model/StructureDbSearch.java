@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -46,7 +47,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureDbSearch.JSON_PROPERTY_TAG_STRUCTURES_WITH_LIPID_CLASS,
   StructureDbSearch.JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class StructureDbSearch {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   @jakarta.annotation.Nullable
@@ -78,7 +79,7 @@ public class StructureDbSearch {
    * @return enabled
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(value = JSON_PROPERTY_ENABLED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isEnabled() {
@@ -86,7 +87,7 @@ public class StructureDbSearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(value = JSON_PROPERTY_ENABLED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
@@ -111,7 +112,7 @@ public class StructureDbSearch {
    * @return structureSearchDBs
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_SEARCH_D_BS)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_SEARCH_D_BS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getStructureSearchDBs() {
@@ -119,7 +120,7 @@ public class StructureDbSearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_SEARCH_D_BS)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_SEARCH_D_BS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureSearchDBs(@jakarta.annotation.Nullable List<String> structureSearchDBs) {
     this.structureSearchDBs = structureSearchDBs;
@@ -136,7 +137,7 @@ public class StructureDbSearch {
    * @return tagStructuresWithLipidClass
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TAG_STRUCTURES_WITH_LIPID_CLASS)
+  @JsonProperty(value = JSON_PROPERTY_TAG_STRUCTURES_WITH_LIPID_CLASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isTagStructuresWithLipidClass() {
@@ -144,7 +145,7 @@ public class StructureDbSearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TAG_STRUCTURES_WITH_LIPID_CLASS)
+  @JsonProperty(value = JSON_PROPERTY_TAG_STRUCTURES_WITH_LIPID_CLASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTagStructuresWithLipidClass(@jakarta.annotation.Nullable Boolean tagStructuresWithLipidClass) {
     this.tagStructuresWithLipidClass = tagStructuresWithLipidClass;
@@ -161,7 +162,7 @@ public class StructureDbSearch {
    * @return expansiveSearchConfidenceMode
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE)
+  @JsonProperty(value = JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public ConfidenceMode getExpansiveSearchConfidenceMode() {
@@ -169,7 +170,7 @@ public class StructureDbSearch {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE)
+  @JsonProperty(value = JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setExpansiveSearchConfidenceMode(@jakarta.annotation.Nullable ConfidenceMode expansiveSearchConfidenceMode) {
     this.expansiveSearchConfidenceMode = expansiveSearchConfidenceMode;

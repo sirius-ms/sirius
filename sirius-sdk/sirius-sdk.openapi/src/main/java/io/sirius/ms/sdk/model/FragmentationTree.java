@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -48,7 +49,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FragmentationTree.JSON_PROPERTY_MOLECULAR_FORMULA,
   FragmentationTree.JSON_PROPERTY_ADDUCT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class FragmentationTree {
   public static final String JSON_PROPERTY_FRAGMENTS = "fragments";
   @jakarta.annotation.Nullable
@@ -92,7 +93,7 @@ public class FragmentationTree {
    * @return fragments
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FRAGMENTS)
+  @JsonProperty(value = JSON_PROPERTY_FRAGMENTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<FragmentNode> getFragments() {
@@ -100,7 +101,7 @@ public class FragmentationTree {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FRAGMENTS)
+  @JsonProperty(value = JSON_PROPERTY_FRAGMENTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFragments(@jakarta.annotation.Nullable List<FragmentNode> fragments) {
     this.fragments = fragments;
@@ -125,7 +126,7 @@ public class FragmentationTree {
    * @return losses
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LOSSES)
+  @JsonProperty(value = JSON_PROPERTY_LOSSES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<LossEdge> getLosses() {
@@ -133,7 +134,7 @@ public class FragmentationTree {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LOSSES)
+  @JsonProperty(value = JSON_PROPERTY_LOSSES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLosses(@jakarta.annotation.Nullable List<LossEdge> losses) {
     this.losses = losses;
@@ -150,7 +151,7 @@ public class FragmentationTree {
    * @return treeScore
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TREE_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_TREE_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getTreeScore() {
@@ -158,7 +159,7 @@ public class FragmentationTree {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TREE_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_TREE_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTreeScore(@jakarta.annotation.Nullable Double treeScore) {
     this.treeScore = treeScore;
@@ -175,7 +176,7 @@ public class FragmentationTree {
    * @return molecularFormula
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getMolecularFormula() {
@@ -183,7 +184,7 @@ public class FragmentationTree {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
@@ -200,7 +201,7 @@ public class FragmentationTree {
    * @return adduct
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getAdduct() {
@@ -208,7 +209,7 @@ public class FragmentationTree {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAdduct(@jakarta.annotation.Nullable String adduct) {
     this.adduct = adduct;

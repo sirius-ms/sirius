@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -64,7 +65,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   JobSubmission.JSON_PROPERTY_COMPOUND_IDS,
   JobSubmission.JSON_PROPERTY_ALIGNED_FEATURE_IDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class JobSubmission {
   public static final String JSON_PROPERTY_FALLBACK_ADDUCTS = "fallbackAdducts";
   @jakarta.annotation.Nullable
@@ -144,7 +145,7 @@ public class JobSubmission {
    * @return fallbackAdducts
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FALLBACK_ADDUCTS)
+  @JsonProperty(value = JSON_PROPERTY_FALLBACK_ADDUCTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getFallbackAdducts() {
@@ -152,7 +153,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FALLBACK_ADDUCTS)
+  @JsonProperty(value = JSON_PROPERTY_FALLBACK_ADDUCTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFallbackAdducts(@jakarta.annotation.Nullable List<String> fallbackAdducts) {
     this.fallbackAdducts = fallbackAdducts;
@@ -177,7 +178,7 @@ public class JobSubmission {
    * @return enforcedAdducts
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ENFORCED_ADDUCTS)
+  @JsonProperty(value = JSON_PROPERTY_ENFORCED_ADDUCTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getEnforcedAdducts() {
@@ -185,7 +186,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ENFORCED_ADDUCTS)
+  @JsonProperty(value = JSON_PROPERTY_ENFORCED_ADDUCTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setEnforcedAdducts(@jakarta.annotation.Nullable List<String> enforcedAdducts) {
     this.enforcedAdducts = enforcedAdducts;
@@ -210,7 +211,7 @@ public class JobSubmission {
    * @return detectableAdducts
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DETECTABLE_ADDUCTS)
+  @JsonProperty(value = JSON_PROPERTY_DETECTABLE_ADDUCTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getDetectableAdducts() {
@@ -218,7 +219,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DETECTABLE_ADDUCTS)
+  @JsonProperty(value = JSON_PROPERTY_DETECTABLE_ADDUCTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDetectableAdducts(@jakarta.annotation.Nullable List<String> detectableAdducts) {
     this.detectableAdducts = detectableAdducts;
@@ -235,7 +236,7 @@ public class JobSubmission {
    * @return recompute
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RECOMPUTE)
+  @JsonProperty(value = JSON_PROPERTY_RECOMPUTE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isRecompute() {
@@ -243,7 +244,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RECOMPUTE)
+  @JsonProperty(value = JSON_PROPERTY_RECOMPUTE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRecompute(@jakarta.annotation.Nullable Boolean recompute) {
     this.recompute = recompute;
@@ -260,7 +261,7 @@ public class JobSubmission {
    * @return spectraSearchParams
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_SPECTRA_SEARCH_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public SpectralLibrarySearch getSpectraSearchParams() {
@@ -268,7 +269,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_SPECTRA_SEARCH_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSpectraSearchParams(@jakarta.annotation.Nullable SpectralLibrarySearch spectraSearchParams) {
     this.spectraSearchParams = spectraSearchParams;
@@ -285,7 +286,7 @@ public class JobSubmission {
    * @return formulaIdParams
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FORMULA_ID_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_FORMULA_ID_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Sirius getFormulaIdParams() {
@@ -293,7 +294,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FORMULA_ID_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_FORMULA_ID_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFormulaIdParams(@jakarta.annotation.Nullable Sirius formulaIdParams) {
     this.formulaIdParams = formulaIdParams;
@@ -310,7 +311,7 @@ public class JobSubmission {
    * @return zodiacParams
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ZODIAC_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_ZODIAC_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Zodiac getZodiacParams() {
@@ -318,7 +319,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ZODIAC_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_ZODIAC_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setZodiacParams(@jakarta.annotation.Nullable Zodiac zodiacParams) {
     this.zodiacParams = zodiacParams;
@@ -335,7 +336,7 @@ public class JobSubmission {
    * @return fingerprintPredictionParams
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FINGERPRINT_PREDICTION_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_FINGERPRINT_PREDICTION_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public FingerprintPrediction getFingerprintPredictionParams() {
@@ -343,7 +344,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FINGERPRINT_PREDICTION_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_FINGERPRINT_PREDICTION_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFingerprintPredictionParams(@jakarta.annotation.Nullable FingerprintPrediction fingerprintPredictionParams) {
     this.fingerprintPredictionParams = fingerprintPredictionParams;
@@ -360,7 +361,7 @@ public class JobSubmission {
    * @return canopusParams
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CANOPUS_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_CANOPUS_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Canopus getCanopusParams() {
@@ -368,7 +369,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CANOPUS_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_CANOPUS_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCanopusParams(@jakarta.annotation.Nullable Canopus canopusParams) {
     this.canopusParams = canopusParams;
@@ -385,7 +386,7 @@ public class JobSubmission {
    * @return structureDbSearchParams
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_DB_SEARCH_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_DB_SEARCH_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public StructureDbSearch getStructureDbSearchParams() {
@@ -393,7 +394,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_DB_SEARCH_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_DB_SEARCH_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureDbSearchParams(@jakarta.annotation.Nullable StructureDbSearch structureDbSearchParams) {
     this.structureDbSearchParams = structureDbSearchParams;
@@ -410,7 +411,7 @@ public class JobSubmission {
    * @return msNovelistParams
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MS_NOVELIST_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_MS_NOVELIST_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public MsNovelist getMsNovelistParams() {
@@ -418,7 +419,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MS_NOVELIST_PARAMS)
+  @JsonProperty(value = JSON_PROPERTY_MS_NOVELIST_PARAMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMsNovelistParams(@jakarta.annotation.Nullable MsNovelist msNovelistParams) {
     this.msNovelistParams = msNovelistParams;
@@ -443,7 +444,7 @@ public class JobSubmission {
    * @return configMap
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONFIG_MAP)
+  @JsonProperty(value = JSON_PROPERTY_CONFIG_MAP, required = false)
   @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
 
   public Map<String, String> getConfigMap() {
@@ -451,7 +452,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CONFIG_MAP)
+  @JsonProperty(value = JSON_PROPERTY_CONFIG_MAP, required = false)
   @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
   public void setConfigMap(@jakarta.annotation.Nullable Map<String, String> configMap) {
     this.configMap = configMap;
@@ -476,7 +477,7 @@ public class JobSubmission {
    * @return compoundIds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
+  @JsonProperty(value = JSON_PROPERTY_COMPOUND_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getCompoundIds() {
@@ -484,7 +485,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COMPOUND_IDS)
+  @JsonProperty(value = JSON_PROPERTY_COMPOUND_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCompoundIds(@jakarta.annotation.Nullable List<String> compoundIds) {
     this.compoundIds = compoundIds;
@@ -509,7 +510,7 @@ public class JobSubmission {
    * @return alignedFeatureIds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_ALIGNED_FEATURE_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getAlignedFeatureIds() {
@@ -517,7 +518,7 @@ public class JobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_ALIGNED_FEATURE_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAlignedFeatureIds(@jakarta.annotation.Nullable List<String> alignedFeatureIds) {
     this.alignedFeatureIds = alignedFeatureIds;
