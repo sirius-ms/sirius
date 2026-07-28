@@ -32,7 +32,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.24.0")
 public class CompoundStatisticsApi {
     private ApiClient apiClient;
 
@@ -77,12 +77,12 @@ public class CompoundStatisticsApi {
 
         pathParams.put("projectId", projectId);
 
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, String> localVarQueryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        localVarQueryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -96,7 +96,7 @@ public class CompoundStatisticsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchange/compute", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchange/compute", HttpMethod.PUT, pathParams, localVarQueryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -173,15 +173,15 @@ public class CompoundStatisticsApi {
 
         pathParams.put("projectId", projectId);
 
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, String> localVarQueryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "leftGroupName", leftGroupName));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "rightGroupName", rightGroupName));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
+        localVarQueryParams.putAll(apiClient.parameterToMultiValueMap(null, "leftGroupName", leftGroupName));
+        localVarQueryParams.putAll(apiClient.parameterToMultiValueMap(null, "rightGroupName", rightGroupName));
+        localVarQueryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
+        localVarQueryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
 
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
@@ -191,7 +191,7 @@ public class CompoundStatisticsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchanges", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchanges", HttpMethod.DELETE, pathParams, localVarQueryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -263,13 +263,13 @@ public class CompoundStatisticsApi {
 
         pathParams.put("projectId", projectId);
 
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, String> localVarQueryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
+        localVarQueryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
+        localVarQueryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -281,7 +281,7 @@ public class CompoundStatisticsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchanges/stats-table", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchanges/stats-table", HttpMethod.GET, pathParams, localVarQueryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -353,7 +353,7 @@ public class CompoundStatisticsApi {
         pathParams.put("projectId", projectId);
         pathParams.put("objectId", objectId);
 
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, String> localVarQueryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
@@ -368,7 +368,7 @@ public class CompoundStatisticsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchanges/{objectId}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchanges/{objectId}", HttpMethod.GET, pathParams, localVarQueryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**

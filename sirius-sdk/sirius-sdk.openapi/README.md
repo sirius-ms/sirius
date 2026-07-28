@@ -4,7 +4,7 @@ SIRIUS Nightsky API
 
 - API version: 3.1
 
-- Generator version: 7.17.0
+- Generator version: 7.24.0
 
 REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
 

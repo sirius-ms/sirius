@@ -27,7 +27,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.24.0")
 public class InfoApi {
     private ApiClient apiClient;
 
@@ -59,7 +59,7 @@ public class InfoApi {
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, String> localVarQueryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
@@ -74,7 +74,7 @@ public class InfoApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<ConnectionCheck> localVarReturnType = new ParameterizedTypeReference<ConnectionCheck>() {};
-        return apiClient.invokeAPI("/api/connection-status", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/connection-status", HttpMethod.GET, pathParams, localVarQueryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -126,13 +126,13 @@ public class InfoApi {
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, String> localVarQueryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "serverInfo", serverInfo));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "updateInfo", updateInfo));
+        localVarQueryParams.putAll(apiClient.parameterToMultiValueMap(null, "serverInfo", serverInfo));
+        localVarQueryParams.putAll(apiClient.parameterToMultiValueMap(null, "updateInfo", updateInfo));
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -144,7 +144,7 @@ public class InfoApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Info> localVarReturnType = new ParameterizedTypeReference<Info>() {};
-        return apiClient.invokeAPI("/api/info", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/info", HttpMethod.GET, pathParams, localVarQueryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**

@@ -25,7 +25,6 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
-import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -48,7 +47,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AdductEdgeExperimental.JSON_PROPERTY_PVALUE,
   AdductEdgeExperimental.JSON_PROPERTY_INTENSITY_RATIO_SCORE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.24.0")
 public class AdductEdgeExperimental {
   public static final String JSON_PROPERTY_MZ_DELTA = "mzDelta";
   @jakarta.annotation.Nullable
@@ -362,10 +361,7 @@ public class AdductEdgeExperimental {
    * (except the first line).
    */
   private String toIndentedString(Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
+    return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 
 }
