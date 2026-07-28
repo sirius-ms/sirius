@@ -287,7 +287,7 @@ public class GuiProjectManager implements Closeable {
             String filterQuery = filterQueryProvider != null ? filterQueryProvider.get() : null;
             List<String> sortQuery = sortQueryProvider != null ? sortQueryProvider.get() : null;
             List<InstanceBean> tmpInst = siriusClient.features()
-                    .getAlignedFeaturesPageExperimental(projectId, 0, Integer.MAX_VALUE, sortQuery, filterQuery, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
+                    .getAlignedFeaturesPage(projectId, 0, Integer.MAX_VALUE, sortQuery, filterQuery, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
                     .getContent().stream().map(f -> new InstanceBean(f, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this)).toList();
 
 

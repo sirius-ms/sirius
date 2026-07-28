@@ -42,7 +42,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
-  <version>3.1+sirius6.5.2-SNAPSHOT</version>
+  <version>3.1+sirius6.5.3</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -58,7 +58,7 @@ Add this dependency to your project's build file:
   }
 
   dependencies {
-     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.5.2-SNAPSHOT"
+     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.5.3"
   }
 ```
 
@@ -72,7 +72,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius-sdk.openapi-3.1+sirius6.5.2-SNAPSHOT.jar`
+- `target/sirius-sdk.openapi-3.1+sirius6.5.3.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
@@ -125,15 +125,15 @@ Class | Method | HTTP request | Description
 *CompoundStatisticsApi* | [**getFoldChangesByCompoundExperimental**](docs/CompoundStatisticsApi.md#getFoldChangesByCompoundExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges/{objectId} | [EXPERIMENTAL] List all fold changes that are associated with an object
 *CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features.
 *CompoundsApi* | [**addTagsToCompoundExperimental**](docs/CompoundsApi.md#addTagsToCompoundExperimental) | **PUT** /api/projects/{projectId}/compounds/tags/{compoundId} | [EXPERIMENTAL] Tags with the same name will be overwritten
-*CompoundsApi* | [**addTagsToObjects**](docs/CompoundsApi.md#addTagsToObjects) | **PUT** /api/projects/{projectId}/compounds/tags | Tags with the same name will be overwritten.
+*CompoundsApi* | [**addTagsToCompoundsExperimental**](docs/CompoundsApi.md#addTagsToCompoundsExperimental) | **PUT** /api/projects/{projectId}/compounds/tags | [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project
 *CompoundsApi* | [**deleteCompound**](docs/CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
 *CompoundsApi* | [**getCompound**](docs/CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space.
 *CompoundsApi* | [**getCompoundQuantTableExperimental**](docs/CompoundsApi.md#getCompoundQuantTableExperimental) | **GET** /api/projects/{projectId}/compounds/quant-table | [EXPERIMENTAL] Returns the full quantification table of compounds
 *CompoundsApi* | [**getCompoundQuantTableRowExperimental**](docs/CompoundsApi.md#getCompoundQuantTableRowExperimental) | **GET** /api/projects/{projectId}/compounds/{compoundId}/quant-table-row | [EXPERIMENTAL] Returns a single quantification table row for the given compound
 *CompoundsApi* | [**getCompoundTracesExperimental**](docs/CompoundsApi.md#getCompoundTracesExperimental) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | [EXPERIMENTAL] Returns the traces of the given compound
-*CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space.
+*CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space
 *CompoundsApi* | [**getCompoundsByGroupExperimental**](docs/CompoundsApi.md#getCompoundsByGroupExperimental) | **GET** /api/projects/{projectId}/compounds/grouped | [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
-*CompoundsApi* | [**getCompoundsPageExperimental**](docs/CompoundsApi.md#getCompoundsPageExperimental) | **GET** /api/projects/{projectId}/compounds/page | [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space
+*CompoundsApi* | [**getCompoundsPage**](docs/CompoundsApi.md#getCompoundsPage) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space
 *CompoundsApi* | [**getTagsForCompoundExperimental**](docs/CompoundsApi.md#getTagsForCompoundExperimental) | **GET** /api/projects/{projectId}/compounds/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Compound
 *CompoundsApi* | [**removeTagFromCompoundExperimental**](docs/CompoundsApi.md#removeTagFromCompoundExperimental) | **DELETE** /api/projects/{projectId}/compounds/tags/{compoundId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space
 *FeatureStatisticsApi* | [**computeAlignedFeatureFoldChangesExperimental**](docs/FeatureStatisticsApi.md#computeAlignedFeatureFoldChangesExperimental) | **PUT** /api/projects/{projectId}/aligned-features/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs
@@ -150,9 +150,9 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getAdductNetworkWithMergedTracesExperimental**](docs/FeaturesApi.md#getAdductNetworkWithMergedTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
 *FeaturesApi* | [**getAlignedFeature**](docs/FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**getAlignedFeatureQualityExperimental**](docs/FeaturesApi.md#getAlignedFeatureQualityExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report | [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
-*FeaturesApi* | [**getAlignedFeatures**](docs/FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | Get all available features (aligned over runs) in the given project-space.
+*FeaturesApi* | [**getAlignedFeatures**](docs/FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | [DEPRECATED] Get all available features (aligned over runs) in the given project-space
 *FeaturesApi* | [**getAlignedFeaturesByGroupExperimental**](docs/FeaturesApi.md#getAlignedFeaturesByGroupExperimental) | **GET** /api/projects/{projectId}/aligned-features/grouped | [EXPERIMENTAL] Get features (aligned over runs) by tag group
-*FeaturesApi* | [**getAlignedFeaturesPageExperimental**](docs/FeaturesApi.md#getAlignedFeaturesPageExperimental) | **GET** /api/projects/{projectId}/aligned-features/page | [EXPERIMENTAL] Get features (aligned over runs) in the given project-space
+*FeaturesApi* | [**getAlignedFeaturesPage**](docs/FeaturesApi.md#getAlignedFeaturesPage) | **GET** /api/projects/{projectId}/aligned-features/page | Get features (aligned over runs) in the given project-space
 *FeaturesApi* | [**getBestMatchingCompoundClasses**](docs/FeaturesApi.md#getBestMatchingCompoundClasses) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes | Return Best matching compound classes for given formulaId
 *FeaturesApi* | [**getCanopusPrediction**](docs/FeaturesApi.md#getCanopusPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction | All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
 *FeaturesApi* | [**getDeNovoStructureCandidates**](docs/FeaturesApi.md#getDeNovoStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
@@ -198,6 +198,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**getDefaultJobConfig**](docs/JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration
 *JobsApi* | [**getJob**](docs/JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available).
 *JobsApi* | [**getJobConfig**](docs/JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name.
+*JobsApi* | [**getJobConfigNames**](docs/JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | [DEPRECATED] Get all (non-default) job configuration names  
 *JobsApi* | [**getJobConfigs**](docs/JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations
 *JobsApi* | [**getJobs**](docs/JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available).
 *JobsApi* | [**getJobsPaged**](docs/JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available).
