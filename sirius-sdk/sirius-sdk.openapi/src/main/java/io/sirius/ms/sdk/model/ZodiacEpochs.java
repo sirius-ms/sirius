@@ -25,7 +25,6 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
-import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -42,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ZodiacEpochs.JSON_PROPERTY_BURN_IN_PERIOD,
   ZodiacEpochs.JSON_PROPERTY_NUMBER_OF_MARKOV_CHAINS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.24.0")
 public class ZodiacEpochs {
   public static final String JSON_PROPERTY_ITERATIONS = "iterations";
   @jakarta.annotation.Nullable
@@ -170,10 +169,7 @@ public class ZodiacEpochs {
    * (except the first line).
    */
   private String toIndentedString(Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
+    return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 
 }
