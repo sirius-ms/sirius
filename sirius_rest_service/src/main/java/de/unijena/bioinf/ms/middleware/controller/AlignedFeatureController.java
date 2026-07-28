@@ -106,7 +106,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
 
     /**
      *
-     * [EXPERIMENTAL] Get features (aligned over runs) in the given project-space.
+     * Get features (aligned over runs) in the given project-space.
      *
      * <h2>Supported filter syntax</h2>
      *
@@ -139,10 +139,8 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
      *
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
      * @param projectId    project space to get features (aligned over runs) from.
-     * @param searchQuery       optional search query in lucene syntax.
+     * @param searchQuery  Optional search query in lucene syntax. Omit this parameter to page over all features.
      * @param pageable     pageable.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
@@ -151,7 +149,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * @return tagged features (aligned over runs)
      */
-    @Operation(operationId = "getAlignedFeaturesPageExperimental")
+    @Operation(operationId = "getAlignedFeaturesPage")
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<AlignedFeature> getAlignedFeaturesPage(
             @PathVariable String projectId,
@@ -189,7 +187,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * Get all available features (aligned over runs) in the given project-space.
+     * [DEPRECATED] Get all available features (aligned over runs) in the given project-space.
+     * <p>
+     * [DEPRECATED] Use /aligned-features/page instead. Loading all features at once does not scale for large
+     * projects. This endpoint will be removed in the next major version of this API.
      *
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
@@ -199,6 +200,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<AlignedFeature> getAlignedFeatures(
             @PathVariable String projectId,
             @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,

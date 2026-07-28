@@ -6,15 +6,15 @@ All URIs are relative to *http://localhost:8888*
 |------------- | ------------- | -------------|
 | [**addCompounds**](CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features. |
 | [**addTagsToCompoundExperimental**](CompoundsApi.md#addTagsToCompoundExperimental) | **PUT** /api/projects/{projectId}/compounds/tags/{compoundId} | [EXPERIMENTAL] Tags with the same name will be overwritten |
-| [**addTagsToObjects**](CompoundsApi.md#addTagsToObjects) | **PUT** /api/projects/{projectId}/compounds/tags | Tags with the same name will be overwritten. |
+| [**addTagsToCompoundsExperimental**](CompoundsApi.md#addTagsToCompoundsExperimental) | **PUT** /api/projects/{projectId}/compounds/tags | [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project |
 | [**deleteCompound**](CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space. |
 | [**getCompound**](CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space. |
 | [**getCompoundQuantTableExperimental**](CompoundsApi.md#getCompoundQuantTableExperimental) | **GET** /api/projects/{projectId}/compounds/quant-table | [EXPERIMENTAL] Returns the full quantification table of compounds |
 | [**getCompoundQuantTableRowExperimental**](CompoundsApi.md#getCompoundQuantTableRowExperimental) | **GET** /api/projects/{projectId}/compounds/{compoundId}/quant-table-row | [EXPERIMENTAL] Returns a single quantification table row for the given compound |
 | [**getCompoundTracesExperimental**](CompoundsApi.md#getCompoundTracesExperimental) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | [EXPERIMENTAL] Returns the traces of the given compound |
-| [**getCompounds**](CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space. |
+| [**getCompounds**](CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space |
 | [**getCompoundsByGroupExperimental**](CompoundsApi.md#getCompoundsByGroupExperimental) | **GET** /api/projects/{projectId}/compounds/grouped | [EXPERIMENTAL] Get compounds (group of ion identities) by tag group |
-| [**getCompoundsPageExperimental**](CompoundsApi.md#getCompoundsPageExperimental) | **GET** /api/projects/{projectId}/compounds/page | [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space |
+| [**getCompoundsPage**](CompoundsApi.md#getCompoundsPage) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space |
 | [**getTagsForCompoundExperimental**](CompoundsApi.md#getTagsForCompoundExperimental) | **GET** /api/projects/{projectId}/compounds/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Compound |
 | [**removeTagFromCompoundExperimental**](CompoundsApi.md#removeTagFromCompoundExperimental) | **DELETE** /api/projects/{projectId}/compounds/tags/{compoundId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space |
 
@@ -164,13 +164,13 @@ No authorization required
 | **200** | the tags that have been added |  -  |
 
 
-## addTagsToObjects
+## addTagsToCompoundsExperimental
 
-> addTagsToObjects(projectId, tagSubmission)
+> addTagsToCompoundsExperimental(projectId, tagSubmission)
 
-Tags with the same name will be overwritten.
+[EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project
 
-Tags with the same name will be overwritten.
+[EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -189,11 +189,11 @@ public class Example {
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to add to.
-        List<TagSubmission> tagSubmission = Arrays.asList(); // List<TagSubmission> | tags with id of the object to be added to.
+        List<TagSubmission> tagSubmission = Arrays.asList(); // List<TagSubmission> | tags with the id of compound (group of ion identities) they shall be added to.
         try {
-            apiInstance.addTagsToObjects(projectId, tagSubmission);
+            apiInstance.addTagsToCompoundsExperimental(projectId, tagSubmission);
         } catch (ApiException e) {
-            System.err.println("Exception when calling CompoundsApi#addTagsToObjects");
+            System.err.println("Exception when calling CompoundsApi#addTagsToCompoundsExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -209,7 +209,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to add to. | |
-| **tagSubmission** | [**List&lt;TagSubmission&gt;**](TagSubmission.md)| tags with id of the object to be added to. | |
+| **tagSubmission** | [**List&lt;TagSubmission&gt;**](TagSubmission.md)| tags with the id of compound (group of ion identities) they shall be added to. | |
 
 ### Return type
 
@@ -584,9 +584,9 @@ No authorization required
 
 > List&lt;Compound&gt; getCompounds(projectId, msDataSearchPrepared, optFields, optFieldsFeatures)
 
-List of all available compounds (group of ion identities) in the given project-space.
+[DEPRECATED] List of all available compounds (group of ion identities) in the given project-space
 
-List of all available compounds (group of ion identities) in the given project-space.
+[DEPRECATED] List of all available compounds (group of ion identities) in the given project-space.  &lt;p&gt;  [DEPRECATED] Use /compounds/page instead. Loading all compounds at once does not scale for large projects.  This endpoint will be removed in the next major version of this API.
 
 ### Example
 
@@ -732,13 +732,13 @@ No authorization required
 | **200** | tagged compounds (group of ion identities) |  -  |
 
 
-## getCompoundsPageExperimental
+## getCompoundsPage
 
-> PagedModelCompound getCompoundsPageExperimental(projectId, searchQuery, page, size, sort, msDataSearchPrepared, optFields, optFieldsFeatures)
+> PagedModelCompound getCompoundsPage(projectId, searchQuery, page, size, sort, msDataSearchPrepared, optFields, optFieldsFeatures)
 
-[EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space
+Page of available compounds (group of ion identities) in the given project-space
 
-[EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  &lt;strong&gt;Note:&lt;/strong&gt; compound-level indexing is not implemented yet, so this endpoint always reads from the  project database. Passing a non-empty &lt;code&gt;searchQuery&lt;/code&gt; is therefore not supported and responds with  405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.
 
 ### Example
 
@@ -757,7 +757,7 @@ public class Example {
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        String searchQuery = "searchQuery_example"; // String | search query in lucene syntax.
+        String searchQuery = "searchQuery_example"; // String | Optional search query in lucene syntax. Not yet supported for compounds; a non-empty                      query responds with 405 METHOD_NOT_ALLOWED. Omit this parameter to page over all compounds.
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
@@ -765,10 +765,10 @@ public class Example {
         List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | 
         try {
-            PagedModelCompound result = apiInstance.getCompoundsPageExperimental(projectId, searchQuery, page, size, sort, msDataSearchPrepared, optFields, optFieldsFeatures);
+            PagedModelCompound result = apiInstance.getCompoundsPage(projectId, searchQuery, page, size, sort, msDataSearchPrepared, optFields, optFieldsFeatures);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling CompoundsApi#getCompoundsPageExperimental");
+            System.err.println("Exception when calling CompoundsApi#getCompoundsPage");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -784,7 +784,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **searchQuery** | **String**| search query in lucene syntax. | [optional] |
+| **searchQuery** | **String**| Optional search query in lucene syntax. Not yet supported for compounds; a non-empty                      query responds with 405 METHOD_NOT_ALLOWED. Omit this parameter to page over all compounds. | [optional] |
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |

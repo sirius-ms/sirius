@@ -62,11 +62,11 @@ public class SiriusClient implements AutoCloseable {
     @Getter
     protected final ApiClient apiClient;
 
-    protected final CompoundsApi compounds;
+    protected final CompoundsApiCompat compounds;
 
     protected final CompoundStatisticsApi compoundStatistics;
 
-    protected final FeaturesApi features;
+    protected final FeaturesApiCompat features;
 
     protected final FeatureStatisticsApi featureStatistics;
 
@@ -106,9 +106,9 @@ public class SiriusClient implements AutoCloseable {
                 .build());
         apiClient.setBasePath(basePath);
 
-        compounds = new CompoundsApi(apiClient);
+        compounds = new CompoundsApiCompat(apiClient);
         compoundStatistics = new CompoundStatisticsApi(apiClient);
-        features = new FeaturesApi(apiClient);
+        features = new FeaturesApiCompat(apiClient);
         featureStatistics = new FeatureStatisticsApi(apiClient);
         jobs = new JobsApi(apiClient);
         gui = new GuiApi(apiClient);
@@ -257,7 +257,7 @@ public class SiriusClient implements AutoCloseable {
         sseBroadcast.unSubscribe(PropertyChangeSubscriber.wrap(listener));
     }
 
-    public CompoundsApi compounds() {
+    public CompoundsApiCompat compounds() {
         return compounds;
     }
 
@@ -265,7 +265,7 @@ public class SiriusClient implements AutoCloseable {
         return compoundStatistics;
     }
 
-    public FeaturesApi features() {
+    public FeaturesApiCompat features() {
         return features;
     }
 
