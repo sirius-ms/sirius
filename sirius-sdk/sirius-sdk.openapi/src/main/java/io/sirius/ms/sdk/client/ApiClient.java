@@ -23,10 +23,13 @@
 
 package io.sirius.ms.sdk.client;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -42,8 +45,6 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.reactive.ClientHttpRequest;
-import org.springframework.http.codec.json.Jackson2JsonDecoder;
-import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -88,7 +89,7 @@ import io.sirius.ms.sdk.client.auth.HttpBasicAuth;
 import io.sirius.ms.sdk.client.auth.HttpBearerAuth;
 import io.sirius.ms.sdk.client.auth.ApiKeyAuth;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.24.0")
 public class ApiClient {
     public enum CollectionFormat {
         CSV(","), TSV("\t"), SSV(" "), PIPES("|"), MULTI(null);
@@ -112,15 +113,15 @@ public class ApiClient {
 
     protected final WebClient webClient;
     protected final DateFormat dateFormat;
-    protected final ObjectMapper objectMapper;
+    protected final ObjectMapper mapper;
 
     protected Map<String, Authentication> authentications;
 
 
     public ApiClient() {
         this.dateFormat = createDefaultDateFormat();
-        this.objectMapper = createDefaultObjectMapper(this.dateFormat);
-        this.webClient = buildWebClient(this.objectMapper);
+        this.mapper = createDefaultMapper(this.dateFormat);
+        this.webClient = buildWebClient(this.mapper);
         this.init();
     }
 
@@ -129,17 +130,17 @@ public class ApiClient {
     }
 
     public ApiClient(ObjectMapper mapper, DateFormat format) {
-        this(buildWebClient(mapper.copy()), format);
+        this(buildWebClient(mapper), format);
     }
 
     public ApiClient(WebClient webClient, ObjectMapper mapper, DateFormat format) {
-        this(Optional.ofNullable(webClient).orElseGet(() -> buildWebClient(mapper.copy())), format);
+        this(Optional.ofNullable(webClient).orElseGet(() -> buildWebClient(mapper)), format);
     }
 
     protected ApiClient(WebClient webClient, DateFormat format) {
         this.webClient = webClient;
         this.dateFormat = format;
-        this.objectMapper = createDefaultObjectMapper(format);
+        this.mapper = createDefaultMapper(format);
         this.init();
     }
 
@@ -149,7 +150,7 @@ public class ApiClient {
         return dateFormat;
     }
 
-    public static ObjectMapper createDefaultObjectMapper(@Nullable DateFormat dateFormat) {
+    public static ObjectMapper createDefaultMapper(@Nullable DateFormat dateFormat) {
         if (null == dateFormat) {
             dateFormat = createDefaultDateFormat();
         }
@@ -159,6 +160,7 @@ public class ApiClient {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return mapper;
     }
+
 
     protected void init() {
         // Setup authentications (key: authentication name, value: authentication).
@@ -188,7 +190,7 @@ public class ApiClient {
      * @return WebClient
      */
     public static WebClient.Builder buildWebClientBuilder() {
-        return buildWebClientBuilder(createDefaultObjectMapper(null));
+        return buildWebClientBuilder(createDefaultMapper(null));
     }
 
     /**
@@ -205,7 +207,7 @@ public class ApiClient {
      * @return WebClient
      */
     public static WebClient buildWebClient() {
-        return buildWebClientBuilder(createDefaultObjectMapper(null)).build();
+        return buildWebClientBuilder(createDefaultMapper(null)).build();
     }
 
     /**
@@ -379,10 +381,10 @@ public class ApiClient {
 
     /**
      * Get the ObjectMapper used to make HTTP requests.
-     * @return ObjectMapper objectMapper
+     * @return ObjectMapper mapper
      */
     public ObjectMapper getObjectMapper() {
-        return objectMapper;
+        return mapper;
     }
 
     /**
@@ -430,8 +432,8 @@ public class ApiClient {
             valueCollection = (Collection<?>) value;
         } else {
             try {
-                return parameterToMultiValueMap(collectionFormat, name, objectMapper.writeValueAsString(value));
-            } catch (JsonProcessingException e) {
+                return parameterToMultiValueMap(collectionFormat, name, mapper.writeValueAsString(value));
+           } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -439,7 +441,7 @@ public class ApiClient {
         List<String> values = new ArrayList<>();
         for(Object o : valueCollection) {
             try {
-                values.add(objectMapper.writeValueAsString(o));
+                values.add(mapper.writeValueAsString(o));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -566,10 +568,10 @@ public class ApiClient {
     /**
      * Select the Content-Type header's value from the given array:
      *     if JSON exists in the given array, use it;
-     *     otherwise use the first one of the array.
+     *     otherwise use the first non-wildcard one of the array.
      *
      * @param contentTypes The Content-Type array to select from
-     * @return MediaType The Content-Type header to use. If the given array is empty, null will be returned.
+     * @return MediaType The Content-Type header to use. If the given array is empty, null will be returned; if it only contains wildcard media types, JSON will be used.
      */
     public MediaType selectHeaderContentType(String[] contentTypes) {
         if (contentTypes.length == 0) {
@@ -578,10 +580,20 @@ public class ApiClient {
         for (String contentType : contentTypes) {
             MediaType mediaType = MediaType.parseMediaType(contentType);
             if (isJsonMime(mediaType)) {
+                // A wildcard media type (e.g. "*/*" or "application/*") is treated as
+                // JSON-compatible but cannot be used as a request Content-Type header,
+                // so fall back to concrete JSON in that case.
+                return mediaType.isWildcardType() || mediaType.isWildcardSubtype() ? MediaType.APPLICATION_JSON : mediaType;
+            }
+        }
+        // No JSON type found; use the first concrete (non-wildcard) media type instead.
+        for (String contentType : contentTypes) {
+            MediaType mediaType = MediaType.parseMediaType(contentType);
+            if (!mediaType.isWildcardType() && !mediaType.isWildcardSubtype()) {
                 return mediaType;
             }
         }
-        return MediaType.parseMediaType(contentTypes[0]);
+        return MediaType.APPLICATION_JSON;
     }
 
     /**
