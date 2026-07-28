@@ -1381,7 +1381,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Get all reactions from the library.",
+        "summary": "[EXPERIMENTAL] Get all reactions from the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "getReactions",
         "responses": {
           "200": {
@@ -1403,8 +1404,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Apply a sequence of reactions to a list of SMILES strings or structures from a database.",
-        "description": "[EXPERIMENTAL] Returns the final pool of SMILES strings.",
+        "summary": "[EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.",
+        "description": "[EXPERIMENTAL] Returns the final pool of SMILES strings. [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "applyReactions",
         "parameters": [
           {
@@ -1447,7 +1448,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Add a new reaction sequence to the library.",
+        "summary": "[EXPERIMENTAL] Add a new reaction sequence to the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "addSequence",
         "requestBody": {
           "content": {
@@ -1471,7 +1473,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Add a new reaction to the library.",
+        "summary": "[EXPERIMENTAL] Add a new reaction to the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "addReaction",
         "requestBody": {
           "content": {
@@ -3449,7 +3452,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Get all reaction sequences from the library.",
+        "summary": "[EXPERIMENTAL] Get all reaction sequences from the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "getSequences",
         "responses": {
           "200": {
@@ -3473,7 +3477,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Get a specific reaction sequence from the library by name.",
+        "summary": "[EXPERIMENTAL] Get a specific reaction sequence from the library by name.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "getSequence",
         "parameters": [
           {
@@ -3504,7 +3509,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Get a specific reaction from the library by name.",
+        "summary": "[EXPERIMENTAL] Get a specific reaction from the library by name.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "getReaction",
         "parameters": [
           {
@@ -3533,7 +3539,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Delete a reaction from the library.",
+        "summary": "[EXPERIMENTAL] Delete a reaction from the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "deleteReaction",
         "parameters": [
           {
@@ -8139,7 +8146,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Delete a reaction sequence from the library.",
+        "summary": "[EXPERIMENTAL] Delete a reaction sequence from the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "deleteSequence",
         "parameters": [
           {
