@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.job.JobConfigService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -73,27 +74,32 @@ public class JobController {
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      */
+    @Operation(operationId = "getJobsPage")
     @GetMapping(value = "/projects/{projectId}/jobs/page", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public Page<Job> getJobsPaged(@PathVariable String projectId,
-                                  @ParameterObject Pageable pageable,
-                                  @RequestParam(defaultValue = "none") EnumSet<Job.OptField> optFields
+    public Page<Job> getJobsPage(@PathVariable String projectId,
+                                 @ParameterObject Pageable pageable,
+                                 @RequestParam(defaultValue = "none") EnumSet<Job.OptField> optFields
     ) {
         return computeService.getJobs(projectsProvider.getProjectOrThrow(projectId), pageable, removeNone(optFields));
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).
+     * <p>
+     * [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.
+     * This endpoint will be removed in the next major version of this API.
      *
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      */
     @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
+    @Deprecated(forRemoval = true)
     public List<Job> getJobs(@PathVariable String projectId,
                              @RequestParam(defaultValue = "none") EnumSet<Job.OptField> optFields
     ) {
-        return getJobsPaged(projectId, globalConfig.unpaged(), optFields).stream().toList();
+        return getJobsPage(projectId, globalConfig.unpaged(), optFields).stream().toList();
     }
 
     @GetMapping(value = "/projects/{projectId}/has-jobs", produces = MediaType.APPLICATION_JSON_VALUE)

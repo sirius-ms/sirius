@@ -753,14 +753,16 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return List&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
      */
+    @Deprecated
     private ResponseSpec getJobsRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
@@ -793,8 +795,8 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -807,8 +809,8 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -821,8 +823,8 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -845,11 +847,11 @@ public class JobsApi {
      * @return PagedModelJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getJobsPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getJobsPageRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getJobsPaged", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getJobsPage", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -891,9 +893,9 @@ public class JobsApi {
      * @return PagedModelJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelJob getJobsPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+    public PagedModelJob getJobsPage(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelJob> localVarReturnType = new ParameterizedTypeReference<PagedModelJob>() {};
-        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+        return getJobsPageRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -908,9 +910,9 @@ public class JobsApi {
      * @return ResponseEntity&lt;PagedModelJob&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelJob> getJobsPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelJob> getJobsPageWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelJob> localVarReturnType = new ParameterizedTypeReference<PagedModelJob>() {};
-        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
+        return getJobsPageRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -925,8 +927,8 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getJobsPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
-        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields);
+    public ResponseSpec getJobsPageWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        return getJobsPageRequestCreation(projectId, page, size, sort, optFields);
     }
 
     /**

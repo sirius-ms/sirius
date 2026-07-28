@@ -1558,8 +1558,8 @@
         "tags": [
           "Jobs"
         ],
-        "summary": "Get List of all available jobs with information such as current state and progress (if available).",
-        "description": "Get List of all available jobs with information such as current state and progress (if available).",
+        "summary": "[DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)",
+        "description": "[DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).\n \u003cp\u003e\n [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.\n This endpoint will be removed in the next major version of this API.",
         "operationId": "getJobs",
         "parameters": [
           {
@@ -1608,7 +1608,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       },
       "post": {
         "tags": [
@@ -4283,7 +4284,7 @@
         ],
         "summary": "Get Page of jobs with information such as current state and progress (if available).",
         "description": "Get Page of jobs with information such as current state and progress (if available).",
-        "operationId": "getJobsPaged",
+        "operationId": "getJobsPage",
         "parameters": [
           {
             "name": "projectId",
