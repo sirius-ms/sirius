@@ -39,55 +39,64 @@ public class ReactionController {
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get all reactions from the library.")
+    @Operation(summary = "[EXPERIMENTAL] Get all reactions from the library.",
+            description = "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.")
     public List<Reaction> getReactions() throws IOException {
         return reactionService.getReactions();
     }
 
     @GetMapping(value = "/library/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get a specific reaction from the library by name.")
+    @Operation(summary = "[EXPERIMENTAL] Get a specific reaction from the library by name.",
+            description = "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.")
     public Reaction getReaction(@PathVariable String name) throws IOException {
         return reactionService.getReaction(name);
     }
 
     @PostMapping(value = "/library", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Add a new reaction to the library.")
+    @Operation(summary = "[EXPERIMENTAL] Add a new reaction to the library.",
+            description = "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.")
     public void addReaction(@RequestBody Reaction reaction) throws IOException {
         reactionService.addReaction(reaction);
     }
 
     @DeleteMapping(value = "/library/{name}")
-    @Operation(summary = "Delete a reaction from the library.")
+    @Operation(summary = "[EXPERIMENTAL] Delete a reaction from the library.",
+            description = "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.")
     public void deleteReaction(@PathVariable String name) throws IOException {
         reactionService.deleteReaction(name);
     }
 
     @GetMapping(value = "/sequences", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get all reaction sequences from the library.")
+    @Operation(summary = "[EXPERIMENTAL] Get all reaction sequences from the library.",
+            description = "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.")
     public List<ReactionSequence> getSequences() throws IOException {
         return reactionSequenceService.getSequences();
     }
 
     @GetMapping(value = "/sequences/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get a specific reaction sequence from the library by name.")
+    @Operation(summary = "[EXPERIMENTAL] Get a specific reaction sequence from the library by name.",
+            description = "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.")
     public ReactionSequence getSequence(@PathVariable String name) throws IOException {
         return reactionSequenceService.getSequence(name);
     }
 
     @PostMapping(value = "/sequences/library", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Add a new reaction sequence to the library.")
+    @Operation(summary = "[EXPERIMENTAL] Add a new reaction sequence to the library.",
+            description = "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.")
     public void addSequence(@RequestBody ReactionSequence sequence) throws IOException {
         reactionSequenceService.addSequence(sequence);
     }
 
     @DeleteMapping(value = "/sequences/library/{name}")
-    @Operation(summary = "Delete a reaction sequence from the library.")
+    @Operation(summary = "[EXPERIMENTAL] Delete a reaction sequence from the library.",
+            description = "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.")
     public void deleteSequence(@PathVariable String name) throws IOException {
         reactionSequenceService.deleteSequence(name);
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Apply a sequence of reactions to a list of SMILES strings or structures from a database.", description = "[EXPERIMENTAL] Returns the final pool of SMILES strings.")
+    @Operation(summary = "[EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.",
+            description = "[EXPERIMENTAL] Returns the final pool of SMILES strings. " + "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.")
     public Page<String> applyReactions(@RequestBody ReactionRequest request, @RequestParam(required = false, defaultValue = "1000") int limit) throws IOException {
         List<String> sourceSmiles = new ArrayList<>();
 

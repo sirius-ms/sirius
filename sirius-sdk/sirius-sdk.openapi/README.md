@@ -238,15 +238,15 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
 *ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
 *ProjectsApi* | [**openProject**](docs/ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
-*ReactionsApi* | [**addReaction**](docs/ReactionsApi.md#addReaction) | **POST** /api/reactions/library | Add a new reaction to the library.
-*ReactionsApi* | [**addSequence**](docs/ReactionsApi.md#addSequence) | **POST** /api/reactions/sequences/library | Add a new reaction sequence to the library.
-*ReactionsApi* | [**applyReactions**](docs/ReactionsApi.md#applyReactions) | **POST** /api/reactions | Apply a sequence of reactions to a list of SMILES strings or structures from a database.
-*ReactionsApi* | [**deleteReaction**](docs/ReactionsApi.md#deleteReaction) | **DELETE** /api/reactions/library/{name} | Delete a reaction from the library.
-*ReactionsApi* | [**deleteSequence**](docs/ReactionsApi.md#deleteSequence) | **DELETE** /api/reactions/sequences/library/{name} | Delete a reaction sequence from the library.
-*ReactionsApi* | [**getReaction**](docs/ReactionsApi.md#getReaction) | **GET** /api/reactions/library/{name} | Get a specific reaction from the library by name.
-*ReactionsApi* | [**getReactions**](docs/ReactionsApi.md#getReactions) | **GET** /api/reactions | Get all reactions from the library.
-*ReactionsApi* | [**getSequence**](docs/ReactionsApi.md#getSequence) | **GET** /api/reactions/sequences/{name} | Get a specific reaction sequence from the library by name.
-*ReactionsApi* | [**getSequences**](docs/ReactionsApi.md#getSequences) | **GET** /api/reactions/sequences | Get all reaction sequences from the library.
+*ReactionsApi* | [**addReaction**](docs/ReactionsApi.md#addReaction) | **POST** /api/reactions/library | [EXPERIMENTAL] Add a new reaction to the library.
+*ReactionsApi* | [**addSequence**](docs/ReactionsApi.md#addSequence) | **POST** /api/reactions/sequences/library | [EXPERIMENTAL] Add a new reaction sequence to the library.
+*ReactionsApi* | [**applyReactions**](docs/ReactionsApi.md#applyReactions) | **POST** /api/reactions | [EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.
+*ReactionsApi* | [**deleteReaction**](docs/ReactionsApi.md#deleteReaction) | **DELETE** /api/reactions/library/{name} | [EXPERIMENTAL] Delete a reaction from the library.
+*ReactionsApi* | [**deleteSequence**](docs/ReactionsApi.md#deleteSequence) | **DELETE** /api/reactions/sequences/library/{name} | [EXPERIMENTAL] Delete a reaction sequence from the library.
+*ReactionsApi* | [**getReaction**](docs/ReactionsApi.md#getReaction) | **GET** /api/reactions/library/{name} | [EXPERIMENTAL] Get a specific reaction from the library by name.
+*ReactionsApi* | [**getReactions**](docs/ReactionsApi.md#getReactions) | **GET** /api/reactions | [EXPERIMENTAL] Get all reactions from the library.
+*ReactionsApi* | [**getSequence**](docs/ReactionsApi.md#getSequence) | **GET** /api/reactions/sequences/{name} | [EXPERIMENTAL] Get a specific reaction sequence from the library by name.
+*ReactionsApi* | [**getSequences**](docs/ReactionsApi.md#getSequences) | **GET** /api/reactions/sequences | [EXPERIMENTAL] Get all reaction sequences from the library.
 *RunsApi* | [**addTagsToRunExperimental**](docs/RunsApi.md#addTagsToRunExperimental) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | [EXPERIMENTAL] Add tags to a run in the project
 *RunsApi* | [**addTagsToRunsExperimental**](docs/RunsApi.md#addTagsToRunsExperimental) | **PUT** /api/projects/{projectId}/runs/tags | [EXPERIMENTAL] Add tags to a run in the project
 *RunsApi* | [**getRunExperimental**](docs/RunsApi.md#getRunExperimental) | **GET** /api/projects/{projectId}/runs/{runId} | [EXPERIMENTAL] Get run with the given identifier from the specified project-space

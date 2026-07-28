@@ -51,8 +51,8 @@ public class ReactionsApi {
 
     
     /**
-     * Add a new reaction to the library.
-     * 
+     * [EXPERIMENTAL] Add a new reaction to the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reaction The reaction parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -85,8 +85,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Add a new reaction to the library.
-     * 
+     * [EXPERIMENTAL] Add a new reaction to the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reaction The reaction parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -97,8 +97,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Add a new reaction to the library.
-     * 
+     * [EXPERIMENTAL] Add a new reaction to the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reaction The reaction parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -109,8 +109,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Add a new reaction to the library.
-     * 
+     * [EXPERIMENTAL] Add a new reaction to the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reaction The reaction parameter
      * @return ResponseSpec
@@ -121,8 +121,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Add a new reaction sequence to the library.
-     * 
+     * [EXPERIMENTAL] Add a new reaction sequence to the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reactionSequence The reactionSequence parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -155,8 +155,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Add a new reaction sequence to the library.
-     * 
+     * [EXPERIMENTAL] Add a new reaction sequence to the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reactionSequence The reactionSequence parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -167,8 +167,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Add a new reaction sequence to the library.
-     * 
+     * [EXPERIMENTAL] Add a new reaction sequence to the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reactionSequence The reactionSequence parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -179,8 +179,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Add a new reaction sequence to the library.
-     * 
+     * [EXPERIMENTAL] Add a new reaction sequence to the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reactionSequence The reactionSequence parameter
      * @return ResponseSpec
@@ -191,8 +191,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Apply a sequence of reactions to a list of SMILES strings or structures from a database.
-     * [EXPERIMENTAL] Returns the final pool of SMILES strings.
+     * [EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.
+     * [EXPERIMENTAL] Returns the final pool of SMILES strings. [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reactionRequest The reactionRequest parameter
      * @param limit The limit parameter
@@ -231,8 +231,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Apply a sequence of reactions to a list of SMILES strings or structures from a database.
-     * [EXPERIMENTAL] Returns the final pool of SMILES strings.
+     * [EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.
+     * [EXPERIMENTAL] Returns the final pool of SMILES strings. [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reactionRequest The reactionRequest parameter
      * @param limit The limit parameter
@@ -245,8 +245,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Apply a sequence of reactions to a list of SMILES strings or structures from a database.
-     * [EXPERIMENTAL] Returns the final pool of SMILES strings.
+     * [EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.
+     * [EXPERIMENTAL] Returns the final pool of SMILES strings. [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reactionRequest The reactionRequest parameter
      * @param limit The limit parameter
@@ -259,8 +259,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Apply a sequence of reactions to a list of SMILES strings or structures from a database.
-     * [EXPERIMENTAL] Returns the final pool of SMILES strings.
+     * [EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.
+     * [EXPERIMENTAL] Returns the final pool of SMILES strings. [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param reactionRequest The reactionRequest parameter
      * @param limit The limit parameter
@@ -272,8 +272,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Delete a reaction from the library.
-     * 
+     * [EXPERIMENTAL] Delete a reaction from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -306,8 +306,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Delete a reaction from the library.
-     * 
+     * [EXPERIMENTAL] Delete a reaction from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -318,8 +318,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Delete a reaction from the library.
-     * 
+     * [EXPERIMENTAL] Delete a reaction from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -330,8 +330,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Delete a reaction from the library.
-     * 
+     * [EXPERIMENTAL] Delete a reaction from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @return ResponseSpec
@@ -342,8 +342,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Delete a reaction sequence from the library.
-     * 
+     * [EXPERIMENTAL] Delete a reaction sequence from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -376,8 +376,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Delete a reaction sequence from the library.
-     * 
+     * [EXPERIMENTAL] Delete a reaction sequence from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -388,8 +388,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Delete a reaction sequence from the library.
-     * 
+     * [EXPERIMENTAL] Delete a reaction sequence from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -400,8 +400,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Delete a reaction sequence from the library.
-     * 
+     * [EXPERIMENTAL] Delete a reaction sequence from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @return ResponseSpec
@@ -412,8 +412,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get a specific reaction from the library by name.
-     * 
+     * [EXPERIMENTAL] Get a specific reaction from the library by name.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @return Reaction
@@ -449,8 +449,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get a specific reaction from the library by name.
-     * 
+     * [EXPERIMENTAL] Get a specific reaction from the library by name.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @return Reaction
@@ -462,8 +462,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get a specific reaction from the library by name.
-     * 
+     * [EXPERIMENTAL] Get a specific reaction from the library by name.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @return ResponseEntity&lt;Reaction&gt;
@@ -475,8 +475,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get a specific reaction from the library by name.
-     * 
+     * [EXPERIMENTAL] Get a specific reaction from the library by name.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @return ResponseSpec
@@ -487,8 +487,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get all reactions from the library.
-     * 
+     * [EXPERIMENTAL] Get all reactions from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @return List&lt;Reaction&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -517,8 +517,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get all reactions from the library.
-     * 
+     * [EXPERIMENTAL] Get all reactions from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @return List&lt;Reaction&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -529,8 +529,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get all reactions from the library.
-     * 
+     * [EXPERIMENTAL] Get all reactions from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @return ResponseEntity&lt;List&lt;Reaction&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -541,8 +541,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get all reactions from the library.
-     * 
+     * [EXPERIMENTAL] Get all reactions from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -552,8 +552,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get a specific reaction sequence from the library by name.
-     * 
+     * [EXPERIMENTAL] Get a specific reaction sequence from the library by name.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @return ReactionSequence
@@ -589,8 +589,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get a specific reaction sequence from the library by name.
-     * 
+     * [EXPERIMENTAL] Get a specific reaction sequence from the library by name.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @return ReactionSequence
@@ -602,8 +602,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get a specific reaction sequence from the library by name.
-     * 
+     * [EXPERIMENTAL] Get a specific reaction sequence from the library by name.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @return ResponseEntity&lt;ReactionSequence&gt;
@@ -615,8 +615,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get a specific reaction sequence from the library by name.
-     * 
+     * [EXPERIMENTAL] Get a specific reaction sequence from the library by name.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param name The name parameter
      * @return ResponseSpec
@@ -627,8 +627,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get all reaction sequences from the library.
-     * 
+     * [EXPERIMENTAL] Get all reaction sequences from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @return List&lt;ReactionSequence&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -657,8 +657,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get all reaction sequences from the library.
-     * 
+     * [EXPERIMENTAL] Get all reaction sequences from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @return List&lt;ReactionSequence&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -669,8 +669,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get all reaction sequences from the library.
-     * 
+     * [EXPERIMENTAL] Get all reaction sequences from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @return ResponseEntity&lt;List&lt;ReactionSequence&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -681,8 +681,8 @@ public class ReactionsApi {
     }
 
     /**
-     * Get all reaction sequences from the library.
-     * 
+     * [EXPERIMENTAL] Get all reaction sequences from the library.
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
