@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,7 +48,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FoldChangeJobSubmission.JSON_PROPERTY_AGGREGATION_TYPES,
   FoldChangeJobSubmission.JSON_PROPERTY_QUANTIFICATION_MEASURES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class FoldChangeJobSubmission {
   public static final String JSON_PROPERTY_LEFT_RUN_GROUP = "leftRunGroup";
   @jakarta.annotation.Nullable
@@ -79,7 +80,7 @@ public class FoldChangeJobSubmission {
    * @return leftRunGroup
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LEFT_RUN_GROUP)
+  @JsonProperty(value = JSON_PROPERTY_LEFT_RUN_GROUP, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getLeftRunGroup() {
@@ -87,7 +88,7 @@ public class FoldChangeJobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LEFT_RUN_GROUP)
+  @JsonProperty(value = JSON_PROPERTY_LEFT_RUN_GROUP, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLeftRunGroup(@jakarta.annotation.Nullable String leftRunGroup) {
     this.leftRunGroup = leftRunGroup;
@@ -104,7 +105,7 @@ public class FoldChangeJobSubmission {
    * @return rightRunGroup
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RIGHT_RUN_GROUP)
+  @JsonProperty(value = JSON_PROPERTY_RIGHT_RUN_GROUP, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getRightRunGroup() {
@@ -112,7 +113,7 @@ public class FoldChangeJobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RIGHT_RUN_GROUP)
+  @JsonProperty(value = JSON_PROPERTY_RIGHT_RUN_GROUP, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRightRunGroup(@jakarta.annotation.Nullable String rightRunGroup) {
     this.rightRunGroup = rightRunGroup;
@@ -137,7 +138,7 @@ public class FoldChangeJobSubmission {
    * @return aggregationTypes
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_AGGREGATION_TYPES)
+  @JsonProperty(value = JSON_PROPERTY_AGGREGATION_TYPES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<AggregationType> getAggregationTypes() {
@@ -145,7 +146,7 @@ public class FoldChangeJobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_AGGREGATION_TYPES)
+  @JsonProperty(value = JSON_PROPERTY_AGGREGATION_TYPES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAggregationTypes(@jakarta.annotation.Nullable List<AggregationType> aggregationTypes) {
     this.aggregationTypes = aggregationTypes;
@@ -170,7 +171,7 @@ public class FoldChangeJobSubmission {
    * @return quantificationMeasures
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURES)
+  @JsonProperty(value = JSON_PROPERTY_QUANTIFICATION_MEASURES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<QuantMeasure> getQuantificationMeasures() {
@@ -178,7 +179,7 @@ public class FoldChangeJobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURES)
+  @JsonProperty(value = JSON_PROPERTY_QUANTIFICATION_MEASURES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setQuantificationMeasures(@jakarta.annotation.Nullable List<QuantMeasure> quantificationMeasures) {
     this.quantificationMeasures = quantificationMeasures;

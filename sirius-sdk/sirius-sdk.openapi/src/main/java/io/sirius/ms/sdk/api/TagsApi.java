@@ -28,7 +28,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class TagsApi {
     private ApiClient apiClient;
 
@@ -48,7 +48,6 @@ public class TagsApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * [EXPERIMENTAL] TagGroup tags in the project
      * [EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -91,7 +90,7 @@ public class TagsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -599,7 +598,7 @@ public class TagsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "groupType", groupType));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -764,7 +763,7 @@ public class TagsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "tagType", tagType));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };

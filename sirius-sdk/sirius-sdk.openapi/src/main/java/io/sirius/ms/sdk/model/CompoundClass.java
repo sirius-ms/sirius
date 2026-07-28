@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -49,7 +50,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CompoundClass.JSON_PROPERTY_PARENT_ID,
   CompoundClass.JSON_PROPERTY_PARENT_NAME
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class CompoundClass {
   public static final String JSON_PROPERTY_TYPE = "type";
   @jakarta.annotation.Nullable
@@ -105,7 +106,7 @@ public class CompoundClass {
    * @return type
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public CompoundClassType getType() {
@@ -113,7 +114,7 @@ public class CompoundClass {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setType(@jakarta.annotation.Nullable CompoundClassType type) {
     this.type = type;
@@ -130,7 +131,7 @@ public class CompoundClass {
    * @return level
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LEVEL)
+  @JsonProperty(value = JSON_PROPERTY_LEVEL, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getLevel() {
@@ -138,7 +139,7 @@ public class CompoundClass {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LEVEL)
+  @JsonProperty(value = JSON_PROPERTY_LEVEL, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLevel(@jakarta.annotation.Nullable String level) {
     this.level = level;
@@ -155,7 +156,7 @@ public class CompoundClass {
    * @return levelIndex
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LEVEL_INDEX)
+  @JsonProperty(value = JSON_PROPERTY_LEVEL_INDEX, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getLevelIndex() {
@@ -163,7 +164,7 @@ public class CompoundClass {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LEVEL_INDEX)
+  @JsonProperty(value = JSON_PROPERTY_LEVEL_INDEX, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLevelIndex(@jakarta.annotation.Nullable Integer levelIndex) {
     this.levelIndex = levelIndex;
@@ -180,7 +181,7 @@ public class CompoundClass {
    * @return name
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getName() {
@@ -188,7 +189,7 @@ public class CompoundClass {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
@@ -205,7 +206,7 @@ public class CompoundClass {
    * @return description
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonProperty(value = JSON_PROPERTY_DESCRIPTION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getDescription() {
@@ -213,7 +214,7 @@ public class CompoundClass {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonProperty(value = JSON_PROPERTY_DESCRIPTION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDescription(@jakarta.annotation.Nullable String description) {
     this.description = description;
@@ -230,7 +231,7 @@ public class CompoundClass {
    * @return id
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ID)
+  @JsonProperty(value = JSON_PROPERTY_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getId() {
@@ -238,7 +239,7 @@ public class CompoundClass {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ID)
+  @JsonProperty(value = JSON_PROPERTY_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setId(@jakarta.annotation.Nullable Integer id) {
     this.id = id;
@@ -255,7 +256,7 @@ public class CompoundClass {
    * @return probability
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PROBABILITY)
+  @JsonProperty(value = JSON_PROPERTY_PROBABILITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getProbability() {
@@ -263,7 +264,7 @@ public class CompoundClass {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PROBABILITY)
+  @JsonProperty(value = JSON_PROPERTY_PROBABILITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setProbability(@jakarta.annotation.Nullable Double probability) {
     this.probability = probability;
@@ -280,7 +281,7 @@ public class CompoundClass {
    * @return index
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INDEX)
+  @JsonProperty(value = JSON_PROPERTY_INDEX, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getIndex() {
@@ -288,7 +289,7 @@ public class CompoundClass {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_INDEX)
+  @JsonProperty(value = JSON_PROPERTY_INDEX, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIndex(@jakarta.annotation.Nullable Integer index) {
     this.index = index;
@@ -305,7 +306,7 @@ public class CompoundClass {
    * @return parentId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PARENT_ID)
+  @JsonProperty(value = JSON_PROPERTY_PARENT_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getParentId() {
@@ -313,7 +314,7 @@ public class CompoundClass {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PARENT_ID)
+  @JsonProperty(value = JSON_PROPERTY_PARENT_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setParentId(@jakarta.annotation.Nullable Integer parentId) {
     this.parentId = parentId;
@@ -330,7 +331,7 @@ public class CompoundClass {
    * @return parentName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PARENT_NAME)
+  @JsonProperty(value = JSON_PROPERTY_PARENT_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getParentName() {
@@ -338,7 +339,7 @@ public class CompoundClass {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PARENT_NAME)
+  @JsonProperty(value = JSON_PROPERTY_PARENT_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setParentName(@jakarta.annotation.Nullable String parentName) {
     this.parentName = parentName;

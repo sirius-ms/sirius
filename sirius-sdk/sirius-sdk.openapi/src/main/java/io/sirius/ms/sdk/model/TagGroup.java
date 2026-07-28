@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   TagGroup.JSON_PROPERTY_LUCENE_QUERY,
   TagGroup.JSON_PROPERTY_GROUP_TYPE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class TagGroup {
   public static final String JSON_PROPERTY_GROUP_NAME = "groupName";
   @jakarta.annotation.Nullable
@@ -69,7 +70,7 @@ public class TagGroup {
    * @return groupName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_GROUP_NAME)
+  @JsonProperty(value = JSON_PROPERTY_GROUP_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getGroupName() {
@@ -77,7 +78,7 @@ public class TagGroup {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_GROUP_NAME)
+  @JsonProperty(value = JSON_PROPERTY_GROUP_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setGroupName(@jakarta.annotation.Nullable String groupName) {
     this.groupName = groupName;
@@ -94,7 +95,7 @@ public class TagGroup {
    * @return luceneQuery
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LUCENE_QUERY)
+  @JsonProperty(value = JSON_PROPERTY_LUCENE_QUERY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getLuceneQuery() {
@@ -102,7 +103,7 @@ public class TagGroup {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LUCENE_QUERY)
+  @JsonProperty(value = JSON_PROPERTY_LUCENE_QUERY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLuceneQuery(@jakarta.annotation.Nullable String luceneQuery) {
     this.luceneQuery = luceneQuery;
@@ -119,7 +120,7 @@ public class TagGroup {
    * @return groupType
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_GROUP_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_GROUP_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getGroupType() {
@@ -127,7 +128,7 @@ public class TagGroup {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_GROUP_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_GROUP_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setGroupType(@jakarta.annotation.Nullable String groupType) {
     this.groupType = groupType;

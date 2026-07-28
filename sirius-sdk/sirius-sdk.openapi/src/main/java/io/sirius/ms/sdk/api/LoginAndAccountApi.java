@@ -28,7 +28,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class LoginAndAccountApi {
     private ApiClient apiClient;
 
@@ -48,7 +48,6 @@ public class LoginAndAccountApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * Get information about the account currently logged in.
      * Get information about the account currently logged in. Fails if not logged in.
@@ -68,7 +67,7 @@ public class LoginAndAccountApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeSubs", includeSubs));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -347,7 +346,7 @@ public class LoginAndAccountApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "acceptTerms", acceptTerms));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "failWhenLoggedIn", failWhenLoggedIn));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeSubs", includeSubs));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -553,7 +552,7 @@ public class LoginAndAccountApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sid", sid));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };

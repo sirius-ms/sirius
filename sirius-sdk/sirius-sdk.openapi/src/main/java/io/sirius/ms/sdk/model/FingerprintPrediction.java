@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FingerprintPrediction.JSON_PROPERTY_USE_SCORE_THRESHOLD,
   FingerprintPrediction.JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class FingerprintPrediction {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   @jakarta.annotation.Nullable
@@ -69,7 +70,7 @@ public class FingerprintPrediction {
    * @return enabled
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(value = JSON_PROPERTY_ENABLED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isEnabled() {
@@ -77,7 +78,7 @@ public class FingerprintPrediction {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(value = JSON_PROPERTY_ENABLED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
@@ -94,7 +95,7 @@ public class FingerprintPrediction {
    * @return useScoreThreshold
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_USE_SCORE_THRESHOLD)
+  @JsonProperty(value = JSON_PROPERTY_USE_SCORE_THRESHOLD, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isUseScoreThreshold() {
@@ -102,7 +103,7 @@ public class FingerprintPrediction {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_USE_SCORE_THRESHOLD)
+  @JsonProperty(value = JSON_PROPERTY_USE_SCORE_THRESHOLD, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setUseScoreThreshold(@jakarta.annotation.Nullable Boolean useScoreThreshold) {
     this.useScoreThreshold = useScoreThreshold;
@@ -119,7 +120,7 @@ public class FingerprintPrediction {
    * @return alwaysPredictHighRefMatches
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES)
+  @JsonProperty(value = JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isAlwaysPredictHighRefMatches() {
@@ -127,7 +128,7 @@ public class FingerprintPrediction {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES)
+  @JsonProperty(value = JSON_PROPERTY_ALWAYS_PREDICT_HIGH_REF_MATCHES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAlwaysPredictHighRefMatches(@jakarta.annotation.Nullable Boolean alwaysPredictHighRefMatches) {
     this.alwaysPredictHighRefMatches = alwaysPredictHighRefMatches;

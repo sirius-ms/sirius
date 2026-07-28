@@ -29,7 +29,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class ReactionsApi {
     private ApiClient apiClient;
 
@@ -49,7 +49,6 @@ public class ReactionsApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * [EXPERIMENTAL] Add a new reaction to the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -214,7 +213,7 @@ public class ReactionsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "limit", limit));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };

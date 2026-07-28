@@ -31,7 +31,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class JobsApi {
     private ApiClient apiClient;
 
@@ -51,7 +51,6 @@ public class JobsApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * Delete job.
      * Delete job. Specify how to behave for running jobs.
@@ -85,7 +84,7 @@ public class JobsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "cancelIfRunning", cancelIfRunning));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "awaitDeletion", awaitDeletion));
-        
+
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -239,7 +238,7 @@ public class JobsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "cancelIfRunning", cancelIfRunning));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "awaitDeletion", awaitDeletion));
-        
+
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -391,7 +390,7 @@ public class JobsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeConfigMap", includeConfigMap));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeCustomDbsForStructureSearch", includeCustomDbsForStructureSearch));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -481,7 +480,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -565,7 +564,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -780,7 +779,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -867,7 +866,7 @@ public class JobsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -957,7 +956,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeFinished", includeFinished));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1045,7 +1044,7 @@ public class JobsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "overrideExisting", overrideExisting));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1141,7 +1140,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1232,7 +1231,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1331,7 +1330,7 @@ public class JobsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "jobConfigName", jobConfigName));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "recompute", recompute));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };

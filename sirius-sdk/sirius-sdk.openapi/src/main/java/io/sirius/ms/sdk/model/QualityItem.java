@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -43,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   QualityItem.JSON_PROPERTY_QUALITY,
   QualityItem.JSON_PROPERTY_WEIGHT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class QualityItem {
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
   @jakarta.annotation.Nullable
@@ -71,7 +72,7 @@ public class QualityItem {
    * @return description
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonProperty(value = JSON_PROPERTY_DESCRIPTION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getDescription() {
@@ -79,7 +80,7 @@ public class QualityItem {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonProperty(value = JSON_PROPERTY_DESCRIPTION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDescription(@jakarta.annotation.Nullable String description) {
     this.description = description;
@@ -96,7 +97,7 @@ public class QualityItem {
    * @return quality
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_QUALITY)
+  @JsonProperty(value = JSON_PROPERTY_QUALITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public DataQuality getQuality() {
@@ -104,7 +105,7 @@ public class QualityItem {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_QUALITY)
+  @JsonProperty(value = JSON_PROPERTY_QUALITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setQuality(@jakarta.annotation.Nullable DataQuality quality) {
     this.quality = quality;
@@ -121,7 +122,7 @@ public class QualityItem {
    * @return weight
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_WEIGHT)
+  @JsonProperty(value = JSON_PROPERTY_WEIGHT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public QualityWeight getWeight() {
@@ -129,7 +130,7 @@ public class QualityItem {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_WEIGHT)
+  @JsonProperty(value = JSON_PROPERTY_WEIGHT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setWeight(@jakarta.annotation.Nullable QualityWeight weight) {
     this.weight = weight;
