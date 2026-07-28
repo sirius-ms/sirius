@@ -486,7 +486,7 @@ public class InstanceBean implements SiriusPCS {
         if (!getSourceFeature().getComputedTools().isStructureSearch())
             return null;
         return withIdsCatched((pid, fid) -> getClient().features()
-                .getStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
+                .getStructureCandidatesPage(pid, fid, pageNum, pageSize, null,
                         fp ? List.of(StructureCandidateOptField.DB_LINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DB_LINKS)));
     }
 
@@ -507,7 +507,7 @@ public class InstanceBean implements SiriusPCS {
         if (!getSourceFeature().getComputedTools().isDeNovoSearch())
             return null;
         return withIdsCatched((pid, fid) -> getClient().features()
-                .getDeNovoStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
+                .getDeNovoStructureCandidatesPage(pid, fid, pageNum, pageSize, null,
                         fp ? List.of(StructureCandidateOptField.DB_LINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DB_LINKS)));
     }
 
