@@ -99,7 +99,7 @@ public class SiriusClient implements AutoCloseable {
     }
     public SiriusClient(@NotNull String basePath, @Nullable ExecutorService asyncExecutor) {
         this.asyncExecutor = asyncExecutor;
-        apiClient = new ApiClient(buildWebClientBuilder(createDefaultMapper(createDefaultDateFormat()))
+        apiClient = new ApiClient(buildWebClientBuilder(createDefaultObjectMapper(createDefaultDateFormat()))
                 .codecs(codecs -> codecs
                         .defaultCodecs()
                         .maxInMemorySize(100 * 1024 * 1024))

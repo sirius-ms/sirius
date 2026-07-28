@@ -78,16 +78,15 @@ dependencies {
 
 openApiGenerate {
     generatorName.set("java")
-    // since generator 7.18+ inputSpec/configFile are RegularFileProperty, not Property<String>
-    inputSpec.set(file("$rootDir/sirius_rest_service/openapi-spec-enums-as-ref.json"))
-    outputDir.set(layout.projectDirectory.dir("sirius-sdk.openapi"))
-    templateDir.set(layout.projectDirectory.dir("templates"))
+    inputSpec.set("$rootDir/sirius_rest_service/openapi-spec-enums-as-ref.json")
+    outputDir.set("$projectDir/sirius-sdk.openapi")
+    templateDir.set("$projectDir/templates")
     apiPackage.set("io.sirius.ms.sdk.api")
     invokerPackage.set("io.sirius.ms.sdk.client")
     modelPackage.set("io.sirius.ms.sdk.model")
     groupId.set("io.sirius-ms")
     version.set(project.version.toString())
-    configFile.set(layout.projectDirectory.file("openapi-gen-config.json"))
+    configFile.set("$projectDir/openapi-gen-config.json")
 
     typeMappings.set([
             "AnyValue": "Object"

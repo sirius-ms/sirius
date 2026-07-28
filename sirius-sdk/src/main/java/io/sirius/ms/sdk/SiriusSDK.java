@@ -166,7 +166,7 @@ public final class SiriusSDK extends SiriusClient {
         if (Files.exists(SIRIUS_PORT_FILE)) {
             try {
                 int port = Integer.parseInt(Files.readAllLines(SIRIUS_PORT_FILE).getFirst());
-                ApiClient apiClient = new ApiClient(buildWebClientBuilder(createDefaultMapper(createDefaultDateFormat()))
+                ApiClient apiClient = new ApiClient(buildWebClientBuilder(createDefaultObjectMapper(createDefaultDateFormat()))
                         .codecs(codecs -> codecs
                                 .defaultCodecs()
                                 .maxInMemorySize(100 * 1024 * 1024))
