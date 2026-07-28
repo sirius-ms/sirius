@@ -107,6 +107,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             "/api/projects/*/import/ms-local-data-files",
             "/api/projects/*/import/preprocessed-local-data-files",
             "/api/projects/*/import/preprocessed-local-data-files-job",
+            "/api/projects/*/jobs",
             "/api/projects/*/jobs/run-command"
     );
 

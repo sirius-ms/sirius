@@ -70,7 +70,7 @@ public class SiriusClient implements AutoCloseable {
 
     protected final FeatureStatisticsApi featureStatistics;
 
-    protected final JobsApi jobs;
+    protected final JobsApiCompat jobs;
 
     protected final GuiApi gui;
 
@@ -110,7 +110,7 @@ public class SiriusClient implements AutoCloseable {
         compoundStatistics = new CompoundStatisticsApi(apiClient);
         features = new FeaturesApiCompat(apiClient);
         featureStatistics = new FeatureStatisticsApi(apiClient);
-        jobs = new JobsApi(apiClient);
+        jobs = new JobsApiCompat(apiClient);
         gui = new GuiApi(apiClient);
         account = new LoginAndAccountApi(apiClient);
         projects = new ProjectsApi(apiClient);
@@ -273,7 +273,7 @@ public class SiriusClient implements AutoCloseable {
         return featureStatistics;
     }
 
-    public JobsApi jobs() {
+    public JobsApiCompat jobs() {
         return jobs;
     }
 
