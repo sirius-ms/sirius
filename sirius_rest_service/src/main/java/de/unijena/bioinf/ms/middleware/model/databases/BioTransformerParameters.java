@@ -5,18 +5,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.biotransformer.*;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.AllArgsConstructor;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 import static de.unijena.bioinf.ms.biotransformer.MetabolicTransformation.HUMAN_CUSTOM_MULTI;
 
+// Bound through the implicit no-arg constructor and setters on purpose:
+// this DTO documents optional-with-default properties, and only field binding keeps those defaults when
+// a request omits them. Constructor binding would deliver null for an omitted primitive, which is
+// rejected (FAIL_ON_NULL_FOR_PRIMITIVES) and would contradict the published schema. Do not add
+// @Builder/@AllArgsConstructor here: Jackson would prefer the all-args constructor, and @Builder.Default
+// moves the field initialisers away so the documented defaults would silently become 0/false/null.
 @Getter
-@Builder
-@AllArgsConstructor
+@Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BioTransformerParameters {
@@ -26,7 +30,6 @@ public class BioTransformerParameters {
      * that do not need the Cyp450 mode.
      */
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.REQUIRED, defaultValue = "COMBINED")
-    @Builder.Default
     private Cyp450Mode cyp450Mode = Cyp450Mode.COMBINED;
 
     /**
@@ -35,15 +38,13 @@ public class BioTransformerParameters {
      * that do not need the Phase II mode.
      */
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.REQUIRED, defaultValue = "BT_RULE_BASED")
-    @Builder.Default
     private P2Mode p2Mode = P2Mode.BT_RULE_BASED;
 
     /**
      * "Specify if you want to enable the retrieving from database (HMDB) feature."
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "true")
-    @Builder.Default
-    private boolean useDB = false;
+    private boolean useDB = true;
 
     /**
      * Specify BioTransformerSequenceSteps to be applied to input structures. MultiStep MetabolicTransformations can
