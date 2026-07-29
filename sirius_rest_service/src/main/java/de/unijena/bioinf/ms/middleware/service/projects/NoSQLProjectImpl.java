@@ -169,11 +169,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         LongList rowIds = new LongArrayList();
         List<String> rowNames = new ArrayList<>();
 
-        if (rowType == QuantRowType.FEATURES) {
-            storage().findAllStr(AlignedFeatures.class).forEach(alignedFeatures -> addToTable(alignedFeatures, values, rowIds, rowNames, table.get()));
-        } else {
-            storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class).forEach(compound -> addToTable(compound, values, rowIds, rowNames, table.get()));
-        }
+        int quantified = rowType == QuantRowType.FEATURES
+                ? storage().findAllStr(AlignedFeatures.class)
+                        .mapToInt(alignedFeatures -> addToTable(alignedFeatures, values, rowIds, rowNames, table.get())).sum()
+                : storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class)
+                        .mapToInt(compound -> addToTable(compound, values, rowIds, rowNames, table.get())).sum();
+
+        // nothing in this project belongs to an LC/MS run, so there is nothing to quantify
+        if (quantified == 0)
+            return Optional.empty();
 
         table.get().setValues(values.toArray(double[][]::new));
         table.get().setRowIds(rowIds.toLongArray());
@@ -198,13 +202,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             if (alignedFeature.isEmpty())
                 return Optional.empty();
 
-            addToTable(alignedFeature.get(), values, rowIds, rowNames, table.get());
+            if (addToTable(alignedFeature.get(), values, rowIds, rowNames, table.get()) == 0)
+                return Optional.empty();
         } else { //must be COMPOUND
             Optional<de.unijena.bioinf.ms.persistence.model.core.Compound> compound = storage().getByPrimaryKey(Long.parseLong(objectId), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
             if (compound.isEmpty())
                 return Optional.empty();
 
-            addToTable(compound.get(), values, rowIds, rowNames, table.get());
+            if (addToTable(compound.get(), values, rowIds, rowNames, table.get()) == 0)
+                return Optional.empty();
         }
 
         table.get().setValues(values.toArray(double[][]::new));
@@ -237,14 +243,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         );
     }
 
+    /**
+     * @return the number of features that could be quantified, that is features that belong to an LC/MS run
+     */
     @SneakyThrows
-    private <T> void addToTable(T parent, List<double[]> values, LongList rowIds, List<String> rowNames, QuantTable table) {
+    private <T> int addToTable(T parent, List<double[]> values, LongList rowIds, List<String> rowNames, QuantTable table) {
         Long2ObjectMap<List<Feature>> features = new Long2ObjectOpenHashMap<>();
         if (parent instanceof AlignedFeatures alignedFeature) {
             rowIds.add(alignedFeature.getAlignedFeatureId());
             rowNames.add(alignedFeature.getName());
 
             storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class)
+                    // only features with LC/MS information can be quantified per run. Features of a project that
+                    // was imported from preprocessed data have no run, quantifying them would throw an NPE.
+                    .filter(feature -> feature.getRunId() != null)
                     .forEach(feature -> features.put((long) feature.getRunId(), List.of(feature)));
         } else if (parent instanceof de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
             rowIds.add(compound.getCompoundId());
@@ -253,6 +265,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             storage().findStr(Filter.where("compoundId").eq(compound.getCompoundId()), AlignedFeature.class).forEach(alignedFeature -> {
                 try {
                     storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class)
+                            .filter(feature -> feature.getRunId() != null)
                             .forEach(feature -> features.computeIfAbsent((long) feature.getRunId(), k -> new ArrayList<>()).add(feature));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -260,6 +273,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             });
         }
         values.add(getQuantTableRow(features, table));
+        return features.size();
     }
 
     private double[] getQuantTableRow(Long2ObjectMap<List<Feature>> features, QuantTable table) {
