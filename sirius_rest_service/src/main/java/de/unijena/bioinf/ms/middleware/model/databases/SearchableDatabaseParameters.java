@@ -39,7 +39,9 @@ public class SearchableDatabaseParameters {
      * display name of the database
      * Should be short
      */
-    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    // documented via @Schema because swagger-core only translates javax validation annotations,
+    // and enforced via the jakarta @Size that the validator of this application actually reads.
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, minLength = 1, maxLength = 15)
     @Size(min = 1, max = 15, message = "If given, the display name must be between 1 and 15 characters long.")
     protected String displayName;
 

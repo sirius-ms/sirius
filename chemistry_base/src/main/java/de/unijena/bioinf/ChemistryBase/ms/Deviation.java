@@ -21,6 +21,8 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import org.apache.commons.lang3.Range;
 
@@ -44,7 +46,12 @@ public class Deviation implements Cloneable, Ms2ExperimentAnnotation {
         this.absolute = 200e-6*ppm; // set absolute to 200 Da with given ppm
     }
 
-    public Deviation(double ppm, double absolute) {
+    /**
+     * Annotated as creator so that {ppm, absolute} objects can be bound, which is the
+     * representation the REST API documents and the SDKs send.
+     */
+    @JsonCreator
+    public Deviation(@JsonProperty("ppm") double ppm, @JsonProperty("absolute") double absolute) {
         this.ppm = ppm;
         this.absolute = absolute;
     }
@@ -98,7 +105,13 @@ public class Deviation implements Cloneable, Ms2ExperimentAnnotation {
 
     private static Pattern pattern = Pattern.compile("(?:(.+)\\s*ppm\\s*)?(?:(?:,|\\(|)\\s*(.+?)\\s*(m\\/z|mDa|Da|u)\\s*\\)?)?");
 
-    // this is used for deserialization
+    /**
+     * This is used for deserialization.
+     * <p>
+     * Annotated explicitly because {@link #valueOf(String)} is an equally valid from-String creator
+     * candidate: Jackson 3 refuses to build a deserializer when it discovers both implicitly.
+     */
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static Deviation fromString(String s) {
         final Matcher m = pattern.matcher(s);
         if (!m.find()) throw new IllegalArgumentException("Pattern should have the format <number> ppm (<number> m/z)");
