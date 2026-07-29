@@ -173,8 +173,8 @@ public class FeaturesApi {
     }
 
     /**
-     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
-     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+     * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures.
+     * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
      * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
@@ -217,12 +217,12 @@ public class FeaturesApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures/add-candidate", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
-     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+     * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures.
+     * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
      * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
@@ -237,8 +237,8 @@ public class FeaturesApi {
     }
 
     /**
-     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
-     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+     * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures.
+     * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
      * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
@@ -253,8 +253,8 @@ public class FeaturesApi {
     }
 
     /**
-     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
-     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+     * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures.
+     * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
      * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
