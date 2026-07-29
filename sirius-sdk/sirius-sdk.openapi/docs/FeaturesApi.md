@@ -5,7 +5,7 @@ All URIs are relative to *http://localhost:8888*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**addAlignedFeatures**](FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project. |
-| [**addDeNovoStructureCandidate**](FeaturesApi.md#addDeNovoStructureCandidate) | **PUT** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. |
+| [**addDeNovoStructureCandidate**](FeaturesApi.md#addDeNovoStructureCandidate) | **PUT** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures/add-candidate | [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures. |
 | [**addTagsToAlignedFeatureExperimental**](FeaturesApi.md#addTagsToAlignedFeatureExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project |
 | [**addTagsToAlignedFeaturesExperimental**](FeaturesApi.md#addTagsToAlignedFeaturesExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project |
 | [**deleteAlignedFeature**](FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
@@ -129,9 +129,9 @@ No authorization required
 
 > List&lt;StructureCandidateFormula&gt; addDeNovoStructureCandidate(projectId, alignedFeatureId, smiles, skipExistenceCheck)
 
-[EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
+[INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures.
 
-[EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+[INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
 
 ### Example
 
