@@ -1,5 +1,5 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Generic badge](https://img.shields.io/badge/Version-6.3.11-informational.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Version-6.3.12-informational.svg)](https://shields.io/)
 [![Build and Publish](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml)
 [![Join community chat at https://gitter.im/sirius-ms/general](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sirius-ms/general?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -28,13 +28,13 @@ Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jen
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 6.3.11 (2026-07-20)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 6.3.12 (2026-07-30)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (x86-64/amd64/x64): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.3.11/sirius-6.3.11-win-x64.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.11/sirius-6.3.11-win-x64.zip)
-- for Mac (x86-64/amd64/x64): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.3.11/sirius-6.3.11-macos-x64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.11/sirius-6.3.11-macos-x64.zip)
-- for Mac (arm64/aarch64/apple silicon): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.3.11/sirius-6.3.11-macos-arm64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.11/sirius-6.3.11-macos-arm64.zip)
-- for Linux (x86-64/amd64/x64): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.11/sirius-6.3.11-linux-x64.zip)
-- for Linux (arm64/aarch64): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.11/sirius-6.3.11-linux-arm64.zip)
+- for Windows (x86-64/amd64/x64): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.3.12/sirius-6.3.12-win-x64.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.12/sirius-6.3.12-win-x64.zip)
+- for Mac (x86-64/amd64/x64): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.3.12/sirius-6.3.12-macos-x64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.12/sirius-6.3.12-macos-x64.zip)
+- for Mac (arm64/aarch64/apple silicon): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.3.12/sirius-6.3.12-macos-arm64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.12/sirius-6.3.12-macos-arm64.zip)
+- for Linux (x86-64/amd64/x64): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.12/sirius-6.3.12-linux-x64.zip)
+- for Linux (arm64/aarch64): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.3.12/sirius-6.3.12-linux-arm64.zip)
 
 
 <!--end download-->
