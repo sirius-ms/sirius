@@ -27,12 +27,17 @@ import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.AllArgsConstructor;
 
+// NOTE: Deliberately does not extend SearchableDatabaseParameters. The request parameters limit the
+// display name length for user created databases, and inheriting that constraint would document it on
+// this response model as well. Databases that ship with SIRIUS use longer display names, so strictly
+// validating clients would then refuse to deserialize the database listing.
+// Not a javadoc comment on purpose: javadoc of API models ends up in the published OpenAPI spec.
 @Getter
 @SuperBuilder
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SearchableDatabase extends SearchableDatabaseParameters {
+public class SearchableDatabase {
     /**
      * A unique identifier or name of the database.
      * Should only contain file path and url save characters
@@ -95,4 +100,28 @@ public class SearchableDatabase extends SearchableDatabaseParameters {
      */
     @Schema(nullable = true)
     protected String errorMessage;
+
+    // declared last to keep the property order of the generated OpenAPI schema stable,
+    // these used to be inherited from SearchableDatabaseParameters
+
+    /**
+     * display name of the database
+     * Should be short
+     */
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    protected String displayName;
+
+    /**
+     * Storage location of user database
+     * Might be NULL for non-user databases or if default location is used.
+     */
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    protected String location;
+
+    /**
+     * Indicates whether this database shall be used to use retention time information for library matching.
+     * Typically used for in-house spectral libraries that have been measured on
+     */
+    @Schema(nullable = true, defaultValue = "false", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    protected Boolean matchRtOfReferenceSpectra;
 }
