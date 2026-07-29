@@ -9373,8 +9373,6 @@
             "nullable": true
           },
           "displayName": {
-            "maxLength": 15,
-            "minLength": 1,
             "type": "string",
             "description": "display name of the database\n Should be short",
             "nullable": true
