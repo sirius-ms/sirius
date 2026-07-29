@@ -87,6 +87,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
     private final static List<String> INTERNAL_EXCLUSIONS = List.of(
             "/api/databases/downloadable",
+            "/api/projects/*/aligned-features/*/denovo-structures/add-candidate",
             "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree",
             "/api/projects/*/copy",
             "/api/projects/*/import/ms-data-local-files-job",
@@ -109,7 +110,6 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
     private final static List<String> EXPERIMENTAL_EXCLUSIONS = List.of(
             "/api/projects/*/aligned-features/*/adducts",
-            "/api/projects/*/aligned-features/*/denovo-structures",
             "/api/projects/*/aligned-features/*/formulas/*/structures/*/annotated-msmsdata",
             "/api/projects/*/aligned-features/*/formulas/*/structures/*/annotated-spectrum",
             "/api/projects/*/aligned-features/*/quality-report",
