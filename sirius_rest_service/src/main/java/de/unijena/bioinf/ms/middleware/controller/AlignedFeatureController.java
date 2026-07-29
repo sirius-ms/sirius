@@ -382,7 +382,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+     * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
      *
      * @param projectId           project-space to read from.
      * @param alignedFeatureId    feature (aligned over runs) the structure candidates belong to.
@@ -391,7 +391,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this feature candidate with specified optional fields.
      */
     @Operation(operationId = "addDeNovoStructureCandidate")
-    @PutMapping(value = "/{alignedFeatureId}/denovo-structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{alignedFeatureId}/denovo-structures/add-candidate", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<StructureCandidateFormula> addDeNovoStructureCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "none") String smiles,
