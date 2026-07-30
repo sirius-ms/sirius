@@ -1,16 +1,18 @@
-# This is the Gradle build system for JVM applications
-# https://gradle.org/
-# https://github.com/gradle/gradle
-#image: gradle:alpine
 default:
-  image: gradle:8.14-jdk21
-#  image: registry.gitlab.com/bright-giant/docker-images/ubuntu-gradle-jbr:latest
+  image: gradle:9.4.1-jdk21
   tags: [$RUNNER_TAGS]
+  cache:
+    - key:
+        files:
+          - gradle/wrapper/gradle-wrapper.properties
+      paths:
+        - .gradle/wrapper/
+    - key: gradle-cache-$CI_COMMIT_REF_SLUG
+      fallback_keys:
+        - gradle-cache-$CI_DEFAULT_BRANCH
+      paths:
+        - .gradle/caches/
 
-# Disable the Gradle daemon for Continuous Integration servers as correctness
-# is usually a priority over speed in CI environments. Using a fresh
-# runtime for each build is more reliable since the runtime is completely
-# isolated from any previous builds.
 stages:
 #  - test-libs
 #  - build-publish-libs
@@ -21,23 +23,12 @@ stages:
   - sync
 
 variables:
-  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true -Xmx4g -XX:MaxMetaspaceSize=512m"
   GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
 
-cache:
-  # Cache for Gradle Wrapper
-  - key: "wrapper-${CI_COMMIT_REF_SLUG}"
-    paths:
-      - .gradle/wrapper/
-
-  # Cache for Gradle Dependencies
-  - key: "dependencies-${CI_COMMIT_REF_SLUG}"
-    paths:
-      - .gradle/caches/
-
-before_script:
-  - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
-  - echo "Using Gradle user home at $GRADLE_USER_HOME"
+#before_script:
+#  - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
+#  - echo "Using Gradle user home at $GRADLE_USER_HOME"
 
 build_test_publish_libs:
   stage: libs
