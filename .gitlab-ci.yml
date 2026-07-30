@@ -35,19 +35,19 @@ build_test_publish_libs:
   script:
     - |
       echo "===> Running Unit Tests"
-      gradle test --stacktrace
+      ./gradlew test --stacktrace
     - |
       echo "===> Running Integration Tests (incl. account-state tests on an isolated SIRIUS instance)"
-      gradle allIntegrationTests --stacktrace
+      ./gradlew allIntegrationTests --stacktrace
     - |
       if [[ "$CI_COMMIT_BRANCH" == "master" ||  "$CI_COMMIT_BRANCH" == "stable" ]]; then
          echo "===> Publishing Libraries to Gitlab Registry"
-         gradle publishMavenJavaPublicationToGitLabRepository --stacktrace
+         ./gradlew publishMavenJavaPublicationToGitLabRepository --stacktrace
       fi
     - |
       if [[ "$CI_COMMIT_BRANCH" == "stable" ]]; then
         echo "===> Publishing Sirius SDK Public Gitlab Registry"
-       gradle publishMavenJavaPublicationToGitLabPublicRepository --stacktrace
+       ./gradlew publishMavenJavaPublicationToGitLabPublicRepository --stacktrace
       fi
 
   artifacts:
@@ -83,7 +83,7 @@ acceptanceTests:
   stage: test-app
   when: manual
   script:
-    - gradle acceptanceTest --stacktrace
+    - ./gradlew acceptanceTest --stacktrace
   artifacts:
     when: on_failure
     reports:
@@ -239,8 +239,8 @@ sync_api_to_monorepo:
     - git clone "https://${GITLAB_BG_BOT_USERNAME}:${BG_PUBLIC_PUSH_API_TOKEN}@${CI_SERVER_HOST}/${MONOREPO_PROJECT_PATH}.git"
     - cd ${CI_PROJECT_NAME}
 
-    - gradle generateOpenApiDocsAdvancedEnumsAsString
-    - gradle copyOpenApiDocsToMonorepo
+    - ./gradlew generateOpenApiDocsAdvancedEnumsAsString
+    - ./gradlew copyOpenApiDocsToMonorepo
 
     - cd ../$(basename ${MONOREPO_PROJECT_PATH})
     - npm install
