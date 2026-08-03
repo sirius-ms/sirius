@@ -23,7 +23,7 @@ stages:
   - sync
 
 variables:
-  GRADLE_OPTS: "-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true -Xmx4g -XX:MaxMetaspaceSize=512m -Dorg.gradle.logging.level=warn"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true -Xmx4g -XX:MaxMetaspaceSize=512m"
   GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
 
 #before_script:
