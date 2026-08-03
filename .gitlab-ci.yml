@@ -1,5 +1,7 @@
 default:
-  image: gradle:9.4.1-jdk21
+  image:
+    name: gradle:9.4.1-jdk21
+    pull_policy: if-not-present
   tags: [$RUNNER_TAGS]
   cache:
     - key:
@@ -23,7 +25,7 @@ stages:
   - sync
 
 variables:
-  GRADLE_OPTS: "-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true -Xmx4g -XX:MaxMetaspaceSize=512m"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true -Dorg.gradle.configuration-cache=true -Xmx4g -XX:MaxMetaspaceSize=512m"
   GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
 
 #before_script:
