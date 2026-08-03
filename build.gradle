@@ -310,6 +310,18 @@ allprojects {
     tasks.withType(AbstractCopyTask).configureEach {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
+
+//  Profiling test runs
+//    tasks.named('test', Test) {
+//        jvmArgs '-XX:+FlightRecorder', '-XX:StartFlightRecording=filename=build/test-profile.jfr'
+//    }
+//
+//    tasks.named('integrationTest', Test) {
+//        jvmArgs '-XX:StartFlightRecording=filename=build/integrationTest-profile.jfr'
+//    }
+//    tasks.named('accountIntegrationTest', Test) {
+//        jvmArgs '-XX:StartFlightRecording=filename=build/accountIntegrationTest-profile.jfr'
+//    }
 }
 
 subprojects {

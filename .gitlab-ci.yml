@@ -1,16 +1,18 @@
-# This is the Gradle build system for JVM applications
-# https://gradle.org/
-# https://github.com/gradle/gradle
-#image: gradle:alpine
 default:
-  image: gradle:8.14-jdk21
-#  image: registry.gitlab.com/bright-giant/docker-images/ubuntu-gradle-jbr:latest
+  image: gradle:9.4.1-jdk21
   tags: [$RUNNER_TAGS]
+  cache:
+    - key:
+        files:
+          - gradle/wrapper/gradle-wrapper.properties
+      paths:
+        - .gradle/wrapper/
+    - key: gradle-cache-$CI_COMMIT_REF_SLUG
+      fallback_keys:
+        - gradle-cache-$CI_DEFAULT_BRANCH
+      paths:
+        - .gradle/caches/
 
-# Disable the Gradle daemon for Continuous Integration servers as correctness
-# is usually a priority over speed in CI environments. Using a fresh
-# runtime for each build is more reliable since the runtime is completely
-# isolated from any previous builds.
 stages:
 #  - test-libs
 #  - build-publish-libs
@@ -21,42 +23,31 @@ stages:
   - sync
 
 variables:
-  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true -Dorg.gradle.configuration-cache=true -Xmx4g -XX:MaxMetaspaceSize=512m"
   GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
 
-cache:
-  # Cache for Gradle Wrapper
-  - key: "wrapper-${CI_COMMIT_REF_SLUG}"
-    paths:
-      - .gradle/wrapper/
-
-  # Cache for Gradle Dependencies
-  - key: "dependencies-${CI_COMMIT_REF_SLUG}"
-    paths:
-      - .gradle/caches/
-
-before_script:
-  - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
-  - echo "Using Gradle user home at $GRADLE_USER_HOME"
+#before_script:
+#  - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
+#  - echo "Using Gradle user home at $GRADLE_USER_HOME"
 
 build_test_publish_libs:
   stage: libs
   script:
     - |
       echo "===> Running Unit Tests"
-      gradle test --stacktrace
+      ./gradlew test --stacktrace
     - |
       echo "===> Running Integration Tests (incl. account-state tests on an isolated SIRIUS instance)"
-      gradle allIntegrationTests --stacktrace
+      ./gradlew allIntegrationTests --stacktrace
     - |
       if [[ "$CI_COMMIT_BRANCH" == "master" ||  "$CI_COMMIT_BRANCH" == "stable" ]]; then
          echo "===> Publishing Libraries to Gitlab Registry"
-         gradle publishMavenJavaPublicationToGitLabRepository --stacktrace
+         ./gradlew publishMavenJavaPublicationToGitLabRepository --stacktrace
       fi
     - |
       if [[ "$CI_COMMIT_BRANCH" == "stable" ]]; then
         echo "===> Publishing Sirius SDK Public Gitlab Registry"
-       gradle publishMavenJavaPublicationToGitLabPublicRepository --stacktrace
+       ./gradlew publishMavenJavaPublicationToGitLabPublicRepository --stacktrace
       fi
 
   artifacts:
@@ -92,7 +83,7 @@ acceptanceTests:
   stage: test-app
   when: manual
   script:
-    - gradle acceptanceTest --stacktrace
+    - ./gradlew acceptanceTest --stacktrace
   artifacts:
     when: on_failure
     reports:
@@ -248,8 +239,8 @@ sync_api_to_monorepo:
     - git clone "https://${GITLAB_BG_BOT_USERNAME}:${BG_PUBLIC_PUSH_API_TOKEN}@${CI_SERVER_HOST}/${MONOREPO_PROJECT_PATH}.git"
     - cd ${CI_PROJECT_NAME}
 
-    - gradle generateOpenApiDocsAdvancedEnumsAsString
-    - gradle copyOpenApiDocsToMonorepo
+    - ./gradlew generateOpenApiDocsAdvancedEnumsAsString
+    - ./gradlew copyOpenApiDocsToMonorepo
 
     - cd ../$(basename ${MONOREPO_PROJECT_PATH})
     - npm install
