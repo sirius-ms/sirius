@@ -1,7 +1,5 @@
 default:
-  image:
-    name: gradle:9.4.1-jdk21
-    pull_policy: if-not-present
+  image: gradle:9.4.1-jdk21
   tags: [$RUNNER_TAGS]
   cache:
     - key:
