@@ -278,7 +278,7 @@ tasks.register('makeProfileTemplates') {
     outputs.dir(layout.buildDirectory.dir("tmp/profiles_concat/"))
 
     doLast {
-        delete(outputs.files.singleFile.listFiles())
+        outputs.files.singleFile.deleteDir()
         def defaultsDir = outputs.files.singleFile.toPath().resolve("de.unijena.bioinf.ms.defaults")
         Files.createDirectories(defaultsDir)
 
