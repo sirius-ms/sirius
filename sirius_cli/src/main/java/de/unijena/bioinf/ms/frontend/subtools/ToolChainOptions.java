@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.projectspace.Instance;
+import picocli.CommandLine;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -31,6 +32,22 @@ public interface ToolChainOptions<O extends ToolChainJob<?>, F extends ToolChain
 
     //todo this should be moved to the corresponding subtool job so that it is independent from the CLI options
     Consumer<Instance> getInvalidator();
+
+    /**
+     * Checks constraints between the options of this tool that picocli cannot express on its own, e.g. options that
+     * must not be combined. Called after parsing, before the tool chain job is created.
+     * <p>
+     * The given parse result is the one of the command line that really parsed this tool. Do NOT determine it from an
+     * injected {@link CommandLine.Model.CommandSpec} via {@code spec.commandLine().getParseResult()}: a tool chain tool
+     * is registered as subcommand of several parent commands (root, config tool, preprocessing tools) that all share a
+     * single CommandSpec, but a CommandSpec knows only the CommandLine of its last registration. On all other entry
+     * points its parse result is therefore null or, in a long-running process, the one of an earlier run.
+     *
+     * @param parseResult parse result of this tool
+     * @throws CommandLine.ParameterException if the given combination of options is not allowed
+     */
+    default void validate(CommandLine.ParseResult parseResult) throws CommandLine.ParameterException {
+    }
 
     /**
      * Merged list of all subtools that should be reachable from this options. Usually no need to Override.

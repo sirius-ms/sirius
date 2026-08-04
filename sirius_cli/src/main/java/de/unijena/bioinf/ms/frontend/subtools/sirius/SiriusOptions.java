@@ -120,7 +120,9 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     @Option(names = {"--database", "-d", "--db"}, descriptionKey = "FormulaSearchDB" , paramLabel = DataSourceCandidates.PARAM_LABEL, completionCandidates = DataSourceCandidates.class,
-            description = {"Search formulas in the union of the given databases. Selecting any database disables de novo and bottom-up search.\nUse config parameters to allow combination of de novo, bottom-up and database search.", DataSourceCandidates.VALID_DATA_STRING})
+            description = {"Search formulas in the union of the given databases. Selecting any database disables de novo and bottom-up search.",
+                    "To combine database search with de novo and/or bottom-up search, use the config tool parameters FormulaSearchDB and FormulaSearchSettings instead of this option.",
+                    DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
         defaultConfigOptions.changeOption("FormulaSearchDB", dbList);
         defaultConfigOptions.changeOption("FormulaSearchSettings.performDeNovoBelowMz", "0"); //don't perform de novo
@@ -231,15 +233,16 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         }
     }
 
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
+    @Override
+    public void validate(CommandLine.ParseResult parseResult) throws CommandLine.ParameterException {
+        if (parseResult.hasMatchedOption("--database") && parseResult.hasMatchedOption("--bottom-up-search"))
+            throw new CommandLine.ParameterException(parseResult.commandSpec().commandLine(),
+                    "--database and --bottom-up-search must not be combined. Selecting a database already disables de novo and bottom-up search. " +
+                            "Use the config tool parameters FormulaSearchDB and FormulaSearchSettings to combine database search with de novo or bottom-up search.");
+    }
 
     @Override
     public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
-        if (spec.commandLine().getParseResult().hasMatchedOption("--database")
-                && spec.commandLine().getParseResult().hasMatchedOption("--bottom-up-search"))
-            throw new CommandLine.ParameterException(spec.commandLine(),
-                    "--database and --bottom-up-search must not be combined. Selecting a database already disables de novo and bottom-up search.");
         return new InstanceJob.Factory<>(SiriusSubToolJob::new, getInvalidator());
     }
 
