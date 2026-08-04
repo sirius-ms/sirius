@@ -35,8 +35,10 @@ import de.unijena.bioinf.projectspace.SiriusProjectSpaceManagerFactory;
 import de.unijena.bioinf.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Stream;
@@ -149,7 +151,29 @@ public class SiriusCLIApplication {
                 measureTime("Compute DONE!");
             }
         } catch (Throwable e) {
-            LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unexpected Error!", e);
+            if (!handleUserError(e))
+                LoggerFactory.getLogger(SiriusCLIApplication.class).error("Unexpected Error!", e);
         }
+    }
+
+    /**
+     * Reports invalid command line input as plain error message with a help hint for the (sub)command the input belongs
+     * to, instead of reporting it as unexpected error with stack trace.
+     *
+     * @return true if the given error was caused by invalid command line input and has been reported
+     */
+    static boolean handleUserError(Throwable e) {
+        if (!(e instanceof CommandLine.ParameterException parameterException))
+            return false;
+
+        CommandLine commandLine = parameterException.getCommandLine();
+        PrintWriter err = commandLine.getErr();
+        err.println(commandLine.getColorScheme().errorText(parameterException.getMessage()));
+        if (!CommandLine.UnmatchedArgumentException.printSuggestions(parameterException, err))
+            err.println("Try '" + commandLine.getCommandSpec().qualifiedName(" ") + " --help' for more information.");
+        err.flush();
+
+        LoggerFactory.getLogger(SiriusCLIApplication.class).debug("Invalid command line input.", e);
+        return true;
     }
 }

@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.LCMSWorkflow;
+import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
@@ -48,6 +49,18 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
 
     @CommandLine.Option(names={"--in-memory"}, description = "Keep the merged traces and alignments in memory. This might speed up the preprocessing, but increases the RAM requirement by a significant amount..", hidden = true)
     public boolean inMemory;
+
+    @Override
+    public void validate(@NotNull CommandLine.ParseResult parseResult, @NotNull RootOptions<?> rootOptions) throws CommandLine.ParameterException {
+        InputFilesOptions input = rootOptions.getInput();
+        if (input == null || input.msInput == null)
+            throw new CommandLine.ParameterException(parseResult.commandSpec().commandLine(),
+                    "No input data given. Please specify the LC/MS runs (.mzml/.mzxml) to align via --input.");
+        if (input.msInput.lcmsFiles.isEmpty())
+            throw new CommandLine.ParameterException(parseResult.commandSpec().commandLine(),
+                    "No LC/MS runs (.mzml/.mzxml) found in the given input. The 'lcms-align' tool can only process LC/MS runs. " +
+                            "Peak list data (e.g. .ms/.mgf/.mat/.msp) is imported without calling 'lcms-align' tool.");
+    }
 
     @Override
     public PreprocessingJob<ProjectSpaceManager> makePreprocessingJob(@NotNull RootOptions<?> rootOptions, @NotNull ProjectSpaceManagerFactory<?> projectFactory, @Nullable ParameterConfig config) {
