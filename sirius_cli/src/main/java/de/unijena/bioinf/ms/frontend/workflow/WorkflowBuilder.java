@@ -289,11 +289,12 @@ public class WorkflowBuilder {
                     return ((StandaloneTool<?>) parseResult.commandSpec().commandLine().getCommand())
                             .makeWorkflow(rootOptions, configOptionLoader.config);
                 }
-                if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool) {
+                if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool<?> preprocessingTool) {
                     if (spaceManagerFactory == null)
                         throw new IllegalStateException("Preprocessing tool requires a ProjectSpaceManagerFactory!");
-                    preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand())
-                            .makePreprocessingJob(rootOptions, spaceManagerFactory, configOptionLoader.config);
+                    // the parse result has to be passed in: it cannot be taken from the (shared) CommandSpec of the tool.
+                    preprocessingTool.validate(parseResult, rootOptions);
+                    preproJob = preprocessingTool.makePreprocessingJob(rootOptions, spaceManagerFactory, configOptionLoader.config);
                 } else {
                     execute(parseResult, toolchain, toolchainOptions);
                 }
