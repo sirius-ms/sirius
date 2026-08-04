@@ -83,7 +83,7 @@ public class DatabaseDialog extends JDialog {
         JButton editDB = Buttons.getEditButton16("Edit custom database");
         JButton openDB = Buttons.getPlainFolderButton16("Add existing database");
         JButton exportDB = Buttons.getExportButton16("Export database");
-        JButton transformationDB = new ToolbarButton(Icons.GEAR.derive(16,16), "Create Transformation product database");
+        JButton transformationDB = new ToolbarButton(Icons.TRANSFORMATION_DB.derive(16,16), "Create Transformation product database");
         JButton showContentsDB = new ToolbarButton(Icons.DB_LENS.derive(16,16), "Show database contents");
         JButton downloadableDBs = Buttons.getDownloadButton16("Download curated custom databases for local use");
 
