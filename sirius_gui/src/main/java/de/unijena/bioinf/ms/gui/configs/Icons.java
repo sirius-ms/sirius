@@ -105,6 +105,7 @@ public abstract class Icons {
     public static final FlatSVGIcon FINGER =  new FlatSVGIcon( Icons.class.getResource("/icons/circular-icons-svg/c-fingerprint.svg"));
     public static final FlatSVGIcon DENOVO = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-msnovelist.svg"));
     public static final FlatSVGIcon DB_LENS = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/db-lens.svg"));
+    public static final FlatSVGIcon TRANSFORMATION_DB = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-transformation-db.svg"));
 
     public static final FlatSVGIcon DB = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-db.svg"));
     public static final FlatSVGIcon GEAR = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-gear.svg"));
