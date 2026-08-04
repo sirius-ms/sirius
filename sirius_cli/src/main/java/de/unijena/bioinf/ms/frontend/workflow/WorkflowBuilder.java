@@ -295,7 +295,7 @@ public class WorkflowBuilder {
                     preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand())
                             .makePreprocessingJob(rootOptions, spaceManagerFactory, configOptionLoader.config);
                 } else {
-                    execute(parseResult.commandSpec().commandLine(), toolchain, toolchainOptions);
+                    execute(parseResult, toolchain, toolchainOptions);
                 }
             } else {
                 return () -> LoggerFactory.getLogger(getClass()).warn("No execution steps have been Specified!");
@@ -311,7 +311,7 @@ public class WorkflowBuilder {
                             .makePostprocessingJob();
                     break;
                 } else {
-                    execute(parseResult.commandSpec().commandLine(), toolchain, toolchainOptions);
+                    execute(parseResult, toolchain, toolchainOptions);
                 }
             }
 
@@ -344,10 +344,14 @@ public class WorkflowBuilder {
             }
         }
 
-        private void execute(CommandLine parsed, List<ToolChainJob.Factory<?>> executionResult, List<ToolChainOptions<?, ?>> executionOptions) {
+        private void execute(CommandLine.ParseResult parseResult, List<ToolChainJob.Factory<?>> executionResult, List<ToolChainOptions<?, ?>> executionOptions) {
+            CommandLine parsed = parseResult.commandSpec().commandLine();
             Object command = parsed.getCommand();
             if (command instanceof ToolChainOptions<?, ?> toolChainOptions) {
                 try {
+                    // the parse result has to be passed in: it cannot be taken from the (shared) CommandSpec of the tool.
+                    toolChainOptions.validate(parseResult);
+
                     // create a JobFactory (Task) and configures it invalidation behavior based on its subtools.
                     final ToolChainJob.Factory<?> task = toolChainOptions.call();
 
