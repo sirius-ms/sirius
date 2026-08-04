@@ -13,7 +13,9 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
+import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
@@ -76,6 +78,39 @@ public abstract class CLITest {
         run.parseArgs(args);
         run.makeWorkflow();
         run.compute();
+    }
+
+    /**
+     * Parses the given arguments with a freshly built command tree and creates the workflow, but does not compute it.
+     * <p>
+     * Tests that check option validation must not use the shared {@link #run}: a real CLI process always starts with a
+     * fresh command tree, whereas the shared one keeps the parse state of previous runs, which can mask errors or make
+     * options appear to be set that were not given.
+     *
+     * @return the config the run has written its parameters to. It is independent of {@link PropertyManager#DEFAULTS},
+     * so parameters set by one run cannot leak into the next one.
+     */
+    protected ParameterConfig makeWorkflowWithFreshCLI(String... args) throws IOException {
+        return withFreshCLI(false, args);
+    }
+
+    /**
+     * Same as {@link #makeWorkflowWithFreshCLI(String...)}, but also computes the workflow.
+     */
+    protected ParameterConfig runWithFreshCLI(String... args) throws IOException {
+        return withFreshCLI(true, args);
+    }
+
+    private ParameterConfig withFreshCLI(boolean compute, String... args) throws IOException {
+        DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(
+                PropertyManager.DEFAULTS.newIndependentInstance(ConfigType.CLI.name()));
+        CLIRootOptions rootOptions = new CLIRootOptions(configOptionLoader, new NitriteProjectSpaceManagerFactory());
+        Run freshRun = new Run(new WorkflowBuilder(rootOptions), false);
+        freshRun.parseArgs(args);
+        freshRun.makeWorkflow();
+        if (compute)
+            freshRun.compute();
+        return configOptionLoader.config;
     }
 
     /**

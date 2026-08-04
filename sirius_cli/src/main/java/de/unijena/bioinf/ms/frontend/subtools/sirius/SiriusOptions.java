@@ -120,9 +120,13 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     @Option(names = {"--database", "-d", "--db"}, descriptionKey = "FormulaSearchDB" , paramLabel = DataSourceCandidates.PARAM_LABEL, completionCandidates = DataSourceCandidates.class,
-            description = {"Search formulas in the Union of the given databases. If no database is given all possible molecular formulas will be respected (no database is used).", DataSourceCandidates.VALID_DATA_STRING})
+            description = {"Search formulas in the union of the given databases. Selecting any database disables de novo and bottom-up search.",
+                    "To combine database search with de novo and/or bottom-up search, use the config tool parameters FormulaSearchDB and FormulaSearchSettings instead of this option.",
+                    DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
         defaultConfigOptions.changeOption("FormulaSearchDB", dbList);
+        defaultConfigOptions.changeOption("FormulaSearchSettings.performDeNovoBelowMz", "0"); //don't perform de novo
+        defaultConfigOptions.changeOption("FormulaSearchSettings.performBottomUpAboveMz", "Infinity"); //don't perform bottom up
     }
 
     @Option(names = {"-f", "--formulas"}, description = "Specify a list of candidate formulas the method should use. Omit this option if you want to consider all possible molecular formulas")
@@ -227,6 +231,14 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
                 defaultConfigOptions.changeOption("FormulaSearchSettings.performDeNovoBelowMz", String.valueOf(Double.POSITIVE_INFINITY));
             }
         }
+    }
+
+    @Override
+    public void validate(CommandLine.ParseResult parseResult) throws CommandLine.ParameterException {
+        if (parseResult.hasMatchedOption("--database") && parseResult.hasMatchedOption("--bottom-up-search"))
+            throw new CommandLine.ParameterException(parseResult.commandSpec().commandLine(),
+                    "--database and --bottom-up-search must not be combined. Selecting a database already disables de novo and bottom-up search. " +
+                            "Use the config tool parameters FormulaSearchDB and FormulaSearchSettings to combine database search with de novo or bottom-up search.");
     }
 
     @Override
