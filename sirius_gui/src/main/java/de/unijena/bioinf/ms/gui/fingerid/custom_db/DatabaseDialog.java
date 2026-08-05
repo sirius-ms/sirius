@@ -52,6 +52,11 @@ import java.util.concurrent.ExecutionException;
 
 
 public class DatabaseDialog extends JDialog {
+    /**
+     * Icon size of the functional buttons. All icons are scalable SVGs.
+     */
+    private static final int BUTTON_ICON_SIZE = 24;
+
     @Getter
     protected final SiriusGui gui;
 
@@ -65,12 +70,12 @@ public class DatabaseDialog extends JDialog {
     }
 
     public DatabaseDialog(SiriusGui gui, @Nullable Frame owner) {
-        super(owner, true);
+        super(owner, false);
         this.gui = gui;
         setTitle("Custom Databases");
         setLayout(new BorderLayout());
 
-        JPanel header = new DialogHeader(Icons.DB.derive(64,64));
+        JPanel header = new DialogHeader(Icons.DB.derive(64, 64));
         add(header, BorderLayout.NORTH);
 
         dbList = new JList<>();
@@ -78,18 +83,45 @@ public class DatabaseDialog extends JDialog {
         dbList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         dbView = new DatabaseView();
 
-        JButton addCustomDb = Buttons.getAddButton16("Create custom database");
-        JButton deleteDB = Buttons.getRemoveButton16("Delete custom database");
-        JButton editDB = Buttons.getEditButton16("Edit custom database");
-        JButton openDB = Buttons.getPlainFolderButton16("Add existing database");
-        JButton exportDB = Buttons.getExportButton16("Export database");
-        JButton transformationDB = new ToolbarButton(Icons.TRANSFORMATION_DB.derive(16,16), "Create Transformation product database");
-        JButton showContentsDB = new ToolbarButton(Icons.DB_LENS.derive(16,16), "Show database contents");
-        JButton downloadableDBs = Buttons.getDownloadButton16("Download curated custom databases for local use");
+        JButton addCustomDb = Buttons.getAddButton(BUTTON_ICON_SIZE, "Create custom database");
+        JButton deleteDB = Buttons.getRemoveButton(BUTTON_ICON_SIZE, "Delete custom database");
+        JButton editDB = Buttons.getEditButton(BUTTON_ICON_SIZE, "Edit custom database");
+        JButton openDB = Buttons.getPlainFolderButton(BUTTON_ICON_SIZE, "Add existing database");
+        JButton exportDB = Buttons.getExportButton(BUTTON_ICON_SIZE, "Export database");
+        JButton transformationDB = new ToolbarButton(Icons.TRANSFORMATION_DB.derive(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE), "Create Transformation product database");
+        JButton showContentsDB = new ToolbarButton(Icons.DB_LENS.derive(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE), "Show database contents");
+        JButton downloadableDBs = Buttons.getDownloadButton(BUTTON_ICON_SIZE, "Download curated custom databases for local use");
 
         downloadableDBs.addActionListener(e -> new DownloadableDBsDialog(owner, this, gui));
 
         loadDatabaseList();
+
+        Action showSelectedDb = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                SearchableDatabase db = dbList.getSelectedValue();
+                if (db != null) {
+                    DatabaseContentPanel contentPanel = new DatabaseContentPanel(db.getDatabaseId(), gui);
+
+                    // 1. Create a JFrame instead of a JDialog.
+                    // You can optionally pass a String to set the title of the window.
+                    JFrame frame = new JFrame("Database: " + db.getDisplayName());
+
+                    frame.setLayout(new BorderLayout());
+                    frame.add(contentPanel, BorderLayout.CENTER);
+
+                    // Necessary to ensure rdkit loads correctly at 2nd+ use
+                    // (JFrame uses the exact same DISPOSE_ON_CLOSE constant)
+                    frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                    frame.setSize(gui.getMainFrame().getSize());
+
+                    // 2. You can still center the new frame over your existing dialog
+                    frame.setLocationRelativeTo(DatabaseDialog.this);
+
+                    frame.setVisible(true);
+                }
+            }
+        };
 
         Action editSelectedDb = new AbstractAction() {
             @Override
@@ -165,75 +197,52 @@ public class DatabaseDialog extends JDialog {
         });
 
         JScrollPane scroll = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        TextHeaderBoxPanel pane = new TextHeaderBoxPanel("Custom Databases", scroll);
-        pane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, 0, 0));
+        TextHeaderBoxPanel listPane = new TextHeaderBoxPanel("Custom Databases", scroll);
+        listPane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP));
 
-        final Box but = Box.createHorizontalBox();
-        but.add(Box.createHorizontalGlue());
-        but.add(deleteDB);
-        but.add(editDB);
-        but.add(exportDB);
-        but.add(transformationDB);
-        but.add(showContentsDB);
-        but.add(openDB);
-        but.add(downloadableDBs);
-        but.add(addCustomDb);
+        // buttons that add or remove databases from the list belong to the list itself
+        listPane.addFooter(createButtonBar(FlowLayout.CENTER, addCustomDb, openDB, downloadableDBs, exportDB, deleteDB));
+
+        JPanel detailsPane = new JPanel(new BorderLayout());
+        detailsPane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP));
+
+        detailsPane.add(dbView, BorderLayout.CENTER);
+        // buttons that modify the selected database belong to the detail view
+        detailsPane.add(createButtonBar(FlowLayout.RIGHT, showContentsDB, editDB, transformationDB), BorderLayout.SOUTH);
+
         editDB.setEnabled(false);
         deleteDB.setEnabled(false);
         exportDB.setEnabled(false);
         transformationDB.setEnabled(false);
         showContentsDB.setEnabled(false);
 
-        add(but, BorderLayout.SOUTH);
-        add(pane, BorderLayout.CENTER);
-        add(dbView, BorderLayout.EAST);
+        add(listPane, BorderLayout.CENTER);
+        add(detailsPane, BorderLayout.EAST);
 
         addCustomDb.addActionListener(e -> new ImportDatabaseDialog(this));
         editDB.addActionListener(editSelectedDb);
         deleteDB.addActionListener(deleteSelectedDb);
         exportDB.addActionListener(exportSelectedDb);
 
-        showContentsDB.addActionListener(e -> {
+        showContentsDB.addActionListener(showSelectedDb);
+
+        transformationDB.addActionListener(e -> {
             SearchableDatabase db = dbList.getSelectedValue();
             if (db != null) {
-                DatabaseContentPanel contentPanel = new DatabaseContentPanel(db.getDatabaseId(), gui);
-                JDialog dialog = new JDialog(this, "Database Contents: " + db.getDisplayName(), true);
-                dialog.setLayout(new BorderLayout());
-                dialog.add(contentPanel, BorderLayout.CENTER);
-
+                ReactionToolPanel rtPanel = new ReactionToolPanel(db.getDatabaseId(), gui);
+                JFrame frame = new JFrame("Create Transformation product database");
+                frame.setLayout(new BorderLayout());
+                frame.add(rtPanel, BorderLayout.CENTER);
 
                 // Necessary to ensure rdkit loads correctly at 2nd+ use
-                dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                frame.setSize(gui.getMainFrame().getSize());
 
-                // Set to fullscreen (maximized bounds)
-                Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-                dialog.setBounds(bounds);
-
-                dialog.setLocationRelativeTo(this);
-                dialog.setVisible(true);
+                frame.setLocationRelativeTo(this);
+                frame.setVisible(true);
+                loadDatabaseList();
             }
         });
-
-transformationDB.addActionListener(e -> {
-    SearchableDatabase db = dbList.getSelectedValue();
-    if (db != null) {
-        ReactionToolPanel rtPanel = new ReactionToolPanel(db.getDatabaseId(), gui);
-        JDialog dialog = new JDialog(this, "Create Transformation product database", true);
-        dialog.setLayout(new BorderLayout());
-        dialog.add(rtPanel, BorderLayout.CENTER);
-
-        // Necessary to ensure rdkit loads correctly at 2nd+ use
-        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-
-        // Set to fullscreen (maximized bounds)
-        Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-        dialog.setBounds(bounds);
-
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
-        loadDatabaseList();
-    }
-});
 
         JFileChooser openDbFileChooser = new JFileChooser();
         openDbFileChooser.setFileFilter(new FileNameExtensionFilter("SIRIUS custom database files", CustomDatabases.CUSTOM_DB_SUFFIX.replace(".", "")));
@@ -246,7 +255,7 @@ transformationDB.addActionListener(e -> {
                     List<SearchableDatabase> newDbs = Jobs.runInBackgroundAndLoad(gui.getMainFrame(),
                             "Adding '" + files.size() + "' database(s) ...", () ->
                                     gui.applySiriusClient((c, pid) ->
-                                        c.databases().addDatabases(files.stream().map(File::getAbsolutePath).toList()))).awaitResult();
+                                            c.databases().addDatabases(files.stream().map(File::getAbsolutePath).toList()))).awaitResult();
                     if (newDbs == null || newDbs.isEmpty())
                         throw new RuntimeException("Not Database returned from Job. Open Databases probably failed.");
                     whenCustomDbIsAdded(newDbs.getFirst().getDatabaseId());
@@ -271,7 +280,7 @@ transformationDB.addActionListener(e -> {
                 if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
                     int i = dbList.getSelectedIndex();
                     if (i >= 0 && dbList.getCellBounds(i, i).contains(e.getPoint()) && editSelectedDb.isEnabled()) {
-                        editSelectedDb.actionPerformed(null);
+                        showSelectedDb.actionPerformed(null);
                     }
                 }
             }
@@ -292,6 +301,19 @@ transformationDB.addActionListener(e -> {
         setVisible(true);
     }
 
+    /**
+     * Creates a bar of toolbar buttons to be used as footer of a panel.
+     *
+     * @param alignment horizontal {@link FlowLayout} alignment of the buttons within the bar
+     */
+    private static JPanel createButtonBar(int alignment, JButton... buttons) {
+        final JPanel bar = new JPanel(new FlowLayout(alignment, GuiUtils.SMALL_GAP, 0));
+        bar.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, 0, 0, 0));
+        for (JButton button : buttons)
+            bar.add(button);
+        return bar;
+    }
+
     private void loadDatabaseList() {
         customDatabases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading DBs...",
                 () -> gui.applySiriusClient((c, pid) -> c.databases().getCustomDatabases(true, true))
@@ -304,7 +326,7 @@ transformationDB.addActionListener(e -> {
     protected Optional<SearchableDatabase> whenCustomDbIsAdded(final String dbIdToSelect) {
         loadDatabaseList();
         // try to scroll to the newly added Database.
-        Optional<SearchableDatabase> dbOpt =dbIdToSelect == null ? Optional.empty() : customDatabases.stream()
+        Optional<SearchableDatabase> dbOpt = dbIdToSelect == null ? Optional.empty() : customDatabases.stream()
                 .filter(db -> dbIdToSelect.equals(db.getDatabaseId())).findFirst();
 
         dbOpt.ifPresent(db -> {

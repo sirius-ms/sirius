@@ -35,7 +35,11 @@ public abstract class Buttons {
     }
 
     public static ToolbarButton getExportButton16(String tootip) {
-        return new ToolbarButton(PLAIN_EXPORT.derive(16,16), tootip);
+        return getExportButton(16, tootip);
+    }
+
+    public static ToolbarButton getExportButton(int size, String tootip) {
+        return new ToolbarButton(PLAIN_EXPORT.derive(size, size), tootip);
     }
 
     public static ToolbarButton getZoomInButton24() {
@@ -47,19 +51,27 @@ public abstract class Buttons {
     }
 
     public static ToolbarButton getEditButton16(String tootip) {
-        return new ToolbarButton(LIST_EDIT.derive(16,16), tootip);
+        return getEditButton(16, tootip);
     }
 
     public static ToolbarButton getEditButton16() {
         return getEditButton16( "add");
     }
 
+    public static ToolbarButton getEditButton(int size, String tootip) {
+        return new ToolbarButton(LIST_EDIT.derive(size, size), tootip);
+    }
+
     public static ToolbarButton getAddButton16(String tootip) {
-        return new ToolbarButton(LIST_ADD.derive(16,16), tootip);
+        return getAddButton(16, tootip);
     }
 
     public static ToolbarButton getAddButton16() {
         return getAddButton16("add");
+    }
+
+    public static ToolbarButton getAddButton(int size, String tootip) {
+        return new ToolbarButton(LIST_ADD.derive(size, size), tootip);
     }
 
     public static ToolbarButton getRemoveButton16() {
@@ -67,7 +79,11 @@ public abstract class Buttons {
     }
 
     public static ToolbarButton getRemoveButton16(String tootip) {
-        return new ToolbarButton(LIST_REMOVE.derive(16,16), tootip);
+        return getRemoveButton(16, tootip);
+    }
+
+    public static ToolbarButton getRemoveButton(int size, String tootip) {
+        return new ToolbarButton(LIST_REMOVE.derive(size, size), tootip);
     }
 
     public static ToolbarButton getFileChooserButton16() {
@@ -79,10 +95,18 @@ public abstract class Buttons {
     }
 
     public static ToolbarButton getDownloadButton16(String tootip) {
-        return new ToolbarButton(PLAIN_DOWNLOAD.derive(16,16), tootip);
+        return getDownloadButton(16, tootip);
+    }
+
+    public static ToolbarButton getDownloadButton(int size, String tootip) {
+        return new ToolbarButton(PLAIN_DOWNLOAD.derive(size, size), tootip);
     }
 
     public static ToolbarButton getPlainFolderButton16(String tootip) {
-        return new ToolbarButton(PLAIN_FOLDER.derive(16,16), tootip);
+        return getPlainFolderButton(16, tootip);
+    }
+
+    public static ToolbarButton getPlainFolderButton(int size, String tootip) {
+        return new ToolbarButton(PLAIN_FOLDER.derive(size, size), tootip);
     }
 }
