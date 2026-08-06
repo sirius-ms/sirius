@@ -156,13 +156,6 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
                     log.info("Updating project source information done in {}.", w);
 
                 }, () -> log.info("Could not update project source information because project type info is missing!"));
-                project.findProjectSourceFormats().ifPresent(projectSourceFormats -> {
-                    try {
-                        System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(projectSourceFormats));
-                    } catch (JsonProcessingException e) {
-                       log.error("Error while printing project source formats!", e);
-                    }
-                });
             }
         }
     }
