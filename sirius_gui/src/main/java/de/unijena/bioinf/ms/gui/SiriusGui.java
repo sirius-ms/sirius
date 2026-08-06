@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.gui;
 
+import de.unijena.bioinf.ms.gui.fingerid.custom_db.DatabaseDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
@@ -87,6 +88,8 @@ public class SiriusGui {
     }
 
     public void shutdown() {
+        //the globally shared database window must not keep running its commands in a closed project
+        DatabaseDialog.disposeInstance(projectManager.getProjectId());
         mainFrame.dispose();
     }
 

@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.fingerid.custom_db.CustomDbContext;
 import de.unijena.bioinf.ms.gui.fingerid.custom_db.DatabaseDialog;
 
 import javax.swing.*;
@@ -39,6 +40,6 @@ public class ShowDBDialogAction extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new DatabaseDialog(gui);
+        DatabaseDialog.showInstance(CustomDbContext.of(gui), gui.getMainFrame());
     }
 }

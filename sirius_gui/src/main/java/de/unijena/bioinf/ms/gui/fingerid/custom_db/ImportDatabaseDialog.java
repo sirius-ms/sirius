@@ -53,6 +53,7 @@ class ImportDatabaseDialog extends JDialog {
             "Are you sure the spectra are centroided and wish to continue?";
 
     private final DatabaseDialog databaseDialog;
+    private final CustomDbContext context;
     protected DatabaseImportConfigPanel configPanel;
     private SearchableDatabase db;
 
@@ -63,11 +64,12 @@ class ImportDatabaseDialog extends JDialog {
     public ImportDatabaseDialog(@NotNull DatabaseDialog databaseDialog, @Nullable SearchableDatabase db) {
         super(databaseDialog, db != null ? "Import into " + db.getDatabaseId() : "Create custom database", true);
         this.databaseDialog = databaseDialog;
+        this.context = databaseDialog.getContext();
         this.db = db;
 
         setPreferredSize(new Dimension(600, 720));
 
-        configPanel = new DatabaseImportConfigPanel(databaseDialog.getGui(), db);
+        configPanel = new DatabaseImportConfigPanel(context, this, db);
         add(configPanel);
 
         configPanel.importButton.addActionListener(e -> {
@@ -91,7 +93,7 @@ class ImportDatabaseDialog extends JDialog {
     protected void runImportJob() {
         try {
             if (configPanel.hasSpectraFiles() && new QuestionDialog(
-                    databaseDialog.gui.getMainFrame(),
+                    databaseDialog,
                     CENTROIDED_QUESTION,
                     DO_NOT_SHOW_AGAIN_KEY_CENTROIDED_WARNING
             ) {
@@ -110,8 +112,8 @@ class ImportDatabaseDialog extends JDialog {
             );
 
             LoadingBackroundTask<Boolean> job = Jobs.runInBackgroundAndLoad(
-                    databaseDialog.gui.getMainFrame(), "Checking Server Connection...", () -> {
-                        ConnectionCheck check = databaseDialog.getGui().getConnectionMonitor().checkConnection();
+                    databaseDialog, "Checking Server Connection...", () -> {
+                        ConnectionCheck check = context.connectionMonitor().checkConnection();
                         return isConnected(check) && isLoggedIn(check);
                     });
             if (!job.getResult()) {
@@ -123,7 +125,7 @@ class ImportDatabaseDialog extends JDialog {
                         .location(configPanel.getDbFilePath())
                         .displayName(configPanel.getDBDisplayName());
                 String dbId = configPanel.getDBBaseFileName();
-                db = databaseDialog.gui.applySiriusClient((c, pid) -> c.databases().createDatabase(dbId, newDbParameters));
+                db = context.client().databases().createDatabase(dbId, newDbParameters);
             }
             configPanel.getParameterBinding().put("db", () -> db.getDatabaseId());
 
@@ -132,12 +134,10 @@ class ImportDatabaseDialog extends JDialog {
             command.addCommandItem(configPanel.toolCommand());
             configPanel.asParameterList().forEach(command::addCommandItem);
 
-            databaseDialog.gui.applySiriusClient((c, pid) -> {
-                Job j = c.jobs().startCommand(pid, command, List.of(JobOptField.PROGRESS));
-                return LoadingBackroundTask.runInBackground(databaseDialog.gui.getMainFrame(),
-                        "Importing into '" + configPanel.getDbFilePath() + "'...", null,
-                        new SseProgressJJob(databaseDialog.gui.getSiriusClient(), pid, j));
-            }).awaitResult();
+            Job j = context.client().jobs().startCommand(context.commandProjectId(), command, List.of(JobOptField.PROGRESS));
+            LoadingBackroundTask.runInBackground(databaseDialog,
+                    "Importing into '" + configPanel.getDbFilePath() + "'...", null,
+                    new SseProgressJJob(context.client(), context.commandProjectId(), j)).awaitResult();
         } catch (Exception ex) {
             if (ex instanceof ExecutionException) {
                 LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", ex);
@@ -147,17 +147,17 @@ class ImportDatabaseDialog extends JDialog {
                     new ErrorWithDetailsDialog(this, "Unexpected error when importing custom DB!", ex);
             } else if (!(ex instanceof CancellationException) && !(ex.getCause() instanceof CancellationException)) {
                 LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", ex);
-                new ErrorWithDetailsDialog(databaseDialog.getGui().getMainFrame(), "Fatal Error during Custom DB import.", ex);
+                new ErrorWithDetailsDialog(databaseDialog, "Fatal Error during Custom DB import.", ex);
             }
 
             if (new QuestionDialog(
-                    databaseDialog.gui.getMainFrame(),
+                    databaseDialog,
                     "Do you want to keep the incompletely imported database?").isCancel()) {
 
                 databaseDialog.whenCustomDbIsAdded(configPanel.getDBBaseFileName()).map(SearchableDatabase::getDatabaseId)
-                        .ifPresent(dbId -> Jobs.runInBackgroundAndLoad(databaseDialog.gui.getMainFrame(),
+                        .ifPresent(dbId -> Jobs.runInBackgroundAndLoad(databaseDialog,
                                 "Deleting database '" + dbId + "'...", () ->
-                                        databaseDialog.gui.acceptSiriusClient((c, pid) -> c.databases().removeDatabase(dbId, true))
+                                        context.client().databases().removeDatabase(dbId, true)
                         ).getResult());
             }
         } finally {

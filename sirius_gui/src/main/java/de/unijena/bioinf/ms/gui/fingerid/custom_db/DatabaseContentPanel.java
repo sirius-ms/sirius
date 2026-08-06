@@ -1,7 +1,8 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
-import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import io.sirius.ms.gui.webView.BrowserPanel;
+import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,14 +12,11 @@ public class DatabaseContentPanel extends JPanel {
 
     private final BrowserPanel browserPanel;
 
-    public DatabaseContentPanel(@NotNull String databaseId, @NotNull SiriusGui siriusGui) {
+    public DatabaseContentPanel(@NotNull String databaseId, @NotNull BrowserPanelProvider<?> browserPanelProvider) {
         super(new BorderLayout());
-        this.browserPanel = siriusGui.getBrowserPanelProvider().makeReactPanel("/database", "databaseId", databaseId);
+        this.browserPanel = browserPanelProvider.makeReactPanel("/database", "databaseId", databaseId);
         add(browserPanel, BorderLayout.CENTER);
-        setPreferredSize(new Dimension(1024, 768));
-    }
-
-    public BrowserPanel getBrowserPanel() {
-        return browserPanel;
+        //the web view has no meaningful preferred size of its own
+        setPreferredSize(GuiUtils.LARGE_CONTENT_SIZE);
     }
 }
