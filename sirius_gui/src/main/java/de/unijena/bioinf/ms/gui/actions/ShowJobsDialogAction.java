@@ -58,8 +58,7 @@ public class ShowJobsDialogAction extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() instanceof JComponent c)
-            JobDialog.INSTANCE().setLocationRelativeTo(c.getRootPane());
-        JobDialog.INSTANCE().setVisible(true);
+        JobDialog.showInstance(e.getSource() instanceof JComponent c
+                ? SwingUtilities.getWindowAncestor(c) : gui.getMainFrame());
     }
 }

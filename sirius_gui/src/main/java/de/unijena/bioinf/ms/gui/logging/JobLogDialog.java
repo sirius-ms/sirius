@@ -31,8 +31,8 @@ public class JobLogDialog extends JDialog {
     private final SwingJJobContainer jobContainer;
     private TextAreaHandler onDemandHandler;
 
-    public JobLogDialog(Dialog owner, SwingJJobContainer source) {
-        super(owner, "Job Log: " + source.getJobName() + " - " + source.getJobCategory());
+    public JobLogDialog(Window owner, SwingJJobContainer source) {
+        super(owner, "Job Log: " + source.getJobName() + " - " + source.getJobCategory(), ModalityType.MODELESS);
         jobContainer = source;
 
         if (source instanceof TextAreaJJobContainer)

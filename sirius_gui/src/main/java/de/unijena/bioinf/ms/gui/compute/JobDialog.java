@@ -24,35 +24,76 @@ import de.unijena.bioinf.jjobs.JJobTable;
 import de.unijena.bioinf.jjobs.JJobTableFormat;
 import de.unijena.bioinf.jjobs.SwingJJobContainer;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.logging.JobLogDialog;
 import de.unijena.bioinf.ms.gui.table.SiriusTableCellRenderer;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class JobDialog extends JDialog {
+public class JobDialog extends JFrame {
+    /**
+     * Minimum size of this window. Shrunk to the screen when shown, see {@link #showInstance(Window)}.
+     */
+    private static final Dimension MINIMUM_SIZE = new Dimension(640, 480);
+
+    /**
+     * The job manager is global, so this window exists only once for all gui instances. It is a frame
+     * and not a dialog, so it is an independent window that can be minimized and has its own task bar
+     * entry.
+     */
     private static JobDialog INSTANCE = null;
 
-    public synchronized static JobDialog INSTANCE() {
+    /**
+     * Shows the single jobs window. If it is already open, it is brought to the front and moved to
+     * the given window instead of opening a second copy.
+     *
+     * @param relativeTo window to center this window on, usually the main frame it was opened from
+     */
+    public synchronized static void showInstance(@Nullable Window relativeTo) {
         if (INSTANCE == null)
-            return INSTANCE = new JobDialog();
-        return INSTANCE;
+            INSTANCE = new JobDialog();
+        INSTANCE.showRelativeTo(relativeTo);
+    }
+
+    /**
+     * Disposes the single instance. Needs to be called when the gui infrastructure is shut down.
+     */
+    public synchronized static void disposeInstance() {
+        if (INSTANCE != null) {
+            INSTANCE.dispose();
+            INSTANCE = null;
+        }
     }
 
     private JobDialog() {
-        this(null);
-    }
-    private JobDialog(JFrame owner) {
-        super(owner, "Jobs (All Projects)", false);
+        super("Jobs (All Projects)");
 
         JJobManagerPanel managerPanel = createJobManagerPanel();
 
         add(managerPanel);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(640, 480));
-        setLocationRelativeTo(owner);
+        // the instance is reused, so closing just hides it to keep size, position and selection
+        setDefaultCloseOperation(HIDE_ON_CLOSE);
+        setIconImage(Icons.SIRIUS_APP_IMAGE); //own window in the task bar, so it needs the app icon
+        setMinimumSize(GuiUtils.shrinkToUsableScreen(MINIMUM_SIZE));
+    }
+
+    /**
+     * Shows this window centered on the given window. An already visible window is moved there and
+     * brought to the front instead of opening a second copy.
+     */
+    private void showRelativeTo(@Nullable Window relativeTo) {
+        setLocationRelativeTo(relativeTo); //null centers it on the screen
+
+        if (!isVisible())
+            setVisible(true);
+
+        toFront();
+        requestFocus();
     }
 
     private JJobManagerPanel createJobManagerPanel() {
