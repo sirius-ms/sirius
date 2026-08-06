@@ -22,6 +22,7 @@
 package de.unijena.bioinf.ms.gui;
 
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
+import de.unijena.bioinf.ms.gui.fingerid.custom_db.CustomDbBrowserWindow;
 import de.unijena.bioinf.ms.gui.fingerid.custom_db.DatabaseDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import io.sirius.ms.gui.webView.BrowserPanelProvider;
@@ -86,6 +87,7 @@ public final class SiriusGuiFactory {
         try {
             //global windows that use the shared infrastructure which is closed below
             DatabaseDialog.disposeInstance();
+            CustomDbBrowserWindow.disposeInstances();
             JobDialog.disposeInstance();
             if (connectionMonitor != null)
                 connectionMonitor.close();
