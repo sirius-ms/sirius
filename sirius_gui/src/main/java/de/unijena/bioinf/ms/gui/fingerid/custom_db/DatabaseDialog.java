@@ -20,7 +20,6 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.chemdb.custom.CustomDatabases;
-import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Colors;
@@ -34,6 +33,7 @@ import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -51,27 +51,71 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 
-public class DatabaseDialog extends JDialog {
+public class DatabaseDialog extends JFrame {
     /**
      * Icon size of the functional buttons. All icons are scalable SVGs.
      */
     private static final int BUTTON_ICON_SIZE = 24;
 
+    /**
+     * Fixed size of this window. The content does not grow with the number of databases, so there is
+     * nothing to compute here.
+     */
+    private static final Dimension WINDOW_SIZE = new Dimension(450, 450);
+
+    /**
+     * Custom databases are a global resource of the SIRIUS service and not bound to a project. So
+     * like the jobs dialog, this window exists only once for all gui instances. It is a frame and not
+     * a dialog, so it is an independent window that does not stay in front of one specific main frame.
+     */
+    private static DatabaseDialog INSTANCE = null;
+
+    /**
+     * Shows the single database window with the given context. If it is already open, it is brought to
+     * the front and moved to the given window instead of opening a second copy.
+     *
+     * @param relativeTo window to center this window on, usually the main frame it was opened from
+     */
+    public synchronized static void showInstance(@NotNull CustomDbContext context, @Nullable Window relativeTo) {
+        if (INSTANCE == null)
+            INSTANCE = new DatabaseDialog();
+        INSTANCE.showWithContext(context, relativeTo);
+    }
+
+    /**
+     * Disposes the single instance. Needs to be called when the shared gui infrastructure (client,
+     * browser panel provider) is shut down.
+     */
+    public synchronized static void disposeInstance() {
+        if (INSTANCE != null) {
+            INSTANCE.dispose();
+            INSTANCE = null;
+        }
+    }
+
+    /**
+     * Disposes the single instance if it currently runs its command jobs in the given project. Needs
+     * to be called when a project is closed, so that the window cannot keep a dead project around.
+     * Can be removed as soon as custom database commands are project independent.
+     */
+    public synchronized static void disposeInstance(@NotNull String commandProjectId) {
+        if (INSTANCE != null && INSTANCE.context != null && commandProjectId.equals(INSTANCE.context.commandProjectId()))
+            disposeInstance();
+    }
+
+    /**
+     * Services this window operates on. Set when the window is shown, see
+     * {@link #showInstance(CustomDbContext, Window)}.
+     */
     @Getter
-    protected final SiriusGui gui;
+    protected CustomDbContext context;
 
     protected JList<SearchableDatabase> dbList;
     protected List<SearchableDatabase> customDatabases;
 
     protected DatabaseView dbView;
 
-    public DatabaseDialog(SiriusGui gui) {
-        this(gui, gui.getMainFrame());
-    }
-
-    public DatabaseDialog(SiriusGui gui, @Nullable Frame owner) {
-        super(owner, false);
-        this.gui = gui;
+    private DatabaseDialog() {
         setTitle("Custom Databases");
         setLayout(new BorderLayout());
 
@@ -92,16 +136,14 @@ public class DatabaseDialog extends JDialog {
         JButton showContentsDB = new ToolbarButton(Icons.DB_LENS.derive(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE), "Show database contents");
         JButton downloadableDBs = Buttons.getDownloadButton(BUTTON_ICON_SIZE, "Download curated custom databases for local use");
 
-        downloadableDBs.addActionListener(e -> new DownloadableDBsDialog(owner, this, gui));
-
-        loadDatabaseList();
+        downloadableDBs.addActionListener(e -> new DownloadableDBsDialog(this));
 
         Action showSelectedDb = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 SearchableDatabase db = dbList.getSelectedValue();
                 if (db != null) {
-                    DatabaseContentPanel contentPanel = new DatabaseContentPanel(db.getDatabaseId(), gui);
+                    DatabaseContentPanel contentPanel = new DatabaseContentPanel(db.getDatabaseId(), context.browserPanelProvider());
 
                     // 1. Create a JFrame instead of a JDialog.
                     // You can optionally pass a String to set the title of the window.
@@ -113,7 +155,7 @@ public class DatabaseDialog extends JDialog {
                     // Necessary to ensure rdkit loads correctly at 2nd+ use
                     // (JFrame uses the exact same DISPOSE_ON_CLOSE constant)
                     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-                    frame.setSize(gui.getMainFrame().getSize());
+                    GuiUtils.packWithinUsableScreen(frame);
 
                     // 2. You can still center the new frame over your existing dialog
                     frame.setLocationRelativeTo(DatabaseDialog.this);
@@ -147,18 +189,18 @@ public class DatabaseDialog extends JDialog {
                 deleteDialogBox.add(Box.createRigidArea(new Dimension(0, 10)));
                 deleteDialogBox.add(deleteFromDisk);
 
-                if (JOptionPane.showConfirmDialog(getOwner(), deleteDialogBox, "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                if (JOptionPane.showConfirmDialog(DatabaseDialog.this, deleteDialogBox, "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     try {
-                        Jobs.runInBackgroundAndLoad(gui.getMainFrame(),
+                        Jobs.runInBackgroundAndLoad(DatabaseDialog.this,
                                 "Deleting database '" + name + "'...", () ->
-                                        gui.acceptSiriusClient((c, pid) -> c.databases().removeDatabase(name, deleteFromDisk.isSelected()))
+                                        context.client().databases().removeDatabase(name, deleteFromDisk.isSelected())
                         ).awaitResult();
                     } catch (ExecutionException ex) {
                         LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
-                        Jobs.runEDTLater(() -> new ErrorWithDetailsDialog(DatabaseDialog.this, gui.getSiriusClient().unwrapErrorMessage(ex), ex));
+                        Jobs.runEDTLater(() -> new ErrorWithDetailsDialog(DatabaseDialog.this, context.client().unwrapErrorMessage(ex), ex));
                     } catch (Exception ex2) {
                         LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB removal.", ex2);
-                        new ErrorWithDetailsDialog(getOwner(), "Fatal Error during Custom DB removal.", ex2);
+                        new ErrorWithDetailsDialog(DatabaseDialog.this, "Fatal Error during Custom DB removal.", ex2);
                     }
 
                     loadDatabaseList();
@@ -172,7 +214,8 @@ public class DatabaseDialog extends JDialog {
                 if (dbList.getSelectedIndex() != -1) {
                     SearchableDatabase db = dbList.getSelectedValue();
 
-                    ExecutionDialog<DatabaseExportConfigPanel> d = new ExecutionDialog<>(gui, new DatabaseExportConfigPanel(db), null, DatabaseDialog.this, "Export " + db.getDisplayName(), true, false);
+                    ExecutionDialog<DatabaseExportConfigPanel> d = new ExecutionDialog<>(context.client(), context.commandProjectId(),
+                            new DatabaseExportConfigPanel(db), null, DatabaseDialog.this, "Export " + db.getDisplayName(), true, false);
                     d.setIndeterminateProgress(false);
                     d.start();
                 }
@@ -229,14 +272,14 @@ public class DatabaseDialog extends JDialog {
         transformationDB.addActionListener(e -> {
             SearchableDatabase db = dbList.getSelectedValue();
             if (db != null) {
-                ReactionToolPanel rtPanel = new ReactionToolPanel(db.getDatabaseId(), gui);
+                ReactionToolPanel rtPanel = new ReactionToolPanel(db.getDatabaseId(), context.browserPanelProvider());
                 JFrame frame = new JFrame("Create Transformation product database");
                 frame.setLayout(new BorderLayout());
                 frame.add(rtPanel, BorderLayout.CENTER);
 
                 // Necessary to ensure rdkit loads correctly at 2nd+ use
                 frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-                frame.setSize(gui.getMainFrame().getSize());
+                GuiUtils.packWithinUsableScreen(frame);
 
                 frame.setLocationRelativeTo(this);
                 frame.setVisible(true);
@@ -252,15 +295,14 @@ public class DatabaseDialog extends JDialog {
                 List<File> files = Arrays.stream(openDbFileChooser.getSelectedFiles()).toList();
                 // error handling and duplicate checking is performed on the server side
                 try {
-                    List<SearchableDatabase> newDbs = Jobs.runInBackgroundAndLoad(gui.getMainFrame(),
+                    List<SearchableDatabase> newDbs = Jobs.runInBackgroundAndLoad(this,
                             "Adding '" + files.size() + "' database(s) ...", () ->
-                                    gui.applySiriusClient((c, pid) ->
-                                            c.databases().addDatabases(files.stream().map(File::getAbsolutePath).toList()))).awaitResult();
+                                    context.client().databases().addDatabases(files.stream().map(File::getAbsolutePath).toList())).awaitResult();
                     if (newDbs == null || newDbs.isEmpty())
                         throw new RuntimeException("Not Database returned from Job. Open Databases probably failed.");
                     whenCustomDbIsAdded(newDbs.getFirst().getDatabaseId());
                 } catch (ExecutionException ex) {
-                    getGui().getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
+                    context.client().unwrapErrorResponse(ex).ifPresentOrElse(
                             err -> JOptionPane.showMessageDialog(this, err.getDetail(), "Error " + err.getStatus() + ": " + err.getTitle(), JOptionPane.ERROR_MESSAGE),
                             () -> JOptionPane.showMessageDialog(this, ex.getCause().getMessage(), "Unexpected Error", JOptionPane.ERROR_MESSAGE)
                     );
@@ -290,15 +332,35 @@ public class DatabaseDialog extends JDialog {
         dbList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), deleteDbActionName);
         dbList.getActionMap().put(deleteDbActionName, deleteSelectedDb);
 
-        dbList.setSelectedIndex(0);
-
         GuiUtils.closeOnEscape(this);
 
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(375, getMinimumSize().height));
-        pack();
-        setLocationRelativeTo(getParent());
-        setVisible(true);
+        // the instance is reused, so closing just hides it to keep position and selection
+        setDefaultCloseOperation(HIDE_ON_CLOSE);
+        setIconImage(Icons.SIRIUS_APP_IMAGE); //own window in the task bar, so it needs the app icon
+        Dimension windowSize = GuiUtils.shrinkToUsableScreen(WINDOW_SIZE);
+        setSize(windowSize);
+        setMinimumSize(windowSize);
+    }
+
+    /**
+     * Sets the context to work with and shows this window centered on the given window. An already
+     * visible window is moved there and brought to the front instead of opening a second copy.
+     */
+    private void showWithContext(@NotNull CustomDbContext context, @Nullable Window relativeTo) {
+        this.context = context;
+
+        if (relativeTo != null)
+            setLocationRelativeTo(relativeTo);
+
+        if (!isVisible())
+            setVisible(true);
+
+        toFront();
+        requestFocus();
+
+        // databases might have been modified elsewhere since this window was shown the last time.
+        // Done last, so the loading popup has a visible parent window.
+        refreshDatabaseList();
     }
 
     /**
@@ -315,12 +377,27 @@ public class DatabaseDialog extends JDialog {
     }
 
     private void loadDatabaseList() {
-        customDatabases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading DBs...",
-                () -> gui.applySiriusClient((c, pid) -> c.databases().getCustomDatabases(true, true))
+        customDatabases = Jobs.runInBackgroundAndLoad(this, "Loading DBs...",
+                () -> context.client().databases().getCustomDatabases(true, true)
         ).getResult();
 
         customDatabases.sort(Comparator.comparing(SearchableDatabase::getDatabaseId));
         dbList.setListData(customDatabases.toArray(SearchableDatabase[]::new));
+    }
+
+    /**
+     * Reloads the database list from the server keeping the currently selected database selected.
+     */
+    private void refreshDatabaseList() {
+        SearchableDatabase selected = dbList.getSelectedValue();
+        if (selected != null) {
+            whenCustomDbIsAdded(selected.getDatabaseId());
+        } else {
+            loadDatabaseList();
+        }
+
+        if (dbList.getSelectedIndex() < 0)
+            dbList.setSelectedIndex(0);
     }
 
     protected Optional<SearchableDatabase> whenCustomDbIsAdded(final String dbIdToSelect) {

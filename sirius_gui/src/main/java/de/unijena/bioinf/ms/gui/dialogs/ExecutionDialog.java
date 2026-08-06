@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.jjobs.SseProgressJJob;
 import io.sirius.ms.sdk.model.CommandSubmission;
 import io.sirius.ms.sdk.model.Job;
@@ -42,13 +43,23 @@ import java.util.concurrent.CancellationException;
 public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
 
-    private final SiriusGui gui;
+    private final SiriusClient client;
+    private final String projectId;
 
     protected final boolean executeInBackground;
 
     public ExecutionDialog(SiriusGui gui, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, Window owner, String title, boolean modal, boolean executeInBackground) {
+        this(gui.getSiriusClient(), gui.getProjectManager().getProjectId(), configPanel, compounds, owner, title, modal, executeInBackground);
+    }
+
+    /**
+     * Variant for callers that do not have a {@link SiriusGui} instance at hand but just the client
+     * and the project the command should be executed in.
+     */
+    public ExecutionDialog(@NotNull SiriusClient client, @NotNull String projectId, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, Window owner, String title, boolean modal, boolean executeInBackground) {
         super(owner, title, modal ? ModalityType.APPLICATION_MODAL : ModalityType.MODELESS);
-        this.gui = gui;
+        this.client = client;
+        this.projectId = projectId;
         this.executeInBackground = executeInBackground;
         init(configPanel, compounds);
     }
@@ -107,15 +118,11 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
             if (compounds != null)
                 sub.alignedFeatureIds(compounds.stream().map(InstanceBean::getFeatureId).toList());
 
-            LoadingBackroundTask<Job> bt = gui.applySiriusClient((c, pid) -> {
-                Job j = c.jobs().startCommand(pid, sub, List.of(JobOptField.PROGRESS));
-                if (!executeInBackground)
-                    return LoadingBackroundTask.runInBackground(getOwner(),
-                            "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, null,
-                            new SseProgressJJob(gui.getSiriusClient(), pid, j)
-                    );
-                return null;
-            });
+            Job j = client.jobs().startCommand(projectId, sub, List.of(JobOptField.PROGRESS));
+            LoadingBackroundTask<Job> bt = executeInBackground ? null
+                    : LoadingBackroundTask.runInBackground(getOwner(),
+                    "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, null,
+                    new SseProgressJJob(client, projectId, j));
 
             if (bt != null)
                 bt.awaitResult();
