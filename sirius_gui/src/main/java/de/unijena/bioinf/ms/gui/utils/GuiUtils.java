@@ -63,6 +63,38 @@ public class GuiUtils {
     public final static int MEDIUM_GAP = 10;
     public final static int LARGE_GAP = 20;
 
+    /**
+     * Default size for windows showing large content that has no meaningful preferred size of its
+     * own, e.g. web views. Always to be used together with {@link #shrinkToUsableScreen(Dimension)}
+     * or {@link #packWithinUsableScreen(Window)}, since it may exceed small screens.
+     */
+    public final static Dimension LARGE_CONTENT_SIZE = new Dimension(1350, 800);
+
+    /**
+     * @return the screen area that is usable for windows, so excluding task bars and the like
+     */
+    public static Rectangle getUsableScreenBounds() {
+        return GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+    }
+
+    /**
+     * Shrinks the given size to the screen area that is usable for windows.
+     */
+    public static Dimension shrinkToUsableScreen(@NotNull Dimension size) {
+        Rectangle usableScreenBounds = getUsableScreenBounds();
+        return new Dimension(Math.min(usableScreenBounds.width, size.width),
+                Math.min(usableScreenBounds.height, size.height));
+    }
+
+    /**
+     * Sizes the given window to fit its content but never larger than the screen area that is usable
+     * for windows.
+     */
+    public static void packWithinUsableScreen(@NotNull Window window) {
+        window.pack(); //preferred size of the content including window decorations
+        window.setSize(shrinkToUsableScreen(window.getSize()));
+    }
+
     public static synchronized void initUI() {
         // disable custom scaling on Mac because Mac is preventing it anyway.
         if (SystemUtils.IS_OS_MAC) {
@@ -321,13 +353,23 @@ public class GuiUtils {
      * Adds a key binding to close the given dialog on pressing escape
      */
     public static void closeOnEscape(JDialog dialog) {
-        JRootPane rootPane = dialog.getRootPane();
+        closeOnEscape(dialog, dialog.getRootPane());
+    }
+
+    /**
+     * Adds a key binding to close the given frame on pressing escape
+     */
+    public static void closeOnEscape(JFrame frame) {
+        closeOnEscape(frame, frame.getRootPane());
+    }
+
+    private static void closeOnEscape(Window window, JRootPane rootPane) {
         String escapePressed = "escapePressed";
         rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ESCAPE"), escapePressed);
         rootPane.getActionMap().put(escapePressed, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
+                window.dispatchEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSING));
             }
         });
     }
