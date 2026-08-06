@@ -52,14 +52,18 @@ public class SiriusToolbar extends JToolBar {
         //import data
         importB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance(gui, true));
         add(importB);
+        addSeparator(new Dimension(20, 20));
+
+        sample = new ToolbarButton(SiriusActions.SHOW_SAMPLE.getInstance(gui, true));
+        add(sample);
+        addSeparator(new Dimension(20, 20));
 
         //summarize
-        addSeparator(new Dimension(20, 20));
         summB = new ToolbarButton(SiriusActions.SUMMARIZE_WS.getInstance(gui, true));
         add(summB);
+        addSeparator(new Dimension(20, 20));
 
         //fbmn
-        addSeparator(new Dimension(20, 20));
         fbmnB = new ToolbarButton(SiriusActions.EXPORT_FBMN.getInstance(gui, true));
         add(fbmnB);
 
@@ -75,10 +79,6 @@ public class SiriusToolbar extends JToolBar {
 
         db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance(gui, true));
         add(db);
-        addSeparator(new Dimension(20, 20));
-
-        sample = new ToolbarButton(SiriusActions.SHOW_SAMPLE.getInstance(gui, true));
-        add(sample);
         addSeparator(new Dimension(20, 20));
 
         jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance(gui, true));
