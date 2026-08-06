@@ -94,6 +94,15 @@ public class DatabaseDialog extends JFrame {
     }
 
     /**
+     * Reloads the database list of the single instance if it is currently open. Used by windows that
+     * may have modified the databases, e.g. the transformation product tool.
+     */
+    public synchronized static void refreshInstance() {
+        if (INSTANCE != null && INSTANCE.isVisible())
+            INSTANCE.refreshDatabaseList();
+    }
+
+    /**
      * Disposes the single instance if it currently runs its command jobs in the given project. Needs
      * to be called when a project is closed, so that the window cannot keep a dead project around.
      * Can be removed as soon as custom database commands are project independent.
@@ -142,26 +151,8 @@ public class DatabaseDialog extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 SearchableDatabase db = dbList.getSelectedValue();
-                if (db != null) {
-                    DatabaseContentPanel contentPanel = new DatabaseContentPanel(db.getDatabaseId(), context.browserPanelProvider());
-
-                    // 1. Create a JFrame instead of a JDialog.
-                    // You can optionally pass a String to set the title of the window.
-                    JFrame frame = new JFrame("Database: " + db.getDisplayName());
-
-                    frame.setLayout(new BorderLayout());
-                    frame.add(contentPanel, BorderLayout.CENTER);
-
-                    // Necessary to ensure rdkit loads correctly at 2nd+ use
-                    // (JFrame uses the exact same DISPOSE_ON_CLOSE constant)
-                    frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-                    GuiUtils.packWithinUsableScreen(frame);
-
-                    // 2. You can still center the new frame over your existing dialog
-                    frame.setLocationRelativeTo(DatabaseDialog.this);
-
-                    frame.setVisible(true);
-                }
+                if (db != null)
+                    CustomDbBrowserWindow.showDatabaseContent(db, context, DatabaseDialog.this);
             }
         };
 
@@ -203,6 +194,8 @@ public class DatabaseDialog extends JFrame {
                         new ErrorWithDetailsDialog(DatabaseDialog.this, "Fatal Error during Custom DB removal.", ex2);
                     }
 
+                    //no window may be left showing a database that does not exist anymore
+                    CustomDbBrowserWindow.disposeInstances(name);
                     loadDatabaseList();
                 }
             }
@@ -271,20 +264,8 @@ public class DatabaseDialog extends JFrame {
 
         transformationDB.addActionListener(e -> {
             SearchableDatabase db = dbList.getSelectedValue();
-            if (db != null) {
-                ReactionToolPanel rtPanel = new ReactionToolPanel(db.getDatabaseId(), context.browserPanelProvider());
-                JFrame frame = new JFrame("Create Transformation product database");
-                frame.setLayout(new BorderLayout());
-                frame.add(rtPanel, BorderLayout.CENTER);
-
-                // Necessary to ensure rdkit loads correctly at 2nd+ use
-                frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-                GuiUtils.packWithinUsableScreen(frame);
-
-                frame.setLocationRelativeTo(this);
-                frame.setVisible(true);
-                loadDatabaseList();
-            }
+            if (db != null) //the tool may have created a database, so refresh the list when it is closed
+                CustomDbBrowserWindow.showReactionTool(db, context, this, DatabaseDialog::refreshInstance);
         });
 
         JFileChooser openDbFileChooser = new JFileChooser();
