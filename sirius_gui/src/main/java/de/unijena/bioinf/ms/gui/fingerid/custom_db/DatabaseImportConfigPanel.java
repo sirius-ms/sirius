@@ -5,7 +5,6 @@ import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.ImportDBOptions;
-import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
@@ -89,15 +88,21 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
 
     private final MessageBanner connectionErrorBanner = new MessageBanner(false);
 
-    private final SiriusGui gui;
+    private final CustomDbContext context;
+
+    /**
+     * Window used as parent for popups of this panel.
+     */
+    private final Window owner;
 
     private final PropertyChangeListener connectionListener;
     private JToggleSwitch biotransformerSwitch;
     private BiotransformerConfigPanel biotransformerConfigPanel;
 
-    public DatabaseImportConfigPanel(@NotNull SiriusGui gui, @Nullable SearchableDatabase db) {
+    public DatabaseImportConfigPanel(@NotNull CustomDbContext context, @NotNull Window owner, @Nullable SearchableDatabase db) {
         super(ImportDBOptions.class);
-        this.gui = gui;
+        this.context = context;
+        this.owner = owner;
         setLayout(new BorderLayout());
 
         add(createParametersPanel(db), BorderLayout.NORTH);
@@ -109,13 +114,13 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
             setLoggedIn(check);
         };
 
-        gui.getConnectionMonitor().addConnectionListener(connectionListener);
-        Jobs.runInBackground(() -> setLoggedIn(gui.getConnectionMonitor().checkConnection()));
+        context.connectionMonitor().addConnectionListener(connectionListener);
+        Jobs.runInBackground(() -> setLoggedIn(context.connectionMonitor().checkConnection()));
     }
 
     public void destroy(){
         if (connectionListener != null)
-            gui.getConnectionMonitor().removePropertyChangeListener(connectionListener);
+            context.connectionMonitor().removePropertyChangeListener(connectionListener);
     }
 
     private synchronized void setLoggedIn(ConnectionCheck check) {
@@ -138,8 +143,8 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
 
     private boolean checkName(String name) {
         final String n = !name.endsWith(CUSTOM_DB_SUFFIX) ? (name + CUSTOM_DB_SUFFIX) : name;
-        return gui.applySiriusClient((c, pid) -> c.databases().getDatabaseWithResponseSpec(n, false)
-                .bodyToMono(SearchableDatabase.class).onErrorComplete().blockOptional().isPresent());
+        return context.client().databases().getDatabaseWithResponseSpec(n, false)
+                .bodyToMono(SearchableDatabase.class).onErrorComplete().blockOptional().isPresent();
     }
 
     private JPanel createParametersPanel(@Nullable SearchableDatabase db) {
@@ -337,10 +342,10 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
         DropTarget dropTarget = new DropTarget() {
             @Override
             public synchronized void drop(DropTargetDropEvent evt) {
-                List<File> sf = DragAndDrop.getFileListFromDrop(gui.getMainFrame(), evt)
+                List<File> sf = DragAndDrop.getFileListFromDrop(owner, evt)
                         .stream().filter(supportedFiles::accept).toList();
                 if (sf.isEmpty())
-                    new InfoDialog(gui.getMainFrame(), "No supported files found in input. " + supportedFiles.getDescription() + " are supported.");
+                    new InfoDialog(owner, "No supported files found in input. " + supportedFiles.getDescription() + " are supported.");
                 else {
                     fileListModel.addAll(sf);
                     refreshImportButton();
