@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -50,7 +51,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   LcmsSubmissionParameters.JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION,
   LcmsSubmissionParameters.JSON_PROPERTY_MIN_S_N_R
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class LcmsSubmissionParameters {
   public static final String JSON_PROPERTY_SAMPLE_NAMES = "sampleNames";
   @jakarta.annotation.Nullable
@@ -106,7 +107,7 @@ public class LcmsSubmissionParameters {
    * @return sampleNames
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SAMPLE_NAMES)
+  @JsonProperty(value = JSON_PROPERTY_SAMPLE_NAMES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getSampleNames() {
@@ -114,7 +115,7 @@ public class LcmsSubmissionParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SAMPLE_NAMES)
+  @JsonProperty(value = JSON_PROPERTY_SAMPLE_NAMES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSampleNames(@jakarta.annotation.Nullable List<String> sampleNames) {
     this.sampleNames = sampleNames;
@@ -139,7 +140,7 @@ public class LcmsSubmissionParameters {
    * @return sampleTypes
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SAMPLE_TYPES)
+  @JsonProperty(value = JSON_PROPERTY_SAMPLE_TYPES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getSampleTypes() {
@@ -147,7 +148,7 @@ public class LcmsSubmissionParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SAMPLE_TYPES)
+  @JsonProperty(value = JSON_PROPERTY_SAMPLE_TYPES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSampleTypes(@jakarta.annotation.Nullable List<String> sampleTypes) {
     this.sampleTypes = sampleTypes;
@@ -164,7 +165,7 @@ public class LcmsSubmissionParameters {
    * @return alignLCMSRuns
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ALIGN_L_C_M_S_RUNS)
+  @JsonProperty(value = JSON_PROPERTY_ALIGN_L_C_M_S_RUNS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isAlignLCMSRuns() {
@@ -172,7 +173,7 @@ public class LcmsSubmissionParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ALIGN_L_C_M_S_RUNS)
+  @JsonProperty(value = JSON_PROPERTY_ALIGN_L_C_M_S_RUNS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAlignLCMSRuns(@jakarta.annotation.Nullable Boolean alignLCMSRuns) {
     this.alignLCMSRuns = alignLCMSRuns;
@@ -189,7 +190,7 @@ public class LcmsSubmissionParameters {
    * @return noiseIntensity
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NOISE_INTENSITY)
+  @JsonProperty(value = JSON_PROPERTY_NOISE_INTENSITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getNoiseIntensity() {
@@ -197,7 +198,7 @@ public class LcmsSubmissionParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NOISE_INTENSITY)
+  @JsonProperty(value = JSON_PROPERTY_NOISE_INTENSITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNoiseIntensity(@jakarta.annotation.Nullable Double noiseIntensity) {
     this.noiseIntensity = noiseIntensity;
@@ -214,7 +215,7 @@ public class LcmsSubmissionParameters {
    * @return traceMaxMassDeviation
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TRACE_MAX_MASS_DEVIATION)
+  @JsonProperty(value = JSON_PROPERTY_TRACE_MAX_MASS_DEVIATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Deviation getTraceMaxMassDeviation() {
@@ -222,7 +223,7 @@ public class LcmsSubmissionParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TRACE_MAX_MASS_DEVIATION)
+  @JsonProperty(value = JSON_PROPERTY_TRACE_MAX_MASS_DEVIATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTraceMaxMassDeviation(@jakarta.annotation.Nullable Deviation traceMaxMassDeviation) {
     this.traceMaxMassDeviation = traceMaxMassDeviation;
@@ -239,7 +240,7 @@ public class LcmsSubmissionParameters {
    * @return alignMaxMassDeviation
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ALIGN_MAX_MASS_DEVIATION)
+  @JsonProperty(value = JSON_PROPERTY_ALIGN_MAX_MASS_DEVIATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Deviation getAlignMaxMassDeviation() {
@@ -247,7 +248,7 @@ public class LcmsSubmissionParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ALIGN_MAX_MASS_DEVIATION)
+  @JsonProperty(value = JSON_PROPERTY_ALIGN_MAX_MASS_DEVIATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAlignMaxMassDeviation(@jakarta.annotation.Nullable Deviation alignMaxMassDeviation) {
     this.alignMaxMassDeviation = alignMaxMassDeviation;
@@ -264,7 +265,7 @@ public class LcmsSubmissionParameters {
    * @return alignMaxRetentionTimeDeviation
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION)
+  @JsonProperty(value = JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getAlignMaxRetentionTimeDeviation() {
@@ -272,7 +273,7 @@ public class LcmsSubmissionParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION)
+  @JsonProperty(value = JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAlignMaxRetentionTimeDeviation(@jakarta.annotation.Nullable Double alignMaxRetentionTimeDeviation) {
     this.alignMaxRetentionTimeDeviation = alignMaxRetentionTimeDeviation;
@@ -289,7 +290,7 @@ public class LcmsSubmissionParameters {
    * @return minSNR
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MIN_S_N_R)
+  @JsonProperty(value = JSON_PROPERTY_MIN_S_N_R, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMinSNR() {
@@ -297,7 +298,7 @@ public class LcmsSubmissionParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MIN_S_N_R)
+  @JsonProperty(value = JSON_PROPERTY_MIN_S_N_R, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMinSNR(@jakarta.annotation.Nullable Double minSNR) {
     this.minSNR = minSNR;

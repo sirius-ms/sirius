@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PeakPair.JSON_PROPERTY_QUERY_PEAK,
   PeakPair.JSON_PROPERTY_REFERENCE_PEAK
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class PeakPair {
   public static final String JSON_PROPERTY_QUERY_PEAK = "queryPeak";
   @jakarta.annotation.Nonnull
@@ -64,7 +65,7 @@ public class PeakPair {
    * @return queryPeak
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_QUERY_PEAK)
+  @JsonProperty(value = JSON_PROPERTY_QUERY_PEAK, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getQueryPeak() {
@@ -72,7 +73,7 @@ public class PeakPair {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_QUERY_PEAK)
+  @JsonProperty(value = JSON_PROPERTY_QUERY_PEAK, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setQueryPeak(@jakarta.annotation.Nonnull Integer queryPeak) {
     this.queryPeak = queryPeak;
@@ -89,7 +90,7 @@ public class PeakPair {
    * @return referencePeak
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_REFERENCE_PEAK)
+  @JsonProperty(value = JSON_PROPERTY_REFERENCE_PEAK, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getReferencePeak() {
@@ -97,7 +98,7 @@ public class PeakPair {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_REFERENCE_PEAK)
+  @JsonProperty(value = JSON_PROPERTY_REFERENCE_PEAK, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setReferencePeak(@jakarta.annotation.Nonnull Integer referencePeak) {
     this.referencePeak = referencePeak;

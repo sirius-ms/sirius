@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -46,7 +47,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ReactionSequence.JSON_PROPERTY_METADATA,
   ReactionSequence.JSON_PROPERTY_STEPS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class ReactionSequence {
   public static final String JSON_PROPERTY_SEQUENCE_NAME = "sequenceName";
   @jakarta.annotation.Nullable
@@ -74,7 +75,7 @@ public class ReactionSequence {
    * @return sequenceName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SEQUENCE_NAME)
+  @JsonProperty(value = JSON_PROPERTY_SEQUENCE_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getSequenceName() {
@@ -82,7 +83,7 @@ public class ReactionSequence {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SEQUENCE_NAME)
+  @JsonProperty(value = JSON_PROPERTY_SEQUENCE_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSequenceName(@jakarta.annotation.Nullable String sequenceName) {
     this.sequenceName = sequenceName;
@@ -99,7 +100,7 @@ public class ReactionSequence {
    * @return metadata
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_METADATA)
+  @JsonProperty(value = JSON_PROPERTY_METADATA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Metadata getMetadata() {
@@ -107,7 +108,7 @@ public class ReactionSequence {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_METADATA)
+  @JsonProperty(value = JSON_PROPERTY_METADATA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMetadata(@jakarta.annotation.Nullable Metadata metadata) {
     this.metadata = metadata;
@@ -132,7 +133,7 @@ public class ReactionSequence {
    * @return steps
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STEPS)
+  @JsonProperty(value = JSON_PROPERTY_STEPS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<ReactionSequenceStepsInner> getSteps() {
@@ -140,7 +141,7 @@ public class ReactionSequence {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_STEPS)
+  @JsonProperty(value = JSON_PROPERTY_STEPS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSteps(@jakarta.annotation.Nullable List<ReactionSequenceStepsInner> steps) {
     this.steps = steps;

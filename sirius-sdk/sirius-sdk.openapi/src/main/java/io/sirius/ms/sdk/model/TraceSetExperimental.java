@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -49,7 +50,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   TraceSetExperimental.JSON_PROPERTY_AXES,
   TraceSetExperimental.JSON_PROPERTY_TRACES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class TraceSetExperimental {
   public static final String JSON_PROPERTY_ADDUCT_NETWORK = "adductNetwork";
   @jakarta.annotation.Nullable
@@ -85,7 +86,7 @@ public class TraceSetExperimental {
    * @return adductNetwork
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ADDUCT_NETWORK)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT_NETWORK, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public AdductNetworkExperimental getAdductNetwork() {
@@ -93,7 +94,7 @@ public class TraceSetExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ADDUCT_NETWORK)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT_NETWORK, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAdductNetwork(@jakarta.annotation.Nullable AdductNetworkExperimental adductNetwork) {
     this.adductNetwork = adductNetwork;
@@ -110,7 +111,7 @@ public class TraceSetExperimental {
    * @return sampleId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SAMPLE_ID)
+  @JsonProperty(value = JSON_PROPERTY_SAMPLE_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getSampleId() {
@@ -118,7 +119,7 @@ public class TraceSetExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SAMPLE_ID)
+  @JsonProperty(value = JSON_PROPERTY_SAMPLE_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSampleId(@jakarta.annotation.Nullable String sampleId) {
     this.sampleId = sampleId;
@@ -135,7 +136,7 @@ public class TraceSetExperimental {
    * @return sampleName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SAMPLE_NAME)
+  @JsonProperty(value = JSON_PROPERTY_SAMPLE_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getSampleName() {
@@ -143,7 +144,7 @@ public class TraceSetExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SAMPLE_NAME)
+  @JsonProperty(value = JSON_PROPERTY_SAMPLE_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSampleName(@jakarta.annotation.Nullable String sampleName) {
     this.sampleName = sampleName;
@@ -160,7 +161,7 @@ public class TraceSetExperimental {
    * @return axes
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_AXES)
+  @JsonProperty(value = JSON_PROPERTY_AXES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Axes getAxes() {
@@ -168,7 +169,7 @@ public class TraceSetExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_AXES)
+  @JsonProperty(value = JSON_PROPERTY_AXES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAxes(@jakarta.annotation.Nullable Axes axes) {
     this.axes = axes;
@@ -193,7 +194,7 @@ public class TraceSetExperimental {
    * @return traces
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TRACES)
+  @JsonProperty(value = JSON_PROPERTY_TRACES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<TraceExperimental> getTraces() {
@@ -201,7 +202,7 @@ public class TraceSetExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TRACES)
+  @JsonProperty(value = JSON_PROPERTY_TRACES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTraces(@jakarta.annotation.Nullable List<TraceExperimental> traces) {
     this.traces = traces;

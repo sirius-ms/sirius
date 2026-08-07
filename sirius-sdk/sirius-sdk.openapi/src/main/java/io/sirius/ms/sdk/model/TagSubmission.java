@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   TagSubmission.JSON_PROPERTY_TAG_NAME,
   TagSubmission.JSON_PROPERTY_VALUE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class TagSubmission {
   public static final String JSON_PROPERTY_TAGGED_OBJECT_ID = "taggedObjectId";
   @jakarta.annotation.Nonnull
@@ -69,7 +70,7 @@ public class TagSubmission {
    * @return taggedObjectId
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_TAGGED_OBJECT_ID)
+  @JsonProperty(value = JSON_PROPERTY_TAGGED_OBJECT_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public String getTaggedObjectId() {
@@ -77,7 +78,7 @@ public class TagSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TAGGED_OBJECT_ID)
+  @JsonProperty(value = JSON_PROPERTY_TAGGED_OBJECT_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setTaggedObjectId(@jakarta.annotation.Nonnull String taggedObjectId) {
     this.taggedObjectId = taggedObjectId;
@@ -94,7 +95,7 @@ public class TagSubmission {
    * @return tagName
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_TAG_NAME)
+  @JsonProperty(value = JSON_PROPERTY_TAG_NAME, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public String getTagName() {
@@ -102,7 +103,7 @@ public class TagSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TAG_NAME)
+  @JsonProperty(value = JSON_PROPERTY_TAG_NAME, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setTagName(@jakarta.annotation.Nonnull String tagName) {
     this.tagName = tagName;
@@ -119,7 +120,7 @@ public class TagSubmission {
    * @return value
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_VALUE)
+  @JsonProperty(value = JSON_PROPERTY_VALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Object getValue() {
@@ -127,7 +128,7 @@ public class TagSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_VALUE)
+  @JsonProperty(value = JSON_PROPERTY_VALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setValue(@jakarta.annotation.Nullable Object value) {
     this.value = value;

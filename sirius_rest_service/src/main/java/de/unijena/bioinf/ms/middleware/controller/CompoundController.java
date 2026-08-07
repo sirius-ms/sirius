@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import de.unijena.bioinf.ms.middleware.model.features.QuantTable;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagSubmission;
 import de.unijena.bioinf.ms.middleware.security.Authorities;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
@@ -77,7 +78,7 @@ public class CompoundController implements TaggableController<Compound, Compound
 
 
     /**
-     * [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space.
+     * Page of available compounds (group of ion identities) in the given project-space.
      *
      * <h2>Supported filter syntax</h2>
      *
@@ -108,19 +109,22 @@ public class CompoundController implements TaggableController<Compound, Compound
      *
      * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
      * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <strong>Note:</strong> compound-level indexing is not implemented yet, so this endpoint always reads from the
+     * project database. Passing a non-empty {@code searchQuery} is therefore not supported and responds with
+     * 405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.
      *
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
-     * @param searchQuery  search query in lucene syntax.
+     * @param searchQuery  Optional search query in lucene syntax. Not yet supported for compounds; a non-empty
+     *                     query responds with 405 METHOD_NOT_ALLOWED. Omit this parameter to page over all compounds.
      * @param pageable  pageable.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged compounds (group of ion identities)
      */
 
-    @Operation(operationId = "getCompoundsPageExperimental")
+    @Operation(operationId = "getCompoundsPage")
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<Compound> getCompoundsPage(@PathVariable String projectId,
                                            @RequestParam(required = false) String searchQuery,
@@ -157,7 +161,10 @@ public class CompoundController implements TaggableController<Compound, Compound
     }
 
     /**
-     * List of all available compounds (group of ion identities) in the given project-space.
+     * [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space.
+     * <p>
+     * [DEPRECATED] Use /compounds/page instead. Loading all compounds at once does not scale for large projects.
+     * This endpoint will be removed in the next major version of this API.
      *
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
@@ -168,6 +175,7 @@ public class CompoundController implements TaggableController<Compound, Compound
      */
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<Compound> getCompounds(@PathVariable String projectId,
                                        @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
                                        @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
@@ -334,6 +342,21 @@ public class CompoundController implements TaggableController<Compound, Compound
     @Override
     public List<Tag> addTags(String projectId, String compoundId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
         return TaggableController.super.addTags(projectId, compoundId, tags);
+    }
+
+    /**
+     *
+     * [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project. Tags with the same name will be overwritten.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId  project-space to add to.
+     * @param tags       tags with the id of compound (group of ion identities) they shall be added to.
+     */
+    @Operation(operationId = "addTagsToCompoundsExperimental")
+    @Override
+    public void addTagsToObjects(String projectId, List<TagSubmission> tags) {
+        TaggableController.super.addTagsToObjects(projectId, tags);
     }
 
     /**

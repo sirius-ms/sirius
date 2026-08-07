@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -48,7 +49,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BioTransformerParameters.JSON_PROPERTY_USE_D_B,
   BioTransformerParameters.JSON_PROPERTY_BIO_TRANSFORMER_SEQUENCE_STEPS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class BioTransformerParameters {
   public static final String JSON_PROPERTY_CYP450_MODE = "cyp450Mode";
   @jakarta.annotation.Nullable
@@ -80,7 +81,7 @@ public class BioTransformerParameters {
    * @return cyp450Mode
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CYP450_MODE)
+  @JsonProperty(value = JSON_PROPERTY_CYP450_MODE, required = false)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Cyp450Mode getCyp450Mode() {
@@ -88,7 +89,7 @@ public class BioTransformerParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CYP450_MODE)
+  @JsonProperty(value = JSON_PROPERTY_CYP450_MODE, required = false)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setCyp450Mode(@jakarta.annotation.Nullable Cyp450Mode cyp450Mode) {
     this.cyp450Mode = cyp450Mode;
@@ -105,7 +106,7 @@ public class BioTransformerParameters {
    * @return p2Mode
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_P2_MODE)
+  @JsonProperty(value = JSON_PROPERTY_P2_MODE, required = false)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public P2Mode getP2Mode() {
@@ -113,7 +114,7 @@ public class BioTransformerParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_P2_MODE)
+  @JsonProperty(value = JSON_PROPERTY_P2_MODE, required = false)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setP2Mode(@jakarta.annotation.Nullable P2Mode p2Mode) {
     this.p2Mode = p2Mode;
@@ -130,7 +131,7 @@ public class BioTransformerParameters {
    * @return useDB
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_USE_D_B)
+  @JsonProperty(value = JSON_PROPERTY_USE_D_B, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isUseDB() {
@@ -138,7 +139,7 @@ public class BioTransformerParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_USE_D_B)
+  @JsonProperty(value = JSON_PROPERTY_USE_D_B, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setUseDB(@jakarta.annotation.Nullable Boolean useDB) {
     this.useDB = useDB;
@@ -163,7 +164,7 @@ public class BioTransformerParameters {
    * @return bioTransformerSequenceSteps
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_BIO_TRANSFORMER_SEQUENCE_STEPS)
+  @JsonProperty(value = JSON_PROPERTY_BIO_TRANSFORMER_SEQUENCE_STEPS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public List<BioTransformerSequenceStep> getBioTransformerSequenceSteps() {
@@ -171,7 +172,7 @@ public class BioTransformerParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_BIO_TRANSFORMER_SEQUENCE_STEPS)
+  @JsonProperty(value = JSON_PROPERTY_BIO_TRANSFORMER_SEQUENCE_STEPS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setBioTransformerSequenceSteps(@jakarta.annotation.Nonnull List<BioTransformerSequenceStep> bioTransformerSequenceSteps) {
     this.bioTransformerSequenceSteps = bioTransformerSequenceSteps;
