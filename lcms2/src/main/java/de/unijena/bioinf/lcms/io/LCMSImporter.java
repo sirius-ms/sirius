@@ -26,6 +26,7 @@ import de.unijena.bioinf.lcms.projectspace.SiriusDatabaseAdapter;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -41,6 +42,22 @@ public class LCMSImporter {
             boolean saveRawScans,
             Chromatography chromatography
     ) throws IOException {
+        return importToProject(file, null, storageFactory, siriusDatabaseAdapter, centroidingStrategy, saveRawScans, chromatography);
+    }
+
+    /**
+     * @param sampleName name to be used for the imported run. If null, the name is derived from the input file
+     *                   by the parser.
+     */
+    public static ProcessedSample importToProject(
+            Path file,
+            @Nullable String sampleName,
+            LCMSStorageFactory storageFactory,
+            SiriusDatabaseAdapter siriusDatabaseAdapter,
+            CentroidingStrategy centroidingStrategy,
+            boolean saveRawScans,
+            Chromatography chromatography
+    ) throws IOException {
         LCMSParser parser;
         if (file.toString().toLowerCase().endsWith(".mzml")) {
             parser = new MzMLParser();
@@ -49,7 +66,7 @@ public class LCMSImporter {
         } else {
             throw new IOException("Illegal file extension. Only .mzml and .mzxml are supported");
         }
-        LCMSRun run = LCMSRun.builder().chromatography(chromatography).build();
+        LCMSRun run = LCMSRun.builder().chromatography(chromatography).name(sampleName).build();
         if (!saveRawScans) {
             return parser.parse(file, storageFactory, siriusDatabaseAdapter::importRun, siriusDatabaseAdapter::updateRun,
                     (scan)->{

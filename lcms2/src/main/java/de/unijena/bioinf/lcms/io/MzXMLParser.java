@@ -53,8 +53,11 @@ public class MzXMLParser implements LCMSParser {
     ) throws IOException {
         try {
             String name = input.getFileName().toString();
-            Matcher matcher = SUFFIX.matcher(name);
-            run.setName(matcher.replaceAll(""));
+            //a name given by the user wins over the name derived from the input file
+            if (run.getName() == null || run.getName().isBlank()) {
+                Matcher matcher = SUFFIX.matcher(name);
+                run.setName(matcher.replaceAll(""));
+            }
             run.setSourceReference(new MsDataSourceReference(input.getParent().toUri(), name, null, null));
             runConsumer.consume(run);
             MzXMLSaxParser saxParser = new MzXMLSaxParser(
