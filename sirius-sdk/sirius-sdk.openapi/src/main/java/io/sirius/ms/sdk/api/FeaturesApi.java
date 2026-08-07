@@ -23,7 +23,7 @@ import io.sirius.ms.sdk.model.PagedModelSpectralLibraryMatch;
 import io.sirius.ms.sdk.model.PagedModelStructureCandidateFormula;
 import io.sirius.ms.sdk.model.PagedModelStructureCandidateScored;
 import io.sirius.ms.sdk.model.QuantMeasure;
-import io.sirius.ms.sdk.model.QuantTableExperimental;
+import io.sirius.ms.sdk.model.QuantTable;
 import io.sirius.ms.sdk.model.SpectralLibraryMatch;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchOptField;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchSummary;
@@ -1846,19 +1846,19 @@ public class FeaturesApi {
     }
 
     /**
-     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)
-     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).  &lt;p&gt;  Returns the full quantification table. The quantification table contains a quantities of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * Returns the full quantification table of features
+     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.
      * <p><b>200</b> - Quant table if akk feature in this project
      * @param projectId project-space to read from.
      * @param type quantification type.
-     * @return QuantTableExperimental
+     * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFeatureQuantTableExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    private ResponseSpec getFeatureQuantTableRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFeatureQuantTableExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFeatureQuantTable", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -1881,49 +1881,141 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
+        ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/quant-table", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)
-     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).  &lt;p&gt;  Returns the full quantification table. The quantification table contains a quantities of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * Returns the full quantification table of features
+     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.
      * <p><b>200</b> - Quant table if akk feature in this project
      * @param projectId project-space to read from.
      * @param type quantification type.
-     * @return QuantTableExperimental
+     * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantTableExperimental getFeatureQuantTableExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
-        return getFeatureQuantTableExperimentalRequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
+    public QuantTable getFeatureQuantTable(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
+        return getFeatureQuantTableRequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)
-     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).  &lt;p&gt;  Returns the full quantification table. The quantification table contains a quantities of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * Returns the full quantification table of features
+     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.
      * <p><b>200</b> - Quant table if akk feature in this project
      * @param projectId project-space to read from.
      * @param type quantification type.
-     * @return ResponseEntity&lt;QuantTableExperimental&gt;
+     * @return ResponseEntity&lt;QuantTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantTableExperimental> getFeatureQuantTableExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
-        return getFeatureQuantTableExperimentalRequestCreation(projectId, type).toEntity(localVarReturnType).block();
+    public ResponseEntity<QuantTable> getFeatureQuantTableWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
+        return getFeatureQuantTableRequestCreation(projectId, type).toEntity(localVarReturnType).block();
     }
 
     /**
-     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)
-     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).  &lt;p&gt;  Returns the full quantification table. The quantification table contains a quantities of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * Returns the full quantification table of features
+     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.
      * <p><b>200</b> - Quant table if akk feature in this project
      * @param projectId project-space to read from.
      * @param type quantification type.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFeatureQuantTableExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        return getFeatureQuantTableExperimentalRequestCreation(projectId, type);
+    public ResponseSpec getFeatureQuantTableWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+        return getFeatureQuantTableRequestCreation(projectId, type);
+    }
+
+    /**
+     * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row
+     * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row.  &lt;p&gt;  The columns of the row refer to the runs the feature has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
+     * <p><b>200</b> - Quant table row for this feature
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which quantity should be read out
+     * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
+     * @return QuantTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
+     */
+    @Deprecated
+    private ResponseSpec getFeatureQuantTableRowRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFeatureQuantTableRow", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getFeatureQuantTableRow", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quant-table-row", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row
+     * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row.  &lt;p&gt;  The columns of the row refer to the runs the feature has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
+     * <p><b>200</b> - Quant table row for this feature
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which quantity should be read out
+     * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
+     * @return QuantTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public QuantTable getFeatureQuantTableRow(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
+        return getFeatureQuantTableRowRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row
+     * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row.  &lt;p&gt;  The columns of the row refer to the runs the feature has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
+     * <p><b>200</b> - Quant table row for this feature
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which quantity should be read out
+     * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
+     * @return ResponseEntity&lt;QuantTable&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<QuantTable> getFeatureQuantTableRowWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
+        return getFeatureQuantTableRowRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row
+     * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row.  &lt;p&gt;  The columns of the row refer to the runs the feature has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
+     * <p><b>200</b> - Quant table row for this feature
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which quantity should be read out
+     * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getFeatureQuantTableRowWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+        return getFeatureQuantTableRowRequestCreation(projectId, alignedFeatureId, type);
     }
 
     /**
@@ -2900,96 +2992,6 @@ public class FeaturesApi {
      */
     public ResponseSpec getMsDataWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Boolean msDataSearchPrepared) throws WebClientResponseException {
         return getMsDataRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared);
-    }
-
-    /**
-     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
-     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).  &lt;p&gt;  The quantification table contains a quantity of the feature within all samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * <p><b>200</b> - Quant table row for this feature
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which quantity should be read out
-     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
-     * @return QuantTableExperimental
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec getQuantTableRowExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantTableRowExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'alignedFeatureId' is set
-        if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getQuantTableRowExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-        pathParams.put("alignedFeatureId", alignedFeatureId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quant-table-row", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
-     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).  &lt;p&gt;  The quantification table contains a quantity of the feature within all samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * <p><b>200</b> - Quant table row for this feature
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which quantity should be read out
-     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
-     * @return QuantTableExperimental
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public QuantTableExperimental getQuantTableRowExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
-        return getQuantTableRowExperimentalRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
-     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).  &lt;p&gt;  The quantification table contains a quantity of the feature within all samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * <p><b>200</b> - Quant table row for this feature
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which quantity should be read out
-     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
-     * @return ResponseEntity&lt;QuantTableExperimental&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<QuantTableExperimental> getQuantTableRowExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
-        return getQuantTableRowExperimentalRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
-     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).  &lt;p&gt;  The quantification table contains a quantity of the feature within all samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * <p><b>200</b> - Quant table row for this feature
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which quantity should be read out
-     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getQuantTableRowExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        return getQuantTableRowExperimentalRequestCreation(projectId, alignedFeatureId, type);
     }
 
     /**

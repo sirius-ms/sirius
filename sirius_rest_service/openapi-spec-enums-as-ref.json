@@ -4392,9 +4392,9 @@
         "tags": [
           "Compounds"
         ],
-        "summary": "[EXPERIMENTAL] Returns a single quantification table row for the given compound",
-        "description": "[EXPERIMENTAL] Returns a single quantification table row for the given compound.\n \u003cp\u003e\n The quantification table contains a quantification of the feature within all\n samples it is contained in.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*",
-        "operationId": "getCompoundQuantTableRowExperimental",
+        "summary": "[INTERNAL] Returns a quantification table that contains the given compound as its only row",
+        "description": "[INTERNAL] Returns a quantification table that contains the given compound as its only row.\n \u003cp\u003e\n The columns of the row refer to the runs the compound has been quantified in, given as run ids and run names.\n \u003cp\u003e\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.\n [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows\n to request the quantification of an arbitrary subset of the project.",
+        "operationId": "getCompoundQuantTableRow",
         "parameters": [
           {
             "name": "projectId",
@@ -4430,12 +4430,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuantTableExperimental"
+                  "$ref": "#/components/schemas/QuantTable"
                 }
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/projects/{projectId}/compounds/tags/{objectId}": {
@@ -4584,9 +4585,9 @@
         "tags": [
           "Compounds"
         ],
-        "summary": "[EXPERIMENTAL] Returns the full quantification table of compounds",
-        "description": "[EXPERIMENTAL] Returns the full quantification table of compounds.\n \u003cp\u003e\n The quantification table contains a quantification of the features within all\n runs they are contained in.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*",
-        "operationId": "getCompoundQuantTableExperimental",
+        "summary": "Returns the full quantification table of compounds",
+        "description": "Returns the full quantification table of compounds.\n \u003cp\u003e\n The quantification table contains the quantities of the compounds within all runs they are contained in.\n Rows refer to compounds, columns to runs, both given as ids and names.",
+        "operationId": "getCompoundQuantTable",
         "parameters": [
           {
             "name": "projectId",
@@ -4613,7 +4614,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuantTableExperimental"
+                  "$ref": "#/components/schemas/QuantTable"
                 }
               }
             }
@@ -5502,9 +5503,9 @@
         "tags": [
           "Features"
         ],
-        "summary": "[EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)",
-        "description": "[EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).\n \u003cp\u003e\n The quantification table contains a quantity of the feature within all samples it is contained in.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
-        "operationId": "getQuantTableRowExperimental",
+        "summary": "[INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row",
+        "description": "[INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row.\n \u003cp\u003e\n The columns of the row refer to the runs the feature has been quantified in, given as run ids and run names.\n \u003cp\u003e\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.\n [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows\n to request the quantification of an arbitrary subset of the project.",
+        "operationId": "getFeatureQuantTableRow",
         "parameters": [
           {
             "name": "projectId",
@@ -5527,7 +5528,7 @@
           {
             "name": "type",
             "in": "query",
-            "description": "quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.",
+            "description": "quantification type. APEX_INTENSITY is the intensity of the feature at its apex,\n                         AREA_UNDER_CURVE the area under its curve.",
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/QuantMeasure"
@@ -5540,12 +5541,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuantTableExperimental"
+                  "$ref": "#/components/schemas/QuantTable"
                 }
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report": {
@@ -7366,9 +7368,9 @@
         "tags": [
           "Features"
         ],
-        "summary": "[EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)",
-        "description": "[EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).\n \u003cp\u003e\n Returns the full quantification table. The quantification table contains a quantities of the features within all\n runs they are contained in.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
-        "operationId": "getFeatureQuantTableExperimental",
+        "summary": "Returns the full quantification table of features",
+        "description": "Returns the full quantification table of features.\n \u003cp\u003e\n The quantification table contains the quantities of the features within all runs they are contained in.\n Rows refer to features, columns to runs, both given as ids and names.",
+        "operationId": "getFeatureQuantTable",
         "parameters": [
           {
             "name": "projectId",
@@ -7395,7 +7397,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuantTableExperimental"
+                  "$ref": "#/components/schemas/QuantTable"
                 }
               }
             }
@@ -12110,7 +12112,7 @@
         },
         "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
       },
-      "QuantTableExperimental": {
+      "QuantTable": {
         "type": "object",
         "properties": {
           "quantificationMeasure": {
@@ -12121,19 +12123,19 @@
           },
           "rowIds": {
             "type": "array",
+            "description": "Ids of the quantified objects, features or compounds depending on the row type.",
             "nullable": true,
             "items": {
-              "type": "integer",
-              "format": "int64",
+              "type": "string",
               "nullable": true
             }
           },
           "columnIds": {
             "type": "array",
+            "description": "Ids of the runs the objects are quantified in.",
             "nullable": true,
             "items": {
-              "type": "integer",
-              "format": "int64",
+              "type": "string",
               "nullable": true
             }
           },
@@ -12164,7 +12166,7 @@
             }
           }
         },
-        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
+        "description": "Quantification of features or compounds within the runs they have been detected in. Rows refer to the quantified objects, columns to the runs. Values that could not be quantified are NaN."
       },
       "FoldChange": {
         "required": [

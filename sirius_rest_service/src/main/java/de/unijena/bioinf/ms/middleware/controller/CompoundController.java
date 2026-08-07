@@ -247,21 +247,23 @@ public class CompoundController implements TaggableController<Compound, Compound
     }
 
     /**
-     * [EXPERIMENTAL] Returns a single quantification table row for the given compound.
+     * [INTERNAL] Returns a quantification table that contains the given compound as its only row.
      * <p>
-     * The quantification table contains a quantification of the feature within all
-     * samples it is contained in.
+     * The columns of the row refer to the runs the compound has been quantified in, given as run ids and run names.
      * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows
+     * to request the quantification of an arbitrary subset of the project.
      *
      * @param projectId  project-space to read from.
      * @param compoundId compound which should be read out
      * @param type       quantification type.
      * @return
      */
-    @Operation(operationId = "getCompoundQuantTableRowExperimental")
+    @Deprecated(forRemoval = true)
+    @Operation(operationId = "getCompoundQuantTableRow")
     @GetMapping(value = "/{compoundId}/quant-table-row", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantTable getQuantTableRow(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
+    public QuantTable getQuantTable(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(compoundId, type, QuantRowType.COMPOUNDS);
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, compoundId) + " and quantification type " + type);
@@ -269,20 +271,18 @@ public class CompoundController implements TaggableController<Compound, Compound
     }
 
     /**
-     * [EXPERIMENTAL] Returns the full quantification table of compounds.
+     * Returns the full quantification table of compounds.
      * <p>
-     * The quantification table contains a quantification of the features within all
-     * runs they are contained in.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
+     * The quantification table contains the quantities of the compounds within all runs they are contained in.
+     * Rows refer to compounds, columns to runs, both given as ids and names.
      *
      * @param projectId project-space to read from.
      * @param type      quantification type.
      * @return
      */
-    @Operation(operationId = "getCompoundQuantTableExperimental")
+    @Operation(operationId = "getCompoundQuantTable")
     @GetMapping(value = "/quant-table", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantTable getQuantTable(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
+    public QuantTable getQuantTable(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantRowType.COMPOUNDS);
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type);

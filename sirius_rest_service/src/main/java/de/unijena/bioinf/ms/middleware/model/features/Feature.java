@@ -28,8 +28,11 @@ import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The AlignedFeature contains the ID of a feature (aligned over runs) together with some read-only information
- * that might be displayed in some summary view.
+ * A feature as it has been detected in one single run, in contrast to an AlignedFeature which combines the
+ * features of the same compound over all runs it was detected in.
+ * <p>
+ * It provides the properties that are specific to the run it was detected in, such as its position on the
+ * retention time axis of that run and its quantity within that run.
  */
 @Getter
 @Setter
@@ -81,16 +84,16 @@ public class Feature {
      * Full width at half maximum of the feature on the retention time axis in seconds
      */
     @Schema(nullable = true)
-    protected Double rtFWHM;
+    protected Double rtFwhmSeconds;
 
     /**
-     * Intensity of the apex of the feature
+     * Feature Quantity measured as Intensity of the apex of the feature
      */
     @Schema(nullable = true)
     protected Double apexIntensity;
 
     /**
-     * Area under curve of the whole feature
+     * Feature Quantity measured as Area under curve of the whole feature
      */
     @Schema(nullable = true)
     protected Double areaUnderCurve;

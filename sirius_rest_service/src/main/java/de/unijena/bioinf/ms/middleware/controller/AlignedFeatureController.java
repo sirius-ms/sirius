@@ -55,7 +55,6 @@ import de.unijena.bioinf.spectraldb.entities.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bioinf.webapi.WebAPI;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.Getter;
@@ -1062,20 +1061,24 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      */
 
     /**
-     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).
+     * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row.
      * <p>
-     * The quantification table contains a quantity of the feature within all samples it is contained in.
+     * The columns of the row refer to the runs the feature has been quantified in, given as run ids and run names.
      * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows
+     * to request the quantification of an arbitrary subset of the project.
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
-     * @param type             quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @param type             quantification type. APEX_INTENSITY is the intensity of the feature at its apex,
+     *                         AREA_UNDER_CURVE the area under its curve.
      * @return Quant table row for this feature
      */
-    @Operation(operationId = "getQuantTableRowExperimental")
+    @Deprecated(forRemoval = true)
+    @Operation(operationId = "getFeatureQuantTableRow")
     @GetMapping(value = "/{alignedFeatureId}/quant-table-row", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantTable getQuantification(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
+    public QuantTable getQuantTable(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(alignedFeatureId, type, QuantRowType.FEATURES);
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, alignedFeatureId) + " and quantification type " + type);
@@ -1083,20 +1086,18 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).
+     * Returns the full quantification table of features.
      * <p>
-     * Returns the full quantification table. The quantification table contains a quantities of the features within all
-     * runs they are contained in.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * The quantification table contains the quantities of the features within all runs they are contained in.
+     * Rows refer to features, columns to runs, both given as ids and names.
      *
      * @param projectId project-space to read from.
      * @param type      quantification type.
      * @return Quant table if akk feature in this project
      */
     @GetMapping(value = "/quant-table", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(operationId = "getFeatureQuantTableExperimental")
-    public QuantTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
+    @Operation(operationId = "getFeatureQuantTable")
+    public QuantTable getQuantTable(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantRowType.FEATURES);
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type);

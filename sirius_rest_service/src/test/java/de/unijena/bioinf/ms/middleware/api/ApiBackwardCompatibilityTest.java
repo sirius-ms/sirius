@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,6 +50,18 @@ public class ApiBackwardCompatibilityTest {
     private static final String COMPOUNDS_PAGE = "/api/projects/{projectId}/compounds/page";
     private static final String FEATURES_COLLECTION = "/api/projects/{projectId}/aligned-features";
     private static final String COMPOUNDS_COLLECTION = "/api/projects/{projectId}/compounds";
+
+    private static final Map<String, String> STABLE_QUANT_OPERATIONS = Map.of(
+            "/api/projects/{projectId}/aligned-features/quant-table", "getFeatureQuantTable",
+            "/api/projects/{projectId}/compounds/quant-table", "getCompoundQuantTable");
+
+    /**
+     * The single row endpoints are kept for existing clients but must never reach the stable surface, since they
+     * are to be replaced by a filter query on the quantification table.
+     */
+    private static final List<String> INTERNAL_QUANT_ROW_PATHS = List.of(
+            "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quant-table-row",
+            "/api/projects/{projectId}/compounds/{compoundId}/quant-table-row");
 
     private static JsonNode enumsAsRef;
     private static JsonNode enumsAsString;
@@ -93,6 +106,33 @@ public class ApiBackwardCompatibilityTest {
         for (JsonNode spec : specs()) {
             assertEquals("getAlignedFeaturesPage", operation(spec, FEATURES_PAGE, "get").path("operationId").asText());
             assertEquals("getCompoundsPage", operation(spec, COMPOUNDS_PAGE, "get").path("operationId").asText());
+        }
+    }
+
+    @Test
+    @DisplayName("quantification endpoints are stable and keep their operationIds")
+    void quantTableEndpointsAreStable() {
+        for (JsonNode spec : specs()) {
+            STABLE_QUANT_OPERATIONS.forEach((path, operationId) -> {
+                JsonNode op = operation(spec, path, "get");
+                assertEquals(operationId, op.path("operationId").asText());
+                assertFalse(isExperimental(op), () -> path + " must not be marked experimental");
+            });
+            assertFalse(spec.path("components").path("schemas").path("QuantTable").isMissingNode(),
+                    "the quantification table schema must be named QuantTable");
+        }
+    }
+
+    @Test
+    @DisplayName("single row quantification endpoints stay internal and deprecated")
+    void quantTableRowEndpointsAreInternal() {
+        for (JsonNode spec : specs()) {
+            for (String path : INTERNAL_QUANT_ROW_PATHS) {
+                JsonNode op = operation(spec, path, "get");
+                String text = op.path("summary").asText("") + op.path("description").asText("");
+                assertTrue(text.contains("[INTERNAL]"), () -> path + " must stay internal");
+                assertTrue(op.path("deprecated").asBoolean(false), () -> path + " must be marked deprecated");
+            }
         }
     }
 
