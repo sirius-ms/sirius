@@ -142,7 +142,14 @@ public class LCMSProcessing {
      * stream later
      */
     public ProcessedSample processSample(Path file) throws IOException {
-        return processSample(file, false, Chromatography.LC);
+        return processSample(file, null);
+    }
+
+    /**
+     * @param sampleName name to be used for the run of this sample. If null, the name is derived from the input file.
+     */
+    public ProcessedSample processSample(Path file, @Nullable String sampleName) throws IOException {
+        return processSample(file, sampleName, false, Chromatography.LC);
     }
 
     public ProcessedSample processSample(URI input) throws IOException {
@@ -155,8 +162,20 @@ public class LCMSProcessing {
             boolean saveRawScans,
             Chromatography chromatography
     ) throws IOException {
+        return processSample(file, null, saveRawScans, chromatography);
+    }
+
+    /**
+     * @param sampleName name to be used for the run of this sample. If null, the name is derived from the input file.
+     */
+    public ProcessedSample processSample(
+            Path file,
+            @Nullable String sampleName,
+            boolean saveRawScans,
+            Chromatography chromatography
+    ) throws IOException {
         ProcessedSample sample = LCMSImporter.importToProject(
-                file, storageFactory, siriusDatabaseAdapter, centroidingStrategy, saveRawScans, chromatography);
+                file, sampleName, storageFactory, siriusDatabaseAdapter, centroidingStrategy, saveRawScans, chromatography);
         processSample(sample);
         return sample;
     }

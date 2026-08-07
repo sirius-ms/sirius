@@ -125,6 +125,8 @@ public class ImportAction extends AbstractGuiAction {
                 parameters.setAlignLCMSRuns(dialog.isAlign());
                 // Get sample type assignments
                 parameters.setSampleTypes(dialog.getLCMSFilesSampleTypes());
+                // Get user specified sample names. Runs without a name are named after their input file.
+                parameters.setSampleNames(dialog.getLCMSFilesSampleNames());
 
                 if(dialog.isSensitiveMode())
                     parameters.setMinSNR(2d);
