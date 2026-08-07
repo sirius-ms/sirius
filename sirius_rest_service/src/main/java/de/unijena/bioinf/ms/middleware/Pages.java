@@ -83,7 +83,7 @@ public class Pages {
     }
 
     public static <T> Page<T> findPage(@NotNull final Database<?> storage, Class<T> clz, Pageable pageable, Filter sortFilter) throws IOException {
-        return makePage(storage, pageable, findPageStr(storage, clz, pageable, sortFilter).toList());
+        return makePage(storage, pageable, findPageStr(storage, clz, pageable, sortFilter).toList(), clz, sortFilter);
     }
 
 
@@ -103,7 +103,7 @@ public class Pages {
                                             @NotNull Filter sortFilter,
                                             @NotNull Function<Sort, Pair<String[], Database.SortOrder[]>> sortTransformer
     ) throws IOException {
-        return makePage(storage, pageable, findPageStr(storage, clz, pageable, sortFilter, sortTransformer).toList());
+        return makePage(storage, pageable, findPageStr(storage, clz, pageable, sortFilter, sortTransformer).toList(), clz, sortFilter);
     }
 
     public static <T> Stream<T> findPageStr(@NotNull final Database<?> storage, Class<T> clz, Pageable pageable,
@@ -149,6 +149,19 @@ public class Pages {
         if (content.isEmpty())
             return Page.empty();
         long total = pageable.isUnpaged() ? content.size() : storage.countAll(content.getFirst().getClass());
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    /**
+     * Creates a page of objects that have been selected by the given filter. In contrast to
+     * {@link #makePage(Database, Pageable, List)} the total number of elements refers to the objects matching the
+     * filter and not to all objects of the collection.
+     */
+    public static <C> Page<C> makePage(@NotNull final Database<?> storage, @NotNull Pageable pageable,
+                                       @NotNull List<C> content, @NotNull Class<?> clz, @NotNull Filter filter) throws IOException {
+        if (content.isEmpty())
+            return Page.empty();
+        long total = pageable.isUnpaged() ? content.size() : storage.count(filter, clz);
         return new PageImpl<>(content, pageable, total);
     }
 
