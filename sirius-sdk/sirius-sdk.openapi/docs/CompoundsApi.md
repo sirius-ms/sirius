@@ -9,8 +9,8 @@ All URIs are relative to *http://localhost:8888*
 | [**addTagsToCompoundsExperimental**](CompoundsApi.md#addTagsToCompoundsExperimental) | **PUT** /api/projects/{projectId}/compounds/tags | [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project |
 | [**deleteCompound**](CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space. |
 | [**getCompound**](CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space. |
-| [**getCompoundQuantTableExperimental**](CompoundsApi.md#getCompoundQuantTableExperimental) | **GET** /api/projects/{projectId}/compounds/quant-table | [EXPERIMENTAL] Returns the full quantification table of compounds |
-| [**getCompoundQuantTableRowExperimental**](CompoundsApi.md#getCompoundQuantTableRowExperimental) | **GET** /api/projects/{projectId}/compounds/{compoundId}/quant-table-row | [EXPERIMENTAL] Returns a single quantification table row for the given compound |
+| [**getCompoundQuantTable**](CompoundsApi.md#getCompoundQuantTable) | **GET** /api/projects/{projectId}/compounds/quant-table | Returns the full quantification table of compounds |
+| [**getCompoundQuantTableRow**](CompoundsApi.md#getCompoundQuantTableRow) | **GET** /api/projects/{projectId}/compounds/{compoundId}/quant-table-row | [INTERNAL] Returns a quantification table that contains the given compound as its only row |
 | [**getCompoundTracesExperimental**](CompoundsApi.md#getCompoundTracesExperimental) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | [EXPERIMENTAL] Returns the traces of the given compound |
 | [**getCompounds**](CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space |
 | [**getCompoundsByGroupExperimental**](CompoundsApi.md#getCompoundsByGroupExperimental) | **GET** /api/projects/{projectId}/compounds/grouped | [EXPERIMENTAL] Get compounds (group of ion identities) by tag group |
@@ -372,13 +372,13 @@ No authorization required
 | **200** | Compounds with additional optional fields (if specified). |  -  |
 
 
-## getCompoundQuantTableExperimental
+## getCompoundQuantTable
 
-> QuantTableExperimental getCompoundQuantTableExperimental(projectId, type)
+> QuantTable getCompoundQuantTable(projectId, type)
 
-[EXPERIMENTAL] Returns the full quantification table of compounds
+Returns the full quantification table of compounds
 
-[EXPERIMENTAL] Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains a quantification of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
+Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.
 
 ### Example
 
@@ -399,10 +399,10 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
         try {
-            QuantTableExperimental result = apiInstance.getCompoundQuantTableExperimental(projectId, type);
+            QuantTable result = apiInstance.getCompoundQuantTable(projectId, type);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling CompoundsApi#getCompoundQuantTableExperimental");
+            System.err.println("Exception when calling CompoundsApi#getCompoundQuantTable");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -422,7 +422,7 @@ public class Example {
 
 ### Return type
 
-[**QuantTableExperimental**](QuantTableExperimental.md)
+[**QuantTable**](QuantTable.md)
 
 ### Authorization
 
@@ -440,13 +440,13 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## getCompoundQuantTableRowExperimental
+## getCompoundQuantTableRow
 
-> QuantTableExperimental getCompoundQuantTableRowExperimental(projectId, compoundId, type)
+> QuantTable getCompoundQuantTableRow(projectId, compoundId, type)
 
-[EXPERIMENTAL] Returns a single quantification table row for the given compound
+[INTERNAL] Returns a quantification table that contains the given compound as its only row
 
-[EXPERIMENTAL] Returns a single quantification table row for the given compound.  &lt;p&gt;  The quantification table contains a quantification of the feature within all  samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
+[INTERNAL] Returns a quantification table that contains the given compound as its only row.  &lt;p&gt;  The columns of the row refer to the runs the compound has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
 
 ### Example
 
@@ -468,10 +468,10 @@ public class Example {
         String compoundId = "compoundId_example"; // String | compound which should be read out
         QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
         try {
-            QuantTableExperimental result = apiInstance.getCompoundQuantTableRowExperimental(projectId, compoundId, type);
+            QuantTable result = apiInstance.getCompoundQuantTableRow(projectId, compoundId, type);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling CompoundsApi#getCompoundQuantTableRowExperimental");
+            System.err.println("Exception when calling CompoundsApi#getCompoundQuantTableRow");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -492,7 +492,7 @@ public class Example {
 
 ### Return type
 
-[**QuantTableExperimental**](QuantTableExperimental.md)
+[**QuantTable**](QuantTable.md)
 
 ### Authorization
 
