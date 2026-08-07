@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,7 +48,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectrumAnnotation.JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG,
   SpectrumAnnotation.JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class SpectrumAnnotation {
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
   @jakarta.annotation.Nullable
@@ -99,7 +100,7 @@ public class SpectrumAnnotation {
    * @return molecularFormula
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getMolecularFormula() {
@@ -107,7 +108,7 @@ public class SpectrumAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
@@ -124,7 +125,7 @@ public class SpectrumAnnotation {
    * @return adduct
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getAdduct() {
@@ -132,7 +133,7 @@ public class SpectrumAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAdduct(@jakarta.annotation.Nullable String adduct) {
     this.adduct = adduct;
@@ -149,7 +150,7 @@ public class SpectrumAnnotation {
    * @return exactMass
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EXACT_MASS)
+  @JsonProperty(value = JSON_PROPERTY_EXACT_MASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getExactMass() {
@@ -157,7 +158,7 @@ public class SpectrumAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_EXACT_MASS)
+  @JsonProperty(value = JSON_PROPERTY_EXACT_MASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setExactMass(@jakarta.annotation.Nullable Double exactMass) {
     this.exactMass = exactMass;
@@ -174,7 +175,7 @@ public class SpectrumAnnotation {
    * @return massDeviationMz
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_MZ)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMassDeviationMz() {
@@ -182,7 +183,7 @@ public class SpectrumAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_MZ)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMassDeviationMz(@jakarta.annotation.Nullable Double massDeviationMz) {
     this.massDeviationMz = massDeviationMz;
@@ -199,7 +200,7 @@ public class SpectrumAnnotation {
    * @return massDeviationPpm
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMassDeviationPpm() {
@@ -207,7 +208,7 @@ public class SpectrumAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMassDeviationPpm(@jakarta.annotation.Nullable Double massDeviationPpm) {
     this.massDeviationPpm = massDeviationPpm;
@@ -224,7 +225,7 @@ public class SpectrumAnnotation {
    * @return structureAnnotationSmiles
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SMILES)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_ANNOTATION_SMILES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getStructureAnnotationSmiles() {
@@ -232,7 +233,7 @@ public class SpectrumAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SMILES)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_ANNOTATION_SMILES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureAnnotationSmiles(@jakarta.annotation.Nullable String structureAnnotationSmiles) {
     this.structureAnnotationSmiles = structureAnnotationSmiles;
@@ -249,7 +250,7 @@ public class SpectrumAnnotation {
    * @return structureAnnotationName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_NAME)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_ANNOTATION_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getStructureAnnotationName() {
@@ -257,7 +258,7 @@ public class SpectrumAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_NAME)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_ANNOTATION_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureAnnotationName(@jakarta.annotation.Nullable String structureAnnotationName) {
     this.structureAnnotationName = structureAnnotationName;
@@ -274,7 +275,7 @@ public class SpectrumAnnotation {
    * @return structureAnnotationSvg
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getStructureAnnotationSvg() {
@@ -282,7 +283,7 @@ public class SpectrumAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureAnnotationSvg(@jakarta.annotation.Nullable String structureAnnotationSvg) {
     this.structureAnnotationSvg = structureAnnotationSvg;
@@ -299,7 +300,7 @@ public class SpectrumAnnotation {
    * @return structureAnnotationScore
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getStructureAnnotationScore() {
@@ -307,7 +308,7 @@ public class SpectrumAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureAnnotationScore(@jakarta.annotation.Nullable Double structureAnnotationScore) {
     this.structureAnnotationScore = structureAnnotationScore;

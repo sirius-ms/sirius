@@ -106,7 +106,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
 
     /**
      *
-     * [EXPERIMENTAL] Get features (aligned over runs) in the given project-space.
+     * Get features (aligned over runs) in the given project-space.
      *
      * <h2>Supported filter syntax</h2>
      *
@@ -139,10 +139,8 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
      *
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
      * @param projectId    project space to get features (aligned over runs) from.
-     * @param searchQuery       optional search query in lucene syntax.
+     * @param searchQuery  Optional search query in lucene syntax. Omit this parameter to page over all features.
      * @param pageable     pageable.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
@@ -151,7 +149,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * @return tagged features (aligned over runs)
      */
-    @Operation(operationId = "getAlignedFeaturesPageExperimental")
+    @Operation(operationId = "getAlignedFeaturesPage")
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<AlignedFeature> getAlignedFeaturesPage(
             @PathVariable String projectId,
@@ -189,7 +187,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * Get all available features (aligned over runs) in the given project-space.
+     * [DEPRECATED] Get all available features (aligned over runs) in the given project-space.
+     * <p>
+     * [DEPRECATED] Use /aligned-features/page instead. Loading all features at once does not scale for large
+     * projects. This endpoint will be removed in the next major version of this API.
      *
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
@@ -199,6 +200,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<AlignedFeature> getAlignedFeatures(
             @PathVariable String projectId,
             @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
@@ -319,7 +321,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/db-structures/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<StructureCandidateFormula> getStructureCandidatesPaged(
+    public Page<StructureCandidateFormula> getStructureCandidatesPage(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
@@ -329,7 +331,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of structure database search candidates ranked by CSI:FingerID score for the given 'alignedFeatureId' with minimal information.
+     * [DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given 'alignedFeatureId' with minimal information.
+     * <p>
+     * [DEPRECATED] Use /db-structures/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      * StructureCandidates can be enriched with molecular fingerprint, structure database links.
      *
      * @param projectId        project-space to read from.
@@ -338,11 +343,12 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/db-structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<StructureCandidateFormula> getStructureCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return getStructureCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
+        return getStructureCandidatesPage(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
     }
 
     /**
@@ -355,7 +361,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/denovo-structures/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<StructureCandidateFormula> getDeNovoStructureCandidatesPaged(
+    public Page<StructureCandidateFormula> getDeNovoStructureCandidatesPage(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
@@ -365,7 +371,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given 'alignedFeatureId' with minimal information.
+     * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given 'alignedFeatureId' with minimal information.
+     * <p>
+     * [DEPRECATED] Use /denovo-structures/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      * StructureCandidates can be enriched with molecular fingerprint.
      *
      * @param projectId        project-space to read from.
@@ -374,11 +383,12 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/denovo-structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<StructureCandidateFormula> getDeNovoStructureCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return getDeNovoStructureCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
+        return getDeNovoStructureCandidatesPage(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
     }
 
     /**
@@ -467,7 +477,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return Spectral library matches of this feature (aligned over runs).
      */
     @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<SpectralLibraryMatch> getSpectralLibraryMatchesPaged(
+    public Page<SpectralLibraryMatch> getSpectralLibraryMatchesPage(
             @PathVariable String projectId,
             @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
@@ -491,13 +501,17 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of spectral library matches for the given 'alignedFeatureId'.
+     * [DEPRECATED] List of spectral library matches for the given 'alignedFeatureId'.
+     * <p>
+     * [DEPRECATED] Use /spectral-library-matches/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @return Spectral library matches of this feature (aligned over runs).
      */
     @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<SpectralLibraryMatch> getSpectralLibraryMatches(
             @PathVariable String projectId,
             @PathVariable String alignedFeatureId,
@@ -506,7 +520,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @RequestParam(defaultValue = "") @Nullable String inchiKey,
             @RequestParam(defaultValue = "none") EnumSet<SpectralLibraryMatch.OptField> optFields
     ) {
-        return getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), minSharedPeaks, minSimilarity, inchiKey, optFields).stream().toList();
+        return getSpectralLibraryMatchesPage(projectId, alignedFeatureId, globalConfig.unpaged(), minSharedPeaks, minSimilarity, inchiKey, optFields).stream().toList();
     }
 
     /**
@@ -603,7 +617,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return All FormulaCandidate of this feature with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<FormulaCandidate> getFormulaCandidatesPaged(
+    public Page<FormulaCandidate> getFormulaCandidatesPage(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
             @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
@@ -613,7 +627,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of FormulaResultContainers available for this feature with minimal information.
+     * [DEPRECATED] List of FormulaResultContainers available for this feature with minimal information.
+     * <p>
+     * [DEPRECATED] Use /formulas/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      * Can be enriched with an optional results overview.
      *
      * @param projectId           project-space to read from.
@@ -625,12 +642,13 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return All FormulaCandidate of this feature with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<FormulaCandidate> getFormulaCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
             @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
     ) {
-        return getFormulaCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), msDataSearchPrepared, optFields).stream().toList();
+        return getFormulaCandidatesPage(projectId, alignedFeatureId, globalConfig.unpaged(), msDataSearchPrepared, optFields).stream().toList();
     }
 
     /**
@@ -668,7 +686,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/db-structures/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<StructureCandidateScored> getStructureCandidatesByFormulaPaged(
+    public Page<StructureCandidateScored> getStructureCandidatesByFormulaPage(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
@@ -678,7 +696,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of CSI:FingerID structure database search candidates for the given 'formulaId' with minimal information.
+     * [DEPRECATED] List of CSI:FingerID structure database search candidates for the given 'formulaId' with minimal information.
+     * <p>
+     * [DEPRECATED] Use /formulas/{formulaId}/db-structures/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      * StructureCandidates can be enriched with molecular fingerprint, structure database links.
      *
      * @param projectId        project-space to read from.
@@ -688,11 +709,12 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/db-structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<StructureCandidateScored> getStructureCandidatesByFormula(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, globalConfig.unpaged(), optFields)
+        return getStructureCandidatesByFormulaPage(projectId, alignedFeatureId, formulaId, globalConfig.unpaged(), optFields)
                 .stream().toList();
     }
 
@@ -707,7 +729,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/denovo-structures/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<StructureCandidateScored> getDeNovoStructureCandidatesByFormulaPaged(
+    public Page<StructureCandidateScored> getDeNovoStructureCandidatesByFormulaPage(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
@@ -717,7 +739,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given 'formulaId' with minimal information.
+     * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given 'formulaId' with minimal information.
+     * <p>
+     * [DEPRECATED] Use /formulas/{formulaId}/denovo-structures/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      * StructureCandidates can be enriched with molecular fingerprint.
      *
      * @param projectId        project-space to read from.
@@ -727,11 +752,12 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/denovo-structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<StructureCandidateScored> getDeNovoStructureCandidatesByFormula(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return getDeNovoStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, globalConfig.unpaged(), optFields)
+        return getDeNovoStructureCandidatesByFormulaPage(projectId, alignedFeatureId, formulaId, globalConfig.unpaged(), optFields)
                 .stream().toList();
     }
 

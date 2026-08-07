@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -51,7 +52,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ConsensusAnnotationsCSI.JSON_PROPERTY_COMPOUND_CLASSES,
   ConsensusAnnotationsCSI.JSON_PROPERTY_SUPPORTING_FEATURE_IDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class ConsensusAnnotationsCSI {
   public static final String JSON_PROPERTY_SELECTION_CRITERION = "selectionCriterion";
   @jakarta.annotation.Nullable
@@ -95,7 +96,7 @@ public class ConsensusAnnotationsCSI {
    * @return selectionCriterion
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
+  @JsonProperty(value = JSON_PROPERTY_SELECTION_CRITERION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public ConsensusCriterionCSI getSelectionCriterion() {
@@ -103,7 +104,7 @@ public class ConsensusAnnotationsCSI {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SELECTION_CRITERION)
+  @JsonProperty(value = JSON_PROPERTY_SELECTION_CRITERION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSelectionCriterion(@jakarta.annotation.Nullable ConsensusCriterionCSI selectionCriterion) {
     this.selectionCriterion = selectionCriterion;
@@ -120,7 +121,7 @@ public class ConsensusAnnotationsCSI {
    * @return csiFingerIdStructure
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE)
+  @JsonProperty(value = JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public StructureCandidate getCsiFingerIdStructure() {
@@ -128,7 +129,7 @@ public class ConsensusAnnotationsCSI {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE)
+  @JsonProperty(value = JSON_PROPERTY_CSI_FINGER_ID_STRUCTURE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCsiFingerIdStructure(@jakarta.annotation.Nullable StructureCandidate csiFingerIdStructure) {
     this.csiFingerIdStructure = csiFingerIdStructure;
@@ -145,7 +146,7 @@ public class ConsensusAnnotationsCSI {
    * @return confidenceExactMatch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
+  @JsonProperty(value = JSON_PROPERTY_CONFIDENCE_EXACT_MATCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getConfidenceExactMatch() {
@@ -153,7 +154,7 @@ public class ConsensusAnnotationsCSI {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
+  @JsonProperty(value = JSON_PROPERTY_CONFIDENCE_EXACT_MATCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConfidenceExactMatch(@jakarta.annotation.Nullable Double confidenceExactMatch) {
     this.confidenceExactMatch = confidenceExactMatch;
@@ -170,7 +171,7 @@ public class ConsensusAnnotationsCSI {
    * @return confidenceApproxMatch
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
+  @JsonProperty(value = JSON_PROPERTY_CONFIDENCE_APPROX_MATCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getConfidenceApproxMatch() {
@@ -178,7 +179,7 @@ public class ConsensusAnnotationsCSI {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
+  @JsonProperty(value = JSON_PROPERTY_CONFIDENCE_APPROX_MATCH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConfidenceApproxMatch(@jakarta.annotation.Nullable Double confidenceApproxMatch) {
     this.confidenceApproxMatch = confidenceApproxMatch;
@@ -195,7 +196,7 @@ public class ConsensusAnnotationsCSI {
    * @return molecularFormula
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getMolecularFormula() {
@@ -203,7 +204,7 @@ public class ConsensusAnnotationsCSI {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
@@ -220,7 +221,7 @@ public class ConsensusAnnotationsCSI {
    * @return compoundClasses
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
+  @JsonProperty(value = JSON_PROPERTY_COMPOUND_CLASSES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public CompoundClasses getCompoundClasses() {
@@ -228,7 +229,7 @@ public class ConsensusAnnotationsCSI {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COMPOUND_CLASSES)
+  @JsonProperty(value = JSON_PROPERTY_COMPOUND_CLASSES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCompoundClasses(@jakarta.annotation.Nullable CompoundClasses compoundClasses) {
     this.compoundClasses = compoundClasses;
@@ -253,7 +254,7 @@ public class ConsensusAnnotationsCSI {
    * @return supportingFeatureIds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_SUPPORTING_FEATURE_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getSupportingFeatureIds() {
@@ -261,7 +262,7 @@ public class ConsensusAnnotationsCSI {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SUPPORTING_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_SUPPORTING_FEATURE_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSupportingFeatureIds(@jakarta.annotation.Nullable List<String> supportingFeatureIds) {
     this.supportingFeatureIds = supportingFeatureIds;

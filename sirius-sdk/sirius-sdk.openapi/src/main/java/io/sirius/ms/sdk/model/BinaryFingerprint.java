@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -43,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BinaryFingerprint.JSON_PROPERTY_BITS_SET,
   BinaryFingerprint.JSON_PROPERTY_LENGTH
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class BinaryFingerprint {
   public static final String JSON_PROPERTY_BITS_SET = "bitsSet";
   @jakarta.annotation.Nullable
@@ -75,7 +76,7 @@ public class BinaryFingerprint {
    * @return bitsSet
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_BITS_SET)
+  @JsonProperty(value = JSON_PROPERTY_BITS_SET, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<Integer> getBitsSet() {
@@ -83,7 +84,7 @@ public class BinaryFingerprint {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_BITS_SET)
+  @JsonProperty(value = JSON_PROPERTY_BITS_SET, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setBitsSet(@jakarta.annotation.Nullable List<Integer> bitsSet) {
     this.bitsSet = bitsSet;
@@ -100,7 +101,7 @@ public class BinaryFingerprint {
    * @return length
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LENGTH)
+  @JsonProperty(value = JSON_PROPERTY_LENGTH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getLength() {
@@ -108,7 +109,7 @@ public class BinaryFingerprint {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LENGTH)
+  @JsonProperty(value = JSON_PROPERTY_LENGTH, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLength(@jakarta.annotation.Nullable Integer length) {
     this.length = length;

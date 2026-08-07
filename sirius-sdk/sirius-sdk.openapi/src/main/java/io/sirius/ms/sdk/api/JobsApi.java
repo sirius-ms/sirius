@@ -31,7 +31,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class JobsApi {
     private ApiClient apiClient;
 
@@ -51,7 +51,6 @@ public class JobsApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * Delete job.
      * Delete job. Specify how to behave for running jobs.
@@ -85,7 +84,7 @@ public class JobsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "cancelIfRunning", cancelIfRunning));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "awaitDeletion", awaitDeletion));
-        
+
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -239,7 +238,7 @@ public class JobsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "cancelIfRunning", cancelIfRunning));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "awaitDeletion", awaitDeletion));
-        
+
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -391,7 +390,7 @@ public class JobsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeConfigMap", includeConfigMap));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeCustomDbsForStructureSearch", includeCustomDbsForStructureSearch));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -481,7 +480,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -565,7 +564,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -618,6 +617,73 @@ public class JobsApi {
      */
     public ResponseSpec getJobConfigWithResponseSpec(@jakarta.annotation.Nonnull String name, @jakarta.annotation.Nullable Boolean moveParametersToConfigMap) throws WebClientResponseException {
         return getJobConfigRequestCreation(name, moveParametersToConfigMap);
+    }
+
+    /**
+     * [DEPRECATED] Get all (non-default) job configuration names  
+     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * <p><b>200</b> - OK
+     * @return List&lt;String&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
+     */
+    @Deprecated
+    private ResponseSpec getJobConfigNamesRequestCreation() throws WebClientResponseException {
+        Object postBody = null;
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
+        return apiClient.invokeAPI("/api/job-config-names", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [DEPRECATED] Get all (non-default) job configuration names  
+     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * <p><b>200</b> - OK
+     * @return List&lt;String&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<String> getJobConfigNames() throws WebClientResponseException {
+        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
+        return getJobConfigNamesRequestCreation().bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * [DEPRECATED] Get all (non-default) job configuration names  
+     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * <p><b>200</b> - OK
+     * @return ResponseEntity&lt;List&lt;String&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<String>> getJobConfigNamesWithHttpInfo() throws WebClientResponseException {
+        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
+        return getJobConfigNamesRequestCreation().toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * [DEPRECATED] Get all (non-default) job configuration names  
+     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * <p><b>200</b> - OK
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getJobConfigNamesWithResponseSpec() throws WebClientResponseException {
+        return getJobConfigNamesRequestCreation();
     }
 
     /**
@@ -686,14 +752,16 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return List&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
      */
+    @Deprecated
     private ResponseSpec getJobsRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
@@ -711,7 +779,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -726,8 +794,8 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -740,8 +808,8 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -754,8 +822,8 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -778,11 +846,11 @@ public class JobsApi {
      * @return PagedModelJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getJobsPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getJobsPageRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getJobsPaged", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getJobsPage", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -798,7 +866,7 @@ public class JobsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -824,9 +892,9 @@ public class JobsApi {
      * @return PagedModelJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelJob getJobsPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+    public PagedModelJob getJobsPage(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelJob> localVarReturnType = new ParameterizedTypeReference<PagedModelJob>() {};
-        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+        return getJobsPageRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -841,9 +909,9 @@ public class JobsApi {
      * @return ResponseEntity&lt;PagedModelJob&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelJob> getJobsPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelJob> getJobsPageWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelJob> localVarReturnType = new ParameterizedTypeReference<PagedModelJob>() {};
-        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
+        return getJobsPageRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -858,8 +926,8 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getJobsPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
-        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields);
+    public ResponseSpec getJobsPageWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        return getJobsPageRequestCreation(projectId, page, size, sort, optFields);
     }
 
     /**
@@ -888,7 +956,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeFinished", includeFinished));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -976,7 +1044,7 @@ public class JobsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "overrideExisting", overrideExisting));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1072,7 +1140,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1163,7 +1231,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1262,7 +1330,7 @@ public class JobsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "jobConfigName", jobConfigName));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "recompute", recompute));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };

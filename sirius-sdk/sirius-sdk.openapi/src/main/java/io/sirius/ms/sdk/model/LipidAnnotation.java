@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -43,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   LipidAnnotation.JSON_PROPERTY_HYPOTHETICAL_STRUCTURE,
   LipidAnnotation.JSON_PROPERTY_CHAINS_UNKNOWN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class LipidAnnotation {
   public static final String JSON_PROPERTY_LIPID_SPECIES = "lipidSpecies";
   @jakarta.annotation.Nullable
@@ -79,7 +80,7 @@ public class LipidAnnotation {
    * @return lipidSpecies
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LIPID_SPECIES)
+  @JsonProperty(value = JSON_PROPERTY_LIPID_SPECIES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getLipidSpecies() {
@@ -87,7 +88,7 @@ public class LipidAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LIPID_SPECIES)
+  @JsonProperty(value = JSON_PROPERTY_LIPID_SPECIES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLipidSpecies(@jakarta.annotation.Nullable String lipidSpecies) {
     this.lipidSpecies = lipidSpecies;
@@ -104,7 +105,7 @@ public class LipidAnnotation {
    * @return lipidMapsId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LIPID_MAPS_ID)
+  @JsonProperty(value = JSON_PROPERTY_LIPID_MAPS_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getLipidMapsId() {
@@ -112,7 +113,7 @@ public class LipidAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LIPID_MAPS_ID)
+  @JsonProperty(value = JSON_PROPERTY_LIPID_MAPS_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLipidMapsId(@jakarta.annotation.Nullable String lipidMapsId) {
     this.lipidMapsId = lipidMapsId;
@@ -129,7 +130,7 @@ public class LipidAnnotation {
    * @return lipidClassName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LIPID_CLASS_NAME)
+  @JsonProperty(value = JSON_PROPERTY_LIPID_CLASS_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getLipidClassName() {
@@ -137,7 +138,7 @@ public class LipidAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LIPID_CLASS_NAME)
+  @JsonProperty(value = JSON_PROPERTY_LIPID_CLASS_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLipidClassName(@jakarta.annotation.Nullable String lipidClassName) {
     this.lipidClassName = lipidClassName;
@@ -154,7 +155,7 @@ public class LipidAnnotation {
    * @return hypotheticalStructure
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_HYPOTHETICAL_STRUCTURE)
+  @JsonProperty(value = JSON_PROPERTY_HYPOTHETICAL_STRUCTURE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getHypotheticalStructure() {
@@ -162,7 +163,7 @@ public class LipidAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_HYPOTHETICAL_STRUCTURE)
+  @JsonProperty(value = JSON_PROPERTY_HYPOTHETICAL_STRUCTURE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setHypotheticalStructure(@jakarta.annotation.Nullable String hypotheticalStructure) {
     this.hypotheticalStructure = hypotheticalStructure;
@@ -179,7 +180,7 @@ public class LipidAnnotation {
    * @return chainsUnknown
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CHAINS_UNKNOWN)
+  @JsonProperty(value = JSON_PROPERTY_CHAINS_UNKNOWN, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isChainsUnknown() {
@@ -187,7 +188,7 @@ public class LipidAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CHAINS_UNKNOWN)
+  @JsonProperty(value = JSON_PROPERTY_CHAINS_UNKNOWN, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setChainsUnknown(@jakarta.annotation.Nullable Boolean chainsUnknown) {
     this.chainsUnknown = chainsUnknown;

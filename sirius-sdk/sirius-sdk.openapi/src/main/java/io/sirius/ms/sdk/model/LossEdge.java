@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -42,7 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   LossEdge.JSON_PROPERTY_MOLECULAR_FORMULA,
   LossEdge.JSON_PROPERTY_SCORE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class LossEdge {
   public static final String JSON_PROPERTY_SOURCE_FRAGMENT_IDX = "sourceFragmentIdx";
   @jakarta.annotation.Nullable
@@ -74,7 +75,7 @@ public class LossEdge {
    * @return sourceFragmentIdx
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SOURCE_FRAGMENT_IDX)
+  @JsonProperty(value = JSON_PROPERTY_SOURCE_FRAGMENT_IDX, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getSourceFragmentIdx() {
@@ -82,7 +83,7 @@ public class LossEdge {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SOURCE_FRAGMENT_IDX)
+  @JsonProperty(value = JSON_PROPERTY_SOURCE_FRAGMENT_IDX, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSourceFragmentIdx(@jakarta.annotation.Nullable Integer sourceFragmentIdx) {
     this.sourceFragmentIdx = sourceFragmentIdx;
@@ -99,7 +100,7 @@ public class LossEdge {
    * @return targetFragmentIdx
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TARGET_FRAGMENT_IDX)
+  @JsonProperty(value = JSON_PROPERTY_TARGET_FRAGMENT_IDX, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getTargetFragmentIdx() {
@@ -107,7 +108,7 @@ public class LossEdge {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TARGET_FRAGMENT_IDX)
+  @JsonProperty(value = JSON_PROPERTY_TARGET_FRAGMENT_IDX, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTargetFragmentIdx(@jakarta.annotation.Nullable Integer targetFragmentIdx) {
     this.targetFragmentIdx = targetFragmentIdx;
@@ -124,7 +125,7 @@ public class LossEdge {
    * @return molecularFormula
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getMolecularFormula() {
@@ -132,7 +133,7 @@ public class LossEdge {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
@@ -149,7 +150,7 @@ public class LossEdge {
    * @return score
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getScore() {
@@ -157,7 +158,7 @@ public class LossEdge {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setScore(@jakarta.annotation.Nullable Double score) {
     this.score = score;

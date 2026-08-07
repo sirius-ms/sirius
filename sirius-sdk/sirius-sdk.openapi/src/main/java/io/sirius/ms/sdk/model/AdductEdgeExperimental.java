@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,7 +48,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AdductEdgeExperimental.JSON_PROPERTY_PVALUE,
   AdductEdgeExperimental.JSON_PROPERTY_INTENSITY_RATIO_SCORE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class AdductEdgeExperimental {
   public static final String JSON_PROPERTY_MZ_DELTA = "mzDelta";
   @jakarta.annotation.Nullable
@@ -99,7 +100,7 @@ public class AdductEdgeExperimental {
    * @return mzDelta
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MZ_DELTA)
+  @JsonProperty(value = JSON_PROPERTY_MZ_DELTA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMzDelta() {
@@ -107,7 +108,7 @@ public class AdductEdgeExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MZ_DELTA)
+  @JsonProperty(value = JSON_PROPERTY_MZ_DELTA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMzDelta(@jakarta.annotation.Nullable Double mzDelta) {
     this.mzDelta = mzDelta;
@@ -124,7 +125,7 @@ public class AdductEdgeExperimental {
    * @return annotation
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ANNOTATION)
+  @JsonProperty(value = JSON_PROPERTY_ANNOTATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getAnnotation() {
@@ -132,7 +133,7 @@ public class AdductEdgeExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ANNOTATION)
+  @JsonProperty(value = JSON_PROPERTY_ANNOTATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAnnotation(@jakarta.annotation.Nullable String annotation) {
     this.annotation = annotation;
@@ -149,7 +150,7 @@ public class AdductEdgeExperimental {
    * @return from
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FROM)
+  @JsonProperty(value = JSON_PROPERTY_FROM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getFrom() {
@@ -157,7 +158,7 @@ public class AdductEdgeExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FROM)
+  @JsonProperty(value = JSON_PROPERTY_FROM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFrom(@jakarta.annotation.Nullable Integer from) {
     this.from = from;
@@ -174,7 +175,7 @@ public class AdductEdgeExperimental {
    * @return to
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TO)
+  @JsonProperty(value = JSON_PROPERTY_TO, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getTo() {
@@ -182,7 +183,7 @@ public class AdductEdgeExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TO)
+  @JsonProperty(value = JSON_PROPERTY_TO, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTo(@jakarta.annotation.Nullable Integer to) {
     this.to = to;
@@ -199,7 +200,7 @@ public class AdductEdgeExperimental {
    * @return mergedCorrelation
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MERGED_CORRELATION)
+  @JsonProperty(value = JSON_PROPERTY_MERGED_CORRELATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Float getMergedCorrelation() {
@@ -207,7 +208,7 @@ public class AdductEdgeExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MERGED_CORRELATION)
+  @JsonProperty(value = JSON_PROPERTY_MERGED_CORRELATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMergedCorrelation(@jakarta.annotation.Nullable Float mergedCorrelation) {
     this.mergedCorrelation = mergedCorrelation;
@@ -224,7 +225,7 @@ public class AdductEdgeExperimental {
    * @return representativeCorrelation
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_REPRESENTATIVE_CORRELATION)
+  @JsonProperty(value = JSON_PROPERTY_REPRESENTATIVE_CORRELATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Float getRepresentativeCorrelation() {
@@ -232,7 +233,7 @@ public class AdductEdgeExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_REPRESENTATIVE_CORRELATION)
+  @JsonProperty(value = JSON_PROPERTY_REPRESENTATIVE_CORRELATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRepresentativeCorrelation(@jakarta.annotation.Nullable Float representativeCorrelation) {
     this.representativeCorrelation = representativeCorrelation;
@@ -249,7 +250,7 @@ public class AdductEdgeExperimental {
    * @return ms2cosine
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MS2COSINE)
+  @JsonProperty(value = JSON_PROPERTY_MS2COSINE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Float getMs2cosine() {
@@ -257,7 +258,7 @@ public class AdductEdgeExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MS2COSINE)
+  @JsonProperty(value = JSON_PROPERTY_MS2COSINE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs2cosine(@jakarta.annotation.Nullable Float ms2cosine) {
     this.ms2cosine = ms2cosine;
@@ -274,7 +275,7 @@ public class AdductEdgeExperimental {
    * @return pvalue
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PVALUE)
+  @JsonProperty(value = JSON_PROPERTY_PVALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Float getPvalue() {
@@ -282,7 +283,7 @@ public class AdductEdgeExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PVALUE)
+  @JsonProperty(value = JSON_PROPERTY_PVALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPvalue(@jakarta.annotation.Nullable Float pvalue) {
     this.pvalue = pvalue;
@@ -299,7 +300,7 @@ public class AdductEdgeExperimental {
    * @return intensityRatioScore
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INTENSITY_RATIO_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY_RATIO_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Float getIntensityRatioScore() {
@@ -307,7 +308,7 @@ public class AdductEdgeExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_INTENSITY_RATIO_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY_RATIO_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIntensityRatioScore(@jakarta.annotation.Nullable Float intensityRatioScore) {
     this.intensityRatioScore = intensityRatioScore;

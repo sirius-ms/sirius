@@ -11,9 +11,10 @@ All URIs are relative to *http://localhost:8888*
 | [**getDefaultJobConfig**](JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration |
 | [**getJob**](JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available). |
 | [**getJobConfig**](JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name. |
+| [**getJobConfigNames**](JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | [DEPRECATED] Get all (non-default) job configuration names   |
 | [**getJobConfigs**](JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations |
-| [**getJobs**](JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available). |
-| [**getJobsPaged**](JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available). |
+| [**getJobs**](JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available) |
+| [**getJobsPage**](JobsApi.md#getJobsPage) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available). |
 | [**hasJobs**](JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs |  |
 | [**saveJobConfig**](JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name. |
 | [**startCommand**](JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | [DEPRECATED] Start computation for given command and input |
@@ -501,6 +502,68 @@ No authorization required
 | **200** | {@link JobSubmission JobSubmission} for given name. |  -  |
 
 
+## getJobConfigNames
+
+> List&lt;String&gt; getJobConfigNames()
+
+[DEPRECATED] Get all (non-default) job configuration names  
+
+[DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.JobsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        JobsApi apiInstance = new JobsApi(defaultClient);
+        try {
+            List<String> result = apiInstance.getJobConfigNames();
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling JobsApi#getJobConfigNames");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**List&lt;String&gt;**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
 ## getJobConfigs
 
 > List&lt;StoredJobSubmission&gt; getJobConfigs()
@@ -567,9 +630,9 @@ No authorization required
 
 > List&lt;Job&gt; getJobs(projectId, optFields)
 
-Get List of all available jobs with information such as current state and progress (if available).
+[DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)
 
-Get List of all available jobs with information such as current state and progress (if available).
+[DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
 
 ### Example
 
@@ -631,9 +694,9 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## getJobsPaged
+## getJobsPage
 
-> PagedModelJob getJobsPaged(projectId, page, size, sort, optFields)
+> PagedModelJob getJobsPage(projectId, page, size, sort, optFields)
 
 Get Page of jobs with information such as current state and progress (if available).
 
@@ -661,10 +724,10 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PagedModelJob result = apiInstance.getJobsPaged(projectId, page, size, sort, optFields);
+            PagedModelJob result = apiInstance.getJobsPage(projectId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling JobsApi#getJobsPaged");
+            System.err.println("Exception when calling JobsApi#getJobsPage");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
