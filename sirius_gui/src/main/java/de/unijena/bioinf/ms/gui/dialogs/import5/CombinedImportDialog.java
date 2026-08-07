@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
@@ -38,6 +39,7 @@ import io.sirius.ms.sdk.model.Run;
 import lombok.Getter;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -69,6 +71,10 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
      * Gets the sample types for each run
      */
     private final Map<String, String> sampleTypes;
+    /**
+     * User specified name per run. Runs without a name keep the name derived during import.
+     */
+    private final Map<String, String> sampleNames;
 //    private final LCMSConfigPanel configPanel;
 
     @Getter
@@ -90,6 +96,21 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
     }
 
     /**
+     * @return the user specified name of each LC/MS file in the order of {@link #getLCMSFiles()}. Files
+     * without a specified name have a null entry, so that their name is derived during import.
+     */
+    @NotNull
+    public List<String> getLCMSFilesSampleNames() {
+        ArrayList<String> sampleNames = new ArrayList<>();
+        for (Path lcmsFile : LCMSFiles) {
+            String sampleName = this.sampleNames.get(lcmsFile.toString());
+            sampleNames.add(Utils.isNullOrBlank(sampleName) ? null : sampleName.strip());
+        }
+
+        return sampleNames;
+    }
+
+    /**
      * Creates a new combined import dialog.
      *
      * @param owner      The parent window
@@ -98,6 +119,7 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
     public CombinedImportDialog(Window owner, InputFilesOptions inputFiles) {
         super(owner, "Import MS Data", Dialog.ModalityType.APPLICATION_MODAL);
         this.sampleTypes = new HashMap<>();
+        this.sampleNames = new HashMap<>();
         this.returnValue = ReturnValue.Cancel;
         this.LCMSFiles = inputFiles.msInput.lcmsFiles.keySet().stream().sorted().toList();
 
@@ -196,20 +218,24 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
         runsTable.setModel(new DefaultEventTableModel<>(sortedRuns, new WritableTableFormat<>() {
             @Override
             public boolean isEditable(Run run, int column) {
-                return column == 2;
+                return column == 2 || column == 3;
             }
 
             @Override
             public Run setColumnValue(Run run, Object value, int column) {
-                if (column == 2 && value instanceof String str)
-                    sampleTypes.put(run.getRunId(), str);
+                if (value instanceof String str) {
+                    if (column == 2)
+                        sampleNames.put(run.getRunId(), str);
+                    else if (column == 3)
+                        sampleTypes.put(run.getRunId(), str);
+                }
 
                 return run;
             }
 
             @Override
             public int getColumnCount() {
-                return 3;
+                return 4;
             }
 
             @Override
@@ -217,7 +243,8 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
                 return switch (column) {
                     case 0 -> "File Name";
                     case 1 -> "Path";
-                    case 2 -> "Sample Type";
+                    case 2 -> "Sample Name";
+                    case 3 -> "Sample Type";
                     default -> throw new IllegalStateException("Unexpected value: " + column);
                 };
             }
@@ -227,7 +254,8 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
                 return switch (column) {
                     case 0 -> run.getName();
                     case 1 -> run.getSource();
-                    case 2 -> sampleTypes.get(run.getRunId());
+                    case 2 -> sampleNames.get(run.getRunId());
+                    case 3 -> sampleTypes.get(run.getRunId());
                     default -> throw new IllegalStateException("Unexpected value: " + column);
                 };
             }
@@ -236,7 +264,8 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
         // Customize column widths
         runsTable.getColumnModel().getColumn(0).setPreferredWidth(150);
         runsTable.getColumnModel().getColumn(1).setPreferredWidth(300);
-        runsTable.getColumnModel().getColumn(2).setPreferredWidth(100);
+        runsTable.getColumnModel().getColumn(2).setPreferredWidth(150);
+        runsTable.getColumnModel().getColumn(3).setPreferredWidth(100);
 
         // Custom renderer for the path column to show a truncated path if needed
         runsTable.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
@@ -252,7 +281,7 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
 
         // Setup sample type dropdown
         JComboBox<String> sampleBox = new JComboBox<>(POSSIBLE_SAMPLE_TYPES.toArray(String[]::new));
-        runsTable.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(sampleBox));
+        runsTable.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(sampleBox));
 
         // Allow column sorting
         TableComparatorChooser.install(runsTable, sortedRuns, AbstractTableComparatorChooser.SINGLE_COLUMN);
@@ -298,6 +327,11 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == importButton) {
+            String sampleNameError = validateSampleNames();
+            if (sampleNameError != null) {
+                new WarningDialog(this, "Invalid sample name", sampleNameError, null);
+                return;
+            }
             if (ignoreFormulas != null) {
                 SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty(
                         "de.unijena.bioinf.sirius.ui.ignoreFormulas",
@@ -312,6 +346,26 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
         }
     }
 
+
+    /**
+     * @return an error message if the given sample names cannot be used for the import, null otherwise
+     */
+    @Nullable
+    private String validateSampleNames() {
+        Set<String> uniqueNames = new HashSet<>();
+        for (String sampleName : getLCMSFilesSampleNames()) {
+            if (sampleName == null)
+                continue; //name is derived from the input file
+            //the deprecated import endpoint used here takes the parameters as query parameters, where
+            //lists are comma separated. Can be dropped once that endpoint is gone.
+            if (sampleName.contains(","))
+                return "The sample name '" + sampleName + "' contains a comma, which is not supported in sample names.";
+            if (!uniqueNames.add(sampleName))
+                return "The sample name '" + sampleName + "' is used for more than one run. Sample names must be unique.";
+        }
+
+        return null;
+    }
 
     private void makeImportOptions(JComponent content, boolean showLCMSOptions, boolean alignAllowed, boolean showPeakListOptions) {
         JPanel paras = new JPanel(new FlowLayout(FlowLayout.LEFT, GuiUtils.MEDIUM_GAP, GuiUtils.MEDIUM_GAP));

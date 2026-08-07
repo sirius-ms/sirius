@@ -1099,6 +1099,7 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sampleNames", parameters.getSampleNames()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sampleTypes", parameters.getSampleTypes()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignLCMSRuns", parameters.isAlignLCMSRuns()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "noiseIntensity", parameters.getNoiseIntensity()));
@@ -1206,6 +1207,7 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sampleNames", parameters.getSampleNames()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sampleTypes", parameters.getSampleTypes()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignLCMSRuns", parameters.isAlignLCMSRuns()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "noiseIntensity", parameters.getNoiseIntensity()));

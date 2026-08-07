@@ -10741,9 +10741,18 @@
       "LcmsSubmissionParameters": {
         "type": "object",
         "properties": {
+          "sampleNames": {
+            "type": "array",
+            "description": "Sample names for each input file to link imported results, e.g. QuantTable back to the input data.\n If NULL or empty sample names will be derived from the input files.\n \u003cp\u003e\n The names are matched to the input files by index. Partial lists are allowed: a NULL entry and any\n input file without a corresponding entry get their name derived from the input file. Surplus entries\n that match no input file are ignored.\n \u003cp\u003e\n Names must neither be blank nor duplicated, otherwise the import is rejected.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
           "sampleTypes": {
             "type": "array",
-            "description": "Sample type for each input file to be used to compute fold changes between blank and sample runs\n If NULL or empty no fold changes will be computed during preprocessing.",
+            "description": "Sample type for each input file to be used to compute fold changes between blank and sample runs\n If NULL or empty no fold changes will be computed during preprocessing.\n \u003cp\u003e\n The types are matched to the input files by index. In contrast to sampleNames either all or no sample\n types have to be given: if the number of types does not match the number of input files or if any type\n is NULL or blank, the import is rejected.",
             "nullable": true,
             "items": {
               "type": "string",

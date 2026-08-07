@@ -93,6 +93,11 @@ import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
     private static final Logger log = LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class);
+    /**
+     * User specified name for the run of each input file. May be shorter than the input files and may
+     * contain null entries, in which case the name is derived from the input file.
+     */
+    private final @Nullable List<String> sampleNames;
     private final @Nullable List<String> sampleTypes;
     private final List<Path> inputFiles;
 
@@ -140,6 +145,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     public LcmsAlignSubToolJobNoSql(@NotNull List<Path> inputFiles, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
         super();
         this.inputFiles = inputFiles;
+        this.sampleNames = null;
         this.sampleTypes = null;
         this.projectSupplier = projectSupplier;
         this.alignRuns = !options.noAlign;
@@ -183,6 +189,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     public LcmsAlignSubToolJobNoSql(
             @NotNull List<Path> runFiles,
+            @Nullable List<String> sampleNames,
             @Nullable List<String> sampleTypes,
             @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier,
             boolean alignRuns,
@@ -198,6 +205,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     ) {
         super();
         this.inputFiles = runFiles;
+        this.sampleNames = sampleNames;
         this.sampleTypes = sampleTypes;
         this.projectSupplier = projectSupplier;
         this.alignRuns = alignRuns;
@@ -219,7 +227,34 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.tracker = tracker==null ? new Tracker.NOOP() : tracker;
     }
 
-    private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, List<Path> files) throws IOException {
+    /**
+     * @return the user specified name for the run of the input file at the given index or null if the name
+     * should be derived from the input file
+     */
+    @Nullable
+    String sampleNameAt(int inputFileIndex) {
+        if (sampleNames == null || inputFileIndex >= sampleNames.size())
+            return null;
+        String sampleName = sampleNames.get(inputFileIndex);
+        return sampleName == null || sampleName.isBlank() ? null : sampleName;
+    }
+
+    /**
+     * @return the user specified sample type for the input file at the given index or the default sample type
+     */
+    @NotNull
+    String sampleTypeAt(int inputFileIndex) {
+        if (sampleTypes == null || inputFileIndex >= sampleTypes.size())
+            return TagDefinitions.SAMPLE_TYPE_SAMPLE;
+        String sampleType = sampleTypes.get(inputFileIndex);
+        return sampleType == null || sampleType.isBlank() ? TagDefinitions.SAMPLE_TYPE_SAMPLE : sampleType;
+    }
+
+    /**
+     * @param indexOfFirstFile index of the first of the given files within the input files, needed to match
+     *                         the user specified sample names and types to the files
+     */
+    private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, List<Path> files, int indexOfFirstFile) throws IOException {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         setProjectTypeOrThrow(ps);
@@ -244,14 +279,16 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 updateProgress(totalProgress, progress, "Processing Runs");
                 List<BasicJJob<ProcessedSample>> jobs = new ArrayList<>();
                 int atmost = Integer.MAX_VALUE;
-                for (Path f : files) {
+                for (int i = 0; i < files.size(); i++) {
                     if (--atmost < 0) break;
+                    final Path f = files.get(i);
+                    final String sampleName = sampleNameAt(indexOfFirstFile + i);
                     jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
                         @Override
                         protected ProcessedSample compute() throws Exception {
                             ProcessedSample sample;
                             try {
-                                sample = processing.processSample(f);
+                                sample = processing.processSample(f, sampleName);
                             } catch (IOException e) {
                                 e.printStackTrace();
                                 LoggerFactory.getLogger(LCMSProcessing.class).warn("Ignore input file " + f);
@@ -277,15 +314,18 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                     updateProgress(totalProgress, ++progress, "Processing Runs");
                 }
 
-                // create sample type tags for runs.
-                Iterator<String> stIt = sampleTypes != null && sampleTypes.size() == inputFiles.size() ? sampleTypes.iterator() : null;
-                List<Tag> sampleTypeTags = jobs.stream()
-                        .map(j -> {
-                            String tagValue = stIt != null ? stIt.next() : TagDefinitions.SAMPLE_TYPE_SAMPLE;
-                            return TagDefinitions.SAMPLE_TYPE.newTagWithValue(tagValue, LCMSRun.class, j.getResult().getRun().getRunId());
-                        })
-                        .peek(tag -> importedRunIds.computeIfAbsent((String) tag.getValue(), k -> new LongLinkedOpenHashSet()).add(tag.getTaggedObjectId()))
-                        .toList();
+                // create sample type tags for runs. Matched to the input files by index, since runs of
+                // input files that could not be processed are missing.
+                List<Tag> sampleTypeTags = new ArrayList<>(jobs.size());
+                for (int i = 0; i < jobs.size(); i++) {
+                    ProcessedSample processedSample = jobs.get(i).getResult();
+                    if (processedSample == null)
+                        continue;
+                    String tagValue = sampleTypeAt(indexOfFirstFile + i);
+                    Tag tag = TagDefinitions.SAMPLE_TYPE.newTagWithValue(tagValue, LCMSRun.class, processedSample.getRun().getRunId());
+                    importedRunIds.computeIfAbsent(tagValue, k -> new LongLinkedOpenHashSet()).add(tag.getTaggedObjectId());
+                    sampleTypeTags.add(tag);
+                }
                 ps.getStorage().insertAll(sampleTypeTags);
             }
 
@@ -497,14 +537,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         progress = 0;
         if (alignRuns) {
             totalProgress = inputFiles.size() + 5L;
-            compute(ps, inputFiles);
+            compute(ps, inputFiles, 0);
         } else {
             // TODO parallelize
             totalProgress = inputFiles.size() * 5L + 1;
             int atmost = Integer.MAX_VALUE;
-            for (Path f : inputFiles) {
+            for (int i = 0; i < inputFiles.size(); i++) {
                 if (--atmost < 0) break;
-                compute(ps, List.of(f));
+                compute(ps, List.of(inputFiles.get(i)), i);
             }
         }
         updateProgress(totalProgress, totalProgress, "Done");

@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
@@ -37,6 +38,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -168,6 +170,7 @@ public class ProjectController {
                                     @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
         importFormatValidationService.validateFiles(request, inputFiles);
+        validateLcmsParameters(parameters, inputFiles.length);
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         try {
             ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
@@ -206,6 +209,7 @@ public class ProjectController {
                                         @RequestPart LcmsSubmissionParameters parameters
     ) {
         importFormatValidationService.validateFiles(request, inputFiles);
+        validateLcmsParameters(parameters, inputFiles.length);
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
         sub.setInputSources(List.of(inputFiles));
         sub.setLcmsParameters(parameters);
@@ -242,6 +246,8 @@ public class ProjectController {
                                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
         importFormatValidationService.validateFiles(request, localFilePaths);
+        treatBlankSampleNamesAsMissing(parameters);
+        validateLcmsParameters(parameters, localFilePaths.length);
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         try {
             ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
@@ -279,6 +285,8 @@ public class ProjectController {
                                                LcmsSubmissionParameters parameters
     ) {
         importFormatValidationService.validateFiles(request, localFilePaths);
+        treatBlankSampleNamesAsMissing(parameters);
+        validateLcmsParameters(parameters, localFilePaths.length);
         ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
         sub.setInputSources(List.of(localFilePaths));
         sub.setLcmsParameters(parameters);
@@ -457,5 +465,31 @@ public class ProjectController {
         projectsProvider.getProjectOrThrow(projectId).createSearchIndex(force);
     }
 
+    /**
+     * Replaces blank sample names by null, since a query string cannot express null: on the deprecated
+     * endpoints that take the import parameters as query parameters instead of as JSON, a name that should
+     * be derived from its input file arrives as an empty string. To be removed with those endpoints.
+     */
+    @Deprecated(forRemoval = true)
+    static void treatBlankSampleNamesAsMissing(@Nullable LcmsSubmissionParameters parameters) {
+        if (parameters == null || parameters.getSampleNames() == null)
+            return;
+        parameters.setSampleNames(parameters.getSampleNames().stream()
+                .map(sampleName -> Utils.isNullOrBlank(sampleName) ? null : sampleName)
+                .toList());
+    }
+
+    /**
+     * Reports sample names or types that cannot be matched to the given input files as user error.
+     */
+    private static void validateLcmsParameters(@Nullable LcmsSubmissionParameters parameters, int numberOfInputFiles) {
+        if (parameters == null)
+            return;
+        try {
+            parameters.validate(numberOfInputFiles);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
 
 }

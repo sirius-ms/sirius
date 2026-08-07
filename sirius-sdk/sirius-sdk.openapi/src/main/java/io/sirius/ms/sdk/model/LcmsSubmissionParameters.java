@@ -41,6 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * LcmsSubmissionParameters
  */
 @JsonPropertyOrder({
+  LcmsSubmissionParameters.JSON_PROPERTY_SAMPLE_NAMES,
   LcmsSubmissionParameters.JSON_PROPERTY_SAMPLE_TYPES,
   LcmsSubmissionParameters.JSON_PROPERTY_ALIGN_L_C_M_S_RUNS,
   LcmsSubmissionParameters.JSON_PROPERTY_NOISE_INTENSITY,
@@ -51,6 +52,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
 public class LcmsSubmissionParameters {
+  public static final String JSON_PROPERTY_SAMPLE_NAMES = "sampleNames";
+  @jakarta.annotation.Nullable
+  private List<String> sampleNames;
+
   public static final String JSON_PROPERTY_SAMPLE_TYPES = "sampleTypes";
   @jakarta.annotation.Nullable
   private List<String> sampleTypes;
@@ -82,6 +87,39 @@ public class LcmsSubmissionParameters {
   public LcmsSubmissionParameters() {
   }
 
+  public LcmsSubmissionParameters sampleNames(@jakarta.annotation.Nullable List<String> sampleNames) {
+    
+    this.sampleNames = sampleNames;
+    return this;
+  }
+
+  public LcmsSubmissionParameters addSampleNamesItem(String sampleNamesItem) {
+    if (this.sampleNames == null) {
+      this.sampleNames = new ArrayList<>();
+    }
+    this.sampleNames.add(sampleNamesItem);
+    return this;
+  }
+
+  /**
+   * Sample names for each input file to link imported results, e.g. QuantTable back to the input data.  If NULL or empty sample names will be derived from the input files.  &lt;p&gt;  The names are matched to the input files by index. Partial lists are allowed: a NULL entry and any  input file without a corresponding entry get their name derived from the input file. Surplus entries  that match no input file are ignored.  &lt;p&gt;  Names must neither be blank nor duplicated, otherwise the import is rejected.
+   * @return sampleNames
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SAMPLE_NAMES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<String> getSampleNames() {
+    return sampleNames;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SAMPLE_NAMES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSampleNames(@jakarta.annotation.Nullable List<String> sampleNames) {
+    this.sampleNames = sampleNames;
+  }
+
   public LcmsSubmissionParameters sampleTypes(@jakarta.annotation.Nullable List<String> sampleTypes) {
     
     this.sampleTypes = sampleTypes;
@@ -97,7 +135,7 @@ public class LcmsSubmissionParameters {
   }
 
   /**
-   * Sample type for each input file to be used to compute fold changes between blank and sample runs  If NULL or empty no fold changes will be computed during preprocessing.
+   * Sample type for each input file to be used to compute fold changes between blank and sample runs  If NULL or empty no fold changes will be computed during preprocessing.  &lt;p&gt;  The types are matched to the input files by index. In contrast to sampleNames either all or no sample  types have to be given: if the number of types does not match the number of input files or if any type  is NULL or blank, the import is rejected.
    * @return sampleTypes
    */
   @jakarta.annotation.Nullable
@@ -275,7 +313,8 @@ public class LcmsSubmissionParameters {
       return false;
     }
     LcmsSubmissionParameters lcmsSubmissionParameters = (LcmsSubmissionParameters) o;
-    return Objects.equals(this.sampleTypes, lcmsSubmissionParameters.sampleTypes) &&
+    return Objects.equals(this.sampleNames, lcmsSubmissionParameters.sampleNames) &&
+        Objects.equals(this.sampleTypes, lcmsSubmissionParameters.sampleTypes) &&
         Objects.equals(this.alignLCMSRuns, lcmsSubmissionParameters.alignLCMSRuns) &&
         Objects.equals(this.noiseIntensity, lcmsSubmissionParameters.noiseIntensity) &&
         Objects.equals(this.traceMaxMassDeviation, lcmsSubmissionParameters.traceMaxMassDeviation) &&
@@ -286,13 +325,14 @@ public class LcmsSubmissionParameters {
 
   @Override
   public int hashCode() {
-    return Objects.hash(sampleTypes, alignLCMSRuns, noiseIntensity, traceMaxMassDeviation, alignMaxMassDeviation, alignMaxRetentionTimeDeviation, minSNR);
+    return Objects.hash(sampleNames, sampleTypes, alignLCMSRuns, noiseIntensity, traceMaxMassDeviation, alignMaxMassDeviation, alignMaxRetentionTimeDeviation, minSNR);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class LcmsSubmissionParameters {\n");
+    sb.append("    sampleNames: ").append(toIndentedString(sampleNames)).append("\n");
     sb.append("    sampleTypes: ").append(toIndentedString(sampleTypes)).append("\n");
     sb.append("    alignLCMSRuns: ").append(toIndentedString(alignLCMSRuns)).append("\n");
     sb.append("    noiseIntensity: ").append(toIndentedString(noiseIntensity)).append("\n");

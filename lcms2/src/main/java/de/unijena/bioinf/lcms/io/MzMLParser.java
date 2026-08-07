@@ -137,7 +137,10 @@ public class MzMLParser implements LCMSParser {
                 // get source location oO
                 reference = new MsDataSourceReference(parent, fileName, runId, mzMlId);
 
-                if (runId != null && !runId.isEmpty() && !runId.isBlank()) {
+                //a name given by the user wins over the ids in the file, which are often not meaningful
+                if (run.getName() != null && !run.getName().isBlank()) {
+                    //keep the given name
+                } else if (runId != null && !runId.isEmpty() && !runId.isBlank()) {
                     run.setName(runId);
                 } else if (mzMlId != null && !mzMlId.isEmpty() && !mzMlId.isBlank()) {
                     run.setName(mzMlId);
