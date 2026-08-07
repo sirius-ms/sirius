@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SubscriptionConsumables.JSON_PROPERTY_PENDING_JOBS,
   SubscriptionConsumables.JSON_PROPERTY_COUNTED_COMPOUNDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class SubscriptionConsumables {
   public static final String JSON_PROPERTY_PENDING_JOBS = "pendingJobs";
   @jakarta.annotation.Nullable
@@ -64,7 +65,7 @@ public class SubscriptionConsumables {
    * @return pendingJobs
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PENDING_JOBS)
+  @JsonProperty(value = JSON_PROPERTY_PENDING_JOBS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getPendingJobs() {
@@ -72,7 +73,7 @@ public class SubscriptionConsumables {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PENDING_JOBS)
+  @JsonProperty(value = JSON_PROPERTY_PENDING_JOBS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPendingJobs(@jakarta.annotation.Nullable Integer pendingJobs) {
     this.pendingJobs = pendingJobs;
@@ -89,7 +90,7 @@ public class SubscriptionConsumables {
    * @return countedCompounds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COUNTED_COMPOUNDS)
+  @JsonProperty(value = JSON_PROPERTY_COUNTED_COMPOUNDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getCountedCompounds() {
@@ -97,7 +98,7 @@ public class SubscriptionConsumables {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COUNTED_COMPOUNDS)
+  @JsonProperty(value = JSON_PROPERTY_COUNTED_COMPOUNDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCountedCompounds(@jakarta.annotation.Nullable Integer countedCompounds) {
     this.countedCompounds = countedCompounds;

@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -43,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ImportResult.JSON_PROPERTY_AFFECTED_COMPOUND_IDS,
   ImportResult.JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class ImportResult {
   public static final String JSON_PROPERTY_AFFECTED_COMPOUND_IDS = "affectedCompoundIds";
   @jakarta.annotation.Nonnull
@@ -75,7 +76,7 @@ public class ImportResult {
    * @return affectedCompoundIds
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_AFFECTED_COMPOUND_IDS)
+  @JsonProperty(value = JSON_PROPERTY_AFFECTED_COMPOUND_IDS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public List<String> getAffectedCompoundIds() {
@@ -83,7 +84,7 @@ public class ImportResult {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_AFFECTED_COMPOUND_IDS)
+  @JsonProperty(value = JSON_PROPERTY_AFFECTED_COMPOUND_IDS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setAffectedCompoundIds(@jakarta.annotation.Nonnull List<String> affectedCompoundIds) {
     this.affectedCompoundIds = affectedCompoundIds;
@@ -108,7 +109,7 @@ public class ImportResult {
    * @return affectedAlignedFeatureIds
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public List<String> getAffectedAlignedFeatureIds() {
@@ -116,7 +117,7 @@ public class ImportResult {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setAffectedAlignedFeatureIds(@jakarta.annotation.Nonnull List<String> affectedAlignedFeatureIds) {
     this.affectedAlignedFeatureIds = affectedAlignedFeatureIds;

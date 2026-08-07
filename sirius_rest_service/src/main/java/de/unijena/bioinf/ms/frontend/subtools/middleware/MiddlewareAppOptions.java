@@ -100,11 +100,21 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
     private final static List<String> DEPRECATED_EXCLUSIONS = List.of(
             "/api/databases",
             "/api/databases/downloadable",
+            "/api/job-config-names",
+            "/api/projects/*/aligned-features",
+            "/api/projects/*/aligned-features/*/db-structures",
+            "/api/projects/*/aligned-features/*/denovo-structures",
+            "/api/projects/*/aligned-features/*/formulas",
+            "/api/projects/*/aligned-features/*/formulas/*/db-structures",
+            "/api/projects/*/aligned-features/*/formulas/*/denovo-structures",
+            "/api/projects/*/aligned-features/*/spectral-library-matches",
+            "/api/projects/*/compounds",
             "/api/projects/*/copy",
             "/api/projects/*/import/ms-data-local-files-job",
             "/api/projects/*/import/ms-local-data-files",
             "/api/projects/*/import/preprocessed-local-data-files",
             "/api/projects/*/import/preprocessed-local-data-files-job",
+            "/api/projects/*/jobs",
             "/api/projects/*/jobs/run-command"
     );
 
@@ -117,7 +127,6 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             "/api/projects/*/aligned-features/*/spectral-library-matches/*/annotated",
             "/api/projects/*/aligned-features/*/traces",
             "/api/projects/*/aligned-features/grouped",
-            "/api/projects/*/aligned-features/page",
             "/api/projects/*/aligned-features/quant-table",
             "/api/projects/*/aligned-features/statistics/foldchange/compute",
             "/api/projects/*/aligned-features/statistics/foldchanges",
@@ -132,12 +141,12 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             "/api/projects/*/compounds/*/quant-table-row",
             "/api/projects/*/compounds/*/traces",
             "/api/projects/*/compounds/grouped",
-            "/api/projects/*/compounds/page",
             "/api/projects/*/compounds/quant-table",
             "/api/projects/*/compounds/statistics/foldchange/compute",
             "/api/projects/*/compounds/statistics/foldchanges",
             "/api/projects/*/compounds/statistics/foldchanges/*",
             "/api/projects/*/compounds/statistics/foldchanges/stats-table",
+            "/api/projects/*/compounds/tags",
             "/api/projects/*/compounds/tags/*",
             "/api/projects/*/compounds/tags/*/*",
             "/api/projects/*/groups",
@@ -153,7 +162,13 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             "/api/projects/*/runs/tags/*/*",
             "/api/projects/*/tags",
             "/api/projects/*/tags/*",
-            "/api/reactions"
+            "/api/reactions",
+            "/api/reactions/library",
+            "/api/reactions/library/*",
+            "/api/reactions/sequences",
+            "/api/reactions/sequences/*",
+            "/api/reactions/sequences/library",
+            "/api/reactions/sequences/library/*"
     );
 
     private static final List<String> ADVANCED_EXCLUSIONS = List.of("/api/projects/*/gui/advanced");

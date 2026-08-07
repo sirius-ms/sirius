@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -39,7 +40,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   WebServerNamespace.JSON_PROPERTY_VALUE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class WebServerNamespace {
   public static final String JSON_PROPERTY_VALUE = "value";
   @jakarta.annotation.Nullable
@@ -59,7 +60,7 @@ public class WebServerNamespace {
    * @return value
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_VALUE)
+  @JsonProperty(value = JSON_PROPERTY_VALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getValue() {
@@ -67,7 +68,7 @@ public class WebServerNamespace {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_VALUE)
+  @JsonProperty(value = JSON_PROPERTY_VALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setValue(@jakarta.annotation.Nullable String value) {
     this.value = value;

@@ -667,9 +667,9 @@
         "tags": [
           "Compounds"
         ],
-        "summary": "Tags with the same name will be overwritten.",
-        "description": "Tags with the same name will be overwritten.",
-        "operationId": "addTagsToObjects",
+        "summary": "[EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project",
+        "description": "[EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project. Tags with the same name will be overwritten.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "addTagsToCompoundsExperimental",
         "parameters": [
           {
             "name": "projectId",
@@ -682,7 +682,7 @@
           }
         ],
         "requestBody": {
-          "description": "tags with id of the object to be added to.",
+          "description": "tags with the id of compound (group of ion identities) they shall be added to.",
           "content": {
             "application/json": {
               "schema": {
@@ -1378,7 +1378,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Get all reactions from the library.",
+        "summary": "[EXPERIMENTAL] Get all reactions from the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "getReactions",
         "responses": {
           "200": {
@@ -1400,8 +1401,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Apply a sequence of reactions to a list of SMILES strings or structures from a database.",
-        "description": "[EXPERIMENTAL] Returns the final pool of SMILES strings.",
+        "summary": "[EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.",
+        "description": "[EXPERIMENTAL] Returns the final pool of SMILES strings. [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "applyReactions",
         "parameters": [
           {
@@ -1444,7 +1445,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Add a new reaction sequence to the library.",
+        "summary": "[EXPERIMENTAL] Add a new reaction sequence to the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "addSequence",
         "requestBody": {
           "content": {
@@ -1468,7 +1470,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Add a new reaction to the library.",
+        "summary": "[EXPERIMENTAL] Add a new reaction to the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "addReaction",
         "requestBody": {
           "content": {
@@ -1492,8 +1495,8 @@
         "tags": [
           "Jobs"
         ],
-        "summary": "Get List of all available jobs with information such as current state and progress (if available).",
-        "description": "Get List of all available jobs with information such as current state and progress (if available).",
+        "summary": "[DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)",
+        "description": "[DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).\n \u003cp\u003e\n [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.\n This endpoint will be removed in the next major version of this API.",
         "operationId": "getJobs",
         "parameters": [
           {
@@ -1542,7 +1545,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       },
       "post": {
         "tags": [
@@ -2625,8 +2629,8 @@
         "tags": [
           "Compounds"
         ],
-        "summary": "List of all available compounds (group of ion identities) in the given project-space.",
-        "description": "List of all available compounds (group of ion identities) in the given project-space.",
+        "summary": "[DEPRECATED] List of all available compounds (group of ion identities) in the given project-space",
+        "description": "[DEPRECATED] List of all available compounds (group of ion identities) in the given project-space.\n \u003cp\u003e\n [DEPRECATED] Use /compounds/page instead. Loading all compounds at once does not scale for large projects.\n This endpoint will be removed in the next major version of this API.",
         "operationId": "getCompounds",
         "parameters": [
           {
@@ -2711,7 +2715,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       },
       "post": {
         "tags": [
@@ -2830,8 +2835,8 @@
         "tags": [
           "Features"
         ],
-        "summary": "Get all available features (aligned over runs) in the given project-space.",
-        "description": "Get all available features (aligned over runs) in the given project-space.",
+        "summary": "[DEPRECATED] Get all available features (aligned over runs) in the given project-space",
+        "description": "[DEPRECATED] Get all available features (aligned over runs) in the given project-space.\n \u003cp\u003e\n [DEPRECATED] Use /aligned-features/page instead. Loading all features at once does not scale for large\n projects. This endpoint will be removed in the next major version of this API.",
         "operationId": "getAlignedFeatures",
         "parameters": [
           {
@@ -2894,7 +2899,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       },
       "post": {
         "tags": [
@@ -3576,7 +3582,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Get all reaction sequences from the library.",
+        "summary": "[EXPERIMENTAL] Get all reaction sequences from the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "getSequences",
         "responses": {
           "200": {
@@ -3600,7 +3607,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Get a specific reaction sequence from the library by name.",
+        "summary": "[EXPERIMENTAL] Get a specific reaction sequence from the library by name.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "getSequence",
         "parameters": [
           {
@@ -3631,7 +3639,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Get a specific reaction from the library by name.",
+        "summary": "[EXPERIMENTAL] Get a specific reaction from the library by name.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "getReaction",
         "parameters": [
           {
@@ -3660,7 +3669,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Delete a reaction from the library.",
+        "summary": "[EXPERIMENTAL] Delete a reaction from the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "deleteReaction",
         "parameters": [
           {
@@ -4215,7 +4225,7 @@
         ],
         "summary": "Get Page of jobs with information such as current state and progress (if available).",
         "description": "Get Page of jobs with information such as current state and progress (if available).",
-        "operationId": "getJobsPaged",
+        "operationId": "getJobsPage",
         "parameters": [
           {
             "name": "projectId",
@@ -4870,9 +4880,9 @@
         "tags": [
           "Compounds"
         ],
-        "summary": "[EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space",
-        "description": "[EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n \u003cp\u003e\n Currently the only searchable fields are names of tags (\u003ccode\u003etagName\u003c/code\u003e) followed by a clause that is valued for the value type of the tag (See TagDefinition).\n Tag name based field need to be prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types of tags are \u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
-        "operationId": "getCompoundsPageExperimental",
+        "summary": "Page of available compounds (group of ion identities) in the given project-space",
+        "description": "Page of available compounds (group of ion identities) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n \u003cp\u003e\n Currently the only searchable fields are names of tags (\u003ccode\u003etagName\u003c/code\u003e) followed by a clause that is valued for the value type of the tag (See TagDefinition).\n Tag name based field need to be prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types of tags are \u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n \u003cp\u003e\n \u003cstrong\u003eNote:\u003c/strong\u003e compound-level indexing is not implemented yet, so this endpoint always reads from the\n project database. Passing a non-empty \u003ccode\u003esearchQuery\u003c/code\u003e is therefore not supported and responds with\n 405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.",
+        "operationId": "getCompoundsPage",
         "parameters": [
           {
             "name": "projectId",
@@ -4886,7 +4896,7 @@
           {
             "name": "searchQuery",
             "in": "query",
-            "description": "search query in lucene syntax.",
+            "description": "Optional search query in lucene syntax. Not yet supported for compounds; a non-empty\n                     query responds with 405 METHOD_NOT_ALLOWED. Omit this parameter to page over all compounds.",
             "required": false,
             "schema": {
               "type": "string"
@@ -5408,8 +5418,8 @@
         "tags": [
           "Features"
         ],
-        "summary": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
-        "description": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
+        "summary": "[DEPRECATED] List of spectral library matches for the given \u0027alignedFeatureId\u0027",
+        "description": "[DEPRECATED] List of spectral library matches for the given \u0027alignedFeatureId\u0027.\n \u003cp\u003e\n [DEPRECATED] Use /spectral-library-matches/page instead. Loading all entries at once does not scale for large\n result sets. This endpoint will be removed in the next major version of this API.",
         "operationId": "getSpectralLibraryMatches",
         "parameters": [
           {
@@ -5493,7 +5503,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId}": {
@@ -5698,7 +5709,7 @@
         ],
         "summary": "Page of spectral library matches for the given \u0027alignedFeatureId\u0027.",
         "description": "Page of spectral library matches for the given \u0027alignedFeatureId\u0027.\n If a \u0027inchiKey\u0027 (2D) is provided, returns only matches for the database compound with the given InChI key.",
-        "operationId": "getSpectralLibraryMatchesPaged",
+        "operationId": "getSpectralLibraryMatchesPage",
         "parameters": [
           {
             "name": "projectId",
@@ -5970,8 +5981,8 @@
         "tags": [
           "Features"
         ],
-        "summary": "List of FormulaResultContainers available for this feature with minimal information.",
-        "description": "List of FormulaResultContainers available for this feature with minimal information.\n Can be enriched with an optional results overview.",
+        "summary": "[DEPRECATED] List of FormulaResultContainers available for this feature with minimal information",
+        "description": "[DEPRECATED] List of FormulaResultContainers available for this feature with minimal information.\n \u003cp\u003e\n [DEPRECATED] Use /formulas/page instead. Loading all entries at once does not scale for large\n result sets. This endpoint will be removed in the next major version of this API.\n Can be enriched with an optional results overview.",
         "operationId": "getFormulaCandidates",
         "parameters": [
           {
@@ -6044,7 +6055,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}": {
@@ -6549,8 +6561,8 @@
         "tags": [
           "Features"
         ],
-        "summary": "List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
-        "description": "List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
+        "summary": "[DEPRECATED] List of de novo structure candidates (e",
+        "description": "[DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027formulaId\u0027 with minimal information.\n \u003cp\u003e\n [DEPRECATED] Use /formulas/{formulaId}/denovo-structures/page instead. Loading all entries at once does not scale for large\n result sets. This endpoint will be removed in the next major version of this API.\n StructureCandidates can be enriched with molecular fingerprint.",
         "operationId": "getDeNovoStructureCandidatesByFormula",
         "parameters": [
           {
@@ -6618,7 +6630,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/denovo-structures/page": {
@@ -6628,7 +6641,7 @@
         ],
         "summary": "Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
         "description": "Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
-        "operationId": "getDeNovoStructureCandidatesByFormulaPaged",
+        "operationId": "getDeNovoStructureCandidatesByFormulaPage",
         "parameters": [
           {
             "name": "projectId",
@@ -6734,8 +6747,8 @@
         "tags": [
           "Features"
         ],
-        "summary": "List of CSI:FingerID structure database search candidates for the given \u0027formulaId\u0027 with minimal information.",
-        "description": "List of CSI:FingerID structure database search candidates for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
+        "summary": "[DEPRECATED] List of CSI:FingerID structure database search candidates for the given \u0027formulaId\u0027 with minimal information",
+        "description": "[DEPRECATED] List of CSI:FingerID structure database search candidates for the given \u0027formulaId\u0027 with minimal information.\n \u003cp\u003e\n [DEPRECATED] Use /formulas/{formulaId}/db-structures/page instead. Loading all entries at once does not scale for large\n result sets. This endpoint will be removed in the next major version of this API.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
         "operationId": "getStructureCandidatesByFormula",
         "parameters": [
           {
@@ -6803,7 +6816,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page": {
@@ -6813,7 +6827,7 @@
         ],
         "summary": "Page of CSI:FingerID structure database search candidates for the given \u0027formulaId\u0027 with minimal information.",
         "description": "Page of CSI:FingerID structure database search candidates for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
-        "operationId": "getStructureCandidatesByFormulaPaged",
+        "operationId": "getStructureCandidatesByFormulaPage",
         "parameters": [
           {
             "name": "projectId",
@@ -7156,7 +7170,7 @@
         ],
         "summary": "Page of FormulaResultContainers available for this feature with minimal information.",
         "description": "Page of FormulaResultContainers available for this feature with minimal information.\n Can be enriched with an optional results overview.",
-        "operationId": "getFormulaCandidatesPaged",
+        "operationId": "getFormulaCandidatesPage",
         "parameters": [
           {
             "name": "projectId",
@@ -7267,8 +7281,8 @@
         "tags": [
           "Features"
         ],
-        "summary": "List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
-        "description": "List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
+        "summary": "[DEPRECATED] List of de novo structure candidates (e",
+        "description": "[DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n \u003cp\u003e\n [DEPRECATED] Use /denovo-structures/page instead. Loading all entries at once does not scale for large\n result sets. This endpoint will be removed in the next major version of this API.\n StructureCandidates can be enriched with molecular fingerprint.",
         "operationId": "getDeNovoStructureCandidates",
         "parameters": [
           {
@@ -7327,7 +7341,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures/page": {
@@ -7337,7 +7352,7 @@
         ],
         "summary": "Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
         "description": "Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
-        "operationId": "getDeNovoStructureCandidatesPaged",
+        "operationId": "getDeNovoStructureCandidatesPage",
         "parameters": [
           {
             "name": "projectId",
@@ -7434,8 +7449,8 @@
         "tags": [
           "Features"
         ],
-        "summary": "List of structure database search candidates ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.",
-        "description": "List of structure database search candidates ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
+        "summary": "[DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information",
+        "description": "[DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n \u003cp\u003e\n [DEPRECATED] Use /db-structures/page instead. Loading all entries at once does not scale for large\n result sets. This endpoint will be removed in the next major version of this API.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
         "operationId": "getStructureCandidates",
         "parameters": [
           {
@@ -7494,7 +7509,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page": {
@@ -7504,7 +7520,7 @@
         ],
         "summary": "Page of structure database search candidates ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.",
         "description": "Page of structure database search candidates ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
-        "operationId": "getStructureCandidatesPaged",
+        "operationId": "getStructureCandidatesPage",
         "parameters": [
           {
             "name": "projectId",
@@ -7842,9 +7858,9 @@
         "tags": [
           "Features"
         ],
-        "summary": "[EXPERIMENTAL] Get features (aligned over runs) in the given project-space",
-        "description": "[EXPERIMENTAL] Get features (aligned over runs) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n\n Currently the only searchable fields are names of tags (\u003ccode\u003etagName\u003c/code\u003e) followed by a clause that is valued for the value type of the tag (See TagDefinition).\n Tag name based field need to be prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types of tags are \u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eboolean\u003c/strong\u003e: tags with boolean value are matched as follows: e.g. \u003ccode\u003etags.MyTagA:true\u003c/code\u003e, \u003ccode\u003etags.MyTagA:false\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003evalue-less\u003c/strong\u003e: tags without values (See TagDefinition) are matched as follows: e.g. \u003ccode\u003etags.MyTagA:*\u003c/code\u003e or \u003ccode\u003etags.MyTagA:true\u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
-        "operationId": "getAlignedFeaturesPageExperimental",
+        "summary": "Get features (aligned over runs) in the given project-space",
+        "description": "Get features (aligned over runs) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n\n Currently the only searchable fields are names of tags (\u003ccode\u003etagName\u003c/code\u003e) followed by a clause that is valued for the value type of the tag (See TagDefinition).\n Tag name based field need to be prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types of tags are \u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eboolean\u003c/strong\u003e: tags with boolean value are matched as follows: e.g. \u003ccode\u003etags.MyTagA:true\u003c/code\u003e, \u003ccode\u003etags.MyTagA:false\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003evalue-less\u003c/strong\u003e: tags without values (See TagDefinition) are matched as follows: e.g. \u003ccode\u003etags.MyTagA:*\u003c/code\u003e or \u003ccode\u003etags.MyTagA:true\u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
+        "operationId": "getAlignedFeaturesPage",
         "parameters": [
           {
             "name": "projectId",
@@ -7892,7 +7908,7 @@
           {
             "name": "searchQuery",
             "in": "query",
-            "description": "optional search query in lucene syntax.",
+            "description": "Optional search query in lucene syntax. Omit this parameter to page over all features.",
             "required": false,
             "schema": {
               "type": "string"
@@ -8086,6 +8102,32 @@
             }
           }
         }
+      }
+    },
+    "/api/job-config-names": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "[DEPRECATED] Get all (non-default) job configuration names\n ",
+        "description": "[DEPRECATED] Get all (non-default) job configuration names\n \u003cp\u003e\n [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "operationId": "getJobConfigNames",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
       }
     },
     "/api/info": {
@@ -8578,7 +8620,8 @@
         "tags": [
           "Reactions"
         ],
-        "summary": "Delete a reaction sequence from the library.",
+        "summary": "[EXPERIMENTAL] Delete a reaction sequence from the library.",
+        "description": "[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "deleteSequence",
         "parameters": [
           {

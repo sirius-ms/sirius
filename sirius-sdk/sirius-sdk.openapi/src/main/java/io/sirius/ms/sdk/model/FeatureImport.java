@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -58,7 +59,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FeatureImport.JSON_PROPERTY_MS1_SPECTRA,
   FeatureImport.JSON_PROPERTY_MS2_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class FeatureImport {
   public static final String JSON_PROPERTY_NAME = "name";
   @jakarta.annotation.Nullable
@@ -122,7 +123,7 @@ public class FeatureImport {
    * @return name
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getName() {
@@ -130,7 +131,7 @@ public class FeatureImport {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
@@ -147,7 +148,7 @@ public class FeatureImport {
    * @return externalFeatureId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EXTERNAL_FEATURE_ID)
+  @JsonProperty(value = JSON_PROPERTY_EXTERNAL_FEATURE_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getExternalFeatureId() {
@@ -155,7 +156,7 @@ public class FeatureImport {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_EXTERNAL_FEATURE_ID)
+  @JsonProperty(value = JSON_PROPERTY_EXTERNAL_FEATURE_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setExternalFeatureId(@jakarta.annotation.Nullable String externalFeatureId) {
     this.externalFeatureId = externalFeatureId;
@@ -172,7 +173,7 @@ public class FeatureImport {
    * @return ionMass
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_ION_MASS)
+  @JsonProperty(value = JSON_PROPERTY_ION_MASS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Double getIonMass() {
@@ -180,7 +181,7 @@ public class FeatureImport {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ION_MASS)
+  @JsonProperty(value = JSON_PROPERTY_ION_MASS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setIonMass(@jakarta.annotation.Nonnull Double ionMass) {
     this.ionMass = ionMass;
@@ -197,7 +198,7 @@ public class FeatureImport {
    * @return charge
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_CHARGE)
+  @JsonProperty(value = JSON_PROPERTY_CHARGE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getCharge() {
@@ -205,7 +206,7 @@ public class FeatureImport {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CHARGE)
+  @JsonProperty(value = JSON_PROPERTY_CHARGE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setCharge(@jakarta.annotation.Nonnull Integer charge) {
     this.charge = charge;
@@ -230,7 +231,7 @@ public class FeatureImport {
    * @return detectedAdducts
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
+  @JsonProperty(value = JSON_PROPERTY_DETECTED_ADDUCTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Set<String> getDetectedAdducts() {
@@ -239,7 +240,7 @@ public class FeatureImport {
 
 
   @JsonDeserialize(as = LinkedHashSet.class)
-  @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
+  @JsonProperty(value = JSON_PROPERTY_DETECTED_ADDUCTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDetectedAdducts(@jakarta.annotation.Nullable Set<String> detectedAdducts) {
     this.detectedAdducts = detectedAdducts;
@@ -256,7 +257,7 @@ public class FeatureImport {
    * @return rtStartSeconds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RT_START_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getRtStartSeconds() {
@@ -264,7 +265,7 @@ public class FeatureImport {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RT_START_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RT_START_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRtStartSeconds(@jakarta.annotation.Nullable Double rtStartSeconds) {
     this.rtStartSeconds = rtStartSeconds;
@@ -281,7 +282,7 @@ public class FeatureImport {
    * @return rtEndSeconds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RT_END_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getRtEndSeconds() {
@@ -289,7 +290,7 @@ public class FeatureImport {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RT_END_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RT_END_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRtEndSeconds(@jakarta.annotation.Nullable Double rtEndSeconds) {
     this.rtEndSeconds = rtEndSeconds;
@@ -306,7 +307,7 @@ public class FeatureImport {
    * @return rtApexSeconds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RT_APEX_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RT_APEX_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getRtApexSeconds() {
@@ -314,7 +315,7 @@ public class FeatureImport {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RT_APEX_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RT_APEX_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRtApexSeconds(@jakarta.annotation.Nullable Double rtApexSeconds) {
     this.rtApexSeconds = rtApexSeconds;
@@ -331,7 +332,7 @@ public class FeatureImport {
    * @return dataQuality
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DATA_QUALITY)
+  @JsonProperty(value = JSON_PROPERTY_DATA_QUALITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public DataQuality getDataQuality() {
@@ -339,7 +340,7 @@ public class FeatureImport {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DATA_QUALITY)
+  @JsonProperty(value = JSON_PROPERTY_DATA_QUALITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDataQuality(@jakarta.annotation.Nullable DataQuality dataQuality) {
     this.dataQuality = dataQuality;
@@ -356,7 +357,7 @@ public class FeatureImport {
    * @return mergedMs1
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MERGED_MS1)
+  @JsonProperty(value = JSON_PROPERTY_MERGED_MS1, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public BasicSpectrum getMergedMs1() {
@@ -364,7 +365,7 @@ public class FeatureImport {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MERGED_MS1)
+  @JsonProperty(value = JSON_PROPERTY_MERGED_MS1, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMergedMs1(@jakarta.annotation.Nullable BasicSpectrum mergedMs1) {
     this.mergedMs1 = mergedMs1;
@@ -389,7 +390,7 @@ public class FeatureImport {
    * @return ms1Spectra
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
+  @JsonProperty(value = JSON_PROPERTY_MS1_SPECTRA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<BasicSpectrum> getMs1Spectra() {
@@ -397,7 +398,7 @@ public class FeatureImport {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
+  @JsonProperty(value = JSON_PROPERTY_MS1_SPECTRA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs1Spectra(@jakarta.annotation.Nullable List<BasicSpectrum> ms1Spectra) {
     this.ms1Spectra = ms1Spectra;
@@ -422,7 +423,7 @@ public class FeatureImport {
    * @return ms2Spectra
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
+  @JsonProperty(value = JSON_PROPERTY_MS2_SPECTRA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<BasicSpectrum> getMs2Spectra() {
@@ -430,7 +431,7 @@ public class FeatureImport {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
+  @JsonProperty(value = JSON_PROPERTY_MS2_SPECTRA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs2Spectra(@jakarta.annotation.Nullable List<BasicSpectrum> ms2Spectra) {
     this.ms2Spectra = ms2Spectra;

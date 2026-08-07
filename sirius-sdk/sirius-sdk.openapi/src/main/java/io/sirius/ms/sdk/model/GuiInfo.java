@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -39,7 +40,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   GuiInfo.JSON_PROPERTY_PROJECT_ID
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class GuiInfo {
   public static final String JSON_PROPERTY_PROJECT_ID = "projectId";
   @jakarta.annotation.Nullable
@@ -59,7 +60,7 @@ public class GuiInfo {
    * @return projectId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PROJECT_ID)
+  @JsonProperty(value = JSON_PROPERTY_PROJECT_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getProjectId() {
@@ -67,7 +68,7 @@ public class GuiInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PROJECT_ID)
+  @JsonProperty(value = JSON_PROPERTY_PROJECT_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setProjectId(@jakarta.annotation.Nullable String projectId) {
     this.projectId = projectId;

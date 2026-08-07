@@ -27,7 +27,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class InfoApi {
     private ApiClient apiClient;
 
@@ -47,7 +47,6 @@ public class InfoApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * 
      * 
@@ -134,7 +133,7 @@ public class InfoApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "serverInfo", serverInfo));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "updateInfo", updateInfo));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };

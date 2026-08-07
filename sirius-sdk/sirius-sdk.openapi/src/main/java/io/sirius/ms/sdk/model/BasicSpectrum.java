@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -56,7 +57,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BasicSpectrum.JSON_PROPERTY_L2_NORM_FACTOR,
   BasicSpectrum.JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class BasicSpectrum {
   public static final String JSON_PROPERTY_NAME = "name";
   @jakarta.annotation.Nullable
@@ -128,7 +129,7 @@ public class BasicSpectrum {
    * @return name
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getName() {
@@ -136,7 +137,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
@@ -153,7 +154,7 @@ public class BasicSpectrum {
    * @return msLevel
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MS_LEVEL)
+  @JsonProperty(value = JSON_PROPERTY_MS_LEVEL, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getMsLevel() {
@@ -161,7 +162,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MS_LEVEL)
+  @JsonProperty(value = JSON_PROPERTY_MS_LEVEL, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMsLevel(@jakarta.annotation.Nullable Integer msLevel) {
     this.msLevel = msLevel;
@@ -178,7 +179,7 @@ public class BasicSpectrum {
    * @return collisionEnergy
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COLLISION_ENERGY)
+  @JsonProperty(value = JSON_PROPERTY_COLLISION_ENERGY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getCollisionEnergy() {
@@ -186,7 +187,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COLLISION_ENERGY)
+  @JsonProperty(value = JSON_PROPERTY_COLLISION_ENERGY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCollisionEnergy(@jakarta.annotation.Nullable String collisionEnergy) {
     this.collisionEnergy = collisionEnergy;
@@ -203,7 +204,7 @@ public class BasicSpectrum {
    * @return instrument
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INSTRUMENT)
+  @JsonProperty(value = JSON_PROPERTY_INSTRUMENT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getInstrument() {
@@ -211,7 +212,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_INSTRUMENT)
+  @JsonProperty(value = JSON_PROPERTY_INSTRUMENT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setInstrument(@jakarta.annotation.Nullable String instrument) {
     this.instrument = instrument;
@@ -228,7 +229,7 @@ public class BasicSpectrum {
    * @return precursorMz
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PRECURSOR_MZ)
+  @JsonProperty(value = JSON_PROPERTY_PRECURSOR_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getPrecursorMz() {
@@ -236,7 +237,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PRECURSOR_MZ)
+  @JsonProperty(value = JSON_PROPERTY_PRECURSOR_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPrecursorMz(@jakarta.annotation.Nullable Double precursorMz) {
     this.precursorMz = precursorMz;
@@ -253,7 +254,7 @@ public class BasicSpectrum {
    * @return scanNumber
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SCAN_NUMBER)
+  @JsonProperty(value = JSON_PROPERTY_SCAN_NUMBER, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getScanNumber() {
@@ -261,7 +262,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SCAN_NUMBER)
+  @JsonProperty(value = JSON_PROPERTY_SCAN_NUMBER, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setScanNumber(@jakarta.annotation.Nullable Integer scanNumber) {
     this.scanNumber = scanNumber;
@@ -278,7 +279,7 @@ public class BasicSpectrum {
    * @return cosineQuery
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_COSINE_QUERY)
+  @JsonProperty(value = JSON_PROPERTY_COSINE_QUERY, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Boolean isCosineQuery() {
@@ -286,7 +287,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COSINE_QUERY)
+  @JsonProperty(value = JSON_PROPERTY_COSINE_QUERY, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setCosineQuery(@jakarta.annotation.Nonnull Boolean cosineQuery) {
     this.cosineQuery = cosineQuery;
@@ -303,7 +304,7 @@ public class BasicSpectrum {
    * @return precursorPeak
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PRECURSOR_PEAK)
+  @JsonProperty(value = JSON_PROPERTY_PRECURSOR_PEAK, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public SimplePeak getPrecursorPeak() {
@@ -311,7 +312,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PRECURSOR_PEAK)
+  @JsonProperty(value = JSON_PROPERTY_PRECURSOR_PEAK, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPrecursorPeak(@jakarta.annotation.Nullable SimplePeak precursorPeak) {
     this.precursorPeak = precursorPeak;
@@ -336,7 +337,7 @@ public class BasicSpectrum {
    * @return peaks
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_PEAKS)
+  @JsonProperty(value = JSON_PROPERTY_PEAKS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public List<SimplePeak> getPeaks() {
@@ -344,7 +345,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PEAKS)
+  @JsonProperty(value = JSON_PROPERTY_PEAKS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setPeaks(@jakarta.annotation.Nonnull List<SimplePeak> peaks) {
     this.peaks = peaks;
@@ -363,7 +364,7 @@ public class BasicSpectrum {
    */
   @Deprecated
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ABS_INTENSITY_FACTOR)
+  @JsonProperty(value = JSON_PROPERTY_ABS_INTENSITY_FACTOR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getAbsIntensityFactor() {
@@ -371,7 +372,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ABS_INTENSITY_FACTOR)
+  @JsonProperty(value = JSON_PROPERTY_ABS_INTENSITY_FACTOR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAbsIntensityFactor(@jakarta.annotation.Nullable Double absIntensityFactor) {
     this.absIntensityFactor = absIntensityFactor;
@@ -388,7 +389,7 @@ public class BasicSpectrum {
    * @return maxNormFactor
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MAX_NORM_FACTOR)
+  @JsonProperty(value = JSON_PROPERTY_MAX_NORM_FACTOR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMaxNormFactor() {
@@ -396,7 +397,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MAX_NORM_FACTOR)
+  @JsonProperty(value = JSON_PROPERTY_MAX_NORM_FACTOR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMaxNormFactor(@jakarta.annotation.Nullable Double maxNormFactor) {
     this.maxNormFactor = maxNormFactor;
@@ -413,7 +414,7 @@ public class BasicSpectrum {
    * @return sumNormFactor
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SUM_NORM_FACTOR)
+  @JsonProperty(value = JSON_PROPERTY_SUM_NORM_FACTOR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getSumNormFactor() {
@@ -421,7 +422,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SUM_NORM_FACTOR)
+  @JsonProperty(value = JSON_PROPERTY_SUM_NORM_FACTOR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSumNormFactor(@jakarta.annotation.Nullable Double sumNormFactor) {
     this.sumNormFactor = sumNormFactor;
@@ -438,7 +439,7 @@ public class BasicSpectrum {
    * @return l2NormFactor
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_L2_NORM_FACTOR)
+  @JsonProperty(value = JSON_PROPERTY_L2_NORM_FACTOR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getL2NormFactor() {
@@ -446,7 +447,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_L2_NORM_FACTOR)
+  @JsonProperty(value = JSON_PROPERTY_L2_NORM_FACTOR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setL2NormFactor(@jakarta.annotation.Nullable Double l2NormFactor) {
     this.l2NormFactor = l2NormFactor;
@@ -463,7 +464,7 @@ public class BasicSpectrum {
    * @return firstPeakNormFactor
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR)
+  @JsonProperty(value = JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getFirstPeakNormFactor() {
@@ -471,7 +472,7 @@ public class BasicSpectrum {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR)
+  @JsonProperty(value = JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFirstPeakNormFactor(@jakarta.annotation.Nullable Double firstPeakNormFactor) {
     this.firstPeakNormFactor = firstPeakNormFactor;

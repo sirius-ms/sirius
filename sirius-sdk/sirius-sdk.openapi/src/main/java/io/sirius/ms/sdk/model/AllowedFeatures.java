@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -44,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AllowedFeatures.JSON_PROPERTY_IMPORT_PEAK_LISTS,
   AllowedFeatures.JSON_PROPERTY_IMPORT_CEF
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class AllowedFeatures {
   public static final String JSON_PROPERTY_CLI = "cli";
   @jakarta.annotation.Nullable
@@ -84,7 +85,7 @@ public class AllowedFeatures {
    * @return cli
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CLI)
+  @JsonProperty(value = JSON_PROPERTY_CLI, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isCli() {
@@ -92,7 +93,7 @@ public class AllowedFeatures {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CLI)
+  @JsonProperty(value = JSON_PROPERTY_CLI, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCli(@jakarta.annotation.Nullable Boolean cli) {
     this.cli = cli;
@@ -109,7 +110,7 @@ public class AllowedFeatures {
    * @return api
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_API)
+  @JsonProperty(value = JSON_PROPERTY_API, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isApi() {
@@ -117,7 +118,7 @@ public class AllowedFeatures {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_API)
+  @JsonProperty(value = JSON_PROPERTY_API, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setApi(@jakarta.annotation.Nullable Boolean api) {
     this.api = api;
@@ -134,7 +135,7 @@ public class AllowedFeatures {
    * @return deNovo
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DE_NOVO)
+  @JsonProperty(value = JSON_PROPERTY_DE_NOVO, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isDeNovo() {
@@ -142,7 +143,7 @@ public class AllowedFeatures {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DE_NOVO)
+  @JsonProperty(value = JSON_PROPERTY_DE_NOVO, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDeNovo(@jakarta.annotation.Nullable Boolean deNovo) {
     this.deNovo = deNovo;
@@ -159,7 +160,7 @@ public class AllowedFeatures {
    * @return importMSRuns
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_IMPORT_M_S_RUNS)
+  @JsonProperty(value = JSON_PROPERTY_IMPORT_M_S_RUNS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isImportMSRuns() {
@@ -167,7 +168,7 @@ public class AllowedFeatures {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_IMPORT_M_S_RUNS)
+  @JsonProperty(value = JSON_PROPERTY_IMPORT_M_S_RUNS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setImportMSRuns(@jakarta.annotation.Nullable Boolean importMSRuns) {
     this.importMSRuns = importMSRuns;
@@ -184,7 +185,7 @@ public class AllowedFeatures {
    * @return importPeakLists
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_IMPORT_PEAK_LISTS)
+  @JsonProperty(value = JSON_PROPERTY_IMPORT_PEAK_LISTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isImportPeakLists() {
@@ -192,7 +193,7 @@ public class AllowedFeatures {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_IMPORT_PEAK_LISTS)
+  @JsonProperty(value = JSON_PROPERTY_IMPORT_PEAK_LISTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setImportPeakLists(@jakarta.annotation.Nullable Boolean importPeakLists) {
     this.importPeakLists = importPeakLists;
@@ -209,7 +210,7 @@ public class AllowedFeatures {
    * @return importCef
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_IMPORT_CEF)
+  @JsonProperty(value = JSON_PROPERTY_IMPORT_CEF, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isImportCef() {
@@ -217,7 +218,7 @@ public class AllowedFeatures {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_IMPORT_CEF)
+  @JsonProperty(value = JSON_PROPERTY_IMPORT_CEF, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setImportCef(@jakarta.annotation.Nullable Boolean importCef) {
     this.importCef = importCef;

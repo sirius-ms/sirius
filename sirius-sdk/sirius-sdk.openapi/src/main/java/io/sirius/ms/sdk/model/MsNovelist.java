@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   MsNovelist.JSON_PROPERTY_ENABLED,
   MsNovelist.JSON_PROPERTY_NUMBER_OF_CANDIDATE_TO_PREDICT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class MsNovelist {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   @jakarta.annotation.Nullable
@@ -64,7 +65,7 @@ public class MsNovelist {
    * @return enabled
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(value = JSON_PROPERTY_ENABLED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isEnabled() {
@@ -72,7 +73,7 @@ public class MsNovelist {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ENABLED)
+  @JsonProperty(value = JSON_PROPERTY_ENABLED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setEnabled(@jakarta.annotation.Nullable Boolean enabled) {
     this.enabled = enabled;
@@ -89,7 +90,7 @@ public class MsNovelist {
    * @return numberOfCandidateToPredict
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATE_TO_PREDICT)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_CANDIDATE_TO_PREDICT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getNumberOfCandidateToPredict() {
@@ -97,7 +98,7 @@ public class MsNovelist {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATE_TO_PREDICT)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_CANDIDATE_TO_PREDICT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNumberOfCandidateToPredict(@jakarta.annotation.Nullable Integer numberOfCandidateToPredict) {
     this.numberOfCandidateToPredict = numberOfCandidateToPredict;

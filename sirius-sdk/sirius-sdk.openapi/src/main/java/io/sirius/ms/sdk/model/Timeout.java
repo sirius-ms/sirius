@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Timeout.JSON_PROPERTY_NUMBER_OF_SECONDS_PER_DECOMPOSITION,
   Timeout.JSON_PROPERTY_NUMBER_OF_SECONDS_PER_INSTANCE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Timeout {
   public static final String JSON_PROPERTY_NUMBER_OF_SECONDS_PER_DECOMPOSITION = "numberOfSecondsPerDecomposition";
   @jakarta.annotation.Nullable
@@ -64,7 +65,7 @@ public class Timeout {
    * @return numberOfSecondsPerDecomposition
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_SECONDS_PER_DECOMPOSITION)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_SECONDS_PER_DECOMPOSITION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getNumberOfSecondsPerDecomposition() {
@@ -72,7 +73,7 @@ public class Timeout {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_SECONDS_PER_DECOMPOSITION)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_SECONDS_PER_DECOMPOSITION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNumberOfSecondsPerDecomposition(@jakarta.annotation.Nullable Integer numberOfSecondsPerDecomposition) {
     this.numberOfSecondsPerDecomposition = numberOfSecondsPerDecomposition;
@@ -89,7 +90,7 @@ public class Timeout {
    * @return numberOfSecondsPerInstance
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_SECONDS_PER_INSTANCE)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_SECONDS_PER_INSTANCE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getNumberOfSecondsPerInstance() {
@@ -97,7 +98,7 @@ public class Timeout {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_SECONDS_PER_INSTANCE)
+  @JsonProperty(value = JSON_PROPERTY_NUMBER_OF_SECONDS_PER_INSTANCE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNumberOfSecondsPerInstance(@jakarta.annotation.Nullable Integer numberOfSecondsPerInstance) {
     this.numberOfSecondsPerInstance = numberOfSecondsPerInstance;

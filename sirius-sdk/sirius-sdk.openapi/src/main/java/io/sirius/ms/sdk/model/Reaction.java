@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Reaction.JSON_PROPERTY_SMARTS,
   Reaction.JSON_PROPERTY_PRESHIPPED
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Reaction {
   public static final String JSON_PROPERTY_NAME = "name";
   @jakarta.annotation.Nullable
@@ -69,7 +70,7 @@ public class Reaction {
    * @return name
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getName() {
@@ -77,7 +78,7 @@ public class Reaction {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
@@ -94,7 +95,7 @@ public class Reaction {
    * @return smarts
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SMARTS)
+  @JsonProperty(value = JSON_PROPERTY_SMARTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getSmarts() {
@@ -102,7 +103,7 @@ public class Reaction {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SMARTS)
+  @JsonProperty(value = JSON_PROPERTY_SMARTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSmarts(@jakarta.annotation.Nullable String smarts) {
     this.smarts = smarts;
@@ -119,7 +120,7 @@ public class Reaction {
    * @return preshipped
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PRESHIPPED)
+  @JsonProperty(value = JSON_PROPERTY_PRESHIPPED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isPreshipped() {
@@ -127,7 +128,7 @@ public class Reaction {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PRESHIPPED)
+  @JsonProperty(value = JSON_PROPERTY_PRESHIPPED, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPreshipped(@jakarta.annotation.Nullable Boolean preshipped) {
     this.preshipped = preshipped;

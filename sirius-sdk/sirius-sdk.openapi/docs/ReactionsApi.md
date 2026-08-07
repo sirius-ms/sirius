@@ -4,15 +4,15 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addReaction**](ReactionsApi.md#addReaction) | **POST** /api/reactions/library | Add a new reaction to the library. |
-| [**addSequence**](ReactionsApi.md#addSequence) | **POST** /api/reactions/sequences/library | Add a new reaction sequence to the library. |
-| [**applyReactions**](ReactionsApi.md#applyReactions) | **POST** /api/reactions | Apply a sequence of reactions to a list of SMILES strings or structures from a database. |
-| [**deleteReaction**](ReactionsApi.md#deleteReaction) | **DELETE** /api/reactions/library/{name} | Delete a reaction from the library. |
-| [**deleteSequence**](ReactionsApi.md#deleteSequence) | **DELETE** /api/reactions/sequences/library/{name} | Delete a reaction sequence from the library. |
-| [**getReaction**](ReactionsApi.md#getReaction) | **GET** /api/reactions/library/{name} | Get a specific reaction from the library by name. |
-| [**getReactions**](ReactionsApi.md#getReactions) | **GET** /api/reactions | Get all reactions from the library. |
-| [**getSequence**](ReactionsApi.md#getSequence) | **GET** /api/reactions/sequences/{name} | Get a specific reaction sequence from the library by name. |
-| [**getSequences**](ReactionsApi.md#getSequences) | **GET** /api/reactions/sequences | Get all reaction sequences from the library. |
+| [**addReaction**](ReactionsApi.md#addReaction) | **POST** /api/reactions/library | [EXPERIMENTAL] Add a new reaction to the library. |
+| [**addSequence**](ReactionsApi.md#addSequence) | **POST** /api/reactions/sequences/library | [EXPERIMENTAL] Add a new reaction sequence to the library. |
+| [**applyReactions**](ReactionsApi.md#applyReactions) | **POST** /api/reactions | [EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database. |
+| [**deleteReaction**](ReactionsApi.md#deleteReaction) | **DELETE** /api/reactions/library/{name} | [EXPERIMENTAL] Delete a reaction from the library. |
+| [**deleteSequence**](ReactionsApi.md#deleteSequence) | **DELETE** /api/reactions/sequences/library/{name} | [EXPERIMENTAL] Delete a reaction sequence from the library. |
+| [**getReaction**](ReactionsApi.md#getReaction) | **GET** /api/reactions/library/{name} | [EXPERIMENTAL] Get a specific reaction from the library by name. |
+| [**getReactions**](ReactionsApi.md#getReactions) | **GET** /api/reactions | [EXPERIMENTAL] Get all reactions from the library. |
+| [**getSequence**](ReactionsApi.md#getSequence) | **GET** /api/reactions/sequences/{name} | [EXPERIMENTAL] Get a specific reaction sequence from the library by name. |
+| [**getSequences**](ReactionsApi.md#getSequences) | **GET** /api/reactions/sequences | [EXPERIMENTAL] Get all reaction sequences from the library. |
 
 
 
@@ -20,7 +20,9 @@ All URIs are relative to *http://localhost:8888*
 
 > addReaction(reaction)
 
-Add a new reaction to the library.
+[EXPERIMENTAL] Add a new reaction to the library.
+
+[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -83,7 +85,9 @@ No authorization required
 
 > addSequence(reactionSequence)
 
-Add a new reaction sequence to the library.
+[EXPERIMENTAL] Add a new reaction sequence to the library.
+
+[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -146,9 +150,9 @@ No authorization required
 
 > PagedModelString applyReactions(reactionRequest, limit)
 
-Apply a sequence of reactions to a list of SMILES strings or structures from a database.
+[EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.
 
-[EXPERIMENTAL] Returns the final pool of SMILES strings.
+[EXPERIMENTAL] Returns the final pool of SMILES strings. [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -214,7 +218,9 @@ No authorization required
 
 > deleteReaction(name)
 
-Delete a reaction from the library.
+[EXPERIMENTAL] Delete a reaction from the library.
+
+[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -277,7 +283,9 @@ No authorization required
 
 > deleteSequence(name)
 
-Delete a reaction sequence from the library.
+[EXPERIMENTAL] Delete a reaction sequence from the library.
+
+[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -340,7 +348,9 @@ No authorization required
 
 > Reaction getReaction(name)
 
-Get a specific reaction from the library by name.
+[EXPERIMENTAL] Get a specific reaction from the library by name.
+
+[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -404,7 +414,9 @@ No authorization required
 
 > List&lt;Reaction&gt; getReactions()
 
-Get all reactions from the library.
+[EXPERIMENTAL] Get all reactions from the library.
+
+[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -464,7 +476,9 @@ No authorization required
 
 > ReactionSequence getSequence(name)
 
-Get a specific reaction sequence from the library by name.
+[EXPERIMENTAL] Get a specific reaction sequence from the library by name.
+
+[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -528,7 +542,9 @@ No authorization required
 
 > List&lt;ReactionSequence&gt; getSequences()
 
-Get all reaction sequences from the library.
+[EXPERIMENTAL] Get all reaction sequences from the library.
+
+[EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 

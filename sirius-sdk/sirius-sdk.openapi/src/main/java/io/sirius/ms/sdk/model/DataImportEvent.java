@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -44,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   DataImportEvent.JSON_PROPERTY_IMPORTED_COMPOUND_IDS,
   DataImportEvent.JSON_PROPERTY_IMPORTED_FEATURE_IDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class DataImportEvent {
   public static final String JSON_PROPERTY_IMPORT_JOB_ID = "importJobId";
   @jakarta.annotation.Nullable
@@ -72,7 +73,7 @@ public class DataImportEvent {
    * @return importJobId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_IMPORT_JOB_ID)
+  @JsonProperty(value = JSON_PROPERTY_IMPORT_JOB_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getImportJobId() {
@@ -80,7 +81,7 @@ public class DataImportEvent {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_IMPORT_JOB_ID)
+  @JsonProperty(value = JSON_PROPERTY_IMPORT_JOB_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setImportJobId(@jakarta.annotation.Nullable String importJobId) {
     this.importJobId = importJobId;
@@ -105,7 +106,7 @@ public class DataImportEvent {
    * @return importedCompoundIds
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_IMPORTED_COMPOUND_IDS)
+  @JsonProperty(value = JSON_PROPERTY_IMPORTED_COMPOUND_IDS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public List<String> getImportedCompoundIds() {
@@ -113,7 +114,7 @@ public class DataImportEvent {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_IMPORTED_COMPOUND_IDS)
+  @JsonProperty(value = JSON_PROPERTY_IMPORTED_COMPOUND_IDS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setImportedCompoundIds(@jakarta.annotation.Nonnull List<String> importedCompoundIds) {
     this.importedCompoundIds = importedCompoundIds;
@@ -138,7 +139,7 @@ public class DataImportEvent {
    * @return importedFeatureIds
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_IMPORTED_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_IMPORTED_FEATURE_IDS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public List<String> getImportedFeatureIds() {
@@ -146,7 +147,7 @@ public class DataImportEvent {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_IMPORTED_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_IMPORTED_FEATURE_IDS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setImportedFeatureIds(@jakarta.annotation.Nonnull List<String> importedFeatureIds) {
     this.importedFeatureIds = importedFeatureIds;

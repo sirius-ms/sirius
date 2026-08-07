@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Metadata.JSON_PROPERTY_EXPORTED_AT,
   Metadata.JSON_PROPERTY_ROW_COUNT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Metadata {
   public static final String JSON_PROPERTY_EXPORTED_AT = "exportedAt";
   @jakarta.annotation.Nullable
@@ -64,7 +65,7 @@ public class Metadata {
    * @return exportedAt
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EXPORTED_AT)
+  @JsonProperty(value = JSON_PROPERTY_EXPORTED_AT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getExportedAt() {
@@ -72,7 +73,7 @@ public class Metadata {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_EXPORTED_AT)
+  @JsonProperty(value = JSON_PROPERTY_EXPORTED_AT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setExportedAt(@jakarta.annotation.Nullable String exportedAt) {
     this.exportedAt = exportedAt;
@@ -89,7 +90,7 @@ public class Metadata {
    * @return rowCount
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ROW_COUNT)
+  @JsonProperty(value = JSON_PROPERTY_ROW_COUNT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getRowCount() {
@@ -97,7 +98,7 @@ public class Metadata {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ROW_COUNT)
+  @JsonProperty(value = JSON_PROPERTY_ROW_COUNT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRowCount(@jakarta.annotation.Nullable Integer rowCount) {
     this.rowCount = rowCount;

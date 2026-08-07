@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SearchableDatabaseParameters.JSON_PROPERTY_LOCATION,
   SearchableDatabaseParameters.JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class SearchableDatabaseParameters {
   public static final String JSON_PROPERTY_DISPLAY_NAME = "displayName";
   @jakarta.annotation.Nullable
@@ -69,7 +70,7 @@ public class SearchableDatabaseParameters {
    * @return displayName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DISPLAY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_DISPLAY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getDisplayName() {
@@ -77,7 +78,7 @@ public class SearchableDatabaseParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DISPLAY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_DISPLAY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDisplayName(@jakarta.annotation.Nullable String displayName) {
     this.displayName = displayName;
@@ -94,7 +95,7 @@ public class SearchableDatabaseParameters {
    * @return location
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LOCATION)
+  @JsonProperty(value = JSON_PROPERTY_LOCATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getLocation() {
@@ -102,7 +103,7 @@ public class SearchableDatabaseParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LOCATION)
+  @JsonProperty(value = JSON_PROPERTY_LOCATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLocation(@jakarta.annotation.Nullable String location) {
     this.location = location;
@@ -119,7 +120,7 @@ public class SearchableDatabaseParameters {
    * @return matchRtOfReferenceSpectra
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA)
+  @JsonProperty(value = JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isMatchRtOfReferenceSpectra() {
@@ -127,7 +128,7 @@ public class SearchableDatabaseParameters {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA)
+  @JsonProperty(value = JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMatchRtOfReferenceSpectra(@jakarta.annotation.Nullable Boolean matchRtOfReferenceSpectra) {
     this.matchRtOfReferenceSpectra = matchRtOfReferenceSpectra;

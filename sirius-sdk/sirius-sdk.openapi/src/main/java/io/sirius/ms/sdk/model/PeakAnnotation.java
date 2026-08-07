@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -56,7 +57,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PeakAnnotation.JSON_PROPERTY_SUBSTRUCTURE_SCORE,
   PeakAnnotation.JSON_PROPERTY_HYDROGEN_REARRANGEMENTS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class PeakAnnotation {
   public static final String JSON_PROPERTY_FRAGMENT_ID = "fragmentId";
   @jakarta.annotation.Nonnull
@@ -128,7 +129,7 @@ public class PeakAnnotation {
    * @return fragmentId
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_FRAGMENT_ID)
+  @JsonProperty(value = JSON_PROPERTY_FRAGMENT_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getFragmentId() {
@@ -136,7 +137,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FRAGMENT_ID)
+  @JsonProperty(value = JSON_PROPERTY_FRAGMENT_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setFragmentId(@jakarta.annotation.Nonnull Integer fragmentId) {
     this.fragmentId = fragmentId;
@@ -153,7 +154,7 @@ public class PeakAnnotation {
    * @return molecularFormula
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getMolecularFormula() {
@@ -161,7 +162,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
@@ -178,7 +179,7 @@ public class PeakAnnotation {
    * @return adduct
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getAdduct() {
@@ -186,7 +187,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAdduct(@jakarta.annotation.Nullable String adduct) {
     this.adduct = adduct;
@@ -203,7 +204,7 @@ public class PeakAnnotation {
    * @return exactMass
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EXACT_MASS)
+  @JsonProperty(value = JSON_PROPERTY_EXACT_MASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getExactMass() {
@@ -211,7 +212,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_EXACT_MASS)
+  @JsonProperty(value = JSON_PROPERTY_EXACT_MASS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setExactMass(@jakarta.annotation.Nullable Double exactMass) {
     this.exactMass = exactMass;
@@ -228,7 +229,7 @@ public class PeakAnnotation {
    * @return massDeviationMz
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_MZ)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMassDeviationMz() {
@@ -236,7 +237,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_MZ)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMassDeviationMz(@jakarta.annotation.Nullable Double massDeviationMz) {
     this.massDeviationMz = massDeviationMz;
@@ -253,7 +254,7 @@ public class PeakAnnotation {
    * @return massDeviationPpm
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMassDeviationPpm() {
@@ -261,7 +262,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MASS_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_MASS_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMassDeviationPpm(@jakarta.annotation.Nullable Double massDeviationPpm) {
     this.massDeviationPpm = massDeviationPpm;
@@ -278,7 +279,7 @@ public class PeakAnnotation {
    * @return recalibratedMassDeviationMz
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RECALIBRATED_MASS_DEVIATION_MZ)
+  @JsonProperty(value = JSON_PROPERTY_RECALIBRATED_MASS_DEVIATION_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getRecalibratedMassDeviationMz() {
@@ -286,7 +287,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RECALIBRATED_MASS_DEVIATION_MZ)
+  @JsonProperty(value = JSON_PROPERTY_RECALIBRATED_MASS_DEVIATION_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRecalibratedMassDeviationMz(@jakarta.annotation.Nullable Double recalibratedMassDeviationMz) {
     this.recalibratedMassDeviationMz = recalibratedMassDeviationMz;
@@ -303,7 +304,7 @@ public class PeakAnnotation {
    * @return recalibratedMassDeviationPpm
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RECALIBRATED_MASS_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_RECALIBRATED_MASS_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getRecalibratedMassDeviationPpm() {
@@ -311,7 +312,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RECALIBRATED_MASS_DEVIATION_PPM)
+  @JsonProperty(value = JSON_PROPERTY_RECALIBRATED_MASS_DEVIATION_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRecalibratedMassDeviationPpm(@jakarta.annotation.Nullable Double recalibratedMassDeviationPpm) {
     this.recalibratedMassDeviationPpm = recalibratedMassDeviationPpm;
@@ -328,7 +329,7 @@ public class PeakAnnotation {
    * @return parentPeak
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PARENT_PEAK)
+  @JsonProperty(value = JSON_PROPERTY_PARENT_PEAK, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public ParentPeak getParentPeak() {
@@ -336,7 +337,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PARENT_PEAK)
+  @JsonProperty(value = JSON_PROPERTY_PARENT_PEAK, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setParentPeak(@jakarta.annotation.Nullable ParentPeak parentPeak) {
     this.parentPeak = parentPeak;
@@ -361,7 +362,7 @@ public class PeakAnnotation {
    * @return substructureAtoms
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SUBSTRUCTURE_ATOMS)
+  @JsonProperty(value = JSON_PROPERTY_SUBSTRUCTURE_ATOMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<Integer> getSubstructureAtoms() {
@@ -369,7 +370,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SUBSTRUCTURE_ATOMS)
+  @JsonProperty(value = JSON_PROPERTY_SUBSTRUCTURE_ATOMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSubstructureAtoms(@jakarta.annotation.Nullable List<Integer> substructureAtoms) {
     this.substructureAtoms = substructureAtoms;
@@ -394,7 +395,7 @@ public class PeakAnnotation {
    * @return substructureBonds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SUBSTRUCTURE_BONDS)
+  @JsonProperty(value = JSON_PROPERTY_SUBSTRUCTURE_BONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<Integer> getSubstructureBonds() {
@@ -402,7 +403,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SUBSTRUCTURE_BONDS)
+  @JsonProperty(value = JSON_PROPERTY_SUBSTRUCTURE_BONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSubstructureBonds(@jakarta.annotation.Nullable List<Integer> substructureBonds) {
     this.substructureBonds = substructureBonds;
@@ -427,7 +428,7 @@ public class PeakAnnotation {
    * @return substructureBondsCut
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SUBSTRUCTURE_BONDS_CUT)
+  @JsonProperty(value = JSON_PROPERTY_SUBSTRUCTURE_BONDS_CUT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<Integer> getSubstructureBondsCut() {
@@ -435,7 +436,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SUBSTRUCTURE_BONDS_CUT)
+  @JsonProperty(value = JSON_PROPERTY_SUBSTRUCTURE_BONDS_CUT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSubstructureBondsCut(@jakarta.annotation.Nullable List<Integer> substructureBondsCut) {
     this.substructureBondsCut = substructureBondsCut;
@@ -452,7 +453,7 @@ public class PeakAnnotation {
    * @return substructureScore
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SUBSTRUCTURE_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_SUBSTRUCTURE_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Float getSubstructureScore() {
@@ -460,7 +461,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SUBSTRUCTURE_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_SUBSTRUCTURE_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSubstructureScore(@jakarta.annotation.Nullable Float substructureScore) {
     this.substructureScore = substructureScore;
@@ -477,7 +478,7 @@ public class PeakAnnotation {
    * @return hydrogenRearrangements
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_HYDROGEN_REARRANGEMENTS)
+  @JsonProperty(value = JSON_PROPERTY_HYDROGEN_REARRANGEMENTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getHydrogenRearrangements() {
@@ -485,7 +486,7 @@ public class PeakAnnotation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_HYDROGEN_REARRANGEMENTS)
+  @JsonProperty(value = JSON_PROPERTY_HYDROGEN_REARRANGEMENTS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setHydrogenRearrangements(@jakarta.annotation.Nullable Integer hydrogenRearrangements) {
     this.hydrogenRearrangements = hydrogenRearrangements;

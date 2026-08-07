@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -42,7 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StoredJobSubmission.JSON_PROPERTY_EDITABLE,
   StoredJobSubmission.JSON_PROPERTY_JOB_SUBMISSION
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class StoredJobSubmission {
   public static final String JSON_PROPERTY_NAME = "name";
   @jakarta.annotation.Nonnull
@@ -70,7 +71,7 @@ public class StoredJobSubmission {
    * @return name
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public String getName() {
@@ -78,7 +79,7 @@ public class StoredJobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setName(@jakarta.annotation.Nonnull String name) {
     this.name = name;
@@ -95,7 +96,7 @@ public class StoredJobSubmission {
    * @return editable
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_EDITABLE)
+  @JsonProperty(value = JSON_PROPERTY_EDITABLE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Boolean isEditable() {
@@ -103,7 +104,7 @@ public class StoredJobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_EDITABLE)
+  @JsonProperty(value = JSON_PROPERTY_EDITABLE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setEditable(@jakarta.annotation.Nonnull Boolean editable) {
     this.editable = editable;
@@ -120,7 +121,7 @@ public class StoredJobSubmission {
    * @return jobSubmission
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_JOB_SUBMISSION)
+  @JsonProperty(value = JSON_PROPERTY_JOB_SUBMISSION, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public JobSubmission getJobSubmission() {
@@ -128,7 +129,7 @@ public class StoredJobSubmission {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_JOB_SUBMISSION)
+  @JsonProperty(value = JSON_PROPERTY_JOB_SUBMISSION, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setJobSubmission(@jakarta.annotation.Nonnull JobSubmission jobSubmission) {
     this.jobSubmission = jobSubmission;

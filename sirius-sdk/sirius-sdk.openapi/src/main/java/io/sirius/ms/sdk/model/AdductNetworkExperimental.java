@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -45,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AdductNetworkExperimental.JSON_PROPERTY_NODES,
   AdductNetworkExperimental.JSON_PROPERTY_EDGES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class AdductNetworkExperimental {
   public static final String JSON_PROPERTY_NODES = "nodes";
   @jakarta.annotation.Nullable
@@ -77,7 +78,7 @@ public class AdductNetworkExperimental {
    * @return nodes
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NODES)
+  @JsonProperty(value = JSON_PROPERTY_NODES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<AdductNodeExperimental> getNodes() {
@@ -85,7 +86,7 @@ public class AdductNetworkExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NODES)
+  @JsonProperty(value = JSON_PROPERTY_NODES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setNodes(@jakarta.annotation.Nullable List<AdductNodeExperimental> nodes) {
     this.nodes = nodes;
@@ -110,7 +111,7 @@ public class AdductNetworkExperimental {
    * @return edges
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EDGES)
+  @JsonProperty(value = JSON_PROPERTY_EDGES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<AdductEdgeExperimental> getEdges() {
@@ -118,7 +119,7 @@ public class AdductNetworkExperimental {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_EDGES)
+  @JsonProperty(value = JSON_PROPERTY_EDGES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setEdges(@jakarta.annotation.Nullable List<AdductEdgeExperimental> edges) {
     this.edges = edges;

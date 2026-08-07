@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -46,7 +47,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ReactionRequest.JSON_PROPERTY_DATABASE_NAME,
   ReactionRequest.JSON_PROPERTY_PRODUCT_DATABASE_NAME
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class ReactionRequest {
   public static final String JSON_PROPERTY_SEQUENCE = "sequence";
   @jakarta.annotation.Nullable
@@ -78,7 +79,7 @@ public class ReactionRequest {
    * @return sequence
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SEQUENCE)
+  @JsonProperty(value = JSON_PROPERTY_SEQUENCE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public ReactionSequence getSequence() {
@@ -86,7 +87,7 @@ public class ReactionRequest {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SEQUENCE)
+  @JsonProperty(value = JSON_PROPERTY_SEQUENCE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSequence(@jakarta.annotation.Nullable ReactionSequence sequence) {
     this.sequence = sequence;
@@ -111,7 +112,7 @@ public class ReactionRequest {
    * @return initialSmiles
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INITIAL_SMILES)
+  @JsonProperty(value = JSON_PROPERTY_INITIAL_SMILES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getInitialSmiles() {
@@ -119,7 +120,7 @@ public class ReactionRequest {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_INITIAL_SMILES)
+  @JsonProperty(value = JSON_PROPERTY_INITIAL_SMILES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setInitialSmiles(@jakarta.annotation.Nullable List<String> initialSmiles) {
     this.initialSmiles = initialSmiles;
@@ -136,7 +137,7 @@ public class ReactionRequest {
    * @return databaseName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DATABASE_NAME)
+  @JsonProperty(value = JSON_PROPERTY_DATABASE_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getDatabaseName() {
@@ -144,7 +145,7 @@ public class ReactionRequest {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DATABASE_NAME)
+  @JsonProperty(value = JSON_PROPERTY_DATABASE_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDatabaseName(@jakarta.annotation.Nullable String databaseName) {
     this.databaseName = databaseName;
@@ -161,7 +162,7 @@ public class ReactionRequest {
    * @return productDatabaseName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PRODUCT_DATABASE_NAME)
+  @JsonProperty(value = JSON_PROPERTY_PRODUCT_DATABASE_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getProductDatabaseName() {
@@ -169,7 +170,7 @@ public class ReactionRequest {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PRODUCT_DATABASE_NAME)
+  @JsonProperty(value = JSON_PROPERTY_PRODUCT_DATABASE_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setProductDatabaseName(@jakarta.annotation.Nullable String productDatabaseName) {
     this.productDatabaseName = productDatabaseName;

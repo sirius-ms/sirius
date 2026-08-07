@@ -30,7 +30,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class RunsApi {
     private ApiClient apiClient;
 
@@ -50,7 +50,6 @@ public class RunsApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * [EXPERIMENTAL] Add tags to a run in the project
      * [EXPERIMENTAL] Add tags to a run in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -257,7 +256,7 @@ public class RunsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -353,7 +352,7 @@ public class RunsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -454,7 +453,7 @@ public class RunsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
             "application/json"
         };
