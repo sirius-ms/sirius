@@ -113,7 +113,7 @@ docs/QualityItem.md
 docs/QualityWeight.md
 docs/QuantMeasure.md
 docs/QuantRowType.md
-docs/QuantTableExperimental.md
+docs/QuantTable.md
 docs/Reaction.md
 docs/ReactionRequest.md
 docs/ReactionSequence.md
@@ -297,7 +297,7 @@ src/main/java/io/sirius/ms/sdk/model/QualityItem.java
 src/main/java/io/sirius/ms/sdk/model/QualityWeight.java
 src/main/java/io/sirius/ms/sdk/model/QuantMeasure.java
 src/main/java/io/sirius/ms/sdk/model/QuantRowType.java
-src/main/java/io/sirius/ms/sdk/model/QuantTableExperimental.java
+src/main/java/io/sirius/ms/sdk/model/QuantTable.java
 src/main/java/io/sirius/ms/sdk/model/Reaction.java
 src/main/java/io/sirius/ms/sdk/model/ReactionRequest.java
 src/main/java/io/sirius/ms/sdk/model/ReactionSequence.java

@@ -361,7 +361,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             return Optional.empty();
 
         List<double[]> values = new ArrayList<>();
-        LongList rowIds = new LongArrayList();
+        List<String> rowIds = new ArrayList<>();
         List<String> rowNames = new ArrayList<>();
 
         int quantified = rowType == QuantRowType.FEATURES
@@ -375,7 +375,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             return Optional.empty();
 
         table.get().setValues(values.toArray(double[][]::new));
-        table.get().setRowIds(rowIds.toLongArray());
+        table.get().setRowIds(rowIds.toArray(String[]::new));
         table.get().setRowNames(rowNames.toArray(String[]::new));
 
         return table;
@@ -389,7 +389,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             return Optional.empty();
 
         List<double[]> values = new ArrayList<>();
-        LongList rowIds = new LongArrayList();
+        List<String> rowIds = new ArrayList<>();
         List<String> rowNames = new ArrayList<>();
 
         if (rowType == QuantRowType.FEATURES) {
@@ -409,7 +409,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
 
         table.get().setValues(values.toArray(double[][]::new));
-        table.get().setRowIds(rowIds.toLongArray());
+        table.get().setRowIds(rowIds.toArray(String[]::new));
         table.get().setRowNames(rowNames.toArray(String[]::new));
 
         return table;
@@ -421,10 +421,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (runs.isEmpty())
             return Optional.empty();
 
-        long[] runIds = new long[runs.size()];
+        String[] runIds = new String[runs.size()];
         String[] runNames = new String[runs.size()];
         for (int i = 0; i < runs.size(); i++) {
-            runIds[i] = runs.get(i).getRunId();
+            runIds[i] = Long.toString(runs.get(i).getRunId());
             runNames[i] = runs.get(i).getName();
         }
 
@@ -442,26 +442,26 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * @return the number of features that could be quantified, that is features that belong to an LC/MS run
      */
     @SneakyThrows
-    private <T> int addToTable(T parent, List<double[]> values, LongList rowIds, List<String> rowNames, QuantTable table) {
-        Long2ObjectMap<List<Feature>> features = new Long2ObjectOpenHashMap<>();
+    private <T> int addToTable(T parent, List<double[]> values, List<String> rowIds, List<String> rowNames, QuantTable table) {
+        Map<String, List<Feature>> features = new HashMap<>();
         if (parent instanceof AlignedFeatures alignedFeature) {
-            rowIds.add(alignedFeature.getAlignedFeatureId());
+            rowIds.add(Long.toString(alignedFeature.getAlignedFeatureId()));
             rowNames.add(alignedFeature.getName());
 
             storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class)
                     // only features with LC/MS information can be quantified per run. Features of a project that
                     // was imported from preprocessed data have no run, quantifying them would throw an NPE.
                     .filter(feature -> feature.getRunId() != null)
-                    .forEach(feature -> features.put((long) feature.getRunId(), List.of(feature)));
+                    .forEach(feature -> features.put(Long.toString(feature.getRunId()), List.of(feature)));
         } else if (parent instanceof de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
-            rowIds.add(compound.getCompoundId());
+            rowIds.add(Long.toString(compound.getCompoundId()));
             rowNames.add(compound.getName());
 
             storage().findStr(Filter.where("compoundId").eq(compound.getCompoundId()), AlignedFeature.class).forEach(alignedFeature -> {
                 try {
                     storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class)
                             .filter(feature -> feature.getRunId() != null)
-                            .forEach(feature -> features.computeIfAbsent((long) feature.getRunId(), k -> new ArrayList<>()).add(feature));
+                            .forEach(feature -> features.computeIfAbsent(Long.toString(feature.getRunId()), k -> new ArrayList<>()).add(feature));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -471,7 +471,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return features.size();
     }
 
-    private double[] getQuantTableRow(Long2ObjectMap<List<Feature>> features, QuantTable table) {
+    private double[] getQuantTableRow(Map<String, List<Feature>> features, QuantTable table) {
         double[] row = new double[table.getColumnIds().length];
         for (int i = 0; i < row.length; i++) {
             if (features.containsKey(table.getColumnIds()[i])) {
@@ -1270,7 +1270,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .alignedFeatureId(Long.toString(feature.getAlignedFeatureId()))
                 .runId(Long.toString(feature.getRunId()))
                 .averageMz(feature.getAverageMass())
-                .rtFWHM(feature.getFwhm())
+                .rtFwhmSeconds(feature.getFwhm())
                 .apexIntensity(feature.getApexIntensity())
                 .areaUnderCurve(feature.getAreaUnderCurve());
 

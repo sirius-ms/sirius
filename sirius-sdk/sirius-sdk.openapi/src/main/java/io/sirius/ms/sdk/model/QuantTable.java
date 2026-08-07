@@ -40,19 +40,19 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.
+ * Quantification of features or compounds within the runs they have been detected in. Rows refer to the quantified objects, columns to the runs. Values that could not be quantified are NaN.
  */
 @JsonPropertyOrder({
-  QuantTableExperimental.JSON_PROPERTY_QUANTIFICATION_MEASURE,
-  QuantTableExperimental.JSON_PROPERTY_ROW_TYPE,
-  QuantTableExperimental.JSON_PROPERTY_ROW_IDS,
-  QuantTableExperimental.JSON_PROPERTY_COLUMN_IDS,
-  QuantTableExperimental.JSON_PROPERTY_ROW_NAMES,
-  QuantTableExperimental.JSON_PROPERTY_COLUMN_NAMES,
-  QuantTableExperimental.JSON_PROPERTY_VALUES
+  QuantTable.JSON_PROPERTY_QUANTIFICATION_MEASURE,
+  QuantTable.JSON_PROPERTY_ROW_TYPE,
+  QuantTable.JSON_PROPERTY_ROW_IDS,
+  QuantTable.JSON_PROPERTY_COLUMN_IDS,
+  QuantTable.JSON_PROPERTY_ROW_NAMES,
+  QuantTable.JSON_PROPERTY_COLUMN_NAMES,
+  QuantTable.JSON_PROPERTY_VALUES
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
-public class QuantTableExperimental {
+public class QuantTable {
   public static final String JSON_PROPERTY_QUANTIFICATION_MEASURE = "quantificationMeasure";
   @jakarta.annotation.Nullable
   private QuantMeasure quantificationMeasure;
@@ -63,11 +63,11 @@ public class QuantTableExperimental {
 
   public static final String JSON_PROPERTY_ROW_IDS = "rowIds";
   @jakarta.annotation.Nullable
-  private List<Long> rowIds;
+  private List<String> rowIds;
 
   public static final String JSON_PROPERTY_COLUMN_IDS = "columnIds";
   @jakarta.annotation.Nullable
-  private List<Long> columnIds;
+  private List<String> columnIds;
 
   public static final String JSON_PROPERTY_ROW_NAMES = "rowNames";
   @jakarta.annotation.Nullable
@@ -81,10 +81,10 @@ public class QuantTableExperimental {
   @jakarta.annotation.Nullable
   private List<List<Double>> values = new ArrayList<>();
 
-  public QuantTableExperimental() {
+  public QuantTable() {
   }
 
-  public QuantTableExperimental quantificationMeasure(@jakarta.annotation.Nullable QuantMeasure quantificationMeasure) {
+  public QuantTable quantificationMeasure(@jakarta.annotation.Nullable QuantMeasure quantificationMeasure) {
     
     this.quantificationMeasure = quantificationMeasure;
     return this;
@@ -109,7 +109,7 @@ public class QuantTableExperimental {
     this.quantificationMeasure = quantificationMeasure;
   }
 
-  public QuantTableExperimental rowType(@jakarta.annotation.Nullable QuantRowType rowType) {
+  public QuantTable rowType(@jakarta.annotation.Nullable QuantRowType rowType) {
     
     this.rowType = rowType;
     return this;
@@ -134,13 +134,13 @@ public class QuantTableExperimental {
     this.rowType = rowType;
   }
 
-  public QuantTableExperimental rowIds(@jakarta.annotation.Nullable List<Long> rowIds) {
+  public QuantTable rowIds(@jakarta.annotation.Nullable List<String> rowIds) {
     
     this.rowIds = rowIds;
     return this;
   }
 
-  public QuantTableExperimental addRowIdsItem(Long rowIdsItem) {
+  public QuantTable addRowIdsItem(String rowIdsItem) {
     if (this.rowIds == null) {
       this.rowIds = new ArrayList<>();
     }
@@ -149,31 +149,31 @@ public class QuantTableExperimental {
   }
 
   /**
-   * Get rowIds
+   * Ids of the quantified objects, features or compounds depending on the row type.
    * @return rowIds
    */
   @jakarta.annotation.Nullable
   @JsonProperty(value = JSON_PROPERTY_ROW_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<Long> getRowIds() {
+  public List<String> getRowIds() {
     return rowIds;
   }
 
 
   @JsonProperty(value = JSON_PROPERTY_ROW_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRowIds(@jakarta.annotation.Nullable List<Long> rowIds) {
+  public void setRowIds(@jakarta.annotation.Nullable List<String> rowIds) {
     this.rowIds = rowIds;
   }
 
-  public QuantTableExperimental columnIds(@jakarta.annotation.Nullable List<Long> columnIds) {
+  public QuantTable columnIds(@jakarta.annotation.Nullable List<String> columnIds) {
     
     this.columnIds = columnIds;
     return this;
   }
 
-  public QuantTableExperimental addColumnIdsItem(Long columnIdsItem) {
+  public QuantTable addColumnIdsItem(String columnIdsItem) {
     if (this.columnIds == null) {
       this.columnIds = new ArrayList<>();
     }
@@ -182,31 +182,31 @@ public class QuantTableExperimental {
   }
 
   /**
-   * Get columnIds
+   * Ids of the runs the objects are quantified in.
    * @return columnIds
    */
   @jakarta.annotation.Nullable
   @JsonProperty(value = JSON_PROPERTY_COLUMN_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<Long> getColumnIds() {
+  public List<String> getColumnIds() {
     return columnIds;
   }
 
 
   @JsonProperty(value = JSON_PROPERTY_COLUMN_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setColumnIds(@jakarta.annotation.Nullable List<Long> columnIds) {
+  public void setColumnIds(@jakarta.annotation.Nullable List<String> columnIds) {
     this.columnIds = columnIds;
   }
 
-  public QuantTableExperimental rowNames(@jakarta.annotation.Nullable List<String> rowNames) {
+  public QuantTable rowNames(@jakarta.annotation.Nullable List<String> rowNames) {
     
     this.rowNames = rowNames;
     return this;
   }
 
-  public QuantTableExperimental addRowNamesItem(String rowNamesItem) {
+  public QuantTable addRowNamesItem(String rowNamesItem) {
     if (this.rowNames == null) {
       this.rowNames = new ArrayList<>();
     }
@@ -233,13 +233,13 @@ public class QuantTableExperimental {
     this.rowNames = rowNames;
   }
 
-  public QuantTableExperimental columnNames(@jakarta.annotation.Nullable List<String> columnNames) {
+  public QuantTable columnNames(@jakarta.annotation.Nullable List<String> columnNames) {
     
     this.columnNames = columnNames;
     return this;
   }
 
-  public QuantTableExperimental addColumnNamesItem(String columnNamesItem) {
+  public QuantTable addColumnNamesItem(String columnNamesItem) {
     if (this.columnNames == null) {
       this.columnNames = new ArrayList<>();
     }
@@ -266,13 +266,13 @@ public class QuantTableExperimental {
     this.columnNames = columnNames;
   }
 
-  public QuantTableExperimental values(@jakarta.annotation.Nullable List<List<Double>> values) {
+  public QuantTable values(@jakarta.annotation.Nullable List<List<Double>> values) {
     
     this.values = values;
     return this;
   }
 
-  public QuantTableExperimental addValuesItem(List<Double> valuesItem) {
+  public QuantTable addValuesItem(List<Double> valuesItem) {
     if (this.values == null) {
       this.values = new ArrayList<>();
     }
@@ -308,14 +308,14 @@ public class QuantTableExperimental {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    QuantTableExperimental quantTableExperimental = (QuantTableExperimental) o;
-    return Objects.equals(this.quantificationMeasure, quantTableExperimental.quantificationMeasure) &&
-        Objects.equals(this.rowType, quantTableExperimental.rowType) &&
-        Objects.equals(this.rowIds, quantTableExperimental.rowIds) &&
-        Objects.equals(this.columnIds, quantTableExperimental.columnIds) &&
-        Objects.equals(this.rowNames, quantTableExperimental.rowNames) &&
-        Objects.equals(this.columnNames, quantTableExperimental.columnNames) &&
-        Objects.equals(this.values, quantTableExperimental.values);
+    QuantTable quantTable = (QuantTable) o;
+    return Objects.equals(this.quantificationMeasure, quantTable.quantificationMeasure) &&
+        Objects.equals(this.rowType, quantTable.rowType) &&
+        Objects.equals(this.rowIds, quantTable.rowIds) &&
+        Objects.equals(this.columnIds, quantTable.columnIds) &&
+        Objects.equals(this.rowNames, quantTable.rowNames) &&
+        Objects.equals(this.columnNames, quantTable.columnNames) &&
+        Objects.equals(this.values, quantTable.values);
   }
 
   @Override
@@ -326,7 +326,7 @@ public class QuantTableExperimental {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class QuantTableExperimental {\n");
+    sb.append("class QuantTable {\n");
     sb.append("    quantificationMeasure: ").append(toIndentedString(quantificationMeasure)).append("\n");
     sb.append("    rowType: ").append(toIndentedString(rowType)).append("\n");
     sb.append("    rowIds: ").append(toIndentedString(rowIds)).append("\n");

@@ -13,15 +13,21 @@ import lombok.*;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(name = "QuantTableExperimental",
-        description = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
+@Schema(description = "Quantification of features or compounds within the runs they have been detected in. " +
+        "Rows refer to the quantified objects, columns to the runs. Values that could not be quantified are NaN.")
 public class QuantTable {
 
     protected QuantMeasure quantificationMeasure;
     protected QuantRowType rowType;
 
-    @Schema(nullable = true) protected long[] rowIds;
-    @Schema(nullable = true) protected long[] columnIds;
+    /**
+     * Ids of the quantified objects, features or compounds depending on the row type.
+     */
+    @Schema(nullable = true) protected String[] rowIds;
+    /**
+     * Ids of the runs the objects are quantified in.
+     */
+    @Schema(nullable = true) protected String[] columnIds;
     @Schema(nullable = true) protected String[] rowNames;
     @Schema(nullable = true) protected String[] columnNames;
     private double[][] values;
