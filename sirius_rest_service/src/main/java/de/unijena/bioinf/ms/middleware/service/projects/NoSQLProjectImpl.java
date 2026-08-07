@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -101,6 +102,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.awt.*;
+import java.net.URI;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
@@ -1295,6 +1297,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Run.RunBuilder builder = Run.builder()
                 .runId(Long.toString(run.getRunId()))
                 .name(run.getName());
+
+        //the file this run has been imported from, so that results can be mapped back to the input data
+        MsDataSourceReference sourceReference = run.getSourceReference();
+        if (sourceReference != null)
+            sourceReference.getSource().map(URI::toString)
+                    .or(sourceReference::getFileName)
+                    .ifPresent(builder::source);
 
         if (run.getChromatography() != null) builder.chromatography(run.getChromatography().getFullName());
         if (run.getFragmentation() != null) builder.fragmentation(run.getFragmentation().getFullName());
