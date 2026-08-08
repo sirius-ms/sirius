@@ -479,12 +479,13 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             //todo add search after mechanism for better deep pagination
 
             TopDocs topDocs = sort != null ? searcher.search(query, numHits, sort) : searcher.search(query, numHits);
+            long totalHits = totalHits(searcher, query, topDocs);
 
             ScoreDoc[] hits = topDocs.scoreDocs;
             long offset = pageable.isUnpaged() ? 0 : pageable.getOffset();
             // A page past the end of the results is empty (and avoids overflowing the int offset cast).
             if (offset >= hits.length)
-                return new PageImpl<>(List.of(), pageable, topDocs.totalHits.value());
+                return new PageImpl<>(List.of(), pageable, totalHits);
             int start = (int) offset; // safe: offset < hits.length <= numHits <= numDocs (int)
             int end = pageable.isUnpaged() ? hits.length : Math.min(start + pageable.getPageSize(), hits.length);
             org.apache.lucene.index.StoredFields storedFields = searcher.storedFields();
@@ -494,11 +495,26 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                         ? storedFields.document(hits[i].doc)
                         : storedFields.document(hits[i].doc, fieldsToLoad)));
 
-            return new PageImpl<>(results, pageable, topDocs.totalHits.value());
+            return new PageImpl<>(results, pageable, totalHits);
         } finally {
             // Always release the searcher when done.
             searcherManager.release(searcher);
         }
+    }
+
+    /**
+     * Number of documents matching the query, which is what the total of a page has to be so that a caller knows
+     * whether there is more to fetch.
+     * <p>
+     * A search stops counting once it has enough hits for the requested page (Lucene counts exactly up to a threshold
+     * of {@code max(numHits, 1000)}), and then reports a lower bound instead of the real number. Only in that case the
+     * matches are counted, which is cheaper than the search itself: it needs no scoring and no stored fields, and for
+     * many queries it is answered from the index metadata without touching the postings at all.
+     */
+    private static long totalHits(IndexSearcher searcher, Query query, TopDocs topDocs) throws IOException {
+        if (topDocs.totalHits.relation() == TotalHits.Relation.EQUAL_TO)
+            return topDocs.totalHits.value();
+        return searcher.count(query);
     }
 
     @SneakyThrows
