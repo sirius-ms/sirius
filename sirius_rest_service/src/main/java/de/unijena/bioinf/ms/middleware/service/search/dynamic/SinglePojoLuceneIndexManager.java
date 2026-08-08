@@ -8,7 +8,6 @@ import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.projectspace.QueryRewriter;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.Analyzer;
@@ -32,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import de.unijena.bioinf.ms.middleware.service.search.IndexedFields;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -360,11 +360,23 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     }
 
     /**
+     * Reads the given stored fields of the matching documents. In contrast to {@link #search(Query, Pageable)} the
+     * indexed objects are not reconstructed and only the requested fields are decoded, which makes it cheap to look
+     * up a few properties of many objects.
+     */
+    @SneakyThrows
+    public <R> Page<R> searchFields(@Nullable String query, Pageable pageable, Set<String> fields, Function<IndexedFields, R> mapper) {
+        return searchAndTransform(rewriteQuery(parseQuery(query)), pageable, fields,
+                doc -> mapper.apply(new LuceneDocumentIndexedFields(doc)));
+    }
+
+    /**
      * Searches the index using the given query and returns a Spring Data Page of beans.
      */
     @SneakyThrows
     public Page<String> searchIds(Query query, Pageable pageable) {
-        return searchAndTransform(query, pageable, doc -> doc.get(pojoMapper.getPojoIdField()));
+        return searchAndTransform(query, pageable, Set.of(pojoMapper.getPojoIdField()),
+                doc -> doc.get(pojoMapper.getPojoIdField()));
     }
 
     @SneakyThrows
@@ -443,6 +455,16 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     @SneakyThrows
     private <R> Page<R> searchAndTransform(Query query, Pageable pageable, Function<Document, R> function) {
+        return searchAndTransform(query, pageable, null, function);
+    }
+
+    /**
+     * @param fieldsToLoad stored fields the transformation needs, null to load the whole document. Restricting them
+     *                     saves decoding the stored fields that are thrown away anyway, which is worthwhile when only
+     *                     a few properties of many documents are read.
+     */
+    @SneakyThrows
+    private <R> Page<R> searchAndTransform(Query query, Pageable pageable, @Nullable Set<String> fieldsToLoad, Function<Document, R> function) {
         searcherManager.maybeRefresh();
         IndexSearcher searcher = searcherManager.acquire();
         try {
@@ -468,7 +490,9 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             org.apache.lucene.index.StoredFields storedFields = searcher.storedFields();
             List<R> results = new ArrayList<>(end - start);
             for (int i = start; i < end; i++)
-                results.add(function.apply(storedFields.document(hits[i].doc)));
+                results.add(function.apply(fieldsToLoad == null
+                        ? storedFields.document(hits[i].doc)
+                        : storedFields.document(hits[i].doc, fieldsToLoad)));
 
             return new PageImpl<>(results, pageable, topDocs.totalHits.value());
         } finally {

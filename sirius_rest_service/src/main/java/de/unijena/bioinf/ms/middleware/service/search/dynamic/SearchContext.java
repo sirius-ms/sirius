@@ -5,7 +5,11 @@ import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
+import de.unijena.bioinf.ms.middleware.service.search.IndexedFields;
 import org.springframework.data.domain.Pageable;
+
+import java.util.Set;
+import java.util.function.Function;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -55,6 +59,12 @@ public interface SearchContext extends Closeable {
     <T> Page<T> search(@Nullable String query, Pageable pageable, Class<T> beanClass);
 
     <T> Page<String> searchIds(@Nullable String query, Pageable pageable, Class<T> beanClass);
+
+    /**
+     * Reads the given fields of the matching objects without reconstructing them.
+     */
+    <T, R> Page<R> searchFields(@Nullable String query, Pageable pageable, Class<T> beanClass,
+                                Set<String> fields, Function<IndexedFields, R> mapper);
 
     ValueType getTagValueType(String tagName);
 
