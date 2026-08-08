@@ -1407,11 +1407,11 @@ No authorization required
 
 ## getFeatureQuantTable
 
-> QuantTable getFeatureQuantTable(projectId, type)
+> QuantTable getFeatureQuantTable(projectId, searchQuery, type)
 
 Returns the full quantification table of features
 
-Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.
+Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.  &lt;p&gt;  The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene  syntax as the paged listing endpoints. Omit it to quantify all objects of the project.
 
 ### Example
 
@@ -1430,9 +1430,10 @@ public class Example {
 
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
+        String searchQuery = "searchQuery_example"; // String | Optional search query in lucene syntax. Omit this parameter to quantify all features.
         QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
         try {
-            QuantTable result = apiInstance.getFeatureQuantTable(projectId, type);
+            QuantTable result = apiInstance.getFeatureQuantTable(projectId, searchQuery, type);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getFeatureQuantTable");
@@ -1451,6 +1452,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
+| **searchQuery** | **String**| Optional search query in lucene syntax. Omit this parameter to quantify all features. | [optional] |
 | **type** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
@@ -1470,7 +1472,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Quant table if akk feature in this project |  -  |
+| **200** | Quant table of the features of this project |  -  |
 
 
 ## getFeatureQuantTableRow
