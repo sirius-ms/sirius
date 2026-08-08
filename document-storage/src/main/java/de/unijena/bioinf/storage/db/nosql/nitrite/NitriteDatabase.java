@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.unijena.bioinf.storage.db.nosql.*;
-import de.unijena.bioinf.storage.db.nosql.nitrite.filters.RangeFilter;
 import de.unijena.bioinf.storage.db.nosql.nitrite.joining.JoinedReflectionIterable;
 import de.unijena.bioinf.storage.db.nosql.nitrite.projection.InjectedDocumentStream;
 import de.unijena.bioinf.storage.db.nosql.nitrite.projection.InjectedObjectStream;
@@ -44,8 +43,7 @@ import org.dizitart.no2.collection.events.CollectionEventListener;
 import org.dizitart.no2.collection.events.EventType;
 import org.dizitart.no2.common.PersistentCollection;
 import org.dizitart.no2.common.RecordStream;
-import org.dizitart.no2.common.WriteResult;
-import org.dizitart.no2.common.mapper.JacksonMapperModule;
+import org.dizitart.no2.mapper.jackson.JacksonMapperModule;
 import org.dizitart.no2.common.mapper.NitriteMapper;
 import org.dizitart.no2.common.module.NitriteModule;
 import org.dizitart.no2.common.processors.ProcessorChain;
@@ -106,7 +104,7 @@ public class NitriteDatabase implements Database<Document> {
 
     private final Map<String, Set<String>> optionalCollectionFields = Collections.synchronizedMap(new HashMap<>());
 
-    private final Map<Long, CollectionEventListener> listeners = Collections.synchronizedMap(new HashMap<>());
+    private final Map<Long, String> subscriptions = Collections.synchronizedMap(new HashMap<>());
 
     // LOCKS
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
@@ -645,11 +643,10 @@ public class NitriteDatabase implements Database<Document> {
     public int insert(String collectionName, Document document) throws IOException {
         return this.write(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
-            WriteResult result = collection.insert(document);
-            if (result.iterator().hasNext()) {
-                document.put("_id", result.iterator().next().getIdValue());
-            }
-            return result.getAffectedCount();
+            //assign the id up front: Nitrite stores a clone, so an id it generates itself would not be visible to the
+            //caller, and writing it back by hand would tie us to how the store represents it
+            document.getId();
+            return collection.insert(document).getAffectedCount();
         });
     }
 
@@ -658,14 +655,10 @@ public class NitriteDatabase implements Database<Document> {
         return this.write(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
             Document[] docs = StreamSupport.stream(documents.spliterator(),false).toArray(Document[]::new);
-            WriteResult result = collection.insert(docs);
-            List<String> ids = StreamSupport.stream(result.spliterator(), false).map(NitriteId::getIdValue).toList();
-            if (ids.size() == docs.length) {
-                for (int i = 0; i < docs.length; i++) {
-                    docs[i].put("_id", ids.get(i));
-                }
-            }
-            return result.getAffectedCount();
+            //assign the ids up front, see insert(String, Document)
+            for (Document doc : docs)
+                doc.getId();
+            return collection.insert(docs).getAffectedCount();
         });
     }
 
@@ -1136,8 +1129,7 @@ public class NitriteDatabase implements Database<Document> {
             }
         };
         final long tsid = TSID.fast().toLong();
-        this.listeners.put(tsid, wrapper);
-        getRepository(clazz).subscribe(wrapper);
+        this.subscriptions.put(tsid, getRepository(clazz).subscribe(wrapper));
         return tsid;
     }
 
@@ -1151,21 +1143,20 @@ public class NitriteDatabase implements Database<Document> {
             }
         };
         final long tsid = TSID.fast().toLong();
-        this.listeners.put(tsid, wrapper);
-        getCollection(collectionName).subscribe(wrapper);
+        this.subscriptions.put(tsid, getCollection(collectionName).subscribe(wrapper));
         return tsid;
     }
 
     @Override
     public void unsubscribe(Class<?> clazz, long listenerId) throws IOException {
-        getRepository(clazz).unsubscribe(this.listeners.get(listenerId));
-        this.listeners.remove(listenerId);
+        getRepository(clazz).unsubscribe(this.subscriptions.get(listenerId));
+        this.subscriptions.remove(listenerId);
     }
 
     @Override
     public void unsubscribe(String collectionName, long listenerId) throws IOException {
-        getCollection(collectionName).unsubscribe(this.listeners.get(listenerId));
-        this.listeners.remove(listenerId);
+        getCollection(collectionName).unsubscribe(this.subscriptions.get(listenerId));
+        this.subscriptions.remove(listenerId);
     }
 
     @Override
@@ -1202,7 +1193,7 @@ public class NitriteDatabase implements Database<Document> {
                 case GTE -> FluentFilter.where(literal.getField()).gte((Comparable<?>) literal.getValues()[0]);
                 case LT -> FluentFilter.where(literal.getField()).lt((Comparable<?>) literal.getValues()[0]);
                 case LTE -> FluentFilter.where(literal.getField()).lte((Comparable<?>) literal.getValues()[0]);
-                case BETWEEN -> new RangeFilter(literal.getField(), (Comparable) literal.getValues()[0], (Comparable) literal.getValues()[1],(boolean)literal.getValues()[2], (boolean)literal.getValues()[3]);
+                case BETWEEN -> FluentFilter.where(literal.getField()).between((Comparable<?>) literal.getValues()[0], (Comparable<?>) literal.getValues()[1], (boolean) literal.getValues()[2], (boolean) literal.getValues()[3]);
                 case TEXT -> FluentFilter.where(literal.getField()).text((String) literal.getValues()[0]);
                 case REGEX -> FluentFilter.where(literal.getField()).regex((String) literal.getValues()[0]);
                 case IN ->
