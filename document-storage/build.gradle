@@ -22,12 +22,14 @@ version = siriusVersion
 
 dependencies {
     // external
-    api platform(libs.nitriteBom)
-    api ('org.dizitart:nitrite-jackson-mapper') {
+    // no nitrite BOM on purpose: it inherits the Nitrite parent pom's dependency management, which would drag
+    // Jackson 3 to the version Nitrite builds against and silently override the one Spring Boot manages for the
+    // REST layer. The three artifacts we use are pinned in the version catalog instead.
+    api (libs.nitriteJacksonMapper) {
         exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
     }
-    api ('org.dizitart:nitrite-mvstore-adapter')
-    api ('org.dizitart:nitrite') {
+    api (libs.nitriteMvstoreAdapter)
+    api (libs.nitrite) {
         exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
     }
 //    implementation 'org.dizitart:nitrite-rocksdb-adapter'
