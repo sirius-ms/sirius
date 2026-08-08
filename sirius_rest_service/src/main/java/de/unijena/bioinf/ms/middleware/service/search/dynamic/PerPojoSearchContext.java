@@ -12,6 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.Set;
+import java.util.function.Function;
+import de.unijena.bioinf.ms.middleware.service.search.IndexedFields;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -150,6 +153,11 @@ public class PerPojoSearchContext implements SearchContext {
     @Override
     public <T> Page<String> searchIds(@Nullable String query, Pageable pageable, Class<T> beanClass) {
         return getIndexManager(beanClass).searchIds(query, pageable);
+    }
+
+    public <T, R> Page<R> searchFields(@Nullable String query, Pageable pageable, Class<T> beanClass,
+                                       Set<String> fields, Function<IndexedFields, R> mapper) {
+        return getIndexManager(beanClass).searchFields(query, pageable, fields, mapper);
     }
 
     @NotNull

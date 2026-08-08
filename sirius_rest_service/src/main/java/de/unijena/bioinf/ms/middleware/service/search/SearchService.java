@@ -10,6 +10,9 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Set;
+import java.util.function.Function;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -85,6 +88,16 @@ public interface SearchService extends AutoCloseable {
 
     <T> Page<T> search(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
     <T> Page<String> searchIds(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
+
+    /**
+     * Reads the given fields of the matching objects without reconstructing them. Use it to look up a few properties
+     * of many objects, e.g. to relate ids to each other.
+     *
+     * @param fields fields to read, the mapper only sees these
+     * @param mapper builds the result of a hit from its fields
+     */
+    <T, R> Page<R> searchFields(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass,
+                                Set<String> fields, Function<IndexedFields, R> mapper);
 
     ValueType getTagValueType(String projectId, String tagName);
     void addTagValueType(String projectId, String tagName, ValueType valueType);
