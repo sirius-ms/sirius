@@ -55,6 +55,10 @@ public class ApiBackwardCompatibilityTest {
             "/api/projects/{projectId}/aligned-features/quant-table", "getFeatureQuantTable",
             "/api/projects/{projectId}/compounds/quant-table", "getCompoundQuantTable");
 
+    private static final Map<String, String> STABLE_RUN_OPERATIONS = Map.of(
+            "/api/projects/{projectId}/runs/page", "getRunsPage",
+            "/api/projects/{projectId}/runs/{runId}", "getRun");
+
     /**
      * The single row endpoints are kept for existing clients but must never reach the stable surface, since they
      * are to be replaced by a filter query on the quantification table.
@@ -120,6 +124,18 @@ public class ApiBackwardCompatibilityTest {
             });
             assertFalse(spec.path("components").path("schemas").path("QuantTable").isMissingNode(),
                     "the quantification table schema must be named QuantTable");
+        }
+    }
+
+    @Test
+    @DisplayName("run lookup is stable, so quantification results can be mapped back to the input data")
+    void runLookupEndpointsAreStable() {
+        for (JsonNode spec : specs()) {
+            STABLE_RUN_OPERATIONS.forEach((path, operationId) -> {
+                JsonNode op = operation(spec, path, "get");
+                assertEquals(operationId, op.path("operationId").asText());
+                assertFalse(isExperimental(op), () -> path + " must not be marked experimental");
+            });
         }
     }
 

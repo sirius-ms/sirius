@@ -512,14 +512,15 @@ public class CompoundsApi {
 
     /**
      * Returns the full quantification table of compounds
-     * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.
-     * <p><b>200</b> - OK
+     * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.  &lt;p&gt;  Compounds are not indexed yet, so the optional search query may only refer to the compound id, e.g.  &lt;code&gt;compoundId:1 OR compoundId:2&lt;/code&gt; or &lt;code&gt;NOT compoundId:3&lt;/code&gt;. Such a query is answered with the same  semantics the search index would apply. Any query referring to other fields is rejected. Omit the query to  quantify all compounds.
+     * <p><b>200</b> - Quant table of the compounds of this project
      * @param projectId project-space to read from.
+     * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundQuantTableRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    private ResponseSpec getCompoundQuantTableRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -535,6 +536,7 @@ public class CompoundsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
 
         final String[] localVarAccepts = { 
@@ -552,43 +554,46 @@ public class CompoundsApi {
 
     /**
      * Returns the full quantification table of compounds
-     * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.
-     * <p><b>200</b> - OK
+     * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.  &lt;p&gt;  Compounds are not indexed yet, so the optional search query may only refer to the compound id, e.g.  &lt;code&gt;compoundId:1 OR compoundId:2&lt;/code&gt; or &lt;code&gt;NOT compoundId:3&lt;/code&gt;. Such a query is answered with the same  semantics the search index would apply. Any query referring to other fields is rejected. Omit the query to  quantify all compounds.
+     * <p><b>200</b> - Quant table of the compounds of this project
      * @param projectId project-space to read from.
+     * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantTable getCompoundQuantTable(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public QuantTable getCompoundQuantTable(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getCompoundQuantTableRequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
+        return getCompoundQuantTableRequestCreation(projectId, searchQuery, type).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Returns the full quantification table of compounds
-     * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.
-     * <p><b>200</b> - OK
+     * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.  &lt;p&gt;  Compounds are not indexed yet, so the optional search query may only refer to the compound id, e.g.  &lt;code&gt;compoundId:1 OR compoundId:2&lt;/code&gt; or &lt;code&gt;NOT compoundId:3&lt;/code&gt;. Such a query is answered with the same  semantics the search index would apply. Any query referring to other fields is rejected. Omit the query to  quantify all compounds.
+     * <p><b>200</b> - Quant table of the compounds of this project
      * @param projectId project-space to read from.
+     * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
      * @return ResponseEntity&lt;QuantTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantTable> getCompoundQuantTableWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public ResponseEntity<QuantTable> getCompoundQuantTableWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getCompoundQuantTableRequestCreation(projectId, type).toEntity(localVarReturnType).block();
+        return getCompoundQuantTableRequestCreation(projectId, searchQuery, type).toEntity(localVarReturnType).block();
     }
 
     /**
      * Returns the full quantification table of compounds
-     * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.
-     * <p><b>200</b> - OK
+     * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.  &lt;p&gt;  Compounds are not indexed yet, so the optional search query may only refer to the compound id, e.g.  &lt;code&gt;compoundId:1 OR compoundId:2&lt;/code&gt; or &lt;code&gt;NOT compoundId:3&lt;/code&gt;. Such a query is answered with the same  semantics the search index would apply. Any query referring to other fields is rejected. Omit the query to  quantify all compounds.
+     * <p><b>200</b> - Quant table of the compounds of this project
      * @param projectId project-space to read from.
+     * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundQuantTableWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        return getCompoundQuantTableRequestCreation(projectId, type);
+    public ResponseSpec getCompoundQuantTableWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+        return getCompoundQuantTableRequestCreation(projectId, searchQuery, type);
     }
 
     /**

@@ -111,6 +111,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.LARGE_BATCH_SIZE;
@@ -357,64 +359,121 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Optional<QuantTable> getQuantification(QuantMeasure type, QuantRowType rowType) {
+    public Optional<QuantTable> getFeatureQuantification(@Nullable String searchQuery, QuantMeasure type) {
+        if (searchService == null)
+            throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
+
+        //quantifying everything is a selection too: a feature of an isotopic alignment references it in the very same
+        //field as an ordinary feature, so without the aligned feature ids the isotopes would become rows of their own
+        List<Long> alignedFeatureIds = searchService.searchIds(projectId, searchQuery, Pageable.unpaged(), AlignedFeature.class)
+                .stream().map(Long::parseLong).toList();
+
+        try (Stream<Feature> features = featuresOf(alignedFeatureIds)) {
+            return fillQuantTable(features, Feature::getAlignedFeatureId, QuantRowType.FEATURES, type);
+        }
+    }
+
+    private static final String ALIGNED_FEATURE_ID_FIELD = "alignedFeatureId";
+    private static final String COMPOUND_ID_FIELD = "compoundId";
+
+    @SneakyThrows
+    @Override
+    public Optional<QuantTable> getCompoundQuantification(@Nullable String searchQuery, QuantMeasure type) {
+        //the query is validated against the supported subset, but selects aligned features by their compound id
+        String indexQuery = null;
+        if (Utils.notNullOrBlank(searchQuery)) {
+            CompoundIdQuery selection = CompoundIdQuery.parse(searchQuery);
+            if (selection.selectsNothing())
+                return Optional.empty();
+            if (!selection.selectsEverything())
+                indexQuery = searchQuery;
+        }
+
+        if (searchService == null)
+            throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
+
+        //which compound a feature belongs to is read from the index, so no aligned features have to be loaded
+        Map<Long, Long> compoundByAlignedFeature = searchService
+                .searchFields(projectId, indexQuery, Pageable.unpaged(), AlignedFeature.class,
+                        Set.of(ALIGNED_FEATURE_ID_FIELD, COMPOUND_ID_FIELD),
+                        fields -> Pair.of(fields.getLong(ALIGNED_FEATURE_ID_FIELD), fields.getLong(COMPOUND_ID_FIELD)))
+                .stream()
+                .filter(pair -> pair.getLeft() != null && pair.getRight() != null) //features without a compound
+                .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+
+        try (Stream<Feature> features = featuresOf(compoundByAlignedFeature.keySet())) {
+            return fillQuantTable(features, feature -> compoundByAlignedFeature.get(feature.getAlignedFeatureId()),
+                    QuantRowType.COMPOUNDS, type);
+        }
+    }
+
+    /**
+     * Loads the features of the given aligned features. The 'in' filter looks every id up in the index of the feature
+     * collection, so the cost grows with the number of requested aligned features and not with the project size.
+     */
+    private Stream<Feature> featuresOf(Collection<Long> alignedFeatureIds) throws IOException {
+        if (alignedFeatureIds.isEmpty())
+            return Stream.empty();
+
+        return storage().findStr(Filter.where("alignedFeatureId").in(alignedFeatureIds.toArray(Long[]::new)),
+                Feature.class);
+    }
+
+    /**
+     * Adds the quantities of the given features to the table they belong to. The features are accumulated into the
+     * table right away, so that only the table itself is held in memory and not the features of the whole project.
+     *
+     * @param rowOf assigns a feature to the row it is quantified in, its aligned feature or its compound
+     * @return the quantification table or nothing if the project has no runs or nothing could be quantified
+     */
+    private Optional<QuantTable> fillQuantTable(Stream<Feature> features, Function<Feature, Long> rowOf,
+                                                QuantRowType rowType, QuantMeasure type) throws IOException {
         Optional<QuantTable> table = initQuantTable(type, rowType);
         if (table.isEmpty())
             return Optional.empty();
 
-        List<double[]> values = new ArrayList<>();
-        List<String> rowIds = new ArrayList<>();
-        List<String> rowNames = new ArrayList<>();
+        String[] columnIds = table.get().getColumnIds();
+        Object2IntMap<String> columnOfRun = new Object2IntOpenHashMap<>(columnIds.length);
+        columnOfRun.defaultReturnValue(-1);
+        for (int i = 0; i < columnIds.length; i++)
+            columnOfRun.put(columnIds[i], i);
 
-        int quantified = rowType == QuantRowType.FEATURES
-                ? storage().findAllStr(AlignedFeatures.class)
-                        .mapToInt(alignedFeatures -> addToTable(alignedFeatures, values, rowIds, rowNames, table.get())).sum()
-                : storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class)
-                        .mapToInt(compound -> addToTable(compound, values, rowIds, rowNames, table.get())).sum();
+        Map<Long, double[]> rows = new HashMap<>();
+        features.forEach(feature -> {
+            if (feature.getRunId() == null)
+                return; //features of a project that was imported from preprocessed data have no run
+
+            int column = columnOfRun.getInt(Long.toString(feature.getRunId()));
+            Long row = rowOf.apply(feature);
+            if (column < 0 || row == null)
+                return;
+
+            double[] quantities = rows.computeIfAbsent(row, id -> nanRow(columnIds.length));
+            double quantity = switch (type) {
+                case APEX_INTENSITY -> feature.getApexIntensity();
+                case AREA_UNDER_CURVE -> feature.getAreaUnderCurve();
+            };
+            //several features of a compound can be detected in the same run
+            quantities[column] = Double.isNaN(quantities[column]) ? quantity : quantities[column] + quantity;
+        });
 
         // nothing in this project belongs to an LC/MS run, so there is nothing to quantify
-        if (quantified == 0)
+        if (rows.isEmpty())
             return Optional.empty();
 
-        table.get().setValues(values.toArray(double[][]::new));
-        table.get().setRowIds(rowIds.toArray(String[]::new));
-        table.get().setRowNames(rowNames.toArray(String[]::new));
+        //rows are ordered by id, like the columns are
+        List<Long> rowIds = rows.keySet().stream().sorted().toList();
+
+        table.get().setValues(rowIds.stream().map(rows::get).toArray(double[][]::new));
+        table.get().setRowIds(rowIds.stream().map(id -> Long.toString(id)).toArray(String[]::new));
 
         return table;
     }
 
-    @SneakyThrows
-    @Override
-    public Optional<QuantTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantMeasure type, QuantRowType rowType) {
-        Optional<QuantTable> table = initQuantTable(type, rowType);
-        if (table.isEmpty())
-            return Optional.empty();
-
-        List<double[]> values = new ArrayList<>();
-        List<String> rowIds = new ArrayList<>();
-        List<String> rowNames = new ArrayList<>();
-
-        if (rowType == QuantRowType.FEATURES) {
-            Optional<AlignedFeatures> alignedFeature = storage().getByPrimaryKey(Long.parseLong(objectId), AlignedFeatures.class);
-            if (alignedFeature.isEmpty())
-                return Optional.empty();
-
-            if (addToTable(alignedFeature.get(), values, rowIds, rowNames, table.get()) == 0)
-                return Optional.empty();
-        } else { //must be COMPOUND
-            Optional<de.unijena.bioinf.ms.persistence.model.core.Compound> compound = storage().getByPrimaryKey(Long.parseLong(objectId), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
-            if (compound.isEmpty())
-                return Optional.empty();
-
-            if (addToTable(compound.get(), values, rowIds, rowNames, table.get()) == 0)
-                return Optional.empty();
-        }
-
-        table.get().setValues(values.toArray(double[][]::new));
-        table.get().setRowIds(rowIds.toArray(String[]::new));
-        table.get().setRowNames(rowNames.toArray(String[]::new));
-
-        return table;
+    private static double[] nanRow(int columns) {
+        double[] row = new double[columns];
+        Arrays.fill(row, Double.NaN);
+        return row;
     }
 
     private Optional<QuantTable> initQuantTable(QuantMeasure type, QuantRowType rowType) throws IOException {
@@ -438,39 +497,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .columnNames(runNames)
                 .build()
         );
-    }
-
-    /**
-     * @return the number of features that could be quantified, that is features that belong to an LC/MS run
-     */
-    @SneakyThrows
-    private <T> int addToTable(T parent, List<double[]> values, List<String> rowIds, List<String> rowNames, QuantTable table) {
-        Map<String, List<Feature>> features = new HashMap<>();
-        if (parent instanceof AlignedFeatures alignedFeature) {
-            rowIds.add(Long.toString(alignedFeature.getAlignedFeatureId()));
-            rowNames.add(alignedFeature.getName());
-
-            storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class)
-                    // only features with LC/MS information can be quantified per run. Features of a project that
-                    // was imported from preprocessed data have no run, quantifying them would throw an NPE.
-                    .filter(feature -> feature.getRunId() != null)
-                    .forEach(feature -> features.put(Long.toString(feature.getRunId()), List.of(feature)));
-        } else if (parent instanceof de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
-            rowIds.add(Long.toString(compound.getCompoundId()));
-            rowNames.add(compound.getName());
-
-            storage().findStr(Filter.where("compoundId").eq(compound.getCompoundId()), AlignedFeature.class).forEach(alignedFeature -> {
-                try {
-                    storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class)
-                            .filter(feature -> feature.getRunId() != null)
-                            .forEach(feature -> features.computeIfAbsent(Long.toString(feature.getRunId()), k -> new ArrayList<>()).add(feature));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        }
-        values.add(getQuantTableRow(features, table));
-        return features.size();
     }
 
     private double[] getQuantTableRow(Map<String, List<Feature>> features, QuantTable table) {

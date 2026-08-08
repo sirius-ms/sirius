@@ -77,9 +77,22 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     @NotNull PSM getProjectSpaceManager();
 
-    Optional<QuantTable> getQuantification(QuantMeasure type, QuantRowType rowType);
+    /**
+     * Quantification of the features matching the given search query within the runs they have been detected in.
+     *
+     * @param searchQuery optional query in lucene syntax. If null or blank, all features are quantified.
+     * @param type        measure to quantify the features with
+     */
+    Optional<QuantTable> getFeatureQuantification(@Nullable String searchQuery, QuantMeasure type);
 
-    Optional<QuantTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantMeasure type, QuantRowType rowType);
+    /**
+     * Quantification of the compounds matching the given search query within the runs they have been detected in.
+     *
+     * @param searchQuery optional query in lucene syntax selecting compounds by id. If null or blank, all compounds
+     *                    are quantified.
+     * @param type        measure to quantify the compounds with
+     */
+    Optional<QuantTable> getCompoundQuantification(@Nullable String searchQuery, QuantMeasure type);
 
     Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId, boolean includeAll);
     Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);

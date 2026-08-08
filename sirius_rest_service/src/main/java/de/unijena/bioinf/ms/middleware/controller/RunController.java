@@ -42,9 +42,10 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/runs")
-@io.swagger.v3.oas.annotations.tags.Tag(name = "Runs", description = "[EXPERIMENTAL] This API allows accessing LC/MS runs. " +
-        "All endpoints are experimental and not part of the stable API specification. " +
-        "These endpoints can change at any time, even in minor updates.")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Runs", description = "This API allows accessing LC/MS runs, " +
+        "e.g. to map quantification results back to the data they have been computed from. The tag based endpoints " +
+        "are experimental and not part of the stable API specification. These endpoints can change at any time, " +
+        "even in minor updates.")
 public class RunController implements TaggableController<Run, Run.OptField> {
 
     @Getter
@@ -57,7 +58,7 @@ public class RunController implements TaggableController<Run, Run.OptField> {
 
     /**
      *
-     * [EXPERIMENTAL] Get runs in the given project-space.
+     * Get runs in the given project-space.
      *
      * <h2>Supported filter syntax</h2>
      *
@@ -88,15 +89,14 @@ public class RunController implements TaggableController<Run, Run.OptField> {
      *
      * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
      *
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId    project space to get runs from.
-     * @param searchQuery  optional search query in lucene syntax.
+     * @param searchQuery  Optional search query in lucene syntax. Omit this parameter to page over all runs.
      * @param pageable     pageable.
      * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged runs
      */
-    @Operation(operationId = "getRunsPageExperimental")
+    @Operation(operationId = "getRunsPage")
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<Run> getRunsPage(
             @PathVariable String projectId,
@@ -108,16 +108,14 @@ public class RunController implements TaggableController<Run, Run.OptField> {
     }
 
     /**
-     * [EXPERIMENTAL] Get run with the given identifier from the specified project-space.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * Get run with the given identifier from the specified project-space.
      *
      * @param projectId        project-space to read from.
      * @param runId            identifier of run to access.
      * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
      * @return Run with tags (if specified).
      */
-    @Operation(operationId = "getRunExperimental")
+    @Operation(operationId = "getRun")
     @GetMapping(value = "/{runId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Run getRun(
             @PathVariable String projectId, @PathVariable String runId,

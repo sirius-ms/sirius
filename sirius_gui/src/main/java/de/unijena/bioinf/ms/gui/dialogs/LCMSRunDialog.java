@@ -129,7 +129,7 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
         Jobs.runEDTLater(() -> {
             List<Run> runs1;
             if (runs == null) {
-                runs1 = gui.applySiriusClient((c, pid) -> c.runs().getRunsPageExperimental(pid, null, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
+                runs1 = gui.applySiriusClient((c, pid) -> c.runs().getRunsPage(pid, null, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
             } else {
                 runs1 = runs;
             }

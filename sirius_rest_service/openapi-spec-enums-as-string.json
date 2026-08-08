@@ -49,10 +49,6 @@
       "description": "Manage SIRIUS projects."
     },
     {
-      "name": "Runs",
-      "description": "[EXPERIMENTAL] This API allows accessing LC/MS runs. All endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
-    },
-    {
       "name": "Compound Statistics",
       "description": "[EXPERIMENTAL] This compound based API allows allows computing and accessing statistics for compounds (also known as a group of ion identities). All endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
     },
@@ -79,6 +75,10 @@
     {
       "name": "Features",
       "description": "This feature based API allows access features (aligned over runs) and there Annotations of a specified project-space. This is the entry point to access all raw annotation results an there summaries."
+    },
+    {
+      "name": "Runs",
+      "description": "This API allows accessing LC/MS runs, e.g. to map quantification results back to the data they have been computed from. The tag based endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
     }
   ],
   "paths": {
@@ -3719,9 +3719,9 @@
         "tags": [
           "Runs"
         ],
-        "summary": "[EXPERIMENTAL] Get run with the given identifier from the specified project-space",
-        "description": "[EXPERIMENTAL] Get run with the given identifier from the specified project-space.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
-        "operationId": "getRunExperimental",
+        "summary": "Get run with the given identifier from the specified project-space.",
+        "description": "Get run with the given identifier from the specified project-space.",
+        "operationId": "getRun",
         "parameters": [
           {
             "name": "projectId",
@@ -3819,9 +3819,9 @@
         "tags": [
           "Runs"
         ],
-        "summary": "[EXPERIMENTAL] Get runs in the given project-space",
-        "description": "[EXPERIMENTAL] Get runs in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n\n Currently the only searchable fields are names of tags (\u003ccode\u003etagName\u003c/code\u003e) followed by a clause that is valued for the value type of the tag (See TagDefinition).\n Tag name based field need to be prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types of tags are \u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
-        "operationId": "getRunsPageExperimental",
+        "summary": "Get runs in the given project-space",
+        "description": "Get runs in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n\n Currently the only searchable fields are names of tags (\u003ccode\u003etagName\u003c/code\u003e) followed by a clause that is valued for the value type of the tag (See TagDefinition).\n Tag name based field need to be prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types of tags are \u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
+        "operationId": "getRunsPage",
         "parameters": [
           {
             "name": "projectId",
@@ -3835,7 +3835,7 @@
           {
             "name": "searchQuery",
             "in": "query",
-            "description": "optional search query in lucene syntax.",
+            "description": "Optional search query in lucene syntax. Omit this parameter to page over all runs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -4835,7 +4835,7 @@
           "Compounds"
         ],
         "summary": "Returns the full quantification table of compounds",
-        "description": "Returns the full quantification table of compounds.\n \u003cp\u003e\n The quantification table contains the quantities of the compounds within all runs they are contained in.\n Rows refer to compounds, columns to runs, both given as ids and names.",
+        "description": "Returns the full quantification table of compounds.\n \u003cp\u003e\n The quantification table contains the quantities of the compounds within all runs they are contained in.\n Rows refer to compounds, columns to runs, both given as ids and names.\n \u003cp\u003e\n Compounds are not indexed yet, so the optional search query may only refer to the compound id, e.g.\n \u003ccode\u003ecompoundId:1 OR compoundId:2\u003c/code\u003e or \u003ccode\u003eNOT compoundId:3\u003c/code\u003e. Such a query is answered with the same\n semantics the search index would apply. Any query referring to other fields is rejected. Omit the query to\n quantify all compounds.",
         "operationId": "getCompoundQuantTable",
         "parameters": [
           {
@@ -4843,6 +4843,15 @@
             "in": "path",
             "description": "project-space to read from.",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -4864,7 +4873,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Quant table of the compounds of this project",
             "content": {
               "application/json": {
                 "schema": {
@@ -7814,7 +7823,7 @@
           "Features"
         ],
         "summary": "Returns the full quantification table of features",
-        "description": "Returns the full quantification table of features.\n \u003cp\u003e\n The quantification table contains the quantities of the features within all runs they are contained in.\n Rows refer to features, columns to runs, both given as ids and names.",
+        "description": "Returns the full quantification table of features.\n \u003cp\u003e\n The quantification table contains the quantities of the features within all runs they are contained in.\n Rows refer to features, columns to runs, both given as ids and names.\n \u003cp\u003e\n The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene\n syntax as the paged listing endpoints. Omit it to quantify all objects of the project.",
         "operationId": "getFeatureQuantTable",
         "parameters": [
           {
@@ -7822,6 +7831,15 @@
             "in": "path",
             "description": "project-space to read from.",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "description": "Optional search query in lucene syntax. Omit this parameter to quantify all features.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -7843,7 +7861,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Quant table if akk feature in this project",
+            "description": "Quant table of the features of this project",
             "content": {
               "application/json": {
                 "schema": {
@@ -12604,14 +12622,6 @@
           "columnIds": {
             "type": "array",
             "description": "Ids of the runs the objects are quantified in.",
-            "nullable": true,
-            "items": {
-              "type": "string",
-              "nullable": true
-            }
-          },
-          "rowNames": {
-            "type": "array",
             "nullable": true,
             "items": {
               "type": "string",
