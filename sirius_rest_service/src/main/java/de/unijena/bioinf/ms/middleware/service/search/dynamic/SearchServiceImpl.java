@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.Set;
+import de.unijena.bioinf.ms.middleware.service.search.IndexedFields;
 
 import java.io.IOException;
 import java.util.*;
@@ -219,6 +221,12 @@ public class SearchServiceImpl implements SearchService {
     @Override
     public <T> Page<String> searchIds(String projectId, @Nullable String query, Pageable pageable, Class<T> pojoClass) {
         return withProjectContext(projectId, ps -> ps.searchIds(query, pageable, pojoClass));
+    }
+
+    @Override
+    public <T, R> Page<R> searchFields(String projectId, @Nullable String query, Pageable pageable, Class<T> pojoClass,
+                                       Set<String> fields, Function<IndexedFields, R> mapper) {
+        return withProjectContext(projectId, ps -> ps.searchFields(query, pageable, pojoClass, fields, mapper));
     }
 
     @Override
