@@ -263,8 +263,9 @@ public class CompoundController implements TaggableController<Compound, Compound
     @Deprecated(forRemoval = true)
     @Operation(operationId = "getCompoundQuantTableRow")
     @GetMapping(value = "/{compoundId}/quant-table-row", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantTable getQuantTable(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
-        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(compoundId, type, QuantRowType.COMPOUNDS);
+    public QuantTable getQuantTableRow(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
+        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId)
+                .getCompoundQuantification("compoundId:" + compoundId, type);
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, compoundId) + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();
@@ -275,15 +276,24 @@ public class CompoundController implements TaggableController<Compound, Compound
      * <p>
      * The quantification table contains the quantities of the compounds within all runs they are contained in.
      * Rows refer to compounds, columns to runs, both given as ids and names.
+     * <p>
+     * Compounds are not indexed yet, so the optional search query may only refer to the compound id, e.g.
+     * {@code compoundId:1 OR compoundId:2} or {@code NOT compoundId:3}. Such a query is answered with the same
+     * semantics the search index would apply. Any query referring to other fields is rejected. Omit the query to
+     * quantify all compounds.
      *
-     * @param projectId project-space to read from.
-     * @param type      quantification type.
-     * @return
+     * @param projectId   project-space to read from.
+     * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
+     * @param type        quantification type.
+     * @return Quant table of the compounds of this project
      */
     @Operation(operationId = "getCompoundQuantTable")
     @GetMapping(value = "/quant-table", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantTable getQuantTable(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
-        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantRowType.COMPOUNDS);
+    public QuantTable getQuantTable(@PathVariable String projectId,
+                                    @RequestParam(required = false) String searchQuery,
+                                    @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
+        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId)
+                .getCompoundQuantification(searchQuery, type);
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();

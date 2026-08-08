@@ -374,11 +374,11 @@ No authorization required
 
 ## getCompoundQuantTable
 
-> QuantTable getCompoundQuantTable(projectId, type)
+> QuantTable getCompoundQuantTable(projectId, searchQuery, type)
 
 Returns the full quantification table of compounds
 
-Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.
+Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.  &lt;p&gt;  Compounds are not indexed yet, so the optional search query may only refer to the compound id, e.g.  &lt;code&gt;compoundId:1 OR compoundId:2&lt;/code&gt; or &lt;code&gt;NOT compoundId:3&lt;/code&gt;. Such a query is answered with the same  semantics the search index would apply. Any query referring to other fields is rejected. Omit the query to  quantify all compounds.
 
 ### Example
 
@@ -397,9 +397,10 @@ public class Example {
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
+        String searchQuery = "searchQuery_example"; // String | Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
         QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
         try {
-            QuantTable result = apiInstance.getCompoundQuantTable(projectId, type);
+            QuantTable result = apiInstance.getCompoundQuantTable(projectId, searchQuery, type);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getCompoundQuantTable");
@@ -418,6 +419,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
+| **searchQuery** | **String**| Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds. | [optional] |
 | **type** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
@@ -437,7 +439,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | OK |  -  |
+| **200** | Quant table of the compounds of this project |  -  |
 
 
 ## getCompoundQuantTableRow

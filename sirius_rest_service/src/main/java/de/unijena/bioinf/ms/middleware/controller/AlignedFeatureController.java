@@ -1078,8 +1078,9 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @Deprecated(forRemoval = true)
     @Operation(operationId = "getFeatureQuantTableRow")
     @GetMapping(value = "/{alignedFeatureId}/quant-table-row", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantTable getQuantTable(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
-        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(alignedFeatureId, type, QuantRowType.FEATURES);
+    public QuantTable getQuantTableRow(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
+        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId)
+                .getFeatureQuantification("alignedFeatureId:" + alignedFeatureId, type);
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, alignedFeatureId) + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();
@@ -1090,15 +1091,22 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * <p>
      * The quantification table contains the quantities of the features within all runs they are contained in.
      * Rows refer to features, columns to runs, both given as ids and names.
+     * <p>
+     * The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene
+     * syntax as the paged listing endpoints. Omit it to quantify all objects of the project.
      *
-     * @param projectId project-space to read from.
-     * @param type      quantification type.
-     * @return Quant table if akk feature in this project
+     * @param projectId   project-space to read from.
+     * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
+     * @param type        quantification type.
+     * @return Quant table of the features of this project
      */
     @GetMapping(value = "/quant-table", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(operationId = "getFeatureQuantTable")
-    public QuantTable getQuantTable(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
-        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantRowType.FEATURES);
+    public QuantTable getQuantTable(@PathVariable String projectId,
+                                    @RequestParam(required = false) String searchQuery,
+                                    @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
+        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId)
+                .getFeatureQuantification(searchQuery, type);
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();

@@ -28,7 +28,6 @@ public class QuantTable {
      * Ids of the runs the objects are quantified in.
      */
     @Schema(nullable = true) protected String[] columnIds;
-    @Schema(nullable = true) protected String[] rowNames;
     @Schema(nullable = true) protected String[] columnNames;
     private double[][] values;
 }

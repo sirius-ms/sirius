@@ -1847,14 +1847,15 @@ public class FeaturesApi {
 
     /**
      * Returns the full quantification table of features
-     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.
-     * <p><b>200</b> - Quant table if akk feature in this project
+     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.  &lt;p&gt;  The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene  syntax as the paged listing endpoints. Omit it to quantify all objects of the project.
+     * <p><b>200</b> - Quant table of the features of this project
      * @param projectId project-space to read from.
+     * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFeatureQuantTableRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    private ResponseSpec getFeatureQuantTableRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1870,6 +1871,7 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
 
         final String[] localVarAccepts = { 
@@ -1887,43 +1889,46 @@ public class FeaturesApi {
 
     /**
      * Returns the full quantification table of features
-     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.
-     * <p><b>200</b> - Quant table if akk feature in this project
+     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.  &lt;p&gt;  The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene  syntax as the paged listing endpoints. Omit it to quantify all objects of the project.
+     * <p><b>200</b> - Quant table of the features of this project
      * @param projectId project-space to read from.
+     * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantTable getFeatureQuantTable(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public QuantTable getFeatureQuantTable(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getFeatureQuantTableRequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
+        return getFeatureQuantTableRequestCreation(projectId, searchQuery, type).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Returns the full quantification table of features
-     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.
-     * <p><b>200</b> - Quant table if akk feature in this project
+     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.  &lt;p&gt;  The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene  syntax as the paged listing endpoints. Omit it to quantify all objects of the project.
+     * <p><b>200</b> - Quant table of the features of this project
      * @param projectId project-space to read from.
+     * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
      * @return ResponseEntity&lt;QuantTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantTable> getFeatureQuantTableWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public ResponseEntity<QuantTable> getFeatureQuantTableWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getFeatureQuantTableRequestCreation(projectId, type).toEntity(localVarReturnType).block();
+        return getFeatureQuantTableRequestCreation(projectId, searchQuery, type).toEntity(localVarReturnType).block();
     }
 
     /**
      * Returns the full quantification table of features
-     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.
-     * <p><b>200</b> - Quant table if akk feature in this project
+     * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.  &lt;p&gt;  The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene  syntax as the paged listing endpoints. Omit it to quantify all objects of the project.
+     * <p><b>200</b> - Quant table of the features of this project
      * @param projectId project-space to read from.
+     * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFeatureQuantTableWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        return getFeatureQuantTableRequestCreation(projectId, type);
+    public ResponseSpec getFeatureQuantTableWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+        return getFeatureQuantTableRequestCreation(projectId, searchQuery, type);
     }
 
     /**

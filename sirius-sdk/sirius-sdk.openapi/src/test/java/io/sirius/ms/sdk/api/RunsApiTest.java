@@ -132,7 +132,7 @@ public class RunsApiTest {
     }
 
     private String getRunIdByName(String name) {
-        PagedModelRun page = api.getRunsPageExperimental(projectId, "name:" + name, 0, 10, null, List.of(RunOptField.NONE));
+        PagedModelRun page = api.getRunsPage(projectId, "name:" + name, 0, 10, null, List.of(RunOptField.NONE));
         if (page.getContent() == null || page.getContent().isEmpty()) {
             fail("Expected run with name '" + name + "' not found.");
         }
@@ -143,17 +143,17 @@ public class RunsApiTest {
      * [EXPERIMENTAL] Get run with the given identifier from the specified project-space
      */
     @Test
-    public void getRunExperimentalTest() {
+    public void getRunTest() {
         String runId = getRunIdByName("run1");
 
         // Fetch run with no optional fields
-        Run run = api.getRunExperimental(projectId, runId, List.of(RunOptField.NONE));
+        Run run = api.getRun(projectId, runId, List.of(RunOptField.NONE));
         assertNotNull(run);
         assertEquals(runId, run.getRunId());
         assertEquals("run1", run.getName());
 
         // Fetch run with TAGS included
-        Run runWithTags = api.getRunExperimental(projectId, runId, List.of(RunOptField.TAGS));
+        Run runWithTags = api.getRun(projectId, runId, List.of(RunOptField.TAGS));
         assertNotNull(runWithTags);
         assertEquals(runId, runWithTags.getRunId());
         // Tags map should be present (even if empty)
@@ -164,9 +164,9 @@ public class RunsApiTest {
      * [EXPERIMENTAL] Get runs in the given project-space (Pagination & Filtering)
      */
     @Test
-    public void getRunsPageExperimentalTest() {
+    public void getRunsPageTest() {
         // Basic listing
-        PagedModelRun page = api.getRunsPageExperimental(projectId, null, 0, 5, null, List.of(RunOptField.NONE));
+        PagedModelRun page = api.getRunsPage(projectId, null, 0, 5, null, List.of(RunOptField.NONE));
         assertNotNull(page);
         assertNotNull(page.getContent());
         assertEquals(2, page.getContent().size()); // We created exactly 2 runs
@@ -180,7 +180,7 @@ public class RunsApiTest {
 
         // Filter: tags.tagName:val1
         String query = "tags." + tagName + ":val1";
-        PagedModelRun filteredPage = api.getRunsPageExperimental(projectId, query, 0, 10, null, List.of(RunOptField.TAGS));
+        PagedModelRun filteredPage = api.getRunsPage(projectId, query, 0, 10, null, List.of(RunOptField.TAGS));
 
         assertNotNull(filteredPage);
         assertNotNull(filteredPage.getContent());

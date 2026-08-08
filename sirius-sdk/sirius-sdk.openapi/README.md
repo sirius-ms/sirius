@@ -249,9 +249,9 @@ Class | Method | HTTP request | Description
 *ReactionsApi* | [**getSequences**](docs/ReactionsApi.md#getSequences) | **GET** /api/reactions/sequences | [EXPERIMENTAL] Get all reaction sequences from the library.
 *RunsApi* | [**addTagsToRunExperimental**](docs/RunsApi.md#addTagsToRunExperimental) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | [EXPERIMENTAL] Add tags to a run in the project
 *RunsApi* | [**addTagsToRunsExperimental**](docs/RunsApi.md#addTagsToRunsExperimental) | **PUT** /api/projects/{projectId}/runs/tags | [EXPERIMENTAL] Add tags to a run in the project
-*RunsApi* | [**getRunExperimental**](docs/RunsApi.md#getRunExperimental) | **GET** /api/projects/{projectId}/runs/{runId} | [EXPERIMENTAL] Get run with the given identifier from the specified project-space
+*RunsApi* | [**getRun**](docs/RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space.
 *RunsApi* | [**getRunsByGroupExperimental**](docs/RunsApi.md#getRunsByGroupExperimental) | **GET** /api/projects/{projectId}/runs/grouped | [EXPERIMENTAL] Get runs by tag group
-*RunsApi* | [**getRunsPageExperimental**](docs/RunsApi.md#getRunsPageExperimental) | **GET** /api/projects/{projectId}/runs/page | [EXPERIMENTAL] Get runs in the given project-space
+*RunsApi* | [**getRunsPage**](docs/RunsApi.md#getRunsPage) | **GET** /api/projects/{projectId}/runs/page | Get runs in the given project-space
 *RunsApi* | [**getTagsForRunExperimental**](docs/RunsApi.md#getTagsForRunExperimental) | **GET** /api/projects/{projectId}/runs/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Run
 *RunsApi* | [**removeTagFromRunExperimental**](docs/RunsApi.md#removeTagFromRunExperimental) | **DELETE** /api/projects/{projectId}/runs/tags/{runId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the run with the specified ID in the specified project-space
 *SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.

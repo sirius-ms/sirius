@@ -47,7 +47,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   QuantTable.JSON_PROPERTY_ROW_TYPE,
   QuantTable.JSON_PROPERTY_ROW_IDS,
   QuantTable.JSON_PROPERTY_COLUMN_IDS,
-  QuantTable.JSON_PROPERTY_ROW_NAMES,
   QuantTable.JSON_PROPERTY_COLUMN_NAMES,
   QuantTable.JSON_PROPERTY_VALUES
 })
@@ -68,10 +67,6 @@ public class QuantTable {
   public static final String JSON_PROPERTY_COLUMN_IDS = "columnIds";
   @jakarta.annotation.Nullable
   private List<String> columnIds;
-
-  public static final String JSON_PROPERTY_ROW_NAMES = "rowNames";
-  @jakarta.annotation.Nullable
-  private List<String> rowNames;
 
   public static final String JSON_PROPERTY_COLUMN_NAMES = "columnNames";
   @jakarta.annotation.Nullable
@@ -200,39 +195,6 @@ public class QuantTable {
     this.columnIds = columnIds;
   }
 
-  public QuantTable rowNames(@jakarta.annotation.Nullable List<String> rowNames) {
-    
-    this.rowNames = rowNames;
-    return this;
-  }
-
-  public QuantTable addRowNamesItem(String rowNamesItem) {
-    if (this.rowNames == null) {
-      this.rowNames = new ArrayList<>();
-    }
-    this.rowNames.add(rowNamesItem);
-    return this;
-  }
-
-  /**
-   * Get rowNames
-   * @return rowNames
-   */
-  @jakarta.annotation.Nullable
-  @JsonProperty(value = JSON_PROPERTY_ROW_NAMES, required = false)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public List<String> getRowNames() {
-    return rowNames;
-  }
-
-
-  @JsonProperty(value = JSON_PROPERTY_ROW_NAMES, required = false)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRowNames(@jakarta.annotation.Nullable List<String> rowNames) {
-    this.rowNames = rowNames;
-  }
-
   public QuantTable columnNames(@jakarta.annotation.Nullable List<String> columnNames) {
     
     this.columnNames = columnNames;
@@ -313,14 +275,13 @@ public class QuantTable {
         Objects.equals(this.rowType, quantTable.rowType) &&
         Objects.equals(this.rowIds, quantTable.rowIds) &&
         Objects.equals(this.columnIds, quantTable.columnIds) &&
-        Objects.equals(this.rowNames, quantTable.rowNames) &&
         Objects.equals(this.columnNames, quantTable.columnNames) &&
         Objects.equals(this.values, quantTable.values);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(quantificationMeasure, rowType, rowIds, columnIds, rowNames, columnNames, values);
+    return Objects.hash(quantificationMeasure, rowType, rowIds, columnIds, columnNames, values);
   }
 
   @Override
@@ -331,7 +292,6 @@ public class QuantTable {
     sb.append("    rowType: ").append(toIndentedString(rowType)).append("\n");
     sb.append("    rowIds: ").append(toIndentedString(rowIds)).append("\n");
     sb.append("    columnIds: ").append(toIndentedString(columnIds)).append("\n");
-    sb.append("    rowNames: ").append(toIndentedString(rowNames)).append("\n");
     sb.append("    columnNames: ").append(toIndentedString(columnNames)).append("\n");
     sb.append("    values: ").append(toIndentedString(values)).append("\n");
     sb.append("}");
