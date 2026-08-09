@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -52,7 +53,7 @@ class QuantificationQueryTest {
         //without a query the rows are all aligned features, and which features those are is what the index knows:
         //a feature of an isotopic alignment is stored like any other and would otherwise become a row of its own
         ResponseStatusException e = assertThrows(ResponseStatusException.class, () ->
-                projectWithoutIndex.getFeatureQuantification(null, QuantMeasure.APEX_INTENSITY));
+                projectWithoutIndex.getFeatureQuantification(null, QuantMeasure.APEX_INTENSITY, EnumSet.noneOf(QuantTable.OptField.class)));
 
         assertEquals(SERVICE_UNAVAILABLE, e.getStatusCode());
     }
@@ -61,7 +62,7 @@ class QuantificationQueryTest {
     @DisplayName("a feature query without search service is reported as unavailable")
     void featureQueryRequiresSearchService() {
         ResponseStatusException e = assertThrows(ResponseStatusException.class, () ->
-                projectWithoutIndex.getFeatureQuantification("alignedFeatureId:1", QuantMeasure.APEX_INTENSITY));
+                projectWithoutIndex.getFeatureQuantification("alignedFeatureId:1", QuantMeasure.APEX_INTENSITY, EnumSet.noneOf(QuantTable.OptField.class)));
 
         assertEquals(SERVICE_UNAVAILABLE, e.getStatusCode());
     }
@@ -70,7 +71,7 @@ class QuantificationQueryTest {
     @DisplayName("a compound id query without search service is reported as unavailable")
     void compoundIdQueryRequiresSearchService() {
         ResponseStatusException e = assertThrows(ResponseStatusException.class, () ->
-                projectWithoutIndex.getCompoundQuantification("compoundId:1", QuantMeasure.APEX_INTENSITY));
+                projectWithoutIndex.getCompoundQuantification("compoundId:1", QuantMeasure.APEX_INTENSITY, EnumSet.noneOf(QuantTable.OptField.class)));
 
         assertEquals(SERVICE_UNAVAILABLE, e.getStatusCode());
     }
@@ -79,7 +80,7 @@ class QuantificationQueryTest {
     @DisplayName("any other compound query is rejected as not supported")
     void compoundSearchQueryIsRejected() {
         ResponseStatusException e = assertThrows(ResponseStatusException.class, () ->
-                projectWithoutIndex.getCompoundQuantification("tags.MyTag:sample", QuantMeasure.APEX_INTENSITY));
+                projectWithoutIndex.getCompoundQuantification("tags.MyTag:sample", QuantMeasure.APEX_INTENSITY, EnumSet.noneOf(QuantTable.OptField.class)));
 
         assertEquals(METHOD_NOT_ALLOWED, e.getStatusCode());
         assertTrue(e.getReason() != null && e.getReason().contains("compoundId"),
@@ -90,7 +91,7 @@ class QuantificationQueryTest {
     @DisplayName("compounds are related to their features via the index, so it is needed even without a query")
     void compoundQuantificationRequiresSearchService() {
         ResponseStatusException e = assertThrows(ResponseStatusException.class, () ->
-                projectWithoutIndex.getCompoundQuantification("  ", QuantMeasure.APEX_INTENSITY));
+                projectWithoutIndex.getCompoundQuantification("  ", QuantMeasure.APEX_INTENSITY, EnumSet.noneOf(QuantTable.OptField.class)));
 
         assertEquals(SERVICE_UNAVAILABLE, e.getStatusCode());
     }

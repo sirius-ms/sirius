@@ -263,9 +263,14 @@ public class CompoundController implements TaggableController<Compound, Compound
     @Deprecated(forRemoval = true)
     @Operation(operationId = "getCompoundQuantTableRow")
     @GetMapping(value = "/{compoundId}/quant-table-row", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantTable getQuantTableRow(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
+    public QuantTable getQuantTableRow(
+            @PathVariable String projectId,
+            @PathVariable String compoundId,
+            @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type,
+            @RequestParam(defaultValue = "none") EnumSet<QuantTable.OptField> optFields
+    ) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId)
-                .getCompoundQuantification("compoundId:" + compoundId, type);
+                .getCompoundQuantification("compoundId:" + compoundId, type,  removeNone(optFields));
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, compoundId) + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();
@@ -291,9 +296,11 @@ public class CompoundController implements TaggableController<Compound, Compound
     @GetMapping(value = "/quant-table", produces = MediaType.APPLICATION_JSON_VALUE)
     public QuantTable getQuantTable(@PathVariable String projectId,
                                     @RequestParam(required = false) String searchQuery,
-                                    @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
+                                    @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type,
+                                    @RequestParam(defaultValue = "none") EnumSet<QuantTable.OptField> optFields
+    ) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId)
-                .getCompoundQuantification(searchQuery, type);
+                .getCompoundQuantification(searchQuery, type, removeNone(optFields));
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();
