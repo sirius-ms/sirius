@@ -36,6 +36,9 @@ import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.configs.ColorGenerator;
@@ -106,6 +109,8 @@ import java.net.URI;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -369,9 +374,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         List<Long> alignedFeatureIds = searchService.searchIds(projectId, searchQuery, Pageable.unpaged(), AlignedFeature.class)
                 .stream().map(Long::parseLong).toList();
 
-        try (Stream<Feature> features = featuresOf(alignedFeatureIds)) {
-            return fillQuantTable(features, Feature::getAlignedFeatureId, QuantRowType.FEATURES, type, optFields);
-        }
+        return fillQuantTable(alignedFeatureIds, Feature::getAlignedFeatureId, QuantRowType.FEATURES, type, optFields);
     }
 
     private static final String ALIGNED_FEATURE_ID_FIELD = "alignedFeatureId";
@@ -406,22 +409,88 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .filter(pair -> pair.getLeft() != null && pair.getRight() != null) //features without a compound
                 .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
 
-        try (Stream<Feature> features = featuresOf(compoundByAlignedFeature.keySet())) {
-            return fillQuantTable(features, feature -> compoundByAlignedFeature.get(feature.getAlignedFeatureId()),
-                    QuantRowType.COMPOUNDS, type, optFields);
-        }
+        return fillQuantTable(compoundByAlignedFeature.keySet(),
+                feature -> compoundByAlignedFeature.get(feature.getAlignedFeatureId()),
+                QuantRowType.COMPOUNDS, type, optFields);
     }
 
     /**
      * Loads the features of the given aligned features. The 'in' filter looks every id up in the index of the feature
      * collection, so the cost grows with the number of requested aligned features and not with the project size.
      */
-    private Stream<Feature> featuresOf(Collection<Long> alignedFeatureIds) throws IOException {
+    /**
+     * Reads the features of the given aligned features and accumulates them into the rows of a quantification table.
+     * <p>
+     * Every aligned feature is asked for on its own, and the ids are handed out from one cursor so that the workers
+     * stay close to each other in the index and a feature with many detections does not hold up a worker that is
+     * already done. An 'in' filter over many ids looks like the obvious alternative but costs hundreds of times more
+     * per call, so many small queries are cheaper than few large ones, and they parallelize.
+     *
+     * @param rowOf assigns a feature to the row it is quantified in, its aligned feature or its compound
+     */
+    private Map<Long, double[]> readRows(Collection<Long> alignedFeatureIds, Function<Feature, Long> rowOf,
+                                         QuantMeasure type, Object2IntMap<String> columnOfRun, int columns) {
         if (alignedFeatureIds.isEmpty())
-            return Stream.empty();
+            return Map.of();
 
-        return storage().findStr(Filter.where("alignedFeatureId").in(alignedFeatureIds.toArray(Long[]::new)),
-                Feature.class);
+        //ascending, so the workers walk the index in one direction instead of jumping around in it
+        Long[] ids = alignedFeatureIds.stream().sorted().toArray(Long[]::new);
+        Map<Long, double[]> rows = new ConcurrentHashMap<>();
+        AtomicInteger cursor = new AtomicInteger();
+
+        BasicMasterJJob<Object> reader = new BasicMasterJJob<>(JJob.JobType.CPU) {
+            @Override
+            protected Object compute() throws Exception {
+                int workers = Math.max(1, Math.min(ids.length, SiriusJobs.getGlobalJobManager().getCPUThreads()));
+                for (int i = 0; i < workers; i++)
+                    submitSubJob(new BasicJJob<Object>(JJob.JobType.CPU) {
+                        @Override
+                        protected Object compute() throws Exception {
+                            int index;
+                            while ((index = cursor.getAndIncrement()) < ids.length) {
+                                checkForInterruption();
+                                accumulateFeaturesOf(ids[index], rows, rowOf, type, columnOfRun, columns);
+                            }
+                            return Boolean.TRUE;
+                        }
+                    });
+                awaitAllSubJobs();
+                return Boolean.TRUE;
+            }
+        };
+        //an interactive read should not wait behind a queue of computations, but it does not outrank what the user
+        //explicitly asked to run now either
+        reader.setPriority(JJob.JobPriority.HIGH);
+        SiriusJobs.getGlobalJobManager().submitJob(reader).takeResult();
+
+        return rows;
+    }
+
+    @SneakyThrows
+    private void accumulateFeaturesOf(long alignedFeatureId, Map<Long, double[]> rows, Function<Feature, Long> rowOf,
+                                      QuantMeasure type, Object2IntMap<String> columnOfRun, int columns) {
+        try (Stream<Feature> features = storage()
+                .findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), Feature.class)) {
+            features.forEach(feature -> {
+                if (feature.getRunId() == null)
+                    return; //features of a project that was imported from preprocessed data have no run
+
+                int column = columnOfRun.getInt(Long.toString(feature.getRunId()));
+                Long row = rowOf.apply(feature);
+                if (column < 0 || row == null)
+                    return;
+
+                double[] quantities = rows.computeIfAbsent(row, id -> nanRow(columns));
+                double quantity = switch (type) {
+                    case APEX_INTENSITY -> feature.getApexIntensity();
+                    case AREA_UNDER_CURVE -> feature.getAreaUnderCurve();
+                };
+                //a compound row collects the features of several aligned features, so it is written by several workers
+                synchronized (quantities) {
+                    quantities[column] = Double.isNaN(quantities[column]) ? quantity : quantities[column] + quantity;
+                }
+            });
+        }
     }
 
     /**
@@ -431,9 +500,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * @param rowOf assigns a feature to the row it is quantified in, its aligned feature or its compound
      * @return the quantification table or nothing if the project has no runs or nothing could be quantified
      */
-    private Optional<QuantTable> fillQuantTable(Stream<Feature> features, Function<Feature, Long> rowOf,
+    private Optional<QuantTable> fillQuantTable(Collection<Long> alignedFeatureIds, Function<Feature, Long> rowOf,
                                                 QuantRowType rowType, QuantMeasure type,
-                                                EnumSet<QuantTable.OptField> optFields) throws IOException {
+                                                EnumSet<QuantTable.OptField> optFields) {
         Optional<QuantTable> table = initQuantTable(type, rowType, optFields);
         if (table.isEmpty())
             return Optional.empty();
@@ -444,24 +513,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         for (int i = 0; i < columnIds.length; i++)
             columnOfRun.put(columnIds[i], i);
 
-        Map<Long, double[]> rows = new HashMap<>();
-        features.forEach(feature -> {
-            if (feature.getRunId() == null)
-                return; //features of a project that was imported from preprocessed data have no run
-
-            int column = columnOfRun.getInt(Long.toString(feature.getRunId()));
-            Long row = rowOf.apply(feature);
-            if (column < 0 || row == null)
-                return;
-
-            double[] quantities = rows.computeIfAbsent(row, id -> nanRow(columnIds.length));
-            double quantity = switch (type) {
-                case APEX_INTENSITY -> feature.getApexIntensity();
-                case AREA_UNDER_CURVE -> feature.getAreaUnderCurve();
-            };
-            //several features of a compound can be detected in the same run
-            quantities[column] = Double.isNaN(quantities[column]) ? quantity : quantities[column] + quantity;
-        });
+        Map<Long, double[]> rows = readRows(alignedFeatureIds, rowOf, type, columnOfRun, columnIds.length);
 
         // nothing in this project belongs to an LC/MS run, so there is nothing to quantify
         if (rows.isEmpty())
