@@ -374,7 +374,7 @@ No authorization required
 
 ## getCompoundQuantTable
 
-> QuantTable getCompoundQuantTable(projectId, searchQuery, type)
+> QuantTable getCompoundQuantTable(projectId, searchQuery, type, optFields)
 
 Returns the full quantification table of compounds
 
@@ -399,8 +399,9 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         String searchQuery = "searchQuery_example"; // String | Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
         QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
+        List<QuantTableOptField> optFields = Arrays.asList(); // List<QuantTableOptField> | 
         try {
-            QuantTable result = apiInstance.getCompoundQuantTable(projectId, searchQuery, type);
+            QuantTable result = apiInstance.getCompoundQuantTable(projectId, searchQuery, type, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getCompoundQuantTable");
@@ -421,6 +422,7 @@ public class Example {
 | **projectId** | **String**| project-space to read from. | |
 | **searchQuery** | **String**| Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds. | [optional] |
 | **type** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **optFields** | [**List&lt;QuantTableOptField&gt;**](QuantTableOptField.md)|  | [optional] |
 
 ### Return type
 
@@ -444,7 +446,7 @@ No authorization required
 
 ## getCompoundQuantTableRow
 
-> QuantTable getCompoundQuantTableRow(projectId, compoundId, type)
+> QuantTable getCompoundQuantTableRow(projectId, compoundId, type, optFields)
 
 [INTERNAL] Returns a quantification table that contains the given compound as its only row
 
@@ -469,8 +471,9 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         String compoundId = "compoundId_example"; // String | compound which should be read out
         QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
+        List<QuantTableOptField> optFields = Arrays.asList(); // List<QuantTableOptField> | 
         try {
-            QuantTable result = apiInstance.getCompoundQuantTableRow(projectId, compoundId, type);
+            QuantTable result = apiInstance.getCompoundQuantTableRow(projectId, compoundId, type, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getCompoundQuantTableRow");
@@ -491,6 +494,7 @@ public class Example {
 | **projectId** | **String**| project-space to read from. | |
 | **compoundId** | **String**| compound which should be read out | |
 | **type** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **optFields** | [**List&lt;QuantTableOptField&gt;**](QuantTableOptField.md)|  | [optional] |
 
 ### Return type
 

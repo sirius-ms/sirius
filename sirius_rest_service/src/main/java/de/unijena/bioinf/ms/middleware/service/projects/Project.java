@@ -82,8 +82,10 @@ public interface Project<PSM extends ProjectSpaceManager> {
      *
      * @param searchQuery optional query in lucene syntax. If null or blank, all features are quantified.
      * @param type        measure to quantify the features with
+     * @param optFields   optional fields to include, see {@link QuantTable.OptField}
      */
-    Optional<QuantTable> getFeatureQuantification(@Nullable String searchQuery, QuantMeasure type);
+    Optional<QuantTable> getFeatureQuantification(@Nullable String searchQuery, QuantMeasure type,
+                                                  EnumSet<QuantTable.OptField> optFields);
 
     /**
      * Quantification of the compounds matching the given search query within the runs they have been detected in.
@@ -91,8 +93,10 @@ public interface Project<PSM extends ProjectSpaceManager> {
      * @param searchQuery optional query in lucene syntax selecting compounds by id. If null or blank, all compounds
      *                    are quantified.
      * @param type        measure to quantify the compounds with
+     * @param optFields   optional fields to include, see {@link QuantTable.OptField}
      */
-    Optional<QuantTable> getCompoundQuantification(@Nullable String searchQuery, QuantMeasure type);
+    Optional<QuantTable> getCompoundQuantification(@Nullable String searchQuery, QuantMeasure type,
+                                                   EnumSet<QuantTable.OptField> optFields);
 
     Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId, boolean includeAll);
     Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);

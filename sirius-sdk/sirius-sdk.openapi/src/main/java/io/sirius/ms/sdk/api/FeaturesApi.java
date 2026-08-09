@@ -24,6 +24,7 @@ import io.sirius.ms.sdk.model.PagedModelStructureCandidateFormula;
 import io.sirius.ms.sdk.model.PagedModelStructureCandidateScored;
 import io.sirius.ms.sdk.model.QuantMeasure;
 import io.sirius.ms.sdk.model.QuantTable;
+import io.sirius.ms.sdk.model.QuantTableOptField;
 import io.sirius.ms.sdk.model.SpectralLibraryMatch;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchOptField;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchSummary;
@@ -1852,10 +1853,11 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFeatureQuantTableRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    private ResponseSpec getFeatureQuantTableRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1873,6 +1875,7 @@ public class FeaturesApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -1894,12 +1897,13 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantTable getFeatureQuantTable(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public QuantTable getFeatureQuantTable(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getFeatureQuantTableRequestCreation(projectId, searchQuery, type).bodyToMono(localVarReturnType).block();
+        return getFeatureQuantTableRequestCreation(projectId, searchQuery, type, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1909,12 +1913,13 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return ResponseEntity&lt;QuantTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantTable> getFeatureQuantTableWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public ResponseEntity<QuantTable> getFeatureQuantTableWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getFeatureQuantTableRequestCreation(projectId, searchQuery, type).toEntity(localVarReturnType).block();
+        return getFeatureQuantTableRequestCreation(projectId, searchQuery, type, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -1924,11 +1929,12 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFeatureQuantTableWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        return getFeatureQuantTableRequestCreation(projectId, searchQuery, type);
+    public ResponseSpec getFeatureQuantTableWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
+        return getFeatureQuantTableRequestCreation(projectId, searchQuery, type, optFields);
     }
 
     /**
@@ -1938,12 +1944,13 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
+     * @param optFields The optFields parameter
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec getFeatureQuantTableRowRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    private ResponseSpec getFeatureQuantTableRowRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1965,6 +1972,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -1986,12 +1994,13 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
+     * @param optFields The optFields parameter
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantTable getFeatureQuantTableRow(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public QuantTable getFeatureQuantTableRow(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getFeatureQuantTableRowRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
+        return getFeatureQuantTableRowRequestCreation(projectId, alignedFeatureId, type, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -2001,12 +2010,13 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
+     * @param optFields The optFields parameter
      * @return ResponseEntity&lt;QuantTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantTable> getFeatureQuantTableRowWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public ResponseEntity<QuantTable> getFeatureQuantTableRowWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getFeatureQuantTableRowRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
+        return getFeatureQuantTableRowRequestCreation(projectId, alignedFeatureId, type, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -2016,11 +2026,12 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
+     * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFeatureQuantTableRowWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        return getFeatureQuantTableRowRequestCreation(projectId, alignedFeatureId, type);
+    public ResponseSpec getFeatureQuantTableRowWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
+        return getFeatureQuantTableRowRequestCreation(projectId, alignedFeatureId, type, optFields);
     }
 
     /**

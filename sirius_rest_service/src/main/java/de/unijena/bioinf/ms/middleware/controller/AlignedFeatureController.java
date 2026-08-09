@@ -1078,9 +1078,14 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @Deprecated(forRemoval = true)
     @Operation(operationId = "getFeatureQuantTableRow")
     @GetMapping(value = "/{alignedFeatureId}/quant-table-row", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantTable getQuantTableRow(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
+    public QuantTable getQuantTableRow(
+            @PathVariable String projectId,
+            @PathVariable String alignedFeatureId,
+            @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type,
+            @RequestParam(defaultValue = "none") EnumSet<QuantTable.OptField> optFields
+    ) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId)
-                .getFeatureQuantification("alignedFeatureId:" + alignedFeatureId, type);
+                .getFeatureQuantification("alignedFeatureId:" + alignedFeatureId, type, removeNone(optFields));
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, alignedFeatureId) + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();
@@ -1104,9 +1109,11 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @Operation(operationId = "getFeatureQuantTable")
     public QuantTable getQuantTable(@PathVariable String projectId,
                                     @RequestParam(required = false) String searchQuery,
-                                    @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type) {
+                                    @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type,
+                                    @RequestParam(defaultValue = "none") EnumSet<QuantTable.OptField> optFields
+    ) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId)
-                .getFeatureQuantification(searchQuery, type);
+                .getFeatureQuantification(searchQuery, type, removeNone(optFields));
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();
