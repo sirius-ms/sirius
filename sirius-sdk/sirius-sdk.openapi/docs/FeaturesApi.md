@@ -1407,7 +1407,7 @@ No authorization required
 
 ## getFeatureQuantTable
 
-> QuantTable getFeatureQuantTable(projectId, searchQuery, type)
+> QuantTable getFeatureQuantTable(projectId, searchQuery, type, optFields)
 
 Returns the full quantification table of features
 
@@ -1432,8 +1432,9 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         String searchQuery = "searchQuery_example"; // String | Optional search query in lucene syntax. Omit this parameter to quantify all features.
         QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
+        List<QuantTableOptField> optFields = Arrays.asList(); // List<QuantTableOptField> | 
         try {
-            QuantTable result = apiInstance.getFeatureQuantTable(projectId, searchQuery, type);
+            QuantTable result = apiInstance.getFeatureQuantTable(projectId, searchQuery, type, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getFeatureQuantTable");
@@ -1454,6 +1455,7 @@ public class Example {
 | **projectId** | **String**| project-space to read from. | |
 | **searchQuery** | **String**| Optional search query in lucene syntax. Omit this parameter to quantify all features. | [optional] |
 | **type** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **optFields** | [**List&lt;QuantTableOptField&gt;**](QuantTableOptField.md)|  | [optional] |
 
 ### Return type
 
@@ -1477,7 +1479,7 @@ No authorization required
 
 ## getFeatureQuantTableRow
 
-> QuantTable getFeatureQuantTableRow(projectId, alignedFeatureId, type)
+> QuantTable getFeatureQuantTableRow(projectId, alignedFeatureId, type, optFields)
 
 [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row
 
@@ -1502,8 +1504,9 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature which quantity should be read out
         QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
+        List<QuantTableOptField> optFields = Arrays.asList(); // List<QuantTableOptField> | 
         try {
-            QuantTable result = apiInstance.getFeatureQuantTableRow(projectId, alignedFeatureId, type);
+            QuantTable result = apiInstance.getFeatureQuantTableRow(projectId, alignedFeatureId, type, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getFeatureQuantTableRow");
@@ -1524,6 +1527,7 @@ public class Example {
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| feature which quantity should be read out | |
 | **type** | [**QuantMeasure**](.md)| quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **optFields** | [**List&lt;QuantTableOptField&gt;**](QuantTableOptField.md)|  | [optional] |
 
 ### Return type
 

@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import de.unijena.bioinf.ms.middleware.model.features.QuantTable;
@@ -24,6 +25,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.EnumSet;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +35,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -92,8 +96,20 @@ class QuantTableContentTest {
 
     @SneakyThrows
     private long insertRun(String name) {
-        LCMSRun run = LCMSRun.builder().name(name).build();
+        LCMSRun run = LCMSRun.builder()
+                .name(name)
+                //the file the run was imported from, which is what a caller needs to map a column back to its input
+                .sourceReference(new MsDataSourceReference(
+                        URI.create("file:///data/measurements/"), name + ".mzML", null, null))
+                .build();
         ps.getStorage().insert(run);
+
+        searchService.addDocument("test", de.unijena.bioinf.ms.middleware.model.features.Run.builder()
+                .runId(Long.toString(run.getRunId()))
+                .name(name)
+                .source("file:/data/measurements/" + name + ".mzML")
+                .build());
+
         return run.getRunId();
     }
 
@@ -143,8 +159,10 @@ class QuantTableContentTest {
         ps.getStorage().insert(feature);
     }
 
-    private QuantTable featureTable(QuantMeasure measure) {
-        Optional<QuantTable> table = project.getFeatureQuantification(null, measure);
+    private QuantTable featureTable(QuantMeasure measure, QuantTable.OptField... optFields) {
+        EnumSet<QuantTable.OptField> fields = optFields.length == 0
+                ? EnumSet.noneOf(QuantTable.OptField.class) : EnumSet.copyOf(List.of(optFields));
+        Optional<QuantTable> table = project.getFeatureQuantification(null, measure, fields);
         assertTrue(table.isPresent(), "the project has quantifiable features");
         return table.get();
     }
@@ -153,7 +171,7 @@ class QuantTableContentTest {
     @DisplayName("columns are the runs of the project")
     void columnsAreRuns() {
         importTwoRunsWithTwoFeatures();
-        QuantTable table = featureTable(QuantMeasure.APEX_INTENSITY);
+        QuantTable table = featureTable(QuantMeasure.APEX_INTENSITY, QuantTable.OptField.columnNames);
 
         assertArrayEquals(new String[]{Long.toString(blankRunId), Long.toString(sampleRunId)}, table.getColumnIds());
         assertArrayEquals(new String[]{"blank-01", "sample-01"}, table.getColumnNames());
@@ -194,7 +212,7 @@ class QuantTableContentTest {
     @DisplayName("a compound is quantified with the sum of its features per run")
     void compoundQuantitiesAreSummedPerRun() {
         importTwoRunsWithTwoFeatures();
-        Optional<QuantTable> table = project.getCompoundQuantification(null, QuantMeasure.APEX_INTENSITY);
+        Optional<QuantTable> table = project.getCompoundQuantification(null, QuantMeasure.APEX_INTENSITY, EnumSet.noneOf(QuantTable.OptField.class));
 
         assertTrue(table.isPresent());
         assertArrayEquals(new String[]{Long.toString(compoundId)}, table.get().getRowIds());
@@ -207,7 +225,7 @@ class QuantTableContentTest {
     @DisplayName("only the selected compounds are quantified")
     void compoundSelectionIsApplied() {
         importTwoRunsWithTwoFeatures();
-        Optional<QuantTable> table = project.getCompoundQuantification("NOT compoundId:" + compoundId, QuantMeasure.APEX_INTENSITY);
+        Optional<QuantTable> table = project.getCompoundQuantification("NOT compoundId:" + compoundId, QuantMeasure.APEX_INTENSITY, EnumSet.noneOf(QuantTable.OptField.class));
 
         assertTrue(table.isEmpty(), "the only compound of the project is excluded");
     }
@@ -218,14 +236,14 @@ class QuantTableContentTest {
         insertRun("sample-01");
         insertAlignedFeature("orphan", 0L);
 
-        assertTrue(project.getFeatureQuantification(null, QuantMeasure.APEX_INTENSITY).isEmpty());
+        assertTrue(project.getFeatureQuantification(null, QuantMeasure.APEX_INTENSITY, EnumSet.noneOf(QuantTable.OptField.class)).isEmpty());
     }
 
     @Test
     @DisplayName("a project without runs has no quantification table")
     void projectWithoutRunsHasNoTable() {
-        assertTrue(project.getFeatureQuantification(null, QuantMeasure.APEX_INTENSITY).isEmpty());
-        assertTrue(project.getCompoundQuantification(null, QuantMeasure.APEX_INTENSITY).isEmpty());
+        assertTrue(project.getFeatureQuantification(null, QuantMeasure.APEX_INTENSITY, EnumSet.noneOf(QuantTable.OptField.class)).isEmpty());
+        assertTrue(project.getCompoundQuantification(null, QuantMeasure.APEX_INTENSITY, EnumSet.noneOf(QuantTable.OptField.class)).isEmpty());
     }
 
     @Test
@@ -265,6 +283,79 @@ class QuantTableContentTest {
         String[] copy = ids.clone();
         java.util.Arrays.sort(copy);
         return copy;
+    }
+
+    @Test
+    @DisplayName("the source files of the runs are left out unless they are asked for")
+    void columnSourcesAreOptional() {
+        importTwoRunsWithTwoFeatures();
+
+        assertNull(featureTable(QuantMeasure.APEX_INTENSITY).getColumnSources(),
+                "a caller that does not need the files should not have to transfer them");
+    }
+
+    @Test
+    @DisplayName("the source files are the files the runs were imported from, in column order")
+    void columnSourcesAreTheImportedFiles() {
+        importTwoRunsWithTwoFeatures();
+
+        QuantTable table = project.getFeatureQuantification(null, QuantMeasure.APEX_INTENSITY,
+                EnumSet.of(QuantTable.OptField.columnSources, QuantTable.OptField.columnNames)).orElseThrow();
+
+        assertArrayEquals(new String[]{"file:/data/measurements/blank-01.mzML",
+                        "file:/data/measurements/sample-01.mzML"}, table.getColumnSources());
+        //the files line up with the columns they belong to
+        assertEquals(table.getColumnIds().length, table.getColumnSources().length);
+        assertArrayEquals(new String[]{"blank-01", "sample-01"}, table.getColumnNames());
+    }
+
+    @Test
+    @DisplayName("compound tables carry the source files as well")
+    void compoundTableAlsoHasColumnSources() {
+        importTwoRunsWithTwoFeatures();
+
+        QuantTable table = project.getCompoundQuantification(null, QuantMeasure.APEX_INTENSITY,
+                EnumSet.of(QuantTable.OptField.columnSources)).orElseThrow();
+
+        assertArrayEquals(new String[]{"file:/data/measurements/blank-01.mzML",
+                "file:/data/measurements/sample-01.mzML"}, table.getColumnSources());
+    }
+
+    @Test
+    @DisplayName("neither names nor files are transferred unless they are asked for")
+    void columnsAreIdsOnlyByDefault() {
+        importTwoRunsWithTwoFeatures();
+        QuantTable table = featureTable(QuantMeasure.APEX_INTENSITY);
+
+        assertArrayEquals(new String[]{Long.toString(blankRunId), Long.toString(sampleRunId)}, table.getColumnIds(),
+                "the ids identify the columns and are always there");
+        assertNull(table.getColumnNames(), "names are optional");
+        assertNull(table.getColumnSources(), "files are optional");
+    }
+
+    @Test
+    @DisplayName("names can be requested without the files")
+    void namesWithoutSources() {
+        importTwoRunsWithTwoFeatures();
+        QuantTable table = featureTable(QuantMeasure.APEX_INTENSITY, QuantTable.OptField.columnNames);
+
+        assertArrayEquals(new String[]{"blank-01", "sample-01"}, table.getColumnNames());
+        assertNull(table.getColumnSources());
+    }
+
+    @Test
+    @DisplayName("quantities do not depend on which optional columns were requested")
+    void valuesAreTheSameWhateverIsRequested() {
+        importTwoRunsWithTwoFeatures();
+
+        QuantTable bare = featureTable(QuantMeasure.APEX_INTENSITY);
+        QuantTable full = featureTable(QuantMeasure.APEX_INTENSITY,
+                QuantTable.OptField.columnNames, QuantTable.OptField.columnSources);
+
+        assertArrayEquals(bare.getRowIds(), full.getRowIds());
+        assertArrayEquals(bare.getColumnIds(), full.getColumnIds());
+        for (int row = 0; row < bare.getValues().length; row++)
+            assertArrayEquals(bare.getValues()[row], full.getValues()[row]);
     }
 
 }

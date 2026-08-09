@@ -10,6 +10,7 @@ import io.sirius.ms.sdk.model.InstrumentProfile;
 import io.sirius.ms.sdk.model.PagedModelCompound;
 import io.sirius.ms.sdk.model.QuantMeasure;
 import io.sirius.ms.sdk.model.QuantTable;
+import io.sirius.ms.sdk.model.QuantTableOptField;
 import io.sirius.ms.sdk.model.Tag;
 import io.sirius.ms.sdk.model.TagSubmission;
 import io.sirius.ms.sdk.model.TraceSetExperimental;
@@ -517,10 +518,11 @@ public class CompoundsApi {
      * @param projectId project-space to read from.
      * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundQuantTableRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    private ResponseSpec getCompoundQuantTableRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -538,6 +540,7 @@ public class CompoundsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -559,12 +562,13 @@ public class CompoundsApi {
      * @param projectId project-space to read from.
      * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantTable getCompoundQuantTable(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public QuantTable getCompoundQuantTable(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getCompoundQuantTableRequestCreation(projectId, searchQuery, type).bodyToMono(localVarReturnType).block();
+        return getCompoundQuantTableRequestCreation(projectId, searchQuery, type, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -574,12 +578,13 @@ public class CompoundsApi {
      * @param projectId project-space to read from.
      * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return ResponseEntity&lt;QuantTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantTable> getCompoundQuantTableWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public ResponseEntity<QuantTable> getCompoundQuantTableWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getCompoundQuantTableRequestCreation(projectId, searchQuery, type).toEntity(localVarReturnType).block();
+        return getCompoundQuantTableRequestCreation(projectId, searchQuery, type, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -589,11 +594,12 @@ public class CompoundsApi {
      * @param projectId project-space to read from.
      * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundQuantTableWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        return getCompoundQuantTableRequestCreation(projectId, searchQuery, type);
+    public ResponseSpec getCompoundQuantTableWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String searchQuery, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
+        return getCompoundQuantTableRequestCreation(projectId, searchQuery, type, optFields);
     }
 
     /**
@@ -603,12 +609,13 @@ public class CompoundsApi {
      * @param projectId project-space to read from.
      * @param compoundId compound which should be read out
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec getCompoundQuantTableRowRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    private ResponseSpec getCompoundQuantTableRowRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -630,6 +637,7 @@ public class CompoundsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -651,12 +659,13 @@ public class CompoundsApi {
      * @param projectId project-space to read from.
      * @param compoundId compound which should be read out
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return QuantTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantTable getCompoundQuantTableRow(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public QuantTable getCompoundQuantTableRow(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getCompoundQuantTableRowRequestCreation(projectId, compoundId, type).bodyToMono(localVarReturnType).block();
+        return getCompoundQuantTableRowRequestCreation(projectId, compoundId, type, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -666,12 +675,13 @@ public class CompoundsApi {
      * @param projectId project-space to read from.
      * @param compoundId compound which should be read out
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return ResponseEntity&lt;QuantTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantTable> getCompoundQuantTableRowWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
+    public ResponseEntity<QuantTable> getCompoundQuantTableRowWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<QuantTable> localVarReturnType = new ParameterizedTypeReference<QuantTable>() {};
-        return getCompoundQuantTableRowRequestCreation(projectId, compoundId, type).toEntity(localVarReturnType).block();
+        return getCompoundQuantTableRowRequestCreation(projectId, compoundId, type, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -681,11 +691,12 @@ public class CompoundsApi {
      * @param projectId project-space to read from.
      * @param compoundId compound which should be read out
      * @param type quantification type.
+     * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundQuantTableRowWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type) throws WebClientResponseException {
-        return getCompoundQuantTableRowRequestCreation(projectId, compoundId, type);
+    public ResponseSpec getCompoundQuantTableRowWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String compoundId, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
+        return getCompoundQuantTableRowRequestCreation(projectId, compoundId, type, optFields);
     }
 
     /**

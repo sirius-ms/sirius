@@ -382,6 +382,7 @@ Class | Method | HTTP request | Description
  - [QuantMeasure](docs/QuantMeasure.md)
  - [QuantRowType](docs/QuantRowType.md)
  - [QuantTable](docs/QuantTable.md)
+ - [QuantTableOptField](docs/QuantTableOptField.md)
  - [Reaction](docs/Reaction.md)
  - [ReactionRequest](docs/ReactionRequest.md)
  - [ReactionSequence](docs/ReactionSequence.md)

@@ -4422,6 +4422,20 @@
             "schema": {
               "$ref": "#/components/schemas/QuantMeasure"
             }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/QuantTableOptField"
+              },
+              "default": [
+                "none"
+              ]
+            }
           }
         ],
         "responses": {
@@ -4614,6 +4628,20 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/QuantMeasure"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/QuantTableOptField"
+              },
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -5541,6 +5569,20 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/QuantMeasure"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/QuantTableOptField"
+              },
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -7406,6 +7448,20 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/QuantMeasure"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/QuantTableOptField"
+              },
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -12130,6 +12186,15 @@
         },
         "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
       },
+      "QuantTableOptField": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "none",
+          "columnNames",
+          "columnSources"
+        ]
+      },
       "QuantTable": {
         "type": "object",
         "properties": {
@@ -12159,6 +12224,16 @@
           },
           "columnNames": {
             "type": "array",
+            "description": "Names of the runs the objects are quantified in, in the order of {@link de.unijena.bioinf.ms.middleware.model.features.QuantTable#columnIds #columnIds}.\n \u003cp\u003e\n Optional field, only present if requested, since the table can be read by run id alone.\n \u003cp\u003e\n The name is the one the run carries in the project. It is either the sample name given when the data was\n imported, or, if none was given, derived from the measurement itself: the run id inside the file, and only\n failing that the file name. A name is therefore not necessarily the name of the file the run came from, and\n it is not guaranteed to be unique. Use {@link de.unijena.bioinf.ms.middleware.model.features.QuantTable#columnSources #columnSources} to identify the input file, and\n {@link de.unijena.bioinf.ms.middleware.model.features.QuantTable#columnIds #columnIds} to identify the run.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "columnSources": {
+            "type": "array",
+            "description": "Files the runs were imported from, in the order of {@link de.unijena.bioinf.ms.middleware.model.features.QuantTable#columnIds #columnIds}, to relate a column back to the input\n data. Same value as the source of the corresponding run.\n \u003cp\u003e\n Optional field, only present if requested, since it is not needed to read the table.",
             "nullable": true,
             "items": {
               "type": "string",

@@ -359,7 +359,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Optional<QuantTable> getFeatureQuantification(@Nullable String searchQuery, QuantMeasure type) {
+    public Optional<QuantTable> getFeatureQuantification(@Nullable String searchQuery, QuantMeasure type,
+                                                         EnumSet<QuantTable.OptField> optFields) {
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
 
@@ -369,16 +370,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .stream().map(Long::parseLong).toList();
 
         try (Stream<Feature> features = featuresOf(alignedFeatureIds)) {
-            return fillQuantTable(features, Feature::getAlignedFeatureId, QuantRowType.FEATURES, type);
+            return fillQuantTable(features, Feature::getAlignedFeatureId, QuantRowType.FEATURES, type, optFields);
         }
     }
 
     private static final String ALIGNED_FEATURE_ID_FIELD = "alignedFeatureId";
+    private static final String RUN_ID_FIELD = "runId";
+    private static final String RUN_NAME_FIELD = "name";
+    private static final String RUN_SOURCE_FIELD = "source";
     private static final String COMPOUND_ID_FIELD = "compoundId";
 
     @SneakyThrows
     @Override
-    public Optional<QuantTable> getCompoundQuantification(@Nullable String searchQuery, QuantMeasure type) {
+    public Optional<QuantTable> getCompoundQuantification(@Nullable String searchQuery, QuantMeasure type,
+                                                          EnumSet<QuantTable.OptField> optFields) {
         //the query is validated against the supported subset, but selects aligned features by their compound id
         String indexQuery = null;
         if (Utils.notNullOrBlank(searchQuery)) {
@@ -403,7 +408,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         try (Stream<Feature> features = featuresOf(compoundByAlignedFeature.keySet())) {
             return fillQuantTable(features, feature -> compoundByAlignedFeature.get(feature.getAlignedFeatureId()),
-                    QuantRowType.COMPOUNDS, type);
+                    QuantRowType.COMPOUNDS, type, optFields);
         }
     }
 
@@ -427,8 +432,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * @return the quantification table or nothing if the project has no runs or nothing could be quantified
      */
     private Optional<QuantTable> fillQuantTable(Stream<Feature> features, Function<Feature, Long> rowOf,
-                                                QuantRowType rowType, QuantMeasure type) throws IOException {
-        Optional<QuantTable> table = initQuantTable(type, rowType);
+                                                QuantRowType rowType, QuantMeasure type,
+                                                EnumSet<QuantTable.OptField> optFields) throws IOException {
+        Optional<QuantTable> table = initQuantTable(type, rowType, optFields);
         if (table.isEmpty())
             return Optional.empty();
 
@@ -476,27 +482,44 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return row;
     }
 
-    private Optional<QuantTable> initQuantTable(QuantMeasure type, QuantRowType rowType) throws IOException {
-        List<LCMSRun> runs = storage().findAllStr(LCMSRun.class, "runId", Database.SortOrder.ASCENDING).toList();
+    private Optional<QuantTable> initQuantTable(QuantMeasure type, QuantRowType rowType,
+                                               EnumSet<QuantTable.OptField> optFields) {
+        boolean withNames = optFields.contains(QuantTable.OptField.columnNames);
+        boolean withSources = optFields.contains(QuantTable.OptField.columnSources);
 
-        if (runs.isEmpty())
+        //the columns are the runs of the project, and their ids are all that is needed to read the table. Names and
+        //files are read from the index along with them, so nothing has to be loaded unless they are asked for.
+        Set<String> fields = new HashSet<>(Set.of(RUN_ID_FIELD));
+        if (withNames) fields.add(RUN_NAME_FIELD);
+        if (withSources) fields.add(RUN_SOURCE_FIELD);
+
+        List<Column> columns = searchService
+                .searchFields(projectId, null, Pageable.unpaged(), Run.class, fields,
+                        f -> new Column(f.getString(RUN_ID_FIELD),
+                                withNames ? f.getString(RUN_NAME_FIELD) : null,
+                                withSources ? f.getString(RUN_SOURCE_FIELD) : null))
+                .stream()
+                .filter(c -> c.id() != null)
+                //columns are ordered by run id, which is a number and must not be ordered as text
+                .sorted(Comparator.comparingLong(c -> Long.parseLong(c.id())))
+                .toList();
+
+        if (columns.isEmpty())
             return Optional.empty();
-
-        String[] runIds = new String[runs.size()];
-        String[] runNames = new String[runs.size()];
-        for (int i = 0; i < runs.size(); i++) {
-            runIds[i] = Long.toString(runs.get(i).getRunId());
-            runNames[i] = runs.get(i).getName();
-        }
 
         return Optional.of(QuantTable
                 .builder()
                 .rowType(rowType)
                 .quantificationMeasure(type)
-                .columnIds(runIds)
-                .columnNames(runNames)
+                .columnIds(columns.stream().map(Column::id).toArray(String[]::new))
+                .columnNames(withNames ? columns.stream().map(Column::name).toArray(String[]::new) : null)
+                .columnSources(withSources ? columns.stream().map(Column::source).toArray(String[]::new) : null)
                 .build()
         );
+    }
+
+    /** one column of a quantification table: the run it refers to, with the optional properties that were requested */
+    private record Column(String id, @Nullable String name, @Nullable String source) {
     }
 
     private double[] getQuantTableRow(Map<String, List<Feature>> features, QuantTable table) {
@@ -1318,6 +1341,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
+    /**
+     * The file a run has been imported from, which is what relates a result back to the input data. Falls back to the
+     * bare file name if the location is unknown. Null if the run does not know where it came from.
+     */
+    private static @Nullable String sourceOf(LCMSRun run) {
+        MsDataSourceReference sourceReference = run.getSourceReference();
+        if (sourceReference == null)
+            return null;
+        return sourceReference.getSource().map(URI::toString)
+                .or(sourceReference::getFileName)
+                .orElse(null);
+    }
+
     @SneakyThrows
     public Run convertToApiRun(LCMSRun run, EnumSet<Run.OptField> optFields) {
         Run.RunBuilder builder = Run.builder()
@@ -1325,11 +1361,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .name(run.getName());
 
         //the file this run has been imported from, so that results can be mapped back to the input data
-        MsDataSourceReference sourceReference = run.getSourceReference();
-        if (sourceReference != null)
-            sourceReference.getSource().map(URI::toString)
-                    .or(sourceReference::getFileName)
-                    .ifPresent(builder::source);
+        String source = sourceOf(run);
+        if (source != null)
+            builder.source(source);
 
         if (run.getChromatography() != null) builder.chromatography(run.getChromatography().getFullName());
         if (run.getFragmentation() != null) builder.fragmentation(run.getFragmentation().getFullName());

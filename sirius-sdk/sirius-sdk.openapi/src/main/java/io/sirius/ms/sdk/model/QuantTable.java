@@ -48,6 +48,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   QuantTable.JSON_PROPERTY_ROW_IDS,
   QuantTable.JSON_PROPERTY_COLUMN_IDS,
   QuantTable.JSON_PROPERTY_COLUMN_NAMES,
+  QuantTable.JSON_PROPERTY_COLUMN_SOURCES,
   QuantTable.JSON_PROPERTY_VALUES
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
@@ -71,6 +72,10 @@ public class QuantTable {
   public static final String JSON_PROPERTY_COLUMN_NAMES = "columnNames";
   @jakarta.annotation.Nullable
   private List<String> columnNames;
+
+  public static final String JSON_PROPERTY_COLUMN_SOURCES = "columnSources";
+  @jakarta.annotation.Nullable
+  private List<String> columnSources;
 
   public static final String JSON_PROPERTY_VALUES = "values";
   @jakarta.annotation.Nullable
@@ -210,7 +215,7 @@ public class QuantTable {
   }
 
   /**
-   * Get columnNames
+   * Names of the runs the objects are quantified in, in the order of {@link de.unijena.bioinf.ms.middleware.model.features.QuantTable#columnIds #columnIds}.  &lt;p&gt;  Optional field, only present if requested, since the table can be read by run id alone.  &lt;p&gt;  The name is the one the run carries in the project. It is either the sample name given when the data was  imported, or, if none was given, derived from the measurement itself: the run id inside the file, and only  failing that the file name. A name is therefore not necessarily the name of the file the run came from, and  it is not guaranteed to be unique. Use {@link de.unijena.bioinf.ms.middleware.model.features.QuantTable#columnSources #columnSources} to identify the input file, and  {@link de.unijena.bioinf.ms.middleware.model.features.QuantTable#columnIds #columnIds} to identify the run.
    * @return columnNames
    */
   @jakarta.annotation.Nullable
@@ -226,6 +231,39 @@ public class QuantTable {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setColumnNames(@jakarta.annotation.Nullable List<String> columnNames) {
     this.columnNames = columnNames;
+  }
+
+  public QuantTable columnSources(@jakarta.annotation.Nullable List<String> columnSources) {
+    
+    this.columnSources = columnSources;
+    return this;
+  }
+
+  public QuantTable addColumnSourcesItem(String columnSourcesItem) {
+    if (this.columnSources == null) {
+      this.columnSources = new ArrayList<>();
+    }
+    this.columnSources.add(columnSourcesItem);
+    return this;
+  }
+
+  /**
+   * Files the runs were imported from, in the order of {@link de.unijena.bioinf.ms.middleware.model.features.QuantTable#columnIds #columnIds}, to relate a column back to the input  data. Same value as the source of the corresponding run.  &lt;p&gt;  Optional field, only present if requested, since it is not needed to read the table.
+   * @return columnSources
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_COLUMN_SOURCES, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<String> getColumnSources() {
+    return columnSources;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_COLUMN_SOURCES, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setColumnSources(@jakarta.annotation.Nullable List<String> columnSources) {
+    this.columnSources = columnSources;
   }
 
   public QuantTable values(@jakarta.annotation.Nullable List<List<Double>> values) {
@@ -276,12 +314,13 @@ public class QuantTable {
         Objects.equals(this.rowIds, quantTable.rowIds) &&
         Objects.equals(this.columnIds, quantTable.columnIds) &&
         Objects.equals(this.columnNames, quantTable.columnNames) &&
+        Objects.equals(this.columnSources, quantTable.columnSources) &&
         Objects.equals(this.values, quantTable.values);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(quantificationMeasure, rowType, rowIds, columnIds, columnNames, values);
+    return Objects.hash(quantificationMeasure, rowType, rowIds, columnIds, columnNames, columnSources, values);
   }
 
   @Override
@@ -293,6 +332,7 @@ public class QuantTable {
     sb.append("    rowIds: ").append(toIndentedString(rowIds)).append("\n");
     sb.append("    columnIds: ").append(toIndentedString(columnIds)).append("\n");
     sb.append("    columnNames: ").append(toIndentedString(columnNames)).append("\n");
+    sb.append("    columnSources: ").append(toIndentedString(columnSources)).append("\n");
     sb.append("    values: ").append(toIndentedString(values)).append("\n");
     sb.append("}");
     return sb.toString();
