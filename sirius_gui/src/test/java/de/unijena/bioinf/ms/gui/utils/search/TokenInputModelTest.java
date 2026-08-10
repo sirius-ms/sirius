@@ -284,6 +284,47 @@ public class TokenInputModelTest {
         assertEquals(TokenInputModel.Stage.FIELD, model.stage());
     }
 
+    // --- terminal-token detection (Enter accepts a complete clause before searching) ---
+
+    @Test
+    public void testTerminalOnlyForCompleteClauses() {
+        // entry stage: a typed default-field term is terminal, empty is not
+        assertTrue(model.isTerminal("caffeine"));
+        assertFalse(model.isTerminal("  "));
+
+        // field chosen, operator stage: never terminal (must still pick a value)
+        model.choose(suggestion("ionMass", ""));
+        assertEquals(TokenInputModel.Stage.OPERATOR, model.stage());
+        assertFalse(model.isTerminal(">="));
+
+        // single-valued operator: terminal once a value is typed
+        model.choose(model.suggestions(">=").get(0));
+        assertFalse(model.isTerminal(""));
+        assertTrue(model.isTerminal("300"));
+    }
+
+    @Test
+    public void testRangeIsTerminalOnlyAtTheUpperBound() {
+        model.choose(suggestion("ionMass", ""));
+        model.choose(model.suggestions("[").get(0)); // inclusive range
+        assertFalse(model.isTerminal("300"), "lower bound alone is not terminal");
+
+        model.submitTyped("300"); // advance to the upper bound
+        assertTrue(model.isTerminal(""), "at the upper bound the range completes (open end)");
+        assertTrue(model.isTerminal("400"));
+    }
+
+    @Test
+    public void testCompleteFreeTextMakesAKeylessClause() {
+        model.updateContext(FIELDS, true, false); // sibling -> connector defaults to AND
+        TokenInputModel.Event.ClauseCompleted completed =
+                (TokenInputModel.Event.ClauseCompleted) model.completeFreeText("caffeine metabolite");
+        assertTrue(completed.clause().isFreeText());
+        assertEquals("caffeine metabolite", completed.clause().value1());
+        assertEquals(LogicOp.AND, completed.logic());
+        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage(), "token is reset after completion");
+    }
+
     // --- typed-through multi-token input (grammar shortcut) ---
 
     @Test

@@ -473,6 +473,33 @@ public class TokenInputModel {
     }
 
     /**
+     * Whether the token currently being built is a "terminal" clause that Enter should accept as a
+     * chip before running the search: a value has been specified (single-valued value stage, or the
+     * upper bound of a range) or a default-field full-text term is typed at an entry stage. An
+     * incomplete token (only a field, operator, connector or the lower bound of a range chosen) is
+     * not terminal - Enter discards it.
+     */
+    public boolean isTerminal(@NotNull String typed) {
+        String trimmed = typed.trim();
+        return switch (stage) {
+            case CONNECTOR, FIELD -> !trimmed.isEmpty();
+            case OPERATOR -> false;
+            case VALUE -> pendingOp != null && pendingOp.isRange() ? false : !trimmed.isEmpty();
+            case VALUE2 -> true;
+        };
+    }
+
+    /**
+     * Completes the current entry-stage token into a keyless full-text clause from the typed text
+     * (carrying any pending negation/connector). Use for the terminal free-text search on Enter.
+     */
+    public Event completeFreeText(@NotNull String text) {
+        Event event = new Event.ClauseCompleted(QueryClause.freeText(text.trim(), pendingNegated), effectiveLogic());
+        resetPending();
+        return event;
+    }
+
+    /**
      * The connector for the token being built: the explicitly chosen one, AND otherwise.
      */
     private LogicOp effectiveLogic() {

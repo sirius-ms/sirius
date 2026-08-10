@@ -153,7 +153,7 @@ public class SearchBarOverlay extends JDialog {
 
         JButton search = new JButton("Search");
         search.setToolTipText("Apply the query and filter the feature list (Enter)");
-        search.addActionListener(e -> commitSearch());
+        search.addActionListener(e -> runSearch());
         controls.add(search);
 
         JPanel controlsAligned = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 2));
@@ -275,8 +275,10 @@ public class SearchBarOverlay extends JDialog {
                         e.consume();
                     }
                     case KeyEvent.VK_ENTER -> {
-                        // Enter never builds the query - it only runs the search and closes
-                        commitSearch();
+                        // Enter runs the search: a terminal token (specified value / typed
+                        // default-field search) is accepted as a chip first, an incomplete one is
+                        // discarded. Enter never *selects* a field/operator/connector - Tab does.
+                        runSearch();
                         e.consume();
                     }
                     case KeyEvent.VK_BACK_SPACE -> {
@@ -422,6 +424,21 @@ public class SearchBarOverlay extends JDialog {
      */
     private String freeTextForCommit() {
         return tokenModel.atEntryStage() ? input.getText().trim() : "";
+    }
+
+    /**
+     * Accepts a terminal token as a chip, then runs the search. Shared by Enter and the Search
+     * button so both behave the same.
+     */
+    private void runSearch() {
+        if (tokenModel.isTerminal(input.getText())) {
+            if (tokenModel.atEntryStage())
+                applyEvent(tokenModel.completeFreeText(input.getText()));
+            else
+                tokenModel.submitTyped(input.getText()).ifPresent(this::applyEvent);
+            input.setText("");
+        }
+        commitSearch();
     }
 
     private void commitSearch() {
