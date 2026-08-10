@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.SiriusStandardAnalyzer;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.projectspace.IndexField;
@@ -234,6 +235,115 @@ public class LuceneMappingUtils {
             return new PointsConfig(new NumberDateFormat(new SimpleDateFormat("yyyy-MM-dd")), Long.class);
         }
         return null;
+    }
+
+    /**
+     * Maps a simple java type of an indexed field to the {@link SearchableField.FieldType} exposed to API users.
+     * Same type support as {@link #getPointsConfigForType} plus text, boolean and enum; null for unsupported types.
+     */
+    @Nullable
+    public static SearchableField.FieldType getSearchableFieldType(Class<?> type) {
+        if (type.equals(String.class))
+            return SearchableField.FieldType.TEXT;
+        if (type.equals(int.class) || type.equals(Integer.class))
+            return SearchableField.FieldType.INTEGER;
+        if (type.equals(long.class) || type.equals(Long.class))
+            return SearchableField.FieldType.LONG;
+        if (type.equals(double.class) || type.equals(Double.class))
+            return SearchableField.FieldType.DOUBLE;
+        if (type.equals(float.class) || type.equals(Float.class))
+            return SearchableField.FieldType.FLOAT;
+        if (type.equals(boolean.class) || type.equals(Boolean.class))
+            return SearchableField.FieldType.BOOLEAN;
+        if (type.equals(Date.class))
+            return SearchableField.FieldType.DATE;
+        if (type.isEnum())
+            return SearchableField.FieldType.ENUM;
+        return null;
+    }
+
+    /**
+     * Maps a tag {@link ValueType} to the {@link SearchableField.FieldType} exposed to API users.
+     * Consistent with how tag values are indexed by the TagMapper: NONE tags are presence flags queried as
+     * {@code tags.<name>:true}, hence BOOLEAN.
+     */
+    public static SearchableField.FieldType getSearchableFieldTypeForValueType(ValueType valueType) {
+        return switch (valueType) {
+            case TEXT -> SearchableField.FieldType.TEXT;
+            case INTEGER -> SearchableField.FieldType.INTEGER;
+            case REAL -> SearchableField.FieldType.DOUBLE;
+            case DATE -> SearchableField.FieldType.DATE;
+            case TIME -> SearchableField.FieldType.TIME;
+            case BOOLEAN, NONE -> SearchableField.FieldType.BOOLEAN;
+        };
+    }
+
+    /**
+     * Describes the dynamic search field of a project tag ({@code tags.<tagName>}), consistent with how tag
+     * values are indexed and queried.
+     */
+    public static SearchableField toTagSearchableField(@NotNull String fieldName, @NotNull String tagName, @NotNull ValueType valueType) {
+        return SearchableField.builder()
+                .name(fieldName)
+                .fieldType(getSearchableFieldTypeForValueType(valueType))
+                .fullTextSearch(valueType == ValueType.TEXT)
+                .description("Project tag '" + tagName + "'"
+                        + (valueType == ValueType.NONE ? "; presence flag, search for value 'true'" : ""))
+                .build();
+    }
+
+    /**
+     * Derives {@link SearchableField} descriptions from query parser configuration maps
+     * (as produced by {@link FieldMapper#applyAnalyzersAndPointConfigs}). Numeric types are recovered from the
+     * {@link PointsConfig}; date/time based configs are recognized by their {@link NumberDateFormat}.
+     */
+    public static List<SearchableField> toSearchableFields(@NotNull Map<String, PointsConfig> pointsConfigMap,
+                                                           @NotNull Map<String, org.apache.lucene.analysis.Analyzer> analyzerMap,
+                                                           @NotNull Collection<CharSequence> defaultSearchFields,
+                                                           @NotNull Map<String, SortField.Type> sortTypes) {
+        Set<String> defaults = new HashSet<>();
+        defaultSearchFields.forEach(f -> defaults.add(f.toString()));
+
+        List<SearchableField> fields = new ArrayList<>();
+        pointsConfigMap.forEach((name, pointsConfig) -> {
+            SearchableField.FieldType fieldType;
+            if (pointsConfig.getNumberFormat() instanceof NumberDateFormat) {
+                fieldType = pointsConfig.getType().equals(Integer.class)
+                        ? SearchableField.FieldType.TIME
+                        : SearchableField.FieldType.DATE;
+            } else {
+                fieldType = getSearchableFieldType(pointsConfig.getType());
+                // unreachable today: PointsConfig itself only accepts Integer/Long/Double/Float.
+                // Fail fast anyway in case a future lucene version widens that set.
+                if (fieldType == null)
+                    throw new IllegalStateException("Points config of field '" + name + "' has unsupported number type '"
+                            + pointsConfig.getType().getName() + "'. Cannot describe it as searchable field.");
+            }
+
+            fields.add(SearchableField.builder()
+                    .name(name)
+                    .fieldType(fieldType)
+                    .fullTextSearch(false)
+                    .sortable(sortTypes.containsKey(name))
+                    .defaultSearchField(defaults.contains(name))
+                    .build());
+        });
+        analyzerMap.forEach((name, analyzer) -> {
+            // fields with a points config are numeric and may additionally carry an analyzer
+            // (e.g. dynamic tag fields) - the numeric description is authoritative, do not duplicate them.
+            if (pointsConfigMap.containsKey(name))
+                return;
+            fields.add(SearchableField.builder()
+                    .name(name)
+                    .fieldType(SearchableField.FieldType.TEXT)
+                    .fullTextSearch(!(analyzer instanceof org.apache.lucene.analysis.core.KeywordAnalyzer))
+                    .sortable(sortTypes.containsKey(name))
+                    .defaultSearchField(defaults.contains(name))
+                    .build());
+        });
+
+        fields.sort(Comparator.comparing(SearchableField::getName));
+        return fields;
     }
 
     /**

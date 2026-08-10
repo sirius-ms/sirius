@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -32,7 +33,12 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
     }
 
     public PerPojoDatabaseSearchContext(@NotNull DB database, @Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions) {
-        super(indexRootDir, tagDefinitions);
+        this(database, indexRootDir, tagDefinitions, null);
+    }
+
+    public PerPojoDatabaseSearchContext(@NotNull DB database, @Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
+                                        @Nullable Function<Field, String> fieldDescriptionProvider) {
+        super(indexRootDir, tagDefinitions, fieldDescriptionProvider);
         this.database = database;
     }
 
