@@ -71,6 +71,12 @@ public class GuiUtils {
     public final static Dimension LARGE_CONTENT_SIZE = new Dimension(1350, 800);
 
     /**
+     * Size of a popup window showing a single web page, e.g. an external page that could not be
+     * opened in the system browser.
+     */
+    public final static Dimension WEB_VIEW_POPUP_SIZE = new Dimension(600, 800);
+
+    /**
      * @return the screen area that is usable for windows, so excluding task bars and the like
      */
     public static Rectangle getUsableScreenBounds() {
@@ -340,13 +346,13 @@ public class GuiUtils {
 
         @NotNull BrowserPanelProvider<?> browserProvider = gui.getBrowserPanelProvider();
 
-        if (owner instanceof JDialog dialog)
-            browserProvider.newBrowserPopUp(dialog, title == null ? "SIRIUS WebView" : title, url);
-        else if (owner instanceof JFrame frame)
-            browserProvider.newBrowserPopUp(frame, title == null ? "SIRIUS WebView" : title, url);
-        else
-            browserProvider.newBrowserPopUp((Frame) null, title == null ? "SIRIUS WebView" : title, url);
-
+        browserProvider.newBrowserWindow(url)
+                .title(title == null ? "SIRIUS WebView" : title)
+                .owner(owner)
+                .modality(Dialog.ModalityType.APPLICATION_MODAL)
+                .size(WEB_VIEW_POPUP_SIZE)
+                .resizable(false)
+                .show();
     }
 
     /**
@@ -363,7 +369,10 @@ public class GuiUtils {
         closeOnEscape(frame, frame.getRootPane());
     }
 
-    private static void closeOnEscape(Window window, JRootPane rootPane) {
+    /**
+     * Adds a key binding to close the given window on pressing escape
+     */
+    public static void closeOnEscape(Window window, JRootPane rootPane) {
         String escapePressed = "escapePressed";
         rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ESCAPE"), escapePressed);
         rootPane.getActionMap().put(escapePressed, new AbstractAction() {
