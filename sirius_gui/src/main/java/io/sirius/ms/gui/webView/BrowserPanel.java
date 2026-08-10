@@ -59,7 +59,8 @@ public abstract class BrowserPanel extends JPanel {
 
     @Override
     public Dimension getMinimumSize() {
-        return new Dimension(50,20);
+        // see getPreferredSize(): an explicitly set size wins over the arbitrary fallback
+        return isMinimumSizeSet() ? super.getMinimumSize() : new Dimension(50,20);
     }
 
     public abstract void showDevTools();
