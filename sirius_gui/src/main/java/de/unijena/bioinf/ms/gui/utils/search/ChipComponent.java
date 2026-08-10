@@ -77,20 +77,40 @@ public class ChipComponent extends JPanel {
             label.addMouseListener(clickListener);
         }
 
-        if (onClose != null) {
-            JLabel close = new JLabel("✕");
-            close.setForeground(label.getForeground());
-            close.setToolTipText("Remove");
-            close.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            close.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 4));
-            close.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    onClose.run();
-                }
-            });
-            add(close);
-        }
+        if (onClose != null)
+            add(closeLabel(label.getForeground(), "Remove", onClose));
+    }
+
+    /**
+     * A small, unobtrusive close affordance for chips and groups: the light "×" glyph (U+00D7, not
+     * the heavy "✕"), dimmed at rest and brightening on hover. Shares the chip's foreground colour
+     * so it reads correctly on both the filled user chips and the outlined model chips.
+     */
+    public static JLabel closeLabel(@NotNull Color foreground, @Nullable String tooltip, @NotNull Runnable onClose) {
+        JLabel close = new JLabel("×");
+        close.setFont(close.getFont().deriveFont(Font.BOLD, close.getFont().getSize2D() + 3f));
+        Color dimmed = new Color(foreground.getRed(), foreground.getGreen(), foreground.getBlue(), 150);
+        close.setForeground(dimmed);
+        close.setToolTipText(tooltip);
+        close.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        close.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3));
+        close.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                onClose.run();
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                close.setForeground(foreground);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                close.setForeground(dimmed);
+            }
+        });
+        return close;
     }
 
     @Override
