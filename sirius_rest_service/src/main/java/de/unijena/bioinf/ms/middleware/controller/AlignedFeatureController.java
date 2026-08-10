@@ -37,6 +37,7 @@ import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.*;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
@@ -113,20 +114,26 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * by a field name.
      * </p>
      *
-     * Currently the only searchable fields are names of tags ({@code tagName}) followed by a clause that is valued for the value type of the tag (See TagDefinition).
-     * Tag name based field need to be prefixed with the namespace {@code tags.}.
-     * Possible value types of tags are <strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value
+     * Searchable fields are the indexed properties of the feature (e.g. {@code ionMass}, {@code name},
+     * {@code quality}, {@code hasMsMs}), its annotations addressed via dot notation
+     * (e.g. {@code topAnnotations.structureAnnotation.structureName}), and project tags prefixed with the
+     * namespace {@code tags.} (e.g. {@code tags.MyTag}).
+     * Use the {@code searchable-fields} endpoint (getAlignedFeaturesSearchableFields) to list all fields that
+     * can be searched, including their value type, whether they support word based (full text) search, and
+     * whether results can be sorted by them.
+     * Possible value types are <strong>text</strong>, <strong>integer</strong>, <strong>double</strong>,
+     * <strong>boolean</strong>, <strong>date</strong>, or <strong>time</strong>.
      *
      * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
      *
      * <p>A clause may be:</p>
      * <ul>
      *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tags.MyTagA:sample}</li>
-     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code tags.MyTagA:"Some Text"}</li>
+     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code name:"Bicuculline methiodide"}</li>
      *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code tags.MyTagA:/[mb]oat/}</li>
-     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code tags.MyTagB<3}</li>
-     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code tags.MyTagB:[* TO 3] }</li>
-     *     <li>a <strong>boolean</strong>: tags with boolean value are matched as follows: e.g. {@code tags.MyTagA:true}, {@code tags.MyTagA:false}</li>
+     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code ionMass<300}</li>
+     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code ionMass:[300 TO 400]}</li>
+     *     <li>a <strong>boolean</strong>: boolean fields are matched as follows: e.g. {@code hasMsMs:true}, {@code tags.MyTagA:false}</li>
      *     <li>a <strong>value-less</strong>: tags without values (See TagDefinition) are matched as follows: e.g. {@code tags.MyTagA:*} or {@code tags.MyTagA:true}</li>
      * </ul>
      *
@@ -136,7 +143,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * <p>The syntax allows to build complex filter queries such as:</p>
      *
-     * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
+     * <p>{@code ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:"Alkaloids" AND tags.city:"new york" OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time<10\:00\:00 }</p>
      *
      * @param projectId    project space to get features (aligned over runs) from.
      * @param searchQuery  Optional search query in lucene syntax. Omit this parameter to page over all features.
@@ -158,6 +165,23 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @RequestParam(defaultValue = "tags, computedTools, qualities") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(searchQuery, pageable, msDataSearchPrepared, removeNone(optFields));
+    }
+
+    /**
+     * Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints.
+     * <p>
+     * Use this to build valid lucene queries: the field type determines which clauses are supported
+     * (e.g. range queries like {@code ionMass:[300 TO 400]} for numeric fields, word based search for
+     * full-text fields). Includes the dynamic tag fields ({@code tags.<tagName>}) of this project.
+     * An empty list means there are no searchable fields.
+     *
+     * @param projectId project space to read the searchable feature fields from.
+     * @return fields usable in searchQuery parameters of feature endpoints.
+     */
+    @Operation(operationId = "getAlignedFeaturesSearchableFields")
+    @GetMapping(value = "/searchable-fields", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SearchableField> getAlignedFeaturesSearchableFields(@PathVariable String projectId) {
+        return projectsProvider.getProjectOrThrow(projectId).getSearchableFields(AlignedFeature.class);
     }
 
     /**
