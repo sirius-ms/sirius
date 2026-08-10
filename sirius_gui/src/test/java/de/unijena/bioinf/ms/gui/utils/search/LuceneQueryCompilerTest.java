@@ -103,6 +103,31 @@ public class LuceneQueryCompilerTest {
                 LuceneQueryCompiler.render(QueryClause.numeric("tags.time", NumberOp.RANGE_INCLUSIVE, "12:00:00", "14:00:00", false)));
     }
 
+    // --- keyless full-text clauses ---
+
+    @Test
+    public void testKeylessClauseRendersAsBareTerm() {
+        assertEquals("caffeine", LuceneQueryCompiler.render(QueryClause.freeText("caffeine", false)));
+    }
+
+    @Test
+    public void testKeylessClauseWithWhitespaceIsQuoted() {
+        assertEquals("\"blank sample\"", LuceneQueryCompiler.render(QueryClause.freeText("blank sample", false)));
+    }
+
+    @Test
+    public void testNegatedKeylessClause() {
+        assertEquals("NOT caffeine", LuceneQueryCompiler.render(QueryClause.freeText("caffeine", true)));
+    }
+
+    @Test
+    public void testKeylessClauseCombinesWithFieldedClauses() {
+        QueryContainer root = container(
+                QueryClause.freeText("caffeine", false),
+                QueryClause.numeric("ionMass", NumberOp.GT, "300", null, false));
+        assertEquals("caffeine AND ionMass:{300 TO *}", LuceneQueryCompiler.compile(root, ""));
+    }
+
     // --- negation & groups ---
 
     @Test

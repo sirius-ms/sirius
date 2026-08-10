@@ -150,16 +150,25 @@ public class LuceneSearchBar extends JPanel {
         chipStrip.removeAll();
         Runnable open = this::openOverlay;
 
-        for (ModelChip chip : modelChipSupplier.get())
-            chipStrip.add(new ChipComponent(chip.label(), chip.tooltip(), ChipComponent.Style.MODEL, open, null));
+        List<ModelChip> modelChips = modelChipSupplier.get();
+        for (int i = 0; i < modelChips.size(); i++) {
+            if (i > 0)
+                chipStrip.add(ChipComponent.implicitAndLabel());
+            chipStrip.add(new ChipComponent(modelChips.get(i).label(), modelChips.get(i).tooltip(),
+                    ChipComponent.Style.MODEL, open, null));
+        }
 
         String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
         if (lastCommit != null && docText.equals(lastCommit.compiled())) {
             // the document still holds what we compiled - render the real chips
+            boolean hasUserPart = !lastCommit.root().items().isEmpty() || !lastCommit.freeText().isEmpty();
+            if (!modelChips.isEmpty() && hasUserPart)
+                chipStrip.add(ChipComponent.implicitAndLabel());
             for (QueryNode node : lastCommit.root().items())
                 chipStrip.add(userChip(node, open));
             if (!lastCommit.freeText().isEmpty())
-                chipStrip.add(plainLabel(lastCommit.freeText()));
+                chipStrip.add(new ChipComponent("“" + lastCommit.freeText() + "”",
+                        "Full-text search in the default fields", ChipComponent.Style.USER, open, null));
         } else if (!docText.isEmpty()) {
             // edited elsewhere - show the raw query text
             chipStrip.add(plainLabel(docText));
@@ -180,6 +189,9 @@ public class LuceneSearchBar extends JPanel {
     }
 
     private JComponent userChip(QueryNode node, Runnable open) {
+        if (node instanceof QueryClause clause && clause.isFreeText())
+            return new ChipComponent((clause.negated() ? "NOT " : "") + "“" + clause.value1() + "”",
+                    "Full-text search in the default fields", ChipComponent.Style.USER, open, null);
         String text = node instanceof QueryClause clause
                 ? (clause.negated() ? "NOT " : "") + clause.field() + " " + SearchBarOverlay.clauseBody(clause)
                 : LuceneQueryCompiler.render(node); // groups collapse to their compiled form

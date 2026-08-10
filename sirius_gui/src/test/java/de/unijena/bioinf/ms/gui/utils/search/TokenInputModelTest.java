@@ -98,13 +98,19 @@ public class TokenInputModelTest {
     @Test
     public void testTypingNarrowsConnectors() {
         model.updateContext(FIELDS, true, false);
-        assertEquals(List.of("OR"), model.suggestions("o").stream().map(TokenInputModel.Suggestion::display).toList());
+        List<String> connectors = model.suggestions("o").stream()
+                .filter(s -> s instanceof TokenInputModel.Suggestion.TokenSuggestion)
+                .map(TokenInputModel.Suggestion::display).toList();
+        assertEquals(List.of("OR"), connectors);
     }
 
     @Test
     public void testTypingNarrowsSuggestions() {
-        List<String> displays = model.suggestions("ion").stream().map(TokenInputModel.Suggestion::display).toList();
-        assertEquals(List.of("ionMass"), displays);
+        // the free-text row is appended at every entry stage; assert on the field suggestions
+        List<String> fields = model.suggestions("ion").stream()
+                .filter(s -> s instanceof TokenInputModel.Suggestion.FieldSuggestion)
+                .map(TokenInputModel.Suggestion::display).toList();
+        assertEquals(List.of("ionMass"), fields);
 
         // segment matching finds nested fields
         assertTrue(model.suggestions("city").stream().anyMatch(s -> s.display().equals("tags.city")));
@@ -247,6 +253,35 @@ public class TokenInputModelTest {
         model.updateContext(FIELDS, false, true);
         assertInstanceOf(TokenInputModel.Event.CloseGroup.class,
                 model.choose(suggestion(")", "")).orElseThrow());
+    }
+
+    // --- keyless full-text clause ---
+
+    @Test
+    public void testEntryStageOffersFreeTextSuggestionLast() {
+        // no match -> the only suggestion is the free-text row
+        List<TokenInputModel.Suggestion> forUnmatched = model.suggestions("caffeine");
+        assertEquals(1, forUnmatched.size());
+        assertInstanceOf(TokenInputModel.Suggestion.FreeTextSuggestion.class, forUnmatched.get(0));
+
+        // with a field match, the free-text row is offered last (so the field stays the default)
+        List<TokenInputModel.Suggestion> forPrefix = model.suggestions("ion");
+        assertInstanceOf(TokenInputModel.Suggestion.FieldSuggestion.class, forPrefix.get(0));
+        assertInstanceOf(TokenInputModel.Suggestion.FreeTextSuggestion.class, forPrefix.get(forPrefix.size() - 1));
+
+        // empty input offers no free-text row
+        assertTrue(model.suggestions("").stream()
+                .noneMatch(s -> s instanceof TokenInputModel.Suggestion.FreeTextSuggestion));
+    }
+
+    @Test
+    public void testChoosingFreeTextCompletesAKeylessClause() {
+        TokenInputModel.Suggestion freeText = model.suggestions("caffeine metabolite").get(0);
+        TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
+                model.choose(freeText).orElseThrow();
+        assertTrue(completed.clause().isFreeText());
+        assertEquals("caffeine metabolite", completed.clause().value1());
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage());
     }
 
     // --- typed-through multi-token input (grammar shortcut) ---

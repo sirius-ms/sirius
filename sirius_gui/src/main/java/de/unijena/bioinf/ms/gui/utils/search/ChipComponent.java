@@ -82,6 +82,21 @@ public class ChipComponent extends JPanel {
     }
 
     /**
+     * A dimmed, italic {@code AND} label marking an implicit conjunction between chips that the user
+     * cannot change (the filter-dialog filters among themselves, and the whole dialog state with the
+     * search query). Visually distinct from the editable AND/OR operators of the user's own query.
+     */
+    public static JLabel implicitAndLabel() {
+        JLabel label = new JLabel("AND");
+        label.setFont(label.getFont().deriveFont(Font.ITALIC, label.getFont().getSize2D() - 1f));
+        Color fg = UIManager.getColor("Label.disabledForeground");
+        label.setForeground(fg != null ? fg : Color.GRAY);
+        label.setToolTipText("Combined with AND (filter-panel filters always narrow the search)");
+        label.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+        return label;
+    }
+
+    /**
      * A small, unobtrusive close affordance for chips and groups: the light "×" glyph (U+00D7, not
      * the heavy "✕"), dimmed at rest and brightening on hover. Shares the chip's foreground colour
      * so it reads correctly on both the filled user chips and the outlined model chips.
