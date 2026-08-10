@@ -25,7 +25,18 @@ import java.util.function.Supplier;
 @Slf4j
 public class LoadingBrowserPanel extends BrowserPanel implements Loadable {
 
+    /**
+     * Time to wait before the loading animation is shown. A web view that is there faster than this
+     * would only make the animation flash up, which reads as a glitch rather than as progress.
+     */
+    private static final int LOADING_ANIMATION_DELAY_MS = 300;
+
     private final LoadablePanel loadablePanel;
+
+    /**
+     * Shows the loading animation once the web view takes long enough to be worth one.
+     */
+    private final Timer loadingAnimationDelay;
 
     /**
      * Holds the web view once it has been created. Shown by {@link #loadablePanel} instead of the
@@ -63,10 +74,24 @@ public class LoadingBrowserPanel extends BrowserPanel implements Loadable {
 
         contentContainer = new JPanel(new BorderLayout());
         loadablePanel = new LoadablePanel(contentContainer);
-        loadablePanel.setLoading(true, true); //the web view is never there before this panel is shown
         add(loadablePanel, BorderLayout.CENTER);
 
+        loadingAnimationDelay = new Timer(LOADING_ANIMATION_DELAY_MS, e -> showLoadingAnimation());
+        loadingAnimationDelay.setRepeats(false);
+        loadingAnimationDelay.start();
+
         load(webViewFactory);
+    }
+
+    /**
+     * Shows the loading animation, unless the web view made it in time after all.
+     */
+    private void showLoadingAnimation() {
+        synchronized (lock) {
+            if (delegate != null || released)
+                return;
+        }
+        setLoading(true, true);
     }
 
     private void load(@NotNull Supplier<? extends BrowserPanel> webViewFactory) {
@@ -74,7 +99,10 @@ public class LoadingBrowserPanel extends BrowserPanel implements Loadable {
             final BrowserPanel webView;
             try {
                 webView = webViewFactory.get();
-            } catch (Exception e) {
+            } catch (Throwable e) {
+                //Throwable and not Exception, since the web view is created by a native library and
+                //e.g. a missing native dependency is an Error. Not showing it would leave the
+                //loading animation running forever.
                 log.error("Error when creating web view.", e);
                 Jobs.runEDTLater(this::showError);
                 return;
@@ -89,22 +117,23 @@ public class LoadingBrowserPanel extends BrowserPanel implements Loadable {
      * never became part of a window, so its {@link #removeNotify()} would never release it.
      */
     private void showWebView(@NotNull BrowserPanel webView) {
-        final String missedDataUpdate;
+        loadingAnimationDelay.stop();
+
         synchronized (lock) {
             if (released) {
                 webView.cleanupResources();
                 return;
             }
             delegate = webView;
-            missedDataUpdate = pendingDataUpdate;
-            pendingDataUpdate = null;
+            //applied before the lock is given up, so that an update submitted in the meantime is not
+            //overwritten again by this older one
+            if (pendingDataUpdate != null) {
+                webView.submitDataUpdate(pendingDataUpdate);
+                pendingDataUpdate = null;
+            }
         }
 
-        contentContainer.add(webView, BorderLayout.CENTER);
-        setLoading(false, true);
-
-        if (missedDataUpdate != null)
-            webView.submitDataUpdate(missedDataUpdate);
+        showContent(webView);
     }
 
     /**
@@ -112,9 +141,22 @@ public class LoadingBrowserPanel extends BrowserPanel implements Loadable {
      * leave the user waiting forever. Details are in the log.
      */
     private void showError() {
-        JLabel message = new JLabel("Could not load this view. See log for details.", SwingConstants.CENTER);
-        contentContainer.add(message, BorderLayout.CENTER);
+        loadingAnimationDelay.stop();
+        showContent(new JLabel("Could not load this view. See log for details.", SwingConstants.CENTER));
+    }
+
+    /**
+     * Replaces whatever is shown with the given component.
+     * <p>
+     * Lays the content out explicitly, since the loading animation may never have been shown and the
+     * card layout only lays out its content again when it actually switches cards.
+     */
+    private void showContent(@NotNull JComponent content) {
+        contentContainer.removeAll();
+        contentContainer.add(content, BorderLayout.CENTER);
         setLoading(false, true);
+        contentContainer.revalidate();
+        contentContainer.repaint();
     }
 
     /**
@@ -155,6 +197,7 @@ public class LoadingBrowserPanel extends BrowserPanel implements Loadable {
 
     @Override
     public void cleanupResources() {
+        loadingAnimationDelay.stop();
         final BrowserPanel webView;
         synchronized (lock) {
             released = true;
