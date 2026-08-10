@@ -45,8 +45,9 @@ import java.util.function.Supplier;
  * state as outlined chips, the user's committed clause chips (groups as nested paren chips), the
  * staged fragments of the token being built, and the inline text input. A suggestion dropdown under
  * the input lists all candidates for the current stage ({@link TokenInputModel}) and narrows while
- * typing; Up/Down navigate, Tab (or Enter after navigating) chooses, Backspace on empty input pops
- * a stage, Enter searches.
+ * typing; Up/Down navigate and Tab is the only key that builds the query (it picks the highlighted
+ * suggestion or commits a typed value). Backspace on empty input pops a stage. Enter never builds
+ * the query - it only runs the search and closes the overlay.
  * <p>
  * An undecorated owned dialog rather than a JPopupMenu/PopupFactory popup (those are built to be
  * non-focusable and to auto-dismiss - wrong for an editor) and rather than a layered-pane overlay.
@@ -263,12 +264,19 @@ public class SearchBarOverlay extends JDialog {
                         e.consume();
                     }
                     case KeyEvent.VK_TAB -> {
-                        // Tab is the explicit "complete" key, like the old grammar hint
-                        if (suggestionPopup.chooseSelected())
-                            e.consume();
+                        // Tab is the only key that builds the query: pick the highlighted
+                        // suggestion, or (at a free-form value stage with no suggestion) commit
+                        // the typed value / advance the token.
+                        if (!suggestionPopup.chooseSelected()) {
+                            tokenModel.submitTyped(input.getText()).ifPresent(SearchBarOverlay.this::applyEvent);
+                            input.setText("");
+                            rebuild();
+                        }
+                        e.consume();
                     }
                     case KeyEvent.VK_ENTER -> {
-                        onEnter();
+                        // Enter never builds the query - it only runs the search and closes
+                        commitSearch();
                         e.consume();
                     }
                     case KeyEvent.VK_BACK_SPACE -> {
@@ -292,43 +300,6 @@ public class SearchBarOverlay extends JDialog {
 
     private void onTyped() {
         refreshSuggestions();
-    }
-
-    /**
-     * Enter accepts the highlighted suggestion (the first row is preselected, so a good default is
-     * one keystroke away). Only at the pristine top-level field entry with empty input does it run
-     * the search instead; mid-token value stages without suggestions take the typed text.
-     */
-    private void onEnter() {
-        boolean emptyInput = input.getText().trim().isEmpty();
-        // the pristine top-level field entry (no connector/NOT staged) is the one place where an
-        // empty-input Enter runs the search instead of picking the highlighted field
-        boolean pristineFieldEntry = tokenModel.stage() == TokenInputModel.Stage.FIELD
-                && tokenModel.pendingFragments().isEmpty();
-
-        // Enter accepts the highlighted suggestion - the first row is preselected, so hitting Enter
-        // on a good default works without arrowing. "type OR, Enter" is covered the same way. The
-        // free-text row is skipped on Enter (Enter runs the search with the typed text as free-text
-        // segment); Tab turns it into a keyless chip instead.
-        boolean freeTextSelected = suggestionPopup.selected()
-                .filter(s -> s instanceof TokenInputModel.Suggestion.FreeTextSuggestion).isPresent();
-        if (suggestionPopup.isVisible() && suggestionPopup.selected().isPresent()
-                && !freeTextSelected && !(emptyInput && pristineFieldEntry)) {
-            if (suggestionPopup.chooseSelected())
-                return;
-        }
-
-        boolean wasEntry = tokenModel.atEntryStage();
-        Optional<TokenInputModel.Event> event = tokenModel.submitTyped(input.getText());
-        event.ifPresent(this::applyEvent);
-        // typed text at an entry stage that neither produced an event nor advanced a stage is free
-        // text - Enter runs the search with it (also covers the plain empty-input Enter)
-        if (wasEntry && event.isEmpty() && tokenModel.atEntryStage()) {
-            commitSearch();
-            return;
-        }
-        input.setText("");
-        rebuild();
     }
 
     private void applySuggestion(TokenInputModel.Suggestion suggestion) {
@@ -442,17 +413,26 @@ public class SearchBarOverlay extends JDialog {
     // --- compile & commit ---
 
     private String compileQuery() {
-        return LuceneQueryCompiler.compile(root, input.getText());
+        return LuceneQueryCompiler.compile(root, freeTextForCommit());
+    }
+
+    /**
+     * The input text only counts as a free-text search segment at an entry stage; at a mid-token
+     * stage it is a value/operator fragment that Enter discards (Tab commits it into a clause).
+     */
+    private String freeTextForCommit() {
+        return tokenModel.atEntryStage() ? input.getText().trim() : "";
     }
 
     private void commitSearch() {
+        String freeText = freeTextForCommit();
         tokenModel.reset(); // a half-built token is not part of the query
-        String compiled = compileQuery();
+        String compiled = LuceneQueryCompiler.compile(root, freeText);
         writeDocument(compiled);
         lastCompiled = compiled;
         filterModel.fireUpdateCompleted();
         setVisible(false);
-        onCommitted.accept(new Commit(root, input.getText().trim(), compiled));
+        onCommitted.accept(new Commit(root, freeText, compiled));
     }
 
     /**
