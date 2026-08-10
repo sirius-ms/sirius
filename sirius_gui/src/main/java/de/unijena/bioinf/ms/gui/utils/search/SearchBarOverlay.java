@@ -307,16 +307,19 @@ public class SearchBarOverlay extends JDialog {
      * grammar input ({@code or not ion}) and, failing that, the search runs with it as free text.
      */
     private void onEnter() {
-        boolean wasIdle = tokenModel.stage() == TokenInputModel.Stage.IDLE;
-        if (suggestionPopup.isVisible() && (listEngaged || !wasIdle)) {
+        boolean wasEntry = tokenModel.atEntryStage();
+        boolean hasTyped = !input.getText().trim().isEmpty();
+        // pick the highlighted suggestion when the user typed a prefix or arrow-navigated to it;
+        // this is what makes "type OR, Enter" work (the dropdown selects OR, Enter chooses it)
+        if (suggestionPopup.isVisible() && suggestionPopup.selected().isPresent() && (listEngaged || hasTyped)) {
             if (suggestionPopup.chooseSelected())
                 return;
         }
         Optional<TokenInputModel.Event> event = tokenModel.submitTyped(input.getText());
         event.ifPresent(this::applyEvent);
-        // typed text at IDLE that neither produced an event nor advanced a stage is free text -
-        // Enter runs the search with it (also covers the plain empty-input Enter)
-        if (wasIdle && event.isEmpty() && tokenModel.stage() == TokenInputModel.Stage.IDLE) {
+        // typed text at an entry stage that neither produced an event nor advanced a stage is free
+        // text - Enter runs the search with it (also covers the plain empty-input Enter)
+        if (wasEntry && event.isEmpty() && tokenModel.atEntryStage()) {
             commitSearch();
             return;
         }
@@ -380,7 +383,7 @@ public class SearchBarOverlay extends JDialog {
      * something - a half-typed field name is not a mistake yet.
      */
     private void validateInput() {
-        String problem = tokenModel.stage() == TokenInputModel.Stage.IDLE && !suggestionPopup.isVisible()
+        String problem = tokenModel.atEntryStage() && !suggestionPopup.isVisible()
                 ? QueryValidator.validate(input.getText(), fieldsProvider.getCached()).orElse(null)
                 : null;
         input.putClientProperty("JComponent.outline", problem == null ? null : "warning");

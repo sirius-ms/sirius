@@ -30,12 +30,13 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * The staged token input of the search bar, modeled after GitLab's filtered search: at {@link Stage#IDLE}
- * all fields and the applicable special tokens ({@code NOT}, {@code AND}/{@code OR}, parens) are
- * suggested and narrow while typing; choosing a field advances to the operator stage (numeric fields
- * only) and then the value stage(s) - ranges take two staged values, an empty bound meaning open-ended.
- * Backspace on empty input pops one stage; with nothing pending it asks the owner to remove the last
- * committed chip.
+ * The staged token input of the search bar, modeled after GitLab's filtered search. When the current
+ * container already holds a sibling the input starts at the {@link Stage#CONNECTOR} stage
+ * ({@code AND}/{@code OR}); otherwise, and after the connector is chosen, the {@link Stage#FIELD}
+ * stage lists all fields plus {@code NOT} and the parens. Choosing a field advances to the operator
+ * stage (numeric fields only) and then the value stage(s) - ranges take two staged values, an empty
+ * bound meaning open-ended. Backspace on empty input pops one stage; with nothing pending it asks
+ * the owner to remove the last committed chip.
  * <p>
  * Pure model: the UI renders {@link #suggestions}, {@link #pendingFragments} and {@link #stagePrompt}
  * and applies the returned {@link Event}s to the query tree. Free text is not consumed here - typed
@@ -50,7 +51,12 @@ public class TokenInputModel {
             SearchableFieldType.INTEGER, SearchableFieldType.LONG, SearchableFieldType.DOUBLE,
             SearchableFieldType.FLOAT, SearchableFieldType.DATE, SearchableFieldType.TIME);
 
-    public enum Stage {IDLE, OPERATOR, VALUE, VALUE2}
+    /**
+     * CONNECTOR and FIELD are the two "entry" stages a fresh token starts in: CONNECTOR when the
+     * current container has a sibling to join (offers AND/OR), FIELD otherwise (offers fields, NOT,
+     * parens). The remaining stages build one clause.
+     */
+    public enum Stage {CONNECTOR, FIELD, OPERATOR, VALUE, VALUE2}
 
     public enum SpecialToken {
         NOT("NOT", "Negate the next filter or group"),
@@ -152,7 +158,7 @@ public class TokenInputModel {
     private boolean groupOpen;
 
     // --- staged token state ---
-    private Stage stage = Stage.IDLE;
+    private Stage stage = Stage.FIELD;
     @Nullable
     private LogicOp pendingLogic;
     private boolean pendingNegated;
@@ -167,10 +173,22 @@ public class TokenInputModel {
         this.fields = fields;
         this.hasSibling = hasSibling;
         this.groupOpen = groupOpen;
+        // keep the entry stage in sync with the (possibly changed) sibling context, as long as
+        // nothing has been staged yet for this token
+        if (atEntryStage() && pendingLogic == null && !pendingNegated && pendingField == null)
+            stage = hasSibling ? Stage.CONNECTOR : Stage.FIELD;
     }
 
     public Stage stage() {
         return stage;
+    }
+
+    /**
+     * True at the two stages that start a fresh token (CONNECTOR/FIELD) - where typed text that
+     * resolves to nothing is the owner's free-text search rather than a clause value.
+     */
+    public boolean atEntryStage() {
+        return stage == Stage.CONNECTOR || stage == Stage.FIELD;
     }
 
     /**
@@ -179,24 +197,28 @@ public class TokenInputModel {
     public List<Suggestion> suggestions(@NotNull String typed) {
         String prefix = typed.trim().toLowerCase(Locale.ROOT);
         return switch (stage) {
-            case IDLE -> idleSuggestions(prefix);
-            case OPERATOR -> NumberOp.values().length == 0 ? List.of() : operatorSuggestions(prefix);
+            case CONNECTOR -> connectorSuggestions(prefix);
+            case FIELD -> fieldStageSuggestions(prefix);
+            case OPERATOR -> operatorSuggestions(prefix);
             case VALUE, VALUE2 -> valueSuggestions(prefix);
         };
     }
 
-    private List<Suggestion> idleSuggestions(String prefix) {
+    private List<Suggestion> connectorSuggestions(String prefix) {
+        List<Suggestion> suggestions = new ArrayList<>(2);
+        if (matches(SpecialToken.AND, prefix))
+            suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.AND));
+        if (matches(SpecialToken.OR, prefix))
+            suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.OR));
+        return suggestions;
+    }
+
+    private List<Suggestion> fieldStageSuggestions(String prefix) {
         List<Suggestion> suggestions = new ArrayList<>(
                 CompletionParser.fieldMatches(prefix, fields).stream()
                         .map(f -> (Suggestion) new Suggestion.FieldSuggestion(f)).toList());
         if (!pendingNegated && matches(SpecialToken.NOT, prefix))
             suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.NOT));
-        if (hasSibling && pendingLogic == null) {
-            if (matches(SpecialToken.AND, prefix))
-                suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.AND));
-            if (matches(SpecialToken.OR, prefix))
-                suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.OR));
-        }
         if (matches(SpecialToken.OPEN_GROUP, prefix))
             suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.OPEN_GROUP));
         if (groupOpen && matches(SpecialToken.CLOSE_GROUP, prefix))
@@ -241,10 +263,12 @@ public class TokenInputModel {
                 }
                 case AND -> {
                     pendingLogic = LogicOp.AND;
+                    stage = Stage.FIELD; // connector chosen -> pick the field/token to join
                     yield Optional.empty();
                 }
                 case OR -> {
                     pendingLogic = LogicOp.OR;
+                    stage = Stage.FIELD;
                     yield Optional.empty();
                 }
                 case OPEN_GROUP -> {
@@ -281,7 +305,7 @@ public class TokenInputModel {
                     return choose(matching.get(0));
                 return Optional.empty();
             }
-            case IDLE -> {
+            case CONNECTOR, FIELD -> {
                 return applyGrammar(trimmed);
             }
         }
@@ -359,20 +383,25 @@ public class TokenInputModel {
                     stage = Stage.OPERATOR;
                 } else {
                     pendingField = null;
-                    stage = Stage.IDLE;
+                    stage = Stage.FIELD;
                 }
             }
             case OPERATOR -> {
                 pendingField = null;
-                stage = Stage.IDLE;
+                stage = Stage.FIELD;
             }
-            case IDLE -> {
+            case FIELD -> {
+                // pop the field-stage decorations in reverse; clearing the connector drops back to
+                // the connector stage (via updateContext), then Backspace removes the last chip
                 if (pendingNegated)
                     pendingNegated = false;
                 else if (pendingLogic != null)
                     pendingLogic = null;
                 else
                     return Optional.of(new Event.RemoveLastNode());
+            }
+            case CONNECTOR -> {
+                return Optional.of(new Event.RemoveLastNode());
             }
         }
         return Optional.empty();
@@ -400,7 +429,8 @@ public class TokenInputModel {
      */
     public String stagePrompt() {
         return switch (stage) {
-            case IDLE -> "Search, or filter by field name...";
+            case CONNECTOR -> "Combine with the previous filter (AND / OR)";
+            case FIELD -> "Search, or filter by field name...";
             case OPERATOR -> "How to compare - [ ] includes the bounds, { } excludes them";
             case VALUE -> {
                 if (pendingOp != null && pendingOp.isRange())
@@ -426,7 +456,8 @@ public class TokenInputModel {
     }
 
     private void resetPending() {
-        stage = Stage.IDLE;
+        // FIELD by default; updateContext bumps to CONNECTOR when the container has a sibling
+        stage = hasSibling ? Stage.CONNECTOR : Stage.FIELD;
         pendingLogic = null;
         pendingNegated = false;
         pendingField = null;
