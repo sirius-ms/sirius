@@ -23,11 +23,8 @@ import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
-import io.sirius.ms.sdk.model.SearchableField;
-import io.sirius.ms.sdk.model.SearchableFieldType;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -42,20 +39,21 @@ import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * The expanded state of the feature search bar: a popup-style window hosting the chip-based lucene
- * query builder. Opens anchored at the collapsed bar and extends over the result view, so the
- * narrow left rail does not constrain query building.
+ * The expanded state of the feature search bar: a popup-style window hosting the inline lucene
+ * query builder, modeled after GitLab's filtered search. ONE wrapping line holds the filter-dialog
+ * state as outlined chips, the user's committed clause chips (groups as nested paren chips), the
+ * staged fragments of the token being built, and the inline text input. A suggestion dropdown under
+ * the input lists all candidates for the current stage ({@link TokenInputModel}) and narrows while
+ * typing; Up/Down navigate, Tab (or Enter after navigating) chooses, Backspace on empty input pops
+ * a stage, Enter searches.
  * <p>
  * An undecorated owned dialog rather than a JPopupMenu/PopupFactory popup (those are built to be
- * non-focusable and to auto-dismiss - wrong for an editor full of text fields and combos) and
- * rather than a layered-pane overlay (manual bounds/z-order/click-outside handling). Combo
- * dropdowns are owned child windows and therefore do not count as focus loss; dismissal is
- * windowLostFocus + Esc.
+ * non-focusable and to auto-dismiss - wrong for an editor) and rather than a layered-pane overlay.
  * <p>
- * The builder state (committed clause chips, the open group the cursor is in, the draft clause,
- * free text) lives here and compiles into the {@link FeatureFilterModel}'s shared search text
- * document on commit - the model itself needs no change and the filter dialog's fulltext field
- * shows the compiled query automatically.
+ * The builder state compiles into the {@link FeatureFilterModel}'s shared search text document on
+ * commit - the model itself needs no change and the filter dialog's fulltext field shows the
+ * compiled query automatically. Text typed into the inline input that resolves to no token is the
+ * free-text segment of the search.
  */
 @Slf4j
 public class SearchBarOverlay extends JDialog {
@@ -63,10 +61,6 @@ public class SearchBarOverlay extends JDialog {
     private static final int MAX_WIDTH = 900;
     private static final int MIN_WIDTH = 500;
     private static final int MAX_HEIGHT = 420;
-
-    private static final EnumSet<SearchableFieldType> NUMERIC_TYPES = EnumSet.of(
-            SearchableFieldType.INTEGER, SearchableFieldType.LONG, SearchableFieldType.DOUBLE,
-            SearchableFieldType.FLOAT, SearchableFieldType.DATE, SearchableFieldType.TIME);
 
     private final FeatureFilterModel filterModel;
     private final SearchableFieldsProvider fieldsProvider;
@@ -77,9 +71,7 @@ public class SearchBarOverlay extends JDialog {
     // --- builder state ---
     private QueryContainer root = QueryContainer.empty();
     private int[] openPath = new int[0];
-    private LogicOp nextLogic = LogicOp.AND;
-    @Nullable
-    private Draft draft;
+    private final TokenInputModel tokenModel = new TokenInputModel();
     /**
      * The query string this overlay last wrote into the shared search document. If the document
      * differs on open, it was edited elsewhere (filter dialog) - the builder then degrades the
@@ -88,12 +80,14 @@ public class SearchBarOverlay extends JDialog {
     private String lastCompiled = "";
 
     // --- ui ---
-    private final JPanel chipsPanel;
-    private final PlaceholderTextField freeText;
-    private final JButton hintButton;
-    private final JButton searchButton;
-    @Nullable
-    private Completion currentCompletion;
+    private final JPanel inlineRow;
+    private final PlaceholderTextField input;
+    private final SuggestionPopup suggestionPopup;
+    /**
+     * Enter only picks the dropdown selection at IDLE after the user navigated with the arrow
+     * keys (GitLab behavior) - otherwise Enter submits the typed text / runs the search.
+     */
+    private boolean listEngaged = false;
 
     public SearchBarOverlay(@NotNull Window owner, @NotNull FeatureFilterModel filterModel,
                             @NotNull SearchableFieldsProvider fieldsProvider,
@@ -113,78 +107,31 @@ public class SearchBarOverlay extends JDialog {
         JPanel content = new JPanel(new BorderLayout());
         content.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Colors.Menu.FILTER_BUTTON, 1),
-                BorderFactory.createEmptyBorder(4, 6, 4, 6)));
+                BorderFactory.createEmptyBorder(2, 4, 2, 4)));
         setContentPane(content);
 
-        chipsPanel = new JPanel(new WrapLayout(FlowLayout.LEFT, 4, 4));
-        JScrollPane chipsScroll = new JScrollPane(chipsPanel,
+        // --- the one inline row: chips + staged fragments + input, wrapping when long ---
+        inlineRow = new JPanel(new WrapLayout(FlowLayout.LEFT, 4, 4));
+        JScrollPane rowScroll = new JScrollPane(inlineRow,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        chipsScroll.setBorder(BorderFactory.createEmptyBorder());
-        chipsScroll.getVerticalScrollBar().setUnitIncrement(16);
-        content.add(chipsScroll, BorderLayout.CENTER);
+        rowScroll.setBorder(BorderFactory.createEmptyBorder());
+        rowScroll.getVerticalScrollBar().setUnitIncrement(16);
+        content.add(rowScroll, BorderLayout.CENTER);
 
-        // --- bottom row: add-filter | free text | hint | copy | clear | search ---
-        Box bottom = Box.createHorizontalBox();
+        input = new PlaceholderTextField(18);
+        input.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
+        input.setOpaque(false);
+        suggestionPopup = new SuggestionPopup(input, this::applySuggestion);
+        wireInput();
 
-        JButton addFilter = new JButton("Add Filter ▾");
-        addFilter.setToolTipText("Add a field filter or a group to the query");
-        addFilter.addActionListener(e -> buildAddFilterMenu().show(addFilter, 0, addFilter.getHeight()));
-        bottom.add(addFilter);
-        bottom.add(Box.createHorizontalStrut(6));
-
-        freeText = new PlaceholderTextField();
-        freeText.setPlaceholder("Search or type a field name and hit Tab...");
-        freeText.setToolTipText(GuiUtils.formatToolTip(
-                "Free text is searched in the default search fields (name, adducts, formula, structure, ...).",
-                "Type a field name (e.g. 'ionMass', 'quality') and hit Tab to add a field filter.",
-                "'not <field>' negates, 'and'/'or' choose how it joins, '(' opens a group, ')' closes it.",
-                "Enter starts the search."));
-        freeText.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                updateCompletionHint();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                updateCompletionHint();
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                updateCompletionHint();
-            }
-        });
-        // Tab applies the completion when one is on offer; otherwise it keeps traversing focus
-        freeText.setFocusTraversalKeysEnabled(false);
-        freeText.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_TAB) {
-                    if (currentCompletion != null) {
-                        applyCompletion();
-                    } else {
-                        if (e.isShiftDown()) freeText.transferFocusBackward();
-                        else freeText.transferFocus();
-                    }
-                    e.consume();
-                } else if (e.getKeyCode() == KeyEvent.VK_ENTER && draft == null) {
-                    commitSearch();
-                }
-            }
-        });
-        bottom.add(freeText);
-        bottom.add(Box.createHorizontalStrut(4));
-
-        hintButton = new JButton();
-        hintButton.setVisible(false);
-        hintButton.setFocusable(false);
-        hintButton.addActionListener(e -> applyCompletion());
-        bottom.add(hintButton);
-
+        // --- trailing controls ---
+        Box controls = Box.createHorizontalBox();
         JButton copy = new JButton("⧉");
         copy.setFocusable(false);
         copy.setToolTipText("Copy the compiled search query to the clipboard");
         copy.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemClipboard()
                 .setContents(new StringSelection(compileQuery()), null));
-        bottom.add(copy);
+        controls.add(copy);
 
         JButton clear = new JButton("Clear");
         clear.setFocusable(false);
@@ -192,26 +139,30 @@ public class SearchBarOverlay extends JDialog {
         clear.addActionListener(e -> {
             root = QueryContainer.empty();
             openPath = new int[0];
-            draft = null;
-            freeText.setText("");
+            tokenModel.reset();
+            input.setText("");
             rebuild();
+            input.requestFocusInWindow();
         });
-        bottom.add(clear);
-        bottom.add(Box.createHorizontalStrut(4));
+        controls.add(clear);
+        controls.add(Box.createHorizontalStrut(4));
 
-        searchButton = new JButton("Search");
-        searchButton.setToolTipText("Apply the query and filter the feature list (Enter)");
-        searchButton.addActionListener(e -> commitSearch());
-        bottom.add(searchButton);
+        JButton search = new JButton("Search");
+        search.setToolTipText("Apply the query and filter the feature list (Enter)");
+        search.addActionListener(e -> commitSearch());
+        controls.add(search);
 
-        bottom.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
-        content.add(bottom, BorderLayout.SOUTH);
+        JPanel controlsAligned = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 2));
+        controlsAligned.add(controls);
+        content.add(controlsAligned, BorderLayout.EAST);
 
-        // Esc hides the overlay; the builder state is kept for the next open
+        // Esc: first closes the dropdown, then the overlay (handled in the input's key listener);
+        // this binding covers Esc while focus is on a button
         getRootPane().registerKeyboardAction(e -> setVisible(false),
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        // focus moving to a window not owned by this overlay (combo popups are owned) closes it
+        // focus moving to a window not owned by this overlay closes it (covers other applications;
+        // in-app clicks are covered by the global mouse listener of the dismissal handling)
         addWindowFocusListener(new WindowAdapter() {
             @Override
             public void windowLostFocus(WindowEvent e) {
@@ -240,6 +191,172 @@ public class SearchBarOverlay extends JDialog {
             if (isVisible())
                 rebuild();
         });
+
+        // hiding the overlay must always take the dropdown with it
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                suggestionPopup.hide();
+            }
+        });
+    }
+
+    // --- input wiring: suggestions, keyboard semantics ---
+
+    private void wireInput() {
+        input.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                onTyped();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                onTyped();
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                onTyped();
+            }
+        });
+
+        input.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                refreshSuggestions();
+            }
+        });
+
+        input.setFocusTraversalKeysEnabled(false);
+        input.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_DOWN -> {
+                        suggestionPopup.moveSelection(1);
+                        listEngaged = true;
+                        e.consume();
+                    }
+                    case KeyEvent.VK_UP -> {
+                        suggestionPopup.moveSelection(-1);
+                        listEngaged = true;
+                        e.consume();
+                    }
+                    case KeyEvent.VK_TAB -> {
+                        // Tab is the explicit "complete" key, like the old grammar hint
+                        if (suggestionPopup.chooseSelected())
+                            e.consume();
+                    }
+                    case KeyEvent.VK_ENTER -> {
+                        onEnter();
+                        e.consume();
+                    }
+                    case KeyEvent.VK_BACK_SPACE -> {
+                        if (input.getText().isEmpty()) {
+                            tokenModel.backspaceOnEmpty().ifPresent(SearchBarOverlay.this::applyEvent);
+                            rebuild();
+                            e.consume();
+                        }
+                    }
+                    case KeyEvent.VK_ESCAPE -> {
+                        if (suggestionPopup.isVisible())
+                            suggestionPopup.hide();
+                        else
+                            setVisible(false);
+                        e.consume();
+                    }
+                }
+            }
+        });
+    }
+
+    private void onTyped() {
+        listEngaged = false;
+        refreshSuggestions();
+    }
+
+    /**
+     * Enter: mid-token stages take the dropdown selection (or the typed text as value); at IDLE it
+     * takes the selection only after arrow navigation, otherwise the typed text is applied as
+     * grammar input ({@code or not ion}) and, failing that, the search runs with it as free text.
+     */
+    private void onEnter() {
+        boolean wasIdle = tokenModel.stage() == TokenInputModel.Stage.IDLE;
+        if (suggestionPopup.isVisible() && (listEngaged || !wasIdle)) {
+            if (suggestionPopup.chooseSelected())
+                return;
+        }
+        Optional<TokenInputModel.Event> event = tokenModel.submitTyped(input.getText());
+        event.ifPresent(this::applyEvent);
+        // typed text at IDLE that neither produced an event nor advanced a stage is free text -
+        // Enter runs the search with it (also covers the plain empty-input Enter)
+        if (wasIdle && event.isEmpty() && tokenModel.stage() == TokenInputModel.Stage.IDLE) {
+            commitSearch();
+            return;
+        }
+        input.setText("");
+        rebuild();
+    }
+
+    private void applySuggestion(TokenInputModel.Suggestion suggestion) {
+        tokenModel.choose(suggestion).ifPresent(this::applyEvent);
+        listEngaged = false;
+        input.setText("");
+        rebuild();
+        input.requestFocusInWindow();
+    }
+
+    private void applyEvent(TokenInputModel.Event event) {
+        if (event instanceof TokenInputModel.Event.ClauseCompleted completed) {
+            root = QueryTreeOps.append(root, openPath, completed.clause(), completed.logic());
+        } else if (event instanceof TokenInputModel.Event.OpenGroup group) {
+            QueryTreeOps.PathResult result = QueryTreeOps.openGroup(root, openPath, group.negated(), group.logic());
+            root = result.root();
+            openPath = result.path();
+        } else if (event instanceof TokenInputModel.Event.CloseGroup) {
+            QueryTreeOps.PathResult result = QueryTreeOps.closeGroup(root, openPath);
+            root = result.root();
+            openPath = result.path();
+        } else if (event instanceof TokenInputModel.Event.RemoveLastNode) {
+            removeLastNode();
+        }
+    }
+
+    /**
+     * Backspace with nothing staged: removes the last chip of the open container; an empty open
+     * group closes (and thereby drops) instead.
+     */
+    private void removeLastNode() {
+        QueryContainer container = QueryTreeOps.containerAt(root, openPath);
+        if (container.isEmpty()) {
+            if (openPath.length > 0) {
+                QueryTreeOps.PathResult result = QueryTreeOps.closeGroup(root, openPath);
+                root = result.root();
+                openPath = result.path();
+            }
+            return;
+        }
+        root = QueryTreeOps.removeNodeById(root, container.items().get(container.items().size() - 1).id());
+        openPath = QueryTreeOps.resolvePath(root, openPath);
+    }
+
+    private void refreshSuggestions() {
+        tokenModel.updateContext(fieldsProvider.getCached(),
+                !QueryTreeOps.containerAt(root, openPath).isEmpty(), openPath.length > 0);
+        if (isVisible() && input.isFocusOwner())
+            suggestionPopup.showSuggestions(tokenModel.suggestions(input.getText()));
+        validateInput();
+    }
+
+    /**
+     * Advisory live validation of the free-text segment: syntax problems and unknown fields show
+     * as a warning outline with the explanation as tooltip. Suppressed while the dropdown offers
+     * something - a half-typed field name is not a mistake yet.
+     */
+    private void validateInput() {
+        String problem = tokenModel.stage() == TokenInputModel.Stage.IDLE && !suggestionPopup.isVisible()
+                ? QueryValidator.validate(input.getText(), fieldsProvider.getCached()).orElse(null)
+                : null;
+        input.putClientProperty("JComponent.outline", problem == null ? null : "warning");
+        input.setToolTipText(problem == null ? null : GuiUtils.formatToolTip(problem));
     }
 
     // --- opening / closing ---
@@ -253,13 +370,17 @@ public class SearchBarOverlay extends JDialog {
         if (!docText.equals(lastCompiled)) {
             root = QueryContainer.empty();
             openPath = new int[0];
-            draft = null;
-            freeText.setText(docText);
+            tokenModel.reset();
+            input.setText(docText);
             lastCompiled = docText;
         }
 
-        // tags are dynamic - refresh the searchable fields in the background while the user types
-        Jobs.runInBackground(fieldsProvider::refreshIfStale);
+        // tags are dynamic - refresh the searchable fields in the background while the user types;
+        // the dropdown updates once they arrive
+        Jobs.runInBackground(() -> {
+            fieldsProvider.refreshIfStale();
+            SwingUtilities.invokeLater(this::refreshSuggestions);
+        });
 
         rebuild();
 
@@ -267,28 +388,28 @@ public class SearchBarOverlay extends JDialog {
         Window owner = getOwner();
         int available = owner.getX() + owner.getWidth() - anchorOnScreen.x - 20;
         int width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, available));
-        setSize(width, 10); // height fixed by resizeToFit
+        setSize(width, 10); // height set by resizeToFit
         resizeToFit();
-        setLocation(anchorOnScreen.x, anchorOnScreen.y + anchor.getHeight());
+        setLocation(anchorOnScreen.x, anchorOnScreen.y);
         setVisible(true);
-        freeText.requestFocusInWindow();
+        input.requestFocusInWindow();
     }
 
     private void resizeToFit() {
-        int height = Math.min(Math.max(getPreferredSize().height, 90), MAX_HEIGHT);
+        int height = Math.min(Math.max(getPreferredSize().height, 40), MAX_HEIGHT);
         setSize(getWidth(), height);
         validate();
+        suggestionPopup.relocate();
     }
 
     // --- compile & commit ---
 
     private String compileQuery() {
-        return LuceneQueryCompiler.compile(root, freeText.getText());
+        return LuceneQueryCompiler.compile(root, input.getText());
     }
 
     private void commitSearch() {
-        if (draft != null)
-            return; // finish or discard the draft first
+        tokenModel.reset(); // a half-built token is not part of the query
         String compiled = compileQuery();
         writeDocument(compiled);
         lastCompiled = compiled;
@@ -307,130 +428,13 @@ public class SearchBarOverlay extends JDialog {
         }
     }
 
-    // --- completion ---
-
-    private void updateCompletionHint() {
-        if (draft != null) { // Tab belongs to the draft's own controls while one is open
-            currentCompletion = null;
-        } else {
-            currentCompletion = CompletionParser.parse(freeText.getText(), fieldsProvider.getCached(),
-                    !QueryTreeOps.containerAt(root, openPath).isEmpty(), openPath.length > 0).orElse(null);
-        }
-
-        if (currentCompletion == null) {
-            hintButton.setVisible(false);
-        } else {
-            hintButton.setText(hintText(currentCompletion) + " ⇥");
-            hintButton.setToolTipText("Press Tab to apply");
-            hintButton.setVisible(true);
-        }
-        hintButton.getParent().revalidate();
-        validateFreeText();
-    }
-
-    /**
-     * Advisory live validation: syntax problems and unknown fields show as a warning outline
-     * (FlatLaf) with the explanation as tooltip; the search still runs either way. No warning
-     * while a completion is offered - a half-typed field name is not a mistake yet.
-     */
-    private void validateFreeText() {
-        String problem = currentCompletion != null ? null
-                : QueryValidator.validate(freeText.getText(), fieldsProvider.getCached()).orElse(null);
-        freeText.putClientProperty("JComponent.outline", problem == null ? null : "warning");
-        if (problem != null)
-            freeText.setToolTipText(GuiUtils.formatToolTip(problem));
-        else
-            freeText.setToolTipText(null);
-    }
-
-    private static String hintText(Completion completion) {
-        if (completion instanceof Completion.CloseGroup)
-            return ") close group";
-        if (completion instanceof Completion.OpenGroup group) {
-            return (group.logic() != null ? group.logic() + " " : "")
-                    + (group.groupNegated() ? "NOT " : "") + "( "
-                    + (group.clause() != null ? clauseHint(group.clause()) : "group");
-        }
-        return clauseHint((Completion.ClauseStart) completion);
-    }
-
-    private static String clauseHint(Completion.ClauseStart clause) {
-        return (clause.logic() != null ? clause.logic() + " " : "")
-                + (clause.negated() ? "NOT " : "") + clause.field().getName();
-    }
-
-    private void applyCompletion() {
-        Completion completion = currentCompletion;
-        if (completion == null)
-            return;
-        freeText.setText("");
-
-        if (completion instanceof Completion.CloseGroup) {
-            doCloseGroup();
-        } else if (completion instanceof Completion.OpenGroup group) {
-            // the connector joins the group itself and must not leak into the next clause
-            doOpenGroup(group.groupNegated(), group.logic() != null ? group.logic() : nextLogic);
-            if (group.clause() != null)
-                beginDraft(group.clause().field(), group.clause().negated());
-        } else if (completion instanceof Completion.ClauseStart clause) {
-            if (clause.logic() != null)
-                nextLogic = clause.logic();
-            beginDraft(clause.field(), clause.negated());
-        }
-        rebuild();
-    }
-
-    // --- tree mutations ---
-
-    private void doOpenGroup(boolean negated, LogicOp logic) {
-        QueryTreeOps.PathResult result = QueryTreeOps.openGroup(root, openPath, negated, logic);
-        root = result.root();
-        openPath = result.path();
-    }
-
-    private void doCloseGroup() {
-        QueryTreeOps.PathResult result = QueryTreeOps.closeGroup(root, openPath);
-        root = result.root();
-        openPath = result.path();
-    }
-
-    private void removeNode(String nodeId) {
-        root = QueryTreeOps.removeNodeById(root, nodeId);
-        openPath = QueryTreeOps.resolvePath(root, openPath);
-        rebuild();
-    }
-
-    private void beginDraft(SearchableField field, boolean negated) {
-        draft = new Draft(field, negated);
-        rebuild();
-        SwingUtilities.invokeLater(draft::focusValue);
-    }
-
-    private void commitDraft() {
-        if (draft == null)
-            return;
-        QueryClause clause = draft.toClause();
-        if (clause == null)
-            return; // no value yet
-        root = QueryTreeOps.append(root, openPath, clause, nextLogic);
-        draft = null;
-        rebuild();
-        freeText.requestFocusInWindow();
-    }
-
-    private void cancelDraft() {
-        draft = null;
-        rebuild();
-        freeText.requestFocusInWindow();
-    }
-
     // --- rendering ---
 
     private void rebuild() {
-        chipsPanel.removeAll();
+        inlineRow.removeAll();
 
         for (ModelChip chip : modelChipSupplier.get())
-            chipsPanel.add(new ChipComponent(chip.label(), chip.tooltip() == null
+            inlineRow.add(new ChipComponent(chip.label(), chip.tooltip() == null
                     ? "Filter from the filter dialog - click to open it"
                     : chip.tooltip() + " (filter dialog)", ChipComponent.Style.MODEL,
                     () -> {
@@ -445,23 +449,27 @@ public class SearchBarOverlay extends JDialog {
         List<QueryNode> items = root.items();
         for (int i = 0; i < items.size(); i++) {
             if (i > 0)
-                chipsPanel.add(buildLogicComponent(root.logics().get(i - 1), new int[]{i}));
-            chipsPanel.add(buildNode(items.get(i), new int[]{i}));
-        }
-        if (openPath.length == 0 && draft != null)
-            chipsPanel.add(draft.panel);
-
-        if (chipsPanel.getComponentCount() == 0) {
-            JLabel empty = new JLabel("No filters yet - type a field name below or use 'Add Filter'");
-            empty.setEnabled(false);
-            chipsPanel.add(empty);
+                inlineRow.add(buildLogicComponent(root.logics().get(i - 1), new int[]{i}));
+            inlineRow.add(buildNode(items.get(i), new int[]{i}));
         }
 
-        updateCompletionHint();
-        chipsPanel.revalidate();
-        chipsPanel.repaint();
+        // the staged token fragments and the input render inside the open group, if any
+        if (openPath.length == 0)
+            addStagedFragmentsAndInput(inlineRow);
+
+        input.setPlaceholder(tokenModel.stagePrompt());
+        refreshSuggestions();
+        inlineRow.revalidate();
+        inlineRow.repaint();
         if (isVisible())
             resizeToFit();
+    }
+
+    private void addStagedFragmentsAndInput(JPanel target) {
+        for (String fragment : tokenModel.pendingFragments())
+            target.add(new ChipComponent(fragment, "Being built - Backspace removes it",
+                    ChipComponent.Style.USER, null, null));
+        target.add(input);
     }
 
     private JComponent buildLogicComponent(LogicOp logic, int[] pathOfFollowingNode) {
@@ -491,7 +499,11 @@ public class SearchBarOverlay extends JDialog {
         if (node instanceof QueryClause clause) {
             String text = (clause.negated() ? "NOT " : "") + clause.field() + " " + clauseBody(clause);
             return new ChipComponent(text, LuceneQueryCompiler.render(clause), ChipComponent.Style.USER,
-                    null, () -> removeNode(clause.id()));
+                    null, () -> {
+                root = QueryTreeOps.removeNodeById(root, clause.id());
+                openPath = QueryTreeOps.resolvePath(root, openPath);
+                rebuild();
+            });
         }
 
         QueryGroup group = (QueryGroup) node;
@@ -526,9 +538,9 @@ public class SearchBarOverlay extends JDialog {
             groupPanel.add(buildNode(children.get(i), childPath));
         }
 
-        // clauses typed while this group is open belong inside it, so the draft renders here
-        if (open && draft != null)
-            groupPanel.add(draft.panel);
+        // tokens built while this group is open belong inside it, so fragments + input render here
+        if (open)
+            addStagedFragmentsAndInput(groupPanel);
 
         JLabel closing = parenLabel(")");
         if (open) {
@@ -537,8 +549,9 @@ public class SearchBarOverlay extends JDialog {
             closing.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    doCloseGroup();
+                    applyEvent(new TokenInputModel.Event.CloseGroup());
                     rebuild();
+                    input.requestFocusInWindow();
                 }
             });
         }
@@ -551,7 +564,9 @@ public class SearchBarOverlay extends JDialog {
             remove.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    removeNode(group.id());
+                    root = QueryTreeOps.removeNodeById(root, group.id());
+                    openPath = QueryTreeOps.resolvePath(root, openPath);
+                    rebuild();
                 }
             });
             groupPanel.add(remove);
@@ -611,209 +626,6 @@ public class SearchBarOverlay extends JDialog {
                 g2.dispose();
             }
             super.paintComponent(g);
-        }
-    }
-
-    // --- add filter menu ---
-
-    private JPopupMenu buildAddFilterMenu() {
-        JPopupMenu menu = new JPopupMenu();
-        List<SearchableField> fields = fieldsProvider.getCached().stream()
-                .sorted(Comparator.comparing(SearchableField::getName)).toList();
-
-        if (fields.isEmpty()) {
-            JMenuItem loading = new JMenuItem("Loading searchable fields...");
-            loading.setEnabled(false);
-            menu.add(loading);
-        }
-
-        // nested fields (topAnnotations.*, tags.*, ...) group into submenus by their first segment
-        Map<String, JMenu> submenus = new LinkedHashMap<>();
-        for (SearchableField field : fields) {
-            JMenuItem item = new JMenuItem(field.getName());
-            if (field.getDescription() != null)
-                item.setToolTipText(GuiUtils.formatToolTip(field.getDescription()));
-            item.addActionListener(e -> beginDraft(field, false));
-
-            int dot = field.getName().indexOf('.');
-            if (dot > 0) {
-                String prefix = field.getName().substring(0, dot);
-                submenus.computeIfAbsent(prefix, p -> {
-                    JMenu sub = new JMenu(p);
-                    menu.add(sub);
-                    return sub;
-                }).add(item);
-            } else {
-                menu.add(item);
-            }
-        }
-
-        menu.addSeparator();
-        JMenuItem openGroup = new JMenuItem("Open group (");
-        openGroup.setToolTipText("Group filters with parentheses, e.g. a AND (b OR c)");
-        openGroup.addActionListener(e -> {
-            doOpenGroup(false, nextLogic);
-            rebuild();
-            freeText.requestFocusInWindow();
-        });
-        menu.add(openGroup);
-        if (openPath.length > 0) {
-            JMenuItem closeGroup = new JMenuItem("Close group )");
-            closeGroup.addActionListener(e -> {
-                doCloseGroup();
-                rebuild();
-                freeText.requestFocusInWindow();
-            });
-            menu.add(closeGroup);
-        }
-        return menu;
-    }
-
-    // --- draft clause editor ---
-
-    /**
-     * The clause being built: connector (2nd+ clause), NOT toggle, field, operator (numeric fields)
-     * and value controls - enum/boolean values as combo, text with wildcard support, numeric and
-     * date/time as plain text validated by the server.
-     */
-    private final class Draft {
-        private final SearchableField field;
-        private final JPanel panel;
-        private final JToggleButton notButton;
-        @Nullable
-        private final JComboBox<NumberOp> opBox;
-        @Nullable
-        private final JComboBox<String> valueCombo;
-        @Nullable
-        private final JTextField value1;
-        @Nullable
-        private JTextField value2;
-        @Nullable
-        private JLabel toLabel;
-
-        Draft(SearchableField field, boolean negated) {
-            this.field = field;
-            panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 1));
-            panel.setOpaque(false);
-            panel.setBorder(BorderFactory.createDashedBorder(Colors.Menu.FILTER_BUTTON, 4, 2));
-
-            if (!QueryTreeOps.containerAt(root, openPath).isEmpty()) {
-                JComboBox<LogicOp> connector = new JComboBox<>(LogicOp.values());
-                connector.setToolTipText("How this filter joins the expression before it");
-                connector.setSelectedItem(nextLogic);
-                connector.addActionListener(e -> nextLogic = (LogicOp) connector.getSelectedItem());
-                panel.add(connector);
-            }
-
-            notButton = new JToggleButton("NOT", negated);
-            notButton.setToolTipText("Negate this filter");
-            panel.add(notButton);
-
-            JLabel fieldLabel = new JLabel(field.getName());
-            fieldLabel.setFont(fieldLabel.getFont().deriveFont(Font.BOLD));
-            if (field.getDescription() != null)
-                fieldLabel.setToolTipText(GuiUtils.formatToolTip(field.getDescription()));
-            panel.add(fieldLabel);
-
-            List<String> suggestions = CompletionParser.valueSuggestions(field);
-            if (NUMERIC_TYPES.contains(field.getFieldType())) {
-                opBox = new JComboBox<>(NumberOp.values());
-                opBox.setToolTipText("How the value is compared - [ ] includes the bounds, { } excludes them");
-                opBox.addActionListener(e -> updateRangeVisibility());
-                panel.add(opBox);
-                valueCombo = null;
-
-                value1 = makeValueField(valuePlaceholder(true));
-                panel.add(value1);
-                value2 = makeValueField(valuePlaceholder(false));
-                toLabel = new JLabel("TO");
-                panel.add(toLabel);
-                panel.add(value2);
-            } else if (!suggestions.isEmpty()) {
-                opBox = null;
-                value1 = null;
-                valueCombo = new JComboBox<>(suggestions.toArray(String[]::new));
-                panel.add(valueCombo);
-            } else {
-                opBox = null;
-                valueCombo = null;
-                PlaceholderTextField text = makeValueField("value (*, ?, ~ wildcards)");
-                value1 = text;
-                panel.add(text);
-            }
-
-            JButton add = new JButton("+");
-            add.setToolTipText("Add this filter to the query");
-            add.addActionListener(e -> commitDraft());
-            panel.add(add);
-
-            JButton cancel = new JButton("✕");
-            cancel.setToolTipText("Discard this filter");
-            cancel.addActionListener(e -> cancelDraft());
-            panel.add(cancel);
-        }
-
-        private PlaceholderTextField makeValueField(String placeholder) {
-            PlaceholderTextField valueField = new PlaceholderTextField(9);
-            valueField.setPlaceholder(placeholder);
-            valueField.addKeyListener(new KeyAdapter() {
-                @Override
-                public void keyPressed(KeyEvent e) {
-                    if (e.getKeyCode() == KeyEvent.VK_ENTER)
-                        commitDraft();
-                    else if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
-                        cancelDraft();
-                }
-            });
-            return valueField;
-        }
-
-        private String valuePlaceholder(boolean lower) {
-            return switch (field.getFieldType()) {
-                case DATE -> "yyyy-MM-dd";
-                case TIME -> "HH:mm:ss";
-                default -> lower ? "min" : "max";
-            };
-        }
-
-        private void updateRangeVisibility() {
-            if (opBox == null || value2 == null || toLabel == null)
-                return;
-            boolean range = ((NumberOp) opBox.getSelectedItem()).isRange();
-            value2.setVisible(range);
-            toLabel.setVisible(range);
-            panel.revalidate();
-            panel.repaint();
-            resizeToFit();
-        }
-
-        void focusValue() {
-            if (valueCombo != null)
-                valueCombo.requestFocusInWindow();
-            else if (value1 != null)
-                value1.requestFocusInWindow();
-        }
-
-        /**
-         * The committed clause, or null while no value is set.
-         */
-        @Nullable
-        QueryClause toClause() {
-            boolean negated = notButton.isSelected();
-            if (valueCombo != null)
-                return QueryClause.text(field.getName(), (String) valueCombo.getSelectedItem(), negated);
-
-            String v1 = value1 == null ? "" : value1.getText().trim();
-            if (opBox != null) {
-                NumberOp op = (NumberOp) opBox.getSelectedItem();
-                String v2 = op.isRange() && value2 != null ? value2.getText().trim() : null;
-                if (v1.isEmpty() && (v2 == null || v2.isEmpty()))
-                    return null;
-                return QueryClause.numeric(field.getName(), op, v1, v2, negated);
-            }
-            if (v1.isEmpty())
-                return null;
-            return QueryClause.text(field.getName(), v1, negated);
         }
     }
 }
