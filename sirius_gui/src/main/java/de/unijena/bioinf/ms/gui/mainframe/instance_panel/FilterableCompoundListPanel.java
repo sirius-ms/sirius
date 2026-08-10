@@ -102,7 +102,7 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
 
 
         Box searchButtonPanel = Box.createHorizontalBox();
-        searchButtonPanel.add(view.sourceList.searchField);
+        searchButtonPanel.add(view.sourceList.searchBar);
         searchButtonPanel.add(view.sourceList.openFilterPanelButton);
 
         Box searchPanel = Box.createVerticalBox();
