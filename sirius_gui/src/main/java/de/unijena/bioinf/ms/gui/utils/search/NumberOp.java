@@ -27,21 +27,26 @@ import lombok.Getter;
  */
 @Getter
 public enum NumberOp {
-    RANGE_INCLUSIVE("[a TO b] (inclusive)"),
-    RANGE_EXCLUSIVE("{a TO b} (exclusive)"),
-    GTE(">="),
-    GT(">"),
-    LTE("<="),
-    LT("<"),
-    EQ("=");
+    RANGE_INCLUSIVE("[a TO b] (inclusive)", "[ TO ]"),
+    RANGE_EXCLUSIVE("{a TO b} (exclusive)", "{ TO }"),
+    GTE(">=", ">="),
+    GT(">", ">"),
+    LTE("<=", "<="),
+    LT("<", "<"),
+    EQ("=", "=");
 
     /**
      * Explanatory text for the operator dropdown.
      */
     private final String label;
+    /**
+     * Terse form shown on committed chips and staged token fragments.
+     */
+    private final String symbol;
 
-    NumberOp(String label) {
+    NumberOp(String label, String symbol) {
         this.label = label;
+        this.symbol = symbol;
     }
 
     /**
