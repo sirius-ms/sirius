@@ -37,6 +37,8 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
+import de.unijena.bioinf.ms.gui.utils.search.LuceneSearchBar;
+import de.unijena.bioinf.ms.gui.utils.search.ModelChipFactory;
 import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
@@ -67,7 +69,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @Slf4j
 public class CompoundList {
 
-    final PlaceholderTextField searchField;
+    final LuceneSearchBar searchBar;
     final JToggleSwitch adductToggleSwitch;
     final JToggleSwitch qualityToggleSwitch;
     final JToggleSwitch msMsToggleSwitch;
@@ -97,18 +99,11 @@ public class CompoundList {
         this.projectManager = gui.getProjectManager();
         //additional filter based on specific parameters
         filterModel = projectManager.getFeatureFilterModel();
-        // filter based ion full text field
-        searchField = new PlaceholderTextField();
-        searchField.setDocument(filterModel.getSearchTextDoc());
-        searchField.setPlaceholder("Type and hit enter to search");
-        searchField.setToolTipText("Type text to perform a full text search on the data below. Hit enter to start searching.");
-        searchField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER)
-                    filterModel.fireUpdateCompleted();
-            }
-        });
+        // lucene query search bar: collapsed summary here, chip-based query builder with
+        // autocompletion in an overlay expanding over the result view
+        searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel,
+                () -> ModelChipFactory.chipsFor(filterModel),
+                () -> new FeatureFilterOptionsDialog(gui, filterModel, this));
 
         adductToggleSwitch = makeAdductToggleSwitch(filterModel);
         qualityToggleSwitch = makeQualityToggleSwitch(filterModel);
@@ -237,9 +232,8 @@ public class CompoundList {
 
     public void resetFilter() {
         //filtering consists of the text filter and the filter model
-        filterModel.resetFilter();
-        searchField.setText("");
-        searchField.postActionEvent();
+        filterModel.resetFilter(); //also clears the shared search text document
+        searchBar.refreshSummary();
         colorByActiveFilter();
         updateTogglesByActiveFilter();
     }
