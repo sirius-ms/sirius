@@ -17,6 +17,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getAlignedFeatures**](FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | [DEPRECATED] Get all available features (aligned over runs) in the given project-space |
 | [**getAlignedFeaturesByGroupExperimental**](FeaturesApi.md#getAlignedFeaturesByGroupExperimental) | **GET** /api/projects/{projectId}/aligned-features/grouped | [EXPERIMENTAL] Get features (aligned over runs) by tag group |
 | [**getAlignedFeaturesPage**](FeaturesApi.md#getAlignedFeaturesPage) | **GET** /api/projects/{projectId}/aligned-features/page | Get features (aligned over runs) in the given project-space |
+| [**getAlignedFeaturesSearchableFields**](FeaturesApi.md#getAlignedFeaturesSearchableFields) | **GET** /api/projects/{projectId}/aligned-features/searchable-fields | Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints |
 | [**getBestMatchingCompoundClasses**](FeaturesApi.md#getBestMatchingCompoundClasses) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes | Return Best matching compound classes for given formulaId |
 | [**getCanopusPrediction**](FeaturesApi.md#getCanopusPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction | All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities, |
 | [**getDeNovoStructureCandidates**](FeaturesApi.md#getDeNovoStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | [DEPRECATED] List of de novo structure candidates (e |
@@ -899,7 +900,7 @@ No authorization required
 
 Get features (aligned over runs) in the given project-space
 
-Get features (aligned over runs) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;boolean&lt;/strong&gt;: tags with boolean value are matched as follows: e.g. &lt;code&gt;tags.MyTagA:true&lt;/code&gt;, &lt;code&gt;tags.MyTagA:false&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;value-less&lt;/strong&gt;: tags without values (See TagDefinition) are matched as follows: e.g. &lt;code&gt;tags.MyTagA:*&lt;/code&gt; or &lt;code&gt;tags.MyTagA:true&lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
+Get features (aligned over runs) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Searchable fields are the indexed properties of the feature (e.g. &lt;code&gt;ionMass&lt;/code&gt;, &lt;code&gt;name&lt;/code&gt;,  &lt;code&gt;quality&lt;/code&gt;, &lt;code&gt;hasMsMs&lt;/code&gt;), its annotations addressed via dot notation  (e.g. &lt;code&gt;topAnnotations.structureAnnotation.structureName&lt;/code&gt;), and project tags prefixed with the  namespace &lt;code&gt;tags.&lt;/code&gt; (e.g. &lt;code&gt;tags.MyTag&lt;/code&gt;).  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getAlignedFeaturesSearchableFields) to list all fields that  can be searched, including their value type, whether they support word based (full text) search, and  whether results can be sorted by them.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;name:&amp;quot;Bicuculline methiodide&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;ionMass&amp;lt;300&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;boolean&lt;/strong&gt;: boolean fields are matched as follows: e.g. &lt;code&gt;hasMsMs:true&lt;/code&gt;, &lt;code&gt;tags.MyTagA:false&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;value-less&lt;/strong&gt;: tags without values (See TagDefinition) are matched as follows: e.g. &lt;code&gt;tags.MyTagA:*&lt;/code&gt; or &lt;code&gt;tags.MyTagA:true&lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:&amp;quot;Alkaloids&amp;quot; AND tags.city:&amp;quot;new york&amp;quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
 
 ### Example
 
@@ -969,6 +970,72 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | tagged features (aligned over runs) |  -  |
+
+
+## getAlignedFeaturesSearchableFields
+
+> List&lt;SearchableField&gt; getAlignedFeaturesSearchableFields(projectId)
+
+Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints
+
+Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints.  &lt;p&gt;  Use this to build valid lucene queries: the field type determines which clauses are supported  (e.g. range queries like &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt; for numeric fields, word based search for  full-text fields). Includes the dynamic tag fields (&lt;code&gt;tags.&amp;lt;tagName&amp;gt;&lt;/code&gt;) of this project.  An empty list means there are no searchable fields.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project space to read the searchable feature fields from.
+        try {
+            List<SearchableField> result = apiInstance.getAlignedFeaturesSearchableFields(projectId);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getAlignedFeaturesSearchableFields");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project space to read the searchable feature fields from. | |
+
+### Return type
+
+[**List&lt;SearchableField&gt;**](SearchableField.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | fields usable in searchQuery parameters of feature endpoints. |  -  |
 
 
 ## getBestMatchingCompoundClasses

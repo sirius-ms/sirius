@@ -134,6 +134,7 @@ Class | Method | HTTP request | Description
 *CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space
 *CompoundsApi* | [**getCompoundsByGroupExperimental**](docs/CompoundsApi.md#getCompoundsByGroupExperimental) | **GET** /api/projects/{projectId}/compounds/grouped | [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
 *CompoundsApi* | [**getCompoundsPage**](docs/CompoundsApi.md#getCompoundsPage) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space
+*CompoundsApi* | [**getCompoundsSearchableFields**](docs/CompoundsApi.md#getCompoundsSearchableFields) | **GET** /api/projects/{projectId}/compounds/searchable-fields | Get all fields that can be used in the searchQuery parameter of compound endpoints
 *CompoundsApi* | [**getTagsForCompoundExperimental**](docs/CompoundsApi.md#getTagsForCompoundExperimental) | **GET** /api/projects/{projectId}/compounds/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Compound
 *CompoundsApi* | [**removeTagFromCompoundExperimental**](docs/CompoundsApi.md#removeTagFromCompoundExperimental) | **DELETE** /api/projects/{projectId}/compounds/tags/{compoundId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space
 *FeatureStatisticsApi* | [**computeAlignedFeatureFoldChangesExperimental**](docs/FeatureStatisticsApi.md#computeAlignedFeatureFoldChangesExperimental) | **PUT** /api/projects/{projectId}/aligned-features/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs
@@ -153,6 +154,7 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getAlignedFeatures**](docs/FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | [DEPRECATED] Get all available features (aligned over runs) in the given project-space
 *FeaturesApi* | [**getAlignedFeaturesByGroupExperimental**](docs/FeaturesApi.md#getAlignedFeaturesByGroupExperimental) | **GET** /api/projects/{projectId}/aligned-features/grouped | [EXPERIMENTAL] Get features (aligned over runs) by tag group
 *FeaturesApi* | [**getAlignedFeaturesPage**](docs/FeaturesApi.md#getAlignedFeaturesPage) | **GET** /api/projects/{projectId}/aligned-features/page | Get features (aligned over runs) in the given project-space
+*FeaturesApi* | [**getAlignedFeaturesSearchableFields**](docs/FeaturesApi.md#getAlignedFeaturesSearchableFields) | **GET** /api/projects/{projectId}/aligned-features/searchable-fields | Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints
 *FeaturesApi* | [**getBestMatchingCompoundClasses**](docs/FeaturesApi.md#getBestMatchingCompoundClasses) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes | Return Best matching compound classes for given formulaId
 *FeaturesApi* | [**getCanopusPrediction**](docs/FeaturesApi.md#getCanopusPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction | All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
 *FeaturesApi* | [**getDeNovoStructureCandidates**](docs/FeaturesApi.md#getDeNovoStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | [DEPRECATED] List of de novo structure candidates (e
@@ -254,6 +256,7 @@ Class | Method | HTTP request | Description
 *RunsApi* | [**getRun**](docs/RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space.
 *RunsApi* | [**getRunsByGroupExperimental**](docs/RunsApi.md#getRunsByGroupExperimental) | **GET** /api/projects/{projectId}/runs/grouped | [EXPERIMENTAL] Get runs by tag group
 *RunsApi* | [**getRunsPage**](docs/RunsApi.md#getRunsPage) | **GET** /api/projects/{projectId}/runs/page | Get runs in the given project-space
+*RunsApi* | [**getRunsSearchableFields**](docs/RunsApi.md#getRunsSearchableFields) | **GET** /api/projects/{projectId}/runs/searchable-fields | Get all fields that can be used in the searchQuery parameter of run endpoints
 *RunsApi* | [**getTagsForRunExperimental**](docs/RunsApi.md#getTagsForRunExperimental) | **GET** /api/projects/{projectId}/runs/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Run
 *RunsApi* | [**removeTagFromRunExperimental**](docs/RunsApi.md#removeTagFromRunExperimental) | **DELETE** /api/projects/{projectId}/runs/tags/{runId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the run with the specified ID in the specified project-space
 *SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
@@ -395,6 +398,8 @@ Class | Method | HTTP request | Description
  - [RunOptField](docs/RunOptField.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
  - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)
+ - [SearchableField](docs/SearchableField.md)
+ - [SearchableFieldType](docs/SearchableFieldType.md)
  - [SecurityContext](docs/SecurityContext.md)
  - [SecurityContextPrincipal](docs/SecurityContextPrincipal.md)
  - [SimplePeak](docs/SimplePeak.md)

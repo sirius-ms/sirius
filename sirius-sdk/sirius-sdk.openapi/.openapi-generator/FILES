@@ -128,6 +128,8 @@ docs/RunsApi.md
 docs/SearchableDatabase.md
 docs/SearchableDatabaseParameters.md
 docs/SearchableDatabasesApi.md
+docs/SearchableField.md
+docs/SearchableFieldType.md
 docs/SecurityContext.md
 docs/SecurityContextPrincipal.md
 docs/SimplePeak.md
@@ -311,6 +313,8 @@ src/main/java/io/sirius/ms/sdk/model/ReactionSequenceStepsInner.java
 src/main/java/io/sirius/ms/sdk/model/Run.java
 src/main/java/io/sirius/ms/sdk/model/RunOptField.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabaseParameters.java
+src/main/java/io/sirius/ms/sdk/model/SearchableField.java
+src/main/java/io/sirius/ms/sdk/model/SearchableFieldType.java
 src/main/java/io/sirius/ms/sdk/model/SecurityContext.java
 src/main/java/io/sirius/ms/sdk/model/SecurityContextPrincipal.java
 src/main/java/io/sirius/ms/sdk/model/SimplePeak.java
