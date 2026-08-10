@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import io.sirius.ms.gui.webView.BrowserPanel;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +39,11 @@ import java.util.function.Supplier;
  * Window showing one of the web views of a custom database. There is at most one live window per
  * kind of view and database, so the same content cannot be opened twice.
  * <p>
+ * The web view shows a loading animation until it has been created in the background, so this
+ * window opens immediately, see {@code BrowserPanelProvider#newLoadingBrowserPanel}.
+ * <p>
  * The windows are disposed instead of hidden when closed, since the web view releases its browser
- * resources when it is removed from the window (see {@code BrowserPanel#removeNotify()}). Showing a
+ * resources when it is removed from the window (see {@link BrowserPanel#removeNotify()}). Showing a
  * view again therefore creates a new window with a fresh web view.
  */
 public class CustomDbBrowserWindow extends JFrame {
@@ -64,7 +68,8 @@ public class CustomDbBrowserWindow extends JFrame {
      */
     public synchronized static void showDatabaseContent(@NotNull SearchableDatabase db, @NotNull CustomDbContext context, @Nullable Window relativeTo) {
         show(new WindowKey(View.CONTENT, db.getDatabaseId()), "Database: " + db.getDisplayName(),
-                () -> new DatabaseContentPanel(db.getDatabaseId(), context.browserPanelProvider()), relativeTo, null);
+                () -> context.browserPanelProvider().makeReactPanel("/database", "databaseId", db.getDatabaseId()),
+                relativeTo, null);
     }
 
     /**
@@ -75,7 +80,8 @@ public class CustomDbBrowserWindow extends JFrame {
      */
     public synchronized static void showReactionTool(@NotNull SearchableDatabase db, @NotNull CustomDbContext context, @Nullable Window relativeTo, @Nullable Runnable onClosed) {
         show(new WindowKey(View.REACTION_TOOL, db.getDatabaseId()), "Transformation products: " + db.getDisplayName(),
-                () -> new ReactionToolPanel(db.getDatabaseId(), context.browserPanelProvider()), relativeTo, onClosed);
+                () -> context.browserPanelProvider().makeReactPanel("/reactionTool", "customdb", db.getDatabaseId()),
+                relativeTo, onClosed);
     }
 
     /**
@@ -96,7 +102,7 @@ public class CustomDbBrowserWindow extends JFrame {
         new ArrayList<>(INSTANCES.values()).forEach(Window::dispose);
     }
 
-    private static void show(@NotNull WindowKey key, @NotNull String title, @NotNull Supplier<JPanel> contentFactory,
+    private static void show(@NotNull WindowKey key, @NotNull String title, @NotNull Supplier<BrowserPanel> contentFactory,
                              @Nullable Window relativeTo, @Nullable Runnable onClosed) {
         CustomDbBrowserWindow window = INSTANCES.get(key);
         if (window != null) {
@@ -119,11 +125,13 @@ public class CustomDbBrowserWindow extends JFrame {
 
     private final WindowKey key;
 
-    private CustomDbBrowserWindow(@NotNull WindowKey key, @NotNull String title, @NotNull JPanel content, @Nullable Runnable onClosed) {
+    private CustomDbBrowserWindow(@NotNull WindowKey key, @NotNull String title, @NotNull BrowserPanel content, @Nullable Runnable onClosed) {
         super(title);
         this.key = key;
 
         setLayout(new BorderLayout());
+        //the web view has no meaningful preferred size of its own, so the window size is defined here
+        content.setPreferredSize(GuiUtils.LARGE_CONTENT_SIZE);
         add(content, BorderLayout.CENTER);
 
         //disposing releases the browser resources of the web view and is needed to reload it correctly
