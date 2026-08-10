@@ -3814,13 +3814,49 @@
         }
       }
     },
+    "/api/projects/{projectId}/runs/searchable-fields": {
+      "get": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Get all fields that can be used in the searchQuery parameter of run endpoints",
+        "description": "Get all fields that can be used in the searchQuery parameter of run endpoints.\n \u003cp\u003e\n Use this to build valid lucene queries: the field type determines which clauses are supported\n (e.g. range queries for numeric fields, word based search for full-text fields). Includes the\n dynamic tag fields (\u003ccode\u003etags.\u0026lt;tagName\u0026gt;\u003c/code\u003e) of this project. An empty list means there are no\n searchable fields.",
+        "operationId": "getRunsSearchableFields",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project space to read the searchable run fields from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "fields usable in searchQuery parameters of run endpoints.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchableField"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/runs/page": {
       "get": {
         "tags": [
           "Runs"
         ],
         "summary": "Get runs in the given project-space",
-        "description": "Get runs in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n\n Currently the only searchable fields are names of tags (\u003ccode\u003etagName\u003c/code\u003e) followed by a clause that is valued for the value type of the tag (See TagDefinition).\n Tag name based field need to be prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types of tags are \u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
+        "description": "Get runs in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n\n Searchable fields are the indexed properties of the run (e.g. \u003ccode\u003ename\u003c/code\u003e, \u003ccode\u003esource\u003c/code\u003e,\n \u003ccode\u003echromatography\u003c/code\u003e, \u003ccode\u003eionization\u003c/code\u003e) and project tags prefixed with the namespace\n \u003ccode\u003etags.\u003c/code\u003e (e.g. \u003ccode\u003etags.MyTag\u003c/code\u003e).\n Use the \u003ccode\u003esearchable-fields\u003c/code\u003e endpoint (getRunsSearchableFields) to list all fields that can be\n searched, including their value type, whether they support word based (full text) search, and whether\n results can be sorted by them.\n Possible value types are \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003edouble\u003c/strong\u003e,\n \u003cstrong\u003eboolean\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e.\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003echromatography:LC\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003ename:\u0026quot;Blank Sample 25\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003ename:\u0026quot;Blank\u0026quot; AND chromatography:LC AND tags.city:\u0026quot;new york\u0026quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
         "operationId": "getRunsPage",
         "parameters": [
           {
@@ -4843,6 +4879,42 @@
         }
       }
     },
+    "/api/projects/{projectId}/compounds/searchable-fields": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "Get all fields that can be used in the searchQuery parameter of compound endpoints",
+        "description": "Get all fields that can be used in the searchQuery parameter of compound endpoints.\n \u003cp\u003e\n An empty list means there are no searchable fields. Since compound-level indexing is not implemented yet,\n this currently always returns an empty list; it will list the searchable compound fields once compound\n search is supported.",
+        "operationId": "getCompoundsSearchableFields",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project space to read the searchable compound fields from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "fields usable in searchQuery parameters of compound endpoints.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchableField"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/compounds/quant-table": {
       "get": {
         "tags": [
@@ -4919,7 +4991,7 @@
           "Compounds"
         ],
         "summary": "Page of available compounds (group of ion identities) in the given project-space",
-        "description": "Page of available compounds (group of ion identities) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n \u003cp\u003e\n Currently the only searchable fields are names of tags (\u003ccode\u003etagName\u003c/code\u003e) followed by a clause that is valued for the value type of the tag (See TagDefinition).\n Tag name based field need to be prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types of tags are \u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n \u003cp\u003e\n \u003cstrong\u003eNote:\u003c/strong\u003e compound-level indexing is not implemented yet, so this endpoint always reads from the\n project database. Passing a non-empty \u003ccode\u003esearchQuery\u003c/code\u003e is therefore not supported and responds with\n 405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.",
+        "description": "Page of available compounds (group of ion identities) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n \u003cp\u003e\n Use the \u003ccode\u003esearchable-fields\u003c/code\u003e endpoint (getCompoundsSearchableFields) to list the fields that can be\n searched - since compound-level indexing is not implemented yet, it currently returns an empty list\n (nothing searchable). The syntax below describes how queries will work once compound search is supported;\n tag based fields are prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types are \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003edouble\u003c/strong\u003e,\n \u003cstrong\u003eboolean\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e.\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n \u003cp\u003e\n \u003cstrong\u003eNote:\u003c/strong\u003e compound-level indexing is not implemented yet, so this endpoint always reads from the\n project database. Passing a non-empty \u003ccode\u003esearchQuery\u003c/code\u003e is therefore not supported and responds with\n 405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.",
         "operationId": "getCompoundsPage",
         "parameters": [
           {
@@ -7981,6 +8053,42 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/searchable-fields": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints",
+        "description": "Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints.\n \u003cp\u003e\n Use this to build valid lucene queries: the field type determines which clauses are supported\n (e.g. range queries like \u003ccode\u003eionMass:[300 TO 400]\u003c/code\u003e for numeric fields, word based search for\n full-text fields). Includes the dynamic tag fields (\u003ccode\u003etags.\u0026lt;tagName\u0026gt;\u003c/code\u003e) of this project.\n An empty list means there are no searchable fields.",
+        "operationId": "getAlignedFeaturesSearchableFields",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project space to read the searchable feature fields from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "fields usable in searchQuery parameters of feature endpoints.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchableField"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/quant-table": {
       "get": {
         "tags": [
@@ -8057,7 +8165,7 @@
           "Features"
         ],
         "summary": "Get features (aligned over runs) in the given project-space",
-        "description": "Get features (aligned over runs) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n\n Currently the only searchable fields are names of tags (\u003ccode\u003etagName\u003c/code\u003e) followed by a clause that is valued for the value type of the tag (See TagDefinition).\n Tag name based field need to be prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types of tags are \u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eboolean\u003c/strong\u003e: tags with boolean value are matched as follows: e.g. \u003ccode\u003etags.MyTagA:true\u003c/code\u003e, \u003ccode\u003etags.MyTagA:false\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003evalue-less\u003c/strong\u003e: tags without values (See TagDefinition) are matched as follows: e.g. \u003ccode\u003etags.MyTagA:*\u003c/code\u003e or \u003ccode\u003etags.MyTagA:true\u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
+        "description": "Get features (aligned over runs) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n\n Searchable fields are the indexed properties of the feature (e.g. \u003ccode\u003eionMass\u003c/code\u003e, \u003ccode\u003ename\u003c/code\u003e,\n \u003ccode\u003equality\u003c/code\u003e, \u003ccode\u003ehasMsMs\u003c/code\u003e), its annotations addressed via dot notation\n (e.g. \u003ccode\u003etopAnnotations.structureAnnotation.structureName\u003c/code\u003e), and project tags prefixed with the\n namespace \u003ccode\u003etags.\u003c/code\u003e (e.g. \u003ccode\u003etags.MyTag\u003c/code\u003e).\n Use the \u003ccode\u003esearchable-fields\u003c/code\u003e endpoint (getAlignedFeaturesSearchableFields) to list all fields that\n can be searched, including their value type, whether they support word based (full text) search, and\n whether results can be sorted by them.\n Possible value types are \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003edouble\u003c/strong\u003e,\n \u003cstrong\u003eboolean\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e.\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003ename:\u0026quot;Bicuculline methiodide\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003eionMass\u0026lt;300\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003eionMass:[300 TO 400]\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eboolean\u003c/strong\u003e: boolean fields are matched as follows: e.g. \u003ccode\u003ehasMsMs:true\u003c/code\u003e, \u003ccode\u003etags.MyTagA:false\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003evalue-less\u003c/strong\u003e: tags without values (See TagDefinition) are matched as follows: e.g. \u003ccode\u003etags.MyTagA:*\u003c/code\u003e or \u003ccode\u003etags.MyTagA:true\u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003eionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:\u0026quot;Alkaloids\u0026quot; AND tags.city:\u0026quot;new york\u0026quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
         "operationId": "getAlignedFeaturesPage",
         "parameters": [
           {
@@ -12423,6 +12531,64 @@
             "nullable": true
           }
         }
+      },
+      "SearchableField": {
+        "required": [
+          "fieldType",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the field to be used in search queries, e.g. \u003ccode\u003eionMass:[300 TO 400]\u003c/code\u003e.\n Nested fields are addressed with dot notation. A trailing \u003ccode\u003e.*\u003c/code\u003e means the prefix is followed\n by a dynamic key, e.g. \u003ccode\u003etags.\u0026lt;tagName\u0026gt;\u003c/code\u003e or an element symbol in \u003ccode\u003emolecularFormula.\u0026lt;element\u0026gt;\u003c/code\u003e."
+          },
+          "fieldType": {
+            "$ref": "#/components/schemas/SearchableFieldType"
+          },
+          "fullTextSearch": {
+            "type": "boolean",
+            "description": "If true, the field content is split into words and can be searched word by word (full text search).\n If false, TEXT fields only match as exact terms (though wildcards and regex are still possible)."
+          },
+          "sortable": {
+            "type": "boolean",
+            "description": "If true, search results can be sorted by this field."
+          },
+          "defaultSearchField": {
+            "type": "boolean",
+            "description": "If true, this field is searched when a query term does not specify a field name."
+          },
+          "possibleValues": {
+            "type": "array",
+            "description": "For ENUM fields: the values this field can take. Null otherwise.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional human-readable description of the field content, as shown in the API documentation.\n Plain text suitable for direct display (e.g. tooltips); deliberate paragraph breaks are newlines.",
+            "nullable": true
+          }
+        },
+        "description": "Describes one field of the search index that can be used in lucene search queries (searchQuery parameter).\n Use this information to build valid queries, e.g. which fields support range queries ([300 TO 400])\n and which support word based (full text) search."
+      },
+      "SearchableFieldType": {
+        "type": "string",
+        "description": "Value type of a searchable field. Determines which query clauses are valid for the field:\n TEXT supports terms, phrases, wildcards and regular expressions; numeric types (INTEGER, LONG, DOUBLE,\n FLOAT), DATE (yyyy-MM-dd) and TIME (HH\\:mm\\:ss) additionally support comparisons and range queries;\n BOOLEAN matches true/false; ENUM matches one of the possibleValues.",
+        "enum": [
+          "TEXT",
+          "INTEGER",
+          "LONG",
+          "DOUBLE",
+          "FLOAT",
+          "BOOLEAN",
+          "DATE",
+          "TIME",
+          "ENUM"
+        ]
       },
       "PagedModelRun": {
         "type": "object",
