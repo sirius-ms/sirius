@@ -63,24 +63,42 @@ public class TokenInputModelTest {
                                 .map(TokenInputModel.Suggestion::display).toList()));
     }
 
-    // --- IDLE suggestions ---
+    // --- entry-stage suggestions ---
 
     @Test
-    public void testIdleListsAllFieldsAndApplicableTokens() {
+    public void testFieldStageListsAllFieldsAndApplicableTokens() {
+        // no sibling -> entry stage is FIELD
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage());
         List<String> displays = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
         assertTrue(displays.containsAll(List.of("ionMass", "name", "quality", "hasMsMs", "tags.city")));
         assertTrue(displays.contains("NOT"));
         assertTrue(displays.contains("("));
-        // no sibling, no open group -> no connectors, no closing paren
+        // connectors live in their own stage, never in the field list; no group open -> no ')'
         assertFalse(displays.contains("AND"));
+        assertFalse(displays.contains("OR"));
         assertFalse(displays.contains(")"));
     }
 
     @Test
-    public void testConnectorsOfferedWithSiblingAndCloseParenWithOpenGroup() {
-        model.updateContext(FIELDS, true, true);
+    public void testWithSiblingTheEntryStageIsConnector() {
+        model.updateContext(FIELDS, true, false);
+        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage());
         List<String> displays = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
-        assertTrue(displays.containsAll(List.of("AND", "OR", ")")));
+        assertEquals(List.of("AND", "OR"), displays, "the connector stage offers only AND/OR");
+
+        // choosing a connector advances to the field stage, where fields and ')' appear
+        model.updateContext(FIELDS, true, true);
+        model.choose(suggestion("OR", ""));
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage());
+        List<String> fieldStage = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
+        assertTrue(fieldStage.containsAll(List.of("ionMass", "NOT", "(", ")")));
+        assertFalse(fieldStage.contains("AND"));
+    }
+
+    @Test
+    public void testTypingNarrowsConnectors() {
+        model.updateContext(FIELDS, true, false);
+        assertEquals(List.of("OR"), model.suggestions("o").stream().map(TokenInputModel.Suggestion::display).toList());
     }
 
     @Test
@@ -96,6 +114,7 @@ public class TokenInputModelTest {
 
     @Test
     public void testTextFieldGoesStraightToValueStage() {
+        // no sibling -> starts at FIELD, choose a field directly
         model.choose(suggestion("name", ""));
         assertEquals(TokenInputModel.Stage.VALUE, model.stage());
         assertTrue(model.suggestions("").isEmpty(), "free text values have no suggestions");
@@ -106,7 +125,7 @@ public class TokenInputModelTest {
         assertEquals("caffeine", completed.clause().value1());
         assertNull(completed.clause().op());
         assertEquals(LogicOp.AND, completed.logic());
-        assertEquals(TokenInputModel.Stage.IDLE, model.stage());
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage());
     }
 
     @Test
@@ -181,7 +200,10 @@ public class TokenInputModelTest {
         assertTrue(completed.clause().negated());
         assertEquals(LogicOp.OR, completed.logic());
 
-        // pending state must not leak into the next clause
+        // pending state must not leak into the next clause: the next token starts at the connector
+        // stage again with no negation carried over
+        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage());
+        model.choose(suggestion("AND", ""));
         model.choose(suggestion("name", ""));
         TokenInputModel.Event.ClauseCompleted second = (TokenInputModel.Event.ClauseCompleted)
                 model.submitTyped("x").orElseThrow();
@@ -190,15 +212,21 @@ public class TokenInputModelTest {
     }
 
     @Test
-    public void testChosenTokensDisappearFromTheSuggestions() {
-        model.updateContext(FIELDS, true, false);
+    public void testFieldStageHidesAlreadyChosenNot() {
+        // no sibling -> FIELD stage, NOT selectable then gone once pending
         model.choose(suggestion("NOT", ""));
-        List<String> displays = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
-        assertFalse(displays.contains("NOT"), "NOT is already pending");
+        assertFalse(model.suggestions("").stream().anyMatch(s -> s.display().equals("NOT")),
+                "NOT is already pending");
+    }
 
+    @Test
+    public void testConnectorsLeaveTheListOnceChosen() {
+        model.updateContext(FIELDS, true, false);
         model.choose(suggestion("AND", ""));
-        displays = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
-        assertFalse(displays.contains("AND"), "connector is already pending");
+        // choosing a connector advances to the field stage, which no longer offers connectors
+        List<String> displays = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
+        assertFalse(displays.contains("AND"));
+        assertFalse(displays.contains("OR"));
     }
 
     @Test
@@ -234,7 +262,7 @@ public class TokenInputModelTest {
     @Test
     public void testUnmatchedTypedTextIsFreeText() {
         assertTrue(model.submitTyped("caffeine metabolite").isEmpty());
-        assertEquals(TokenInputModel.Stage.IDLE, model.stage());
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage());
         assertTrue(model.pendingFragments().isEmpty(), "free text must not consume a stage");
     }
 
@@ -242,7 +270,7 @@ public class TokenInputModelTest {
 
     @Test
     public void testBackspacePopsStages() {
-        model.updateContext(FIELDS, true, false);
+        // no sibling -> NOT is choosable directly at the field stage
         model.choose(suggestion("NOT", ""));
         model.choose(suggestion("ionMass", ""));
         model.choose(model.suggestions(">=").get(0));
@@ -252,7 +280,7 @@ public class TokenInputModelTest {
         assertEquals(TokenInputModel.Stage.OPERATOR, model.stage());
 
         assertTrue(model.backspaceOnEmpty().isEmpty());
-        assertEquals(TokenInputModel.Stage.IDLE, model.stage());
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage());
         assertEquals(List.of("NOT"), model.pendingFragments(), "field popped, NOT still pending");
 
         assertTrue(model.backspaceOnEmpty().isEmpty());
@@ -260,6 +288,18 @@ public class TokenInputModelTest {
 
         // nothing pending anymore -> ask the owner to remove the last committed chip
         assertInstanceOf(TokenInputModel.Event.RemoveLastNode.class, model.backspaceOnEmpty().orElseThrow());
+    }
+
+    @Test
+    public void testBackspaceFromFieldStageClearsTheConnectorBackToConnectorStage() {
+        model.updateContext(FIELDS, true, false);
+        model.choose(suggestion("OR", "")); // CONNECTOR -> FIELD, pending OR
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage());
+
+        assertTrue(model.backspaceOnEmpty().isEmpty()); // clears the pending connector
+        model.updateContext(FIELDS, true, false);       // owner re-syncs the context
+        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage());
+        assertTrue(model.pendingFragments().isEmpty());
     }
 
     @Test
