@@ -285,13 +285,38 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * Get list of features that were aligned over runs with the given identifier from the specified project-space.
+     * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in.
+     * <p>
+     * A feature carries what is specific to the run it was detected in: where it sits on that run's retention time
+     * axis, the m/z it was measured at there, and how much of it was measured. Use the run id to relate it to the run
+     * it belongs to; a feature of a project that was imported from preprocessed data belongs to no run and has none.
      *
      * @param projectId        project-space to read from.
-     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return AlignedFeature with additional annotations and MS/MS data (if specified).
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @param pageable         pageable.
+     * @return Features of this feature (aligned over runs).
      */
-    @Hidden
+    @Operation(operationId = "getFeaturesPage")
+    @GetMapping(value = "/{alignedFeatureId}/features/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<Feature> getFeaturesPage(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId,
+            @ParameterObject Pageable pageable
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findFeaturesByAlignedFeatureId(alignedFeatureId, pageable);
+    }
+
+    /**
+     * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from.
+     * <p>
+     * [DEPRECATED] Use /features/page instead. Loading all features at once does not scale for a project with many
+     * runs, since a feature is aligned from one feature per run it was detected in.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @return Features of this feature (aligned over runs).
+     */
+    @Deprecated(forRemoval = true)
+    @Operation(operationId = "getFeatures")
     @GetMapping(value = "/{alignedFeatureId}/features", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Feature> getFeatures(
             @PathVariable String projectId, @PathVariable String alignedFeatureId

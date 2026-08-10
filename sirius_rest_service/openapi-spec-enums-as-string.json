@@ -7329,6 +7329,128 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/features": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "[DEPRECATED] Get all features the given feature (aligned over runs) was aligned from",
+        "description": "[DEPRECATED] Get all features the given feature (aligned over runs) was aligned from.\n \u003cp\u003e\n [DEPRECATED] Use /features/page instead. Loading all features at once does not scale for a project with many\n runs, since a feature is aligned from one feature per run it was detected in.",
+        "operationId": "getFeatures",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) whose features to read.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Features of this feature (aligned over runs).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Feature"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/features/page": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in",
+        "description": "Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in.\n \u003cp\u003e\n A feature carries what is specific to the run it was detected in: where it sits on that run\u0027s retention time\n axis, the m/z it was measured at there, and how much of it was measured. Use the run id to relate it to the run\n it belongs to; a feature of a project that was imported from preprocessed data belongs to no run and has none.",
+        "operationId": "getFeaturesPage",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) whose features to read.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Features of this feature (aligned over runs).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelFeature"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures": {
       "get": {
         "tags": [
@@ -12962,6 +13084,86 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FormulaCandidate"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
+          }
+        }
+      },
+      "Feature": {
+        "type": "object",
+        "properties": {
+          "featureId": {
+            "type": "string",
+            "description": "Identifier"
+          },
+          "alignedFeatureId": {
+            "type": "string",
+            "description": "ID of the AlignedFeature this feature belongs to"
+          },
+          "runId": {
+            "type": "string",
+            "description": "ID of the run this feature belongs to"
+          },
+          "averageMz": {
+            "type": "number",
+            "description": "Average m/z over the whole feature",
+            "format": "double",
+            "nullable": true
+          },
+          "apexMz": {
+            "type": "number",
+            "description": "m/z at the apex of the feature, the m/z this feature was measured at in its run",
+            "format": "double",
+            "nullable": true
+          },
+          "rtStartSeconds": {
+            "type": "number",
+            "description": "Start of the feature on the retention time axis in seconds",
+            "format": "double",
+            "nullable": true
+          },
+          "rtEndSeconds": {
+            "type": "number",
+            "description": "End of the feature on the retention time axis in seconds",
+            "format": "double",
+            "nullable": true
+          },
+          "rtApexSeconds": {
+            "type": "number",
+            "description": "Apex of the feature on the retention time axis in seconds",
+            "format": "double",
+            "nullable": true
+          },
+          "rtFwhmSeconds": {
+            "type": "number",
+            "description": "Full width at half maximum of the feature on the retention time axis in seconds",
+            "format": "double",
+            "nullable": true
+          },
+          "apexIntensity": {
+            "type": "number",
+            "description": "Feature Quantity measured as Intensity of the apex of the feature",
+            "format": "double",
+            "nullable": true
+          },
+          "areaUnderCurve": {
+            "type": "number",
+            "description": "Feature Quantity measured as Area under curve of the whole feature",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "description": "A feature as it has been detected in one single run, in contrast to an AlignedFeature which combines the\n features of the same compound over all runs it was detected in.\n \u003cp\u003e\n It provides the properties that are specific to the run it was detected in, such as its position on the\n retention time axis of that run and its quantity within that run."
+      },
+      "PagedModelFeature": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Feature"
             }
           },
           "page": {

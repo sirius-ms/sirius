@@ -27,17 +27,18 @@ import java.util.stream.Stream;
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.LARGE_BATCH_SIZE;
 
 public class Pages {
-    private static final Map<Class<?>, Function<Sort,Pair<String[], Database.SortOrder[]>>> sortMapper = Map.of(
-            AlignedFeatures.class, Pages::sortFeature,
-            Compound.class, Pages::sortCompound,
-            LCMSRun.class, Pages::sortRun,
-            QualityReport.class, Pages::sortFeature,
-            SpectraMatch.class, Pages::sortMatch,
-            FormulaCandidate.class, Pages::sortFormulaCandidate,
-            CsiStructureMatch.class, Pages::sortStructureMatch,
-            DenovoStructureMatch.class, Pages::sortStructureMatch,
-            FoldChange.AlignedFeaturesFoldChange.class, Pages::sortRun,
-            FoldChange.CompoundFoldChange.class, Pages::sortRun
+    private static final Map<Class<?>, Function<Sort,Pair<String[], Database.SortOrder[]>>> sortMapper = Map.ofEntries(
+            Map.entry(AlignedFeatures.class, Pages::sortFeature),
+            Map.entry(Compound.class, Pages::sortCompound),
+            Map.entry(LCMSRun.class, Pages::sortRun),
+            Map.entry(QualityReport.class, Pages::sortFeature),
+            Map.entry(SpectraMatch.class, Pages::sortMatch),
+            Map.entry(FormulaCandidate.class, Pages::sortFormulaCandidate),
+            Map.entry(CsiStructureMatch.class, Pages::sortStructureMatch),
+            Map.entry(DenovoStructureMatch.class, Pages::sortStructureMatch),
+            Map.entry(FoldChange.AlignedFeaturesFoldChange.class, Pages::sortRun),
+            Map.entry(FoldChange.CompoundFoldChange.class, Pages::sortRun),
+            Map.entry(de.unijena.bioinf.ms.persistence.model.core.feature.Feature.class, Pages::sortRunFeature)
     );
 
     /**
@@ -178,6 +179,11 @@ public class Pages {
             orders.add(s.getDirection().isAscending() ? Database.SortOrder.ASCENDING : Database.SortOrder.DESCENDING);
         });
         return Pair.of(properties.toArray(String[]::new), orders.toArray(Database.SortOrder[]::new));
+    }
+
+    /** the features of an aligned feature are ordered by the run they were detected in */
+    public static Pair<String[], Database.SortOrder[]> sortRunFeature(Sort sort) {
+        return sort(sort, Pair.of("runId", Database.SortOrder.ASCENDING), Function.identity());
     }
 
     public static Pair<String[], Database.SortOrder[]> sortRun(Sort sort) {
