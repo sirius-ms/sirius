@@ -1,7 +1,10 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -17,10 +20,13 @@ import java.util.function.Function;
 import de.unijena.bioinf.ms.middleware.service.search.IndexedFields;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,8 +41,21 @@ public class PerPojoSearchContext implements SearchContext {
     protected final ConcurrentHashMap<Class<?>, SinglePojoLuceneIndexManager<?>> indices;
     protected final Map<String, ValueType> tagDefs;
 
+    /**
+     * Provides human-readable descriptions for indexed fields, e.g. from OpenAPI annotations. Injected by the
+     * caller so the lucene machinery stays free of presentation-layer concerns; null for no descriptions.
+     */
+    @Nullable
+    protected final Function<Field, String> fieldDescriptionProvider;
+
     public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions) {
+        this(indexRootDir, tagDefinitions, null);
+    }
+
+    public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
+                                @Nullable Function<Field, String> fieldDescriptionProvider) {
         this.indexRootDir = indexRootDir;
+        this.fieldDescriptionProvider = fieldDescriptionProvider;
         indices = new ConcurrentHashMap<>();
         tagDefs = tagDefinitions != null ? tagDefinitions : new HashMap<>();
     }
@@ -160,6 +179,26 @@ public class PerPojoSearchContext implements SearchContext {
         return getIndexManager(beanClass).searchFields(query, pageable, fields, mapper);
     }
 
+    @Override
+    public <T> List<SearchableField> getSearchableFields(Class<T> beanClass) {
+        // Objects without a document id field have no search index at all - report "nothing searchable"
+        // instead of failing to create an index manager for them.
+        if (!GenericPojoMapper.isIndexable(beanClass))
+            return List.of();
+        SinglePojoLuceneIndexManager<T> manager = getIndexManager(beanClass);
+        List<SearchableField> fields = new ArrayList<>(manager.getStaticSearchableFields());
+        // Tag fields are derived on demand from the tag definition registry - the same monitor that also
+        // brackets propagation of registry changes to the index managers, so the report is always
+        // consistent with the query parser configuration. Sorted for a deterministic response.
+        if (manager.isTaggable()) {
+            synchronized (tagDefs) {
+                tagDefs.keySet().stream().sorted().forEach(tagName -> fields.add(
+                        LuceneMappingUtils.toTagSearchableField(Taggable.makeTagFieldName(tagName), tagName, tagDefs.get(tagName))));
+            }
+        }
+        return fields;
+    }
+
     @NotNull
     @Override
     public ValueType getTagValueType(String tagName) {
@@ -230,7 +269,7 @@ public class PerPojoSearchContext implements SearchContext {
             synchronized (tagDefs) {
                 tagDefSnapshot = new HashMap<>(tagDefs);
             }
-            return new SinglePojoLuceneIndexManager<>(createIndexDirectory(pc), pc, tagDefSnapshot, this::getTagValueType);
+            return new SinglePojoLuceneIndexManager<>(createIndexDirectory(pc), pc, tagDefSnapshot, this::getTagValueType, fieldDescriptionProvider);
         });
     }
 

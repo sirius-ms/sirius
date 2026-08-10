@@ -50,6 +50,8 @@ dependencies {
     //process javadoc for swagger/openapi
     annotationProcessor libs.therapiRuntimeJavadocScribe
     implementation libs.therapiRuntimeJavadoc
+    // bake javadoc of test classes as well, so tests can cover javadoc-derived field descriptions
+    testAnnotationProcessor libs.therapiRuntimeJavadocScribe
     ////////////////////////////////////////////////////
 
     //must match minio version

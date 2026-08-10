@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
@@ -227,6 +228,11 @@ public class SearchServiceImpl implements SearchService {
     public <T, R> Page<R> searchFields(String projectId, @Nullable String query, Pageable pageable, Class<T> pojoClass,
                                        Set<String> fields, Function<IndexedFields, R> mapper) {
         return withProjectContext(projectId, ps -> ps.searchFields(query, pageable, pojoClass, fields, mapper));
+    }
+
+    @Override
+    public <T> List<SearchableField> getSearchableFields(String projectId, Class<T> pojoClass) {
+        return withProjectContext(projectId, ps -> ps.getSearchableFields(pojoClass));
     }
 
     @Override

@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.middleware.service.search;
 
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
@@ -98,6 +99,12 @@ public interface SearchService extends AutoCloseable {
      */
     <T, R> Page<R> searchFields(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass,
                                 Set<String> fields, Function<IndexedFields, R> mapper);
+
+    /**
+     * Describes the fields that can be used in search queries for the given object type, including the
+     * project's dynamic tag fields. Empty if the object type has no search index.
+     */
+    <T> List<SearchableField> getSearchableFields(String projectId, Class<T> beanClass);
 
     ValueType getTagValueType(String projectId, String tagName);
     void addTagValueType(String projectId, String tagName, ValueType valueType);

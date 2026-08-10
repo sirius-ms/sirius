@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -65,6 +67,12 @@ public interface SearchContext extends Closeable {
      */
     <T, R> Page<R> searchFields(@Nullable String query, Pageable pageable, Class<T> beanClass,
                                 Set<String> fields, Function<IndexedFields, R> mapper);
+
+    /**
+     * Describes the fields that can be used in search queries for the given object type, including the
+     * project's dynamic tag fields. Empty if the object type has no search index.
+     */
+    <T> List<SearchableField> getSearchableFields(Class<T> beanClass);
 
     ValueType getTagValueType(String tagName);
 

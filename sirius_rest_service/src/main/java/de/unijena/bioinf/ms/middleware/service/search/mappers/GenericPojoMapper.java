@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.projectspace.IndexField;
 import de.unijena.bioinf.projectspace.QueryRewriter;
 import lombok.Getter;
@@ -19,6 +20,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils.*;
 
@@ -40,8 +42,22 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
     @Getter
     private final boolean nonStoredFields;
 
+    /**
+     * Provides human-readable descriptions for indexed fields (see {@link #describeSearchableFields()}).
+     * Injected so this mapper stays free of presentation-layer concerns (e.g. OpenAPI annotations);
+     * defaults to no descriptions.
+     */
+    private final @NotNull Function<Field, String> fieldDescriptionProvider;
+
 
     public GenericPojoMapper(@NotNull Class<T> pojoClass, ConcurrentHashMap<Class<? extends FieldMapper>, FieldMapper> fieldMappers) {
+        this(pojoClass, null, fieldMappers);
+    }
+
+    public GenericPojoMapper(@NotNull Class<T> pojoClass,
+                             @Nullable Function<Field, String> fieldDescriptionProvider,
+                             ConcurrentHashMap<Class<? extends FieldMapper>, FieldMapper> fieldMappers) {
+        this.fieldDescriptionProvider = fieldDescriptionProvider != null ? fieldDescriptionProvider : field -> null;
         this.fieldMappers = fieldMappers;
         this.pojoClass = pojoClass;
 
@@ -90,7 +106,13 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
     }
 
     public GenericPojoMapper(@NotNull Class<T> pojoClass, FieldMapper... fieldMappers) {
-        this(pojoClass);
+        this(pojoClass, (Function<Field, String>) null, fieldMappers);
+    }
+
+    public GenericPojoMapper(@NotNull Class<T> pojoClass,
+                             @Nullable Function<Field, String> fieldDescriptionProvider,
+                             FieldMapper... fieldMappers) {
+        this(pojoClass, fieldDescriptionProvider, new ConcurrentHashMap<>());
         for (FieldMapper fieldMapper : fieldMappers) {
             this.fieldMappers.put(fieldMapper.getClass(), fieldMapper);
         }
@@ -198,6 +220,73 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
             }
         }
     }
+
+    /**
+     * Whether the given class can be indexed at all, i.e. declares a document id field. Classes without one
+     * have no search index and therefore no searchable fields.
+     */
+    public static boolean isIndexable(@NotNull Class<?> pojoClass) {
+        for (Field f : FieldUtils.getAllFields(pojoClass)) {
+            IndexField indexField = f.getAnnotation(IndexField.class);
+            if (indexField != null && indexField.documentId())
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Describes all searchable fields of the pojo class as exposed to API users. Mirrors the field walk of
+     * {@link #detectAnalyzersAndPointConfigs} but keeps the accurate java types (numbers, booleans, enums, dates)
+     * instead of the lucene query parser configuration. Dynamic fields (e.g. tags) are not included here; they
+     * are contributed by the index manager that knows the project's tag definitions.
+     */
+    public List<SearchableField> describeSearchableFields() {
+        List<SearchableField> fields = new ArrayList<>();
+        describeSearchableFields("", pojoClass, fields);
+        return fields;
+    }
+
+    private void describeSearchableFields(@NotNull String fieldPrefix, @NotNull Class<?> pojoClass, @NotNull List<SearchableField> fields) {
+        for (Field field : FieldUtils.getAllFields(pojoClass)) {
+            if (field.isAnnotationPresent(IndexField.class)) {
+                IndexField indexField = field.getAnnotation(IndexField.class);
+                String fieldName = fieldPrefix + (indexField.name().isEmpty() ? field.getName() : indexField.name());
+
+                Class<?> elementType = field.getType();
+                if (isCollection(elementType)) {
+                    elementType = getCollectionElementType(field);
+                } else if (isMap(elementType)) {
+                    elementType = getMapValueType(field);
+                    fieldName = fieldName + ".*";
+                }
+
+                if (!isSimpleType(elementType)) {
+                    describeSearchableFields(fieldName + ".", elementType, fields);
+                } else {
+                    SearchableField.FieldType fieldType = getSearchableFieldType(elementType);
+                    if (fieldType == null)
+                        continue; // unsupported simple types are rejected by detectAnalyzersAndPointConfigs at index creation
+                    boolean textLike = elementType.equals(String.class) || elementType.isEnum();
+                    fields.add(SearchableField.builder()
+                            .name(fieldName)
+                            .fieldType(fieldType)
+                            .fullTextSearch(textLike && indexField.fullTextSearch())
+                            .sortable(indexField.sortable() && getSortTypeForType(elementType) != null)
+                            .defaultSearchField(indexField.defaultSearchField())
+                            .possibleValues(elementType.isEnum()
+                                    ? Arrays.stream(elementType.getEnumConstants()).map(e -> ((Enum<?>) e).name()).toList()
+                                    : null)
+                            .description(fieldDescriptionProvider.apply(field))
+                            .build());
+                }
+            } else if (field.isAnnotationPresent(IndexFieldWithMapper.class)) {
+                IndexFieldWithMapper mapperAnno = field.getAnnotation(IndexFieldWithMapper.class);
+                String fieldName = fieldPrefix + (mapperAnno.name().isEmpty() ? field.getName() : mapperAnno.name());
+                fields.addAll(getOrComputeMapper(mapperAnno).describeSearchableFields(fieldName));
+            }
+        }
+    }
+
 
 
     /**

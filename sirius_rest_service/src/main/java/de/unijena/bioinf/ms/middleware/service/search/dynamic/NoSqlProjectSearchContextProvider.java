@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
+import de.unijena.bioinf.ms.middleware.service.search.ApiDocFieldDescriptions;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,9 @@ public class NoSqlProjectSearchContextProvider implements SearchContextProvider<
         Map<String, ValueType> tagDefinitions = new HashMap<>();
         project.project().findAllTagDefinitionsStr().forEach(td -> tagDefinitions.put(td.getTagName(), td.getValueType()));
 
-        return new PerPojoDatabaseSearchContext<>(project.storage(), projectIndexRoot, tagDefinitions);
+        // Field descriptions come from the API documentation of the models (schema annotations/javadoc);
+        // injected here (REST-side glue) so the search machinery itself stays free of presentation concerns.
+        return new PerPojoDatabaseSearchContext<>(project.storage(), projectIndexRoot, tagDefinitions, ApiDocFieldDescriptions.PROVIDER);
     }
 
     @Override
