@@ -152,7 +152,7 @@ public class DatabaseDialog extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 SearchableDatabase db = dbList.getSelectedValue();
                 if (db != null)
-                    CustomDbBrowserWindow.showDatabaseContent(db, context, DatabaseDialog.this);
+                    CustomDbWebViews.showDatabaseContent(db, context, DatabaseDialog.this);
             }
         };
 
@@ -195,7 +195,7 @@ public class DatabaseDialog extends JFrame {
                     }
 
                     //no window may be left showing a database that does not exist anymore
-                    CustomDbBrowserWindow.disposeInstances(name);
+                    CustomDbWebViews.disposeInstances(name);
                     loadDatabaseList();
                 }
             }
@@ -265,7 +265,7 @@ public class DatabaseDialog extends JFrame {
         transformationDB.addActionListener(e -> {
             SearchableDatabase db = dbList.getSelectedValue();
             if (db != null) //the tool may have created a database, so refresh the list when it is closed
-                CustomDbBrowserWindow.showReactionTool(db, context, this, DatabaseDialog::refreshInstance);
+                CustomDbWebViews.showReactionTool(db, context, this, DatabaseDialog::refreshInstance);
         });
 
         JFileChooser openDbFileChooser = new JFileChooser();
