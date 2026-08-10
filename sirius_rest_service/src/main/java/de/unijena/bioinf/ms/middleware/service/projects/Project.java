@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
@@ -66,6 +67,18 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     @SneakyThrows
     void removeFromSearchIndex(@Nullable Collection<String> alignedFeaturesIds, @Nullable Collection<String> compoundIds, @Nullable Collection<String> runIds);
+
+    /**
+     * Describes the fields that can be used in lucene search queries (searchQuery parameter) for the given
+     * API model type (e.g. AlignedFeature, Run), including this project's dynamic tag fields.
+     * Empty if no searchable fields exist for the given type.
+     */
+    default List<SearchableField> getSearchableFields(@NotNull Class<?> modelClass) {
+        SearchService searchService = getSearchService();
+        if (searchService == null)
+            return List.of();
+        return searchService.getSearchableFields(getProjectId(), modelClass);
+    }
 
     /**
      * Technical Identifier for the project file/directory on the filesystem/dbms

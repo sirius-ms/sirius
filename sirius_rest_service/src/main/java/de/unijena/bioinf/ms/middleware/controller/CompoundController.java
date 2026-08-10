@@ -27,9 +27,9 @@ import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
-import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import de.unijena.bioinf.ms.middleware.model.features.QuantTable;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagSubmission;
 import de.unijena.bioinf.ms.middleware.security.Authorities;
@@ -86,9 +86,12 @@ public class CompoundController implements TaggableController<Compound, Compound
      * by a field name.
      * </p>
      * <p>
-     * Currently the only searchable fields are names of tags ({@code tagName}) followed by a clause that is valued for the value type of the tag (See TagDefinition).
-     * Tag name based field need to be prefixed with the namespace {@code tags.}.
-     * Possible value types of tags are <strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value
+     * Use the {@code searchable-fields} endpoint (getCompoundsSearchableFields) to list the fields that can be
+     * searched - since compound-level indexing is not implemented yet, it currently returns an empty list
+     * (nothing searchable). The syntax below describes how queries will work once compound search is supported;
+     * tag based fields are prefixed with the namespace {@code tags.}.
+     * Possible value types are <strong>text</strong>, <strong>integer</strong>, <strong>double</strong>,
+     * <strong>boolean</strong>, <strong>date</strong>, or <strong>time</strong>.
      *
      * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
      *
@@ -132,6 +135,22 @@ public class CompoundController implements TaggableController<Compound, Compound
                                            @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
                                            @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         return projectsProvider.getProjectOrThrow(projectId).findCompounds(searchQuery, pageable, msDataSearchPrepared, removeNone(optFields), removeNone(optFieldsFeatures));
+    }
+
+    /**
+     * Get all fields that can be used in the searchQuery parameter of compound endpoints.
+     * <p>
+     * An empty list means there are no searchable fields. Since compound-level indexing is not implemented yet,
+     * this currently always returns an empty list; it will list the searchable compound fields once compound
+     * search is supported.
+     *
+     * @param projectId project space to read the searchable compound fields from.
+     * @return fields usable in searchQuery parameters of compound endpoints.
+     */
+    @Operation(operationId = "getCompoundsSearchableFields")
+    @GetMapping(value = "/searchable-fields", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SearchableField> getCompoundsSearchableFields(@PathVariable String projectId) {
+        return projectsProvider.getProjectOrThrow(projectId).getSearchableFields(Compound.class);
     }
 
     /**
