@@ -1,6 +1,7 @@
 package io.sirius.ms.gui.webView;
 
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,6 +167,10 @@ public class BrowserWindowBuilder {
                 return open;
             }
         }
+
+        //before the web view starts loading, and for every kind of window: whether the page is
+        //reached through the configured proxy must not depend on it being shown in a frame or dialog
+        ProxyManager.enforceGlobalProxySetting();
 
         BrowserPanel browserPanel = loading
                 ? provider.newLoadingBrowserPanel(url, linkInterception)

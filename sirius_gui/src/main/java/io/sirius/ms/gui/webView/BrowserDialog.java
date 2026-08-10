@@ -20,7 +20,6 @@
 
 package io.sirius.ms.gui.webView;
 
-import de.unijena.bioinf.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +39,6 @@ public class BrowserDialog extends JDialog implements BrowserWindow {
     BrowserDialog(@Nullable Window owner, @NotNull String title, @NotNull Dialog.ModalityType modality,
                   @NotNull BrowserPanel browserPanel) {
         super(owner, title, modality);
-        ProxyManager.enforceGlobalProxySetting();
-
         this.browserPanel = browserPanel;
 
         setLayout(new BorderLayout());
