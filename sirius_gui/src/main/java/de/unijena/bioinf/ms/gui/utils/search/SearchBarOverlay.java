@@ -90,11 +90,6 @@ public class SearchBarOverlay extends JDialog {
     private final JPanel inlineRow;
     private final PlaceholderTextField input;
     private final SuggestionPopup suggestionPopup;
-    /**
-     * Enter only picks the dropdown selection at IDLE after the user navigated with the arrow
-     * keys (GitLab behavior) - otherwise Enter submits the typed text / runs the search.
-     */
-    private boolean listEngaged = false;
 
     public SearchBarOverlay(@NotNull Window owner, @NotNull FeatureFilterModel filterModel,
                             @NotNull SearchableFieldsProvider fieldsProvider,
@@ -260,12 +255,10 @@ public class SearchBarOverlay extends JDialog {
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_DOWN -> {
                         suggestionPopup.moveSelection(1);
-                        listEngaged = true;
                         e.consume();
                     }
                     case KeyEvent.VK_UP -> {
                         suggestionPopup.moveSelection(-1);
-                        listEngaged = true;
                         e.consume();
                     }
                     case KeyEvent.VK_TAB -> {
@@ -297,24 +290,30 @@ public class SearchBarOverlay extends JDialog {
     }
 
     private void onTyped() {
-        listEngaged = false;
         refreshSuggestions();
     }
 
     /**
-     * Enter: mid-token stages take the dropdown selection (or the typed text as value); at IDLE it
-     * takes the selection only after arrow navigation, otherwise the typed text is applied as
-     * grammar input ({@code or not ion}) and, failing that, the search runs with it as free text.
+     * Enter accepts the highlighted suggestion (the first row is preselected, so a good default is
+     * one keystroke away). Only at the pristine top-level field entry with empty input does it run
+     * the search instead; mid-token value stages without suggestions take the typed text.
      */
     private void onEnter() {
-        boolean wasEntry = tokenModel.atEntryStage();
-        boolean hasTyped = !input.getText().trim().isEmpty();
-        // pick the highlighted suggestion when the user typed a prefix or arrow-navigated to it;
-        // this is what makes "type OR, Enter" work (the dropdown selects OR, Enter chooses it)
-        if (suggestionPopup.isVisible() && suggestionPopup.selected().isPresent() && (listEngaged || hasTyped)) {
+        boolean emptyInput = input.getText().trim().isEmpty();
+        // the pristine top-level field entry (no connector/NOT staged) is the one place where an
+        // empty-input Enter runs the search instead of picking the highlighted field
+        boolean pristineFieldEntry = tokenModel.stage() == TokenInputModel.Stage.FIELD
+                && tokenModel.pendingFragments().isEmpty();
+
+        // Enter accepts the highlighted suggestion - the first row is preselected, so hitting Enter
+        // on a good default works without arrowing. "type OR, Enter" is covered the same way.
+        if (suggestionPopup.isVisible() && suggestionPopup.selected().isPresent()
+                && !(emptyInput && pristineFieldEntry)) {
             if (suggestionPopup.chooseSelected())
                 return;
         }
+
+        boolean wasEntry = tokenModel.atEntryStage();
         Optional<TokenInputModel.Event> event = tokenModel.submitTyped(input.getText());
         event.ifPresent(this::applyEvent);
         // typed text at an entry stage that neither produced an event nor advanced a stage is free
@@ -329,10 +328,8 @@ public class SearchBarOverlay extends JDialog {
 
     private void applySuggestion(TokenInputModel.Suggestion suggestion) {
         tokenModel.choose(suggestion).ifPresent(this::applyEvent);
-        listEngaged = false;
         input.setText("");
-        rebuild();
-        input.requestFocusInWindow();
+        rebuild(); // restores input focus (see rebuild)
     }
 
     private void applyEvent(TokenInputModel.Event event) {
@@ -372,7 +369,10 @@ public class SearchBarOverlay extends JDialog {
     private void refreshSuggestions() {
         tokenModel.updateContext(fieldsProvider.getCached(),
                 !QueryTreeOps.containerAt(root, openPath).isEmpty(), openPath.length > 0);
-        if (isVisible() && input.isFocusOwner())
+        // the dropdown follows the open overlay, not the transient focus state: rebuild() detaches
+        // and re-adds the input, so keying it off focus would flicker the dropdown away between a
+        // suggestion being chosen and focus being restored
+        if (isVisible())
             suggestionPopup.showSuggestions(tokenModel.suggestions(input.getText()));
         validateInput();
     }
@@ -424,6 +424,7 @@ public class SearchBarOverlay extends JDialog {
         setLocation(anchorOnScreen.x, anchorOnScreen.y);
         setVisible(true);
         input.requestFocusInWindow();
+        refreshSuggestions(); // show the dropdown immediately on open (now that the overlay is visible)
     }
 
     private void resizeToFit() {
@@ -471,6 +472,9 @@ public class SearchBarOverlay extends JDialog {
     // --- rendering ---
 
     private void rebuild() {
+        // removeAll() detaches the (focused) input, which drops the keyboard focus; restore it
+        // after the re-layout so typing continues seamlessly after choosing a suggestion
+        boolean refocus = input.isFocusOwner();
         inlineRow.removeAll();
 
         for (ModelChip chip : modelChipSupplier.get())
@@ -503,6 +507,8 @@ public class SearchBarOverlay extends JDialog {
         inlineRow.repaint();
         if (isVisible())
             resizeToFit();
+        if (refocus)
+            SwingUtilities.invokeLater(input::requestFocusInWindow);
     }
 
     private void addStagedFragmentsAndInput(JPanel target) {
