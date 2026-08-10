@@ -103,7 +103,14 @@ public class JxBrowserPanel extends BrowserPanel {
         // Own the popup with this panel's window ancestor. When that ancestor is an application-modal
         // dialog, an owned (and itself non-modal) window is exempt from the modal block and can be
         // focused and raised; a plain top-level window would be blocked behind the dialog.
-        final Window owner = SwingUtilities.getWindowAncestor(this);
+        // There is no ancestor while the page is still loading, since the web view is put into its
+        // window only once it has loaded. The active window is the best guess then, and it is the
+        // blocking one if any window is modal.
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        if (owner == null) {
+            owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+            log.debug("Web view is not in a window yet, owning popup '{}' with the active window instead.", url);
+        }
         final JDialog popupDialog = new JDialog(owner);
         popupDialog.setModalityType(Dialog.ModalityType.MODELESS);
         popupDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
