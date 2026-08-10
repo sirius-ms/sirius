@@ -22,66 +22,40 @@ package io.sirius.ms.gui.webView;
 
 import de.unijena.bioinf.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
- * A dialog that embeds a JCEF browser component.
- * Resource cleanup is handled automatically through JCefBrowserPanel's removeNotify method.
+ * A dialog showing a web view. Created by {@link BrowserWindowBuilder}, which also shows it.
+ * <p>
+ * Resource cleanup is handled automatically through {@link BrowserPanel#removeNotify()}, so there is
+ * no custom dispose or window listener needed here.
  */
-public class BrowserDialog extends JDialog {
-    /**
-     * Creates a browser dialog with the given title and URL.
-     *
-     * @param owner The owner frame
-     * @param title The dialog title
-     */
-    BrowserDialog(Frame owner, String title, @NotNull BrowserPanel browserPanel) {
-        super(owner, title, true);
+public class BrowserDialog extends JDialog implements BrowserWindow {
+
+    private final BrowserPanel browserPanel;
+
+    BrowserDialog(@Nullable Window owner, @NotNull String title, @NotNull Dialog.ModalityType modality,
+                  @NotNull BrowserPanel browserPanel) {
+        super(owner, title, modality);
         ProxyManager.enforceGlobalProxySetting();
 
-        // Setup dialog
+        this.browserPanel = browserPanel;
+
         setLayout(new BorderLayout());
-        setResizable(false);
-        setMinimumSize(new Dimension(600, 800));
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-
-        // Create the browser panel and make it own its client (will dispose the client when closed)
         add(browserPanel, BorderLayout.CENTER);
-
-        // Show dialog
-        pack();
-        setLocationRelativeTo(getParent());
-        setVisible(true);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
 
-    /**
-     * Creates a browser dialog with the given title and URL.
-     *
-     * @param owner The owner dialog
-     * @param title The dialog title
-     */
-    BrowserDialog(Dialog owner, String title, @NotNull BrowserPanel browserPanel) {
-        super(owner, title, true);
-        ProxyManager.enforceGlobalProxySetting();
-
-        // Setup dialog
-        setLayout(new BorderLayout());
-        setResizable(false);
-        setMinimumSize(new Dimension(600, 800));
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-
-        // Create the browser panel and make it own its client (will dispose the client when closed)
-        add(browserPanel, BorderLayout.CENTER);
-
-        // Show dialog
-        pack();
-        setLocationRelativeTo(getParent());
-        setVisible(true);
+    @Override
+    public @NotNull Window window() {
+        return this;
     }
 
-    // No need for custom dispose() or window listeners!
-    // The cleanup is automatically handled by the browserPanel's removeNotify() method
-    // when the dialog is disposed or closed
+    @Override
+    public @NotNull BrowserPanel browserPanel() {
+        return browserPanel;
+    }
 }
