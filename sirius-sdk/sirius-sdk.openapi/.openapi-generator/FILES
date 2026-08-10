@@ -50,6 +50,7 @@ docs/DataQuality.md
 docs/DatabaseStructure.md
 docs/Deviation.md
 docs/DownloadableDatabase.md
+docs/Feature.md
 docs/FeatureAnnotations.md
 docs/FeatureImport.md
 docs/FeatureStatisticsApi.md
@@ -92,6 +93,7 @@ docs/PageMetadata.md
 docs/PagedModelAlignedFeature.md
 docs/PagedModelCompound.md
 docs/PagedModelDatabaseStructure.md
+docs/PagedModelFeature.md
 docs/PagedModelFormulaCandidate.md
 docs/PagedModelJob.md
 docs/PagedModelRun.md
@@ -243,6 +245,7 @@ src/main/java/io/sirius/ms/sdk/model/DataQuality.java
 src/main/java/io/sirius/ms/sdk/model/DatabaseStructure.java
 src/main/java/io/sirius/ms/sdk/model/Deviation.java
 src/main/java/io/sirius/ms/sdk/model/DownloadableDatabase.java
+src/main/java/io/sirius/ms/sdk/model/Feature.java
 src/main/java/io/sirius/ms/sdk/model/FeatureAnnotations.java
 src/main/java/io/sirius/ms/sdk/model/FeatureImport.java
 src/main/java/io/sirius/ms/sdk/model/FingerprintPrediction.java
@@ -278,6 +281,7 @@ src/main/java/io/sirius/ms/sdk/model/PageMetadata.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelAlignedFeature.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelCompound.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelDatabaseStructure.java
+src/main/java/io/sirius/ms/sdk/model/PagedModelFeature.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelFormulaCandidate.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelJob.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelRun.java

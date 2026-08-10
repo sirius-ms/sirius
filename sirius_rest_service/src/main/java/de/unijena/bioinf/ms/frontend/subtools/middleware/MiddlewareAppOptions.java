@@ -106,6 +106,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             "/api/projects/*/aligned-features",
             "/api/projects/*/aligned-features/*/db-structures",
             "/api/projects/*/aligned-features/*/denovo-structures",
+            "/api/projects/*/aligned-features/*/features",
             "/api/projects/*/aligned-features/*/formulas",
             "/api/projects/*/aligned-features/*/formulas/*/db-structures",
             "/api/projects/*/aligned-features/*/formulas/*/denovo-structures",

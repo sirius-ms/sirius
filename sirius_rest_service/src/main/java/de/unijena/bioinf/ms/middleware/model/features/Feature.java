@@ -63,6 +63,12 @@ public class Feature {
     protected Double averageMz;
 
     /**
+     * m/z at the apex of the feature, the m/z this feature was measured at in its run
+     */
+    @Schema(nullable = true)
+    protected Double apexMz;
+
+    /**
      * Start of the feature on the retention time axis in seconds
      */
     @Schema(nullable = true)

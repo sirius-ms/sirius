@@ -1367,15 +1367,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return feature;
     }
 
-    private de.unijena.bioinf.ms.middleware.model.features.Feature convertToApiFeature0(Feature feature) {
+    private de.unijena.bioinf.ms.middleware.model.features.Feature convertToApiUnalignedFeature(Feature feature) {
         de.unijena.bioinf.ms.middleware.model.features.Feature.FeatureBuilder builder = de.unijena.bioinf.ms.middleware.model.features.Feature.builder()
                 .featureId(Long.toString(feature.getFeatureId()))
                 .alignedFeatureId(Long.toString(feature.getAlignedFeatureId()))
-                .runId(Long.toString(feature.getRunId()))
                 .averageMz(feature.getAverageMass())
+                .apexMz(feature.getApexMass())
                 .rtFwhmSeconds(feature.getFwhm())
                 .apexIntensity(feature.getApexIntensity())
                 .areaUnderCurve(feature.getAreaUnderCurve());
+
+        //a feature of a project that was imported from preprocessed data belongs to no run
+        if (feature.getRunId() != null)
+            builder.runId(Long.toString(feature.getRunId()));
 
         RetentionTime rt = feature.getRetentionTime();
         if (rt != null) {
@@ -2121,7 +2125,27 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public List<de.unijena.bioinf.ms.middleware.model.features.Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId) {
-        return storage().findStr(Filter.where("alignedFeatureId").eq(Long.parseLong(alignedFeatureId)), Feature.class).map(this::convertToApiFeature0).toList();
+        return findFeaturesByAlignedFeatureId(alignedFeatureId, Pageable.unpaged()).getContent();
+    }
+
+    @SneakyThrows
+    @Override
+    public Page<de.unijena.bioinf.ms.middleware.model.features.Feature> findFeaturesByAlignedFeatureId(
+            String alignedFeatureId, Pageable pageable) {
+        Filter ofAlignedFeature = Filter.where("alignedFeatureId").eq(parseIdOrThrow(alignedFeatureId, "alignedFeatureId"));
+        return Pages.findPage(storage(), Feature.class, pageable, ofAlignedFeature)
+                .map(this::convertToApiUnalignedFeature);
+    }
+
+    /**
+     * Ids are numbers, so anything else is a request that cannot be answered rather than a failure on our side.
+     */
+    private static long parseIdOrThrow(String id, String name) {
+        try {
+            return Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(BAD_REQUEST, "'" + id + "' is not a valid " + name + ".", e);
+        }
     }
 
 

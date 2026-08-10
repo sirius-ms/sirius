@@ -156,7 +156,20 @@ public interface Project<PSM extends ProjectSpaceManager> {
         return findAlignedFeatures(pageable, msDataAsCosineQuery, toEnumSet(AlignedFeature.OptField.class, optFields));
     }
 
+    /**
+     * @deprecated use {@link #findFeaturesByAlignedFeatureId(String, Pageable)}, which does not load every feature
+     * of an aligned feature at once.
+     */
+    @Deprecated
     List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId);
+
+    /**
+     * The features the given aligned feature was aligned from, one per run it has been detected in.
+     *
+     * @param alignedFeatureId aligned feature whose features to read
+     * @param pageable         page to read
+     */
+    Page<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId, Pageable pageable);
 
     Page<AlignedFeature> findAlignedFeaturesByGroup(@NotNull String groupName, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 

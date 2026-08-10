@@ -9,6 +9,7 @@ import io.sirius.ms.sdk.model.AnnotatedMsMsData;
 import io.sirius.ms.sdk.model.AnnotatedSpectrum;
 import io.sirius.ms.sdk.model.CanopusPrediction;
 import io.sirius.ms.sdk.model.CompoundClasses;
+import io.sirius.ms.sdk.model.Feature;
 import io.sirius.ms.sdk.model.FeatureImport;
 import io.sirius.ms.sdk.model.FormulaCandidate;
 import io.sirius.ms.sdk.model.FormulaCandidateOptField;
@@ -18,6 +19,7 @@ import io.sirius.ms.sdk.model.IsotopePatternAnnotation;
 import io.sirius.ms.sdk.model.LipidAnnotation;
 import io.sirius.ms.sdk.model.MsData;
 import io.sirius.ms.sdk.model.PagedModelAlignedFeature;
+import io.sirius.ms.sdk.model.PagedModelFeature;
 import io.sirius.ms.sdk.model.PagedModelFormulaCandidate;
 import io.sirius.ms.sdk.model.PagedModelSpectralLibraryMatch;
 import io.sirius.ms.sdk.model.PagedModelStructureCandidateFormula;
@@ -2032,6 +2034,192 @@ public class FeaturesApi {
      */
     public ResponseSpec getFeatureQuantTableRowWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable QuantMeasure type, @jakarta.annotation.Nullable List<QuantTableOptField> optFields) throws WebClientResponseException {
         return getFeatureQuantTableRowRequestCreation(projectId, alignedFeatureId, type, optFields);
+    }
+
+    /**
+     * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from
+     * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from.  &lt;p&gt;  [DEPRECATED] Use /features/page instead. Loading all features at once does not scale for a project with many  runs, since a feature is aligned from one feature per run it was detected in.
+     * <p><b>200</b> - Features of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @return List&lt;Feature&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
+     */
+    @Deprecated
+    private ResponseSpec getFeaturesRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFeatures", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getFeatures", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Feature> localVarReturnType = new ParameterizedTypeReference<Feature>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/features", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from
+     * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from.  &lt;p&gt;  [DEPRECATED] Use /features/page instead. Loading all features at once does not scale for a project with many  runs, since a feature is aligned from one feature per run it was detected in.
+     * <p><b>200</b> - Features of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @return List&lt;Feature&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<Feature> getFeatures(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<Feature> localVarReturnType = new ParameterizedTypeReference<Feature>() {};
+        return getFeaturesRequestCreation(projectId, alignedFeatureId).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from
+     * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from.  &lt;p&gt;  [DEPRECATED] Use /features/page instead. Loading all features at once does not scale for a project with many  runs, since a feature is aligned from one feature per run it was detected in.
+     * <p><b>200</b> - Features of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @return ResponseEntity&lt;List&lt;Feature&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<Feature>> getFeaturesWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<Feature> localVarReturnType = new ParameterizedTypeReference<Feature>() {};
+        return getFeaturesRequestCreation(projectId, alignedFeatureId).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from
+     * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from.  &lt;p&gt;  [DEPRECATED] Use /features/page instead. Loading all features at once does not scale for a project with many  runs, since a feature is aligned from one feature per run it was detected in.
+     * <p><b>200</b> - Features of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getFeaturesWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId) throws WebClientResponseException {
+        return getFeaturesRequestCreation(projectId, alignedFeatureId);
+    }
+
+    /**
+     * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in
+     * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in.  &lt;p&gt;  A feature carries what is specific to the run it was detected in: where it sits on that run&#39;s retention time  axis, the m/z it was measured at there, and how much of it was measured. Use the run id to relate it to the run  it belongs to; a feature of a project that was imported from preprocessed data belongs to no run and has none.
+     * <p><b>200</b> - Features of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return PagedModelFeature
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getFeaturesPageRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFeaturesPage", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getFeaturesPage", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<PagedModelFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelFeature>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/features/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in
+     * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in.  &lt;p&gt;  A feature carries what is specific to the run it was detected in: where it sits on that run&#39;s retention time  axis, the m/z it was measured at there, and how much of it was measured. Use the run id to relate it to the run  it belongs to; a feature of a project that was imported from preprocessed data belongs to no run and has none.
+     * <p><b>200</b> - Features of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return PagedModelFeature
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public PagedModelFeature getFeaturesPage(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelFeature>() {};
+        return getFeaturesPageRequestCreation(projectId, alignedFeatureId, page, size, sort).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in
+     * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in.  &lt;p&gt;  A feature carries what is specific to the run it was detected in: where it sits on that run&#39;s retention time  axis, the m/z it was measured at there, and how much of it was measured. Use the run id to relate it to the run  it belongs to; a feature of a project that was imported from preprocessed data belongs to no run and has none.
+     * <p><b>200</b> - Features of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return ResponseEntity&lt;PagedModelFeature&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<PagedModelFeature> getFeaturesPageWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelFeature>() {};
+        return getFeaturesPageRequestCreation(projectId, alignedFeatureId, page, size, sort).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in
+     * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in.  &lt;p&gt;  A feature carries what is specific to the run it was detected in: where it sits on that run&#39;s retention time  axis, the m/z it was measured at there, and how much of it was measured. Use the run id to relate it to the run  it belongs to; a feature of a project that was imported from preprocessed data belongs to no run and has none.
+     * <p><b>200</b> - Features of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getFeaturesPageWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String alignedFeatureId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+        return getFeaturesPageRequestCreation(projectId, alignedFeatureId, page, size, sort);
     }
 
     /**
