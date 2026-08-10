@@ -37,6 +37,21 @@ public record QueryClause(@NotNull String id, @NotNull String field, @Nullable N
         return new QueryClause(QueryNode.nextId("clause"), field, null, value, null, negated);
     }
 
+    /**
+     * A keyless full-text clause (no field): matches the value against the index' default search
+     * fields, e.g. a bare {@code caffeine} that can be combined with fielded clauses.
+     */
+    public static QueryClause freeText(@NotNull String value, boolean negated) {
+        return new QueryClause(QueryNode.nextId("clause"), "", null, value, null, negated);
+    }
+
+    /**
+     * Whether this is a keyless full-text clause (empty field).
+     */
+    public boolean isFreeText() {
+        return field.isEmpty();
+    }
+
     public static QueryClause numeric(@NotNull String field, @NotNull NumberOp op,
                                       @NotNull String value1, @Nullable String value2, boolean negated) {
         return new QueryClause(QueryNode.nextId("clause"), field, op, value1, value2, negated);
