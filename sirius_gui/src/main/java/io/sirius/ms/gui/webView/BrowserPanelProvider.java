@@ -41,23 +41,23 @@ public abstract class BrowserPanelProvider<BP extends BrowserPanel> {
     }
 
 
-    public BP makeReactPanel(@NotNull String appPath, @NotNull String paramName, @NotNull String paramValue){
+    public BrowserPanel makeReactPanel(@NotNull String appPath, @NotNull String paramName, @NotNull String paramValue){
         String url = baseUrl.resolve(appPath) + THEME_REST_PARA + "&" + paramName + "=" + paramValue;
-        return newBrowserPanel(url);
+        return newLoadingBrowserPanel(url);
     }
 
-    public BP makeReactPanel(@NotNull String appPath, @NotNull String projectId){
+    public BrowserPanel makeReactPanel(@NotNull String appPath, @NotNull String projectId){
         return makeReactPanel(appPath, projectId, null, null, null, null);
     }
 
-    public BP makeReactPanel(@NotNull String appPath,
+    public BrowserPanel makeReactPanel(@NotNull String appPath,
                                       @NotNull String projectId,
                                       @Nullable String alignedFeatureId,
                                       @Nullable String formulaId,
                                       @Nullable String inchiKey,
                                       @Nullable String matchId){
         String url = baseUrl.resolve(appPath) +  makeParameters(projectId, alignedFeatureId, formulaId, inchiKey, matchId);
-        return newBrowserPanel(url);
+        return newLoadingBrowserPanel(url);
     }
 
     public BP makeHTMLTextPanel(String htmlText) {
@@ -104,6 +104,22 @@ public abstract class BrowserPanelProvider<BP extends BrowserPanel> {
 
     public BP newBrowserPanel(@NotNull String fullUrlWithParameters){
         return newBrowserPanel(fullUrlWithParameters, LinkInterception.NONE);
+    }
+
+    /**
+     * Creates a browser panel that shows a loading animation until its web view has been created in
+     * the background. To be used for web views that take long enough to start that waiting for them
+     * would block the event dispatch thread noticeably, which is the case for the react apps.
+     * <p>
+     * Not used for the panels showing plain html, since a data url is loaded immediately and a
+     * loading animation would be bigger than the content of e.g. a single line of text.
+     */
+    public BrowserPanel newLoadingBrowserPanel(@NotNull String fullUrlWithParameters){
+        return newLoadingBrowserPanel(fullUrlWithParameters, LinkInterception.NONE);
+    }
+
+    public BrowserPanel newLoadingBrowserPanel(@NotNull String fullUrlWithParameters, @NotNull LinkInterception linkInterception){
+        return new LoadingBrowserPanel(() -> newBrowserPanel(fullUrlWithParameters, linkInterception));
     }
 
     public JDialog newBrowserPopUp(Frame owner, String title, URI url) {

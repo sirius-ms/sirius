@@ -7,7 +7,6 @@ import com.teamdev.jxbrowser.net.HttpHeader;
 import com.teamdev.jxbrowser.net.callback.BeforeStartTransactionCallback;
 import com.teamdev.jxbrowser.permission.PermissionType;
 import com.teamdev.jxbrowser.permission.callback.RequestPermissionCallback;
-import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import io.sirius.ms.gui.webView.LinkInterception;
