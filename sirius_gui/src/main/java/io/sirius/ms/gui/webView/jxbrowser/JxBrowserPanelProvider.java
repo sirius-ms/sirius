@@ -1,5 +1,6 @@
 package io.sirius.ms.gui.webView.jxbrowser;
 
+import com.teamdev.jxbrowser.browser.Browser;
 import com.teamdev.jxbrowser.engine.Engine;
 import com.teamdev.jxbrowser.engine.EngineOptions;
 import com.teamdev.jxbrowser.engine.Theme;
@@ -86,7 +87,16 @@ public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel>
     @Override
     public JxBrowserPanel newBrowserPanel(@NotNull String fullUrlWithParameters, @NotNull LinkInterception linkInterception) {
         log.info("Browser URL: {}", fullUrlWithParameters);
-        return new JxBrowserPanel(fullUrlWithParameters, jxBrowserEngine.newBrowser(), linkInterception);
+        final Browser browser = jxBrowserEngine.newBrowser();
+        try {
+            return new JxBrowserPanel(fullUrlWithParameters, browser, linkInterception);
+        } catch (Throwable e) {
+            //the panel that would have released this browser when it is removed from its window does
+            //not exist, so its browser process would be left running until the engine is closed
+            if (!browser.isClosed())
+                browser.close();
+            throw e;
+        }
     }
 
     @Override
