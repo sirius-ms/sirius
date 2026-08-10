@@ -130,6 +130,21 @@ public class TokenInputModel {
                 return null;
             }
         }
+
+        /**
+         * Turn the typed text into a keyless full-text clause (default field matching).
+         */
+        record FreeTextSuggestion(@NotNull String text) implements Suggestion {
+            @Override
+            public String display() {
+                return "\"" + text + "\"";
+            }
+
+            @Override
+            public String description() {
+                return "full-text search";
+            }
+        }
     }
 
     /**
@@ -195,13 +210,21 @@ public class TokenInputModel {
      * The suggestions for the current stage, narrowed by the typed prefix (empty prefix = all).
      */
     public List<Suggestion> suggestions(@NotNull String typed) {
-        String prefix = typed.trim().toLowerCase(Locale.ROOT);
-        return switch (stage) {
+        String trimmed = typed.trim();
+        String prefix = trimmed.toLowerCase(Locale.ROOT);
+        List<Suggestion> suggestions = switch (stage) {
             case CONNECTOR -> connectorSuggestions(prefix);
             case FIELD -> fieldStageSuggestions(prefix);
             case OPERATOR -> operatorSuggestions(prefix);
             case VALUE, VALUE2 -> valueSuggestions(prefix);
         };
+        // at an entry stage, typed text can always become a keyless full-text clause; offered last
+        // so a matching field stays the default pick
+        if (atEntryStage() && !trimmed.isEmpty()) {
+            suggestions = new ArrayList<>(suggestions);
+            suggestions.add(new Suggestion.FreeTextSuggestion(trimmed));
+        }
+        return suggestions;
     }
 
     private List<Suggestion> connectorSuggestions(String prefix) {
@@ -283,6 +306,11 @@ public class TokenInputModel {
             pendingOp = op.op();
             stage = Stage.VALUE;
             return Optional.empty();
+        }
+        if (suggestion instanceof Suggestion.FreeTextSuggestion freeText) {
+            Event event = new Event.ClauseCompleted(QueryClause.freeText(freeText.text(), pendingNegated), effectiveLogic());
+            resetPending();
+            return Optional.of(event);
         }
         // value suggestion
         return acceptValue(((Suggestion.ValueSuggestion) suggestion).value());

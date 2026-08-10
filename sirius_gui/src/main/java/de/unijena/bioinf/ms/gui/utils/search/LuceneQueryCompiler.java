@@ -87,8 +87,11 @@ public final class LuceneQueryCompiler {
     }
 
     private static String renderClause(@NotNull QueryClause clause) {
-        if (clause.op() == null)
-            return clause.field() + ":" + escapeValue(clause.value1().trim());
+        if (clause.op() == null) {
+            String value = escapeValue(clause.value1().trim());
+            // keyless clause -> bare term matched against the default search fields
+            return clause.field().isEmpty() ? value : clause.field() + ":" + value;
+        }
 
         String v1 = orWildcard(clause.value1());
         String v2 = orWildcard(clause.value2());

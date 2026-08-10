@@ -20,6 +20,7 @@ package de.unijena.bioinf.ms.gui.utils.search;
 
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
@@ -128,7 +129,7 @@ public class SearchBarOverlay extends JDialog {
 
         // --- trailing controls ---
         Box controls = Box.createHorizontalBox();
-        JButton copy = new JButton("⧉");
+        JButton copy = new JButton(Icons.CLIP_BOARD.derive(16, 16));
         copy.setFocusable(false);
         copy.setToolTipText("Copy the compiled search query to the clipboard");
         copy.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemClipboard()
@@ -306,9 +307,13 @@ public class SearchBarOverlay extends JDialog {
                 && tokenModel.pendingFragments().isEmpty();
 
         // Enter accepts the highlighted suggestion - the first row is preselected, so hitting Enter
-        // on a good default works without arrowing. "type OR, Enter" is covered the same way.
+        // on a good default works without arrowing. "type OR, Enter" is covered the same way. The
+        // free-text row is skipped on Enter (Enter runs the search with the typed text as free-text
+        // segment); Tab turns it into a keyless chip instead.
+        boolean freeTextSelected = suggestionPopup.selected()
+                .filter(s -> s instanceof TokenInputModel.Suggestion.FreeTextSuggestion).isPresent();
         if (suggestionPopup.isVisible() && suggestionPopup.selected().isPresent()
-                && !(emptyInput && pristineFieldEntry)) {
+                && !freeTextSelected && !(emptyInput && pristineFieldEntry)) {
             if (suggestionPopup.chooseSelected())
                 return;
         }
@@ -477,10 +482,14 @@ public class SearchBarOverlay extends JDialog {
         boolean refocus = input.isFocusOwner();
         inlineRow.removeAll();
 
-        for (ModelChip chip : modelChipSupplier.get())
+        List<ModelChip> modelChips = modelChipSupplier.get();
+        for (int i = 0; i < modelChips.size(); i++) {
+            if (i > 0)
+                inlineRow.add(ChipComponent.implicitAndLabel()); // dialog filters always AND together
+            ModelChip chip = modelChips.get(i);
             inlineRow.add(new ChipComponent(chip.label(), chip.tooltip() == null
-                    ? "Filter from the filter dialog - click to open it"
-                    : chip.tooltip() + " (filter dialog)", ChipComponent.Style.MODEL,
+                    ? "Filter from the filter dialog - click to open it, combined with AND"
+                    : chip.tooltip() + " (filter dialog) - combined with AND", ChipComponent.Style.MODEL,
                     () -> {
                         setVisible(false);
                         openFilterDialog.run();
@@ -489,8 +498,12 @@ public class SearchBarOverlay extends JDialog {
                         chip.onRemove().run();
                         filterModel.fireUpdateCompleted();
                     }));
+        }
 
         List<QueryNode> items = root.items();
+        // the dialog filters and the user's own query are combined with AND - make that visible
+        if (!modelChips.isEmpty() && !items.isEmpty())
+            inlineRow.add(ChipComponent.implicitAndLabel());
         for (int i = 0; i < items.size(); i++) {
             if (i > 0)
                 inlineRow.add(buildLogicComponent(root.logics().get(i - 1), new int[]{i}));
@@ -543,8 +556,13 @@ public class SearchBarOverlay extends JDialog {
 
     private JComponent buildNode(QueryNode node, int[] path) {
         if (node instanceof QueryClause clause) {
-            String text = (clause.negated() ? "NOT " : "") + clause.field() + " " + clauseBody(clause);
-            return new ChipComponent(text, LuceneQueryCompiler.render(clause), ChipComponent.Style.USER,
+            String text = clause.isFreeText()
+                    ? (clause.negated() ? "NOT " : "") + "“" + clause.value1() + "”"
+                    : (clause.negated() ? "NOT " : "") + clause.field() + " " + clauseBody(clause);
+            String tooltip = clause.isFreeText()
+                    ? "Full-text search in the default fields"
+                    : LuceneQueryCompiler.render(clause);
+            return new ChipComponent(text, tooltip, ChipComponent.Style.USER,
                     null, () -> {
                 root = QueryTreeOps.removeNodeById(root, clause.id());
                 openPath = QueryTreeOps.resolvePath(root, openPath);
