@@ -19,7 +19,6 @@
 package de.unijena.bioinf.ms.gui.utils.search;
 
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import io.sirius.ms.sdk.SiriusClient;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +28,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -36,23 +37,30 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * The collapsed state of the feature search bar: a compact, read-only summary of the committed
- * query in the narrow left rail. Clicking (or focusing) it expands the {@link SearchBarOverlay}
- * to the right over the result view, where the query is built with chips and autocompletion.
+ * The collapsed state of the feature search bar: a text-field-looking strip in the narrow left rail
+ * that renders the committed query as chips (filter-dialog state outlined, user clauses filled,
+ * free text as trailing text), clipped to the available width with the full query as tooltip.
+ * Clicking, focusing or typing expands the {@link SearchBarOverlay} exactly on top of this field -
+ * one perceived control that grows over the result view while editing and shrinks back on close.
+ * A keystroke that triggered the expansion is forwarded, so typing "just continues" in the overlay.
  * <p>
- * The committed query lives in the {@link FeatureFilterModel}'s shared search text document
- * (also shown in the filter dialog's fulltext field), so this bar needs no state of its own.
+ * The chips are rendered from the {@link SearchBarOverlay.Commit} snapshot of the last commit,
+ * never by parsing the compiled query; if the shared search document was changed elsewhere (filter
+ * dialog fulltext field, reset), the bar falls back to rendering the document text plainly.
  */
 public class LuceneSearchBar extends JPanel {
 
-    private final PlaceholderTextField summaryField;
     private final FeatureFilterModel filterModel;
     private final SearchableFieldsProvider fieldsProvider;
     private final Supplier<List<ModelChip>> modelChipSupplier;
     private final Runnable openFilterDialog;
 
+    private final JPanel chipStrip;
+
     @Nullable
     private SearchBarOverlay overlay;
+    @Nullable
+    private SearchBarOverlay.Commit lastCommit;
 
     public LuceneSearchBar(@NotNull SiriusClient siriusClient, @NotNull String projectId,
                            @NotNull FeatureFilterModel filterModel,
@@ -64,34 +72,59 @@ public class LuceneSearchBar extends JPanel {
         this.openFilterDialog = openFilterDialog;
         this.fieldsProvider = new SearchableFieldsProvider(siriusClient, projectId);
 
-        summaryField = new PlaceholderTextField();
-        summaryField.setPlaceholder("Search or add filters...");
-        summaryField.setToolTipText(GuiUtils.formatToolTip(
-                "Search the feature list. Click to open the query builder with autocompletion on all searchable fields."));
-        summaryField.setEditable(false);
-        summaryField.addMouseListener(new MouseAdapter() {
+        // look like an (active) text field, not like a disabled one
+        setBorder(UIManager.getBorder("TextField.border"));
+        setBackground(UIManager.getColor("TextField.background"));
+        setOpaque(true);
+        setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+        setFocusable(true);
+
+        chipStrip = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 1));
+        chipStrip.setOpaque(false);
+        add(chipStrip, BorderLayout.CENTER);
+
+        // clipped single row at text-field height; the overlay is the place that wraps
+        int fieldHeight = new JTextField().getPreferredSize().height;
+        setPreferredSize(new Dimension(100, fieldHeight));
+        setMinimumSize(new Dimension(60, fieldHeight));
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, fieldHeight));
+
+        MouseAdapter opener = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 openOverlay();
             }
-        });
-        summaryField.addFocusListener(new FocusAdapter() {
+        };
+        addMouseListener(opener);
+        addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
                 openOverlay();
             }
         });
-        add(summaryField, BorderLayout.CENTER);
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                char typed = e.getKeyChar();
+                if (!Character.isISOControl(typed))
+                    openOverlay(String.valueOf(typed));
+            }
+        });
 
         // keep the summary in sync with commits from anywhere (overlay, dialog, reset)
         filterModel.addUpdateCompleteListener(evt -> refreshSummary());
         refreshSummary();
     }
 
-    /**
-     * Expands the query-builder overlay anchored at this bar.
-     */
     public void openOverlay() {
+        openOverlay(null);
+    }
+
+    /**
+     * Expands the query-builder overlay on top of this bar, optionally forwarding the keystroke
+     * that triggered the expansion.
+     */
+    public void openOverlay(@Nullable String typeAhead) {
         if (!isShowing())
             return;
         if (overlay == null) {
@@ -99,20 +132,63 @@ public class LuceneSearchBar extends JPanel {
             if (owner == null)
                 return;
             overlay = new SearchBarOverlay(owner, filterModel, fieldsProvider, modelChipSupplier,
-                    openFilterDialog, this::refreshSummary);
+                    openFilterDialog, commit -> {
+                lastCommit = commit;
+                refreshSummary();
+            });
         }
         if (!overlay.isVisible())
             overlay.openAt(this);
+        if (typeAhead != null)
+            overlay.typeAhead(typeAhead);
     }
 
     /**
-     * Updates the collapsed one-line summary from the committed state.
+     * Re-renders the collapsed summary from the committed state.
      */
     public void refreshSummary() {
-        String userQuery = Optional.ofNullable(filterModel.getSearchText()).orElse("");
-        summaryField.setText(userQuery);
-        summaryField.setCaretPosition(0);
-        if (!userQuery.isEmpty())
-            summaryField.setToolTipText(GuiUtils.formatToolTip("Current search query:", userQuery));
+        chipStrip.removeAll();
+        Runnable open = this::openOverlay;
+
+        for (ModelChip chip : modelChipSupplier.get())
+            chipStrip.add(new ChipComponent(chip.label(), chip.tooltip(), ChipComponent.Style.MODEL, open, null));
+
+        String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
+        if (lastCommit != null && docText.equals(lastCommit.compiled())) {
+            // the document still holds what we compiled - render the real chips
+            for (QueryNode node : lastCommit.root().items())
+                chipStrip.add(userChip(node, open));
+            if (!lastCommit.freeText().isEmpty())
+                chipStrip.add(plainLabel(lastCommit.freeText()));
+        } else if (!docText.isEmpty()) {
+            // edited elsewhere - show the raw query text
+            chipStrip.add(plainLabel(docText));
+        }
+
+        if (chipStrip.getComponentCount() == 0) {
+            JLabel placeholder = plainLabel("Search or add filters...");
+            placeholder.setForeground(UIManager.getColor("TextField.inactiveForeground"));
+            chipStrip.add(placeholder);
+        }
+
+        setToolTipText(docText.isEmpty()
+                ? GuiUtils.formatToolTip("Search the feature list - click to open the query builder "
+                + "with suggestions for all searchable fields.")
+                : GuiUtils.formatToolTip("Current search query:", docText));
+        chipStrip.revalidate();
+        chipStrip.repaint();
+    }
+
+    private JComponent userChip(QueryNode node, Runnable open) {
+        String text = node instanceof QueryClause clause
+                ? (clause.negated() ? "NOT " : "") + clause.field() + " " + SearchBarOverlay.clauseBody(clause)
+                : LuceneQueryCompiler.render(node); // groups collapse to their compiled form
+        return new ChipComponent(text, LuceneQueryCompiler.render(node), ChipComponent.Style.USER, open, null);
+    }
+
+    private JLabel plainLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        return label;
     }
 }

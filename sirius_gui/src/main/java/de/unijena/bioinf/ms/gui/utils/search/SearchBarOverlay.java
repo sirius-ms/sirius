@@ -62,11 +62,18 @@ public class SearchBarOverlay extends JDialog {
     private static final int MIN_WIDTH = 500;
     private static final int MAX_HEIGHT = 420;
 
+    /**
+     * What a commit produced - the collapsed bar renders its chips from this snapshot (never by
+     * parsing the compiled string).
+     */
+    public record Commit(@NotNull QueryContainer root, @NotNull String freeText, @NotNull String compiled) {
+    }
+
     private final FeatureFilterModel filterModel;
     private final SearchableFieldsProvider fieldsProvider;
     private final Supplier<List<ModelChip>> modelChipSupplier;
     private final Runnable openFilterDialog;
-    private final Runnable onCommitted;
+    private final java.util.function.Consumer<Commit> onCommitted;
 
     // --- builder state ---
     private QueryContainer root = QueryContainer.empty();
@@ -93,7 +100,7 @@ public class SearchBarOverlay extends JDialog {
                             @NotNull SearchableFieldsProvider fieldsProvider,
                             @NotNull Supplier<List<ModelChip>> modelChipSupplier,
                             @NotNull Runnable openFilterDialog,
-                            @NotNull Runnable onCommitted) {
+                            @NotNull java.util.function.Consumer<Commit> onCommitted) {
         super(owner);
         this.filterModel = filterModel;
         this.fieldsProvider = fieldsProvider;
@@ -192,14 +199,35 @@ public class SearchBarOverlay extends JDialog {
                 rebuild();
         });
 
-        // hiding the overlay must always take the dropdown with it
+        // In-app clicks outside the overlay close it. windowLostFocus alone is not enough: clicking
+        // many components of the main frame does not transfer X window focus. The AWTEventListener
+        // sees every press in this application before dispatch; presses inside this overlay or any
+        // window it owns (suggestion dropdown, combo popups) are ignored. Registered only while
+        // visible so the global listener does not linger.
         addComponentListener(new ComponentAdapter() {
             @Override
+            public void componentShown(ComponentEvent e) {
+                Toolkit.getDefaultToolkit().addAWTEventListener(outsideClickListener, AWTEvent.MOUSE_EVENT_MASK);
+            }
+
+            @Override
             public void componentHidden(ComponentEvent e) {
-                suggestionPopup.hide();
+                Toolkit.getDefaultToolkit().removeAWTEventListener(outsideClickListener);
+                suggestionPopup.hide(); // hiding the overlay must always take the dropdown with it
             }
         });
     }
+
+    private final AWTEventListener outsideClickListener = event -> {
+        if (!(event instanceof MouseEvent mouse) || mouse.getID() != MouseEvent.MOUSE_PRESSED)
+            return;
+        if (!(mouse.getComponent() instanceof Component component))
+            return;
+        for (Window w = SwingUtilities.getWindowAncestor(component); w != null; w = w.getOwner())
+            if (w == this)
+                return;
+        setVisible(false);
+    };
 
     // --- input wiring: suggestions, keyboard semantics ---
 
@@ -415,7 +443,16 @@ public class SearchBarOverlay extends JDialog {
         lastCompiled = compiled;
         filterModel.fireUpdateCompleted();
         setVisible(false);
-        onCommitted.run();
+        onCommitted.accept(new Commit(root, input.getText().trim(), compiled));
+    }
+
+    /**
+     * Appends text to the inline input - used by the collapsed bar to forward the keystroke that
+     * opened the overlay, so typing into the collapsed field "just continues" here.
+     */
+    public void typeAhead(@NotNull String text) {
+        input.setText(input.getText() + text);
+        input.setCaretPosition(input.getText().length());
     }
 
     private void writeDocument(String text) {
@@ -583,9 +620,10 @@ public class SearchBarOverlay extends JDialog {
 
     /**
      * Operator + value as shown on a clause chip, e.g. {@code >= 100} or {@code [100 TO 200]};
-     * text-like clauses read as {@code : value}.
+     * text-like clauses read as {@code : value}. Package-visible: the collapsed bar renders its
+     * committed chips with the same wording.
      */
-    private static String clauseBody(QueryClause clause) {
+    static String clauseBody(QueryClause clause) {
         if (clause.op() == null)
             return ": " + clause.value1();
         String v1 = clause.value1().isEmpty() ? "*" : clause.value1();
