@@ -603,20 +603,13 @@ public class SearchBarOverlay extends JDialog {
         }
         groupPanel.add(closing);
 
-        if (!open) {
-            JLabel remove = new JLabel("✕");
-            remove.setToolTipText("Remove this group with all its filters");
-            remove.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            remove.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    root = QueryTreeOps.removeNodeById(root, group.id());
-                    openPath = QueryTreeOps.resolvePath(root, openPath);
-                    rebuild();
-                }
-            });
-            groupPanel.add(remove);
-        }
+        if (!open)
+            groupPanel.add(ChipComponent.closeLabel(Colors.Menu.FILTER_BUTTON, "Remove this group with all its filters",
+                    () -> {
+                        root = QueryTreeOps.removeNodeById(root, group.id());
+                        openPath = QueryTreeOps.resolvePath(root, openPath);
+                        rebuild();
+                    }));
         return groupPanel;
     }
 
