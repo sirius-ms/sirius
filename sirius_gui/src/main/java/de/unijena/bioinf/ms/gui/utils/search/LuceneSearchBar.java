@@ -26,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -89,16 +87,12 @@ public class LuceneSearchBar extends JPanel {
         setMinimumSize(new Dimension(60, fieldHeight));
         setMaximumSize(new Dimension(Integer.MAX_VALUE, fieldHeight));
 
-        MouseAdapter opener = new MouseAdapter() {
+        // Open only on an explicit gesture - a click or the first typed character. Deliberately NOT
+        // on focusGained: the bar receives focus during normal traversal (and on startup), which
+        // must not pop the overlay open.
+        addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                openOverlay();
-            }
-        };
-        addMouseListener(opener);
-        addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
                 openOverlay();
             }
         });
@@ -125,19 +119,15 @@ public class LuceneSearchBar extends JPanel {
      * that triggered the expansion.
      */
     public void openOverlay(@Nullable String typeAhead) {
-        if (!isShowing())
+        if (!isShowing() || getRootPane() == null)
             return;
-        if (overlay == null) {
-            Window owner = SwingUtilities.getWindowAncestor(this);
-            if (owner == null)
-                return;
-            overlay = new SearchBarOverlay(owner, filterModel, fieldsProvider, modelChipSupplier,
+        if (overlay == null)
+            overlay = new SearchBarOverlay(filterModel, fieldsProvider, modelChipSupplier,
                     openFilterDialog, commit -> {
-                lastCommit = commit;
-                refreshSummary();
-            });
-        }
-        if (!overlay.isVisible())
+                        lastCommit = commit;
+                        refreshSummary();
+                    });
+        if (!overlay.isOpen())
             overlay.openAt(this);
         if (typeAhead != null)
             overlay.typeAhead(typeAhead);
