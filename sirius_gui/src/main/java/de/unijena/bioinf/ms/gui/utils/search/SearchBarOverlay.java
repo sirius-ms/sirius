@@ -100,6 +100,13 @@ public class SearchBarOverlay extends JDialog {
      * document content into its free-text segment instead of trying to parse it back into chips.
      */
     private String lastCompiled = "";
+    /**
+     * Model-filter chip removals staged in the overlay but not yet applied. Like the user's own
+     * clauses, they take effect only on commit (Search) and are discarded on Cancel - so the
+     * {@link FeatureFilterModel} is left untouched until the query is actually run. Keyed by chip
+     * label so {@link #rebuild} can hide a staged-removed chip without mutating the model.
+     */
+    private final LinkedHashMap<String, Runnable> pendingModelRemovals = new LinkedHashMap<>();
 
     // --- ui ---
     private final JPanel inlineRow;
@@ -159,6 +166,7 @@ public class SearchBarOverlay extends JDialog {
             openPath = new int[0];
             tokenModel.reset();
             input.setText("");
+            pendingModelRemovals.clear(); // "filter-dialog filters are kept" -> restore any staged-removed chips
             rebuild();
             input.requestFocusInWindow();
         });
@@ -537,7 +545,14 @@ public class SearchBarOverlay extends JDialog {
         openPath = new int[0];
         tokenModel.reset();
         input.setText(baselineFreeText);
-        setVisible(false);
+        pendingModelRemovals.clear(); // discard staged model-filter removals -> model stays as applied
+        // Destroy the native peer, don't just hide it: on some (X)Wayland compositors an undecorated
+        // heavyweight window's surface can linger after a plain hide - still grabbing mouse input at
+        // its old location while painting nothing. That is what makes a "click on the collapsed bar"
+        // land on the invisible overlay's model chip and reopen the filter dialog once the overlay
+        // has been closed once. dispose() releases the surface (and hides the window); openAt()
+        // re-realizes it via setVisible(true). The builder state lives in fields, so it survives.
+        dispose();
     }
 
     /**
@@ -593,6 +608,10 @@ public class SearchBarOverlay extends JDialog {
     private void commitSearch() {
         String freeText = freeTextForCommit();
         tokenModel.reset(); // a half-built token is not part of the query
+        // now that the search is actually being run, apply the model-filter removals staged in the
+        // overlay (Cancel would instead have discarded them in close())
+        pendingModelRemovals.values().forEach(Runnable::run);
+        pendingModelRemovals.clear();
         String compiled = LuceneQueryCompiler.compile(root, freeText);
         writeDocument(compiled);
         lastCompiled = compiled;
@@ -623,7 +642,11 @@ public class SearchBarOverlay extends JDialog {
         boolean refocus = input.isFocusOwner();
         inlineRow.removeAll();
 
-        List<ModelChip> modelChips = modelChipSupplier.get();
+        // render only the model filters not staged for removal - a staged removal hides the chip but
+        // does not touch the model until the search is committed (Cancel discards it, see close())
+        List<ModelChip> modelChips = modelChipSupplier.get().stream()
+                .filter(c -> !pendingModelRemovals.containsKey(c.label()))
+                .toList();
         for (int i = 0; i < modelChips.size(); i++) {
             if (i > 0)
                 inlineRow.add(ChipComponent.implicitAndLabel()); // dialog filters always AND together
@@ -637,8 +660,10 @@ public class SearchBarOverlay extends JDialog {
                         SwingUtilities.invokeLater(openFilterDialog);
                     },
                     () -> {
-                        chip.onRemove().run();
-                        filterModel.fireUpdateCompleted();
+                        // stage the removal (applied on commit, reverted on Cancel) instead of
+                        // mutating the model right away
+                        pendingModelRemovals.put(chip.label(), chip.onRemove());
+                        rebuild();
                     }));
         }
 
