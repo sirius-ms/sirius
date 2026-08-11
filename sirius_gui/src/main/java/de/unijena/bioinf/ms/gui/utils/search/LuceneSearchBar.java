@@ -132,7 +132,7 @@ public class LuceneSearchBar extends JPanel {
                     });
         }
         if (!overlay.isOpen())
-            overlay.openAt(this, typeAhead); // modal: blocks until the overlay is closed
+            overlay.openAt(this, typeAhead);
     }
 
     /**
