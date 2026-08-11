@@ -21,6 +21,7 @@ import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.PanelQueryNodeFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

@@ -16,14 +16,11 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.utils.search;
+package de.unijena.bioinf.ms.gui.utils.filter;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
-import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
-import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
-import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import org.jetbrains.annotations.NotNull;
 
