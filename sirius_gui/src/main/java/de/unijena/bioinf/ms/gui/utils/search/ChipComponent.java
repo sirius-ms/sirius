@@ -26,6 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 
 /**
  * A rounded tag/chip: label text, optional close button, optional click action. Filled chips are
@@ -47,6 +48,10 @@ public class ChipComponent extends JPanel {
     }
 
     private static final int ARC = 14;
+    /** Chips wider than this (text only) are faded out on the right instead of widening the row. */
+    private static final int MAX_TEXT_WIDTH = 240;
+    /** Width of the right-edge alpha fade applied to truncated chip text. */
+    private static final int FADE_WIDTH = 22;
 
     private final Style style;
 
@@ -57,9 +62,11 @@ public class ChipComponent extends JPanel {
         setOpaque(false);
         setBorder(BorderFactory.createEmptyBorder(1, 6, 1, onClose != null ? 2 : 6));
 
-        JLabel label = new JLabel(text);
+        FadingLabel label = new FadingLabel(text);
         label.setForeground(style == Style.USER ? Colors.Menu.FILTER_BUTTON_TEXT : Colors.FOREGROUND_DATA);
         add(label);
+        // the tooltip (the fully-qualified lucene, or a full-text hint incl. the phrase) reveals the
+        // full content on hover - important now that long chips fade out; keep whatever the caller set
         if (tooltip != null) {
             setToolTipText(tooltip);
             label.setToolTipText(tooltip);
@@ -126,6 +133,71 @@ public class ChipComponent extends JPanel {
             }
         });
         return close;
+    }
+
+    /**
+     * A single-line text label capped at {@link #MAX_TEXT_WIDTH}: instead of hard-clipping or an
+     * {@code ...} ellipsis, an over-long label is drawn in full into an off-screen image whose right
+     * edge is then erased with a horizontal alpha gradient, so the text fades softly into the chip
+     * fill (background-independent, since we erase the text's own alpha rather than paint over it).
+     * The full text stays available as the chip's hover tooltip.
+     */
+    private static final class FadingLabel extends JLabel {
+        private static final Color FADE_FROM = new Color(0, 0, 0, 0);   // erase nothing
+        private static final Color FADE_TO = new Color(0, 0, 0, 255);   // erase fully
+
+        FadingLabel(@NotNull String text) {
+            super(text);
+        }
+
+        /** The unconstrained text width (what the label would want without the cap). */
+        private int naturalWidth() {
+            return super.getPreferredSize().width;
+        }
+
+        boolean isTruncated() {
+            return naturalWidth() > MAX_TEXT_WIDTH;
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            Dimension d = super.getPreferredSize();
+            return d.width > MAX_TEXT_WIDTH ? new Dimension(MAX_TEXT_WIDTH, d.height) : d;
+        }
+
+        @Override
+        public Dimension getMaximumSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            if (!isTruncated()) {
+                super.paintComponent(g);
+                return;
+            }
+            int w = Math.max(1, getWidth());
+            int h = Math.max(1, getHeight());
+            BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D ig = img.createGraphics();
+            try {
+                ig.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                ig.setFont(getFont());
+                ig.setColor(getForeground());
+                FontMetrics fm = ig.getFontMetrics();
+                Insets in = getInsets();
+                int baseline = in.top + (h - in.top - in.bottom - fm.getHeight()) / 2 + fm.getAscent();
+                ig.drawString(getText(), in.left, baseline);
+
+                int fade = Math.min(FADE_WIDTH, w);
+                ig.setComposite(AlphaComposite.DstOut);
+                ig.setPaint(new GradientPaint(w - fade, 0, FADE_FROM, w, 0, FADE_TO));
+                ig.fillRect(w - fade, 0, fade, h);
+            } finally {
+                ig.dispose();
+            }
+            g.drawImage(img, 0, 0, null);
+        }
     }
 
     @Override
