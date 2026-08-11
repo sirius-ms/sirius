@@ -506,7 +506,7 @@ public class FeatureFilterModel implements SiriusPCS {
                 .replace("Infinity]", "*]").replace("[-Infinity", "[*")); // tostring of query seems to be buggy, Infinity is the suggested way by lucene but the resulting query string is wrong.
     }
 
-    private static final String BLANK_REMOVAL_SEARCH_FIELD_NAME = "stats.foldChange" +
+    public static final String BLANK_REMOVAL_SEARCH_FIELD_NAME = "stats.foldChange" +
             "." + Groups.SAMPLE_RUNS.getGroupName() +
             "." + Groups.BLANK_RUNS.getGroupName() +
             "." + QuantMeasure.APEX_INTENSITY +
