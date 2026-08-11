@@ -45,10 +45,10 @@ import java.util.function.Supplier;
  * being built and the text input; an embedded suggestion list below it offers all candidates for
  * the current stage ({@link TokenInputModel}) and narrows while typing.
  * <p>
- * It is a plain panel hosted in the main frame's {@link JLayeredPane} (not a separate window): this
- * avoids the focus/compositing fragility of undecorated dialogs and pop-up windows on some display
- * servers. It closes only via Esc (cancel) or Enter/Search (run the search) - there is no
- * outside-click dismissal.
+ * It is an undecorated, non-modal heavyweight {@link JDialog} anchored on top of the collapsed bar,
+ * so it floats above the native JxBrowser result views (a lightweight layered-pane panel would be
+ * hidden behind those). It closes on Esc/Cancel, on Enter/Search (run the search), or when it loses
+ * window focus - the latter also covers a click on the native result view or anywhere else in the app.
  * <p>
  * Up/Down navigate the suggestion list and Tab is the only key that builds the query (it picks the
  * highlighted suggestion or commits a typed value). Backspace on empty input pops a stage. Enter
@@ -133,12 +133,11 @@ public class SearchBarOverlay extends JDialog {
 
         // A heavyweight top-level window so it floats above the native JxBrowser windows of the
         // result views (a lightweight layered-pane panel is hidden behind those). Undecorated so it
-        // reads as an inline expansion of the collapsed bar. NON-modal on purpose: a modal dialog's
-        // event filter rejects mouse presses on the blocked owner before they are dispatched, so an
-        // AWTEventListener never sees them and outside-click cancel cannot work (we would only ever
-        // see presses on the dialog itself). Non-modal lets the listener receive presses on the rest
-        // of the UI. Only ONE window (the suggestion list is embedded), avoiding the multi-window
-        // focus/paint fragility.
+        // reads as an inline expansion of the collapsed bar. NON-modal on purpose: a modal dialog
+        // would block the rest of the UI, and the outside-click dismissal relies on focus moving
+        // away to another window (see the window-focus listener) - which modality would prevent.
+        // Only ONE window (the suggestion list is embedded), avoiding the multi-window focus/paint
+        // fragility.
         setUndecorated(true);
         setModalityType(ModalityType.MODELESS);
         setFocusableWindowState(true);
@@ -232,25 +231,28 @@ public class SearchBarOverlay extends JDialog {
             }
         });
 
-        // keep anchored while the main window is moved or resized
+        // keep anchored while the main window is moved or resized (only while actually open - a
+        // WM-driven or programmatic move that does not steal focus would otherwise detach the overlay)
         owner.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentMoved(ComponentEvent e) {
-                reposition();
+                if (isVisible())
+                    reposition();
             }
 
             @Override
             public void componentResized(ComponentEvent e) {
-                reposition();
+                if (isVisible())
+                    reposition();
             }
         });
 
-        // Cancel when the overlay loses focus - this is what catches a click on the native
-        // JxBrowser result view (which produces no AWT mouse event the outsideClickListener could
-        // see): clicking it steals window focus, but to Java the focus goes "nowhere" (null opposite
-        // window). Guards: only after the overlay has actually held focus once (so the transient
-        // focus dance while showing cannot close it), and never when focus moves into a window we
-        // own (the AND/OR combo popup).
+        // Cancel when the overlay loses window focus. This is the single dismissal mechanism for
+        // clicking outside: any click elsewhere in the app (including the native JxBrowser result
+        // view, which produces no AWT mouse event) activates another window and moves focus away.
+        // Guards: only after the overlay has actually held focus once (so the transient focus dance
+        // while showing cannot close it), and never when focus moves into a window we own (the
+        // AND/OR combo popup).
         addWindowFocusListener(new WindowAdapter() {
             @Override
             public void windowGainedFocus(WindowEvent e) {
@@ -274,29 +276,6 @@ public class SearchBarOverlay extends JDialog {
                 rebuild();
         });
     }
-
-    /**
-     * Cancels on a press outside the dialog. Registered/removed deterministically in
-     * {@link #openAt}/{@link #close} (NOT via component show/hide events, whose delivery for windows
-     * is unreliable - a leaked global listener would otherwise close the overlay the instant it
-     * reopens). The {@code isVisible()} guard is a second safety net against a stale invocation.
-     * Best-effort: clicks on the native JxBrowser windows produce no AWT event, so those cannot be
-     * caught here - Cancel/Esc are the guaranteed exits.
-     */
-    private final AWTEventListener outsideClickListener = event -> {
-        if (!isVisible() || !(event instanceof MouseEvent mouse) || mouse.getID() != MouseEvent.MOUSE_PRESSED)
-            return;
-        // only cancel on a press we can attribute to a component outside this dialog; a null-source
-        // event must not close it spuriously
-        Component source = mouse.getComponent();
-        if (source == null)
-            return;
-        // ignore presses inside this dialog or any window it owns (e.g. the AND/OR combo popup)
-        for (Window w = SwingUtilities.getWindowAncestor(source); w != null; w = w.getOwner())
-            if (w == this)
-                return;
-        SwingUtilities.invokeLater(this::close); // cancel
-    };
 
     private static JButton iconButton(Icon icon, String tooltip) {
         JButton button = new JButton(icon);
@@ -516,12 +495,6 @@ public class SearchBarOverlay extends JDialog {
         rebuild();
         resizeToFit();
         reposition();
-        // register the outside-click watcher right before showing (the opening press has already
-        // been dispatched, so it will not see it) and remove it in close(). Defensively drop any
-        // prior registration first so a leaked listener from an earlier open can never accumulate
-        // and fire twice against this instance.
-        Toolkit.getDefaultToolkit().removeAWTEventListener(outsideClickListener);
-        Toolkit.getDefaultToolkit().addAWTEventListener(outsideClickListener, AWTEvent.MOUSE_EVENT_MASK);
         setVisible(true);
         toFront();
         // focus the input and show the dropdown once the window is up
@@ -534,12 +507,10 @@ public class SearchBarOverlay extends JDialog {
 
     /**
      * Closes the overlay, discarding any uncommitted edits: the working state reverts to the last
-     * applied query (the baseline). Used by Cancel, Esc, outside-click and the open-filter-dialog
-     * chip. A commit updates the baseline first, so closing right after committing keeps the applied
-     * query.
+     * applied query (the baseline). Used by Cancel, Esc, focus loss and the open-filter-dialog chip.
+     * A commit updates the baseline first, so closing right after committing keeps the applied query.
      */
     public void close() {
-        Toolkit.getDefaultToolkit().removeAWTEventListener(outsideClickListener);
         focusEstablished = false;
         root = baselineRoot;
         openPath = new int[0];
