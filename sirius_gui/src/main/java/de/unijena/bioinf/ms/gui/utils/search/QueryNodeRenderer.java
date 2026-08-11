@@ -70,7 +70,7 @@ public final class QueryNodeRenderer {
             if (clause.isFreeText())
                 return (clause.negated() ? "NOT " : "") + "“" + clause.value1() + "”";
             return (clause.negated() ? "NOT " : "") + displayField(clause.field(), mode, suffixLengthByField)
-                    + " " + SearchBarOverlay.clauseBody(clause);
+                    + " " + QueryEditorPanel.clauseBody(clause);
         }
         QueryGroup group = (QueryGroup) node;
         StringBuilder body = new StringBuilder("(");
