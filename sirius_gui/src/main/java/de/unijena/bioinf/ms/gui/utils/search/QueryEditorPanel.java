@@ -705,7 +705,8 @@ public class QueryEditorPanel extends JPanel {
                     + QueryNodeRenderer.displayField(clause.field(), renderState.mode(), renderState.suffixLengthResolver())
                     + " " + clauseBody(clause);
             String tooltip = clause.isFreeText()
-                    ? "Full-text search in the default fields"
+                    // reveal the (possibly faded-out) full phrase on hover, plus what it does
+                    ? GuiUtils.formatToolTip("“" + clause.value1() + "”", "Full-text search in the default fields")
                     : LuceneQueryCompiler.render(clause);
             return new ChipComponent(text, tooltip, ChipComponent.Style.USER,
                     null, () -> {
