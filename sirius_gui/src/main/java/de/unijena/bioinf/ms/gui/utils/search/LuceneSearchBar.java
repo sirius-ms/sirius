@@ -276,13 +276,7 @@ public class LuceneSearchBar extends JPanel {
     }
 
     private JComponent userChip(QueryNode node, Runnable open) {
-        if (node instanceof QueryClause clause && clause.isFreeText())
-            return new ChipComponent((clause.negated() ? "NOT " : "") + "“" + clause.value1() + "”",
-                    "Full-text search in the default fields", ChipComponent.Style.USER, open, null);
-        String text = node instanceof QueryClause clause
-                ? (clause.negated() ? "NOT " : "") + clause.field() + " " + SearchBarOverlay.clauseBody(clause)
-                : LuceneQueryCompiler.render(node); // groups collapse to their compiled form
-        return new ChipComponent(text, LuceneQueryCompiler.render(node), ChipComponent.Style.USER, open, null);
+        return QueryNodeRenderer.chip(node, ChipComponent.Style.USER, open);
     }
 
     private JLabel plainLabel(String text) {

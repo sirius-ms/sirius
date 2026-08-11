@@ -1,0 +1,183 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2024 Bright Giant GmbH
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
+package de.unijena.bioinf.ms.gui.utils.search;
+
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
+import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
+import io.sirius.ms.sdk.model.SearchableDatabase;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+/**
+ * Builds query-builder {@link QueryNode}s for the active structured filters of a
+ * {@link FeatureFilterModel}, using the REAL lucene index field names (e.g. {@code ionMass:[300 TO 400]},
+ * {@code detectedAdducts:...}) - so the filter-panel state can be rendered by the SAME engine as the
+ * user's own query clauses, only in a different (model) style.
+ * <p>
+ * This is the AlignedFeature-specific precursor of the pojo-agnostic {@code FilterTerm} provider
+ * planned for P1 (see GUI-SEARCHBAR-PLAN.md): for now it just emits nodes, no binding/editing yet.
+ * <p>
+ * The field names below MUST match {@code FeatureFilterModel.toLuceneQueryBuilder}. Until the two are
+ * unified at the source (plan P5), a test cross-checks that every field name emitted here occurs in
+ * the model's compiled query, so the parallel mapping cannot silently drift. Compound facets (RT,
+ * adducts, quality, elements, DB) render as OR/AND groups; the model's {@code NOT_APPLICABLE}
+ * quality fallbacks are an execution detail and are intentionally not shown as chips.
+ */
+public final class PanelQueryNodeFactory {
+
+    private PanelQueryNodeFactory() {
+    }
+
+    // Real index field names / prefixes - keep in sync with FeatureFilterModel.toLuceneQueryBuilder.
+    static final String FIELD_MZ = "ionMass";
+    static final String FIELD_RT_START = "rtStartSeconds";
+    static final String FIELD_RT_APEX = "rtApexSeconds";
+    static final String FIELD_RT_END = "rtEndSeconds";
+    static final String FIELD_CONFIDENCE_APPROX = "topAnnotations.confidenceApproxMatch";
+    static final String FIELD_CONFIDENCE_EXACT = "topAnnotations.confidenceExactMatch";
+    static final String FIELD_HAS_MS1 = "hasMs1";
+    static final String FIELD_HAS_MSMS = "hasMsMs";
+    static final String FIELD_ADDUCTS = "detectedAdducts";
+    static final String FIELD_QUALITY = "quality";
+    static final String PREFIX_CATEGORIZED_QUALITY = "qualities.";
+    static final String PREFIX_ELEMENT = "topAnnotations.formulaAnnotation.molecularFormula.";
+    static final String FIELD_LIPID = "topAnnotations.formulaAnnotation.lipidAnnotation.lipid";
+    static final String PREFIX_DB = "topAnnotations.matchedDatabases.";
+    static final String FIELD_BLANK = FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME;
+
+    /**
+     * The active panel facets as query nodes, AND-joined at the top level (the caller renders them in
+     * model style). The {@code confidenceMode} selects the confidence field the model actually queries.
+     * Empty when no facet is active.
+     */
+    public static List<QueryNode> nodesFor(@NotNull FeatureFilterModel model, @NotNull ConfidenceDisplayMode confidenceMode) {
+        List<QueryNode> nodes = new ArrayList<>();
+
+        if (model.isMzFilterActive())
+            nodes.add(range(FIELD_MZ, model.getCurrentMinMz(), model.getCurrentMaxMz()));
+
+        if (model.isRtFilterActive())
+            // the model matches the RT window against ANY of the three retention-time fields (OR)
+            nodes.add(group(LogicOp.OR, List.of(
+                    range(FIELD_RT_START, model.getCurrentMinRt(), model.getCurrentMaxRt()),
+                    range(FIELD_RT_APEX, model.getCurrentMinRt(), model.getCurrentMaxRt()),
+                    range(FIELD_RT_END, model.getCurrentMinRt(), model.getCurrentMaxRt()))));
+
+        if (model.isMinConfidenceFilterActive() || model.isMaxConfidenceFilterActive()) {
+            String field = confidenceMode == ConfidenceDisplayMode.APPROXIMATE ? FIELD_CONFIDENCE_APPROX : FIELD_CONFIDENCE_EXACT;
+            nodes.add(range(field, model.getCurrentMinConfidence(), model.getCurrentMaxConfidence()));
+        }
+
+        if (model.isHasMs1())
+            nodes.add(QueryClause.text(FIELD_HAS_MS1, "true", false));
+        if (model.isHasMsMs())
+            nodes.add(QueryClause.text(FIELD_HAS_MSMS, "true", false));
+
+        if (model.isAdductFilterActive())
+            nodes.add(group(LogicOp.OR, model.getSelectedAdducts().stream()
+                    .map(Object::toString).sorted()
+                    .<QueryNode>map(adduct -> QueryClause.text(FIELD_ADDUCTS, adduct, false))
+                    .toList()));
+
+        if (model.getFeatureQualityFilter().isEnabled())
+            nodes.add(group(LogicOp.OR, qualityTerms(FIELD_QUALITY, model.getFeatureQualityFilter())));
+
+        model.getCategorizedQualityFilters().stream().filter(QualityFilter::isEnabled).forEach(filter -> {
+            List<QueryNode> terms = qualityTerms(PREFIX_CATEGORIZED_QUALITY + filter.getId(), filter);
+            // the model additionally lets features without any quality data pass (see toLuceneQueryBuilder)
+            terms.add(QueryClause.text(FIELD_QUALITY, DataQuality.NOT_APPLICABLE.toString(), false));
+            nodes.add(group(LogicOp.OR, terms));
+        });
+
+        if (model.isElementFilterEnabled()) {
+            List<QueryNode> perElement = new ArrayList<>();
+            model.getElementFilter().getConstraints().getChemicalAlphabet().forEach(element -> perElement.add(
+                    QueryClause.numeric(PREFIX_ELEMENT + element.getSymbol(), NumberOp.RANGE_INCLUSIVE,
+                            Integer.toString(model.getElementFilter().getConstraints().getLowerbound(element)),
+                            Integer.toString(model.getElementFilter().getConstraints().getUpperbound(element)), false)));
+            // the top formula must satisfy ALL element constraints (AND)
+            nodes.add(group(LogicOp.AND, perElement));
+        }
+
+        if (model.getSampleBlankFoldChange().isEnabled())
+            nodes.add(QueryClause.numeric(FIELD_BLANK, NumberOp.RANGE_INCLUSIVE,
+                    number(model.getSampleBlankFoldChange().getCurrentMinFoldChange()), "", false)); // [min TO *]
+
+        if (model.isLipidFilterEnabled()) {
+            // "no lipid class" is a negated clause; "any lipid class" a plain one
+            boolean noLipid = model.getLipidFilter() == FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED;
+            nodes.add(QueryClause.text(FIELD_LIPID, "true", noLipid));
+        }
+
+        if (model.isDbFilterEnabled()) {
+            int candidates = model.getDbFilter().getNumOfCandidates();
+            nodes.add(group(LogicOp.OR, model.getDbFilter().getDbs().stream()
+                    .map(SearchableDatabase::getDatabaseId)
+                    .filter(java.util.Objects::nonNull).sorted()
+                    .<QueryNode>map(db -> QueryClause.numeric(PREFIX_DB + db, NumberOp.RANGE_INCLUSIVE,
+                            "1", Integer.toString(candidates), false))
+                    .toList()));
+        }
+
+        return nodes;
+    }
+
+    /**
+     * The quality clauses for one field, faithful to {@code FeatureFilterModel.makeQualityQuery}: one
+     * {@code field:value} per selected data quality, plus a {@code field:NOT_APPLICABLE} fallback so
+     * features without quality data still pass (added unconditionally, exactly as the model does).
+     */
+    private static List<QueryNode> qualityTerms(String field, QualityFilter filter) {
+        List<QueryNode> terms = new ArrayList<>();
+        filter.getDataQualities().stream().map(Object::toString).sorted()
+                .forEach(quality -> terms.add(QueryClause.text(field, quality, false)));
+        terms.add(QueryClause.text(field, DataQuality.NOT_APPLICABLE.toString(), false));
+        return terms;
+    }
+
+    /**
+     * A faithful inclusive range clause on the concrete current bounds - matching the model's
+     * {@code DoublePoint.newRangeQuery(field, currentMin, currentMax)} (no wildcard substitution;
+     * an untouched bound already equals the absolute bound, exactly as the model queries it).
+     */
+    private static QueryClause range(String field, double currentMin, double currentMax) {
+        return QueryClause.numeric(field, NumberOp.RANGE_INCLUSIVE, number(currentMin), number(currentMax), false);
+    }
+
+    /** A parenthesized group joining the items with the given operator; a single item stays a clause. */
+    private static QueryNode group(LogicOp op, @NotNull List<QueryNode> items) {
+        if (items.size() == 1)
+            return items.get(0);
+        List<LogicOp> logics = new ArrayList<>(Math.max(0, items.size() - 1));
+        for (int i = 1; i < items.size(); i++)
+            logics.add(op);
+        return new QueryGroup(QueryNode.nextId("group"), false, items, logics);
+    }
+
+    private static String number(double value) {
+        if (value == Math.rint(value) && !Double.isInfinite(value))
+            return String.format(Locale.US, "%.0f", value);
+        return String.format(Locale.US, "%s", value);
+    }
+}
