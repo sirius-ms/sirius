@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.gui.utils.search;
 import com.formdev.flatlaf.icons.FlatClearIcon;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
@@ -34,7 +33,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
@@ -155,11 +153,6 @@ public class SearchBarOverlay extends JDialog {
         wireInput();
 
         Box controls = Box.createHorizontalBox();
-        JButton copy = iconButton(Icons.CLIP_BOARD.derive(15, 15), "Copy the compiled search query to the clipboard");
-        copy.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemClipboard()
-                .setContents(new StringSelection(compileQuery()), null));
-        controls.add(copy);
-
         JButton clear = iconButton(new FlatClearIcon(), "Clear the whole search query (filter-dialog filters are kept)");
         clear.addActionListener(e -> {
             root = QueryContainer.empty();
@@ -569,10 +562,6 @@ public class SearchBarOverlay extends JDialog {
     }
 
     // --- compile & commit ---
-
-    private String compileQuery() {
-        return LuceneQueryCompiler.compile(root, freeTextForCommit());
-    }
 
     /**
      * The input text only counts as a free-text search segment at an entry stage; at a mid-token
