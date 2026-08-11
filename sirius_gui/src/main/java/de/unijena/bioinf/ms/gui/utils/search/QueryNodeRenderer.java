@@ -42,7 +42,7 @@ public final class QueryNodeRenderer {
      *
      * @param onClick optional action when the chip is clicked (e.g. open the query builder); null = inert
      */
-    public static ChipComponent chip(@NotNull QueryNode node, @NotNull ChipComponent.Style style,
+    public static ChipComponent     chip(@NotNull QueryNode node, @NotNull ChipComponent.Style style,
                                      @Nullable Runnable onClick) {
         if (node instanceof QueryClause clause && clause.isFreeText())
             return new ChipComponent((clause.negated() ? "NOT " : "") + "“" + clause.value1() + "”",

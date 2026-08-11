@@ -12074,7 +12074,8 @@
       "SearchableField": {
         "required": [
           "fieldType",
-          "name"
+          "name",
+          "significantSuffixLength"
         ],
         "type": "object",
         "properties": {
@@ -12110,6 +12111,11 @@
             "type": "string",
             "description": "Optional human-readable description of the field content, as shown in the API documentation.\n Plain text suitable for direct display (e.g. tooltips); deliberate paragraph breaks are newlines.",
             "nullable": true
+          },
+          "significantSuffixLength": {
+            "type": "integer",
+            "description": "How many trailing dot-separated segments of the field name carry its meaning, for compact\n display. \u003ccode\u003e1\u003c/code\u003e for a normal field (show the terminal segment, e.g. \u003ccode\u003elipid\u003c/code\u003e); \u003ccode\u003e2\u003c/code\u003e\n for a dynamic map key (show field + key, e.g. \u003ccode\u003ematchedDatabases.GNPS\u003c/code\u003e,\n \u003ccode\u003equalities.PEAK_QUALITY\u003c/code\u003e, \u003ccode\u003etags.pfas\u003c/code\u003e); larger for multi-segment keys. Clients may\n show the last \u003ccode\u003esignificantSuffixLength\u003c/code\u003e name segments as a short label; the full field name\n always stays authoritative for queries.",
+            "format": "int32"
           }
         },
         "description": "Describes one field of the search index that can be used in lucene search queries (searchQuery parameter).\n Use this information to build valid queries, e.g. which fields support range queries ([300 TO 400])\n and which support word based (full text) search."
