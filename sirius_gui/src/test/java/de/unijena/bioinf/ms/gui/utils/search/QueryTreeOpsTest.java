@@ -17,6 +17,7 @@
  */
 
 package de.unijena.bioinf.ms.gui.utils.search;
+import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import org.junit.jupiter.api.Test;
 
