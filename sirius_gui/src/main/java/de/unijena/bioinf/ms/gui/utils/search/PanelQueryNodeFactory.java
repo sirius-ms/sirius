@@ -20,6 +20,7 @@ package de.unijena.bioinf.ms.gui.utils.search;
 
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
+import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import io.sirius.ms.sdk.model.SearchableDatabase;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 /**
  * Builds query-builder {@link QueryNode}s for the active structured filters of a
@@ -67,47 +69,74 @@ public final class PanelQueryNodeFactory {
     static final String FIELD_BLANK = FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME;
 
     /**
-     * The active panel facets as query nodes, AND-joined at the top level (the caller renders them in
-     * model style). The {@code confidenceMode} selects the confidence field the model actually queries.
-     * Empty when no facet is active.
+     * One active filter-panel facet: its stable {@code id}, the faithful {@link QueryNode} it compiles
+     * to (verified equal to the model's executed query), and how to {@code reset} exactly that facet in
+     * the model. This is the per-facet descriptor the {@code FilterTerm} provider and (later, plan P5)
+     * the single-source query builder are built on.
+     */
+    public record Facet(@NotNull String id, @NotNull QueryNode queryNode,
+                        @NotNull Consumer<FeatureFilterModel> reset) {
+    }
+
+    /**
+     * The active panel facets as query nodes, AND-joined at the top level. {@code confidenceMode}
+     * selects the confidence field the model actually queries. Empty when no facet is active.
      */
     public static List<QueryNode> nodesFor(@NotNull FeatureFilterModel model, @NotNull ConfidenceDisplayMode confidenceMode) {
-        List<QueryNode> nodes = new ArrayList<>();
+        return facets(model, confidenceMode).stream().map(Facet::queryNode).toList();
+    }
+
+    /** The active facets as descriptors (node + reset), in a stable order. */
+    public static List<Facet> facets(@NotNull FeatureFilterModel model, @NotNull ConfidenceDisplayMode confidenceMode) {
+        List<Facet> facets = new ArrayList<>();
 
         if (model.isMzFilterActive())
-            nodes.add(range(FIELD_MZ, model.getCurrentMinMz(), model.getCurrentMaxMz()));
+            facets.add(new Facet("mz", range(FIELD_MZ, model.getCurrentMinMz(), model.getCurrentMaxMz()),
+                    m -> {
+                        m.setCurrentMinMz(m.getMinMz());
+                        m.setCurrentMaxMz(m.getMaxMz());
+                    }));
 
         if (model.isRtFilterActive())
             // the model matches the RT window against ANY of the three retention-time fields (OR)
-            nodes.add(group(LogicOp.OR, List.of(
+            facets.add(new Facet("rt", group(LogicOp.OR, List.of(
                     range(FIELD_RT_START, model.getCurrentMinRt(), model.getCurrentMaxRt()),
                     range(FIELD_RT_APEX, model.getCurrentMinRt(), model.getCurrentMaxRt()),
-                    range(FIELD_RT_END, model.getCurrentMinRt(), model.getCurrentMaxRt()))));
+                    range(FIELD_RT_END, model.getCurrentMinRt(), model.getCurrentMaxRt()))),
+                    m -> {
+                        m.setCurrentMinRt(m.getMinRt());
+                        m.setCurrentMaxRt(m.getMaxRt());
+                    }));
 
         if (model.isMinConfidenceFilterActive() || model.isMaxConfidenceFilterActive()) {
             String field = confidenceMode == ConfidenceDisplayMode.APPROXIMATE ? FIELD_CONFIDENCE_APPROX : FIELD_CONFIDENCE_EXACT;
-            nodes.add(range(field, model.getCurrentMinConfidence(), model.getCurrentMaxConfidence()));
+            facets.add(new Facet("confidence", range(field, model.getCurrentMinConfidence(), model.getCurrentMaxConfidence()),
+                    m -> {
+                        m.setCurrentMinConfidence(m.getMinConfidence());
+                        m.setCurrentMaxConfidence(m.getMaxConfidence());
+                    }));
         }
 
         if (model.isHasMs1())
-            nodes.add(QueryClause.text(FIELD_HAS_MS1, "true", false));
+            facets.add(new Facet("hasMs1", QueryClause.text(FIELD_HAS_MS1, "true", false), m -> m.setHasMs1(false)));
         if (model.isHasMsMs())
-            nodes.add(QueryClause.text(FIELD_HAS_MSMS, "true", false));
+            facets.add(new Facet("hasMsMs", QueryClause.text(FIELD_HAS_MSMS, "true", false), m -> m.setHasMsMs(false)));
 
         if (model.isAdductFilterActive())
-            nodes.add(group(LogicOp.OR, model.getSelectedAdducts().stream()
+            facets.add(new Facet("adducts", group(LogicOp.OR, model.getSelectedAdducts().stream()
                     .map(Object::toString).sorted()
                     .<QueryNode>map(adduct -> QueryClause.text(FIELD_ADDUCTS, adduct, false))
-                    .toList()));
+                    .toList()), m -> m.setAdducts(java.util.Set.of())));
 
         if (model.getFeatureQualityFilter().isEnabled())
-            nodes.add(group(LogicOp.OR, qualityTerms(FIELD_QUALITY, model.getFeatureQualityFilter())));
+            facets.add(new Facet("quality", group(LogicOp.OR, qualityTerms(FIELD_QUALITY, model.getFeatureQualityFilter())),
+                    m -> m.getFeatureQualityFilter().reset()));
 
         model.getCategorizedQualityFilters().stream().filter(QualityFilter::isEnabled).forEach(filter -> {
             List<QueryNode> terms = qualityTerms(PREFIX_CATEGORIZED_QUALITY + filter.getId(), filter);
             // the model additionally lets features without any quality data pass (see toLuceneQueryBuilder)
             terms.add(QueryClause.text(FIELD_QUALITY, DataQuality.NOT_APPLICABLE.toString(), false));
-            nodes.add(group(LogicOp.OR, terms));
+            facets.add(new Facet("quality." + filter.getId(), group(LogicOp.OR, terms), m -> filter.reset()));
         });
 
         if (model.isElementFilterEnabled()) {
@@ -117,30 +146,32 @@ public final class PanelQueryNodeFactory {
                             Integer.toString(model.getElementFilter().getConstraints().getLowerbound(element)),
                             Integer.toString(model.getElementFilter().getConstraints().getUpperbound(element)), false)));
             // the top formula must satisfy ALL element constraints (AND)
-            nodes.add(group(LogicOp.AND, perElement));
+            facets.add(new Facet("elements", group(LogicOp.AND, perElement), m -> m.setElementFilter(ElementFilter.disabled())));
         }
 
         if (model.getSampleBlankFoldChange().isEnabled())
-            nodes.add(QueryClause.numeric(FIELD_BLANK, NumberOp.RANGE_INCLUSIVE,
-                    number(model.getSampleBlankFoldChange().getCurrentMinFoldChange()), "", false)); // [min TO *]
+            facets.add(new Facet("blank", QueryClause.numeric(FIELD_BLANK, NumberOp.RANGE_INCLUSIVE,
+                    number(model.getSampleBlankFoldChange().getCurrentMinFoldChange()), "", false), // [min TO *]
+                    m -> m.getSampleBlankFoldChange().reset()));
 
         if (model.isLipidFilterEnabled()) {
             // "no lipid class" is a negated clause; "any lipid class" a plain one
             boolean noLipid = model.getLipidFilter() == FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED;
-            nodes.add(QueryClause.text(FIELD_LIPID, "true", noLipid));
+            facets.add(new Facet("lipid", QueryClause.text(FIELD_LIPID, "true", noLipid),
+                    m -> m.setLipidFilter(FeatureFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS)));
         }
 
         if (model.isDbFilterEnabled()) {
             int candidates = model.getDbFilter().getNumOfCandidates();
-            nodes.add(group(LogicOp.OR, model.getDbFilter().getDbs().stream()
+            facets.add(new Facet("db", group(LogicOp.OR, model.getDbFilter().getDbs().stream()
                     .map(SearchableDatabase::getDatabaseId)
                     .filter(java.util.Objects::nonNull).sorted()
                     .<QueryNode>map(db -> QueryClause.numeric(PREFIX_DB + db, NumberOp.RANGE_INCLUSIVE,
                             "1", Integer.toString(candidates), false))
-                    .toList()));
+                    .toList()), m -> m.setDbFilter(null)));
         }
 
-        return nodes;
+        return facets;
     }
 
     /**

@@ -317,7 +317,7 @@ interface FilterTerm {
   boolean isActive();
   QueryNode toQueryNode();              // -> render/AST layer
   List<EditableValue> editableValues(); // scalar/range values editable INLINE (carry domain: min/max/step/enum)
-  void openExternalEditor(Host host);   // set/complex facets defer here (adducts/DBs/quality/elements)
+  void openEditor(FilterEditorHost host);   // set/complex facets defer here (adducts/DBs/quality/elements)
   void reset();
   void addChangeListener(Runnable l);
 }
@@ -413,9 +413,9 @@ interface FilterTerm {
 
     // --- editing (transactional; see C3) ---
     List<EditableValue> editableValues();// inline-editable scalars/ranges w/ domain (min/max/step/enum);
-                                         // empty => not inline-editable (use openExternalEditor)
+                                         // empty => not inline-editable (use openEditor)
     void setWorkingValue(EditableValue slot, String raw);  // stage an edit (fires change; no backing write)
-    void openExternalEditor(Host host);  // set/complex facets defer here (adduct/DB/element pickers)
+    void openEditor(FilterEditorHost host);  // set/complex facets defer here (adduct/DB/element pickers)
     void clear();                        // stage "remove this term" (revertible until commit)
 
     void addChangeListener(Runnable l);  // fires on any working-state change
@@ -430,7 +430,7 @@ record EditableValue(String key, ValueKind kind, String workingRaw, /* domain */
   inline editor can validate without knowing the pojo. This is the piece the Lucene flexible model
   could not provide and the reason we keep our own model.
 
-### C2. `FilterTermProvider` + `Host` — the per-pojo plug and the UI callbacks
+### C2. `FilterTermProvider` + `FilterEditorHost` — the per-pojo plug and the UI callbacks
 ```
 interface FilterTermProvider {
     List<FilterTerm> panelTerms();       // PANEL terms (may be empty for pojos without a filter panel)
@@ -439,14 +439,14 @@ interface FilterTermProvider {
     List<SearchableField> searchableFields(); // autocomplete source (already per-pojo)
 }
 
-interface Host {                          // how a term asks its host to open a full editor
-    void openPanelEditorFor(FilterTerm term);   // overlay -> open the dialog + select the term's tab;
+interface FilterEditorHost {              // how a term asks its host to open a full editor
+    void openEditorFor(FilterTerm term);        // overlay -> open the dialog + select the term's tab;
                                                 //  dialog  -> just select the term's tab + focus picker
 }
 ```
 - The AlignedFeature provider wraps `FeatureFilterModel` (panel terms) + `GuiProjectManager.reloadFeatures`
   (commit). A future Runs/Compounds provider wraps its own model or supplies only user terms.
-- The engine takes a `FilterTermProvider` and a `Host`; it never imports `FeatureFilterModel`.
+- The engine takes a `FilterTermProvider` and a `FilterEditorHost`; it never imports `FeatureFilterModel`.
 
 ### C3. Working-copy / commit protocol (transactional, Q1) - reused everywhere
 Chosen over a whole-model snapshot because `FeatureFilterModel` is not cleanly clonable and per-term
@@ -466,7 +466,7 @@ is naturally generic:
 
 ### What this makes reusable vs per-pojo
 - Reusable (engine): `QueryNode` + compiler, renderer (interactive/read-only modes), token editor,
-  autocomplete, the `FilterTerm`/`FilterTermProvider`/`Host` contracts, the commit/revert protocol.
+  autocomplete, the `FilterTerm`/`FilterTermProvider`/`FilterEditorHost` contracts, the commit/revert protocol.
 - Per-pojo (provider): the concrete `FilterTerm` set + their widget/model binding, and the execution
   sink. AlignedFeature is the first provider; others drop in without touching the engine.
 

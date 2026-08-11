@@ -15,6 +15,7 @@ Describes one field of the search index that can be used in lucene search querie
 |**defaultSearchField** | **Boolean** | If true, this field is searched when a query term does not specify a field name. |  [optional] |
 |**possibleValues** | **List&lt;String&gt;** | For ENUM fields: the values this field can take. Null otherwise. |  [optional] |
 |**description** | **String** | Optional human-readable description of the field content, as shown in the API documentation.  Plain text suitable for direct display (e.g. tooltips); deliberate paragraph breaks are newlines. |  [optional] |
+|**significantSuffixLength** | **Integer** | How many trailing dot-separated segments of the field name carry its meaning, for compact  display. &lt;code&gt;1&lt;/code&gt; for a normal field (show the terminal segment, e.g. &lt;code&gt;lipid&lt;/code&gt;); &lt;code&gt;2&lt;/code&gt;  for a dynamic map key (show field + key, e.g. &lt;code&gt;matchedDatabases.GNPS&lt;/code&gt;,  &lt;code&gt;qualities.PEAK_QUALITY&lt;/code&gt;, &lt;code&gt;tags.pfas&lt;/code&gt;); larger for multi-segment keys. Clients may  show the last &lt;code&gt;significantSuffixLength&lt;/code&gt; name segments as a short label; the full field name  always stays authoritative for queries. |  |
 
 
 

@@ -48,7 +48,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SearchableField.JSON_PROPERTY_SORTABLE,
   SearchableField.JSON_PROPERTY_DEFAULT_SEARCH_FIELD,
   SearchableField.JSON_PROPERTY_POSSIBLE_VALUES,
-  SearchableField.JSON_PROPERTY_DESCRIPTION
+  SearchableField.JSON_PROPERTY_DESCRIPTION,
+  SearchableField.JSON_PROPERTY_SIGNIFICANT_SUFFIX_LENGTH
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class SearchableField {
@@ -79,6 +80,10 @@ public class SearchableField {
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
   @jakarta.annotation.Nullable
   private String description;
+
+  public static final String JSON_PROPERTY_SIGNIFICANT_SUFFIX_LENGTH = "significantSuffixLength";
+  @jakarta.annotation.Nonnull
+  private Integer significantSuffixLength;
 
   public SearchableField() {
   }
@@ -266,6 +271,31 @@ public class SearchableField {
     this.description = description;
   }
 
+  public SearchableField significantSuffixLength(@jakarta.annotation.Nonnull Integer significantSuffixLength) {
+    
+    this.significantSuffixLength = significantSuffixLength;
+    return this;
+  }
+
+  /**
+   * How many trailing dot-separated segments of the field name carry its meaning, for compact  display. &lt;code&gt;1&lt;/code&gt; for a normal field (show the terminal segment, e.g. &lt;code&gt;lipid&lt;/code&gt;); &lt;code&gt;2&lt;/code&gt;  for a dynamic map key (show field + key, e.g. &lt;code&gt;matchedDatabases.GNPS&lt;/code&gt;,  &lt;code&gt;qualities.PEAK_QUALITY&lt;/code&gt;, &lt;code&gt;tags.pfas&lt;/code&gt;); larger for multi-segment keys. Clients may  show the last &lt;code&gt;significantSuffixLength&lt;/code&gt; name segments as a short label; the full field name  always stays authoritative for queries.
+   * @return significantSuffixLength
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_SIGNIFICANT_SUFFIX_LENGTH, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Integer getSignificantSuffixLength() {
+    return significantSuffixLength;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_SIGNIFICANT_SUFFIX_LENGTH, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setSignificantSuffixLength(@jakarta.annotation.Nonnull Integer significantSuffixLength) {
+    this.significantSuffixLength = significantSuffixLength;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -282,12 +312,13 @@ public class SearchableField {
         Objects.equals(this.sortable, searchableField.sortable) &&
         Objects.equals(this.defaultSearchField, searchableField.defaultSearchField) &&
         Objects.equals(this.possibleValues, searchableField.possibleValues) &&
-        Objects.equals(this.description, searchableField.description);
+        Objects.equals(this.description, searchableField.description) &&
+        Objects.equals(this.significantSuffixLength, searchableField.significantSuffixLength);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, fieldType, fullTextSearch, sortable, defaultSearchField, possibleValues, description);
+    return Objects.hash(name, fieldType, fullTextSearch, sortable, defaultSearchField, possibleValues, description, significantSuffixLength);
   }
 
   @Override
@@ -301,6 +332,7 @@ public class SearchableField {
     sb.append("    defaultSearchField: ").append(toIndentedString(defaultSearchField)).append("\n");
     sb.append("    possibleValues: ").append(toIndentedString(possibleValues)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
+    sb.append("    significantSuffixLength: ").append(toIndentedString(significantSuffixLength)).append("\n");
     sb.append("}");
     return sb.toString();
   }

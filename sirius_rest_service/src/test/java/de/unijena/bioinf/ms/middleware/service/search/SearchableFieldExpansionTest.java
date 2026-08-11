@@ -93,6 +93,27 @@ public class SearchableFieldExpansionTest {
     }
 
     @Test
+    public void testSignificantSuffixLengthIsStructuralLeafPlusKeySegments() {
+        SearchableField dbTemplate = field("topAnnotations.matchedDatabases.*", FieldType.INTEGER);
+        SearchableField foldTemplate = field("stats.foldChange.*", FieldType.DOUBLE);
+
+        Map<String, SearchableField> out = byName(LuceneMappingUtils.expandDynamicKeyFields(
+                List.of(dbTemplate, foldTemplate),
+                Set.of("topAnnotations.matchedDatabases.GNPS",                 // single-segment key -> 1 + 1
+                        "stats.foldChange.SAMPLE.BLANK.APEX_INTENSITY.AVG")));  // four-segment key  -> 1 + 4
+
+        assertEquals(2, out.get("topAnnotations.matchedDatabases.GNPS").getSignificantSuffixLength());
+        assertEquals(5, out.get("stats.foldChange.SAMPLE.BLANK.APEX_INTENSITY.AVG").getSignificantSuffixLength());
+    }
+
+    @Test
+    public void testPlainFieldsDefaultToSuffixLengthOne() {
+        SearchableField ionMass = field("ionMass", FieldType.DOUBLE);
+        assertEquals(1, LuceneMappingUtils.expandDynamicKeyFields(List.of(ionMass), Set.of("ionMass"))
+                .get(0).getSignificantSuffixLength());
+    }
+
+    @Test
     public void testTemplateWithoutMatchingKeysIsDropped() {
         SearchableField template = field("topAnnotations.matchedDatabases.*", FieldType.INTEGER);
         // index holds no matchedDatabases.* keys yet -> nothing concrete to query -> drop the template

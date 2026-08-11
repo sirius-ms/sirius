@@ -287,6 +287,7 @@ public class LuceneMappingUtils {
                 .name(fieldName)
                 .fieldType(getSearchableFieldTypeForValueType(valueType))
                 .fullTextSearch(valueType == ValueType.TEXT)
+                .significantSuffixLength(2) // "tags.<tagName>" - the tag field plus the tag key
                 .description("Project tag '" + tagName + "'"
                         + (valueType == ValueType.NONE ? "; presence flag, search for value 'true'" : ""))
                 .build();
@@ -374,15 +375,20 @@ public class LuceneMappingUtils {
             indexedFieldNames.stream()
                     .filter(indexed -> indexed.length() > prefix.length() && indexed.startsWith(prefix))
                     .sorted()
-                    .forEach(concrete -> result.add(SearchableField.builder()
-                            .name(concrete)
-                            .fieldType(field.getFieldType())
-                            .fullTextSearch(field.isFullTextSearch())
-                            .sortable(field.isSortable())
-                            .defaultSearchField(field.isDefaultSearchField())
-                            .possibleValues(field.getPossibleValues())
-                            .description(field.getDescription())
-                            .build()));
+                    .forEach(concrete -> {
+                        // meaningful tail = the structural field (1) + however many segments the dynamic key spans
+                        int keySegments = concrete.substring(prefix.length()).split("\\.").length;
+                        result.add(SearchableField.builder()
+                                .name(concrete)
+                                .fieldType(field.getFieldType())
+                                .fullTextSearch(field.isFullTextSearch())
+                                .sortable(field.isSortable())
+                                .defaultSearchField(field.isDefaultSearchField())
+                                .possibleValues(field.getPossibleValues())
+                                .description(field.getDescription())
+                                .significantSuffixLength(1 + keySegments)
+                                .build());
+                    });
         }
         return result;
     }
