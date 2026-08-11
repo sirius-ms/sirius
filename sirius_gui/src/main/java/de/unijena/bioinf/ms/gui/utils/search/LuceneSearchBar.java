@@ -180,8 +180,14 @@ public class LuceneSearchBar extends JPanel {
                         refreshSummary();
                     });
         }
-        if (!overlay.isOpen())
-            overlay.openAt(this, typeAhead);
+        // Reopen unconditionally. If we reach here the collapsed bar received the gesture, which means
+        // the overlay is NOT the active window - so a still-"open" overlay is a stale/stuck instance
+        // (e.g. a hide that did not take after a filter-dialog round-trip). Force it closed first so
+        // openAt always starts from a clean baseline; otherwise the old isOpen() no-op would leave the
+        // overlay permanently un-reopenable.
+        if (overlay.isOpen())
+            overlay.close();
+        overlay.openAt(this, typeAhead);
     }
 
     /**
