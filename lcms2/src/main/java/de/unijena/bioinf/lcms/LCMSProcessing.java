@@ -4,10 +4,14 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.centroiding.CentroidIndividualSpectraStrategy;
 import de.unijena.bioinf.lcms.centroiding.CentroidingStrategy;
+import de.unijena.bioinf.lcms.deconvolution.DeconvoluteForLargeIsolationWindows;
+import de.unijena.bioinf.lcms.deconvolution.DeconvoluteMs2ToTraces;
+import de.unijena.bioinf.lcms.deconvolution.DeconvolutionDecision;
 import de.unijena.bioinf.lcms.features.IsotopePatternExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedApexIsotopePatternExtractor;
 import de.unijena.bioinf.lcms.features.SegmentMergedFeatures;
@@ -116,6 +120,8 @@ public class LCMSProcessing {
 
     @Getter @Setter private IsotopePatternExtractionStrategy isotopePatternExtractionStrategy = new MergedApexIsotopePatternExtractor();
 
+    @Getter @Setter private DeconvolutionDecision deconvolutionDecision = new DeconvoluteForLargeIsolationWindows();
+
     protected List<ProcessedSample> samples = new ArrayList<>();
     private HashMap<Integer, ProcessedSample> sampleByIdx = new HashMap<>();
 
@@ -196,14 +202,46 @@ public class LCMSProcessing {
         return sample;
     }
 
+    private void cleanupSample(ProcessedSample sample) {
+        fixMissingParentIdsForMs2(sample);
+    }
+
+    private void fixMissingParentIdsForMs2(ProcessedSample sample) {
+        final ArrayList<Ms2SpectrumHeader> headers = new ArrayList<>();
+        for (Ms2SpectrumHeader header : sample.getStorage().getSpectrumStorage().ms2SpectraHeader()) {
+            headers.add(header);
+        }
+        for (Ms2SpectrumHeader ms2 : headers){
+            int parentId = ms2.getParentId();
+            if (parentId<0) {
+                parentId = sample.getMapping().idForRetentionTime(ms2.getRetentionTime());
+                for (int k=parentId; k >= parentId-10 && k >= 0; --k) {
+                    SimpleSpectrum ms1Spectrum = sample.getStorage().getSpectrumStorage().getSpectrum(k);
+                    int peakIdx = Spectrums.mostIntensivePeakWithin(ms1Spectrum, ms2.getPrecursorMz(), new Deviation(20));
+                    if ((peakIdx >= 0) && (ms1Spectrum.getIntensityAt(peakIdx)>sample.getStorage().getStatistics().noiseLevel(k))) {
+                        parentId = k;
+                        break;
+                    }
+                }
+                sample.getStorage().getSpectrumStorage().updateMs2Header(ms2.withParentId(parentId));
+            }
+        }
+    }
+
     private void processSample(ProcessedSample sample) throws IOException {
         sample.setUid(this.samples.size());
         this.samples.add(sample);
         this.sampleByIdx.put(sample.getUid(), sample);
         sample.active();
         collectStatistics(sample);
+        cleanupSample(sample);
         extractTraces(sample);
-        assignMs2Trace(sample);
+        if (deconvolutionDecision.performDeconvolution(sample)) {
+            new DeconvoluteMs2ToTraces().deconvolute(sample);
+            System.exit(0);
+        } else {
+            assignMs2Trace(sample);
+        }
         sample.setNormalizer(normalizationStrategy.computeNormalization(sample));
         extractMoIsForAlignment(sample);
         collectStatisticsBeforeAlignment(sample);
