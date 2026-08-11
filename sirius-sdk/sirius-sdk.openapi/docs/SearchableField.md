@@ -8,7 +8,7 @@ Describes one field of the search index that can be used in lucene search querie
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**name** | **String** | Name of the field to be used in search queries, e.g. &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt;.  Nested fields are addressed with dot notation. A trailing &lt;code&gt;.*&lt;/code&gt; means the prefix is followed  by a dynamic key, e.g. &lt;code&gt;tags.&amp;lt;tagName&amp;gt;&lt;/code&gt; or an element symbol in &lt;code&gt;molecularFormula.&amp;lt;element&amp;gt;&lt;/code&gt;. |  |
+|**name** | **String** | Name of the field to be used in search queries, e.g. &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt;.  Nested fields are addressed with dot notation. Dynamic, map-like fields are reported as concrete,  directly usable field names - one entry per key currently present in the project index - rather  than a wildcard template, e.g. &lt;code&gt;tags.&amp;lt;tagName&amp;gt;&lt;/code&gt;, an element symbol in  &lt;code&gt;...molecularFormula.&amp;lt;element&amp;gt;&lt;/code&gt;, or a database id in  &lt;code&gt;topAnnotations.matchedDatabases.&amp;lt;dbId&amp;gt;&lt;/code&gt;. |  |
 |**fieldType** | **SearchableFieldType** |  |  |
 |**fullTextSearch** | **Boolean** | If true, the field content is split into words and can be searched word by word (full text search).  If false, TEXT fields only match as exact terms (though wildcards and regex are still possible). |  [optional] |
 |**sortable** | **Boolean** | If true, search results can be sorted by this field. |  [optional] |
