@@ -20,7 +20,6 @@ package de.unijena.bioinf.ms.gui.utils.search;
 
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
-import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import io.sirius.ms.sdk.SiriusClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +53,6 @@ public class LuceneSearchBar extends JPanel {
     private final SearchableFieldsProvider fieldsProvider;
     private final Supplier<List<ModelChip>> modelChipSupplier;
     private final Runnable openFilterDialog;
-    private final Supplier<ConfidenceDisplayMode> confidenceMode;
 
     private final JPanel chipStrip;
 
@@ -78,13 +76,11 @@ public class LuceneSearchBar extends JPanel {
     public LuceneSearchBar(@NotNull SiriusClient siriusClient, @NotNull String projectId,
                            @NotNull FeatureFilterModel filterModel,
                            @NotNull Supplier<List<ModelChip>> modelChipSupplier,
-                           @NotNull Runnable openFilterDialog,
-                           @NotNull Supplier<ConfidenceDisplayMode> confidenceMode) {
+                           @NotNull Runnable openFilterDialog) {
         super(new BorderLayout());
         this.filterModel = filterModel;
         this.modelChipSupplier = modelChipSupplier;
         this.openFilterDialog = openFilterDialog;
-        this.confidenceMode = confidenceMode;
         this.fieldsProvider = new SearchableFieldsProvider(siriusClient, projectId);
 
         // look like an (active) text field, not like a disabled one
@@ -157,7 +153,7 @@ public class LuceneSearchBar extends JPanel {
                     openFilterDialog, commit -> {
                         lastCommit = commit;
                         refreshSummary();
-                    }, confidenceMode);
+                    });
         }
         if (!overlay.isOpen())
             overlay.openAt(this, typeAhead);

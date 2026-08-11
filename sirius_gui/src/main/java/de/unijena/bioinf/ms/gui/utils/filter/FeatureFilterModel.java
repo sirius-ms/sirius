@@ -465,22 +465,8 @@ public class FeatureFilterModel implements SiriusPCS {
     public Optional<String> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode) {
         if (!isActive())
             return Optional.empty();
-        return finalizeQuery(toLuceneQueryBuilder(confidenceMode, getSearchText()).build());
-    }
 
-    /**
-     * The full query (model filters combined with the given user query) as it would be executed,
-     * independent of the shared search-text document. Used to copy the complete query - including the
-     * filter-panel part - while the user query is still being built in the search overlay.
-     */
-    public Optional<String> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode, @Nullable String userQuery) {
-        BooleanQuery mainQuery = toLuceneQueryBuilder(confidenceMode, userQuery).build();
-        if (mainQuery.clauses().isEmpty())
-            return Optional.empty();
-        return finalizeQuery(mainQuery);
-    }
-
-    private Optional<String> finalizeQuery(BooleanQuery mainQuery) {
+        BooleanQuery mainQuery = toLuceneQueryBuilder(confidenceMode).build();
         if (isInverted()) {
             mainQuery = new BooleanQuery.Builder()
                     .add(new MatchAllDocsQuery(), BooleanClause.Occur.MUST)  // Include all documents (*:*)
@@ -497,7 +483,7 @@ public class FeatureFilterModel implements SiriusPCS {
         if (!isActive() && alFeatureIds.length == 0)
             return Optional.empty();
 
-        BooleanQuery.Builder builder = toLuceneQueryBuilder(confidenceMode, getSearchText());
+        BooleanQuery.Builder builder = toLuceneQueryBuilder(confidenceMode);
         if (alFeatureIds.length > 0) {
             BooleanQuery.Builder idQuery = new BooleanQuery.Builder();
             for (String fid : alFeatureIds) {
@@ -523,7 +509,7 @@ public class FeatureFilterModel implements SiriusPCS {
             "." + QuantMeasure.APEX_INTENSITY +
             "." + AggregationType.AVG;
 
-    private BooleanQuery.Builder toLuceneQueryBuilder(@NotNull ConfidenceDisplayMode confidenceMode, @Nullable String searchText) {
+    private BooleanQuery.Builder toLuceneQueryBuilder(@NotNull ConfidenceDisplayMode confidenceMode) {
         // Combine queries using BooleanQuery.Builder
         BooleanQuery.Builder booleanQuery = new BooleanQuery.Builder();
 
@@ -587,7 +573,8 @@ public class FeatureFilterModel implements SiriusPCS {
             booleanQuery.add(makeDbQuery("topAnnotations.matchedDatabases.", dbFilter), BooleanClause.Occur.MUST);
 
         // Handling searchText (Full-text search)
-        if (searchText != null && !searchText.isBlank()) {
+        if (isSearchTextFilterActive()) {
+            String searchText = getSearchText();
             try {
                 // Try to parse the search text as a Lucene query
                 booleanQuery.add(textFieldParser.parse(searchText), BooleanClause.Occur.MUST);
