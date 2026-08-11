@@ -51,21 +51,22 @@ public final class PanelQueryNodeFactory {
     private PanelQueryNodeFactory() {
     }
 
-    // Real index field names / prefixes - keep in sync with FeatureFilterModel.toLuceneQueryBuilder.
-    static final String FIELD_MZ = "ionMass";
-    static final String FIELD_RT_START = "rtStartSeconds";
-    static final String FIELD_RT_APEX = "rtApexSeconds";
-    static final String FIELD_RT_END = "rtEndSeconds";
-    static final String FIELD_CONFIDENCE_APPROX = "topAnnotations.confidenceApproxMatch";
-    static final String FIELD_CONFIDENCE_EXACT = "topAnnotations.confidenceExactMatch";
-    static final String FIELD_HAS_MS1 = "hasMs1";
-    static final String FIELD_HAS_MSMS = "hasMsMs";
-    static final String FIELD_ADDUCTS = "detectedAdducts";
-    static final String FIELD_QUALITY = "quality";
-    static final String PREFIX_CATEGORIZED_QUALITY = "qualities.";
-    static final String PREFIX_ELEMENT = "topAnnotations.formulaAnnotation.molecularFormula.";
-    static final String FIELD_LIPID = "topAnnotations.formulaAnnotation.lipidAnnotation.lipid";
-    static final String PREFIX_DB = "topAnnotations.matchedDatabases.";
+    // Field names come from FeatureFilterModel (the single GUI-side source of truth), so the chips and
+    // the executed query cannot drift on field names.
+    static final String FIELD_MZ = FeatureFilterModel.FIELD_MZ;
+    static final String FIELD_RT_START = FeatureFilterModel.FIELD_RT_START;
+    static final String FIELD_RT_APEX = FeatureFilterModel.FIELD_RT_APEX;
+    static final String FIELD_RT_END = FeatureFilterModel.FIELD_RT_END;
+    static final String FIELD_CONFIDENCE_APPROX = FeatureFilterModel.FIELD_CONFIDENCE_APPROX;
+    static final String FIELD_CONFIDENCE_EXACT = FeatureFilterModel.FIELD_CONFIDENCE_EXACT;
+    static final String FIELD_HAS_MS1 = FeatureFilterModel.FIELD_HAS_MS1;
+    static final String FIELD_HAS_MSMS = FeatureFilterModel.FIELD_HAS_MSMS;
+    static final String FIELD_ADDUCTS = FeatureFilterModel.FIELD_ADDUCTS;
+    static final String FIELD_QUALITY = FeatureFilterModel.FIELD_QUALITY;
+    static final String PREFIX_CATEGORIZED_QUALITY = FeatureFilterModel.PREFIX_CATEGORIZED_QUALITY;
+    static final String PREFIX_ELEMENT = FeatureFilterModel.PREFIX_ELEMENT;
+    static final String FIELD_LIPID = FeatureFilterModel.FIELD_LIPID;
+    static final String PREFIX_DB = FeatureFilterModel.PREFIX_DB;
     static final String FIELD_BLANK = FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME;
 
     /**
