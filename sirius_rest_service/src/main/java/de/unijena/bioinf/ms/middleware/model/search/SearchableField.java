@@ -58,8 +58,11 @@ public class SearchableField {
 
     /**
      * Name of the field to be used in search queries, e.g. {@code ionMass:[300 TO 400]}.
-     * Nested fields are addressed with dot notation. A trailing {@code .*} means the prefix is followed
-     * by a dynamic key, e.g. {@code tags.<tagName>} or an element symbol in {@code molecularFormula.<element>}.
+     * Nested fields are addressed with dot notation. Dynamic, map-like fields are reported as concrete,
+     * directly usable field names - one entry per key currently present in the project index - rather
+     * than a wildcard template, e.g. {@code tags.<tagName>}, an element symbol in
+     * {@code ...molecularFormula.<element>}, or a database id in
+     * {@code topAnnotations.matchedDatabases.<dbId>}.
      */
     @NotNull
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)

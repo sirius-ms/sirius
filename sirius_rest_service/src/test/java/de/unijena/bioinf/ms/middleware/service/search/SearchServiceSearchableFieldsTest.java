@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.search;
 
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
@@ -110,6 +111,29 @@ public class SearchServiceSearchableFieldsTest {
         searchService.removeTagValueType(projectId, "concentration");
         assertNull(fieldsAsMap(Run.class).get("tags.concentration"),
                 "removed tag definitions must no longer be searchable");
+    }
+
+    @Test
+    public void testDynamicKeyFieldsAreExpandedToConcreteIndexedKeys() {
+        // before any document is indexed, the dynamic-key template must NOT be reported as a bare ".*"
+        assertNull(fieldsAsMap(AlignedFeature.class).get("qualities.*"),
+                "the un-queryable 'qualities.*' template must not be exposed");
+
+        // index a feature carrying a concrete quality-category key
+        searchService.addDocument(projectId, AlignedFeature.builder()
+                .alignedFeatureId("1")
+                .qualities(Map.of("peakShape", DataQuality.GOOD))
+                .build());
+
+        Map<String, SearchableField> features = fieldsAsMap(AlignedFeature.class);
+        // the materialized key is now offered as a concrete, directly-queryable field ...
+        SearchableField concrete = features.get("qualities.peakShape");
+        assertNotNull(concrete, "the concrete quality-category key present in the index must be searchable");
+        assertEquals(SearchableField.FieldType.ENUM, concrete.getFieldType());
+        assertNotNull(concrete.getPossibleValues(), "enum key domain (DataQuality values) must be carried over");
+        assertFalse(concrete.getPossibleValues().isEmpty());
+        // ... and the ".*" template is gone
+        assertNull(features.get("qualities.*"), "the '.*' template must be replaced by concrete keys");
     }
 
     @Test

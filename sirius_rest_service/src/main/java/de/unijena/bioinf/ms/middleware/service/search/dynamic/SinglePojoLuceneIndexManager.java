@@ -15,6 +15,8 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexCommit;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -162,6 +164,36 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
      */
     public List<SearchableField> getStaticSearchableFields() {
         return pojoMapper.describeSearchableFields();
+    }
+
+    /**
+     * The concrete field names currently present in the index, read from the segment {@link FieldInfos}.
+     * Used to expand dynamic-key field templates (e.g. {@code matchedDatabases.*}) into the keys that
+     * actually occur. This reads only index metadata (no document scan); it refreshes the searcher first
+     * so freshly indexed keys are visible, and returns an empty set if the index cannot be read.
+     */
+    public Set<String> getIndexedFieldNames() {
+        IndexSearcher searcher;
+        try {
+            searcherManager.maybeRefreshBlocking();
+            searcher = searcherManager.acquire();
+        } catch (IOException e) {
+            log.warn("Could not read indexed field names for '{}'; treating as none.",
+                    pojoMapper.getPojoClass().getSimpleName(), e);
+            return Set.of();
+        }
+        try {
+            Set<String> names = new HashSet<>();
+            for (FieldInfo fieldInfo : FieldInfos.getMergedFieldInfos(searcher.getIndexReader()))
+                names.add(fieldInfo.name);
+            return names;
+        } finally {
+            try {
+                searcherManager.release(searcher);
+            } catch (IOException e) {
+                log.warn("Could not release searcher after reading indexed field names.", e);
+            }
+        }
     }
 
     public boolean isTaggable() {

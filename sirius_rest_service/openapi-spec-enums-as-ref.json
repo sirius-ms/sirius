@@ -12080,7 +12080,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Name of the field to be used in search queries, e.g. \u003ccode\u003eionMass:[300 TO 400]\u003c/code\u003e.\n Nested fields are addressed with dot notation. A trailing \u003ccode\u003e.*\u003c/code\u003e means the prefix is followed\n by a dynamic key, e.g. \u003ccode\u003etags.\u0026lt;tagName\u0026gt;\u003c/code\u003e or an element symbol in \u003ccode\u003emolecularFormula.\u0026lt;element\u0026gt;\u003c/code\u003e."
+            "description": "Name of the field to be used in search queries, e.g. \u003ccode\u003eionMass:[300 TO 400]\u003c/code\u003e.\n Nested fields are addressed with dot notation. Dynamic, map-like fields are reported as concrete,\n directly usable field names - one entry per key currently present in the project index - rather\n than a wildcard template, e.g. \u003ccode\u003etags.\u0026lt;tagName\u0026gt;\u003c/code\u003e, an element symbol in\n \u003ccode\u003e...molecularFormula.\u0026lt;element\u0026gt;\u003c/code\u003e, or a database id in\n \u003ccode\u003etopAnnotations.matchedDatabases.\u0026lt;dbId\u0026gt;\u003c/code\u003e."
           },
           "fieldType": {
             "$ref": "#/components/schemas/SearchableFieldType"

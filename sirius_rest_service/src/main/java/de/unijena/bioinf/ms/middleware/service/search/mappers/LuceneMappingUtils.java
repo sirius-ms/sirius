@@ -347,6 +347,47 @@ public class LuceneMappingUtils {
     }
 
     /**
+     * Expands dynamic-key field templates into the keys that are actually present in the index.
+     * <p>
+     * Map-like index fields whose Lucene key ends in a dynamic segment (e.g.
+     * {@code topAnnotations.matchedDatabases.*}, {@code qualities.*},
+     * {@code ...molecularFormula.*}) are described with a trailing {@code .*}, which is not a usable
+     * query token. Given the concrete field names present in the index, every such template is
+     * replaced by one {@link SearchableField} per matching key - cloning the template's type, flags,
+     * {@code possibleValues} and description - so the autocomplete offers real field names. Fields
+     * without a {@code .*} terminal pass through unchanged. A template with no materialized key is
+     * dropped (there is nothing concrete to query yet). Concrete fields are ordered by name.
+     *
+     * @param fields            the (static) searchable fields, some possibly {@code prefix.*} templates
+     * @param indexedFieldNames the concrete field names present in the index (e.g. from the segment field infos)
+     */
+    public static List<SearchableField> expandDynamicKeyFields(@NotNull List<SearchableField> fields,
+                                                               @NotNull Collection<String> indexedFieldNames) {
+        List<SearchableField> result = new ArrayList<>(fields.size());
+        for (SearchableField field : fields) {
+            String name = field.getName();
+            if (name == null || !name.endsWith(".*")) {
+                result.add(field); // not a dynamic-key template - keep as is
+                continue;
+            }
+            String prefix = name.substring(0, name.length() - 1); // strip only the '*', keep the trailing '.'
+            indexedFieldNames.stream()
+                    .filter(indexed -> indexed.length() > prefix.length() && indexed.startsWith(prefix))
+                    .sorted()
+                    .forEach(concrete -> result.add(SearchableField.builder()
+                            .name(concrete)
+                            .fieldType(field.getFieldType())
+                            .fullTextSearch(field.isFullTextSearch())
+                            .sortable(field.isSortable())
+                            .defaultSearchField(field.isDefaultSearchField())
+                            .possibleValues(field.getPossibleValues())
+                            .description(field.getDescription())
+                            .build()));
+        }
+        return result;
+    }
+
+    /**
      * Returns a SortField.Type if depending on the type.
      * If the type is not supported for sorting, returns null.
      */
