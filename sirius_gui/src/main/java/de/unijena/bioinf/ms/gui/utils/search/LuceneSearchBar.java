@@ -55,6 +55,18 @@ public class LuceneSearchBar extends JPanel {
 
     private final JPanel chipStrip;
 
+    /**
+     * Opens the overlay on a press anywhere on the collapsed bar. Shared so it can be attached to
+     * the bar, the chip strip and the non-interactive labels alike (mouse events do not bubble to
+     * the parent, so every surface that should open needs it).
+     */
+    private final MouseAdapter opener = new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+            openOverlay();
+        }
+    };
+
     @Nullable
     private SearchBarOverlay overlay;
     @Nullable
@@ -89,13 +101,11 @@ public class LuceneSearchBar extends JPanel {
 
         // Open only on an explicit gesture - a click or the first typed character. Deliberately NOT
         // on focusGained: the bar receives focus during normal traversal (and on startup), which
-        // must not pop the overlay open.
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                openOverlay();
-            }
-        });
+        // must not pop the overlay open. The listener is added to the bar AND to chipStrip so a
+        // click in the gaps between chips opens too (mouse events do not bubble to the parent); the
+        // non-interactive labels get it in refreshSummary.
+        addMouseListener(opener);
+        chipStrip.addMouseListener(opener);
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -145,7 +155,7 @@ public class LuceneSearchBar extends JPanel {
         List<ModelChip> modelChips = modelChipSupplier.get();
         for (int i = 0; i < modelChips.size(); i++) {
             if (i > 0)
-                chipStrip.add(ChipComponent.implicitAndLabel());
+                chipStrip.add(andLabel());
             chipStrip.add(new ChipComponent(modelChips.get(i).label(), modelChips.get(i).tooltip(),
                     ChipComponent.Style.MODEL, open, null));
         }
@@ -155,7 +165,7 @@ public class LuceneSearchBar extends JPanel {
             // the document still holds what we compiled - render the real chips
             boolean hasUserPart = !lastCommit.root().items().isEmpty() || !lastCommit.freeText().isEmpty();
             if (!modelChips.isEmpty() && hasUserPart)
-                chipStrip.add(ChipComponent.implicitAndLabel());
+                chipStrip.add(andLabel());
             for (QueryNode node : lastCommit.root().items())
                 chipStrip.add(userChip(node, open));
             if (!lastCommit.freeText().isEmpty())
@@ -193,6 +203,17 @@ public class LuceneSearchBar extends JPanel {
     private JLabel plainLabel(String text) {
         JLabel label = new JLabel(text);
         label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        label.addMouseListener(opener); // non-interactive text still opens the overlay on click
+        return label;
+    }
+
+    /**
+     * The dimmed "AND" connector for the collapsed summary, made clickable so a press on it opens
+     * the overlay like the rest of the bar (a plain label would swallow the click otherwise).
+     */
+    private JLabel andLabel() {
+        JLabel label = ChipComponent.implicitAndLabel();
+        label.addMouseListener(opener);
         return label;
     }
 }
