@@ -74,7 +74,12 @@ public final class PanelQueryNodeFactory {
      * the single-source query builder are built on.
      */
     public record Facet(@NotNull String id, @NotNull QueryNode queryNode,
-                        @NotNull Consumer<FeatureFilterModel> reset) {
+                        @NotNull Consumer<FeatureFilterModel> reset,
+                        @org.jetbrains.annotations.Nullable RangeEdit range) {
+        /** A facet with no inline range editing (set/complex facets edit via the dialog). */
+        public Facet(@NotNull String id, @NotNull QueryNode queryNode, @NotNull Consumer<FeatureFilterModel> reset) {
+            this(id, queryNode, reset, null);
+        }
     }
 
     /**
@@ -94,7 +99,12 @@ public final class PanelQueryNodeFactory {
                     m -> {
                         m.setCurrentMinMz(m.getMinMz());
                         m.setCurrentMaxMz(m.getMaxMz());
-                    }));
+                    },
+                    new RangeEdit(model.getCurrentMinMz(), model.getCurrentMaxMz(), model.getMinMz(), model.getMaxMz(),
+                            (mn, mx) -> {
+                                model.setCurrentMinMz(mn);
+                                model.setCurrentMaxMz(mx);
+                            })));
 
         if (model.isRtFilterActive())
             // the model matches the RT window against ANY of the three retention-time fields (OR)
@@ -105,7 +115,12 @@ public final class PanelQueryNodeFactory {
                     m -> {
                         m.setCurrentMinRt(m.getMinRt());
                         m.setCurrentMaxRt(m.getMaxRt());
-                    }));
+                    },
+                    new RangeEdit(model.getCurrentMinRt(), model.getCurrentMaxRt(), model.getMinRt(), model.getMaxRt(),
+                            (mn, mx) -> {
+                                model.setCurrentMinRt(mn);
+                                model.setCurrentMaxRt(mx);
+                            })));
 
         if (model.isMinConfidenceFilterActive() || model.isMaxConfidenceFilterActive()) {
             String field = confidenceMode == ConfidenceDisplayMode.APPROXIMATE ? FIELD_CONFIDENCE_APPROX : FIELD_CONFIDENCE_EXACT;
@@ -113,7 +128,13 @@ public final class PanelQueryNodeFactory {
                     m -> {
                         m.setCurrentMinConfidence(m.getMinConfidence());
                         m.setCurrentMaxConfidence(m.getMaxConfidence());
-                    }));
+                    },
+                    new RangeEdit(model.getCurrentMinConfidence(), model.getCurrentMaxConfidence(),
+                            model.getMinConfidence(), model.getMaxConfidence(),
+                            (mn, mx) -> {
+                                model.setCurrentMinConfidence(mn);
+                                model.setCurrentMaxConfidence(mx);
+                            })));
         }
 
         if (model.isHasMs1())
