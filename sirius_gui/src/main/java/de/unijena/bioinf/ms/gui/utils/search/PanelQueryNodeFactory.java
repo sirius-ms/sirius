@@ -17,6 +17,7 @@
  */
 
 package de.unijena.bioinf.ms.gui.utils.search;
+import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;

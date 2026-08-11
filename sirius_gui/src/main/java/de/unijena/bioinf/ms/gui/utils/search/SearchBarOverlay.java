@@ -17,6 +17,7 @@
  */
 
 package de.unijena.bioinf.ms.gui.utils.search;
+import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import com.formdev.flatlaf.icons.FlatClearIcon;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
