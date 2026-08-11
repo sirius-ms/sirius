@@ -9,6 +9,8 @@ import lombok.Getter;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -182,6 +184,21 @@ public class Ms2TraceStorage {
                 }
             }
             return Optional.empty();
+        }
+
+        /**
+         * Every trace of this channel, bound to its axis. Used where the whole channel is revisited rather than
+         * looked up peak by peak, i.e. when the assignment is redone over the final feature boundaries.
+         *
+         * @return the traces, in no particular order
+         */
+        public List<ContiguousTrace> all() {
+            final List<ContiguousTrace> traces = new ArrayList<>(size());
+            for (Rect rect : rectangles) {
+                final ContiguousTrace trace = get(rect.id);
+                if (trace != null) traces.add(trace);
+            }
+            return traces;
         }
 
         /**
