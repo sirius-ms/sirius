@@ -860,17 +860,35 @@ public class SearchBarOverlay extends JDialog {
     }
 
     /**
-     * Renders a suggestion row: display text with the (dimmed, truncated) description behind it.
+     * Renders a suggestion row: display text with the (dimmed, truncated) description behind it. In
+     * compact mode, ONLY field-name rows are shortened (per the field's significantSuffixLength) - the
+     * fully-qualified name is moved into the dimmed text so it stays discoverable; operator, value and
+     * connector rows are shown verbatim (compacting a value like {@code 195.08} would corrupt it).
      */
-    private static class SuggestionRenderer extends DefaultListCellRenderer {
+    private class SuggestionRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                       boolean isSelected, boolean cellHasFocus) {
             TokenInputModel.Suggestion suggestion = (TokenInputModel.Suggestion) value;
+            String display = suggestion.display();
             String description = suggestion.description();
+
+            if (suggestion instanceof TokenInputModel.Suggestion.FieldSuggestion fieldSuggestion
+                    && renderState.mode() == FieldDisplay.Mode.COMPACT) {
+                var field = fieldSuggestion.field();
+                int suffix = field.getSignificantSuffixLength() != null ? field.getSignificantSuffixLength() : 1;
+                String compact = FieldDisplay.compact(field.getName(), suffix);
+                if (!compact.equals(field.getName())) {
+                    display = compact;
+                    // keep the fully-qualified name visible (and searchable) in the dimmed text
+                    description = field.getName()
+                            + (description == null || description.isBlank() ? "" : "  ·  " + description);
+                }
+            }
+
             String text = description == null || description.isBlank()
-                    ? escape(suggestion.display())
-                    : "<html><b>" + escape(suggestion.display()) + "</b>&nbsp;&nbsp;<span style='color:gray'>"
+                    ? escape(display)
+                    : "<html><b>" + escape(display) + "</b>&nbsp;&nbsp;<span style='color:gray'>"
                     + escape(truncate(description)) + "</span></html>";
             Component component = super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
             ((JComponent) component).setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
