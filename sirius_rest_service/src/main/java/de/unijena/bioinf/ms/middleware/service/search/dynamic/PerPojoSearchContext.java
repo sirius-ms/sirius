@@ -186,7 +186,11 @@ public class PerPojoSearchContext implements SearchContext {
         if (!GenericPojoMapper.isIndexable(beanClass))
             return List.of();
         SinglePojoLuceneIndexManager<T> manager = getIndexManager(beanClass);
-        List<SearchableField> fields = new ArrayList<>(manager.getStaticSearchableFields());
+        // Dynamic-key fields (e.g. matchedDatabases.*, qualities.*, molecularFormula.*) are described
+        // statically with a trailing ".*", which is not a usable query token. Expand each into the
+        // concrete keys actually present in the index so the autocomplete offers real field names.
+        List<SearchableField> fields = new ArrayList<>(LuceneMappingUtils.expandDynamicKeyFields(
+                manager.getStaticSearchableFields(), manager.getIndexedFieldNames()));
         // Tag fields are derived on demand from the tag definition registry - the same monitor that also
         // brackets propagation of registry changes to the index managers, so the report is always
         // consistent with the query parser configuration. Sorted for a deterministic response.
