@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.deconvolution;
 
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
+import de.unijena.bioinf.lcms.trace.Trace;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -113,32 +114,20 @@ public class DiaAssignmentGraph {
                 List.copyOf(edges), withoutShape);
     }
 
-    private static boolean isCandidate(PrecursorFeature precursor, ContiguousTrace fragment, ChannelWindow window,
-                                       int apexTolerance, double maxFragmentMzAbovePrecursor) {
+    /**
+     * The structural part of an edge: measured inside the feature, peaking roughly where it peaks, and light enough
+     * to be a fragment of it. Shared with the consensus graph of stage two, so that both stages admit exactly the
+     * same pairs and only the evidence behind them differs.
+     */
+    static boolean isCandidate(PrecursorFeature precursor, Trace fragment, ChannelWindow window,
+                               int apexTolerance, double maxFragmentMzAbovePrecursor) {
         // the fragment has to have been measured inside the feature
         if (fragment.endId() < window.from() || fragment.startId() > window.to()) return false;
         if (fragment.averagedMz() > precursor.getMz() + maxFragmentMzAbovePrecursor) return false;
         // and it has to peak roughly where the feature does
-        final int fragmentApex = apexWithin(fragment, window);
+        final int fragmentApex = window.apexIndexIn(fragment);
         if (fragmentApex < 0) return false;
         return Math.abs(fragmentApex - precursor.getApexChannelIndex()) <= apexTolerance;
-    }
-
-    /**
-     * @return the scan point of the highest intensity the fragment reaches inside the window, or -1 if it was not
-     * measured there at all
-     */
-    private static int apexWithin(ContiguousTrace fragment, ChannelWindow window) {
-        int apex = -1;
-        double best = 0d;
-        for (int k = Math.max(window.from(), fragment.startId()), end = Math.min(window.to(), fragment.endId()); k <= end; ++k) {
-            final double intensity = fragment.intensity(k);
-            if (intensity > best) {
-                best = intensity;
-                apex = k;
-            }
-        }
-        return apex;
     }
 
     /**

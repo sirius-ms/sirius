@@ -96,6 +96,17 @@ public class DiaFragmentResolver {
     public record FragmentEdge(int leftFragment, int rightFragment, double weight) {
     }
 
+    /**
+     * A candidate edge whose weight has already been decided.
+     * <p>
+     * The walk itself does not care what a precursor or a fragment is, only how strongly they are connected, which
+     * is what lets the same solver resolve both stages. Stage one's nodes are the features and traces of a single
+     * sample; stage two's are features and fragments aligned across samples, whose evidence is pooled before it
+     * gets here.
+     */
+    public record WeightedEdge(int precursorIndex, int fragmentIndex, double weight) {
+    }
+
     @Getter
     public static class Result {
         /** one per fragment of the graph, in the graph's fragment order */
@@ -149,14 +160,29 @@ public class DiaFragmentResolver {
     public static Result resolve(DiaAssignmentGraph graph, EdgeWeighting weighting, PrecursorCapacity capacity,
                                  List<FragmentEdge> fragmentEdges, double unassignedWeight, double minProbability,
                                  int exactSolverLimit, int iterativeSteps) {
-        final int fragmentCount = graph.getFragments().size();
+        final List<WeightedEdge> weighted = new ArrayList<>(graph.getPrecursorEdges().size());
+        for (DiaAssignmentGraph.PrecursorEdge edge : graph.getPrecursorEdges()) {
+            weighted.add(new WeightedEdge(edge.precursorIndex(), edge.fragmentIndex(), weighting.weight(edge)));
+        }
+        return resolveWeighted(graph.getFragments().size(), weighted, capacity, fragmentEdges, unassignedWeight,
+                minProbability, exactSolverLimit, iterativeSteps);
+    }
+
+    /**
+     * The same, for edges that already carry their weight.
+     *
+     * @param fragmentCount number of fragments; the edges index into {@code 0..fragmentCount-1}
+     */
+    public static Result resolveWeighted(int fragmentCount, List<WeightedEdge> edges, PrecursorCapacity capacity,
+                                         List<FragmentEdge> fragmentEdges, double unassignedWeight,
+                                         double minProbability, int exactSolverLimit, int iterativeSteps) {
         final FragmentAssignment[] assignments = new FragmentAssignment[fragmentCount];
         java.util.Arrays.fill(assignments, FragmentAssignment.unassigned());
 
         // candidate edges per fragment, and fragment neighbours, both by fragment index
-        final List<List<DiaAssignmentGraph.PrecursorEdge>> candidates = new ArrayList<>(fragmentCount);
+        final List<List<WeightedEdge>> candidates = new ArrayList<>(fragmentCount);
         for (int k = 0; k < fragmentCount; ++k) candidates.add(new ArrayList<>());
-        for (DiaAssignmentGraph.PrecursorEdge edge : graph.getPrecursorEdges()) {
+        for (WeightedEdge edge : edges) {
             candidates.get(edge.fragmentIndex()).add(edge);
         }
         final List<IntArrayList> neighbours = new ArrayList<>(fragmentCount);
@@ -176,7 +202,7 @@ public class DiaFragmentResolver {
             componentSizes.add(component.size());
             if (component.size() > exactSolverLimit) ++iterative;
             else ++exact;
-            solveComponent(component, candidates, fragmentEdges, weighting, capacity, unassignedWeight,
+            solveComponent(component, candidates, fragmentEdges, capacity, unassignedWeight,
                     minProbability, exactSolverLimit, iterativeSteps, assignments);
         }
         return new Result(assignments, componentSizes.toIntArray(), exact, iterative);
@@ -198,9 +224,8 @@ public class DiaFragmentResolver {
         return stack;
     }
 
-    private static void solveComponent(IntArrayList component,
-                                       List<List<DiaAssignmentGraph.PrecursorEdge>> candidates,
-                                       List<FragmentEdge> fragmentEdges, EdgeWeighting weighting,
+    private static void solveComponent(IntArrayList component, List<List<WeightedEdge>> candidates,
+                                       List<FragmentEdge> fragmentEdges,
                                        PrecursorCapacity capacity, double unassignedWeight, double minProbability,
                                        int exactSolverLimit, int iterativeSteps, FragmentAssignment[] assignments) {
         // local indices, so the walk only ever sees the nodes of this component
@@ -210,8 +235,8 @@ public class DiaFragmentResolver {
         precursorToLocal.defaultReturnValue(-1);
         final IntArrayList localToPrecursor = new IntArrayList();
         for (int fragment : component) {
-            for (DiaAssignmentGraph.PrecursorEdge edge : candidates.get(fragment)) {
-                if (weighting.weight(edge) <= 0) continue;
+            for (WeightedEdge edge : candidates.get(fragment)) {
+                if (edge.weight() <= 0) continue;
                 if (!precursorToLocal.containsKey(edge.precursorIndex())) {
                     precursorToLocal.put(edge.precursorIndex(), localToPrecursor.size());
                     localToPrecursor.add(edge.precursorIndex());
@@ -226,12 +251,12 @@ public class DiaFragmentResolver {
             // keeps its full weight and the unassigned node stays comparable. Only the ratios between candidates
             // matter, and those are preserved.
             double largestCapacity = 0d;
-            for (DiaAssignmentGraph.PrecursorEdge edge : candidates.get(fragment)) {
-                if (weighting.weight(edge) <= 0) continue;
+            for (WeightedEdge edge : candidates.get(fragment)) {
+                if (edge.weight() <= 0) continue;
                 largestCapacity = Math.max(largestCapacity, capacity.capacityOf(edge.precursorIndex()));
             }
-            for (DiaAssignmentGraph.PrecursorEdge edge : candidates.get(fragment)) {
-                final double weight = weighting.weight(edge);
+            for (WeightedEdge edge : candidates.get(fragment)) {
+                final double weight = edge.weight();
                 if (weight <= 0) continue;
                 final double share = largestCapacity > 0
                         ? Math.max(0d, capacity.capacityOf(edge.precursorIndex())) / largestCapacity

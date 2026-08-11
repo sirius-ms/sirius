@@ -86,6 +86,10 @@ public class PrecursorFeature {
         return onAxisOf(channel, ms1Trace, ms1Trace.getUid(), segment);
     }
 
+    static Optional<PrecursorFeature> decoy(DiaChannel channel, Trace ms1Trace, int traceUid, TraceSegment segment) {
+        return onAxisOf(channel, ms1Trace, traceUid, segment);
+    }
+
     private static Optional<PrecursorFeature> onAxisOf(DiaChannel channel, Trace ms1Trace, int traceUid,
                                                       TraceSegment segment) {
         return ChannelWindow.of(channel, ms1Trace, segment).map(window -> new PrecursorFeature(
