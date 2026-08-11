@@ -94,11 +94,14 @@ public class LuceneSearchBar extends JPanel {
         chipStrip.setOpaque(false);
         add(chipStrip, BorderLayout.CENTER);
 
-        // clipped single row at text-field height; the overlay is the place that wraps
+        // clipped single row, tall enough for a chip to sit in without being cut off (the overlay
+        // is where the query wraps); a bare text field is a touch too short for the chips.
         int fieldHeight = new JTextField().getPreferredSize().height;
-        setPreferredSize(new Dimension(100, fieldHeight));
-        setMinimumSize(new Dimension(60, fieldHeight));
-        setMaximumSize(new Dimension(Integer.MAX_VALUE, fieldHeight));
+        int chipHeight = new ChipComponent("Ag", null, ChipComponent.Style.MODEL, null, null).getPreferredSize().height;
+        int barHeight = Math.max(fieldHeight, chipHeight) + 6;
+        setPreferredSize(new Dimension(100, barHeight));
+        setMinimumSize(new Dimension(60, barHeight));
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, barHeight));
 
         // Open only on an explicit gesture - a click or the first typed character. Deliberately NOT
         // on focusGained: the bar receives focus during normal traversal (and on startup), which
