@@ -105,4 +105,16 @@ public class SearchableField {
     @Nullable
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected String description;
+
+    /**
+     * How many trailing dot-separated segments of the field name carry its meaning, for compact
+     * display. {@code 1} for a normal field (show the terminal segment, e.g. {@code lipid}); {@code 2}
+     * for a dynamic map key (show field + key, e.g. {@code matchedDatabases.GNPS},
+     * {@code qualities.PEAK_QUALITY}, {@code tags.pfas}); larger for multi-segment keys. Clients may
+     * show the last {@code significantSuffixLength} name segments as a short label; the full field name
+     * always stays authoritative for queries.
+     */
+    @Builder.Default
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected int significantSuffixLength = 1;
 }
