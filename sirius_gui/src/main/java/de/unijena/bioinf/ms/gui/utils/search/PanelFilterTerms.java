@@ -71,5 +71,10 @@ public final class PanelFilterTerms {
         public void openEditor(@NotNull FilterEditorHost host) {
             host.openEditorFor(this);
         }
+
+        @Override
+        public de.unijena.bioinf.ms.gui.utils.query.RangeEdit rangeEdit() {
+            return facet.range();
+        }
     }
 }
