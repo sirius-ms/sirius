@@ -61,7 +61,7 @@ import java.util.function.Supplier;
  * compiled query automatically.
  */
 @Slf4j
-public class SearchBarOverlay extends JPanel {
+public class SearchBarOverlay extends JDialog {
 
     private static final int MAX_WIDTH = 900;
     private static final int MIN_WIDTH = 500;
@@ -100,27 +100,35 @@ public class SearchBarOverlay extends JPanel {
 
     private int overlayWidth = MIN_WIDTH;
     @org.jetbrains.annotations.Nullable
-    private JLayeredPane host;
-    @org.jetbrains.annotations.Nullable
-    private ComponentAdapter hostResizeListener;
+    private Component anchor;
 
-    public SearchBarOverlay(@NotNull FeatureFilterModel filterModel,
+    public SearchBarOverlay(@NotNull Window owner,
+                            @NotNull FeatureFilterModel filterModel,
                             @NotNull SearchableFieldsProvider fieldsProvider,
                             @NotNull Supplier<List<ModelChip>> modelChipSupplier,
                             @NotNull Runnable openFilterDialog,
                             @NotNull java.util.function.Consumer<Commit> onCommitted) {
-        super(new BorderLayout());
+        super(owner);
         this.filterModel = filterModel;
         this.fieldsProvider = fieldsProvider;
         this.modelChipSupplier = modelChipSupplier;
         this.openFilterDialog = openFilterDialog;
         this.onCommitted = onCommitted;
 
-        setOpaque(true);
-        setBackground(UIManager.getColor("TextField.background"));
-        setBorder(BorderFactory.createCompoundBorder(
+        // A heavyweight top-level window so it floats above the native JxBrowser windows of the
+        // result views (a lightweight layered-pane panel is hidden behind those). Undecorated and
+        // modeless so it reads as an inline expansion of the collapsed bar. Only ONE window (the
+        // suggestion list is embedded), which avoids the multi-window focus/paint fragility.
+        setUndecorated(true);
+        setModalityType(ModalityType.MODELESS);
+        setFocusableWindowState(true);
+
+        JPanel content = new JPanel(new BorderLayout());
+        content.setBackground(UIManager.getColor("TextField.background"));
+        content.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Colors.Menu.FILTER_BUTTON, 1),
                 BorderFactory.createEmptyBorder(3, 5, 3, 5)));
+        setContentPane(content);
 
         // --- top: the one inline row (chips + staged fragments + input) plus trailing controls ---
         inlineRow = new JPanel(new WrapLayout(FlowLayout.LEFT, 4, 4));
@@ -160,7 +168,7 @@ public class SearchBarOverlay extends JPanel {
         controlsAligned.setOpaque(false);
         controlsAligned.add(controls);
         top.add(controlsAligned, BorderLayout.EAST);
-        add(top, BorderLayout.NORTH);
+        content.add(top, BorderLayout.NORTH);
 
         // --- embedded suggestion list (no separate window) ---
         suggestionList = new JList<>();
@@ -189,21 +197,34 @@ public class SearchBarOverlay extends JPanel {
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         suggestionScroll.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Colors.Menu.FILTER_BUTTON));
         suggestionScroll.setVisible(false);
-        add(suggestionScroll, BorderLayout.CENTER);
+        content.add(suggestionScroll, BorderLayout.CENTER);
 
         // Esc closes the overlay even when focus sits on a button inside it
-        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "closeSearchOverlay");
-        getActionMap().put("closeSearchOverlay", new AbstractAction() {
+        getRootPane().getActionMap().put("closeSearchOverlay", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 close();
             }
         });
 
+        // keep anchored while the main window is moved or resized
+        owner.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentMoved(ComponentEvent e) {
+                reposition();
+            }
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                reposition();
+            }
+        });
+
         // structured filters may change while the overlay is open (dialog, quick toggles)
         filterModel.addUpdateCompleteListener(evt -> {
-            if (isOpen())
+            if (isVisible())
                 rebuild();
         });
     }
@@ -216,7 +237,7 @@ public class SearchBarOverlay extends JPanel {
     }
 
     public boolean isOpen() {
-        return getParent() != null;
+        return isVisible();
     }
 
     // --- input wiring: suggestions, keyboard semantics ---
@@ -331,7 +352,7 @@ public class SearchBarOverlay extends JPanel {
     private void refreshSuggestions() {
         tokenModel.updateContext(fieldsProvider.getCached(),
                 !QueryTreeOps.containerAt(root, openPath).isEmpty(), openPath.length > 0);
-        if (isOpen())
+        if (isVisible())
             showSuggestions(tokenModel.suggestions(input.getText()));
         validateInput();
     }
@@ -340,7 +361,7 @@ public class SearchBarOverlay extends JPanel {
         if (suggestions.isEmpty()) {
             if (suggestionScroll.isVisible()) {
                 suggestionScroll.setVisible(false);
-                updateBounds();
+                resizeToFit();
             }
             return;
         }
@@ -351,7 +372,7 @@ public class SearchBarOverlay extends JPanel {
         suggestionList.ensureIndexIsVisible(suggestionList.getSelectedIndex());
         suggestionList.setVisibleRowCount(Math.min(suggestions.size(), MAX_LIST_ROWS));
         suggestionScroll.setVisible(true);
-        updateBounds();
+        resizeToFit();
     }
 
     private void moveSuggestionSelection(int delta) {
@@ -392,14 +413,10 @@ public class SearchBarOverlay extends JPanel {
     // --- opening / closing ---
 
     /**
-     * Opens the overlay on the main frame's layered pane, anchored at the collapsed bar and
-     * extending right over the result view.
+     * Opens the overlay anchored at the collapsed bar, extending right over the result view.
      */
     public void openAt(@NotNull JComponent anchor) {
-        JRootPane rootPane = anchor.getRootPane();
-        if (rootPane == null)
-            return;
-        host = rootPane.getLayeredPane();
+        this.anchor = anchor;
 
         // the shared document was edited elsewhere -> degrade its content into the free text
         String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
@@ -415,68 +432,46 @@ public class SearchBarOverlay extends JPanel {
         Jobs.runInBackground(() -> {
             fieldsProvider.refreshIfStale();
             SwingUtilities.invokeLater(() -> {
-                if (isOpen())
+                if (isVisible())
                     refreshSuggestions();
             });
         });
 
-        Point origin = SwingUtilities.convertPoint(anchor, 0, 0, host);
-        int available = host.getWidth() - origin.x - 8;
-        overlayWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, available));
-
-        if (getParent() != host) {
-            host.add(this, JLayeredPane.POPUP_LAYER);
-        }
-        setLocation(origin.x, origin.y);
-
         rebuild();
-        updateBounds();
-
-        // reposition/resize with the frame while open
-        hostResizeListener = new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                if (isOpen()) {
-                    int avail = host.getWidth() - getX() - 8;
-                    overlayWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, avail));
-                    updateBounds();
-                }
-            }
-        };
-        host.addComponentListener(hostResizeListener);
-
+        resizeToFit();
+        reposition();
+        setVisible(true);
         input.requestFocusInWindow();
         refreshSuggestions();
     }
 
     public void close() {
-        if (host == null)
-            return;
-        if (hostResizeListener != null) {
-            host.removeComponentListener(hostResizeListener);
-            hostResizeListener = null;
-        }
-        JLayeredPane parent = host;
-        host = null;
-        parent.remove(this);
-        parent.revalidate();
-        parent.repaint();
+        setVisible(false);
     }
 
     /**
-     * Recomputes the panel bounds from the current content height (clamped), keeping the anchored
-     * top-left corner.
+     * Anchors the top-left corner of the overlay at the collapsed bar and sets the width to extend
+     * over the result view (clamped). No-op while hidden or before the bar is shown.
      */
-    private void updateBounds() {
-        if (getParent() == null)
+    private void reposition() {
+        if (anchor == null || !anchor.isShowing())
             return;
-        // set width first so the wrapping row computes its height against the real width
-        setBounds(getX(), getY(), overlayWidth, Math.max(getHeight(), 1));
+        Point origin = anchor.getLocationOnScreen();
+        int available = getOwner().getX() + getOwner().getWidth() - origin.x - 12;
+        overlayWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, available));
+        setLocation(origin.x, origin.y);
+        resizeToFit();
+    }
+
+    /**
+     * Sizes the window to the current content height (clamped) at the anchored width.
+     */
+    private void resizeToFit() {
+        setSize(overlayWidth, Math.max(getHeight(), 1));
         validate();
         int height = Math.min(getPreferredSize().height, MAX_HEIGHT);
-        setBounds(getX(), getY(), overlayWidth, height);
+        setSize(overlayWidth, height);
         validate();
-        repaint();
     }
 
     // --- compile & commit ---
@@ -582,8 +577,8 @@ public class SearchBarOverlay extends JPanel {
         refreshSuggestions();
         inlineRow.revalidate();
         inlineRow.repaint();
-        if (isOpen())
-            updateBounds();
+        if (isVisible())
+            resizeToFit();
         if (refocus)
             SwingUtilities.invokeLater(input::requestFocusInWindow);
     }
