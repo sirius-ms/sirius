@@ -509,9 +509,13 @@ public class SearchBarOverlay extends JDialog {
         resizeToFit();
         reposition();
         // register the outside-click watcher right before showing (the opening press has already
-        // been dispatched, so it will not see it) and remove it in close()
+        // been dispatched, so it will not see it) and remove it in close(). Defensively drop any
+        // prior registration first so a leaked listener from an earlier open can never accumulate
+        // and fire twice against this instance.
+        Toolkit.getDefaultToolkit().removeAWTEventListener(outsideClickListener);
         Toolkit.getDefaultToolkit().addAWTEventListener(outsideClickListener, AWTEvent.MOUSE_EVENT_MASK);
         setVisible(true);
+        toFront();
         // focus the input and show the dropdown once the window is up
         SwingUtilities.invokeLater(() -> {
             input.requestFocusInWindow();
