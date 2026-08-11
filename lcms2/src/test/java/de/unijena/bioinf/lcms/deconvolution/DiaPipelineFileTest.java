@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -29,18 +31,39 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 public class DiaPipelineFileTest {
 
     static Optional<Path> file(String variable) {
-        String location = System.getenv(variable);
-        if (location == null || location.isBlank()) return Optional.empty();
-        Path path = Path.of(location);
-        return Files.isRegularFile(path) ? Optional.of(path) : Optional.empty();
+        final List<Path> files = files(variable);
+        return files.size() == 1 ? Optional.of(files.get(0)) : Optional.empty();
+    }
+
+    static String name(List<Path> files) {
+        final StringBuilder buf = new StringBuilder();
+        for (Path file : files) buf.append(buf.isEmpty() ? "" : " + ").append(file.getFileName());
+        return buf.toString();
+    }
+
+    /**
+     * @return the files named by the variable, which may hold several separated by commas to process them as one
+     * experiment, or empty if it is unset or names something that is not a file
+     */
+    static List<Path> files(String variable) {
+        final String value = System.getenv(variable);
+        if (value == null || value.isBlank()) return List.of();
+        final List<Path> files = new ArrayList<>();
+        for (String location : value.split(",")) {
+            if (location.isBlank()) continue;
+            final Path path = Path.of(location.trim());
+            if (!Files.isRegularFile(path)) return List.of();
+            files.add(path);
+        }
+        return files;
     }
 
     @Test
     public void runTheWholePipeline() throws IOException {
-        Optional<Path> file = file("SIRIUS_DIA_TEST_FILE");
-        assumeTrue(file.isPresent(), "no test file given, set SIRIUS_DIA_TEST_FILE");
+        List<Path> files = files("SIRIUS_DIA_TEST_FILE");
+        assumeTrue(!files.isEmpty(), "no test file given, set SIRIUS_DIA_TEST_FILE");
 
-        final PipelineRun run = PipelineRun.run(file.get(), file.get().getFileName().toString(), deconvolution -> {
+        final PipelineRun run = PipelineRun.run(files, name(files), deconvolution -> {
             final String quantile = System.getenv("SIRIUS_DIA_NOISE_QUANTILE");
             if (quantile != null && !quantile.isBlank()) deconvolution.setNoiseQuantile(Double.parseDouble(quantile));
             final String prior = System.getenv("SIRIUS_DIA_INTENSITY_PRIOR");
@@ -64,7 +87,7 @@ public class DiaPipelineFileTest {
         System.out.printf("=== %s ===%n", run.name);
         System.out.printf("processSample %.1f s, alignment and features %.1f s%n",
                 run.processingSeconds, run.alignmentSeconds);
-        if (run.diaReport != null) System.out.print(run.diaReport.describe());
+        for (DiaReport report : run.diaReports) if (report != null) System.out.print(report.describe());
         System.out.printf("aligned features %d%n", run.features.size());
         System.out.printf("  with isotope pattern %d, with MS/MS %d (%.1f %%)%n", withIsotopes, withMsMs,
                 run.features.isEmpty() ? 0d : 100d * withMsMs / run.features.size());

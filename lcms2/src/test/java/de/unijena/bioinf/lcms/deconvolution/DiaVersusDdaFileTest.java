@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import static de.unijena.bioinf.lcms.deconvolution.DiaPipelineFileTest.file;
+import static de.unijena.bioinf.lcms.deconvolution.DiaPipelineFileTest.files;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -68,9 +69,11 @@ public class DiaVersusDdaFileTest {
 
     @Test
     public void compareAgainstDda() throws IOException {
-        final Optional<Path> diaFile = file("SIRIUS_DIA_TEST_FILE");
+        // the DIA side may name several files, which are then aligned into one experiment: the consensus across
+        // replicates is part of what produces the final spectra, so it belongs in what gets judged
+        final List<Path> diaFiles = files("SIRIUS_DIA_TEST_FILE");
         final Optional<Path> ddaFile = file("SIRIUS_DDA_TEST_FILE");
-        assumeTrue(diaFile.isPresent() && ddaFile.isPresent(),
+        assumeTrue(!diaFiles.isEmpty() && ddaFile.isPresent(),
                 "no file pair given, set SIRIUS_DIA_TEST_FILE and SIRIUS_DDA_TEST_FILE");
 
         final double rtTolerance = doubleFromEnvironment("SIRIUS_MATCH_RT_TOLERANCE", DEFAULT_RT_TOLERANCE);
@@ -78,12 +81,12 @@ public class DiaVersusDdaFileTest {
                 : Double.parseDouble(System.getenv("SIRIUS_DIA_NOISE_QUANTILE"));
 
         // only the spectra are kept from each run: three whole runs' features at once do not fit in a test JVM
-        final Run reference = Run.of(ddaFile.get(), "DDA reference", null);
-        final Run priorOn = Run.of(diaFile.get(), "DIA, prior on", deconvolution -> {
+        final Run reference = Run.of(List.of(ddaFile.get()), "DDA reference", null);
+        final Run priorOn = Run.of(diaFiles, "DIA, prior on", deconvolution -> {
             deconvolution.setIntensityPrior(true);
             if (quantile != null) deconvolution.setNoiseQuantile(quantile);
         });
-        final Run priorOff = Run.of(diaFile.get(), "DIA, prior off", deconvolution -> {
+        final Run priorOff = Run.of(diaFiles, "DIA, prior off", deconvolution -> {
             deconvolution.setIntensityPrior(false);
             if (quantile != null) deconvolution.setNoiseQuantile(quantile);
         });
@@ -253,8 +256,8 @@ public class DiaVersusDdaFileTest {
          * Runs the file and keeps only the spectra. The features themselves are unreachable when this returns,
          * which is what makes three runs in one test JVM possible.
          */
-        static Run of(Path file, String name, Consumer<DiaDeconvolution> configure) throws IOException {
-            final PipelineRun run = PipelineRun.run(file, name, configure);
+        static Run of(List<Path> files, String name, Consumer<DiaDeconvolution> configure) throws IOException {
+            final PipelineRun run = PipelineRun.run(files, name, configure);
             final List<FeatureSpectrum> spectra = new ArrayList<>();
             for (AlignedFeatures feature : run.featuresWithMsMs()) {
                 final FeatureSpectrum spectrum = FeatureSpectrum.of(feature);
