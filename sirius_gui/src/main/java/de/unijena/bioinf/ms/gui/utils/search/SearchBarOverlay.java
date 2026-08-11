@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.utils.search;
 
+import com.formdev.flatlaf.icons.FlatClearIcon;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -40,29 +41,32 @@ import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * The expanded state of the feature search bar: a popup-style window hosting the inline lucene
- * query builder, modeled after GitLab's filtered search. ONE wrapping line holds the filter-dialog
- * state as outlined chips, the user's committed clause chips (groups as nested paren chips), the
- * staged fragments of the token being built, and the inline text input. A suggestion dropdown under
- * the input lists all candidates for the current stage ({@link TokenInputModel}) and narrows while
- * typing; Up/Down navigate and Tab is the only key that builds the query (it picks the highlighted
- * suggestion or commits a typed value). Backspace on empty input pops a stage. Enter never builds
- * the query - it only runs the search and closes the overlay.
+ * The expanded state of the feature search bar: the inline lucene query builder, modeled after
+ * GitLab's filtered search. ONE wrapping line holds the filter-dialog state as outlined chips, the
+ * user's committed clause chips (groups as nested paren chips), the staged fragments of the token
+ * being built and the text input; an embedded suggestion list below it offers all candidates for
+ * the current stage ({@link TokenInputModel}) and narrows while typing.
  * <p>
- * An undecorated owned dialog rather than a JPopupMenu/PopupFactory popup (those are built to be
- * non-focusable and to auto-dismiss - wrong for an editor) and rather than a layered-pane overlay.
+ * It is a plain panel hosted in the main frame's {@link JLayeredPane} (not a separate window): this
+ * avoids the focus/compositing fragility of undecorated dialogs and pop-up windows on some display
+ * servers. It closes only via Esc (cancel) or Enter/Search (run the search) - there is no
+ * outside-click dismissal.
+ * <p>
+ * Up/Down navigate the suggestion list and Tab is the only key that builds the query (it picks the
+ * highlighted suggestion or commits a typed value). Backspace on empty input pops a stage. Enter
+ * runs the search, accepting a terminal token as a chip first.
  * <p>
  * The builder state compiles into the {@link FeatureFilterModel}'s shared search text document on
  * commit - the model itself needs no change and the filter dialog's fulltext field shows the
- * compiled query automatically. Text typed into the inline input that resolves to no token is the
- * free-text segment of the search.
+ * compiled query automatically.
  */
 @Slf4j
-public class SearchBarOverlay extends JDialog {
+public class SearchBarOverlay extends JPanel {
 
     private static final int MAX_WIDTH = 900;
     private static final int MIN_WIDTH = 500;
-    private static final int MAX_HEIGHT = 420;
+    private static final int MAX_HEIGHT = 460;
+    private static final int MAX_LIST_ROWS = 10;
 
     /**
      * What a commit produced - the collapsed bar renders its chips from this snapshot (never by
@@ -91,55 +95,49 @@ public class SearchBarOverlay extends JDialog {
     // --- ui ---
     private final JPanel inlineRow;
     private final PlaceholderTextField input;
-    private final SuggestionPopup suggestionPopup;
+    private final JList<TokenInputModel.Suggestion> suggestionList;
+    private final JScrollPane suggestionScroll;
 
-    public SearchBarOverlay(@NotNull Window owner, @NotNull FeatureFilterModel filterModel,
+    private int overlayWidth = MIN_WIDTH;
+    @org.jetbrains.annotations.Nullable
+    private JLayeredPane host;
+    @org.jetbrains.annotations.Nullable
+    private ComponentAdapter hostResizeListener;
+
+    public SearchBarOverlay(@NotNull FeatureFilterModel filterModel,
                             @NotNull SearchableFieldsProvider fieldsProvider,
                             @NotNull Supplier<List<ModelChip>> modelChipSupplier,
                             @NotNull Runnable openFilterDialog,
                             @NotNull java.util.function.Consumer<Commit> onCommitted) {
-        super(owner);
+        super(new BorderLayout());
         this.filterModel = filterModel;
         this.fieldsProvider = fieldsProvider;
         this.modelChipSupplier = modelChipSupplier;
         this.openFilterDialog = openFilterDialog;
         this.onCommitted = onCommitted;
 
-        setUndecorated(true);
-        setModalityType(ModalityType.MODELESS);
-
-        JPanel content = new JPanel(new BorderLayout());
-        content.setBorder(BorderFactory.createCompoundBorder(
+        setOpaque(true);
+        setBackground(UIManager.getColor("TextField.background"));
+        setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Colors.Menu.FILTER_BUTTON, 1),
-                BorderFactory.createEmptyBorder(2, 4, 2, 4)));
-        setContentPane(content);
+                BorderFactory.createEmptyBorder(3, 5, 3, 5)));
 
-        // --- the one inline row: chips + staged fragments + input, wrapping when long ---
+        // --- top: the one inline row (chips + staged fragments + input) plus trailing controls ---
         inlineRow = new JPanel(new WrapLayout(FlowLayout.LEFT, 4, 4));
-        JScrollPane rowScroll = new JScrollPane(inlineRow,
-                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        rowScroll.setBorder(BorderFactory.createEmptyBorder());
-        rowScroll.getVerticalScrollBar().setUnitIncrement(16);
-        content.add(rowScroll, BorderLayout.CENTER);
+        inlineRow.setOpaque(false);
 
         input = new PlaceholderTextField(18);
         input.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
         input.setOpaque(false);
-        suggestionPopup = new SuggestionPopup(input, this::applySuggestion);
         wireInput();
 
-        // --- trailing controls ---
         Box controls = Box.createHorizontalBox();
-        JButton copy = new JButton(Icons.CLIP_BOARD.derive(16, 16));
-        copy.setFocusable(false);
-        copy.setToolTipText("Copy the compiled search query to the clipboard");
+        JButton copy = iconButton(Icons.CLIP_BOARD.derive(15, 15), "Copy the compiled search query to the clipboard");
         copy.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemClipboard()
                 .setContents(new StringSelection(compileQuery()), null));
         controls.add(copy);
 
-        JButton clear = new JButton("Clear");
-        clear.setFocusable(false);
-        clear.setToolTipText("Clear the whole search query (filters set in the filter dialog are kept)");
+        JButton clear = iconButton(new FlatClearIcon(), "Clear the whole search query (filter-dialog filters are kept)");
         clear.addActionListener(e -> {
             root = QueryContainer.empty();
             openPath = new int[0];
@@ -149,82 +147,77 @@ public class SearchBarOverlay extends JDialog {
             input.requestFocusInWindow();
         });
         controls.add(clear);
-        controls.add(Box.createHorizontalStrut(4));
 
-        JButton search = new JButton("Search");
-        search.setToolTipText("Apply the query and filter the feature list (Enter)");
+        JButton search = new JButton(Icons.DB_LENS.derive(16, 16));
+        search.setToolTipText("Run the search and close (Enter)");
         search.addActionListener(e -> runSearch());
         controls.add(search);
 
+        JPanel top = new JPanel(new BorderLayout());
+        top.setOpaque(false);
+        top.add(inlineRow, BorderLayout.CENTER);
         JPanel controlsAligned = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 2));
+        controlsAligned.setOpaque(false);
         controlsAligned.add(controls);
-        content.add(controlsAligned, BorderLayout.EAST);
+        top.add(controlsAligned, BorderLayout.EAST);
+        add(top, BorderLayout.NORTH);
 
-        // Esc: first closes the dropdown, then the overlay (handled in the input's key listener);
-        // this binding covers Esc while focus is on a button
-        getRootPane().registerKeyboardAction(e -> setVisible(false),
-                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        // focus moving to a window not owned by this overlay closes it (covers other applications;
-        // in-app clicks are covered by the global mouse listener of the dismissal handling)
-        addWindowFocusListener(new WindowAdapter() {
+        // --- embedded suggestion list (no separate window) ---
+        suggestionList = new JList<>();
+        suggestionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        suggestionList.setFocusable(false);
+        suggestionList.setCellRenderer(new SuggestionRenderer());
+        suggestionList.addMouseListener(new MouseAdapter() {
             @Override
-            public void windowLostFocus(WindowEvent e) {
-                for (Window w = e.getOppositeWindow(); w != null; w = w.getOwner())
-                    if (w == SearchBarOverlay.this)
-                        return;
-                setVisible(false);
+            public void mouseClicked(MouseEvent e) {
+                int index = suggestionList.locationToIndex(e.getPoint());
+                if (index >= 0) {
+                    suggestionList.setSelectedIndex(index);
+                    chooseSelectedSuggestion();
+                }
             }
         });
-
-        // moving/resizing the main window invalidates the anchor position - just hide
-        owner.addComponentListener(new ComponentAdapter() {
+        suggestionList.addMouseMotionListener(new MouseAdapter() {
             @Override
-            public void componentMoved(ComponentEvent e) {
-                setVisible(false);
+            public void mouseMoved(MouseEvent e) {
+                int index = suggestionList.locationToIndex(e.getPoint());
+                if (index >= 0)
+                    suggestionList.setSelectedIndex(index);
             }
+        });
+        suggestionScroll = new JScrollPane(suggestionList,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        suggestionScroll.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Colors.Menu.FILTER_BUTTON));
+        suggestionScroll.setVisible(false);
+        add(suggestionScroll, BorderLayout.CENTER);
 
+        // Esc closes the overlay even when focus sits on a button inside it
+        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "closeSearchOverlay");
+        getActionMap().put("closeSearchOverlay", new AbstractAction() {
             @Override
-            public void componentResized(ComponentEvent e) {
-                setVisible(false);
+            public void actionPerformed(ActionEvent e) {
+                close();
             }
         });
 
         // structured filters may change while the overlay is open (dialog, quick toggles)
         filterModel.addUpdateCompleteListener(evt -> {
-            if (isVisible())
+            if (isOpen())
                 rebuild();
-        });
-
-        // In-app clicks outside the overlay close it. windowLostFocus alone is not enough: clicking
-        // many components of the main frame does not transfer X window focus. The AWTEventListener
-        // sees every press in this application before dispatch; presses inside this overlay or any
-        // window it owns (suggestion dropdown, combo popups) are ignored. Registered only while
-        // visible so the global listener does not linger.
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentShown(ComponentEvent e) {
-                Toolkit.getDefaultToolkit().addAWTEventListener(outsideClickListener, AWTEvent.MOUSE_EVENT_MASK);
-            }
-
-            @Override
-            public void componentHidden(ComponentEvent e) {
-                Toolkit.getDefaultToolkit().removeAWTEventListener(outsideClickListener);
-                suggestionPopup.hide(); // hiding the overlay must always take the dropdown with it
-            }
         });
     }
 
-    private final AWTEventListener outsideClickListener = event -> {
-        if (!(event instanceof MouseEvent mouse) || mouse.getID() != MouseEvent.MOUSE_PRESSED)
-            return;
-        if (!(mouse.getComponent() instanceof Component component))
-            return;
-        for (Window w = SwingUtilities.getWindowAncestor(component); w != null; w = w.getOwner())
-            if (w == this)
-                return;
-        setVisible(false);
-    };
+    private static JButton iconButton(Icon icon, String tooltip) {
+        JButton button = new JButton(icon);
+        button.setFocusable(false);
+        button.setToolTipText(tooltip);
+        return button;
+    }
+
+    public boolean isOpen() {
+        return getParent() != null;
+    }
 
     // --- input wiring: suggestions, keyboard semantics ---
 
@@ -243,31 +236,24 @@ public class SearchBarOverlay extends JDialog {
             }
         });
 
-        input.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                refreshSuggestions();
-            }
-        });
-
         input.setFocusTraversalKeysEnabled(false);
         input.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_DOWN -> {
-                        suggestionPopup.moveSelection(1);
+                        moveSuggestionSelection(1);
                         e.consume();
                     }
                     case KeyEvent.VK_UP -> {
-                        suggestionPopup.moveSelection(-1);
+                        moveSuggestionSelection(-1);
                         e.consume();
                     }
                     case KeyEvent.VK_TAB -> {
                         // Tab is the only key that builds the query: pick the highlighted
                         // suggestion, or (at a free-form value stage with no suggestion) commit
                         // the typed value / advance the token.
-                        if (!suggestionPopup.chooseSelected()) {
+                        if (!chooseSelectedSuggestion()) {
                             tokenModel.submitTyped(input.getText()).ifPresent(SearchBarOverlay.this::applyEvent);
                             input.setText("");
                             rebuild();
@@ -275,9 +261,8 @@ public class SearchBarOverlay extends JDialog {
                         e.consume();
                     }
                     case KeyEvent.VK_ENTER -> {
-                        // Enter runs the search: a terminal token (specified value / typed
-                        // default-field search) is accepted as a chip first, an incomplete one is
-                        // discarded. Enter never *selects* a field/operator/connector - Tab does.
+                        // Enter runs the search, accepting a terminal token as a chip first. It
+                        // never *selects* a field/operator/connector - Tab does.
                         runSearch();
                         e.consume();
                     }
@@ -289,10 +274,7 @@ public class SearchBarOverlay extends JDialog {
                         }
                     }
                     case KeyEvent.VK_ESCAPE -> {
-                        if (suggestionPopup.isVisible())
-                            suggestionPopup.hide();
-                        else
-                            setVisible(false);
+                        close();
                         e.consume();
                     }
                 }
@@ -344,24 +326,63 @@ public class SearchBarOverlay extends JDialog {
         openPath = QueryTreeOps.resolvePath(root, openPath);
     }
 
+    // --- embedded suggestion list handling ---
+
     private void refreshSuggestions() {
         tokenModel.updateContext(fieldsProvider.getCached(),
                 !QueryTreeOps.containerAt(root, openPath).isEmpty(), openPath.length > 0);
-        // the dropdown follows the open overlay, not the transient focus state: rebuild() detaches
-        // and re-adds the input, so keying it off focus would flicker the dropdown away between a
-        // suggestion being chosen and focus being restored
-        if (isVisible())
-            suggestionPopup.showSuggestions(tokenModel.suggestions(input.getText()));
+        if (isOpen())
+            showSuggestions(tokenModel.suggestions(input.getText()));
         validateInput();
     }
 
+    private void showSuggestions(List<TokenInputModel.Suggestion> suggestions) {
+        if (suggestions.isEmpty()) {
+            if (suggestionScroll.isVisible()) {
+                suggestionScroll.setVisible(false);
+                updateBounds();
+            }
+            return;
+        }
+        TokenInputModel.Suggestion previous = suggestionList.getSelectedValue();
+        suggestionList.setListData(suggestions.toArray(TokenInputModel.Suggestion[]::new));
+        int keep = previous == null ? -1 : suggestions.indexOf(previous);
+        suggestionList.setSelectedIndex(Math.max(keep, 0));
+        suggestionList.ensureIndexIsVisible(suggestionList.getSelectedIndex());
+        suggestionList.setVisibleRowCount(Math.min(suggestions.size(), MAX_LIST_ROWS));
+        suggestionScroll.setVisible(true);
+        updateBounds();
+    }
+
+    private void moveSuggestionSelection(int delta) {
+        int size = suggestionList.getModel().getSize();
+        if (!suggestionScroll.isVisible() || size == 0)
+            return;
+        int index = ((suggestionList.getSelectedIndex() + delta) % size + size) % size;
+        suggestionList.setSelectedIndex(index);
+        suggestionList.ensureIndexIsVisible(index);
+    }
+
     /**
-     * Advisory live validation of the free-text segment: syntax problems and unknown fields show
-     * as a warning outline with the explanation as tooltip. Suppressed while the dropdown offers
-     * something - a half-typed field name is not a mistake yet.
+     * Picks the highlighted suggestion; false when there is nothing to pick, so the caller can fall
+     * back to its own handling.
+     */
+    private boolean chooseSelectedSuggestion() {
+        if (!suggestionScroll.isVisible())
+            return false;
+        TokenInputModel.Suggestion selected = suggestionList.getSelectedValue();
+        if (selected == null)
+            return false;
+        applySuggestion(selected);
+        return true;
+    }
+
+    /**
+     * Advisory live validation of the free-text segment: syntax problems and unknown fields show as
+     * a warning outline with the explanation as tooltip. Suppressed while the list offers something.
      */
     private void validateInput() {
-        String problem = tokenModel.atEntryStage() && !suggestionPopup.isVisible()
+        String problem = tokenModel.atEntryStage() && !suggestionScroll.isVisible()
                 ? QueryValidator.validate(input.getText(), fieldsProvider.getCached()).orElse(null)
                 : null;
         input.putClientProperty("JComponent.outline", problem == null ? null : "warning");
@@ -371,9 +392,15 @@ public class SearchBarOverlay extends JDialog {
     // --- opening / closing ---
 
     /**
-     * Opens the overlay anchored at the collapsed bar, spanning to the right over the result view.
+     * Opens the overlay on the main frame's layered pane, anchored at the collapsed bar and
+     * extending right over the result view.
      */
-    public void openAt(@NotNull Component anchor) {
+    public void openAt(@NotNull JComponent anchor) {
+        JRootPane rootPane = anchor.getRootPane();
+        if (rootPane == null)
+            return;
+        host = rootPane.getLayeredPane();
+
         // the shared document was edited elsewhere -> degrade its content into the free text
         String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
         if (!docText.equals(lastCompiled)) {
@@ -384,32 +411,72 @@ public class SearchBarOverlay extends JDialog {
             lastCompiled = docText;
         }
 
-        // tags are dynamic - refresh the searchable fields in the background while the user types;
-        // the dropdown updates once they arrive
+        // tags are dynamic - refresh the searchable fields in the background; list updates on arrival
         Jobs.runInBackground(() -> {
             fieldsProvider.refreshIfStale();
-            SwingUtilities.invokeLater(this::refreshSuggestions);
+            SwingUtilities.invokeLater(() -> {
+                if (isOpen())
+                    refreshSuggestions();
+            });
         });
 
-        rebuild();
+        Point origin = SwingUtilities.convertPoint(anchor, 0, 0, host);
+        int available = host.getWidth() - origin.x - 8;
+        overlayWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, available));
 
-        Point anchorOnScreen = anchor.getLocationOnScreen();
-        Window owner = getOwner();
-        int available = owner.getX() + owner.getWidth() - anchorOnScreen.x - 20;
-        int width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, available));
-        setSize(width, 10); // height set by resizeToFit
-        resizeToFit();
-        setLocation(anchorOnScreen.x, anchorOnScreen.y);
-        setVisible(true);
+        if (getParent() != host) {
+            host.add(this, JLayeredPane.POPUP_LAYER);
+        }
+        setLocation(origin.x, origin.y);
+
+        rebuild();
+        updateBounds();
+
+        // reposition/resize with the frame while open
+        hostResizeListener = new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                if (isOpen()) {
+                    int avail = host.getWidth() - getX() - 8;
+                    overlayWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, avail));
+                    updateBounds();
+                }
+            }
+        };
+        host.addComponentListener(hostResizeListener);
+
         input.requestFocusInWindow();
-        refreshSuggestions(); // show the dropdown immediately on open (now that the overlay is visible)
+        refreshSuggestions();
     }
 
-    private void resizeToFit() {
-        int height = Math.min(Math.max(getPreferredSize().height, 40), MAX_HEIGHT);
-        setSize(getWidth(), height);
+    public void close() {
+        if (host == null)
+            return;
+        if (hostResizeListener != null) {
+            host.removeComponentListener(hostResizeListener);
+            hostResizeListener = null;
+        }
+        JLayeredPane parent = host;
+        host = null;
+        parent.remove(this);
+        parent.revalidate();
+        parent.repaint();
+    }
+
+    /**
+     * Recomputes the panel bounds from the current content height (clamped), keeping the anchored
+     * top-left corner.
+     */
+    private void updateBounds() {
+        if (getParent() == null)
+            return;
+        // set width first so the wrapping row computes its height against the real width
+        setBounds(getX(), getY(), overlayWidth, Math.max(getHeight(), 1));
         validate();
-        suggestionPopup.relocate();
+        int height = Math.min(getPreferredSize().height, MAX_HEIGHT);
+        setBounds(getX(), getY(), overlayWidth, height);
+        validate();
+        repaint();
     }
 
     // --- compile & commit ---
@@ -448,7 +515,7 @@ public class SearchBarOverlay extends JDialog {
         writeDocument(compiled);
         lastCompiled = compiled;
         filterModel.fireUpdateCompleted();
-        setVisible(false);
+        close();
         onCommitted.accept(new Commit(root, freeText, compiled));
     }
 
@@ -488,7 +555,7 @@ public class SearchBarOverlay extends JDialog {
                     ? "Filter from the filter dialog - click to open it, combined with AND"
                     : chip.tooltip() + " (filter dialog) - combined with AND", ChipComponent.Style.MODEL,
                     () -> {
-                        setVisible(false);
+                        close();
                         openFilterDialog.run();
                     },
                     () -> {
@@ -515,8 +582,8 @@ public class SearchBarOverlay extends JDialog {
         refreshSuggestions();
         inlineRow.revalidate();
         inlineRow.repaint();
-        if (isVisible())
-            resizeToFit();
+        if (isOpen())
+            updateBounds();
         if (refocus)
             SwingUtilities.invokeLater(input::requestFocusInWindow);
     }
@@ -681,6 +748,34 @@ public class SearchBarOverlay extends JDialog {
                 g2.dispose();
             }
             super.paintComponent(g);
+        }
+    }
+
+    /**
+     * Renders a suggestion row: display text with the (dimmed, truncated) description behind it.
+     */
+    private static class SuggestionRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                      boolean isSelected, boolean cellHasFocus) {
+            TokenInputModel.Suggestion suggestion = (TokenInputModel.Suggestion) value;
+            String description = suggestion.description();
+            String text = description == null || description.isBlank()
+                    ? escape(suggestion.display())
+                    : "<html><b>" + escape(suggestion.display()) + "</b>&nbsp;&nbsp;<span style='color:gray'>"
+                    + escape(truncate(description)) + "</span></html>";
+            Component component = super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
+            ((JComponent) component).setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
+            return component;
+        }
+
+        private static String truncate(String text) {
+            String firstLine = text.split("\n", 2)[0];
+            return firstLine.length() > 80 ? firstLine.substring(0, 77) + "..." : firstLine;
+        }
+
+        private static String escape(String text) {
+            return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
         }
     }
 }
