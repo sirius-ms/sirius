@@ -116,11 +116,13 @@ public class SearchBarOverlay extends JDialog {
         this.onCommitted = onCommitted;
 
         // A heavyweight top-level window so it floats above the native JxBrowser windows of the
-        // result views (a lightweight layered-pane panel is hidden behind those). Undecorated and
-        // modeless so it reads as an inline expansion of the collapsed bar. Only ONE window (the
-        // suggestion list is embedded), which avoids the multi-window focus/paint fragility.
+        // result views (a lightweight layered-pane panel is hidden behind those). Undecorated so it
+        // reads as an inline expansion of the collapsed bar, and document-modal so nothing behind it
+        // is interactable while building a query - which makes dismissal robust (Esc/Cancel/Search,
+        // plus outside-click on the blocked UI). Only ONE window (the suggestion list is embedded),
+        // avoiding the multi-window focus/paint fragility.
         setUndecorated(true);
-        setModalityType(ModalityType.MODELESS);
+        setModalityType(ModalityType.DOCUMENT_MODAL);
         setFocusableWindowState(true);
 
         JPanel content = new JPanel(new BorderLayout());
@@ -156,7 +158,14 @@ public class SearchBarOverlay extends JDialog {
         });
         controls.add(clear);
 
-        JButton search = new JButton(Icons.DB_LENS.derive(16, 16));
+        controls.add(Box.createHorizontalStrut(6));
+        JButton cancel = new JButton("Cancel");
+        cancel.setFocusable(false);
+        cancel.setToolTipText("Close without applying (Esc)");
+        cancel.addActionListener(e -> close());
+        controls.add(cancel);
+
+        JButton search = new JButton("Search");
         search.setToolTipText("Run the search and close (Enter)");
         search.addActionListener(e -> runSearch());
         controls.add(search);
@@ -222,12 +231,37 @@ public class SearchBarOverlay extends JDialog {
             }
         });
 
+        // Outside-click cancels. Registered only while shown so the global listener does not linger.
+        // Best-effort: clicks on the native JxBrowser windows produce no AWT event, so those cannot
+        // be caught here - Cancel/Esc are the guaranteed exits.
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                Toolkit.getDefaultToolkit().addAWTEventListener(outsideClickListener, AWTEvent.MOUSE_EVENT_MASK);
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                Toolkit.getDefaultToolkit().removeAWTEventListener(outsideClickListener);
+            }
+        });
+
         // structured filters may change while the overlay is open (dialog, quick toggles)
         filterModel.addUpdateCompleteListener(evt -> {
             if (isVisible())
                 rebuild();
         });
     }
+
+    private final AWTEventListener outsideClickListener = event -> {
+        if (!(event instanceof MouseEvent mouse) || mouse.getID() != MouseEvent.MOUSE_PRESSED)
+            return;
+        // ignore presses inside this dialog or any window it owns (e.g. the AND/OR combo popup)
+        for (Window w = SwingUtilities.getWindowAncestor(mouse.getComponent()); w != null; w = w.getOwner())
+            if (w == this)
+                return;
+        SwingUtilities.invokeLater(this::close); // cancel
+    };
 
     private static JButton iconButton(Icon icon, String tooltip) {
         JButton button = new JButton(icon);
@@ -414,8 +448,10 @@ public class SearchBarOverlay extends JDialog {
 
     /**
      * Opens the overlay anchored at the collapsed bar, extending right over the result view.
+     * The optional type-ahead is the keystroke that triggered the expansion from the collapsed bar,
+     * applied before the (blocking, modal) show so typing continues seamlessly.
      */
-    public void openAt(@NotNull JComponent anchor) {
+    public void openAt(@NotNull JComponent anchor, @org.jetbrains.annotations.Nullable String typeAhead) {
         this.anchor = anchor;
 
         // the shared document was edited elsewhere -> degrade its content into the free text
@@ -427,6 +463,8 @@ public class SearchBarOverlay extends JDialog {
             input.setText(docText);
             lastCompiled = docText;
         }
+        if (typeAhead != null)
+            input.setText(input.getText() + typeAhead);
 
         // tags are dynamic - refresh the searchable fields in the background; list updates on arrival
         Jobs.runInBackground(() -> {
@@ -440,9 +478,14 @@ public class SearchBarOverlay extends JDialog {
         rebuild();
         resizeToFit();
         reposition();
+        // the dialog is modal, so setVisible(true) blocks - focus the input and show the dropdown
+        // from the event queue once the window is up
+        SwingUtilities.invokeLater(() -> {
+            input.requestFocusInWindow();
+            input.setCaretPosition(input.getText().length());
+            refreshSuggestions();
+        });
         setVisible(true);
-        input.requestFocusInWindow();
-        refreshSuggestions();
     }
 
     public void close() {
@@ -514,15 +557,6 @@ public class SearchBarOverlay extends JDialog {
         onCommitted.accept(new Commit(root, freeText, compiled));
     }
 
-    /**
-     * Appends text to the inline input - used by the collapsed bar to forward the keystroke that
-     * opened the overlay, so typing into the collapsed field "just continues" here.
-     */
-    public void typeAhead(@NotNull String text) {
-        input.setText(input.getText() + text);
-        input.setCaretPosition(input.getText().length());
-    }
-
     private void writeDocument(String text) {
         Document doc = filterModel.getSearchTextDoc();
         try {
@@ -550,8 +584,9 @@ public class SearchBarOverlay extends JDialog {
                     ? "Filter from the filter dialog - click to open it, combined with AND"
                     : chip.tooltip() + " (filter dialog) - combined with AND", ChipComponent.Style.MODEL,
                     () -> {
+                        // close the modal first, then open the filter dialog (avoid nested modals)
                         close();
-                        openFilterDialog.run();
+                        SwingUtilities.invokeLater(openFilterDialog);
                     },
                     () -> {
                         chip.onRemove().run();
