@@ -47,7 +47,7 @@ import java.util.function.Supplier;
  * one perceived control that grows over the result view while editing and shrinks back on close.
  * A keystroke that triggered the expansion is forwarded, so typing "just continues" in the overlay.
  * <p>
- * The chips are rendered from the {@link SearchBarOverlay.Commit} snapshot of the last commit,
+ * The chips are rendered from the {@link QueryEditorPanel.Commit} snapshot of the last commit,
  * never by parsing the compiled query; if the shared search document was changed elsewhere (filter
  * dialog fulltext field, reset), the bar falls back to rendering the document text plainly.
  */
@@ -78,7 +78,7 @@ public class LuceneSearchBar extends JPanel {
     @Nullable
     private SearchBarOverlay overlay;
     @Nullable
-    private SearchBarOverlay.Commit lastCommit;
+    private QueryEditorPanel.Commit lastCommit;
 
     public LuceneSearchBar(@NotNull SiriusClient siriusClient, @NotNull String projectId,
                            @NotNull FeatureFilterModel filterModel,
