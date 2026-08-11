@@ -96,7 +96,7 @@ public class CompoundList {
         // autocompletion in an overlay expanding over the result view
         searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel,
                 () -> PanelFilterTerms.of(filterModel, gui.getProperties().getConfidenceDisplayMode()),
-                term -> new FeatureFilterOptionsDialog(gui, filterModel, this));
+                term -> new FeatureFilterOptionsDialog(gui, filterModel, this, term.id()));
 
         observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(observableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
