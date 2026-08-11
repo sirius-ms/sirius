@@ -119,14 +119,18 @@ public class LuceneSearchBar extends JPanel {
      * that triggered the expansion.
      */
     public void openOverlay(@Nullable String typeAhead) {
-        if (!isShowing() || getRootPane() == null)
+        if (!isShowing())
             return;
-        if (overlay == null)
-            overlay = new SearchBarOverlay(filterModel, fieldsProvider, modelChipSupplier,
+        if (overlay == null) {
+            Window owner = SwingUtilities.getWindowAncestor(this);
+            if (owner == null)
+                return;
+            overlay = new SearchBarOverlay(owner, filterModel, fieldsProvider, modelChipSupplier,
                     openFilterDialog, commit -> {
                         lastCommit = commit;
                         refreshSummary();
                     });
+        }
         if (!overlay.isOpen())
             overlay.openAt(this);
         if (typeAhead != null)
