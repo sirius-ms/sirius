@@ -31,10 +31,23 @@ public class DiaScanIndex {
     @Getter
     private final int numberOfRepairedParentReferences;
 
+    /**
+     * spectra that were computed by the deconvolution rather than acquired, and therefore not part of the
+     * acquisition scheme
+     */
+    @Getter
+    private final int numberOfDeconvolutedScans;
+
     public DiaScanIndex(List<DiaChannel> channels, int numberOfDroppedScans, int numberOfRepairedParentReferences) {
+        this(channels, numberOfDroppedScans, numberOfRepairedParentReferences, 0);
+    }
+
+    public DiaScanIndex(List<DiaChannel> channels, int numberOfDroppedScans, int numberOfRepairedParentReferences,
+                        int numberOfDeconvolutedScans) {
         this.channels = Collections.unmodifiableList(channels);
         this.numberOfDroppedScans = numberOfDroppedScans;
         this.numberOfRepairedParentReferences = numberOfRepairedParentReferences;
+        this.numberOfDeconvolutedScans = numberOfDeconvolutedScans;
     }
 
     public int numberOfChannels() {
@@ -72,6 +85,8 @@ public class DiaScanIndex {
         if (numberOfDroppedScans > 0) buf.append(String.format(Locale.US, ", %d scans dropped", numberOfDroppedScans));
         if (numberOfRepairedParentReferences > 0)
             buf.append(String.format(Locale.US, ", %d parent references repaired", numberOfRepairedParentReferences));
+        if (numberOfDeconvolutedScans > 0)
+            buf.append(String.format(Locale.US, ", %d deconvoluted spectra ignored", numberOfDeconvolutedScans));
         buf.append('\n');
         for (DiaChannel channel : channels) {
             buf.append(String.format(Locale.US, "  %s, every %.2f s%n", channel, channel.medianScanInterval()));
