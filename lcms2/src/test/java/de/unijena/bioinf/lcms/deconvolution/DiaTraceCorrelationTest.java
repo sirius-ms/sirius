@@ -8,11 +8,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Correlating a precursor with a fragment, or two fragments with each other.
+ * Shape agreement between a precursor and a fragment over one feature of the precursor.
  * <p>
- * The guards are the point of these tests. A channel samples a peak four to nine times, so a correlation is
- * cheap to obtain by accident, and the shapes we compare are of very different length and sampling rate. The
- * traps encoded here are the ones {@code adducts.Scorer.correlateLargerWithSmaller} already learned about.
+ * The interesting cases are the ones a whole-trace correlation gets wrong: a precursor trace carrying two
+ * features, and a fragment that belongs to only one of them.
  */
 public class DiaTraceCorrelationTest {
 
@@ -38,105 +37,106 @@ public class DiaTraceCorrelationTest {
         return new DiaChannel(0, new float[]{350f}, new float[]{450f}, new CollisionEnergy(35), CHANNEL_AXIS, toMs1);
     }
 
-    /** a gaussian peak on the given axis, centred at centerRt with the given width */
-    private static ContiguousTrace gaussian(ScanPointMapping ax, double centerRt, double sigma, float apex, double mz) {
-        int from = -1, to = -1;
+    /** sum of gaussians, so a trace can carry more than one feature */
+    private static ContiguousTrace peaks(ScanPointMapping ax, double mz, double baseline, double[]... centreSigmaApex) {
+        final double[] masses = new double[ax.length()];
+        final float[] intensities = new float[ax.length()];
         for (int k = 0; k < ax.length(); ++k) {
-            double v = apex * Math.exp(-0.5 * Math.pow((ax.getRetentionTimeAt(k) - centerRt) / sigma, 2));
-            if (v >= apex / 1000d) {
-                if (from < 0) from = k;
-                to = k;
+            double v = baseline;
+            for (double[] p : centreSigmaApex) {
+                v += p[2] * Math.exp(-0.5 * Math.pow((ax.getRetentionTimeAt(k) - p[0]) / p[1], 2));
             }
-        }
-        if (from < 0) throw new IllegalStateException("peak does not fit on this axis");
-        final double[] masses = new double[to - from + 1];
-        final float[] intensities = new float[masses.length];
-        for (int k = from; k <= to; ++k) {
-            masses[k - from] = mz;
-            intensities[k - from] = (float) (apex * Math.exp(-0.5 * Math.pow((ax.getRetentionTimeAt(k) - centerRt) / sigma, 2)));
-        }
-        return new ContiguousTrace(ax, from, to, masses, intensities);
-    }
-
-    /** a long, almost flat trace, as a background mass produces */
-    private static ContiguousTrace plateau(ScanPointMapping ax, int from, int to, float intensity, double mz) {
-        final double[] masses = new double[to - from + 1];
-        final float[] intensities = new float[masses.length];
-        for (int k = 0; k < masses.length; ++k) {
             masses[k] = mz;
-            intensities[k] = intensity * (1f + 0.01f * (float) Math.sin(k));
+            intensities[k] = (float) v;
         }
-        return new ContiguousTrace(ax, from, to, masses, intensities);
+        return new ContiguousTrace(ax, 0, ax.length() - 1, masses, intensities);
+    }
+
+    private static ChannelWindow windowAround(double centreRt, double halfWidthRt) {
+        DiaChannel c = channel();
+        return new ChannelWindow(c.channelIndexForRetentionTime(centreRt - halfWidthRt),
+                c.channelIndexForRetentionTime(centreRt + halfWidthRt));
     }
 
     @Test
-    public void aFragmentThatCoElutesWithItsPrecursorCorrelatesAlmostPerfectly() {
-        DiaChannel channel = channel();
-        ContiguousTrace precursor = gaussian(MS1, 60d, 4d, 10000f, 400.2);
-        ContiguousTrace fragment = gaussian(CHANNEL_AXIS, 60d, 4d, 2000f, 150.1);
+    public void aFragmentThatCoElutesWithTheFeatureCorrelatesAlmostPerfectly() {
+        ContiguousTrace precursor = peaks(MS1, 400.2, 0d, new double[]{60d, 4d, 10000d});
+        ContiguousTrace fragment = peaks(CHANNEL_AXIS, 150.1, 0d, new double[]{60d, 4d, 2000d});
 
-        DiaTraceCorrelation.Result r = DiaTraceCorrelation.precursorWithFragment(precursor, fragment, channel);
+        DiaTraceCorrelation.Result r = DiaTraceCorrelation.precursorWithFragment(
+                precursor, fragment, channel(), windowAround(60d, 8d));
 
-        assertTrue(r.isDefined(), "co-eluting traces must be comparable");
-        assertTrue(r.correlation() > 0.95, "expected a high correlation but got " + r.correlation());
-        assertTrue(r.datapoints() >= 3, "and it must report how many points it is based on");
-    }
-
-    @Test
-    public void aFragmentElutingElsewhereDoesNotCorrelate() {
-        DiaChannel channel = channel();
-        ContiguousTrace precursor = gaussian(MS1, 60d, 4d, 10000f, 400.2);
-        ContiguousTrace fragment = gaussian(CHANNEL_AXIS, 140d, 4d, 2000f, 150.1);
-
-        DiaTraceCorrelation.Result r = DiaTraceCorrelation.precursorWithFragment(precursor, fragment, channel);
-
-        assertFalse(r.isDefined() && r.correlation() > 0.5,
-                "a fragment eluting a minute later must not look correlated, got " + r.correlation());
+        assertTrue(r.isDefined());
+        assertTrue(r.correlation() > 0.95, "expected a high correlation, got " + r.correlation());
+        assertTrue(r.datapoints() >= DiaTraceCorrelation.MIN_POINTS);
     }
 
     /**
-     * The trap: a long flat trace against a short peak. Padding the short one with zeros makes it look
-     * rectangular too, and two rectangles correlate beautifully while having nothing to do with each other.
+     * The reason windows exist. One precursor trace, two features; a fragment belonging to the first must
+     * correlate there and not at the second. A whole-trace correlation would centre on whichever feature
+     * happens to be more intense and answer the wrong question for the other one.
      */
     @Test
-    public void aBackgroundPlateauIsNotComparedWithAShortPeak() {
-        DiaChannel channel = channel();
-        ContiguousTrace precursor = gaussian(MS1, 60d, 2d, 10000f, 400.2);
-        ContiguousTrace background = plateau(CHANNEL_AXIS, 0, 89, 500f, 150.1);
+    public void thesameFragmentIsJudgedPerFeatureOfThePrecursor() {
+        ContiguousTrace precursor = peaks(MS1, 400.2, 0d,
+                new double[]{40d, 4d, 10000d}, new double[]{100d, 4d, 12000d});
+        // The fragment belongs to the first feature only. It is present across the whole run as background, and
+        // that background drifts - a perfectly constant profile would have no variance and therefore no
+        // correlation at all, which would prove nothing about the second window.
+        ContiguousTrace fragment = peaks(CHANNEL_AXIS, 150.1, 50d,
+                new double[]{40d, 4d, 2000d}, new double[]{130d, 20d, 300d});
 
-        DiaTraceCorrelation.Result r = DiaTraceCorrelation.precursorWithFragment(precursor, background, channel);
+        DiaTraceCorrelation.Result atFirst = DiaTraceCorrelation.precursorWithFragment(
+                precursor, fragment, channel(), windowAround(40d, 8d));
+        DiaTraceCorrelation.Result atSecond = DiaTraceCorrelation.precursorWithFragment(
+                precursor, fragment, channel(), windowAround(100d, 8d));
 
-        assertFalse(r.isDefined(), "traces of wildly different duration must not be correlated at all");
+        assertTrue(atFirst.isDefined() && atSecond.isDefined(), "both windows hold enough scan points");
+        assertTrue(atFirst.correlation() > 0.95, "at its own feature, got " + atFirst.correlation());
+        assertTrue(atFirst.correlation() > atSecond.correlation() + 0.5,
+                "the fragment must look far better at its own feature: " + atFirst.correlation()
+                        + " vs " + atSecond.correlation());
     }
 
     @Test
-    public void apexOfTheSmallerTraceMustLieWithinTheLargerOne() {
-        DiaChannel channel = channel();
-        ContiguousTrace precursor = gaussian(MS1, 60d, 4d, 10000f, 400.2);
-        // same duration, but shifted so that its apex sits outside the precursor's peak
-        ContiguousTrace fragment = gaussian(CHANNEL_AXIS, 78d, 4d, 2000f, 150.1);
+    public void aFragmentThatWasNotMeasuredInTheWindowHasNoShape() {
+        ContiguousTrace precursor = peaks(MS1, 400.2, 0d, new double[]{60d, 4d, 10000d});
+        // a fragment confined to a completely different part of the run
+        ContiguousTrace fragment = new ContiguousTrace(CHANNEL_AXIS, 4, 10,
+                new double[]{150.1, 150.1, 150.1, 150.1, 150.1, 150.1, 150.1},
+                new float[]{10f, 50f, 200f, 400f, 200f, 50f, 10f});
 
-        DiaTraceCorrelation.Result r = DiaTraceCorrelation.precursorWithFragment(precursor, fragment, channel);
+        DiaTraceCorrelation.Result r = DiaTraceCorrelation.precursorWithFragment(
+                precursor, fragment, channel(), windowAround(60d, 8d));
 
-        assertFalse(r.isDefined() && r.correlation() > 0.5,
-                "apex outside the other peak must not give a high correlation, got " + r.correlation());
+        assertFalse(r.isDefined(), "nothing was measured here, so there is no shape to compare");
     }
 
+    /**
+     * A fragment the channel caught once or twice carries no shape. That is not the same as carrying no
+     * information at all - the graph keeps such an edge and scores it by specificity instead - but this class
+     * has nothing to say about it.
+     */
     @Test
-    public void tracesThatDoNotOverlapAtAllAreUndefined() {
-        DiaChannel channel = channel();
-        ContiguousTrace precursor = gaussian(MS1, 20d, 3d, 10000f, 400.2);
-        ContiguousTrace fragment = gaussian(CHANNEL_AXIS, 160d, 3d, 2000f, 150.1);
+    public void aFragmentSeenInTooFewScansOfTheWindowHasNoShape() {
+        ContiguousTrace precursor = peaks(MS1, 400.2, 0d, new double[]{60d, 4d, 10000d});
+        final int apex = channel().channelIndexForRetentionTime(60d);
+        ContiguousTrace fragment = new ContiguousTrace(CHANNEL_AXIS, apex, apex + 1,
+                new double[]{150.1, 150.1}, new float[]{500f, 400f});
 
-        assertFalse(DiaTraceCorrelation.precursorWithFragment(precursor, fragment, channel).isDefined());
+        DiaTraceCorrelation.Result r = DiaTraceCorrelation.precursorWithFragment(
+                precursor, fragment, channel(), windowAround(60d, 8d));
+
+        assertFalse(r.isDefined());
+        assertEquals(0, r.datapoints());
     }
 
     @Test
     public void twoFragmentsOfTheSameCompoundCorrelate() {
-        ContiguousTrace a = gaussian(CHANNEL_AXIS, 60d, 4d, 2000f, 150.1);
-        ContiguousTrace b = gaussian(CHANNEL_AXIS, 60d, 4d, 800f, 233.4);
+        ContiguousTrace a = peaks(CHANNEL_AXIS, 150.1, 0d, new double[]{60d, 4d, 2000d});
+        ContiguousTrace b = peaks(CHANNEL_AXIS, 233.4, 0d, new double[]{60d, 4d, 800d});
 
-        DiaTraceCorrelation.Result r = DiaTraceCorrelation.fragmentWithFragment(a, b);
+        DiaTraceCorrelation.Result r = DiaTraceCorrelation.fragmentWithFragment(a, b, windowAround(60d, 8d));
 
         assertTrue(r.isDefined());
         assertTrue(r.correlation() > 0.95, "got " + r.correlation());
@@ -144,39 +144,41 @@ public class DiaTraceCorrelationTest {
 
     @Test
     public void twoFragmentsOfDifferentCompoundsDoNotCorrelate() {
-        ContiguousTrace a = gaussian(CHANNEL_AXIS, 60d, 4d, 2000f, 150.1);
-        ContiguousTrace b = gaussian(CHANNEL_AXIS, 100d, 4d, 800f, 233.4);
+        ContiguousTrace a = peaks(CHANNEL_AXIS, 150.1, 20d, new double[]{50d, 4d, 2000d});
+        ContiguousTrace b = peaks(CHANNEL_AXIS, 233.4, 20d, new double[]{70d, 4d, 800d});
 
-        DiaTraceCorrelation.Result r = DiaTraceCorrelation.fragmentWithFragment(a, b);
+        DiaTraceCorrelation.Result r = DiaTraceCorrelation.fragmentWithFragment(a, b, windowAround(60d, 8d));
 
-        assertFalse(r.isDefined() && r.correlation() > 0.5, "got " + r.correlation());
-    }
-
-    /** The number of points is what the p-value calibration is binned by, so it must be truthful. */
-    @Test
-    public void theNumberOfPointsReflectsTheComparisonWindow() {
-        DiaChannel channel = channel();
-        ContiguousTrace narrow = gaussian(MS1, 60d, 2d, 10000f, 400.2);
-        ContiguousTrace wide = gaussian(MS1, 60d, 8d, 10000f, 400.2);
-        ContiguousTrace fragmentNarrow = gaussian(CHANNEL_AXIS, 60d, 2d, 2000f, 150.1);
-        ContiguousTrace fragmentWide = gaussian(CHANNEL_AXIS, 60d, 8d, 2000f, 150.1);
-
-        DiaTraceCorrelation.Result small = DiaTraceCorrelation.precursorWithFragment(narrow, fragmentNarrow, channel);
-        DiaTraceCorrelation.Result large = DiaTraceCorrelation.precursorWithFragment(wide, fragmentWide, channel);
-
-        assertTrue(small.isDefined() && large.isDefined());
-        assertTrue(large.datapoints() > small.datapoints(),
-                "a broader peak gives more points: " + small.datapoints() + " vs " + large.datapoints());
+        assertTrue(r.isDefined(), "both were measured across this window");
+        assertTrue(r.correlation() < 0.5, "two peaks either side of the window must not agree, got " + r.correlation());
     }
 
     @Test
-    public void aFragmentSeenInTooFewScansIsUndefined() {
-        DiaChannel channel = channel();
-        ContiguousTrace precursor = gaussian(MS1, 60d, 4d, 10000f, 400.2);
-        // only two scan points of the channel
-        ContiguousTrace fragment = new ContiguousTrace(CHANNEL_AXIS, 26, 27,
-                new double[]{150.1, 150.1}, new float[]{500f, 400f});
+    public void theNumberOfPointsIsTheSizeOfTheWindow() {
+        ContiguousTrace precursor = peaks(MS1, 400.2, 0d, new double[]{60d, 8d, 10000d});
+        ContiguousTrace fragment = peaks(CHANNEL_AXIS, 150.1, 10d, new double[]{60d, 8d, 2000d});
 
-        assertFalse(DiaTraceCorrelation.precursorWithFragment(precursor, fragment, channel).isDefined());
+        ChannelWindow narrow = windowAround(60d, 6d);
+        ChannelWindow wide = windowAround(60d, 14d);
+
+        assertEquals(narrow.length(), DiaTraceCorrelation.precursorWithFragment(precursor, fragment, channel(), narrow).datapoints());
+        assertEquals(wide.length(), DiaTraceCorrelation.precursorWithFragment(precursor, fragment, channel(), wide).datapoints());
+    }
+
+    @Test
+    public void aWindowTooSmallToHoldAShapeIsUndefined() {
+        assertFalse(DiaTraceCorrelation.correlateProfiles(new double[]{1, 2}, new double[]{1, 2}).isDefined());
+    }
+
+    /**
+     * Both profiles constant means no variance and therefore no correlation. Note that a <em>nearly</em>
+     * constant fragment can still produce a large correlation by chance over four or five points - that is what
+     * the decoy calibration in {@link DiaCorrelationPValues} is for, and no longer something this class tries to
+     * catch with a guard.
+     */
+    @Test
+    public void constantProfilesHaveNoCorrelation() {
+        assertFalse(DiaTraceCorrelation.correlateProfiles(
+                new double[]{5, 5, 5, 5, 5}, new double[]{1, 2, 3, 2, 1}).isDefined());
     }
 }
