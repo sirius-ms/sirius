@@ -37,6 +37,7 @@ import io.sirius.ms.sdk.model.SearchableDatabase;
 import lombok.extern.slf4j.Slf4j;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -78,9 +79,20 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     private final QualityFilterPanel overallQualityPanel;
     private final List<QualityFilterPanel> qualityPanels;
 
+    private JTabbedPane centerTab;
+
     final SiriusGui gui;
 
     public FeatureFilterOptionsDialog(SiriusGui gui, FeatureFilterModel filterModel, CompoundList compoundList) {
+        this(gui, filterModel, compoundList, null);
+    }
+
+    /**
+     * @param selectFacetId if non-null, the tab owning that filter facet (see {@link #tabTitleForFacet})
+     *                      is preselected - used when a search-bar chip is clicked to jump to its control.
+     */
+    public FeatureFilterOptionsDialog(SiriusGui gui, FeatureFilterModel filterModel, CompoundList compoundList,
+                                      @Nullable String selectFacetId) {
         super(gui.getMainFrame(), "Filter configuration", true);
         this.gui = gui;
         this.filterModel = filterModel;
@@ -104,7 +116,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             searchPanel.add(Box.createVerticalStrut(10));
         }
 
-        final JTabbedPane centerTab = new JTabbedPane();
+        centerTab = new JTabbedPane();
         optionsPanel.add(centerTab, BorderLayout.CENTER);
 
         // filter modifiers
@@ -352,9 +364,36 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
         setMaximumSize(GuiUtils.getEffectiveScreenSize());
         configureActions();
+        selectTabForFacet(selectFacetId); // jump to the clicked chip's control, if any
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
+    }
+
+    /** The tab title that owns a given filter facet id (see PanelQueryNodeFactory facet ids); null if unknown. */
+    static @Nullable String tabTitleForFacet(@Nullable String facetId) {
+        if (facetId == null)
+            return null;
+        String base = facetId.contains(".") ? facetId.substring(0, facetId.indexOf('.')) : facetId;
+        return switch (base) {
+            case "mz", "rt", "adducts" -> "Input";
+            case "blank" -> "Fold Change";
+            case "hasMs1", "hasMsMs", "quality" -> "Data Quality";
+            case "confidence", "elements", "lipid", "db" -> "Results";
+            default -> null;
+        };
+    }
+
+    /** Preselects the tab owning {@code facetId}; a no-op (keeps the default tab) if it is unknown. */
+    private void selectTabForFacet(@Nullable String facetId) {
+        String title = tabTitleForFacet(facetId);
+        if (title == null)
+            return;
+        for (int i = 0; i < centerTab.getTabCount(); i++)
+            if (title.equals(centerTab.getTitleAt(i))) {
+                centerTab.setSelectedIndex(i);
+                return;
+            }
     }
 
     private void configureActions() {
