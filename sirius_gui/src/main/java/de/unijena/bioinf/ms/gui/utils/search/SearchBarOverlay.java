@@ -231,21 +231,6 @@ public class SearchBarOverlay extends JDialog {
             }
         });
 
-        // Outside-click cancels. Registered only while shown so the global listener does not linger.
-        // Best-effort: clicks on the native JxBrowser windows produce no AWT event, so those cannot
-        // be caught here - Cancel/Esc are the guaranteed exits.
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentShown(ComponentEvent e) {
-                Toolkit.getDefaultToolkit().addAWTEventListener(outsideClickListener, AWTEvent.MOUSE_EVENT_MASK);
-            }
-
-            @Override
-            public void componentHidden(ComponentEvent e) {
-                Toolkit.getDefaultToolkit().removeAWTEventListener(outsideClickListener);
-            }
-        });
-
         // structured filters may change while the overlay is open (dialog, quick toggles)
         filterModel.addUpdateCompleteListener(evt -> {
             if (isVisible())
@@ -253,8 +238,16 @@ public class SearchBarOverlay extends JDialog {
         });
     }
 
+    /**
+     * Cancels on a press outside the dialog. Registered/removed deterministically in
+     * {@link #openAt}/{@link #close} (NOT via component show/hide events, whose delivery for windows
+     * is unreliable - a leaked global listener would otherwise close the overlay the instant it
+     * reopens). The {@code isVisible()} guard is a second safety net against a stale invocation.
+     * Best-effort: clicks on the native JxBrowser windows produce no AWT event, so those cannot be
+     * caught here - Cancel/Esc are the guaranteed exits.
+     */
     private final AWTEventListener outsideClickListener = event -> {
-        if (!(event instanceof MouseEvent mouse) || mouse.getID() != MouseEvent.MOUSE_PRESSED)
+        if (!isVisible() || !(event instanceof MouseEvent mouse) || mouse.getID() != MouseEvent.MOUSE_PRESSED)
             return;
         // ignore presses inside this dialog or any window it owns (e.g. the AND/OR combo popup)
         for (Window w = SwingUtilities.getWindowAncestor(mouse.getComponent()); w != null; w = w.getOwner())
@@ -478,6 +471,9 @@ public class SearchBarOverlay extends JDialog {
         rebuild();
         resizeToFit();
         reposition();
+        // register the outside-click watcher right before showing (the opening press has already
+        // been dispatched, so it will not see it) and remove it in close()
+        Toolkit.getDefaultToolkit().addAWTEventListener(outsideClickListener, AWTEvent.MOUSE_EVENT_MASK);
         // the dialog is modal, so setVisible(true) blocks - focus the input and show the dropdown
         // from the event queue once the window is up
         SwingUtilities.invokeLater(() -> {
@@ -489,6 +485,7 @@ public class SearchBarOverlay extends JDialog {
     }
 
     public void close() {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(outsideClickListener);
         setVisible(false);
     }
 
