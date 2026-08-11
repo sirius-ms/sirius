@@ -104,7 +104,7 @@ public final class DiaPseudoSpectra {
                 final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(assigned.size());
                 for (int fragmentIndex : assigned) {
                     final ContiguousTrace fragment = fragments.get(fragmentIndex);
-                    final double intensity = apexIntensityWithin(fragment, precursor.getWindow());
+                    final double intensity = precursor.getWindow().apexIntensityIn(fragment);
                     if (intensity > 0) buffer.addPeak(fragment.averagedMz(), intensity);
                 }
                 if (buffer.isEmpty()) {
@@ -137,16 +137,5 @@ public final class DiaPseudoSpectra {
         final Ms2SpectrumHeader stored = sample.getStorage().getSpectrumStorage().addMs2Spectrum(header, spectrum);
         sample.getStorage().getTraceStorage().assignTraceForMs2(new MsMsTraceReference(
                 stored.getUid(), precursor.getTraceUid(), parentId, ms2ScanId));
-    }
-
-    /**
-     * @return the highest intensity the fragment reaches inside the window, or zero if it was not measured there
-     */
-    private static double apexIntensityWithin(ContiguousTrace fragment, ChannelWindow window) {
-        double best = 0d;
-        for (int k = Math.max(window.from(), fragment.startId()), end = Math.min(window.to(), fragment.endId()); k <= end; ++k) {
-            best = Math.max(best, fragment.intensity(k));
-        }
-        return best;
     }
 }

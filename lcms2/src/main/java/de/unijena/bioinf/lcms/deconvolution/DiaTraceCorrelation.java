@@ -2,6 +2,9 @@ package de.unijena.bioinf.lcms.deconvolution;
 
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.lcms.trace.Trace;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+
+import java.util.List;
 
 /**
  * How well two elution profiles agree over one feature of a precursor: a precursor against a fragment, or two
@@ -83,6 +86,68 @@ public final class DiaTraceCorrelation {
     }
 
     /** intensities of the trace over the window, zero where the channel measured nothing */
+    /** one sample's view of a candidate pair: both traces, that sample's channel, and the feature's window in it */
+    public record SampleWindow(Trace precursor, Trace fragment, DiaChannel channel, ChannelWindow window) {
+    }
+
+    /**
+     * How many points a single sample has to contribute before it is pooled at all.
+     * <p>
+     * Below two, normalisation would fabricate agreement rather than measure it: a slice is divided by its own mean,
+     * so a single point becomes exactly one in both profiles and contributes a perfectly correlated pair whatever
+     * was measured. From two points on, what is left after normalisation is whether the two profiles move in the
+     * same direction, which is real if weak information. Note that this is lower than {@link #MIN_POINTS}, and
+     * legitimately so: a short slice is not fitted on its own here, it contributes a couple of terms to a sum over
+     * all samples, so the degeneracy that makes a two point correlation meaningless does not arise.
+     */
+    public static final int MIN_POINTS_PER_SAMPLE = 2;
+
+    /**
+     * The same correlation, over the windows of several samples at once.
+     * <p>
+     * This is the point of doing the assignment again after alignment. A channel samples a peak four to nine times
+     * and no calibration can make five points say more than five points do; three replicates of that measurement
+     * hold three times as many, about the same pair, and pooling them is the only way to get past that floor. The
+     * result is a single correlation over all of them, with a truthful point count, so the calibration binned by
+     * point count applies unchanged and the extra evidence shows up where it should - in a p-value that a five point
+     * correlation could not reach.
+     * <p>
+     * Each sample's profiles are divided by their own mean before being appended, because the samples have different
+     * intensity scales and without that the correlation would partly measure which sample is more intense rather
+     * than whether the two profiles have the same shape.
+     * <p>
+     * Samples where the fragment was not measured in the window are left out rather than appended as zeros. That
+     * absence is evidence - the precursor eluted there and the fragment did not - but it is evidence about
+     * abundance, not about shape, and it belongs where abundance across samples is judged.
+     */
+    public static Result pooled(List<SampleWindow> perSample) {
+        final DoubleArrayList left = new DoubleArrayList(), right = new DoubleArrayList();
+        for (SampleWindow sample : perSample) {
+            final double[] precursorProfile = Ms1TraceResampler.resample(sample.precursor(),
+                    sample.channel().getAxis(), sample.window().from(), sample.window().to());
+            final double[] fragmentProfile = profileOf(sample.fragment(), sample.window());
+            if (measuredPoints(precursorProfile) < MIN_POINTS_PER_SAMPLE
+                    || measuredPoints(fragmentProfile) < MIN_POINTS_PER_SAMPLE) continue;
+            if (!normalizeByMean(precursorProfile) || !normalizeByMean(fragmentProfile)) continue;
+            final int n = Math.min(precursorProfile.length, fragmentProfile.length);
+            for (int k = 0; k < n; ++k) {
+                left.add(precursorProfile[k]);
+                right.add(fragmentProfile[k]);
+            }
+        }
+        return correlateProfiles(left.toDoubleArray(), right.toDoubleArray());
+    }
+
+    /** @return false if there was nothing to normalise, i.e. the profile is empty */
+    private static boolean normalizeByMean(double[] profile) {
+        double sum = 0d;
+        for (double v : profile) sum += v;
+        if (!(sum > 0d)) return false;
+        final double mean = sum / profile.length;
+        for (int k = 0; k < profile.length; ++k) profile[k] /= mean;
+        return true;
+    }
+
     private static double[] profileOf(Trace trace, ChannelWindow window) {
         final double[] profile = new double[window.length()];
         for (int k = Math.max(window.from(), trace.startId()), end = Math.min(window.to(), trace.endId()); k <= end; ++k) {

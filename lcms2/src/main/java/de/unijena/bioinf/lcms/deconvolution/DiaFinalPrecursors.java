@@ -54,6 +54,11 @@ public final class DiaFinalPrecursors {
         /** uids of the pseudo spectra that feature extraction will collect for this feature */
         private final int[] pseudoSpectra;
 
+        static Instance of(ProcessedSample sample, Trace rawTrace, TraceSegment rawWindow, double mz,
+                           float apexIntensity, int[] pseudoSpectra) {
+            return new Instance(sample, rawTrace, rawWindow, mz, apexIntensity, pseudoSpectra);
+        }
+
         private Instance(ProcessedSample sample, Trace rawTrace, TraceSegment rawWindow, double mz,
                          float apexIntensity, int[] pseudoSpectra) {
             this.sample = sample;
@@ -75,17 +80,14 @@ public final class DiaFinalPrecursors {
         private final double retentionTime;
         private final List<Instance> instances;
 
+        static Aligned of(double mz, double retentionTime, List<Instance> instances) {
+            return new Aligned(mz, retentionTime, instances);
+        }
+
         private Aligned(double mz, double retentionTime, List<Instance> instances) {
             this.mz = mz;
             this.retentionTime = retentionTime;
             this.instances = instances;
-        }
-
-        /** the abundance across samples, in the order of {@link #getInstances()}, for correlating against fragments */
-        public double[] abundance() {
-            final double[] intensities = new double[instances.size()];
-            for (int k = 0; k < intensities.length; ++k) intensities[k] = instances.get(k).apexIntensity;
-            return intensities;
         }
     }
 
@@ -120,11 +122,11 @@ public final class DiaFinalPrecursors {
                 final ProjectedTrace projected = mergedTrace.getTraces()[k];
                 final Trace raw = projected.raw(sample.getMapping());
                 final TraceSegment rawWindow = rawWindowOf(projected, sample, segment, raw);
-                instances.add(new Instance(sample, raw, rawWindow, projected.getAveragedMz(),
+                instances.add(Instance.of(sample, raw, rawWindow, projected.getAveragedMz(),
                         raw.intensity(rawWindow.apex), spectraPerSample[k][fid]));
             }
             if (instances.isEmpty()) continue;
-            features.add(new Aligned(mergedTrace.averagedMz(),
+            features.add(Aligned.of(mergedTrace.averagedMz(),
                     mergedTrace.retentionTime(mergedSegments[fid].apex), List.copyOf(instances)));
         }
         return features;

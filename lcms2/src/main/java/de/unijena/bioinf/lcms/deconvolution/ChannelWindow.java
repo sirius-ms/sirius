@@ -45,6 +45,30 @@ public record ChannelWindow(int from, int to) {
         return to - from + 1;
     }
 
+    /**
+     * @return the scan point at which the trace is highest inside this window, or -1 if it was not measured here at
+     * all. Note that this is the trace's apex <em>within the window</em>, which for a fragment of a channel that
+     * samples once per cycle is often not the point where the compound really peaked.
+     */
+    public int apexIndexIn(Trace trace) {
+        int apex = -1;
+        double best = 0d;
+        for (int k = Math.max(from, trace.startId()), end = Math.min(to, trace.endId()); k <= end; ++k) {
+            final double intensity = trace.intensity(k);
+            if (intensity > best) {
+                best = intensity;
+                apex = k;
+            }
+        }
+        return apex;
+    }
+
+    /** @return the highest intensity the trace reaches inside this window, or zero */
+    public double apexIntensityIn(Trace trace) {
+        final int apex = apexIndexIn(trace);
+        return apex < 0 ? 0d : trace.intensity(apex);
+    }
+
     public boolean contains(int channelIndex) {
         return channelIndex >= from && channelIndex <= to;
     }
