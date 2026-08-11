@@ -84,6 +84,34 @@ public class PanelFilterTermsTest {
         assertTrue(terms(cleanSlate()).isEmpty());
     }
 
+    @Test
+    public void testNumericFacetsExposeAnInlineRangeEditThatAppliesToTheModel() {
+        FeatureFilterModel model = cleanSlate();
+        model.setCurrentMinMz(300);
+        model.setCurrentMaxMz(400);
+
+        de.unijena.bioinf.ms.gui.utils.query.RangeEdit range = byId(terms(model), "mz").rangeEdit();
+        assertNotNull(range, "m/z is inline-editable");
+        assertEquals(300.0, range.currentMin());
+        assertEquals(400.0, range.currentMax());
+        assertEquals(model.getMinMz(), range.lowerBound());
+        assertEquals(model.getMaxMz(), range.upperBound());
+
+        // applying the setter mutates exactly this facet's bounds on the backing model
+        range.setter().accept(325.0, 375.0);
+        assertEquals(325.0, model.getCurrentMinMz());
+        assertEquals(375.0, model.getCurrentMaxMz());
+    }
+
+    @Test
+    public void testSetAndBooleanFacetsHaveNoInlineRangeEdit() {
+        FeatureFilterModel model = cleanSlate();
+        model.setHasMs1(true);
+        model.setAdducts(Set.of(PrecursorIonType.fromString("[M+H]+")));
+        assertNull(byId(terms(model), "hasMs1").rangeEdit(), "a boolean facet is not range-editable");
+        assertNull(byId(terms(model), "adducts").rangeEdit(), "a set facet is edited via the dialog, not inline");
+    }
+
     private static Set<String> model2ids(FeatureFilterModel model) {
         return terms(model).stream().map(FilterTerm::id).collect(java.util.stream.Collectors.toSet());
     }
