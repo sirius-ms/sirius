@@ -37,7 +37,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.search.LuceneSearchBar;
-import de.unijena.bioinf.ms.gui.utils.search.ModelChipFactory;
+import de.unijena.bioinf.ms.gui.utils.search.PanelFilterTerms;
 import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
@@ -95,8 +95,8 @@ public class CompoundList {
         // lucene query search bar: collapsed summary here, chip-based query builder with
         // autocompletion in an overlay expanding over the result view
         searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel,
-                () -> ModelChipFactory.chipsFor(filterModel),
-                () -> new FeatureFilterOptionsDialog(gui, filterModel, this));
+                () -> PanelFilterTerms.of(filterModel, gui.getProperties().getConfidenceDisplayMode()),
+                term -> new FeatureFilterOptionsDialog(gui, filterModel, this));
 
         observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(observableScource, Comparator.comparing(InstanceBean::getRTOrMissing));

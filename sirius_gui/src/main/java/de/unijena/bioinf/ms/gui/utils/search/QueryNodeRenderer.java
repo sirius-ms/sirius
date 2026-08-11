@@ -21,6 +21,8 @@ package de.unijena.bioinf.ms.gui.utils.search;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * Renders a {@link QueryNode} as a read-only, collapsed {@link ChipComponent} - one chip per node,
  * showing the clause in human-readable form ({@code field op value}, {@code "free text"}, groups
@@ -37,20 +39,55 @@ public final class QueryNodeRenderer {
     private QueryNodeRenderer() {
     }
 
-    /**
-     * A read-only chip for one query node.
-     *
-     * @param onClick optional action when the chip is clicked (e.g. open the query builder); null = inert
-     */
-    public static ChipComponent     chip(@NotNull QueryNode node, @NotNull ChipComponent.Style style,
+    /** Convenience: extensive (fully-qualified) rendering, no per-field length lookup. */
+    public static ChipComponent chip(@NotNull QueryNode node, @NotNull ChipComponent.Style style,
                                      @Nullable Runnable onClick) {
-        if (node instanceof QueryClause clause && clause.isFreeText())
-            return new ChipComponent((clause.negated() ? "NOT " : "") + "“" + clause.value1() + "”",
-                    "Full-text search in the default fields", style, onClick, null);
+        return chip(node, style, onClick, FieldDisplay.Mode.EXTENSIVE, null);
+    }
 
-        String text = node instanceof QueryClause clause
-                ? (clause.negated() ? "NOT " : "") + clause.field() + " " + SearchBarOverlay.clauseBody(clause)
-                : LuceneQueryCompiler.render(node); // groups collapse to their compiled form
-        return new ChipComponent(text, LuceneQueryCompiler.render(node), style, onClick, null);
+    /**
+     * A read-only chip for one query node. The chip <b>label</b> shows field names per {@code mode}
+     * (compact = the last {@code significantSuffixLength} segments, looked up via {@code suffixLengthByField});
+     * the <b>tooltip</b> is always the fully-qualified compiled lucene (or the full-text hint).
+     *
+     * @param onClick             optional click action (e.g. open the query builder); null = inert
+     * @param suffixLengthByField field name -> significant suffix length (nullable / may return null -> heuristic)
+     */
+    public static ChipComponent chip(@NotNull QueryNode node, @NotNull ChipComponent.Style style,
+                                     @Nullable Runnable onClick, @NotNull FieldDisplay.Mode mode,
+                                     @Nullable Function<String, Integer> suffixLengthByField) {
+        String tooltip = node instanceof QueryClause clause && clause.isFreeText()
+                ? "Full-text search in the default fields"
+                : LuceneQueryCompiler.render(node);
+        return new ChipComponent(label(node, mode, suffixLengthByField), tooltip, style, onClick, null);
+    }
+
+    /** The human-readable label of a node, with field names shown per {@code mode}. */
+    static String label(@NotNull QueryNode node, @NotNull FieldDisplay.Mode mode,
+                        @Nullable Function<String, Integer> suffixLengthByField) {
+        if (node instanceof QueryClause clause) {
+            if (clause.isFreeText())
+                return (clause.negated() ? "NOT " : "") + "“" + clause.value1() + "”";
+            return (clause.negated() ? "NOT " : "") + displayField(clause.field(), mode, suffixLengthByField)
+                    + " " + SearchBarOverlay.clauseBody(clause);
+        }
+        QueryGroup group = (QueryGroup) node;
+        StringBuilder body = new StringBuilder("(");
+        for (int i = 0; i < group.items().size(); i++) {
+            if (i > 0)
+                body.append(' ').append(group.logics().get(i - 1)).append(' ');
+            body.append(label(group.items().get(i), mode, suffixLengthByField));
+        }
+        body.append(')');
+        return (group.negated() ? "NOT " : "") + body;
+    }
+
+    /** A single field name shown per {@code mode} (compact = last significant-suffix-length segments). */
+    static String displayField(@NotNull String field, @NotNull FieldDisplay.Mode mode,
+                               @Nullable Function<String, Integer> suffixLengthByField) {
+        if (mode == FieldDisplay.Mode.EXTENSIVE || field.isEmpty())
+            return field;
+        Integer length = suffixLengthByField == null ? null : suffixLengthByField.apply(field);
+        return length != null ? FieldDisplay.compact(field, length) : FieldDisplay.compact(field);
     }
 }

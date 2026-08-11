@@ -75,8 +75,10 @@ public class SearchBarOverlay extends JDialog {
 
     private final FeatureFilterModel filterModel;
     private final SearchableFieldsProvider fieldsProvider;
-    private final Supplier<List<ModelChip>> modelChipSupplier;
-    private final Runnable openFilterDialog;
+    private final Supplier<List<FilterTerm>> termSupplier;
+    private final FilterEditorHost editorHost;
+    private final SearchRenderState renderState;
+    private final Runnable refreshCollapsedBar;
     private final java.util.function.Consumer<Commit> onCommitted;
 
     // --- builder state ---
@@ -121,15 +123,19 @@ public class SearchBarOverlay extends JDialog {
     public SearchBarOverlay(@NotNull Window owner,
                             @NotNull FeatureFilterModel filterModel,
                             @NotNull SearchableFieldsProvider fieldsProvider,
-                            @NotNull Supplier<List<ModelChip>> modelChipSupplier,
-                            @NotNull Runnable openFilterDialog,
-                            @NotNull java.util.function.Consumer<Commit> onCommitted) {
+                            @NotNull Supplier<List<FilterTerm>> termSupplier,
+                            @NotNull FilterEditorHost editorHost,
+                            @NotNull SearchRenderState renderState,
+                            @NotNull java.util.function.Consumer<Commit> onCommitted,
+                            @NotNull Runnable refreshCollapsedBar) {
         super(owner);
         this.filterModel = filterModel;
         this.fieldsProvider = fieldsProvider;
-        this.modelChipSupplier = modelChipSupplier;
-        this.openFilterDialog = openFilterDialog;
+        this.termSupplier = termSupplier;
+        this.editorHost = editorHost;
+        this.renderState = renderState;
         this.onCommitted = onCommitted;
+        this.refreshCollapsedBar = refreshCollapsedBar;
 
         // A heavyweight top-level window so it floats above the native JxBrowser windows of the
         // result views (a lightweight layered-pane panel is hidden behind those). Undecorated so it
@@ -159,6 +165,20 @@ public class SearchBarOverlay extends JDialog {
         wireInput();
 
         Box controls = Box.createHorizontalBox();
+
+        // field-name display toggle (compact terminal names <-> fully-qualified), shared with the bar
+        JButton modeToggle = new JButton();
+        modeToggle.setFocusable(false);
+        styleModeToggle(modeToggle);
+        modeToggle.addActionListener(e -> {
+            renderState.toggleMode();
+            styleModeToggle(modeToggle);
+            rebuild();
+            refreshCollapsedBar.run();
+        });
+        controls.add(modeToggle);
+        controls.add(Box.createHorizontalStrut(6));
+
         JButton clear = iconButton(new FlatClearIcon(), "Clear the whole search query (filter-dialog filters are kept)");
         clear.addActionListener(e -> {
             root = QueryContainer.empty();
@@ -282,6 +302,15 @@ public class SearchBarOverlay extends JDialog {
         button.setFocusable(false);
         button.setToolTipText(tooltip);
         return button;
+    }
+
+    /** Labels the field-name display toggle for the current mode. */
+    private void styleModeToggle(JButton button) {
+        boolean compact = renderState.mode() == FieldDisplay.Mode.COMPACT;
+        button.setText(compact ? "abc" : "a.b.c");
+        button.setToolTipText(GuiUtils.formatToolTip(compact
+                ? "Field names: compact (terminal name). Click to show fully-qualified names."
+                : "Field names: fully-qualified. Click to show compact terminal names."));
     }
 
     public boolean isOpen() {
@@ -615,32 +644,35 @@ public class SearchBarOverlay extends JDialog {
 
         // render only the model filters not staged for removal - a staged removal hides the chip but
         // does not touch the model until the search is committed (Cancel discards it, see close())
-        List<ModelChip> modelChips = modelChipSupplier.get().stream()
-                .filter(c -> !pendingModelRemovals.containsKey(c.label()))
+        List<FilterTerm> terms = termSupplier.get().stream()
+                .filter(t -> !pendingModelRemovals.containsKey(t.id()))
                 .toList();
-        for (int i = 0; i < modelChips.size(); i++) {
+        for (int i = 0; i < terms.size(); i++) {
             if (i > 0)
                 inlineRow.add(ChipComponent.implicitAndLabel()); // dialog filters always AND together
-            ModelChip chip = modelChips.get(i);
-            inlineRow.add(new ChipComponent(chip.label(), chip.tooltip() == null
-                    ? "Filter from the filter dialog - click to open it, combined with AND"
-                    : chip.tooltip() + " (filter dialog) - combined with AND", ChipComponent.Style.MODEL,
+            FilterTerm term = terms.get(i);
+            QueryNode node = term.toQueryNode();
+            inlineRow.add(new ChipComponent(
+                    QueryNodeRenderer.label(node, renderState.mode(), renderState.suffixLengthResolver()),
+                    GuiUtils.formatToolTip(LuceneQueryCompiler.render(node),
+                            "Filter from the filter dialog - click to edit; combined with AND"),
+                    ChipComponent.Style.MODEL,
                     () -> {
-                        // close the modal first, then open the filter dialog (avoid nested modals)
+                        // close the overlay first, then open the full editor (avoid nested modals)
                         close();
-                        SwingUtilities.invokeLater(openFilterDialog);
+                        SwingUtilities.invokeLater(() -> term.openEditor(editorHost));
                     },
                     () -> {
                         // stage the removal (applied on commit, reverted on Cancel) instead of
                         // mutating the model right away
-                        pendingModelRemovals.put(chip.label(), chip.onRemove());
+                        pendingModelRemovals.put(term.id(), term::remove);
                         rebuild();
                     }));
         }
 
         List<QueryNode> items = root.items();
         // the dialog filters and the user's own query are combined with AND - make that visible
-        if (!modelChips.isEmpty() && !items.isEmpty())
+        if (!terms.isEmpty() && !items.isEmpty())
             inlineRow.add(ChipComponent.implicitAndLabel());
         for (int i = 0; i < items.size(); i++) {
             if (i > 0)
@@ -696,7 +728,9 @@ public class SearchBarOverlay extends JDialog {
         if (node instanceof QueryClause clause) {
             String text = clause.isFreeText()
                     ? (clause.negated() ? "NOT " : "") + "“" + clause.value1() + "”"
-                    : (clause.negated() ? "NOT " : "") + clause.field() + " " + clauseBody(clause);
+                    : (clause.negated() ? "NOT " : "")
+                    + QueryNodeRenderer.displayField(clause.field(), renderState.mode(), renderState.suffixLengthResolver())
+                    + " " + clauseBody(clause);
             String tooltip = clause.isFreeText()
                     ? "Full-text search in the default fields"
                     : LuceneQueryCompiler.render(clause);
