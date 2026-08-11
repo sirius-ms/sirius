@@ -246,6 +246,8 @@ grappa = { group = "att.grappa", name = "grappa", version.ref = "grappa" }
 jmzml = { group = "uk.ac.ebi.jmzml", name = "jmzml", version.ref = "jmzml" }
 xxindex = { group = "psidev.psi.tools", name = "xxindex", version.ref = "xxindex" }
 legacyJaxbImpl = { group = "stealth.com.sun.xml.bind", name = "jaxb-impl", version = { strictly = "2.3.9" } }
+#jmzml needs the pre-jakarta javax.xml.bind API, which legacyJaxbImpl does not contain
+legacyJaxbApi = { group = "javax.xml.bind", name = "jaxb-api", version = { strictly = "2.3.1" } }
 
 [plugins]
 sonatypeScan = { id = "org.sonatype.gradle.plugins.scan", version = "3.1.5" }

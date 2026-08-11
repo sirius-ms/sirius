@@ -41,6 +41,8 @@ import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -223,6 +225,9 @@ public class MzMLParser implements LCMSParser {
 
             // read spectra
             Map<String, Long> ms1Ids = new HashMap<>();
+            // multiplexed (MSX) DIA scans co-isolate several windows in one MS2 scan. An Ms2SpectrumHeader can
+            // only carry one of them, so the complete set is collected here for the DIA preprocessing.
+            Int2ObjectMap<float[]> multiplexedIsolationWindows = null;
             for (String sid : um.getSpectrumIDs()) {
                 final Spectrum spectrum = um.getSpectrumById(sid);
                 Polarity polarity = Polarity.UNKNOWN;
@@ -418,7 +423,27 @@ public class MzMLParser implements LCMSParser {
                             prec.getMass(), // todo: fix
                             rt
                     );
-                    storage.getSpectrumStorage().addMs2Spectrum(header, peaks);
+                    final Ms2SpectrumHeader storedHeader = storage.getSpectrumStorage().addMs2Spectrum(header, peaks);
+
+                    final List<uk.ac.ebi.jmzml.model.mzml.Precursor> allPrecursors = spectrum.getPrecursorList().getPrecursor();
+                    if (allPrecursors.size() > 1) {
+                        // multiplexed acquisition: keep the isolation windows of the remaining precursors, too.
+                        // Note that they are not listed in any reliable order.
+                        final float[] bounds = new float[allPrecursors.size() * 2];
+                        int at = 0;
+                        for (uk.ac.ebi.jmzml.model.mzml.Precursor p : allPrecursors) {
+                            final Precursor parsed = makePrecursor(p);
+                            final IsolationWindow window = parsed.getIsolationWindow();
+                            if (window == null || window.isUndefined() || !Double.isFinite(parsed.getMass())) continue;
+                            bounds[at++] = (float) (parsed.getMass() + window.getLeftOffset());
+                            bounds[at++] = (float) (parsed.getMass() + window.getRightOffset());
+                        }
+                        if (at >= 2) {
+                            if (multiplexedIsolationWindows == null)
+                                multiplexedIsolationWindows = new Int2ObjectOpenHashMap<>();
+                            multiplexedIsolationWindows.put(storedHeader.getUid(), at == bounds.length ? bounds : Arrays.copyOf(bounds, at));
+                        }
+                    }
                 }
 
             }
@@ -455,6 +480,11 @@ public class MzMLParser implements LCMSParser {
             storage.setMapping(mapping);
             ProcessedSample sample = new ProcessedSample(mapping, storage, samplePolarity, -1);
             sample.setRun(run);
+            sample.setMultiplexedIsolationWindows(multiplexedIsolationWindows);
+            if (multiplexedIsolationWindows != null) {
+                LoggerFactory.getLogger(MzMLParser.class).info("{} of the MS/MS scans of {} co-isolate several " +
+                        "isolation windows (multiplexed DIA acquisition).", multiplexedIsolationWindows.size(), fileName);
+            }
 
             if (noScanIDCount>0) {
                 LoggerFactory.getLogger(MzMLParser.class).warn("In total {} spectra have no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.", noScanIDCount);
