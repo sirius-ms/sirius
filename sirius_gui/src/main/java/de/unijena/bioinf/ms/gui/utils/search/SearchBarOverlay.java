@@ -123,12 +123,14 @@ public class SearchBarOverlay extends JDialog {
 
         // A heavyweight top-level window so it floats above the native JxBrowser windows of the
         // result views (a lightweight layered-pane panel is hidden behind those). Undecorated so it
-        // reads as an inline expansion of the collapsed bar, and document-modal so nothing behind it
-        // is interactable while building a query - which makes dismissal robust (Esc/Cancel/Search,
-        // plus outside-click on the blocked UI). Only ONE window (the suggestion list is embedded),
-        // avoiding the multi-window focus/paint fragility.
+        // reads as an inline expansion of the collapsed bar. NON-modal on purpose: a modal dialog's
+        // event filter rejects mouse presses on the blocked owner before they are dispatched, so an
+        // AWTEventListener never sees them and outside-click cancel cannot work (we would only ever
+        // see presses on the dialog itself). Non-modal lets the listener receive presses on the rest
+        // of the UI. Only ONE window (the suggestion list is embedded), avoiding the multi-window
+        // focus/paint fragility.
         setUndecorated(true);
-        setModalityType(ModalityType.DOCUMENT_MODAL);
+        setModalityType(ModalityType.MODELESS);
         setFocusableWindowState(true);
 
         JPanel content = new JPanel(new BorderLayout());
@@ -453,7 +455,7 @@ public class SearchBarOverlay extends JDialog {
     /**
      * Opens the overlay anchored at the collapsed bar, extending right over the result view.
      * The optional type-ahead is the keystroke that triggered the expansion from the collapsed bar,
-     * applied before the (blocking, modal) show so typing continues seamlessly.
+     * applied before showing so typing continues seamlessly.
      */
     public void openAt(@NotNull JComponent anchor, @org.jetbrains.annotations.Nullable String typeAhead) {
         this.anchor = anchor;
@@ -488,14 +490,13 @@ public class SearchBarOverlay extends JDialog {
         // register the outside-click watcher right before showing (the opening press has already
         // been dispatched, so it will not see it) and remove it in close()
         Toolkit.getDefaultToolkit().addAWTEventListener(outsideClickListener, AWTEvent.MOUSE_EVENT_MASK);
-        // the dialog is modal, so setVisible(true) blocks - focus the input and show the dropdown
-        // from the event queue once the window is up
+        setVisible(true);
+        // focus the input and show the dropdown once the window is up
         SwingUtilities.invokeLater(() -> {
             input.requestFocusInWindow();
             input.setCaretPosition(input.getText().length());
             refreshSuggestions();
         });
-        setVisible(true);
     }
 
     /**
