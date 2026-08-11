@@ -303,6 +303,9 @@ public class FeatureFilterModel implements SiriusPCS {
         if (getCategorizedQualityFilters().stream().anyMatch(QualityFilter::isEnabled) || getFeatureQualityFilter().isEnabled() || isLipidFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled())
             return true;
 
+        if (getSampleBlankFoldChange().isEnabled()) // contributes a range clause to toLuceneQuery
+            return true;
+
         return false;
     }
 
