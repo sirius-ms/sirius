@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -112,6 +113,19 @@ public class LuceneSearchBar extends JPanel {
                 char typed = e.getKeyChar();
                 if (!Character.isISOControl(typed))
                     openOverlay(String.valueOf(typed));
+            }
+        });
+
+        // Ctrl+F (Cmd+F on macOS) opens the search from anywhere in the main window - the standard
+        // "find" shortcut. WHEN_IN_FOCUSED_WINDOW so it fires regardless of which component is
+        // focused (as long as the main frame is the active window).
+        int shortcutMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+        getInputMap(WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_F, shortcutMask), "openFeatureSearch");
+        getActionMap().put("openFeatureSearch", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openOverlay();
             }
         });
 
