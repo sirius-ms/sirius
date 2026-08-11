@@ -512,50 +512,68 @@ public class FeatureFilterModel implements SiriusPCS {
             "." + QuantMeasure.APEX_INTENSITY +
             "." + AggregationType.AVG;
 
+    // Canonical lucene index field names of the structured filter facets - the single GUI-side source
+    // of truth, used both to build the executed query (below) and to render the facets as query chips
+    // (PanelQueryNodeFactory). Must match the backend @IndexField names.
+    public static final String FIELD_MZ = "ionMass";
+    public static final String FIELD_RT_START = "rtStartSeconds";
+    public static final String FIELD_RT_APEX = "rtApexSeconds";
+    public static final String FIELD_RT_END = "rtEndSeconds";
+    public static final String FIELD_CONFIDENCE_APPROX = "topAnnotations.confidenceApproxMatch";
+    public static final String FIELD_CONFIDENCE_EXACT = "topAnnotations.confidenceExactMatch";
+    public static final String FIELD_HAS_MS1 = "hasMs1";
+    public static final String FIELD_HAS_MSMS = "hasMsMs";
+    public static final String FIELD_ADDUCTS = "detectedAdducts";
+    public static final String FIELD_QUALITY = "quality";
+    public static final String PREFIX_CATEGORIZED_QUALITY = "qualities.";
+    public static final String PREFIX_ELEMENT = "topAnnotations.formulaAnnotation.molecularFormula.";
+    public static final String FIELD_LIPID = "topAnnotations.formulaAnnotation.lipidAnnotation.lipid";
+    public static final String PREFIX_DB = "topAnnotations.matchedDatabases.";
+
     private BooleanQuery.Builder toLuceneQueryBuilder(@NotNull ConfidenceDisplayMode confidenceMode) {
         // Combine queries using BooleanQuery.Builder
         BooleanQuery.Builder booleanQuery = new BooleanQuery.Builder();
 
         if (isMzFilterActive())
-            booleanQuery.add(DoublePoint.newRangeQuery("ionMass", currentMinMz, currentMaxMz), BooleanClause.Occur.MUST);
+            booleanQuery.add(DoublePoint.newRangeQuery(FIELD_MZ, currentMinMz, currentMaxMz), BooleanClause.Occur.MUST);
 
         if (isRtFilterActive()) {
             BooleanQuery.Builder rtQuery = new BooleanQuery.Builder();
 
-            rtQuery.add(DoublePoint.newRangeQuery("rtStartSeconds", currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
-            rtQuery.add(DoublePoint.newRangeQuery("rtApexSeconds", currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
-            rtQuery.add(DoublePoint.newRangeQuery("rtEndSeconds", currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
+            rtQuery.add(DoublePoint.newRangeQuery(FIELD_RT_START, currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
+            rtQuery.add(DoublePoint.newRangeQuery(FIELD_RT_APEX, currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
+            rtQuery.add(DoublePoint.newRangeQuery(FIELD_RT_END, currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
 
             booleanQuery.add(rtQuery.build(), BooleanClause.Occur.MUST);
         }
 
         if (isMinConfidenceFilterActive() || isMaxConfidenceFilterActive()) {
-            String confidenceField = confidenceMode == ConfidenceDisplayMode.APPROXIMATE ? "topAnnotations.confidenceApproxMatch" : "topAnnotations.confidenceExactMatch";
+            String confidenceField = confidenceMode == ConfidenceDisplayMode.APPROXIMATE ? FIELD_CONFIDENCE_APPROX : FIELD_CONFIDENCE_EXACT;
             booleanQuery.add(DoublePoint.newRangeQuery(confidenceField, currentMinConfidence, currentMaxConfidence), BooleanClause.Occur.MUST);
         }
 
         if (isHasMs1())
-            booleanQuery.add(new TermQuery(new Term("hasMs1", "true")), BooleanClause.Occur.MUST);
+            booleanQuery.add(new TermQuery(new Term(FIELD_HAS_MS1, "true")), BooleanClause.Occur.MUST);
 
         if (isHasMsMs())
-            booleanQuery.add(new TermQuery(new Term("hasMsMs", "true")), BooleanClause.Occur.MUST);
+            booleanQuery.add(new TermQuery(new Term(FIELD_HAS_MSMS, "true")), BooleanClause.Occur.MUST);
 
         if (isAdductFilterActive())
-            booleanQuery.add(makeAdductQuery("detectedAdducts", getSelectedAdducts()), BooleanClause.Occur.MUST);
+            booleanQuery.add(makeAdductQuery(FIELD_ADDUCTS, getSelectedAdducts()), BooleanClause.Occur.MUST);
 
         if (getFeatureQualityFilter().isEnabled())
-            booleanQuery.add(makeQualityQuery("quality", getFeatureQualityFilter()).build(), BooleanClause.Occur.MUST);
+            booleanQuery.add(makeQualityQuery(FIELD_QUALITY, getFeatureQualityFilter()).build(), BooleanClause.Occur.MUST);
 
         getCategorizedQualityFilters().stream().filter(QualityFilter::isEnabled)
                 .forEach(filter -> {
-                    BooleanQuery.Builder qualityQuery = makeQualityQuery("qualities." + filter.getId(), filter);
+                    BooleanQuery.Builder qualityQuery = makeQualityQuery(PREFIX_CATEGORIZED_QUALITY + filter.getId(), filter);
                     //to allow matching data without quality data.
-                    qualityQuery.add(new TermQuery(new Term("quality", DataQuality.NOT_APPLICABLE.toString())), BooleanClause.Occur.SHOULD);
+                    qualityQuery.add(new TermQuery(new Term(FIELD_QUALITY, DataQuality.NOT_APPLICABLE.toString())), BooleanClause.Occur.SHOULD);
                     booleanQuery.add(qualityQuery.build(), BooleanClause.Occur.MUST);
                 });
 
         if (isElementFilterEnabled())
-            booleanQuery.add(makeElementFilter("topAnnotations.formulaAnnotation.molecularFormula.", elementFilter.getConstraints()), BooleanClause.Occur.MUST);
+            booleanQuery.add(makeElementFilter(PREFIX_ELEMENT, elementFilter.getConstraints()), BooleanClause.Occur.MUST);
 
         //TAG FILTERS
         if (getSampleBlankFoldChange().isEnabled())
@@ -564,7 +582,7 @@ public class FeatureFilterModel implements SiriusPCS {
         //RESULT FILTERS
         //todo we can now also filter efficiently for exact lipid classes.
         if (isLipidFilterEnabled()) {
-            TermQuery lipidQuery = new TermQuery(new Term("topAnnotations.formulaAnnotation.lipidAnnotation.lipid", "true"));
+            TermQuery lipidQuery = new TermQuery(new Term(FIELD_LIPID, "true"));
             if (lipidFilter == LipidFilter.ANY_LIPID_CLASS_DETECTED) {
                 booleanQuery.add(lipidQuery, BooleanClause.Occur.MUST);
             } else if (lipidFilter == LipidFilter.NO_LIPID_CLASS_DETECTED) {
@@ -573,7 +591,7 @@ public class FeatureFilterModel implements SiriusPCS {
         }
 
         if (isDbFilterEnabled())
-            booleanQuery.add(makeDbQuery("topAnnotations.matchedDatabases.", dbFilter), BooleanClause.Occur.MUST);
+            booleanQuery.add(makeDbQuery(PREFIX_DB, dbFilter), BooleanClause.Occur.MUST);
 
         // Handling searchText (Full-text search)
         if (isSearchTextFilterActive()) {
