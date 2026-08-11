@@ -44,9 +44,21 @@ public class DiaCorrelationPValues {
      * Synchronized, since decoys are typically collected from parallel jobs.
      */
     public synchronized void addDecoy(DiaTraceCorrelation.Result decoy) {
-        if (calibrated) throw new IllegalStateException("this null distribution has already been calibrated");
         if (!decoy.isDefined()) return;
-        histogramFor(decoy.datapoints()).add(decoy.correlation());
+        addDecoy(decoy.correlation(), decoy.datapoints());
+    }
+
+    /**
+     * Adds a decoy value directly. Any score between zero and one can be calibrated this way, not only a
+     * correlation - specificity is calibrated against the same decoys with its own instance of this class.
+     *
+     * @param datapoints what to bin the null distribution by; for a correlation the number of scan points it was
+     *                   computed from
+     */
+    public synchronized void addDecoy(double value, int datapoints) {
+        if (calibrated) throw new IllegalStateException("this null distribution has already been calibrated");
+        if (!Double.isFinite(value)) return;
+        histogramFor(datapoints).add(value);
     }
 
     /**
@@ -71,9 +83,21 @@ public class DiaCorrelationPValues {
      * distribution for this number of data points. At most zero; zero means no evidence.
      */
     public double logPvalue(DiaTraceCorrelation.Result result) {
+        if (!result.isDefined()) {
+            if (!calibrated) throw new IllegalStateException("call calibrate() before asking for p-values");
+            return 0d;
+        }
+        return logPvalue(result.correlation(), result.datapoints());
+    }
+
+    /**
+     * @return natural log of the fraction of decoys that reached at least this value, using the null distribution
+     * for this bin. At most zero; zero means no evidence.
+     */
+    public double logPvalue(double value, int datapoints) {
         if (!calibrated) throw new IllegalStateException("call calibrate() before asking for p-values");
-        if (!result.isDefined()) return 0d;
-        return histogramFor(result.datapoints()).logPvalue(result.correlation());
+        if (!Double.isFinite(value)) return 0d;
+        return histogramFor(datapoints).logPvalue(value);
     }
 
     private Histogram histogramFor(int datapoints) {
