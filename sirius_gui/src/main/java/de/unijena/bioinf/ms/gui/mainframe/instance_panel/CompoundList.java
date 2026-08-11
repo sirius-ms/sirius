@@ -36,16 +36,13 @@ import de.unijena.bioinf.ms.gui.dialogs.filter.FeatureFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
-import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import de.unijena.bioinf.ms.gui.utils.search.LuceneSearchBar;
 import de.unijena.bioinf.ms.gui.utils.search.ModelChipFactory;
 import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
-import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import io.sirius.ms.sdk.model.DataQuality;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -70,10 +67,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class CompoundList {
 
     final LuceneSearchBar searchBar;
-    final JToggleSwitch adductToggleSwitch;
-    final JToggleSwitch qualityToggleSwitch;
-    final JToggleSwitch msMsToggleSwitch;
-
 
     final JButton openFilterPanelButton;
     final ObservableElementList<InstanceBean> observableScource;
@@ -105,10 +98,6 @@ public class CompoundList {
                 () -> ModelChipFactory.chipsFor(filterModel),
                 () -> new FeatureFilterOptionsDialog(gui, filterModel, this));
 
-        adductToggleSwitch = makeAdductToggleSwitch(filterModel);
-        qualityToggleSwitch = makeQualityToggleSwitch(filterModel);
-        msMsToggleSwitch = makeMsMsToggleSwitch(filterModel);
-
         observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(observableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
         compoundList = GlazedListsSwing.swingThreadProxyList(sortedSource);
@@ -128,11 +117,7 @@ public class CompoundList {
         compoundList.addListEventListener(this::notifyListenerDataChange);
 
         //init filters
-        filterModel.addUpdateCompleteListener(evt -> {
-            colorByActiveFilter();
-            updateTogglesByActiveFilter();
-        });
-        filterModel.addPropertyChangeListener("possibleAdductsUpdated", evt -> updateTogglesByActiveFilter());
+        filterModel.addUpdateCompleteListener(evt -> colorByActiveFilter());
         filterModel.updateAdducts(projectManager.getDetectedAdducts());
         filterModel.fireUpdateCompleted();
     }
@@ -179,53 +164,6 @@ public class CompoundList {
         }
     }
 
-    protected void updateTogglesByActiveFilter() {
-        msMsToggleSwitch.setSelected(!filterModel.isHasMsMs(), false, false);
-        adductToggleSwitch.setSelected(filterModel.isMultiAdductsAllowed(), false, false);
-        qualityToggleSwitch.setSelected(filterModel.getFeatureQualityFilter().isQualitySelected(DataQuality.BAD), false, false);
-    }
-
-    private static @NotNull JToggleSwitch makeAdductToggleSwitch(FeatureFilterModel model) {
-        JToggleSwitch tSwitch = new JToggleSwitch();
-        tSwitch.setSelected(model.isMultiAdductsAllowed(), false, false);
-        tSwitch.addEventToggleSelected(selected -> {
-            if (selected)
-                model.addMultiAdducts();
-            else
-                model.removeMultiAdducts();
-            model.fireUpdateCompleted();
-        });
-        return tSwitch;
-    }
-
-    private static @NotNull JToggleSwitch makeQualityToggleSwitch(FeatureFilterModel model) {
-        final QualityFilter fqFilter = model.getFeatureQualityFilter();
-        JToggleSwitch tSwitch = new JToggleSwitch();
-        tSwitch.setSelected(fqFilter.isQualitySelected(DataQuality.BAD), false, false); //initialize from model
-        tSwitch.addEventToggleSelected(selected -> {
-            if (selected) {
-                // we add only the bad ones when enabling
-                fqFilter.addQuality(DataQuality.BAD);
-            } else {
-                fqFilter.removeQuality(DataQuality.LOWEST);
-                fqFilter.removeQuality(DataQuality.BAD);
-            }
-            model.fireUpdateCompleted();
-        });
-        // ensure default value is propagated
-        return tSwitch;
-    }
-
-    private static @NotNull JToggleSwitch makeMsMsToggleSwitch(FeatureFilterModel model) {
-        JToggleSwitch tSwitch = new JToggleSwitch();
-        tSwitch.setSelected(!model.isHasMsMs(), false, false); ///initialize from model
-        tSwitch.addEventToggleSelected(selected -> {
-            model.setHasMsMs(!selected);
-            model.fireUpdateCompleted();
-        });
-        return tSwitch;
-    }
-
     public void orderBy(@NotNull final Comparator<InstanceBean> comp) {
         sortedSource.setComparator(comp);
     }
@@ -235,7 +173,6 @@ public class CompoundList {
         filterModel.resetFilter(); //also clears the shared search text document
         searchBar.refreshSummary();
         colorByActiveFilter();
-        updateTogglesByActiveFilter();
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
