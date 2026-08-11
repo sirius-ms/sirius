@@ -100,6 +100,12 @@ public abstract class LCMSStorage implements Closeable {
     public abstract SpectrumStorage getSpectrumStorage();
 
     public abstract TraceStorage getTraceStorage();
+
+    /**
+     * Storage for the fragment chromatograms of a data independent acquisition. Only used for DIA runs and empty
+     * for everything else.
+     */
+    public abstract Ms2TraceStorage getMs2TraceStorage();
 }
 
 class MVTraceStorage extends LCMSStorage {
@@ -111,6 +117,7 @@ class MVTraceStorage extends LCMSStorage {
     private ScanPointMapping mapping;
     private volatile MvBasedAlignmentStorage alignmentStorage;
     private volatile TraceStorage.MvTraceStorage traceStorage;
+    private volatile Ms2TraceStorage ms2TraceStorage;
     private volatile SpectrumStorage.MvSpectrumStorage spectrumStorage;
     private volatile MergeMvStorage mergeMvStorage;
 
@@ -167,6 +174,17 @@ class MVTraceStorage extends LCMSStorage {
             }
         }
         return traceStorage;
+    }
+
+
+    @Override
+    public Ms2TraceStorage getMs2TraceStorage() {
+        if (ms2TraceStorage == null) {
+            synchronized (this) {
+                if (ms2TraceStorage == null) ms2TraceStorage = new Ms2TraceStorage(storage);
+            }
+        }
+        return ms2TraceStorage;
     }
 
 
