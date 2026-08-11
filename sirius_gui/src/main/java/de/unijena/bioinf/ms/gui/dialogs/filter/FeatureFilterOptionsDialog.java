@@ -33,6 +33,12 @@ import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.gui.utils.search.FilterEditorHost;
+import de.unijena.bioinf.ms.gui.utils.search.FilterTerm;
+import de.unijena.bioinf.ms.gui.utils.search.PanelFilterTerms;
+import de.unijena.bioinf.ms.gui.utils.search.QueryEditorPanel;
+import de.unijena.bioinf.ms.gui.utils.search.SearchRenderState;
+import de.unijena.bioinf.ms.gui.utils.search.SearchableFieldsProvider;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import lombok.extern.slf4j.Slf4j;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -58,7 +64,13 @@ import static de.unijena.bioinf.ms.gui.utils.GuiUtils.MEDIUM_GAP;
 @Slf4j
 public class FeatureFilterOptionsDialog extends JDialog implements ActionListener {
 
-    final JTextField searchFieldDialogCopy;
+    /**
+     * The embedded query editor: renders the full filter configuration (all tabs' widget state) plus
+     * the user's own query as chips, live-updating as the widgets change, and lets the user type/edit
+     * the query with autocomplete. Replaces the former plain "Fulltext search" field. See
+     * {@link QueryEditorPanel}.
+     */
+    QueryEditorPanel queryEditor;
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply, reset;
@@ -97,27 +109,30 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         this.gui = gui;
         this.filterModel = filterModel;
         this.compoundList = compoundList;
+        setPreferredSize(GuiUtils.getPreferredSizeLimitedByScreenSize(GuiUtils.WEB_VIEW_POPUP_SIZE));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
-        setResizable(false);
-
+        setResizable(true); // the embedded query editor's chip area benefits from extra room
 
         JPanel optionsPanel = new JPanel(new BorderLayout());
         optionsPanel.setBorder(BorderFactory.createEmptyBorder(0, MEDIUM_GAP, 0, MEDIUM_GAP));
         add(optionsPanel, BorderLayout.CENTER);
 
-        //text search
-        {
-            TwoColumnPanel searchPanel = new TwoColumnPanel();
-            optionsPanel.add(searchPanel, BorderLayout.NORTH);
-            searchFieldDialogCopy = new JTextField();
-            searchFieldDialogCopy.setDocument(filterModel.getSearchTextDoc());
-            searchPanel.addNamed("Fulltext search", searchFieldDialogCopy);
-            searchPanel.add(Box.createVerticalStrut(10));
-        }
-
         centerTab = new JTabbedPane();
-        optionsPanel.add(centerTab, BorderLayout.CENTER);
+        optionsPanel.add(centerTab, BorderLayout.NORTH);
+
+        // search query + live view of the full filter configuration as chips (replaces the plain
+        // fulltext field): the tab facets render as read-only chips (click jumps to their tab), the
+        // user's own query is typed/edited here with autocomplete, and both are applied together on Apply.
+        {
+            Box searchPanel = Box.createVerticalBox();
+            searchPanel.add(new JXTitledSeparator("Search query & active filters"));
+            searchPanel.add(Box.createVerticalStrut(3));
+            queryEditor = buildQueryEditor();
+            searchPanel.add(queryEditor);
+            searchPanel.add(Box.createVerticalStrut(10));
+            optionsPanel.add(searchPanel, BorderLayout.CENTER);
+        }
 
         // filter modifiers
         {
@@ -363,6 +378,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         add(buttons, BorderLayout.SOUTH);
 
         setMaximumSize(GuiUtils.getEffectiveScreenSize());
+        wireLiveChipRefresh();          // widget edits -> live re-render of the panel chips
+        queryEditor.openSession(null);  // seed the user query from the shared doc + refresh autocomplete fields
         configureActions();
         selectTabForFacet(selectFacetId); // jump to the clicked chip's control, if any
         pack();
@@ -425,6 +442,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
         } else {
             applyToModel(filterModel);
+            queryEditor.commitToDocument(); // bake the user query into the shared doc as part of Apply
             filterModel.fireUpdateCompleted();
         }
     }
@@ -465,6 +483,84 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
         filterModel.getSampleBlankFoldChange().setEnabled(blankFilter.isSelected());
         filterModel.getSampleBlankFoldChange().setCurrentMinFoldChange((Double) blankSpinner.getValue());
+    }
+
+    // --- embedded query editor (see queryEditor) ---
+
+    /**
+     * Builds the embedded {@link QueryEditorPanel}. Its panel chips are rendered from a live snapshot
+     * of the dialog's own widget state ({@link #workingTerms()}), so they mirror the tabs without
+     * touching the real model until Apply; the host wires the dialog's transaction boundary
+     * (Esc = Discard, Enter = Apply) and turns a model-chip click into a jump to its tab.
+     */
+    private QueryEditorPanel buildQueryEditor() {
+        SearchableFieldsProvider fieldsProvider = new SearchableFieldsProvider(
+                gui.getSiriusClient(), gui.getProjectManager().getProjectId());
+        SearchRenderState renderState = new SearchRenderState(fieldsProvider);
+        FilterEditorHost jumpToTab = term -> selectTabForFacet(term.id());
+        QueryEditorPanel.Host host = new QueryEditorPanel.Host() {
+            @Override
+            public void editorContentChanged() {
+                // the chip area / autocomplete list changed height - relayout NORTH vs. the tabs
+                queryEditor.revalidate();
+                queryEditor.repaint();
+            }
+
+            @Override
+            public void editorCloseRequested() {
+                dispose(); // Esc inside the editor == Discard
+            }
+
+            @Override
+            public void editorCommitRequested() {
+                saveChanges(); // Enter inside the editor == Apply
+                dispose();
+            }
+
+            @Override
+            public void editorHandoff(@NotNull Runnable openFullEditor) {
+                openFullEditor.run(); // a model chip was clicked -> just jump to its tab, don't close
+            }
+        };
+        return new QueryEditorPanel(filterModel, fieldsProvider, this::workingTerms, jumpToTab, renderState,
+                commit -> {}, () -> {}, host, true);
+    }
+
+    /**
+     * The active panel facets of the dialog's CURRENT (uncommitted) widget state, as filter terms.
+     * Compiles the widgets into a throwaway model - exactly as the delete path does - so the chips
+     * reflect the working copy without mutating the real model. Defensive: a half-typed element
+     * formula (etc.) that cannot be parsed yields no chips rather than an error.
+     */
+    private List<FilterTerm> workingTerms() {
+        try {
+            FeatureFilterModel working = new FeatureFilterModel();
+            applyToModel(working);
+            return PanelFilterTerms.of(working, gui.getProperties().getConfidenceDisplayMode());
+        } catch (Exception ex) {
+            log.debug("Could not build the working filter snapshot for the live chips", ex);
+            return List.of();
+        }
+    }
+
+    /** Re-renders the panel chips whenever any filter widget changes, so they track the tabs live. */
+    private void wireLiveChipRefresh() {
+        Runnable refresh = () -> queryEditor.rebuild();
+        for (JSpinner s : new JSpinner[]{minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner,
+                minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, blankSpinner})
+            s.addChangeListener(e -> refresh.run());
+        for (JCheckBox c : new JCheckBox[]{invertFilter, hasMs1, hasMsMs, blankFilter})
+            c.addActionListener(e -> refresh.run());
+        lipidFilterBox.addActionListener(e -> refresh.run());
+        adductOptions.checkBoxList.addCheckBoxListener(e -> refresh.run());
+        searchDBList.checkBoxList.addCheckBoxListener(e -> refresh.run());
+        overallQualityPanel.onChange(refresh);
+        qualityPanels.forEach(p -> p.onChange(refresh));
+        elementsField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { refresh.run(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { refresh.run(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { refresh.run(); }
+        });
     }
 
     @Override
@@ -531,13 +627,16 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         lipidFilterBox.setSelectedItem(FeatureFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
         elementsField.setText(null);
         searchDBList.checkBoxList.uncheckAll();
-        searchFieldDialogCopy.setText("");
         invertFilter.setSelected(false);
         deleteSelection.setSelected(false);
         hasMs1.setSelected(false);
         hasMsMs.setSelected(false);
 
         blankFilter.setSelected(false);
+
+        // clear the user query and re-render the chips from the freshly-reset widget state (a
+        // programmatic checkbox reset does not fire the live-refresh listeners)
+        queryEditor.clearUserQuery();
     }
 
     private void resetSpinnerValues() {
