@@ -19,8 +19,10 @@
 package de.unijena.bioinf.ms.gui.utils.search;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import io.sirius.ms.sdk.SiriusClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,8 +60,13 @@ public class LuceneSearchBar extends JPanel {
     private final Supplier<List<FilterTerm>> termSupplier;
     private final FilterEditorHost editorHost;
     private final SearchRenderState renderState;
+    /** Opens the full filter dialog; triggered by the in-field funnel icon (see {@link #filterButton}). */
+    private final Runnable openFilterPanel;
 
     private final JPanel chipStrip;
+    /** In-field funnel icon that opens the full filter dialog; tinted to the accent when a filter is active. */
+    private final JLabel filterButton;
+    private final FunnelIcon funnelIcon = new FunnelIcon(15, Colors.FOREGROUND_DATA);
     /** The full summary cells in order; {@link #relayoutCells} decides how many fit. */
     private final List<JComponent> cells = new ArrayList<>();
 
@@ -83,11 +90,13 @@ public class LuceneSearchBar extends JPanel {
     public LuceneSearchBar(@NotNull SiriusClient siriusClient, @NotNull String projectId,
                            @NotNull FeatureFilterModel filterModel,
                            @NotNull Supplier<List<FilterTerm>> termSupplier,
-                           @NotNull FilterEditorHost editorHost) {
+                           @NotNull FilterEditorHost editorHost,
+                           @NotNull Runnable openFilterPanel) {
         super(new BorderLayout());
         this.filterModel = filterModel;
         this.termSupplier = termSupplier;
         this.editorHost = editorHost;
+        this.openFilterPanel = openFilterPanel;
         this.fieldsProvider = new SearchableFieldsProvider(siriusClient, projectId);
         this.renderState = new SearchRenderState(fieldsProvider);
 
@@ -111,6 +120,22 @@ public class LuceneSearchBar extends JPanel {
         gbc.weighty = 1;
         centerer.add(chipStrip, gbc);
         add(centerer, BorderLayout.CENTER);
+
+        // in-field funnel icon on the right that opens the full filter dialog (replaces the former
+        // separate "..." button next to the bar); it does NOT open the overlay (no `opener` on it)
+        filterButton = new JLabel(funnelIcon);
+        filterButton.setToolTipText(GuiUtils.formatToolTip("Open the filter panel"));
+        filterButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        filterButton.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 6));
+        filterButton.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.OpenFilterPanelButton);
+        filterButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                openFilterPanel.run();
+            }
+        });
+        add(filterButton, BorderLayout.EAST);
+
         // re-truncate the summary (ellipsis) whenever the available width changes
         addComponentListener(new ComponentAdapter() {
             @Override
@@ -181,7 +206,7 @@ public class LuceneSearchBar extends JPanel {
                     renderState, commit -> {
                         lastCommit = commit;
                         refreshSummary();
-                    }, this::refreshSummary);
+                    }, this::refreshSummary, openFilterPanel);
         }
         // Reopen unconditionally. If we reach here the collapsed bar received the gesture, which means
         // the overlay is NOT the active window - so a still-"open" overlay is a stale/stuck instance
@@ -235,6 +260,14 @@ public class LuceneSearchBar extends JPanel {
                 ? GuiUtils.formatToolTip("Search the feature list - click to open the query builder "
                 + "with suggestions for all searchable fields.")
                 : GuiUtils.formatToolTip("Current search query:", docText));
+
+        // tint the funnel to the accent while a structured filter is active (orange when inverted),
+        // mirroring the old filter button's active/inverted colouring
+        funnelIcon.setColor(filterModel.isActive()
+                ? (filterModel.isInverted() ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON)
+                : Colors.FOREGROUND_DATA);
+        filterButton.repaint();
+
         relayoutCells();
     }
 
@@ -246,7 +279,10 @@ public class LuceneSearchBar extends JPanel {
     private void relayoutCells() {
         chipStrip.removeAll();
         Insets in = getInsets();
-        int available = getWidth() - in.left - in.right - 6; // minus border and a small margin
+        // reserve the funnel button's width so summary chips (and the ellipsis) never run under it
+        int buttonSpace = filterButton == null ? 0
+                : (filterButton.getWidth() > 0 ? filterButton.getWidth() : filterButton.getPreferredSize().width);
+        int available = getWidth() - in.left - in.right - buttonSpace - 6;
         int ellipsisWidth = ellipsisLabel().getPreferredSize().width + 6;
 
         int used = 0;

@@ -31,7 +31,6 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.filter.FeatureFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.utils.*;
@@ -40,7 +39,6 @@ import de.unijena.bioinf.ms.gui.utils.search.LuceneSearchBar;
 import de.unijena.bioinf.ms.gui.utils.search.PanelFilterTerms;
 import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
-import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
@@ -68,7 +66,6 @@ public class CompoundList {
 
     final LuceneSearchBar searchBar;
 
-    final JButton openFilterPanelButton;
     final ObservableElementList<InstanceBean> observableScource;
     @Getter
     final SortedList<InstanceBean> sortedSource;
@@ -79,8 +76,6 @@ public class CompoundList {
     final AdvancedListSelectionModel<InstanceBean> compoundListSelectionModel;
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
-
-    private final Color defaultOpenFilterPanelButtonColor;
 
     @Getter
     private @NotNull SiriusGui gui;
@@ -94,21 +89,16 @@ public class CompoundList {
         filterModel = projectManager.getFeatureFilterModel();
         // lucene query search bar: collapsed summary here, chip-based query builder with
         // autocompletion in an overlay expanding over the result view
+        // the full filter dialog is now opened from an in-field funnel icon inside the search bar
+        // (see LuceneSearchBar) instead of a separate "..." button next to it
         searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel,
                 () -> PanelFilterTerms.of(filterModel, gui.getProperties().getConfidenceDisplayMode()),
-                term -> new FeatureFilterOptionsDialog(gui, filterModel, this, term.id()));
+                term -> new FeatureFilterOptionsDialog(gui, filterModel, this, term.id()),
+                () -> new FeatureFilterOptionsDialog(gui, filterModel, this));
 
         observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(observableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
         compoundList = GlazedListsSwing.swingThreadProxyList(sortedSource);
-
-        //filter dialog
-        openFilterPanelButton = new JButton("...");
-        openFilterPanelButton.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.OpenFilterPanelButton);
-        openFilterPanelButton.setToolTipText("Open filter panel");
-        defaultOpenFilterPanelButtonColor = openFilterPanelButton.getBackground();
-
-        openFilterPanelButton.addActionListener(e -> new FeatureFilterOptionsDialog(gui, filterModel, this));
 
         compoundListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
@@ -117,7 +107,6 @@ public class CompoundList {
         compoundList.addListEventListener(this::notifyListenerDataChange);
 
         //init filters
-        filterModel.addUpdateCompleteListener(evt -> colorByActiveFilter());
         filterModel.updateAdducts(projectManager.getDetectedAdducts());
         filterModel.fireUpdateCompleted();
     }
@@ -148,22 +137,6 @@ public class CompoundList {
         }
     }
 
-    private void colorByActiveFilter() {
-        //is any filtering option active (despite the text filter which is visible all the time)
-        if (filterModel.isActive()) {
-            if (filterModel.isInverted()) {
-                openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON_INVERTED);
-                openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_INVERTED_TEXT);
-            } else {
-                openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON);
-                openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_TEXT);
-            }
-        } else {
-            openFilterPanelButton.setBackground(defaultOpenFilterPanelButtonColor);
-            openFilterPanelButton.setForeground(Colors.FOREGROUND_DATA);
-        }
-    }
-
     public void orderBy(@NotNull final Comparator<InstanceBean> comp) {
         sortedSource.setComparator(comp);
     }
@@ -171,8 +144,7 @@ public class CompoundList {
     public void resetFilter() {
         //filtering consists of the text filter and the filter model
         filterModel.resetFilter(); //also clears the shared search text document
-        searchBar.refreshSummary();
-        colorByActiveFilter();
+        searchBar.refreshSummary(); // also re-tints the in-field funnel icon for the (now inactive) filter
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {

@@ -523,7 +523,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             }
         };
         return new QueryEditorPanel(filterModel, fieldsProvider, this::workingTerms, jumpToTab, renderState,
-                commit -> {}, () -> {}, host, true);
+                commit -> {}, () -> {}, host, true, null); // embedded: no in-editor "open filter panel" funnel
     }
 
     /**
