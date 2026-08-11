@@ -86,6 +86,12 @@ public class SearchBarOverlay extends JDialog {
     private int[] openPath = new int[0];
     private final TokenInputModel tokenModel = new TokenInputModel();
     /**
+     * The applied query the working state reverts to on Cancel: captured when the overlay opens and
+     * whenever a search is committed. Uncommitted edits made while open are discarded back to this.
+     */
+    private QueryContainer baselineRoot = QueryContainer.empty();
+    private String baselineFreeText = "";
+    /**
      * The query string this overlay last wrote into the shared search document. If the document
      * differs on open, it was edited elsewhere (filter dialog) - the builder then degrades the
      * document content into its free-text segment instead of trying to parse it back into chips.
@@ -456,6 +462,9 @@ public class SearchBarOverlay extends JDialog {
             input.setText(docText);
             lastCompiled = docText;
         }
+        // the applied query is the baseline Cancel reverts to (before any type-ahead edit)
+        baselineRoot = root;
+        baselineFreeText = input.getText();
         if (typeAhead != null)
             input.setText(input.getText() + typeAhead);
 
@@ -484,8 +493,18 @@ public class SearchBarOverlay extends JDialog {
         setVisible(true);
     }
 
+    /**
+     * Closes the overlay, discarding any uncommitted edits: the working state reverts to the last
+     * applied query (the baseline). Used by Cancel, Esc, outside-click and the open-filter-dialog
+     * chip. A commit updates the baseline first, so closing right after committing keeps the applied
+     * query.
+     */
     public void close() {
         Toolkit.getDefaultToolkit().removeAWTEventListener(outsideClickListener);
+        root = baselineRoot;
+        openPath = new int[0];
+        tokenModel.reset();
+        input.setText(baselineFreeText);
         setVisible(false);
     }
 
@@ -549,9 +568,13 @@ public class SearchBarOverlay extends JDialog {
         String compiled = LuceneQueryCompiler.compile(root, freeText);
         writeDocument(compiled);
         lastCompiled = compiled;
+        // the applied query becomes the new baseline, so the close() below keeps it (no revert)
+        baselineRoot = root;
+        baselineFreeText = freeText;
         filterModel.fireUpdateCompleted();
+        Commit commit = new Commit(root, freeText, compiled);
         close();
-        onCommitted.accept(new Commit(root, freeText, compiled));
+        onCommitted.accept(commit);
     }
 
     private void writeDocument(String text) {
