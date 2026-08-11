@@ -53,6 +53,20 @@ public class PrecursorFeature {
      */
     public static Optional<PrecursorFeature> of(DiaChannel channel, ContiguousTrace ms1Trace, TraceSegment segment) {
         if (!channel.covers(ms1Trace.averagedMz())) return Optional.empty();
+        return onAxisOf(channel, ms1Trace, segment);
+    }
+
+    /**
+     * The same, but without requiring the channel to cover the m/z. Used to build decoys: a precursor outside a
+     * channel's isolation windows cannot have contributed any of that channel's fragments, so pairing the two
+     * gives an edge that is null by construction while keeping everything else - the retention times, the window,
+     * the structural criteria - exactly as it is for a real edge.
+     */
+    static Optional<PrecursorFeature> decoy(DiaChannel channel, ContiguousTrace ms1Trace, TraceSegment segment) {
+        return onAxisOf(channel, ms1Trace, segment);
+    }
+
+    private static Optional<PrecursorFeature> onAxisOf(DiaChannel channel, ContiguousTrace ms1Trace, TraceSegment segment) {
         return ChannelWindow.of(channel, ms1Trace, segment).map(window -> new PrecursorFeature(
                 ms1Trace, segment, window, channel.getChannelId(),
                 channel.channelIndexForRetentionTime(ms1Trace.retentionTime(segment.apex))));
