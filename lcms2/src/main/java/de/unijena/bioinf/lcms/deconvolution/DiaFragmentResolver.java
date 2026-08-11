@@ -67,6 +67,31 @@ public class DiaFragmentResolver {
         double weight(DiaAssignmentGraph.PrecursorEdge edge);
     }
 
+    /**
+     * How much MS2 signal a precursor can account for, in the units of its MS1 intensity.
+     * <p>
+     * This is the second half of the evidence and it is not interchangeable with a threshold on intensity. Ion
+     * count is conserved for singly charged precursors: each precursor ion is detected either intact or as exactly
+     * one charged fragment, so a precursor of MS1 intensity I can only explain about {@code k*I} of MS2 ion
+     * current. Among candidates whose elution profiles agree equally well, the odds that a fragment came from one
+     * of them are therefore proportional to its share of the ion flux into that window - a precursor a hundred
+     * times more intense than its competitors is a hundred times more likely to have emitted the fragment,
+     * whatever the shapes say.
+     * <p>
+     * Deleting weak precursors instead would be wrong in a way this is not. A weak precursor that is the
+     * <em>only</em> candidate for a fragment keeps it, because the comparison is relative: capacities are
+     * normalised within each fragment's own candidate set, so a lone candidate always has a factor of one. What
+     * this cannot do on its own is stop an intense precursor absorbing more than it could physically have emitted;
+     * that needs the total to be capped at its capacity, which is a constraint over sets of edges rather than a
+     * per edge weight.
+     */
+    public interface PrecursorCapacity {
+        double capacityOf(int precursorIndex);
+    }
+
+    /** every precursor is equally able to explain a fragment, i.e. intensity is ignored */
+    public static final PrecursorCapacity UNIFORM_CAPACITY = index -> 1d;
+
     /** an edge between two fragments, see the note in the class comment */
     public record FragmentEdge(int leftFragment, int rightFragment, double weight) {
     }
@@ -110,13 +135,20 @@ public class DiaFragmentResolver {
     }
 
     public static Result resolve(DiaAssignmentGraph graph, EdgeWeighting weighting) {
-        return resolve(graph, weighting, List.of(), DEFAULT_UNASSIGNED_WEIGHT, FragmentAssignment.DEFAULT_MIN_PROBABILITY,
-                DEFAULT_EXACT_SOLVER_LIMIT, DEFAULT_ITERATIVE_STEPS);
+        return resolve(graph, weighting, UNIFORM_CAPACITY, List.of(), DEFAULT_UNASSIGNED_WEIGHT,
+                FragmentAssignment.DEFAULT_MIN_PROBABILITY, DEFAULT_EXACT_SOLVER_LIMIT, DEFAULT_ITERATIVE_STEPS);
     }
 
     public static Result resolve(DiaAssignmentGraph graph, EdgeWeighting weighting, List<FragmentEdge> fragmentEdges,
                                  double unassignedWeight, double minProbability, int exactSolverLimit,
                                  int iterativeSteps) {
+        return resolve(graph, weighting, UNIFORM_CAPACITY, fragmentEdges, unassignedWeight, minProbability,
+                exactSolverLimit, iterativeSteps);
+    }
+
+    public static Result resolve(DiaAssignmentGraph graph, EdgeWeighting weighting, PrecursorCapacity capacity,
+                                 List<FragmentEdge> fragmentEdges, double unassignedWeight, double minProbability,
+                                 int exactSolverLimit, int iterativeSteps) {
         final int fragmentCount = graph.getFragments().size();
         final FragmentAssignment[] assignments = new FragmentAssignment[fragmentCount];
         java.util.Arrays.fill(assignments, FragmentAssignment.unassigned());
@@ -144,8 +176,8 @@ public class DiaFragmentResolver {
             componentSizes.add(component.size());
             if (component.size() > exactSolverLimit) ++iterative;
             else ++exact;
-            solveComponent(component, candidates, fragmentEdges, weighting, unassignedWeight, minProbability,
-                    exactSolverLimit, iterativeSteps, assignments);
+            solveComponent(component, candidates, fragmentEdges, weighting, capacity, unassignedWeight,
+                    minProbability, exactSolverLimit, iterativeSteps, assignments);
         }
         return new Result(assignments, componentSizes.toIntArray(), exact, iterative);
     }
@@ -169,8 +201,8 @@ public class DiaFragmentResolver {
     private static void solveComponent(IntArrayList component,
                                        List<List<DiaAssignmentGraph.PrecursorEdge>> candidates,
                                        List<FragmentEdge> fragmentEdges, EdgeWeighting weighting,
-                                       double unassignedWeight, double minProbability, int exactSolverLimit,
-                                       int iterativeSteps, FragmentAssignment[] assignments) {
+                                       PrecursorCapacity capacity, double unassignedWeight, double minProbability,
+                                       int exactSolverLimit, int iterativeSteps, FragmentAssignment[] assignments) {
         // local indices, so the walk only ever sees the nodes of this component
         final Int2IntOpenHashMap fragmentToLocal = new Int2IntOpenHashMap(component.size());
         for (int local = 0; local < component.size(); ++local) fragmentToLocal.put(component.getInt(local), local);
@@ -190,10 +222,21 @@ public class DiaFragmentResolver {
         final AbsorbingWalk.Builder builder = AbsorbingWalk.builder(component.size(), unassignedNode + 1);
         for (int local = 0; local < component.size(); ++local) {
             final int fragment = component.getInt(local);
+            // capacities are normalised within this fragment's own candidate set, so the best supported candidate
+            // keeps its full weight and the unassigned node stays comparable. Only the ratios between candidates
+            // matter, and those are preserved.
+            double largestCapacity = 0d;
+            for (DiaAssignmentGraph.PrecursorEdge edge : candidates.get(fragment)) {
+                if (weighting.weight(edge) <= 0) continue;
+                largestCapacity = Math.max(largestCapacity, capacity.capacityOf(edge.precursorIndex()));
+            }
             for (DiaAssignmentGraph.PrecursorEdge edge : candidates.get(fragment)) {
                 final double weight = weighting.weight(edge);
                 if (weight <= 0) continue;
-                builder.addAbsorbingEdge(local, precursorToLocal.get(edge.precursorIndex()), weight);
+                final double share = largestCapacity > 0
+                        ? Math.max(0d, capacity.capacityOf(edge.precursorIndex())) / largestCapacity
+                        : 1d;
+                builder.addAbsorbingEdge(local, precursorToLocal.get(edge.precursorIndex()), weight * share);
             }
             builder.addAbsorbingEdge(local, unassignedNode, unassignedWeight);
         }

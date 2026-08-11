@@ -63,8 +63,14 @@ public class DiaScanIndexBuilder {
                                                Int2ObjectMap<float[]> multiplexedWindows,
                                                ScanPointMapping ms1Mapping) {
         final Map<DiaChannelKey, List<Ms2SpectrumHeader>> groups = new HashMap<>();
-        int droppedScans = 0;
+        int droppedScans = 0, deconvolutedScans = 0;
         for (Ms2SpectrumHeader header : headers) {
+            if (DiaPseudoSpectra.isDeconvoluted(header)) {
+                // computed, not acquired: it carries an isolation window of its own and would otherwise be
+                // counted as a measurement, inflating its channel or inventing new ones
+                ++deconvolutedScans;
+                continue;
+            }
             final float[] bounds = absoluteBoundsOf(header, multiplexedWindows);
             if (bounds == null) {
                 // no isolation window at all: this is not something we can deconvolute
@@ -125,7 +131,7 @@ public class DiaScanIndexBuilder {
             log.debug("No DIA channel of this sample fires at least {} times; not treating it as DIA.", MIN_SCANS_PER_CHANNEL);
             return Optional.empty();
         }
-        return Optional.of(new DiaScanIndex(channels, droppedScans, repairedParents));
+        return Optional.of(new DiaScanIndex(channels, droppedScans, repairedParents, deconvolutedScans));
     }
 
     /**

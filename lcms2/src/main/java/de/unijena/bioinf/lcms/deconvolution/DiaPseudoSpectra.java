@@ -33,9 +33,10 @@ import java.util.Locale;
  * the meaning of a peak height the same as in a real MS2 spectrum, which matters because these spectra are
  * compared with DDA ones by cosine further down.
  * <p>
- * Note that the spectra written here become part of the sample's MS2 spectra. Anything that reasons about the
- * acquisition scheme - {@link DiaScanIndexBuilder}, {@code DeconvoluteForLargeIsolationWindows} - has to run
- * before this, as it does in the pipeline, since a synthetic header carries an isolation window of its own.
+ * Note that the spectra written here become part of the sample's MS2 spectra, and a synthetic header carries an
+ * isolation window of its own. Anything reconstructing the acquisition scheme therefore has to ignore them, which
+ * is what {@link #isDeconvoluted} is for: without it a pseudo spectrum folds back into the channel it came from and
+ * inflates it, and for a multiplexed channel it invents new single window channels that were never acquired.
  */
 public final class DiaPseudoSpectra {
 
@@ -46,6 +47,21 @@ public final class DiaPseudoSpectra {
      * decision left to whoever reads them.
      */
     public static final double DEFAULT_MIN_PROBABILITY = 0.1;
+
+    /**
+     * Marks the source id of a spectrum that was computed rather than acquired. Anything reconstructing the
+     * acquisition scheme has to ignore these: a pseudo spectrum carries an isolation window of its own, so it
+     * would otherwise be counted as if the instrument had measured it. {@link DiaScanIndexBuilder} skips them by
+     * this prefix, which no acquired header can carry - a header without a source id reports {@code scan=<number>}.
+     */
+    public static final String SOURCE_ID_PREFIX = "deconvoluted=";
+
+    /**
+     * @return true if this spectrum was produced by the deconvolution rather than measured by the instrument
+     */
+    public static boolean isDeconvoluted(Ms2SpectrumHeader header) {
+        return header.getSourceId().startsWith(SOURCE_ID_PREFIX);
+    }
 
     public record Result(int spectraWritten, int peaksWritten, int featuresWithoutFragments) {
         public String describe() {
@@ -115,7 +131,7 @@ public final class DiaPseudoSpectra {
         final IsolationWindow window = channel.isolationWindowFor(precursorMz);
 
         final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
-                "deconvoluted=" + ms2ScanId, ms2ScanId, sample.getPolarity(), 2, true,
+                SOURCE_ID_PREFIX + ms2ScanId, ms2ScanId, sample.getPolarity(), 2, true,
                 channel.getCollisionEnergy(), window, parentId, precursorMz, precursorMz,
                 precursor.getRetentionTime());
         final Ms2SpectrumHeader stored = sample.getStorage().getSpectrumStorage().addMs2Spectrum(header, spectrum);

@@ -25,7 +25,16 @@ public final class DiaChannelNoise {
     /** scans with fewer peaks than this carry no usable intensity distribution */
     private static final int MIN_PEAKS_PER_SCAN = 10;
 
-    private static final double QUANTILE = 0.75;
+    /**
+     * Which quantile of a scan's intensities to treat as the noise floor.
+     * <p>
+     * The sample wide MS2 estimator uses the upper quartile, on the assumption that most peaks of a scan are
+     * noise. That does not hold for a DIA window: it holds the fragments of everything co-eluting within a hundred
+     * Dalton, so most of its peaks are real signal of some compound and an upper quantile measures signal rather
+     * than noise. On the test file the quartile came out between 12000 and 38000, which discarded about half of
+     * every scan before a trace could even be attempted.
+     */
+    public static final double DEFAULT_QUANTILE = 0.25;
 
     private DiaChannelNoise() {
     }
@@ -35,11 +44,19 @@ public final class DiaChannelNoise {
      * does not contain enough peaks to estimate anything from
      */
     public static float estimate(ProcessedSample sample, DiaChannel channel) {
+        return estimate(sample, channel, DEFAULT_QUANTILE);
+    }
+
+    public static float estimate(ProcessedSample sample, DiaChannel channel, double quantile) {
         return estimate(sample.getStorage().getSpectrumStorage(), channel,
-                sample.getStorage().getStatistics().getMs2NoiseLevel());
+                sample.getStorage().getStatistics().getMs2NoiseLevel(), quantile);
     }
 
     public static float estimate(SpectrumStorage spectrumStorage, DiaChannel channel, float fallback) {
+        return estimate(spectrumStorage, channel, fallback, DEFAULT_QUANTILE);
+    }
+
+    public static float estimate(SpectrumStorage spectrumStorage, DiaChannel channel, float fallback, double quantile) {
         final FloatArrayList noisePerScan = new FloatArrayList(channel.numberOfScans());
         final DoubleArrayList intensities = new DoubleArrayList();
         for (int k = 0; k < channel.numberOfScans(); ++k) {
@@ -53,11 +70,11 @@ public final class DiaChannelNoise {
             }
             if (intensities.size() < MIN_PEAKS_PER_SCAN) continue;
             final double[] xs = intensities.toDoubleArray();
-            final int rank = Math.min(xs.length - 1, (int) (QUANTILE * xs.length));
-            final double quantile = Quickselect.quickselectInplace(xs, 0, xs.length, rank);
+            final int rank = Math.min(xs.length - 1, (int) (quantile * xs.length));
+            final double floor = Quickselect.quickselectInplace(xs, 0, xs.length, rank);
             double minimum = Double.POSITIVE_INFINITY;
             for (double x : xs) minimum = Math.min(minimum, x);
-            final double noise = (2 * quantile + minimum) / 3d;
+            final double noise = (2 * floor + minimum) / 3d;
             if (noise > 0) noisePerScan.add((float) noise);
         }
         if (noisePerScan.isEmpty()) return fallback;

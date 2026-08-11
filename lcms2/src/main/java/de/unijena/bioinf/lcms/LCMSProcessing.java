@@ -9,8 +9,7 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.centroiding.CentroidIndividualSpectraStrategy;
 import de.unijena.bioinf.lcms.centroiding.CentroidingStrategy;
-import de.unijena.bioinf.lcms.deconvolution.DeconvoluteForLargeIsolationWindows;
-import de.unijena.bioinf.lcms.deconvolution.DeconvolutionDecision;
+import de.unijena.bioinf.lcms.deconvolution.*;
 import de.unijena.bioinf.lcms.features.IsotopePatternExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedApexIsotopePatternExtractor;
 import de.unijena.bioinf.lcms.features.SegmentMergedFeatures;
@@ -55,6 +54,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LCMSProcessing {
 
@@ -120,6 +120,26 @@ public class LCMSProcessing {
     @Getter @Setter private IsotopePatternExtractionStrategy isotopePatternExtractionStrategy = new MergedApexIsotopePatternExtractor();
 
     @Getter @Setter private DeconvolutionDecision deconvolutionDecision = new DeconvoluteForLargeIsolationWindows();
+
+    /**
+     * Assigns the fragments of a DIA measurement to its precursors. Only used when
+     * {@link #deconvolutionDecision} says the sample is data independent.
+     */
+    @Getter @Setter private DiaDeconvolution diaDeconvolution = new DiaDeconvolution();
+
+    /**
+     * What the DIA deconvolution did, per sample. Kept for inspection rather than only logged, and keyed by the
+     * sample itself: samples are processed in parallel, so a single field would be overwritten by whichever
+     * thread finished last.
+     */
+    private final Map<ProcessedSample, DiaReport> diaReports = new ConcurrentHashMap<>();
+
+    /**
+     * @return what the DIA deconvolution did for this sample, or empty if it was not a DIA sample
+     */
+    public Optional<DiaReport> getDiaReport(ProcessedSample sample) {
+        return Optional.ofNullable(diaReports.get(sample));
+    }
 
     protected List<ProcessedSample> samples = new ArrayList<>();
     private HashMap<Integer, ProcessedSample> sampleByIdx = new HashMap<>();
@@ -228,23 +248,19 @@ public class LCMSProcessing {
     }
 
     private void processSample(ProcessedSample sample) throws IOException {
-        sample.setUid(this.samples.size());
-        this.samples.add(sample);
-        this.sampleByIdx.put(sample.getUid(), sample);
+        final int sampleUid;
+        synchronized (this) {
+            sampleUid = this.samples.size();
+            this.samples.add(sample);
+            this.sampleByIdx.put(sampleUid, sample);
+        }
+        sample.setUid(sampleUid);
         sample.active();
         collectStatistics(sample);
         cleanupSample(sample);
         extractTraces(sample);
         if (deconvolutionDecision.performDeconvolution(sample)) {
-            /*
-            DIA: every MS2 scan covers a wide isolation window and therefore contains the fragments of all
-            compounds that co-elute within that window. Assigning such a spectrum to the most intensive precursor
-            of its window, as we do for DDA, would attach other compounds' fragments to that feature. Until the
-            fragments are deconvoluted we rather leave these features without MS/MS than with a wrong one.
-             */
-            LoggerFactory.getLogger(LCMSProcessing.class).warn("{} looks like a data independent acquisition (DIA). " +
-                            "Deconvolution of the fragment spectra is not implemented yet, so its features will have " +
-                            "no MS/MS attached.", sample.getRun().getName());
+            deconvoluteDia(sample);
         } else {
             assignMs2Trace(sample);
         }
@@ -456,6 +472,42 @@ public class LCMSProcessing {
             Optional<ContiguousTrace> peak = tracePicker.detectMostIntensivePeak(spectrumIdx, spectrum.getMzAt(peakIdx));
             peak.ifPresent(p->tracker.tracePicked(p.averagedMz(), sample.getMapping().getRetentionTimeAt(p.apex()), sample, p));
         });
+        sample.getStorage().commit();
+    }
+
+    /**
+     * DIA: every MS2 scan covers a wide isolation window and therefore holds the fragments of all compounds
+     * co-eluting within it. Assigning such a spectrum to the most intensive precursor of its window, as the DDA
+     * path does, would attach other compounds' fragments to that feature. Instead the fragments are picked as
+     * chromatograms of their own and assigned to precursors by co-elution, and the result is written back as
+     * ordinary MS2 spectra so that everything after this point stays unchanged.
+     * <p>
+     * This runs before the masses of interest are extracted, which means
+     * {@code PrecursorsWithMsMsAreConfidentStrategy} rewards precursors whose deconvolution actually found
+     * co-eluting fragments - a meaningful confidence signal for DIA, with no code change.
+     */
+    private void deconvoluteDia(ProcessedSample sample) {
+        final Optional<DiaScanIndex> maybeIndex = DiaScanIndexBuilder.build(sample);
+        if (maybeIndex.isEmpty()) {
+            LoggerFactory.getLogger(LCMSProcessing.class).warn("{} looks like a data independent acquisition, but no "
+                    + "usable acquisition scheme could be recovered from its MS/MS scans. Its features will have no "
+                    + "MS/MS attached.", sample.getRun().getName());
+            return;
+        }
+        final DiaScanIndex index = maybeIndex.get();
+        LoggerFactory.getLogger(LCMSProcessing.class).info("{}: {}", sample.getRun().getName(), index.describe());
+        final DiaDeconvolution.Result deconvoluted = diaDeconvolution.deconvolute(sample, index);
+        LoggerFactory.getLogger(LCMSProcessing.class).info("{}: {}", sample.getRun().getName(), deconvoluted.describe());
+        if (deconvoluted.nullDistributionTooThin()) {
+            diaReports.put(sample, new DiaReport(index, deconvoluted, null));
+            LoggerFactory.getLogger(LCMSProcessing.class).warn("{} does not contain enough precursors outside its "
+                    + "isolation windows to tell a real co-elution from an accidental one, so no fragment could be "
+                    + "assigned.", sample.getRun().getName());
+            return;
+        }
+        final DiaPseudoSpectra.Result spectra = DiaPseudoSpectra.write(sample, deconvoluted);
+        LoggerFactory.getLogger(LCMSProcessing.class).info("{}: {}", sample.getRun().getName(), spectra.describe());
+        diaReports.put(sample, new DiaReport(index, deconvoluted, spectra));
         sample.getStorage().commit();
     }
 

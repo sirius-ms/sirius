@@ -153,6 +153,50 @@ public class DiaFragmentResolverTest {
         assertTrue(assignment.storedProbability() + assignment.getUnassignedProbability() < 1d);
     }
 
+    /**
+     * Ion count is conserved, so a precursor a hundred times more intense can account for a hundred times more MS2
+     * signal. Given equally good elution profiles, that has to decide the assignment - which a threshold on
+     * intensity could not do, since it would only remove candidates.
+     */
+    @Test
+    public void anIntensePrecursorOutweighsAWeakOneWithTheSameEvidence() {
+        DiaAssignmentGraph graph = DiaAssignmentGraph.build(channel(),
+                List.of(feature(precursorTrace(400.2, 60d), 60d), feature(precursorTrace(420.7, 60d), 60d)),
+                List.of(fragmentTrace(150.1, 60d)));
+        assertEquals(2, graph.edgesTo(0).size(), "precondition: both are candidates");
+
+        // identical evidence, but the first precursor is a hundred times more intense
+        DiaFragmentResolver.Result result = DiaFragmentResolver.resolve(graph, UNIFORM,
+                precursorIndex -> precursorIndex == 0 ? 1_000_000d : 10_000d, List.of(),
+                DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01, 250, 12);
+
+        FragmentAssignment assignment = result.getAssignments()[0];
+        assertEquals(0, assignment.precursorIndexAt(0), "the intense precursor has to come first");
+        // weights are 10 and 10/100 against an unassigned weight of 1
+        assertEquals(10d / 11.1, assignment.probabilityAt(0), 1e-6);
+        assertEquals(1, assignment.size(), "and the weak one falls below the storage threshold");
+        assertFalse(assignment.isAmbiguous());
+    }
+
+    /**
+     * The other half of the argument: this is a comparison between competitors, not an absolute cut. A weak
+     * precursor that is the only candidate for a fragment keeps it.
+     */
+    @Test
+    public void aWeakPrecursorWithoutCompetitionKeepsItsFragment() {
+        DiaAssignmentGraph graph = DiaAssignmentGraph.build(channel(),
+                List.of(feature(precursorTrace(400.2, 60d), 60d)), List.of(fragmentTrace(150.1, 60d)));
+
+        DiaFragmentResolver.Result weak = DiaFragmentResolver.resolve(graph, UNIFORM,
+                precursorIndex -> 1d, List.of(), DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01, 250, 12);
+        DiaFragmentResolver.Result strong = DiaFragmentResolver.resolve(graph, UNIFORM,
+                precursorIndex -> 1_000_000d, List.of(), DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01, 250, 12);
+
+        assertEquals(1, weak.getAssignments()[0].size());
+        assertEquals(strong.getAssignments()[0].probabilityAt(0), weak.getAssignments()[0].probabilityAt(0), 1e-9,
+                "with a single candidate the absolute intensity must not matter at all");
+    }
+
     /** Fragment edges are the only thing that makes a component bigger than one fragment. */
     @Test
     public void withoutFragmentEdgesEveryComponentIsASingleFragment() {

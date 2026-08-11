@@ -4,6 +4,7 @@ import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +51,17 @@ public class DiaDeconvolution {
     private final double minProbability;
 
     private final int maxDecoyPrecursors;
+
+    /** which quantile of a channel's intensities counts as its noise floor, see {@link DiaChannelNoise} */
+    @Getter @Setter
+    private double noiseQuantile = DiaChannelNoise.DEFAULT_QUANTILE;
+
+    /**
+     * Whether a candidate's MS1 intensity weighs on the assignment, see
+     * {@link DiaFragmentResolver.PrecursorCapacity}. Only useful to turn off in order to measure what it does.
+     */
+    @Getter @Setter
+    private boolean intensityPrior = true;
 
     public DiaDeconvolution() {
         this(DiaFragmentResolver.DEFAULT_SIGNIFICANCE_FLOOR, DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT,
@@ -165,12 +177,13 @@ public class DiaDeconvolution {
             for (ChannelResult c : channels) {
                 buf.append(String.format(Locale.US,
                         "  channel %d [%.1f-%.1f]: noise %.0f, %d features (%d without shape), %d fragments from %d seeds, "
-                                + "%d edges, %d decoy edges, largest component %d%n",
+                                + "%d edges, %d decoy edges, largest component %d, %d exact / %d iterative%n",
                         c.getChannel().getChannelId(), c.getChannel().lowestMz(), c.getChannel().highestMz(),
                         c.getNoiseLevel(), c.getGraph().getPrecursors().size(),
                         c.getGraph().getFeaturesWithoutShapeEvidence(), c.getGraph().getFragments().size(),
                         c.getFragmentSeeds(), c.getGraph().getPrecursorEdges().size(), c.getDecoyEdges(),
-                        c.getResolution().largestComponent()));
+                        c.getResolution().largestComponent(), c.getResolution().getComponentsSolvedExactly(),
+                        c.getResolution().getComponentsSolvedIteratively()));
                 if (!c.isOwnNullDistribution()) {
                     buf.append("    (too few decoys of its own, using the null distribution of the whole sample)\n");
                 }
@@ -222,7 +235,7 @@ public class DiaDeconvolution {
         final List<Draft> drafts = new ArrayList<>(channelCount);
         for (int c = 0; c < channelCount; ++c) {
             final DiaChannel channel = channels.get(c);
-            final float noiseLevel = DiaChannelNoise.estimate(sample, channel);
+            final float noiseLevel = DiaChannelNoise.estimate(sample, channel, noiseQuantile);
             final DiaChannelFragments.Result fragments = DiaChannelFragments.pickAll(sample, channel, noiseLevel);
             final List<PrecursorFeature> decoys = DiaDecoys.thin(decoyCandidates.get(c), maxDecoyPrecursors);
             drafts.add(new Draft(channel, noiseLevel, fragments.seedsTried(), decoys.size(),
@@ -248,8 +261,11 @@ public class DiaDeconvolution {
             } else {
                 nulls = pooled;
             }
+            final List<PrecursorFeature> features = draft.graph.getPrecursors();
             final DiaFragmentResolver.Result resolution = DiaFragmentResolver.resolve(draft.graph,
                     edge -> DiaFragmentResolver.weightFromLogPValue(nulls.logPvalue(edge), significanceFloor),
+                    intensityPrior ? precursorIndex -> features.get(precursorIndex).getApexIntensity()
+                            : DiaFragmentResolver.UNIFORM_CAPACITY,
                     List.of(), unassignedWeight, minProbability, DiaFragmentResolver.DEFAULT_EXACT_SOLVER_LIMIT,
                     DiaFragmentResolver.DEFAULT_ITERATIVE_STEPS);
             results.add(new ChannelResult(draft.channel, draft.graph, resolution, draft.noiseLevel,
