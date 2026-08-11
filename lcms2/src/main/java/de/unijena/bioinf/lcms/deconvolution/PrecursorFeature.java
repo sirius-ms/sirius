@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.deconvolution;
 
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
+import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import lombok.Getter;
 
@@ -9,12 +10,17 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * One preliminary feature of an MS1 trace, seen from one DIA channel: the thing fragments get assigned to.
+ * One feature of an MS1 trace, seen from one DIA channel: the thing fragments get assigned to.
  * <p>
  * A precursor is a feature rather than a whole trace, because a trace can carry several features and fragments
- * belong to one of them, not to the trace. The segmentation used here is the preliminary one from trace picking;
- * the final feature boundaries only exist after alignment, which is why stage one of the assignment is a
- * candidate generator and not the final word.
+ * belong to one of them, not to the trace.
+ * <p>
+ * Which segmentation the feature comes from is deliberately not fixed here. Stage one builds these from the
+ * preliminary segments of trace picking, which is why it is a candidate generator and not the final word; stage two
+ * builds them from the final feature boundaries that only exist after alignment, over the raw trace of one sample.
+ * Both need the same thing of a trace - retention times, intensities and an averaged mass - so this works on
+ * {@link Trace} rather than on the picked {@link ContiguousTrace}, and keeps the trace's identifier separately for
+ * whoever has to point back at it.
  * <p>
  * A precursor m/z covered by more than one channel - overlapping isolation windows, or several collision
  * energies - yields one instance per channel.
@@ -22,7 +28,11 @@ import java.util.Optional;
 public class PrecursorFeature {
 
     @Getter
-    private final ContiguousTrace trace;
+    private final Trace trace;
+
+    /** identifier of the trace within its sample, or -1 for a trace that is not stored under one */
+    @Getter
+    private final int traceUid;
 
     @Getter
     private final TraceSegment segment;
@@ -38,9 +48,10 @@ public class PrecursorFeature {
     @Getter
     private final int apexChannelIndex;
 
-    private PrecursorFeature(ContiguousTrace trace, TraceSegment segment, ChannelWindow window, int channelId,
+    private PrecursorFeature(Trace trace, int traceUid, TraceSegment segment, ChannelWindow window, int channelId,
                              int apexChannelIndex) {
         this.trace = trace;
+        this.traceUid = traceUid;
         this.segment = segment;
         this.window = window;
         this.channelId = channelId;
@@ -52,8 +63,17 @@ public class PrecursorFeature {
      * sample it often enough to describe a shape
      */
     public static Optional<PrecursorFeature> of(DiaChannel channel, ContiguousTrace ms1Trace, TraceSegment segment) {
+        return of(channel, ms1Trace, ms1Trace.getUid(), segment);
+    }
+
+    /**
+     * @param traceUid identifier of the trace within its sample, or -1 if it is not stored under one
+     * @return the feature as seen from this channel, or empty if the channel does not cover its m/z or does not
+     * sample it often enough to describe a shape
+     */
+    public static Optional<PrecursorFeature> of(DiaChannel channel, Trace ms1Trace, int traceUid, TraceSegment segment) {
         if (!channel.covers(ms1Trace.averagedMz())) return Optional.empty();
-        return onAxisOf(channel, ms1Trace, segment);
+        return onAxisOf(channel, ms1Trace, traceUid, segment);
     }
 
     /**
@@ -63,12 +83,13 @@ public class PrecursorFeature {
      * the structural criteria - exactly as it is for a real edge.
      */
     static Optional<PrecursorFeature> decoy(DiaChannel channel, ContiguousTrace ms1Trace, TraceSegment segment) {
-        return onAxisOf(channel, ms1Trace, segment);
+        return onAxisOf(channel, ms1Trace, ms1Trace.getUid(), segment);
     }
 
-    private static Optional<PrecursorFeature> onAxisOf(DiaChannel channel, ContiguousTrace ms1Trace, TraceSegment segment) {
+    private static Optional<PrecursorFeature> onAxisOf(DiaChannel channel, Trace ms1Trace, int traceUid,
+                                                      TraceSegment segment) {
         return ChannelWindow.of(channel, ms1Trace, segment).map(window -> new PrecursorFeature(
-                ms1Trace, segment, window, channel.getChannelId(),
+                ms1Trace, traceUid, segment, window, channel.getChannelId(),
                 channel.channelIndexForRetentionTime(ms1Trace.retentionTime(segment.apex))));
     }
 

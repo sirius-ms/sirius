@@ -136,7 +136,7 @@ public final class DiaPseudoSpectra {
                 precursor.getRetentionTime());
         final Ms2SpectrumHeader stored = sample.getStorage().getSpectrumStorage().addMs2Spectrum(header, spectrum);
         sample.getStorage().getTraceStorage().assignTraceForMs2(new MsMsTraceReference(
-                stored.getUid(), precursor.getTrace().getUid(), parentId, ms2ScanId));
+                stored.getUid(), precursor.getTraceUid(), parentId, ms2ScanId));
     }
 
     /**

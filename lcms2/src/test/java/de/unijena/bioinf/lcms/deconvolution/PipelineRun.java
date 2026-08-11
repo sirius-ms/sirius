@@ -37,26 +37,30 @@ final class PipelineRun {
     final List<AlignedFeatures> features;
     final double processingSeconds;
     final double alignmentSeconds;
-    /** null for a DDA file, and for a DIA file only if nothing was deconvoluted */
-    final DiaReport diaReport;
+    /** one per sample, in the order the files were given, and null for a sample that was not deconvoluted */
+    final List<DiaReport> diaReports;
 
     private PipelineRun(String name, List<AlignedFeatures> features, double processingSeconds,
-                        double alignmentSeconds, DiaReport diaReport) {
+                        double alignmentSeconds, List<DiaReport> diaReports) {
         this.name = name;
         this.features = features;
         this.processingSeconds = processingSeconds;
         this.alignmentSeconds = alignmentSeconds;
-        this.diaReport = diaReport;
+        this.diaReports = diaReports;
     }
 
     static PipelineRun run(Path file, String name) throws IOException {
-        return run(file, name, null);
+        return run(List.of(file), name, null);
     }
 
     /**
+     * Puts every given file through processing and aligns them into one experiment, the way the CLI does with
+     * several input files. With one file the alignment is trivial but still runs, so a single sample and a
+     * replicate group go through exactly the same code.
+     *
      * @param configure applied to the deconvolution before processing starts, to vary its settings between runs
      */
-    static PipelineRun run(Path file, String name, Consumer<DiaDeconvolution> configure) throws IOException {
+    static PipelineRun run(List<Path> files, String name, Consumer<DiaDeconvolution> configure) throws IOException {
         final CollectingAdapter adapter = new CollectingAdapter();
         final LCMSProcessing processing = new LCMSProcessing(adapter, false);
         final DiaDeconvolution deconvolution = new DiaDeconvolution();
@@ -64,7 +68,8 @@ final class PipelineRun {
         processing.setDiaDeconvolution(deconvolution);
         try {
             final long started = System.currentTimeMillis();
-            final ProcessedSample sample = processing.processSample(file);
+            final List<ProcessedSample> samples = new ArrayList<>(files.size());
+            for (Path file : files) samples.add(processing.processSample(file));
             final long afterSample = System.currentTimeMillis();
             final AlignmentBackbone backbone = processing.align();
             final ProcessedSample merged = processing.merge(backbone);
@@ -74,8 +79,10 @@ final class PipelineRun {
                 throw new AssertionError("the importer reported " + featureCount + " features but handed over "
                         + adapter.features.size());
             }
+            final List<DiaReport> reports = new ArrayList<>(samples.size());
+            for (ProcessedSample sample : samples) reports.add(processing.getDiaReport(sample).orElse(null));
             return new PipelineRun(name, adapter.features, (afterSample - started) / 1000d,
-                    (finished - afterSample) / 1000d, processing.getDiaReport(sample).orElse(null));
+                    (finished - afterSample) / 1000d, reports);
         } finally {
             processing.closeStorages();
         }
