@@ -47,6 +47,10 @@ import javax.swing.text.PlainDocument;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.stream.Collectors;
+import de.unijena.bioinf.ms.gui.utils.query.LogicOp;
+import de.unijena.bioinf.ms.gui.utils.query.LuceneQueryCompiler;
+import de.unijena.bioinf.ms.gui.utils.query.QueryContainer;
+import de.unijena.bioinf.ms.gui.utils.query.QueryNode;
 
 import static de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory.*;
 
@@ -462,48 +466,48 @@ public class FeatureFilterModel implements SiriusPCS {
 
 
     private static final String FAKE_FIELD = "__FAKE_FIELD__";
-    private static final String FAKE_FIELD_REPLACE = FAKE_FIELD + ":";
     private final QueryParser textFieldParser;
 
+    /**
+     * The executed lucene query, or empty when no filter is active. Derived from the SAME facet nodes
+     * the search bar renders ({@link PanelQueryNodeFactory}) compiled via {@link LuceneQueryCompiler},
+     * combined (AND) with the free-text segment, and wrapped for inversion - so the executed query and
+     * the chips share one definition (see the equivalence tests, incl. the live-backend one).
+     */
     public Optional<String> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode) {
         if (!isActive())
             return Optional.empty();
-
-        BooleanQuery mainQuery = toLuceneQueryBuilder(confidenceMode).build();
-        if (isInverted()) {
-            mainQuery = new BooleanQuery.Builder()
-                    .add(new MatchAllDocsQuery(), BooleanClause.Occur.MUST)  // Include all documents (*:*)
-                    .add(mainQuery, BooleanClause.Occur.MUST_NOT)  // Exclude the original query
-                    .build();
-        }
-
-        return Optional.of(mainQuery.toString()
-                .replace(FAKE_FIELD_REPLACE, "") //fake field to trick lucene
-                .replace("Infinity]", "*]").replace("[-Infinity", "[*")); // tostring of query seems to be buggy, Infinity is the suggested way by lucene but the resulting query string is wrong.
+        String core = compileCore(confidenceMode);
+        if (core.isBlank())
+            return Optional.empty();
+        // inversion: a pure-negative query matches nothing, so anchor with match-all and exclude
+        return Optional.of(isInverted() ? "*:* AND NOT (" + core + ")" : core);
     }
 
-    public Optional<String> toLuceneQueryWithIds(@NotNull ConfidenceDisplayMode confidenceMode, String... alFeatureIds) {
-        if (!isActive() && alFeatureIds.length == 0)
-            return Optional.empty();
+    /** The active structured facets (as query nodes) AND the free-text segment, compiled to lucene. */
+    private String compileCore(@NotNull ConfidenceDisplayMode confidenceMode) {
+        List<QueryNode> nodes = PanelQueryNodeFactory.nodesFor(this, confidenceMode);
+        List<LogicOp> ands = new ArrayList<>(Math.max(0, nodes.size() - 1));
+        for (int i = 1; i < nodes.size(); i++)
+            ands.add(LogicOp.AND);
+        return LuceneQueryCompiler.compile(new QueryContainer(nodes, ands), freeTextQuery());
+    }
 
-        BooleanQuery.Builder builder = toLuceneQueryBuilder(confidenceMode);
-        if (alFeatureIds.length > 0) {
-            BooleanQuery.Builder idQuery = new BooleanQuery.Builder();
-            for (String fid : alFeatureIds) {
-                idQuery.add(new TermQuery(new Term("alignedFeatureId", fid)), BooleanClause.Occur.SHOULD);
-            }
-            builder.add(idQuery.build(), BooleanClause.Occur.MUST);
+    /**
+     * The full-text segment: the user's search text used as-is when it parses as a lucene query,
+     * otherwise quoted as a phrase so malformed input still runs (against the default search fields)
+     * instead of failing the whole query.
+     */
+    private String freeTextQuery() {
+        if (!isSearchTextFilterActive())
+            return "";
+        String text = getSearchText();
+        try {
+            textFieldParser.parse(text);
+            return text;
+        } catch (ParseException e) {
+            return "\"" + text.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
         }
-
-        if (isInverted()) {
-            builder = new BooleanQuery.Builder()
-                    .add(new MatchAllDocsQuery(), BooleanClause.Occur.MUST)  // Include all documents (*:*)
-                    .add(builder.build(), BooleanClause.Occur.MUST_NOT);  // Exclude the original query
-        }
-
-        return Optional.of(builder.build().toString()
-                .replace(FAKE_FIELD_REPLACE, "")  //fake field to trick lucene
-                .replace("Infinity]", "*]").replace("[-Infinity", "[*")); // tostring of query seems to be buggy, Infinity is the suggested way by lucene but the resulting query string is wrong.
     }
 
     public static final String BLANK_REMOVAL_SEARCH_FIELD_NAME = "stats.foldChange" +
@@ -530,114 +534,4 @@ public class FeatureFilterModel implements SiriusPCS {
     public static final String FIELD_LIPID = "topAnnotations.formulaAnnotation.lipidAnnotation.lipid";
     public static final String PREFIX_DB = "topAnnotations.matchedDatabases.";
 
-    private BooleanQuery.Builder toLuceneQueryBuilder(@NotNull ConfidenceDisplayMode confidenceMode) {
-        // Combine queries using BooleanQuery.Builder
-        BooleanQuery.Builder booleanQuery = new BooleanQuery.Builder();
-
-        if (isMzFilterActive())
-            booleanQuery.add(DoublePoint.newRangeQuery(FIELD_MZ, currentMinMz, currentMaxMz), BooleanClause.Occur.MUST);
-
-        if (isRtFilterActive()) {
-            BooleanQuery.Builder rtQuery = new BooleanQuery.Builder();
-
-            rtQuery.add(DoublePoint.newRangeQuery(FIELD_RT_START, currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
-            rtQuery.add(DoublePoint.newRangeQuery(FIELD_RT_APEX, currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
-            rtQuery.add(DoublePoint.newRangeQuery(FIELD_RT_END, currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
-
-            booleanQuery.add(rtQuery.build(), BooleanClause.Occur.MUST);
-        }
-
-        if (isMinConfidenceFilterActive() || isMaxConfidenceFilterActive()) {
-            String confidenceField = confidenceMode == ConfidenceDisplayMode.APPROXIMATE ? FIELD_CONFIDENCE_APPROX : FIELD_CONFIDENCE_EXACT;
-            booleanQuery.add(DoublePoint.newRangeQuery(confidenceField, currentMinConfidence, currentMaxConfidence), BooleanClause.Occur.MUST);
-        }
-
-        if (isHasMs1())
-            booleanQuery.add(new TermQuery(new Term(FIELD_HAS_MS1, "true")), BooleanClause.Occur.MUST);
-
-        if (isHasMsMs())
-            booleanQuery.add(new TermQuery(new Term(FIELD_HAS_MSMS, "true")), BooleanClause.Occur.MUST);
-
-        if (isAdductFilterActive())
-            booleanQuery.add(makeAdductQuery(FIELD_ADDUCTS, getSelectedAdducts()), BooleanClause.Occur.MUST);
-
-        if (getFeatureQualityFilter().isEnabled())
-            booleanQuery.add(makeQualityQuery(FIELD_QUALITY, getFeatureQualityFilter()).build(), BooleanClause.Occur.MUST);
-
-        getCategorizedQualityFilters().stream().filter(QualityFilter::isEnabled)
-                .forEach(filter -> {
-                    BooleanQuery.Builder qualityQuery = makeQualityQuery(PREFIX_CATEGORIZED_QUALITY + filter.getId(), filter);
-                    //to allow matching data without quality data.
-                    qualityQuery.add(new TermQuery(new Term(FIELD_QUALITY, DataQuality.NOT_APPLICABLE.toString())), BooleanClause.Occur.SHOULD);
-                    booleanQuery.add(qualityQuery.build(), BooleanClause.Occur.MUST);
-                });
-
-        if (isElementFilterEnabled())
-            booleanQuery.add(makeElementFilter(PREFIX_ELEMENT, elementFilter.getConstraints()), BooleanClause.Occur.MUST);
-
-        //TAG FILTERS
-        if (getSampleBlankFoldChange().isEnabled())
-            booleanQuery.add(DoublePoint.newRangeQuery(BLANK_REMOVAL_SEARCH_FIELD_NAME, getSampleBlankFoldChange().getCurrentMinFoldChange(), Double.POSITIVE_INFINITY), BooleanClause.Occur.MUST);
-
-        //RESULT FILTERS
-        //todo we can now also filter efficiently for exact lipid classes.
-        if (isLipidFilterEnabled()) {
-            TermQuery lipidQuery = new TermQuery(new Term(FIELD_LIPID, "true"));
-            if (lipidFilter == LipidFilter.ANY_LIPID_CLASS_DETECTED) {
-                booleanQuery.add(lipidQuery, BooleanClause.Occur.MUST);
-            } else if (lipidFilter == LipidFilter.NO_LIPID_CLASS_DETECTED) {
-                booleanQuery.add(lipidQuery, BooleanClause.Occur.MUST_NOT);
-            }
-        }
-
-        if (isDbFilterEnabled())
-            booleanQuery.add(makeDbQuery(PREFIX_DB, dbFilter), BooleanClause.Occur.MUST);
-
-        // Handling searchText (Full-text search)
-        if (isSearchTextFilterActive()) {
-            String searchText = getSearchText();
-            try {
-                // Try to parse the search text as a Lucene query
-                booleanQuery.add(textFieldParser.parse(searchText), BooleanClause.Occur.MUST);
-            } catch (ParseException e) {
-                // If parsing fails, treat as a simple text search
-                // The backend already has standard fields defined for simple search queries
-                booleanQuery.add(new TermQuery(new Term(FAKE_FIELD, searchText)), BooleanClause.Occur.MUST);
-            }
-        }
-
-        return booleanQuery;
-    }
-
-    //todo Optimize: we could check if constrains are just a formula and build exact match query instead.
-    private static Query makeElementFilter(String fieldPrefix, FormulaConstraints constrains) {
-        BooleanQuery.Builder dbQuery = new BooleanQuery.Builder();
-        constrains.getChemicalAlphabet().forEach(element -> {
-            int lower = constrains.getLowerbound(element);
-            int upper = constrains.getUpperbound(element);
-            dbQuery.add(IntPoint.newRangeQuery(fieldPrefix + element.getSymbol(), lower, upper), BooleanClause.Occur.MUST);
-        });
-        return dbQuery.build();
-    }
-
-    private static Query makeDbQuery(String fieldPrefix, DbFilter filter) {
-        BooleanQuery.Builder dbQuery = new BooleanQuery.Builder();
-        filter.dbs.forEach(db -> dbQuery.add(IntPoint.newRangeQuery(fieldPrefix + db.getDatabaseId(), 1, filter.getNumOfCandidates()), BooleanClause.Occur.SHOULD));
-        return dbQuery.build();
-    }
-
-    private static BooleanQuery.Builder makeQualityQuery(String fieldName, QualityFilter filter) {
-        BooleanQuery.Builder qualityQuery = new BooleanQuery.Builder();
-        filter.getDataQualities().forEach(q -> qualityQuery.add(new TermQuery(new Term(fieldName, q.toString())), BooleanClause.Occur.SHOULD));
-        //to allow matching data without quality data.
-        qualityQuery.add(new TermQuery(new Term(fieldName, DataQuality.NOT_APPLICABLE.toString())), BooleanClause.Occur.SHOULD);
-        return qualityQuery;
-    }
-
-    private static Query makeAdductQuery(String fieldName, Set<PrecursorIonType> adducts) {
-        BooleanQuery.Builder qualityQuery = new BooleanQuery.Builder();
-        adducts.stream().map(p -> "\"" + p + "\"").forEach(adduct -> qualityQuery.add(new TermQuery(new Term(fieldName, adduct)), BooleanClause.Occur.SHOULD));
-        return qualityQuery.build();
-
-    }
 }

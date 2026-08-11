@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.utils.search;
 import de.unijena.bioinf.ms.gui.utils.query.*;
+import de.unijena.bioinf.ms.gui.utils.filter.PanelQueryNodeFactory;
 
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
@@ -69,10 +70,10 @@ public class PanelQueryNodeEquivalenceTest {
     private static Map<String, PointsConfig> pointsConfig(String... intFields) {
         Map<String, PointsConfig> map = new HashMap<>();
         PointsConfig dbl = new PointsConfig(plainFormat(), Double.class);
-        for (String f : List.of(PanelQueryNodeFactory.FIELD_MZ, PanelQueryNodeFactory.FIELD_RT_START,
-                PanelQueryNodeFactory.FIELD_RT_APEX, PanelQueryNodeFactory.FIELD_RT_END,
-                PanelQueryNodeFactory.FIELD_CONFIDENCE_APPROX, PanelQueryNodeFactory.FIELD_CONFIDENCE_EXACT,
-                PanelQueryNodeFactory.FIELD_BLANK))
+        for (String f : List.of(FeatureFilterModel.FIELD_MZ, FeatureFilterModel.FIELD_RT_START,
+                FeatureFilterModel.FIELD_RT_APEX, FeatureFilterModel.FIELD_RT_END,
+                FeatureFilterModel.FIELD_CONFIDENCE_APPROX, FeatureFilterModel.FIELD_CONFIDENCE_EXACT,
+                FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME))
             map.put(f, dbl);
         PointsConfig integer = new PointsConfig(plainFormat(), Integer.class);
         for (String f : intFields)
@@ -192,7 +193,7 @@ public class PanelQueryNodeEquivalenceTest {
     public void testElements() {
         FeatureFilterModel model = cleanSlate();
         model.setElementFilter(new de.unijena.bioinf.ms.gui.utils.filter.ElementFilter("CHNOPS"));
-        String p = PanelQueryNodeFactory.PREFIX_ELEMENT;
+        String p = FeatureFilterModel.PREFIX_ELEMENT;
         assertEquivalent(model, ConfidenceDisplayMode.EXACT,
                 p + "C", p + "H", p + "N", p + "O", p + "P", p + "S");
     }
@@ -202,7 +203,7 @@ public class PanelQueryNodeEquivalenceTest {
         FeatureFilterModel model = cleanSlate();
         model.setDbFilter(new de.unijena.bioinf.ms.gui.utils.filter.DbFilter(
                 java.util.List.of(new io.sirius.ms.sdk.model.SearchableDatabase().databaseId("PubChem")), 5));
-        assertEquivalent(model, ConfidenceDisplayMode.EXACT, PanelQueryNodeFactory.PREFIX_DB + "PubChem");
+        assertEquivalent(model, ConfidenceDisplayMode.EXACT, FeatureFilterModel.PREFIX_DB + "PubChem");
     }
 
     @Test
