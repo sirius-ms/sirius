@@ -10,7 +10,6 @@ import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.centroiding.CentroidIndividualSpectraStrategy;
 import de.unijena.bioinf.lcms.centroiding.CentroidingStrategy;
 import de.unijena.bioinf.lcms.deconvolution.DeconvoluteForLargeIsolationWindows;
-import de.unijena.bioinf.lcms.deconvolution.DeconvoluteMs2ToTraces;
 import de.unijena.bioinf.lcms.deconvolution.DeconvolutionDecision;
 import de.unijena.bioinf.lcms.features.IsotopePatternExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedApexIsotopePatternExtractor;
@@ -237,8 +236,15 @@ public class LCMSProcessing {
         cleanupSample(sample);
         extractTraces(sample);
         if (deconvolutionDecision.performDeconvolution(sample)) {
-            new DeconvoluteMs2ToTraces().deconvolute(sample);
-            System.exit(0);
+            /*
+            DIA: every MS2 scan covers a wide isolation window and therefore contains the fragments of all
+            compounds that co-elute within that window. Assigning such a spectrum to the most intensive precursor
+            of its window, as we do for DDA, would attach other compounds' fragments to that feature. Until the
+            fragments are deconvoluted we rather leave these features without MS/MS than with a wrong one.
+             */
+            LoggerFactory.getLogger(LCMSProcessing.class).warn("{} looks like a data independent acquisition (DIA). " +
+                            "Deconvolution of the fragment spectra is not implemented yet, so its features will have " +
+                            "no MS/MS attached.", sample.getRun().getName());
         } else {
             assignMs2Trace(sample);
         }

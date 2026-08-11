@@ -24,8 +24,10 @@ public class MsSpectrumHeaderDatatype extends CustomDataType<Ms1SpectrumHeader> 
         if (obj instanceof Ms2SpectrumHeader) flags |= 16;
         buff.putInt(obj.uid);
         buff.putInt(obj.scanId);
-        buff.putInt(obj.sourceId.length());
-        buff.putStringData(obj.sourceId, obj.sourceId.length());
+        // the source id is nullable; getSourceId() derives one from the scan id in that case
+        final String sourceId = obj.getSourceId();
+        buff.putInt(sourceId.length());
+        buff.putStringData(sourceId, sourceId.length());
         buff.put(flags);
         if (obj instanceof Ms2SpectrumHeader header2) {
             String ce = header2.energy==null ? "" : header2.energy.toString();
