@@ -103,8 +103,7 @@ public class CompoundList {
         // autocompletion in an overlay expanding over the result view
         searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel,
                 () -> ModelChipFactory.chipsFor(filterModel),
-                () -> new FeatureFilterOptionsDialog(gui, filterModel, this),
-                () -> gui.getProperties().getConfidenceDisplayMode());
+                () -> new FeatureFilterOptionsDialog(gui, filterModel, this));
 
         adductToggleSwitch = makeAdductToggleSwitch(filterModel);
         qualityToggleSwitch = makeQualityToggleSwitch(filterModel);
