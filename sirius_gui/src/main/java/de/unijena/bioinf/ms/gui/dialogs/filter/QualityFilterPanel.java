@@ -31,4 +31,10 @@ class QualityFilterPanel extends JPanel {
         for (int k = 0; k < qualityBoxes.length; ++k)
             qualityFilter.setQualitySelected(k, qualityBoxes[k].isSelected());
     }
+
+    /** Runs {@code onChange} whenever any of the quality check boxes is toggled. */
+    public void onChange(@NotNull Runnable onChange) {
+        for (JCheckBox box : qualityBoxes)
+            box.addActionListener(e -> onChange.run());
+    }
 }
