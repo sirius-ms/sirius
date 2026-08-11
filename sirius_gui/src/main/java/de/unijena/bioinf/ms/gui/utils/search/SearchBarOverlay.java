@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +81,7 @@ public class SearchBarOverlay extends JDialog {
     private final Supplier<List<ModelChip>> modelChipSupplier;
     private final Runnable openFilterDialog;
     private final java.util.function.Consumer<Commit> onCommitted;
+    private final Supplier<ConfidenceDisplayMode> confidenceMode;
 
     // --- builder state ---
     private QueryContainer root = QueryContainer.empty();
@@ -118,13 +120,15 @@ public class SearchBarOverlay extends JDialog {
                             @NotNull SearchableFieldsProvider fieldsProvider,
                             @NotNull Supplier<List<ModelChip>> modelChipSupplier,
                             @NotNull Runnable openFilterDialog,
-                            @NotNull java.util.function.Consumer<Commit> onCommitted) {
+                            @NotNull java.util.function.Consumer<Commit> onCommitted,
+                            @NotNull Supplier<ConfidenceDisplayMode> confidenceMode) {
         super(owner);
         this.filterModel = filterModel;
         this.fieldsProvider = fieldsProvider;
         this.modelChipSupplier = modelChipSupplier;
         this.openFilterDialog = openFilterDialog;
         this.onCommitted = onCommitted;
+        this.confidenceMode = confidenceMode;
 
         // A heavyweight top-level window so it floats above the native JxBrowser windows of the
         // result views (a lightweight layered-pane panel is hidden behind those). Undecorated so it
@@ -155,9 +159,10 @@ public class SearchBarOverlay extends JDialog {
         wireInput();
 
         Box controls = Box.createHorizontalBox();
-        JButton copy = iconButton(Icons.CLIP_BOARD.derive(15, 15), "Copy the compiled search query to the clipboard");
+        JButton copy = iconButton(Icons.CLIP_BOARD.derive(15, 15),
+                "Copy the full search query (filter-panel filters and your query) to the clipboard");
         copy.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemClipboard()
-                .setContents(new StringSelection(compileQuery()), null));
+                .setContents(new StringSelection(fullCompiledQuery()), null));
         controls.add(copy);
 
         JButton clear = iconButton(new FlatClearIcon(), "Clear the whole search query (filter-dialog filters are kept)");
@@ -572,6 +577,16 @@ public class SearchBarOverlay extends JDialog {
 
     private String compileQuery() {
         return LuceneQueryCompiler.compile(root, freeTextForCommit());
+    }
+
+    /**
+     * The whole query as it would be executed: the filter-panel (model) filters combined with the
+     * user query currently being built. Falls back to the user query alone if no panel filters are
+     * active.
+     */
+    private String fullCompiledQuery() {
+        String userQuery = compileQuery();
+        return filterModel.toLuceneQuery(confidenceMode.get(), userQuery).orElse(userQuery);
     }
 
     /**
