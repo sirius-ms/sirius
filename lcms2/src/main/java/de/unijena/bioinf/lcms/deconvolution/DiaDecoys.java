@@ -60,22 +60,39 @@ public final class DiaDecoys {
      */
     public static List<PrecursorFeature> select(DiaChannel channel, Iterable<ContiguousTrace> ms1Traces,
                                                 double windowMargin, double massBandFactor, int maxDecoys) {
-        final double lowest = channel.lowestMz(), highest = channel.highestMz();
-        final double band = (highest - lowest) * massBandFactor;
         final List<PrecursorFeature> candidates = new ArrayList<>();
         for (ContiguousTrace trace : ms1Traces) {
             if (trace.getSegments() == null) continue;
-            final double mz = trace.averagedMz();
-            if (mz < lowest - band || mz > highest + band) continue;      // too far away in mass to be comparable
-            if (!isOutsideEveryWindow(channel, mz, windowMargin)) continue;
+            if (!isEligible(channel, trace.averagedMz(), windowMargin, massBandFactor)) continue;
             for (TraceSegment segment : trace.getSegments()) {
                 PrecursorFeature.decoy(channel, trace, segment).ifPresent(candidates::add);
             }
         }
-        if (candidates.size() <= maxDecoys) return candidates;
+        return thin(candidates, maxDecoys);
+    }
 
-        // thin out evenly along retention time, so the decoys span the run the way the real features do. Taking
-        // every n-th of a sorted list keeps this deterministic, which random sampling would not.
+    /**
+     * @return true if a precursor of this m/z is a safe decoy for the channel: far enough outside every isolation
+     * window not to have leaked in, and close enough in mass for the decoy population to be comparable
+     */
+    public static boolean isEligible(DiaChannel channel, double mz, double windowMargin, double massBandFactor) {
+        final double lowest = channel.lowestMz(), highest = channel.highestMz();
+        final double band = (highest - lowest) * massBandFactor;
+        if (mz < lowest - band || mz > highest + band) return false;
+        return isOutsideEveryWindow(channel, mz, windowMargin);
+    }
+
+    public static boolean isEligible(DiaChannel channel, double mz) {
+        return isEligible(channel, mz, DEFAULT_WINDOW_MARGIN, DEFAULT_MASS_BAND_FACTOR);
+    }
+
+    /**
+     * Thins a list of candidates down to at most {@code maxDecoys}, evenly along retention time, so the decoys
+     * span the run the way the real features do. Taking every n-th of a sorted list keeps this deterministic,
+     * which random sampling would not: the null distribution has to come out the same on a rerun of the same file.
+     */
+    public static List<PrecursorFeature> thin(List<PrecursorFeature> candidates, int maxDecoys) {
+        if (candidates.size() <= maxDecoys) return candidates;
         candidates.sort(Comparator.comparingDouble(PrecursorFeature::getRetentionTime));
         final List<PrecursorFeature> thinned = new ArrayList<>(maxDecoys);
         final double stride = candidates.size() / (double) maxDecoys;
