@@ -92,6 +92,11 @@ public class SearchBarOverlay extends JDialog {
     private QueryContainer baselineRoot = QueryContainer.empty();
     private String baselineFreeText = "";
     /**
+     * Whether the overlay has held window focus since it was shown. Gates the focus-loss cancel so
+     * the transient focus changes while the window is coming up cannot close it immediately.
+     */
+    private boolean focusEstablished = false;
+    /**
      * The query string this overlay last wrote into the shared search document. If the document
      * differs on open, it was edited elsewhere (filter dialog) - the builder then degrades the
      * document content into its free-text segment instead of trying to parse it back into chips.
@@ -236,6 +241,29 @@ public class SearchBarOverlay extends JDialog {
             @Override
             public void componentResized(ComponentEvent e) {
                 reposition();
+            }
+        });
+
+        // Cancel when the overlay loses focus - this is what catches a click on the native
+        // JxBrowser result view (which produces no AWT mouse event the outsideClickListener could
+        // see): clicking it steals window focus, but to Java the focus goes "nowhere" (null opposite
+        // window). Guards: only after the overlay has actually held focus once (so the transient
+        // focus dance while showing cannot close it), and never when focus moves into a window we
+        // own (the AND/OR combo popup).
+        addWindowFocusListener(new WindowAdapter() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {
+                focusEstablished = true;
+            }
+
+            @Override
+            public void windowLostFocus(WindowEvent e) {
+                if (!isVisible() || !focusEstablished)
+                    return;
+                for (Window w = e.getOppositeWindow(); w != null; w = w.getOwner())
+                    if (w == SearchBarOverlay.this)
+                        return; // focus went to our own owned popup, keep open
+                SwingUtilities.invokeLater(SearchBarOverlay.this::close);
             }
         });
 
@@ -507,6 +535,7 @@ public class SearchBarOverlay extends JDialog {
      */
     public void close() {
         Toolkit.getDefaultToolkit().removeAWTEventListener(outsideClickListener);
+        focusEstablished = false;
         root = baselineRoot;
         openPath = new int[0];
         tokenModel.reset();
