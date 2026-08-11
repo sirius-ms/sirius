@@ -255,8 +255,13 @@ public class SearchBarOverlay extends JDialog {
     private final AWTEventListener outsideClickListener = event -> {
         if (!isVisible() || !(event instanceof MouseEvent mouse) || mouse.getID() != MouseEvent.MOUSE_PRESSED)
             return;
+        // only cancel on a press we can attribute to a component outside this dialog; a null-source
+        // event must not close it spuriously
+        Component source = mouse.getComponent();
+        if (source == null)
+            return;
         // ignore presses inside this dialog or any window it owns (e.g. the AND/OR combo popup)
-        for (Window w = SwingUtilities.getWindowAncestor(mouse.getComponent()); w != null; w = w.getOwner())
+        for (Window w = SwingUtilities.getWindowAncestor(source); w != null; w = w.getOwner())
             if (w == this)
                 return;
         SwingUtilities.invokeLater(this::close); // cancel
