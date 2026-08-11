@@ -63,16 +63,28 @@ public class QueryNodeRendererTest {
     }
 
     @Test
-    public void testGroupCollapsesToCompiledForm() {
+    public void testGroupRendersAsParenthesizedReadableFormWithCompiledTooltip() {
         QueryClause a = QueryClause.text("detectedAdducts", "[M+H]+", false);
         QueryClause b = QueryClause.text("detectedAdducts", "[M+Na]+", false);
         QueryGroup group = new QueryGroup(QueryNode.nextId("group"), false, List.of(a, b), List.of(LogicOp.OR));
 
         ChipComponent chip = QueryNodeRenderer.chip(group, ChipComponent.Style.MODEL, null);
-        String expected = LuceneQueryCompiler.render(group);
+        assertTrue(labelText(chip).startsWith("(") && labelText(chip).contains(" OR "), labelText(chip));
+        assertEquals(LuceneQueryCompiler.render(group), chip.getToolTipText(), "tooltip stays fully-qualified lucene");
+    }
 
-        assertEquals(expected, labelText(chip), "a group chip shows its compiled form");
-        assertEquals(expected, chip.getToolTipText());
-        assertTrue(expected.startsWith("(") && expected.contains("OR"), expected);
+    @Test
+    public void testCompactModeShortensFieldNamesInTheLabel() {
+        QueryClause db = QueryClause.numeric("topAnnotations.matchedDatabases.GNPS", NumberOp.RANGE_INCLUSIVE, "1", "5", false);
+        // suffix length 2 -> keep "matchedDatabases.GNPS"
+        ChipComponent compact = QueryNodeRenderer.chip(db, ChipComponent.Style.MODEL, null,
+                FieldDisplay.Mode.COMPACT, field -> 2);
+        assertTrue(labelText(compact).startsWith("matchedDatabases.GNPS "), labelText(compact));
+        // tooltip keeps the fully-qualified field
+        assertTrue(compact.getToolTipText().startsWith("topAnnotations.matchedDatabases.GNPS"), compact.getToolTipText());
+
+        ChipComponent extensive = QueryNodeRenderer.chip(db, ChipComponent.Style.MODEL, null,
+                FieldDisplay.Mode.EXTENSIVE, field -> 2);
+        assertTrue(labelText(extensive).startsWith("topAnnotations.matchedDatabases.GNPS "), labelText(extensive));
     }
 }

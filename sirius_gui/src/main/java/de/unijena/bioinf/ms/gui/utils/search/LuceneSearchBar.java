@@ -54,8 +54,9 @@ public class LuceneSearchBar extends JPanel {
 
     private final FeatureFilterModel filterModel;
     private final SearchableFieldsProvider fieldsProvider;
-    private final Supplier<List<ModelChip>> modelChipSupplier;
-    private final Runnable openFilterDialog;
+    private final Supplier<List<FilterTerm>> termSupplier;
+    private final FilterEditorHost editorHost;
+    private final SearchRenderState renderState;
 
     private final JPanel chipStrip;
     /** The full summary cells in order; {@link #relayoutCells} decides how many fit. */
@@ -80,13 +81,14 @@ public class LuceneSearchBar extends JPanel {
 
     public LuceneSearchBar(@NotNull SiriusClient siriusClient, @NotNull String projectId,
                            @NotNull FeatureFilterModel filterModel,
-                           @NotNull Supplier<List<ModelChip>> modelChipSupplier,
-                           @NotNull Runnable openFilterDialog) {
+                           @NotNull Supplier<List<FilterTerm>> termSupplier,
+                           @NotNull FilterEditorHost editorHost) {
         super(new BorderLayout());
         this.filterModel = filterModel;
-        this.modelChipSupplier = modelChipSupplier;
-        this.openFilterDialog = openFilterDialog;
+        this.termSupplier = termSupplier;
+        this.editorHost = editorHost;
         this.fieldsProvider = new SearchableFieldsProvider(siriusClient, projectId);
+        this.renderState = new SearchRenderState(fieldsProvider);
 
         // look like an (active) text field, not like a disabled one
         setBorder(UIManager.getBorder("TextField.border"));
@@ -174,11 +176,11 @@ public class LuceneSearchBar extends JPanel {
             Window owner = SwingUtilities.getWindowAncestor(this);
             if (owner == null)
                 return;
-            overlay = new SearchBarOverlay(owner, filterModel, fieldsProvider, modelChipSupplier,
-                    openFilterDialog, commit -> {
+            overlay = new SearchBarOverlay(owner, filterModel, fieldsProvider, termSupplier, editorHost,
+                    renderState, commit -> {
                         lastCommit = commit;
                         refreshSummary();
-                    });
+                    }, this::refreshSummary);
         }
         // Reopen unconditionally. If we reach here the collapsed bar received the gesture, which means
         // the overlay is NOT the active window - so a still-"open" overlay is a stale/stuck instance
@@ -198,19 +200,19 @@ public class LuceneSearchBar extends JPanel {
         Runnable open = this::openOverlay;
         cells.clear();
 
-        List<ModelChip> modelChips = modelChipSupplier.get();
-        for (int i = 0; i < modelChips.size(); i++) {
+        List<FilterTerm> terms = termSupplier.get();
+        for (int i = 0; i < terms.size(); i++) {
             if (i > 0)
                 cells.add(andLabel());
-            cells.add(new ChipComponent(modelChips.get(i).label(), modelChips.get(i).tooltip(),
-                    ChipComponent.Style.MODEL, open, null));
+            cells.add(QueryNodeRenderer.chip(terms.get(i).toQueryNode(), ChipComponent.Style.MODEL, open,
+                    renderState.mode(), renderState.suffixLengthResolver()));
         }
 
         String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
         if (lastCommit != null && docText.equals(lastCommit.compiled())) {
             // the document still holds what we compiled - render the real chips
             boolean hasUserPart = !lastCommit.root().items().isEmpty() || !lastCommit.freeText().isEmpty();
-            if (!modelChips.isEmpty() && hasUserPart)
+            if (!terms.isEmpty() && hasUserPart)
                 cells.add(andLabel());
             for (QueryNode node : lastCommit.root().items())
                 cells.add(userChip(node, open));
@@ -276,7 +278,8 @@ public class LuceneSearchBar extends JPanel {
     }
 
     private JComponent userChip(QueryNode node, Runnable open) {
-        return QueryNodeRenderer.chip(node, ChipComponent.Style.USER, open);
+        return QueryNodeRenderer.chip(node, ChipComponent.Style.USER, open,
+                renderState.mode(), renderState.suffixLengthResolver());
     }
 
     private JLabel plainLabel(String text) {
