@@ -76,9 +76,10 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         // The default-active filters (MS/MS present, quality, single adducts) are no longer exposed
         // as quick-toggle switches here - they are shown as chips in the search bar/overlay, which
         // both indicates they are active and lets the user change them.
+        // the full filter dialog is opened from the funnel icon inside the search bar now (no
+        // separate button beside it)
         Box searchButtonPanel = Box.createHorizontalBox();
         searchButtonPanel.add(view.sourceList.searchBar);
-        searchButtonPanel.add(view.sourceList.openFilterPanelButton);
         // a little breathing room so the (taller) search bar does not butt directly against the list
         searchButtonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
 

@@ -114,6 +114,12 @@ public class QueryEditorPanel extends JPanel {
      * renders model chips as read-only navigation targets (their value is edited via the widgets).
      */
     private final boolean embedded;
+    /**
+     * Opens the full filter dialog from the overlay's in-field funnel icon; null when there is no
+     * such affordance (the embedded host is already the dialog).
+     */
+    @Nullable
+    private final Runnable openFilterPanel;
 
     // --- builder state ---
     private QueryContainer root = QueryContainer.empty();
@@ -153,7 +159,8 @@ public class QueryEditorPanel extends JPanel {
                             @NotNull Consumer<Commit> onCommitted,
                             @NotNull Runnable refreshCollapsedBar,
                             @NotNull Host host,
-                            boolean embedded) {
+                            boolean embedded,
+                            @Nullable Runnable openFilterPanel) {
         super(new BorderLayout());
         this.filterModel = filterModel;
         this.fieldsProvider = fieldsProvider;
@@ -164,6 +171,7 @@ public class QueryEditorPanel extends JPanel {
         this.refreshCollapsedBar = refreshCollapsedBar;
         this.host = host;
         this.embedded = embedded;
+        this.openFilterPanel = openFilterPanel;
 
         setBackground(UIManager.getColor("TextField.background"));
         setBorder(BorderFactory.createCompoundBorder(
@@ -180,6 +188,22 @@ public class QueryEditorPanel extends JPanel {
         wireInput();
 
         Box controls = Box.createHorizontalBox();
+
+        // in-field funnel that opens the full filter dialog (same affordance as the collapsed bar);
+        // hands off via the host so the overlay steps aside before the (modal) dialog opens
+        if (openFilterPanel != null) {
+            JLabel filterButton = new JLabel(new FunnelIcon(15, Colors.FOREGROUND_DATA));
+            filterButton.setToolTipText(GuiUtils.formatToolTip("Open the filter panel"));
+            filterButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            filterButton.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 8));
+            filterButton.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    host.editorHandoff(openFilterPanel);
+                }
+            });
+            controls.add(filterButton);
+        }
 
         // field-name display toggle (compact terminal names <-> fully-qualified), shared with the bar
         JButton modeToggle = new JButton();

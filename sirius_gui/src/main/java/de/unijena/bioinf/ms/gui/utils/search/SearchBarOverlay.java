@@ -67,7 +67,8 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
                             @NotNull FilterEditorHost editorHost,
                             @NotNull SearchRenderState renderState,
                             @NotNull Consumer<QueryEditorPanel.Commit> onCommitted,
-                            @NotNull Runnable refreshCollapsedBar) {
+                            @NotNull Runnable refreshCollapsedBar,
+                            @NotNull Runnable openFilterPanel) {
         super(owner);
 
         // A heavyweight top-level window so it floats above the native JxBrowser windows of the
@@ -82,7 +83,7 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
         setFocusableWindowState(true);
 
         editor = new QueryEditorPanel(filterModel, fieldsProvider, termSupplier, editorHost, renderState,
-                onCommitted, refreshCollapsedBar, this, false);
+                onCommitted, refreshCollapsedBar, this, false, openFilterPanel);
         setContentPane(editor);
 
         // keep anchored while the main window is moved or resized (only while actually open - a
