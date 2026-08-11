@@ -27,10 +27,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -55,6 +58,8 @@ public class LuceneSearchBar extends JPanel {
     private final Runnable openFilterDialog;
 
     private final JPanel chipStrip;
+    /** The full summary cells in order; {@link #relayoutCells} decides how many fit. */
+    private final List<JComponent> cells = new ArrayList<>();
 
     /**
      * Opens the overlay on a press anywhere on the collapsed bar. Shared so it can be attached to
@@ -92,7 +97,24 @@ public class LuceneSearchBar extends JPanel {
 
         chipStrip = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 1));
         chipStrip.setOpaque(false);
-        add(chipStrip, BorderLayout.CENTER);
+        // center the chip row vertically in the (now taller) bar: a GridBag cell with WEST anchor
+        // and horizontal fill keeps the strip at its natural (single-row) height, centered.
+        JPanel centerer = new JPanel(new GridBagLayout());
+        centerer.setOpaque(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        centerer.add(chipStrip, gbc);
+        add(centerer, BorderLayout.CENTER);
+        // re-truncate the summary (ellipsis) whenever the available width changes
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                relayoutCells();
+            }
+        });
 
         // clipped single row, tall enough for a chip to sit in without being cut off (the overlay
         // is where the query wraps); a bare text field is a touch too short for the chips.
@@ -163,17 +185,18 @@ public class LuceneSearchBar extends JPanel {
     }
 
     /**
-     * Re-renders the collapsed summary from the committed state.
+     * Re-renders the collapsed summary from the committed state. The summary cells are built once
+     * here; how many of them fit (and where the ellipsis goes) is decided in {@link #relayoutCells}.
      */
     public void refreshSummary() {
-        chipStrip.removeAll();
         Runnable open = this::openOverlay;
+        cells.clear();
 
         List<ModelChip> modelChips = modelChipSupplier.get();
         for (int i = 0; i < modelChips.size(); i++) {
             if (i > 0)
-                chipStrip.add(andLabel());
-            chipStrip.add(new ChipComponent(modelChips.get(i).label(), modelChips.get(i).tooltip(),
+                cells.add(andLabel());
+            cells.add(new ChipComponent(modelChips.get(i).label(), modelChips.get(i).tooltip(),
                     ChipComponent.Style.MODEL, open, null));
         }
 
@@ -182,29 +205,68 @@ public class LuceneSearchBar extends JPanel {
             // the document still holds what we compiled - render the real chips
             boolean hasUserPart = !lastCommit.root().items().isEmpty() || !lastCommit.freeText().isEmpty();
             if (!modelChips.isEmpty() && hasUserPart)
-                chipStrip.add(andLabel());
+                cells.add(andLabel());
             for (QueryNode node : lastCommit.root().items())
-                chipStrip.add(userChip(node, open));
+                cells.add(userChip(node, open));
             if (!lastCommit.freeText().isEmpty())
-                chipStrip.add(new ChipComponent("“" + lastCommit.freeText() + "”",
+                cells.add(new ChipComponent("“" + lastCommit.freeText() + "”",
                         "Full-text search in the default fields", ChipComponent.Style.USER, open, null));
         } else if (!docText.isEmpty()) {
             // edited elsewhere - show the raw query text
-            chipStrip.add(plainLabel(docText));
+            cells.add(plainLabel(docText));
         }
 
-        if (chipStrip.getComponentCount() == 0) {
+        if (cells.isEmpty()) {
             JLabel placeholder = plainLabel("Search or add filters...");
             placeholder.setForeground(UIManager.getColor("TextField.inactiveForeground"));
-            chipStrip.add(placeholder);
+            cells.add(placeholder);
         }
 
         setToolTipText(docText.isEmpty()
                 ? GuiUtils.formatToolTip("Search the feature list - click to open the query builder "
                 + "with suggestions for all searchable fields.")
                 : GuiUtils.formatToolTip("Current search query:", docText));
+        relayoutCells();
+    }
+
+    /**
+     * Places as many summary cells into the (single-row) strip as fit the current width, appending
+     * a "…" marker when the rest is clipped so it is clear the summary is shortened. Recomputed on
+     * every resize.
+     */
+    private void relayoutCells() {
+        chipStrip.removeAll();
+        Insets in = getInsets();
+        int available = getWidth() - in.left - in.right - 6; // minus border and a small margin
+        int ellipsisWidth = ellipsisLabel().getPreferredSize().width + 6;
+
+        int used = 0;
+        boolean truncated = false;
+        for (int i = 0; i < cells.size(); i++) {
+            JComponent cell = cells.get(i);
+            int cellWidth = cell.getPreferredSize().width + 3; // + FlowLayout hgap
+            boolean last = i == cells.size() - 1;
+            // once the width is known, stop as soon as a cell (leaving room for "…" unless it is the
+            // last one) would overflow - but always keep at least the first cell
+            if (available > 0 && chipStrip.getComponentCount() > 0
+                    && used + cellWidth + (last ? 0 : ellipsisWidth) > available) {
+                truncated = true;
+                break;
+            }
+            chipStrip.add(cell);
+            used += cellWidth;
+        }
+        if (truncated)
+            chipStrip.add(ellipsisLabel());
+
         chipStrip.revalidate();
         chipStrip.repaint();
+    }
+
+    private JLabel ellipsisLabel() {
+        JLabel label = plainLabel("…");
+        label.setToolTipText(GuiUtils.formatToolTip("The summary is shortened - open the search to see the full query."));
+        return label;
     }
 
     private JComponent userChip(QueryNode node, Runnable open) {

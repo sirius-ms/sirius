@@ -79,6 +79,8 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         Box searchButtonPanel = Box.createHorizontalBox();
         searchButtonPanel.add(view.sourceList.searchBar);
         searchButtonPanel.add(view.sourceList.openFilterPanelButton);
+        // a little breathing room so the (taller) search bar does not butt directly against the list
+        searchButtonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
 
         add(searchButtonPanel, BorderLayout.NORTH);
         add(center, BorderLayout.CENTER);
