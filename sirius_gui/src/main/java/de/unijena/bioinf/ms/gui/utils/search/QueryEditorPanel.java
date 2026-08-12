@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.CompactToggleIcon;
 import de.unijena.bioinf.ms.gui.configs.FilterButton;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
@@ -71,9 +72,13 @@ public class QueryEditorPanel extends JPanel {
 
     private static final int ICON_SIZE = 24; // px; sized to sit on the input row next to the field
     private static final int MAX_LIST_ROWS = 10;
-    /** The finished-chips zone shows at most this many rows, then scrolls (keeps the typing row visible). */
+    /**
+     * The finished-chips zone shows at most this many rows, then scrolls (keeps the typing row visible).
+     */
     private static final int MAX_CHIP_ROWS = 3;
-    /** Vertical gap between chip rows; shared by the chips-zone {@link WrapLayout} and the height cap. */
+    /**
+     * Vertical gap between chip rows; shared by the chips-zone {@link WrapLayout} and the height cap.
+     */
     private static final int CHIP_VGAP = 4;
 
     /**
@@ -83,12 +88,18 @@ public class QueryEditorPanel extends JPanel {
     public record Commit(@NotNull QueryContainer root, @NotNull String freeText, @NotNull String compiled) {
     }
 
-    /** The window/lifecycle concerns the editor delegates to whatever hosts it. */
+    /**
+     * The window/lifecycle concerns the editor delegates to whatever hosts it.
+     */
     public interface Host {
-        /** The editor's content changed height; re-fit the surrounding container (e.g. resize the overlay). */
+        /**
+         * The editor's content changed height; re-fit the surrounding container (e.g. resize the overlay).
+         */
         void editorContentChanged();
 
-        /** The editor asked to be dismissed (Esc / Cancel / after commit). */
+        /**
+         * The editor asked to be dismissed (Esc / Cancel / after commit).
+         */
         void editorCloseRequested();
 
         /**
@@ -136,10 +147,14 @@ public class QueryEditorPanel extends JPanel {
      */
     @Nullable
     private final Runnable clearFilter;
-    /** The overlay's funnel button, kept so its tint can track the active filter state; null when embedded. */
+    /**
+     * The overlay's funnel button, kept so its tint can track the active filter state; null when embedded.
+     */
     @Nullable
     private FilterButton filterButton;
-    /** The field-name display toggle's glyph, kept so it can flip between compact/expanded on toggle. */
+    /**
+     * The field-name display toggle's glyph, kept so it can flip between compact/expanded on toggle.
+     */
     private CompactToggleIcon modeIcon;
 
     // --- builder state ---
@@ -167,11 +182,17 @@ public class QueryEditorPanel extends JPanel {
     private final LinkedHashMap<String, Runnable> pendingModelRemovals = new LinkedHashMap<>();
 
     // --- ui ---
-    /** Upper zone: the finished terms as chips (wraps across rows, height-capped + scrollable). */
+    /**
+     * Upper zone: the finished terms as chips (wraps across rows, height-capped + scrollable).
+     */
     private final JPanel chipsRow;
-    /** The scroll pane wrapping {@link #chipsRow}; kept so rebuilds can scroll it to the newest chips. */
+    /**
+     * The scroll pane wrapping {@link #chipsRow}; kept so rebuilds can scroll it to the newest chips.
+     */
     private JScrollPane chipsScroll;
-    /** Lower zone: the term currently being built - open-group markers, staged fragments and the input. */
+    /**
+     * Lower zone: the term currently being built - open-group markers, staged fragments and the input.
+     */
     private final JPanel typingRow;
     private final PlaceholderTextField input;
     private final JList<TokenInputModel.Suggestion> suggestionList;
@@ -233,25 +254,24 @@ public class QueryEditorPanel extends JPanel {
         Box controls = Box.createHorizontalBox();
 
 
-
         // borderless in-field buttons on the left of the controls (same affordances as the collapsed
         // bar): Clear does a full reset of all filters + the query; the funnel opens the full dialog
-        if (openFilterPanel != null) {
 
-            JButton clear = Buttons.getBackspaceButton(ICON_SIZE, "Clear all filters and the search query", true);
-            clear.setFocusable(false); // must not grab focus (e.g. would auto-close the search overlay)
-            clear.setMargin(new Insets(0,0,0,0));
-            clear.addActionListener(e -> {
-                clearAll();
-                input.requestFocusInWindow();
-            });
-            controls.add(clear);
+        JButton clear = Buttons.getBackspaceButton(ICON_SIZE, "Clear all filters and the search query", true);
+        clear.setFocusable(false); // must not grab focus (e.g. would auto-close the search overlay)
+        clear.setMargin(new Insets(0, 0, 0, 0));
+        clear.addActionListener(e -> {
+            clearAll();
+            input.requestFocusInWindow();
+        });
+        controls.add(clear);
+        if (openFilterPanel != null) {
 
             // hands off via the host so the overlay steps aside before the (modal) dialog opens
             filterButton = Buttons.getFilterButton(ICON_SIZE, "Open the filter panel", true);
             filterButton.setFocusable(false);
             filterButton.addActionListener(e -> host.editorHandoff(openFilterPanel));
-            filterButton.setMargin(new Insets(0,0,0,0));
+            filterButton.setMargin(new Insets(0, 0, 0, 0));
             controls.add(filterButton);
         }
 
@@ -300,11 +320,26 @@ public class QueryEditorPanel extends JPanel {
             discard.setToolTipText("Close without applying (Esc)");
             discard.addActionListener(e -> host.editorCloseRequested());
 
-            JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 4));
+            // icon-only copy of the whole query (filters + user query), left-aligned in the footer
+            ToolbarButton copy = new ToolbarButton(Icons.CLIP_BOARD.derive(ICON_SIZE, ICON_SIZE),
+                    "Copy the full search query to the clipboard", true);
+            copy.setFocusable(false); // a focus grab would auto-close the overlay
+            copy.setMargin(new Insets(0, 0, 0, 0));
+            copy.addActionListener(e -> copyQueryToClipboard());
+            JPanel copyBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
+            copyBox.setOpaque(false);
+            copyBox.add(copy);
+
+            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 4));
+            actions.setOpaque(false);
+            actions.add(apply);
+            actions.add(discard);
+
+            JPanel footer = new JPanel(new BorderLayout());
             footer.setOpaque(false);
             footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Colors.Menu.FILTER_BUTTON));
-            footer.add(apply);
-            footer.add(discard);
+            footer.add(copyBox, BorderLayout.WEST);
+            footer.add(actions, BorderLayout.EAST);
             add(footer, BorderLayout.SOUTH);
         }
 
@@ -358,7 +393,9 @@ public class QueryEditorPanel extends JPanel {
         }
     }
 
-    /** Clears the user's own query (typed clauses + free text); the filter-dialog filters are kept. */
+    /**
+     * Clears the user's own query (typed clauses + free text); the filter-dialog filters are kept.
+     */
     public void clearUserQuery() {
         root = QueryContainer.empty();
         openPath = new int[0];
@@ -389,7 +426,31 @@ public class QueryEditorPanel extends JPanel {
         rebuild();
     }
 
-    /** Labels the field-name display toggle for the current mode. */
+    /**
+     * Copies the whole query as currently shown - the panel facets (minus any staged removals) AND the
+     * user's own query, wrapped for inversion - to the system clipboard. Mirrors the executed-query
+     * composition in {@link FeatureFilterModel} (facets AND free-text segment, {@code *:* AND NOT (...)}
+     * when inverted), but from the live editor state rather than the committed model, so it reflects
+     * unsaved edits.
+     */
+    private void copyQueryToClipboard() {
+        List<QueryNode> facets = new ArrayList<>();
+        for (FilterTerm term : termSupplier.get())
+            if (!pendingModelRemovals.containsKey(term.id()))
+                facets.add(term.toQueryNode());
+        List<LogicOp> ands = new ArrayList<>(Math.max(0, facets.size() - 1));
+        for (int i = 1; i < facets.size(); i++)
+            ands.add(LogicOp.AND);
+        // the user query rides in as the free-text segment, so it becomes "(facets) AND (userQuery)"
+        String userQuery = LuceneQueryCompiler.compile(root, freeTextForCommit());
+        String core = LuceneQueryCompiler.compile(new QueryContainer(facets, ands), userQuery);
+        String whole = filterModel.isInverted() && !core.isBlank() ? "*:* AND NOT (" + core + ")" : core;
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(whole), null);
+    }
+
+    /**
+     * Labels the field-name display toggle for the current mode.
+     */
     private void styleModeToggle(JButton button) {
         boolean compact = renderState.mode() == FieldDisplay.Mode.COMPACT;
         // action-oriented: show the arrows for what a click will do - expand (outward) while compact,
@@ -444,7 +505,9 @@ public class QueryEditorPanel extends JPanel {
         rebuild();
     }
 
-    /** Focuses the input and shows the dropdown; the host calls this once it is on screen. */
+    /**
+     * Focuses the input and shows the dropdown; the host calls this once it is on screen.
+     */
     public void focusInputAndRefresh() {
         input.requestFocusInWindow();
         input.setCaretPosition(input.getText().length());
@@ -783,7 +846,9 @@ public class QueryEditorPanel extends JPanel {
             SwingUtilities.invokeLater(input::requestFocusInWindow);
     }
 
-    /** Scrolls the chips zone to the bottom; a no-op when everything already fits (no scrollbar). */
+    /**
+     * Scrolls the chips zone to the bottom; a no-op when everything already fits (no scrollbar).
+     */
     private void scrollChipsToBottom() {
         JScrollBar bar = chipsScroll.getVerticalScrollBar();
         bar.setValue(bar.getMaximum());
@@ -808,7 +873,9 @@ public class QueryEditorPanel extends JPanel {
             typingRow.add(closeGroupControl());
     }
 
-    /** A dimmed "(" marker shown in the typing row while a group is open (one per nesting level). */
+    /**
+     * A dimmed "(" marker shown in the typing row while a group is open (one per nesting level).
+     */
     private JComponent openGroupMarker() {
         JLabel marker = parenLabel("(");
         marker.setToolTipText(GuiUtils.formatToolTip(
@@ -816,7 +883,9 @@ public class QueryEditorPanel extends JPanel {
         return marker;
     }
 
-    /** The interactive ")" in the typing row: closes the innermost open group (same as typing ")"). */
+    /**
+     * The interactive ")" in the typing row: closes the innermost open group (same as typing ")").
+     */
     private JComponent closeGroupControl() {
         JLabel close = parenLabel(")");
         close.setToolTipText(GuiUtils.formatToolTip("Close the group and keep adding filters (or type \")\")"));
@@ -830,7 +899,9 @@ public class QueryEditorPanel extends JPanel {
         return close;
     }
 
-    /** Closes the innermost open group and returns focus to the input. */
+    /**
+     * Closes the innermost open group and returns focus to the input.
+     */
     private void closeOpenGroup() {
         applyEvent(new TokenInputModel.Event.CloseGroup());
         rebuild();
@@ -865,8 +936,8 @@ public class QueryEditorPanel extends JPanel {
             String text = clause.isFreeText()
                     ? (clause.negated() ? "NOT " : "") + "“" + clause.value1() + "”"
                     : (clause.negated() ? "NOT " : "")
-                    + QueryNodeRenderer.displayField(clause.field(), renderState.mode(), renderState.suffixLengthResolver())
-                    + " " + clauseBody(clause);
+                      + QueryNodeRenderer.displayField(clause.field(), renderState.mode(), renderState.suffixLengthResolver())
+                      + " " + clauseBody(clause);
             String tooltip = clause.isFreeText()
                     // reveal the (possibly faded-out) full phrase on hover, plus what it does
                     ? GuiUtils.formatToolTip("“" + clause.value1() + "”", "Full-text search in the default fields")
@@ -940,7 +1011,8 @@ public class QueryEditorPanel extends JPanel {
      * not clipped either.
      */
     private static int chipRowHeight() {
-        return new ChipComponent("Ag", null, ChipComponent.Style.MODEL, null, () -> {}).getPreferredSize().height + 4;
+        return new ChipComponent("Ag", null, ChipComponent.Style.MODEL, null, () -> {
+        }).getPreferredSize().height + 4;
     }
 
     /**
@@ -1068,7 +1140,7 @@ public class QueryEditorPanel extends JPanel {
             String text = description == null || description.isBlank()
                     ? escape(display)
                     : "<html><b>" + escape(display) + "</b>&nbsp;&nbsp;<span style='color:gray'>"
-                    + escape(truncate(description)) + "</span></html>";
+                      + escape(truncate(description)) + "</span></html>";
             Component component = super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
             ((JComponent) component).setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
             return component;
