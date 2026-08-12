@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 
@@ -37,7 +38,7 @@ public class SoftwareTourMessage extends QuestionDialog {
 
     @Override
     protected void decorateButtonPanel(JPanel boxedButtonPanel) {
-        setUndecorated(true);
+        GuiUtils.setUndecorated(this);
         setBackground(Colors.BACKGROUND);
         getRootPane().setBorder(BorderFactory.createLineBorder(Colors.FOREGROUND_INTERFACE, 1));
 

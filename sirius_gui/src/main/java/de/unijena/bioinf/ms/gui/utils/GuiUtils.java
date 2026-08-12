@@ -19,12 +19,14 @@
 
 package de.unijena.bioinf.ms.gui.utils;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -102,6 +104,10 @@ public class GuiUtils {
     }
 
     public static synchronized void initUI() {
+        // 1. Enable custom window decorations
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JDialog.setDefaultLookAndFeelDecorated(true);
+
         // disable custom scaling on Mac because Mac is preventing it anyway.
         if (SystemUtils.IS_OS_MAC) {
             SiriusProperties.setProperty("de.unijena.bioinf.sirius.customUiScale", "false");
@@ -522,5 +528,23 @@ public class GuiUtils {
         }
 
         return sb.toString();
+    }
+
+    // If GuiUtils enables JDialog.setDefaultLookAndFeelDecorated(true), a new dialog is created with
+    // FlatLaf window decorations (rootpane windowDecorationStyle == PLAIN_DIALOG). For this floating,
+    // inline-expansion overlay we clear that decoration style so FlatLaf draws no title bar. The
+    // USE_WINDOW_DECORATIONS client property alone does not undo the already-decorated rootpane;
+    // resetting the standard windowDecorationStyle to NONE is what actually removes it.
+
+    public static void setUndecorated(JFrame frame) {
+        frame.setUndecorated(true);
+        frame.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+        frame.getRootPane().putClientProperty(FlatClientProperties.USE_WINDOW_DECORATIONS, false);
+    }
+
+    public static void setUndecorated(JDialog dialog) {
+        dialog.setUndecorated(true);
+        dialog.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+        dialog.getRootPane().putClientProperty(FlatClientProperties.USE_WINDOW_DECORATIONS, false);
     }
 }
