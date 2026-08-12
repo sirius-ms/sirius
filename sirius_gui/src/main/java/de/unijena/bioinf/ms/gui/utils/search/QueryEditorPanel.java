@@ -607,6 +607,13 @@ public class QueryEditorPanel extends JPanel {
     private void applyEvent(TokenInputModel.Event event) {
         if (event instanceof TokenInputModel.Event.ClauseCompleted completed) {
             root = QueryTreeOps.append(root, openPath, completed.clause(), completed.logic());
+        } else if (event instanceof TokenInputModel.Event.QueryParsed parsed) {
+            // splice the parsed query into the open container: first item joins the existing chips by
+            // the connector logic, the rest by the parsed query's own connectors
+            List<QueryNode> items = parsed.container().items();
+            List<LogicOp> logics = parsed.container().logics();
+            for (int i = 0; i < items.size(); i++)
+                root = QueryTreeOps.append(root, openPath, items.get(i), i == 0 ? parsed.logic() : logics.get(i - 1));
         } else if (event instanceof TokenInputModel.Event.OpenGroup group) {
             QueryTreeOps.PathResult result = QueryTreeOps.openGroup(root, openPath, group.negated(), group.logic());
             root = result.root();

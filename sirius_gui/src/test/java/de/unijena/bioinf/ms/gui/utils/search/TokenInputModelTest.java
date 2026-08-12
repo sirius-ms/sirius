@@ -413,4 +413,35 @@ public class TokenInputModelTest {
         model.choose(model.suggestions("[").get(0));
         assertNotEquals(operatorPrompt, model.stagePrompt());
     }
+
+    // --- parse-as-query entry ---
+
+    @Test
+    public void testStructuredTextOffersParseAsQuery() {
+        var suggestions = model.suggestions("ionMass:[100 TO 200]");
+        assertTrue(suggestions.stream().anyMatch(s -> s instanceof TokenInputModel.Suggestion.FreeTextSuggestion),
+                "free text is always offered");
+        assertTrue(suggestions.stream().anyMatch(s -> s instanceof TokenInputModel.Suggestion.ParseQuerySuggestion),
+                "a field:range query should also offer 'parse as query'");
+    }
+
+    @Test
+    public void testPlainWordsDoNotOfferParseAsQuery() {
+        var suggestions = model.suggestions("caffeine");
+        assertTrue(suggestions.stream().anyMatch(s -> s instanceof TokenInputModel.Suggestion.FreeTextSuggestion));
+        assertFalse(suggestions.stream().anyMatch(s -> s instanceof TokenInputModel.Suggestion.ParseQuerySuggestion),
+                "plain words are just free text - parse-as-query would be redundant");
+    }
+
+    @Test
+    public void testChooseParseAsQueryEmitsParsedQuery() {
+        TokenInputModel.Suggestion parse = model.suggestions("quality:GOOD OR quality:DECENT").stream()
+                .filter(s -> s instanceof TokenInputModel.Suggestion.ParseQuerySuggestion)
+                .findFirst().orElseThrow();
+        TokenInputModel.Event event = model.choose(parse).orElseThrow();
+        assertInstanceOf(TokenInputModel.Event.QueryParsed.class, event);
+        QueryContainer container = ((TokenInputModel.Event.QueryParsed) event).container();
+        assertEquals(2, container.items().size());
+        assertEquals(List.of(LogicOp.OR), container.logics());
+    }
 }
