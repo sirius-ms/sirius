@@ -111,12 +111,12 @@ public class TokenInputModel {
         record OperatorSuggestion(@NotNull NumberOp op) implements Suggestion {
             @Override
             public String display() {
-                return op.getLabel();
+                return op.getSymbol(); // the same terse form the chips use (e.g. >=, [ TO ])
             }
 
             @Override
             public String description() {
-                return null;
+                return op.getDescription(); // human-readable, e.g. "greater than or equal"
             }
         }
 
@@ -259,8 +259,11 @@ public class TokenInputModel {
     }
 
     private List<Suggestion> operatorSuggestions(String prefix) {
+        // match the terse symbol (">", "[") or the human phrase ("greater", "between") so typing
+        // either narrows the list
         return java.util.Arrays.stream(NumberOp.values())
-                .filter(op -> op.getLabel().toLowerCase(Locale.ROOT).startsWith(prefix))
+                .filter(op -> op.getSymbol().toLowerCase(Locale.ROOT).startsWith(prefix)
+                        || op.getDescription().toLowerCase(Locale.ROOT).startsWith(prefix))
                 .map(op -> (Suggestion) new Suggestion.OperatorSuggestion(op))
                 .toList();
     }
