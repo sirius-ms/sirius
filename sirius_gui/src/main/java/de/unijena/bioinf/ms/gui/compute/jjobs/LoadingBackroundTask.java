@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.gui.compute.jjobs;
 
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.loading.JProgressBarPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.ProgressPanel;
 import lombok.Getter;
@@ -166,7 +167,7 @@ public class LoadingBackroundTask<T> extends JDialog implements ActionListener {
 
         setModalityType(ModalityType.APPLICATION_MODAL);
 
-        setUndecorated(true);
+        GuiUtils.setUndecorated(this);
         pack();
         setLocationRelativeTo(getOwner());
         setResizable(false);
