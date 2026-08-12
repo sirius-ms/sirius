@@ -256,6 +256,18 @@ public class TokenInputModelTest {
                 model.choose(suggestion(")", "")).orElseThrow());
     }
 
+    @Test
+    public void testConnectorStageInsideOpenGroupOffersCloseGroup() {
+        // sibling + a group open -> connector stage; ) is offered here too so the group can be closed
+        // from the keyboard (select + Tab) right after a committed clause, without adding another
+        model.updateContext(FIELDS, true, true);
+        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage());
+        List<String> displays = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
+        assertEquals(List.of("AND", "OR", ")"), displays);
+        assertInstanceOf(TokenInputModel.Event.CloseGroup.class,
+                model.choose(suggestion(")", "")).orElseThrow());
+    }
+
     // --- keyless full-text clause ---
 
     @Test
