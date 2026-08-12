@@ -19,7 +19,6 @@
 package de.unijena.bioinf.ms.gui.configs;
 
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,7 +35,7 @@ public class FilterButton extends ToolbarButton {
     private final Color idleColor;
 
     public FilterButton(int size, @Nullable Color idleColor, String tooltip, boolean borderless) {
-        this(new FunnelIcon(size, idleColor != null ? idleColor : defaultIdleColor()), tooltip, borderless);
+        this(new FunnelIcon(size, idleColor != null ? idleColor : Colors.searchFieldIconColor()), tooltip, borderless);
     }
 
     private FilterButton(FunnelIcon icon, String tooltip, boolean borderless) {
@@ -51,12 +50,5 @@ public class FilterButton extends ToolbarButton {
                 ? (inverted ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON)
                 : idleColor);
         repaint();
-    }
-
-    /** FlatLaf's search-field clear-icon colour, or the data foreground if the L&F does not define it. */
-    @NotNull
-    private static Color defaultIdleColor() {
-        Color c = UIManager.getColor("SearchField.clearIconColor");
-        return c != null ? c : Colors.FOREGROUND_DATA;
     }
 }

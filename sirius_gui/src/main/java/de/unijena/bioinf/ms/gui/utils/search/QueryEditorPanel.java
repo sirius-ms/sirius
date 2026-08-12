@@ -67,6 +67,7 @@ import java.util.function.Supplier;
 @Slf4j
 public class QueryEditorPanel extends JPanel {
 
+    private static final int ICON_SIZE = 24; // px; sized to sit on the input row next to the field
     private static final int MAX_LIST_ROWS = 10;
 
     /**
@@ -210,9 +211,8 @@ public class QueryEditorPanel extends JPanel {
         // borderless in-field buttons on the left of the controls (same affordances as the collapsed
         // bar): Clear does a full reset of all filters + the query; the funnel opens the full dialog
         if (openFilterPanel != null) {
-            int iconSize = 24;//input.getPreferredSize().height;
 
-            JButton clear = Buttons.getBackspaceButton(iconSize, "Clear all filters and the search query", true);
+            JButton clear = Buttons.getBackspaceButton(ICON_SIZE, "Clear all filters and the search query", true);
             clear.setFocusable(false); // must not grab focus (e.g. would auto-close the search overlay)
             clear.setMargin(new Insets(0,0,0,0));
             clear.addActionListener(e -> {
@@ -222,7 +222,7 @@ public class QueryEditorPanel extends JPanel {
             controls.add(clear);
 
             // hands off via the host so the overlay steps aside before the (modal) dialog opens
-            filterButton = Buttons.getFilterButton(iconSize, "Open the filter panel", true);
+            filterButton = Buttons.getFilterButton(ICON_SIZE, "Open the filter panel", true);
             filterButton.setFocusable(false);
             filterButton.addActionListener(e -> host.editorHandoff(openFilterPanel));
             filterButton.setMargin(new Insets(0,0,0,0));
@@ -232,7 +232,7 @@ public class QueryEditorPanel extends JPanel {
         // field-name display toggle (compact terminal names <-> fully-qualified): a borderless icon
         // button whose expand/collapse arrows show the ACTION a click performs (expand arrows while
         // names are compact, collapse arrows while fully-qualified), matching the other in-field icons
-        modeIcon = new CompactToggleIcon(24, searchIconColor(), renderState.mode() == FieldDisplay.Mode.COMPACT);
+        modeIcon = new CompactToggleIcon(ICON_SIZE, Colors.searchFieldIconColor(), renderState.mode() == FieldDisplay.Mode.COMPACT);
         ToolbarButton modeToggle = new ToolbarButton(modeIcon, null, true);
         modeToggle.setFocusable(false);
         modeToggle.setMargin(new Insets(0, 0, 0, 0));
@@ -254,11 +254,12 @@ public class QueryEditorPanel extends JPanel {
         top.add(controlsAligned, BorderLayout.EAST);
         add(top, BorderLayout.NORTH);
 
-        // the floating overlay's main actions live in a left-aligned footer (like the app's dialogs);
+        // the floating overlay's main actions live in a right-aligned footer (like the app's dialogs);
         // the embedded editor omits it - the filter dialog owns commit/dismissal (Apply / Discard)
         if (!embedded) {
             JButton apply = new JButton("Apply");
-            apply.setToolTipText("Apply filter (search) and close (Enter)");
+            apply.setFocusable(false); // keep keyboard focus in the input (Enter still applies)
+            apply.setToolTipText("Apply the filter and close (Enter)");
             apply.addActionListener(e -> runSearch());
 
             JButton discard = new JButton("Discard");
@@ -365,12 +366,6 @@ public class QueryEditorPanel extends JPanel {
                 ? "Show fully-qualified field names"
                 : "Show compact field names"));
         button.repaint();
-    }
-
-    /** The muted colour shared by the in-field search icons (FlatLaf's clear-icon colour, else data foreground). */
-    private static Color searchIconColor() {
-        Color c = UIManager.getColor("SearchField.clearIconColor");
-        return c != null ? c : Colors.FOREGROUND_DATA;
     }
 
     // --- session lifecycle (driven by the host) ---
