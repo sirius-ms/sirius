@@ -32,4 +32,13 @@ public interface FilterEditorHost {
      * Reveal the full editor for {@code term} (e.g. open the filter dialog on the tab that owns it).
      */
     void openEditorFor(@NotNull FilterTerm term);
+
+    /**
+     * Remove {@code term} from the query by resetting the control that backs it. Used by the embedded
+     * dialog renderer, whose panel chips mirror widget state and so cannot be removed by mutating the
+     * throwaway snapshot model directly. The default is a no-op for hosts that stage removals in the
+     * editor itself (the overlay).
+     */
+    default void removeFilter(@NotNull FilterTerm term) {
+    }
 }

@@ -497,7 +497,17 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         SearchableFieldsProvider fieldsProvider = new SearchableFieldsProvider(
                 gui.getSiriusClient(), gui.getProjectManager().getProjectId());
         SearchRenderState renderState = new SearchRenderState(fieldsProvider);
-        FilterEditorHost jumpToTab = term -> selectTabForFacet(term.id());
+        FilterEditorHost jumpToTab = new FilterEditorHost() {
+            @Override
+            public void openEditorFor(@NotNull FilterTerm term) {
+                selectTabForFacet(term.id()); // a model chip was clicked -> jump to its control
+            }
+
+            @Override
+            public void removeFilter(@NotNull FilterTerm term) {
+                resetFacet(term.id()); // the chip's x -> reset the backing widget (like every edit: until Apply)
+            }
+        };
         QueryEditorPanel.Host host = new QueryEditorPanel.Host() {
             @Override
             public void editorContentChanged() {
@@ -649,6 +659,68 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
         candidateSpinner.setValue(1);
         blankSpinner.setValue(filterModel.getSampleBlankFoldChange().getMinFoldChange());
+    }
+
+    /**
+     * Resets the single filter facet backing an embedded query-editor chip to its inactive state,
+     * invoked when the chip's remove (x) is clicked. It only touches the dialog widgets - like any
+     * other edit here, it takes effect on Apply and is reverted by Discard/Esc. The facet ids match
+     * {@link de.unijena.bioinf.ms.gui.utils.filter.PanelQueryNodeFactory}; the base before any '.' is
+     * the widget group (categorized quality is "quality.&lt;id&gt;").
+     */
+    private void resetFacet(@NotNull String facetId) {
+        String base = facetId.contains(".") ? facetId.substring(0, facetId.indexOf('.')) : facetId;
+        switch (base) {
+            case "mz" -> {
+                minMzSpinner.setValue(filterModel.getMinMz());
+                maxMzSpinner.setValue(filterModel.getMaxMz());
+            }
+            case "rt" -> {
+                minRtSpinner.setValue(filterModel.getMinRt());
+                maxRtSpinner.setValue(filterModel.getMaxRt());
+            }
+            case "confidence" -> {
+                minConfidenceSpinner.setValue(filterModel.getMinConfidence());
+                maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
+            }
+            case "hasMs1" -> hasMs1.setSelected(false);
+            case "hasMsMs" -> hasMsMs.setSelected(false);
+            case "adducts" -> adductOptions.checkBoxList.uncheckAll();
+            case "quality" -> resetQualityFacet(facetId);
+            case "elements" -> elementsField.setText(null);
+            case "blank" -> {
+                blankFilter.setSelected(false);
+                blankSpinner.setValue(filterModel.getSampleBlankFoldChange().getMinFoldChange());
+            }
+            case "lipid" -> lipidFilterBox.setSelectedItem(FeatureFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
+            case "db" -> {
+                searchDBList.checkBoxList.uncheckAll();
+                candidateSpinner.setValue(1);
+            }
+            default -> {
+                return; // unknown facet - nothing to reset, leave the chips untouched
+            }
+        }
+        // a programmatic checkbox / combo reset does not fire the live-refresh listeners, so re-render
+        queryEditor.rebuild();
+    }
+
+    /** Resets the overall ("quality") or a categorized ("quality.&lt;id&gt;") quality filter panel. */
+    private void resetQualityFacet(@NotNull String facetId) {
+        if (facetId.equals("quality")) {
+            overallQualityPanel.reset();
+            return;
+        }
+        String filterId = facetId.substring(facetId.indexOf('.') + 1);
+        Iterator<QualityFilterPanel> panelIt = qualityPanels.iterator();
+        Iterator<QualityFilter> filterIt = filterModel.getCategorizedQualityFilters().iterator();
+        while (panelIt.hasNext() && filterIt.hasNext()) {
+            QualityFilterPanel panel = panelIt.next();
+            if (filterIt.next().getId().equals(filterId)) {
+                panel.reset();
+                return;
+            }
+        }
     }
 
     public double getMinMz() {
