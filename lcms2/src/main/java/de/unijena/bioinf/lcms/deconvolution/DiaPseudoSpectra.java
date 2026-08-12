@@ -7,6 +7,7 @@ import de.unijena.bioinf.lcms.msms.MsMsTraceReference;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.ArrayList;
@@ -28,10 +29,10 @@ import java.util.Locale;
  * {@link DiaChannel#isolationWindowFor}, not the acquisition window, which for a multiplexed channel would not
  * even be contiguous.
  * <p>
- * Peak intensities are the highest a fragment reaches inside the feature, not its intensity at the precursor's
- * apex: a channel samples once per cycle and therefore often does not measure at the apex at all. That also keeps
- * the meaning of a peak height the same as in a real MS2 spectrum, which matters because these spectra are
- * compared with DDA ones by cosine further down.
+ * Peak intensities are the share of the fragment that belongs to this precursor, from
+ * {@link FragmentIntensityShares}, not the fragment's full height. A fragment that several co-eluting precursors
+ * could have produced is split between them, so the spectra together account for the ion current that was measured
+ * rather than a multiple of it, and a peak's height says how much of it belongs where it was written.
  * <p>
  * Note that the spectra written here become part of the sample's MS2 spectra, and a synthetic header carries an
  * isolation window of its own. Anything reconstructing the acquisition scheme therefore has to ignore them, which
@@ -74,23 +75,45 @@ public final class DiaPseudoSpectra {
     }
 
     public static Result write(ProcessedSample sample, DiaDeconvolution.Result deconvolution) {
-        return write(sample, deconvolution, DEFAULT_MIN_PROBABILITY);
+        return write(sample, deconvolution, DEFAULT_MIN_PROBABILITY, true);
     }
 
     public static Result write(ProcessedSample sample, DiaDeconvolution.Result deconvolution, double minProbability) {
+        return write(sample, deconvolution, minProbability, true);
+    }
+
+    public static Result write(ProcessedSample sample, DiaDeconvolution.Result deconvolution, double minProbability,
+                               boolean intensityShares) {
         int spectra = 0, peaks = 0, without = 0;
         for (DiaDeconvolution.ChannelResult channel : deconvolution.getChannels()) {
             final List<PrecursorFeature> precursors = channel.getGraph().getPrecursors();
             final List<ContiguousTrace> fragments = channel.getGraph().getFragments();
 
-            // fragments per precursor feature, from the assignments
+            // fragments per precursor feature, from the assignments, together with the share of the fragment that
+            // belongs to that precursor: a fragment assigned to several of them is split between them rather than
+            // written into each of their spectra at its full height
             final List<IntArrayList> byPrecursor = new ArrayList<>(precursors.size());
-            for (int p = 0; p < precursors.size(); ++p) byPrecursor.add(new IntArrayList());
+            final List<DoubleArrayList> intensities = new ArrayList<>(precursors.size());
+            for (int p = 0; p < precursors.size(); ++p) {
+                byPrecursor.add(new IntArrayList());
+                intensities.add(new DoubleArrayList());
+            }
             for (int f = 0; f < fragments.size(); ++f) {
                 final FragmentAssignment assignment = channel.assignmentOf(f);
+                final IntArrayList assignedTo = new IntArrayList(assignment.size());
+                final List<PrecursorFeature> candidates = new ArrayList<>(assignment.size());
                 for (int rank = 0; rank < assignment.size(); ++rank) {
                     if (assignment.probabilityAt(rank) < minProbability) continue;  // sorted, but be explicit
-                    byPrecursor.get(assignment.precursorIndexAt(rank)).add(f);
+                    assignedTo.add(assignment.precursorIndexAt(rank));
+                    candidates.add(precursors.get(assignment.precursorIndexAt(rank)));
+                }
+                if (assignedTo.isEmpty()) continue;
+                final double[] shares = FragmentIntensityShares.of(channel.getChannel(), candidates,
+                        fragments.get(f), intensityShares);
+                for (int k = 0; k < assignedTo.size(); ++k) {
+                    if (shares[k] <= 0) continue;
+                    byPrecursor.get(assignedTo.getInt(k)).add(f);
+                    intensities.get(assignedTo.getInt(k)).add(shares[k]);
                 }
             }
 
@@ -102,10 +125,8 @@ public final class DiaPseudoSpectra {
                 }
                 final PrecursorFeature precursor = precursors.get(p);
                 final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(assigned.size());
-                for (int fragmentIndex : assigned) {
-                    final ContiguousTrace fragment = fragments.get(fragmentIndex);
-                    final double intensity = precursor.getWindow().apexIntensityIn(fragment);
-                    if (intensity > 0) buffer.addPeak(fragment.averagedMz(), intensity);
+                for (int k = 0; k < assigned.size(); ++k) {
+                    buffer.addPeak(fragments.get(assigned.getInt(k)).averagedMz(), intensities.get(p).getDouble(k));
                 }
                 if (buffer.isEmpty()) {
                     ++without;

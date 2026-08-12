@@ -39,18 +39,21 @@ final class PipelineRun {
     final double alignmentSeconds;
     /** one per sample, in the order the files were given, and null for a sample that was not deconvoluted */
     final List<DiaReport> diaReports;
+    /** what stage two reported, or null if it did not run */
+    final String refinement;
 
     private PipelineRun(String name, List<AlignedFeatures> features, double processingSeconds,
-                        double alignmentSeconds, List<DiaReport> diaReports) {
+                        double alignmentSeconds, List<DiaReport> diaReports, String refinement) {
         this.name = name;
         this.features = features;
         this.processingSeconds = processingSeconds;
         this.alignmentSeconds = alignmentSeconds;
         this.diaReports = diaReports;
+        this.refinement = refinement;
     }
 
     static PipelineRun run(Path file, String name) throws IOException {
-        return run(List.of(file), name, null);
+        return run(List.of(file), name, null, true);
     }
 
     /**
@@ -58,14 +61,15 @@ final class PipelineRun {
      * several input files. With one file the alignment is trivial but still runs, so a single sample and a
      * replicate group go through exactly the same code.
      *
-     * @param configure applied to the deconvolution before processing starts, to vary its settings between runs
+     * @param configure applied to the processing before it starts, to vary its settings between runs
+     * @param refine    whether to redo the DIA assignment over the final feature boundaries, i.e. stage two. Off is
+     *                  what the pipeline did before stage two existed, which is what it has to be compared against.
      */
-    static PipelineRun run(List<Path> files, String name, Consumer<DiaDeconvolution> configure) throws IOException {
+    static PipelineRun run(List<Path> files, String name, Consumer<LCMSProcessing> configure, boolean refine)
+            throws IOException {
         final CollectingAdapter adapter = new CollectingAdapter();
         final LCMSProcessing processing = new LCMSProcessing(adapter, false);
-        final DiaDeconvolution deconvolution = new DiaDeconvolution();
-        if (configure != null) configure.accept(deconvolution);
-        processing.setDiaDeconvolution(deconvolution);
+        if (configure != null) configure.accept(processing);
         try {
             final long started = System.currentTimeMillis();
             final List<ProcessedSample> samples = new ArrayList<>(files.size());
@@ -73,6 +77,7 @@ final class PipelineRun {
             final long afterSample = System.currentTimeMillis();
             final AlignmentBackbone backbone = processing.align();
             final ProcessedSample merged = processing.merge(backbone);
+            if (refine) processing.refineDiaAssignments(merged, backbone);
             final int featureCount = processing.extractFeaturesAndExportToProjectSpace(merged, backbone);
             final long finished = System.currentTimeMillis();
             if (featureCount != adapter.features.size()) {
@@ -82,7 +87,7 @@ final class PipelineRun {
             final List<DiaReport> reports = new ArrayList<>(samples.size());
             for (ProcessedSample sample : samples) reports.add(processing.getDiaReport(sample).orElse(null));
             return new PipelineRun(name, adapter.features, (afterSample - started) / 1000d,
-                    (finished - afterSample) / 1000d, reports);
+                    (finished - afterSample) / 1000d, reports, processing.getDiaRefinementReport());
         } finally {
             processing.closeStorages();
         }

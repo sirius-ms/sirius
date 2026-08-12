@@ -6,6 +6,7 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.ToDoubleFunction;
 
 /**
  * Picks the precursor features that stand in for "this fragment does not belong here".
@@ -92,12 +93,21 @@ public final class DiaDecoys {
      * which random sampling would not: the null distribution has to come out the same on a rerun of the same file.
      */
     public static List<PrecursorFeature> thin(List<PrecursorFeature> candidates, int maxDecoys) {
+        return thin(candidates, maxDecoys, PrecursorFeature::getRetentionTime);
+    }
+
+    /**
+     * The same, for anything that has a retention time. Stage two draws its decoys from features aligned across
+     * samples rather than from the features of one sample, and there is no reason for the two to thin differently.
+     */
+    public static <T> List<T> thin(List<T> candidates, int maxDecoys, ToDoubleFunction<T> retentionTime) {
         if (candidates.size() <= maxDecoys) return candidates;
-        candidates.sort(Comparator.comparingDouble(PrecursorFeature::getRetentionTime));
-        final List<PrecursorFeature> thinned = new ArrayList<>(maxDecoys);
-        final double stride = candidates.size() / (double) maxDecoys;
+        final List<T> sorted = new ArrayList<>(candidates);
+        sorted.sort(Comparator.comparingDouble(retentionTime));
+        final List<T> thinned = new ArrayList<>(maxDecoys);
+        final double stride = sorted.size() / (double) maxDecoys;
         for (int k = 0; k < maxDecoys; ++k) {
-            thinned.add(candidates.get(Math.min(candidates.size() - 1, (int) (k * stride))));
+            thinned.add(sorted.get(Math.min(sorted.size() - 1, (int) (k * stride))));
         }
         return thinned;
     }

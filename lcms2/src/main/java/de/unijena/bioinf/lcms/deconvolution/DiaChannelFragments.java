@@ -48,13 +48,27 @@ public final class DiaChannelFragments {
     }
 
     /**
+     * @param minScanPoints how many of the channel's scan points a fragment has to be followed across, see
+     *                      {@link de.unijena.bioinf.lcms.traceextractor.AbstractTracePicker#getMinScanPoints}
+     */
+    public static Result pickAll(ProcessedSample sample, DiaChannel channel, float noiseLevel, int minScanPoints) {
+        return pickAll(sample, channel, noiseLevel, new NoSegmentation(), minScanPoints);
+    }
+
+    /**
      * @param noiseLevel noise level of this channel, see {@link DiaChannelNoise}
      * @param segmenter  used by the picker while following a trace
      */
     public static Result pickAll(ProcessedSample sample, DiaChannel channel, float noiseLevel,
                                  TraceSegmentationStrategy segmenter) {
+        return pickAll(sample, channel, noiseLevel, segmenter, DiaDeconvolution.DEFAULT_MIN_FRAGMENT_SCAN_POINTS);
+    }
+
+    public static Result pickAll(ProcessedSample sample, DiaChannel channel, float noiseLevel,
+                                 TraceSegmentationStrategy segmenter, int minScanPoints) {
         final Ms2ChannelTraceCache cache = new Ms2ChannelTraceCache(sample, channel);
         final Ms2ChannelTracePicker picker = new Ms2ChannelTracePicker(sample, channel, noiseLevel, cache, segmenter);
+        picker.setMinScanPoints(minScanPoints);
         final IntOpenHashSet seen = new IntOpenHashSet();
         final List<ContiguousTrace> traces = new ArrayList<>();
         int seedsTried = 0, seedsBelowNoise = 0;

@@ -15,12 +15,25 @@ import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Optional;
 
 public abstract class AbstractTracePicker {
 
     protected final static int MIN_SCANPOINT_THRESHOLD = 3;
+
+    /**
+     * How many scan points a trace has to span to be kept.
+     * <p>
+     * Three is right for MS1, where a peak covers tens of scans and anything shorter is noise. It is not right for
+     * the fragments of a DIA channel: a channel is sampled once per cycle, so a chromatographic peak is only about
+     * four scan points wide there and a single missed scan discards the fragment altogether. Measured against a DDA
+     * measurement of the same sample, that requirement costs about a quarter of the fragments that are present in
+     * the raw scans at all.
+     */
+    @Getter @Setter
+    protected int minScanPoints = MIN_SCANPOINT_THRESHOLD;
 
     protected TraceCachingStrategy.Cache cache;
     protected TraceSegmentationStrategy segmentationStrategy;
@@ -152,7 +165,7 @@ public abstract class AbstractTracePicker {
         extendLeft(spectrumIds, masses, intensities, initialId);
         rev(spectrumIds,masses,intensities);
         extendRight(spectrumIds, masses, intensities, initialId);
-        if (spectrumIds.size() < MIN_SCANPOINT_THRESHOLD) return Optional.empty();
+        if (spectrumIds.size() < minScanPoints) return Optional.empty();
         return Optional.of(makeTrace(spectrumIds, masses, intensities));
     }
 

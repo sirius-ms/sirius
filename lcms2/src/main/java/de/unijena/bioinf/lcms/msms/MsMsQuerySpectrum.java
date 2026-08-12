@@ -108,6 +108,9 @@ public class MsMsQuerySpectrum {
     }
 
     private SimpleSpectrum filtered(SimpleSpectrum originalSpectrum) {
+        // a spectrum without peaks has nothing to filter, and asking for its base peak would throw. This happens
+        // when a computed spectrum ends up empty, e.g. a DIA pseudo spectrum whose fragments were all reassigned.
+        if (originalSpectrum.isEmpty()) return originalSpectrum;
         // remove everything below 0.005% intensity and keep top 60 peaks
         Spectrum<Peak> intensityOrderedSpectrum = Spectrums.getIntensityOrderedSpectrum(originalSpectrum);
         final double threshold = intensityOrderedSpectrum.getIntensityAt(0)*0.005;

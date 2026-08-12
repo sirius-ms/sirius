@@ -60,6 +60,19 @@ public class DiaChannel {
     /**
      * @return number of MS2 scans in this channel, i.e. the length of its retention time axis
      */
+    /**
+     * The identity of this channel, independent of the sample it was reconstructed in. Channel ids are handed out
+     * per sample and say nothing across samples; this is what says that two samples measured the same thing.
+     */
+    DiaChannelKey key() {
+        final float[] bounds = new float[2 * numberOfWindows()];
+        for (int k = 0; k < numberOfWindows(); ++k) {
+            bounds[2 * k] = windowLowerBound(k);
+            bounds[2 * k + 1] = windowUpperBound(k);
+        }
+        return DiaChannelKey.of(bounds, getCollisionEnergy());
+    }
+
     public int numberOfScans() {
         return axis.length();
     }

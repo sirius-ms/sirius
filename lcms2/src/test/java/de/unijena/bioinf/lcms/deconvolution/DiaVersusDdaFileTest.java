@@ -1,15 +1,11 @@
 package de.unijena.bioinf.lcms.deconvolution;
 
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import de.unijena.bioinf.lcms.LCMSProcessing;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -45,27 +41,11 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 public class DiaVersusDdaFileTest {
 
-    /** for matching a fragment peak of one spectrum against the peaks of another */
-    private static final Deviation PEAK_DEVIATION = new Deviation(10, 0.002);
 
-    /** for matching a feature of one run against the features of another */
-    private static final Deviation PRECURSOR_DEVIATION = new Deviation(10, 0.002);
 
-    /** the same compound in two runs of the same sample on the same column, in seconds */
-    private static final double DEFAULT_RT_TOLERANCE = 20d;
 
-    /** a decoy has to be far enough away that it cannot be the same compound, in seconds */
-    private static final double MIN_DECOY_RT_DISTANCE = 120d;
 
-    /**
-     * Peaks this close to the precursor are the surviving precursor ion and its isotopes. They are in every
-     * spectrum of that precursor by construction, ours as much as the DDA one, so counting them would report
-     * agreement that is not evidence of anything.
-     */
-    private static final double PRECURSOR_REGION = 1.5;
 
-    /** below this share of the base peak a DDA peak is not reliably a fragment, so recall is not asked about it */
-    private static final double MIN_RELATIVE_INTENSITY_FOR_RECALL = 0.01;
 
     @Test
     public void compareAgainstDda() throws IOException {
@@ -76,43 +56,51 @@ public class DiaVersusDdaFileTest {
         assumeTrue(!diaFiles.isEmpty() && ddaFile.isPresent(),
                 "no file pair given, set SIRIUS_DIA_TEST_FILE and SIRIUS_DDA_TEST_FILE");
 
-        final double rtTolerance = doubleFromEnvironment("SIRIUS_MATCH_RT_TOLERANCE", DEFAULT_RT_TOLERANCE);
+        final double rtTolerance = doubleFromEnvironment("SIRIUS_MATCH_RT_TOLERANCE", SpectrumAgreement.DEFAULT_RT_TOLERANCE);
         final Double quantile = System.getenv("SIRIUS_DIA_NOISE_QUANTILE") == null ? null
                 : Double.parseDouble(System.getenv("SIRIUS_DIA_NOISE_QUANTILE"));
 
         // only the spectra are kept from each run: three whole runs' features at once do not fit in a test JVM
-        final Run reference = Run.of(List.of(ddaFile.get()), "DDA reference", null);
-        final Run priorOn = Run.of(diaFiles, "DIA, prior on", deconvolution -> {
-            deconvolution.setIntensityPrior(true);
-            if (quantile != null) deconvolution.setNoiseQuantile(quantile);
-        });
-        final Run priorOff = Run.of(diaFiles, "DIA, prior off", deconvolution -> {
-            deconvolution.setIntensityPrior(false);
-            if (quantile != null) deconvolution.setNoiseQuantile(quantile);
-        });
+        final Consumer<LCMSProcessing> settings = processing -> {
+            if (quantile != null) DiaPipelineFileTest.deconvolutionOf(processing).setNoiseQuantile(quantile);
+            final String keep = System.getenv("SIRIUS_DIA_KEEP_UNREFINED");
+            if (keep != null && !keep.isBlank()) {
+                DiaPipelineFileTest.refinementOf(processing).setKeepUnrefinedSpectra(Boolean.parseBoolean(keep));
+            }
+            final String minPoints = System.getenv("SIRIUS_DIA_MIN_POINTS");
+            if (minPoints != null && !minPoints.isBlank()) {
+                DiaPipelineFileTest.deconvolutionOf(processing).setMinFragmentScanPoints(Integer.parseInt(minPoints));
+            }
+            final String decoyQuantile = System.getenv("SIRIUS_DIA_DECOY_QUANTILE");
+            if (decoyQuantile != null && !decoyQuantile.isBlank()) {
+                DiaPipelineFileTest.refinementOf(processing).setDecoyQuantile(Double.parseDouble(decoyQuantile));
+            }
+        };
+        final SpectrumAgreement.Run reference = SpectrumAgreement.Run.of(List.of(ddaFile.get()), "DDA reference", null, false);
+        final SpectrumAgreement.Run before = SpectrumAgreement.Run.of(diaFiles, "stage 1", settings, false);
+        final SpectrumAgreement.Run after = SpectrumAgreement.Run.of(diaFiles, "stage 1 + 2", settings, true);
 
         System.out.printf("%n=== reference: %s ===%n", ddaFile.get().getFileName());
         System.out.printf("%d features, %d with a merged MS/MS%n", reference.featureCount, reference.spectra.size());
 
-        final Agreement on = score(priorOn, reference, rtTolerance);
-        final Agreement off = score(priorOff, reference, rtTolerance);
+        final SpectrumAgreement.Agreement first = SpectrumAgreement.score(before, reference, rtTolerance);
+        final SpectrumAgreement.Agreement second = SpectrumAgreement.score(after, reference, rtTolerance);
         System.out.printf("%n=== agreement with the reference (retention time tolerance %.0f s) ===%n", rtTolerance);
-        System.out.printf("%-15s %8s %8s %8s %11s %10s %10s %8s%n",
-                "", "features", "matched", "peaks", "confirmed", "by decoy", "weighted", "recall");
-        System.out.println(on.describe());
-        System.out.println(off.describe());
+        System.out.println(SpectrumAgreement.header());
+        System.out.println(first.describe());
+        System.out.println(second.describe());
 
-        final Removed removed = scoreRemovedPeaks(priorOff, priorOn, reference, rtTolerance);
-        System.out.printf("%n=== the peaks the prior removes (%d compounds present in all three runs) ===%n",
-                removed.features);
-        System.out.println(removed.describe());
+        final Changes changes = scoreChanges(before, after, reference, rtTolerance);
+        System.out.printf("%n=== what stage two changed (%d compounds present in all three runs) ===%n",
+                changes.features);
+        System.out.println(changes.describe());
 
         assertTrue(!reference.spectra.isEmpty(), "the reference run must produce MS/MS");
-        assertTrue(on.matchedFeatures > 0 && off.matchedFeatures > 0, "and features must match across runs");
+        assertTrue(first.matchedFeatures > 0 && second.matchedFeatures > 0, "and features must match across runs");
         // if the assignment carried no information, a peak would agree with the reference no more often than with
         // an unrelated spectrum of similar precursor mass
-        assertTrue(on.confirmedRate() > on.decoyRate(), "prior on: agreement must beat chance");
-        assertTrue(off.confirmedRate() > off.decoyRate(), "prior off: agreement must beat chance");
+        assertTrue(first.confirmedRate() > first.decoyRate(), "stage 1: agreement must beat chance");
+        assertTrue(second.confirmedRate() > second.decoyRate(), "stage 1 + 2: agreement must beat chance");
     }
 
     private static double doubleFromEnvironment(String variable, double fallback) {
@@ -120,226 +108,43 @@ public class DiaVersusDdaFileTest {
         return value == null || value.isBlank() ? fallback : Double.parseDouble(value);
     }
 
-    /** how well one run's fragment peaks agree with the reference run's spectra of the same compounds */
-    private static Agreement score(Run run, Run reference, double rtTolerance) {
-        final Agreement agreement = new Agreement(run.name, run.featureCount);
-        for (FeatureSpectrum ours : run.spectra) {
-            final FeatureSpectrum match = reference.bestMatch(ours, rtTolerance);
-            if (match == null) continue;
-            final FeatureSpectrum decoy = reference.decoy(ours);
-            ++agreement.matchedFeatures;
-
-            for (int k = 0; k < ours.size(); ++k) {
-                final double mz = ours.mz[k];
-                final double intensity = ours.intensity[k];
-                ++agreement.peaks;
-                agreement.intensity += intensity;
-                if (match.contains(mz)) {
-                    ++agreement.confirmed;
-                    agreement.confirmedIntensity += intensity;
-                }
-                if (decoy != null) {
-                    ++agreement.decoyPeaks;
-                    if (decoy.contains(mz)) ++agreement.decoyConfirmed;
-                }
-            }
-            // and the other direction: which of the reference fragments did we find at all
-            for (int k = 0; k < match.size(); ++k) {
-                if (match.intensity[k] < MIN_RELATIVE_INTENSITY_FOR_RECALL * match.basePeakIntensity) continue;
-                ++agreement.referencePeaks;
-                if (ours.contains(match.mz[k])) ++agreement.recovered;
-            }
-        }
-        return agreement;
-    }
-
     /**
-     * The comparison aggregate counts cannot make: take the compounds all three runs found, split the peaks the
-     * run without the prior produced into those the prior kept and those it removed, and ask the reference about
-     * each group separately.
+     * The comparison aggregate counts cannot make: take the compounds both runs and the reference found, split the
+     * peaks into those the second run kept, those it dropped and those it added, and ask the reference about each
+     * group separately. Dropped peaks the reference confirms are what the change got wrong; added peaks it confirms
+     * are what it got right.
      */
-    private static Removed scoreRemovedPeaks(Run priorOff, Run priorOn, Run reference, double rtTolerance) {
-        final Removed result = new Removed();
-        for (FeatureSpectrum ours : priorOff.spectra) {
-            final FeatureSpectrum counterpart = priorOn.bestMatch(ours, rtTolerance);
+    private static Changes scoreChanges(SpectrumAgreement.Run before, SpectrumAgreement.Run after, SpectrumAgreement.Run reference, double rtTolerance) {
+        final Changes result = new Changes();
+        for (SpectrumAgreement.FeatureSpectrum ours : before.spectra) {
+            final SpectrumAgreement.FeatureSpectrum counterpart = after.bestMatch(ours, rtTolerance);
             if (counterpart == null) continue;
-            final FeatureSpectrum match = reference.bestMatch(ours, rtTolerance);
+            final SpectrumAgreement.FeatureSpectrum match = reference.bestMatch(ours, rtTolerance);
             if (match == null) continue;
-            final FeatureSpectrum decoy = reference.decoy(ours);
+            final SpectrumAgreement.FeatureSpectrum decoy = reference.decoy(ours);
             ++result.features;
 
             for (int k = 0; k < ours.size(); ++k) {
-                final double mz = ours.mz[k];
-                final Group group = counterpart.contains(mz) ? result.kept : result.removed;
-                ++group.peaks;
-                group.intensity += ours.intensity[k];
-                if (match.contains(mz)) {
-                    ++group.confirmed;
-                    group.confirmedIntensity += ours.intensity[k];
-                }
-                if (decoy != null) {
-                    ++group.decoyPeaks;
-                    if (decoy.contains(mz)) ++group.decoyConfirmed;
-                }
+                add(counterpart.contains(ours.mz[k]) ? result.kept : result.dropped, ours, k, match, decoy);
+            }
+            for (int k = 0; k < counterpart.size(); ++k) {
+                if (!ours.contains(counterpart.mz[k])) add(result.added, counterpart, k, match, decoy);
             }
         }
         return result;
     }
 
-    /**
-     * The fragment peaks of one feature: everything the comparison needs, and nothing else, so that three runs fit
-     * in memory at once. Masses are ascending, and peaks in the precursor region are already gone.
-     */
-    private static final class FeatureSpectrum {
-        private final double precursorMz;
-        private final double retentionTime;
-        private final double[] mz;
-        private final double[] intensity;
-        private final double basePeakIntensity;
-
-        private FeatureSpectrum(double precursorMz, double retentionTime, double[] mz, double[] intensity) {
-            this.precursorMz = precursorMz;
-            this.retentionTime = retentionTime;
-            this.mz = mz;
-            this.intensity = intensity;
-            double base = 0d;
-            for (double i : intensity) base = Math.max(base, i);
-            this.basePeakIntensity = base;
+    private static void add(Group group, SpectrumAgreement.FeatureSpectrum spectrum, int peak, SpectrumAgreement.FeatureSpectrum match,
+                            SpectrumAgreement.FeatureSpectrum decoy) {
+        ++group.peaks;
+        group.intensity += spectrum.intensity[peak];
+        if (match.contains(spectrum.mz[peak])) {
+            ++group.confirmed;
+            group.confirmedIntensity += spectrum.intensity[peak];
         }
-
-        static FeatureSpectrum of(AlignedFeatures feature) {
-            final SimpleSpectrum spectrum = feature.getMSData().orElseThrow().getMergedMSnSpectrum();
-            final double precursorMz = feature.getAverageMass();
-            final DoubleArrayList masses = new DoubleArrayList(spectrum.size());
-            final DoubleArrayList intensities = new DoubleArrayList(spectrum.size());
-            for (int k = 0; k < spectrum.size(); ++k) {
-                if (spectrum.getMzAt(k) > precursorMz - PRECURSOR_REGION) continue;
-                masses.add(spectrum.getMzAt(k));
-                intensities.add(spectrum.getIntensityAt(k));
-            }
-            return new FeatureSpectrum(precursorMz, feature.getRetentionTime().getRetentionTimeInSeconds(),
-                    masses.toDoubleArray(), intensities.toDoubleArray());
-        }
-
-        int size() {
-            return mz.length;
-        }
-
-        /** whether some peak of this spectrum has the given mass, within {@link #PEAK_DEVIATION} */
-        boolean contains(double queryMz) {
-            final double allowed = PEAK_DEVIATION.absoluteFor(queryMz);
-            int low = 0, high = mz.length - 1;
-            while (low <= high) {
-                final int mid = (low + high) >>> 1;
-                if (mz[mid] < queryMz - allowed) low = mid + 1;
-                else if (mz[mid] > queryMz + allowed) high = mid - 1;
-                else return true;
-            }
-            return false;
-        }
-    }
-
-    /** the spectra of one run, searchable by precursor mass and retention time */
-    private static final class Run {
-        private final String name;
-        private final int featureCount;
-        private final List<FeatureSpectrum> spectra;
-
-        private Run(String name, int featureCount, List<FeatureSpectrum> spectra) {
-            this.name = name;
-            this.featureCount = featureCount;
-            this.spectra = spectra;
-            this.spectra.sort(Comparator.comparingDouble(s -> s.precursorMz));
-        }
-
-        /**
-         * Runs the file and keeps only the spectra. The features themselves are unreachable when this returns,
-         * which is what makes three runs in one test JVM possible.
-         */
-        static Run of(List<Path> files, String name, Consumer<DiaDeconvolution> configure) throws IOException {
-            final PipelineRun run = PipelineRun.run(files, name, configure);
-            final List<FeatureSpectrum> spectra = new ArrayList<>();
-            for (AlignedFeatures feature : run.featuresWithMsMs()) {
-                final FeatureSpectrum spectrum = FeatureSpectrum.of(feature);
-                if (spectrum.size() > 0) spectra.add(spectrum);
-            }
-            System.out.printf("%s: %d features, %d with fragment peaks, %.1f s%n", name, run.features.size(),
-                    spectra.size(), run.processingSeconds + run.alignmentSeconds);
-            return new Run(name, run.features.size(), spectra);
-        }
-
-        /** the mass matching spectrum closest in retention time, or null if none is within the tolerance */
-        FeatureSpectrum bestMatch(FeatureSpectrum query, double rtTolerance) {
-            final double allowed = PRECURSOR_DEVIATION.absoluteFor(query.precursorMz);
-            FeatureSpectrum best = null;
-            double bestDistance = Double.POSITIVE_INFINITY;
-            for (int k = lowerBound(query.precursorMz - allowed);
-                 k < spectra.size() && spectra.get(k).precursorMz <= query.precursorMz + allowed; ++k) {
-                final double distance = Math.abs(spectra.get(k).retentionTime - query.retentionTime);
-                if (distance <= rtTolerance && distance < bestDistance) {
-                    bestDistance = distance;
-                    best = spectra.get(k);
-                }
-            }
-            return best;
-        }
-
-        /**
-         * A spectrum that cannot be the queried compound but covers a comparable mass range: the closest precursor
-         * mass among the compounds eluting far away. Scoring against it measures how often a fragment mass finds a
-         * peak by chance.
-         */
-        FeatureSpectrum decoy(FeatureSpectrum query) {
-            // walking outwards from the query mass finds the closest eligible precursor without scanning the rest
-            int left = lowerBound(query.precursorMz) - 1, right = left + 1;
-            while (left >= 0 || right < spectra.size()) {
-                final boolean takeLeft = right >= spectra.size() || (left >= 0
-                        && query.precursorMz - spectra.get(left).precursorMz
-                        <= spectra.get(right).precursorMz - query.precursorMz);
-                final FeatureSpectrum candidate = takeLeft ? spectra.get(left--) : spectra.get(right++);
-                if (Math.abs(candidate.retentionTime - query.retentionTime) >= MIN_DECOY_RT_DISTANCE) {
-                    return candidate;
-                }
-            }
-            return null;
-        }
-
-        /** index of the first spectrum whose precursor mass is not below the given one */
-        private int lowerBound(double precursorMz) {
-            int low = 0, high = spectra.size();
-            while (low < high) {
-                final int mid = (low + high) >>> 1;
-                if (spectra.get(mid).precursorMz < precursorMz) low = mid + 1;
-                else high = mid;
-            }
-            return low;
-        }
-    }
-
-    private static final class Agreement {
-        private final String name;
-        private final int features;
-        private int matchedFeatures, peaks, confirmed, decoyPeaks, decoyConfirmed, referencePeaks, recovered;
-        private double intensity, confirmedIntensity;
-
-        Agreement(String name, int features) {
-            this.name = name;
-            this.features = features;
-        }
-
-        double confirmedRate() {
-            return peaks == 0 ? 0d : confirmed / (double) peaks;
-        }
-
-        double decoyRate() {
-            return decoyPeaks == 0 ? 0d : decoyConfirmed / (double) decoyPeaks;
-        }
-
-        String describe() {
-            return String.format("%-15s %8d %8d %8d %9.1f %% %8.1f %% %8.1f %% %6.1f %%", name, features,
-                    matchedFeatures, peaks, 100 * confirmedRate(), 100 * decoyRate(),
-                    intensity == 0 ? 0d : 100 * confirmedIntensity / intensity,
-                    referencePeaks == 0 ? 0d : 100 * recovered / (double) referencePeaks);
+        if (decoy != null) {
+            ++group.decoyPeaks;
+            if (decoy.contains(spectrum.mz[peak])) ++group.decoyConfirmed;
         }
     }
 
@@ -356,13 +161,15 @@ public class DiaVersusDdaFileTest {
         }
     }
 
-    private static final class Removed {
+    private static final class Changes {
         private int features;
         private final Group kept = new Group();
-        private final Group removed = new Group();
+        private final Group dropped = new Group();
+        private final Group added = new Group();
 
         String describe() {
-            return kept.describe("kept by the prior") + "\n" + removed.describe("removed by the prior");
+            return kept.describe("kept by stage two") + "\n" + dropped.describe("dropped by stage two") + "\n"
+                    + added.describe("added by stage two");
         }
     }
 }

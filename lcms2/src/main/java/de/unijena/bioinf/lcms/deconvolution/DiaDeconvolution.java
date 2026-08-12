@@ -52,6 +52,30 @@ public class DiaDeconvolution {
 
     private final int maxDecoyPrecursors;
 
+    /**
+     * How many of a channel's scan points a fragment has to be followed across to be picked at all.
+     * <p>
+     * Three is what MS1 trace picking uses, and for a DIA channel it is too strict: a peak is about four scan points
+     * wide there, so one missed scan discards the fragment. Against a DDA measurement of the same sample, three
+     * points reach only about three quarters of the fragments that the raw scans contain at all.
+     * <p>
+     * Two still leaves a shape, weak on its own but a real one once the samples are pooled in stage two, where two
+     * points per sample is exactly what the pooled correlation accepts. One leaves none, and worse, the signals that
+     * remain for a single point - specificity and abundance - cannot tell two precursors of the same window apart,
+     * which is the decision that has to be made.
+     */
+    public static final int DEFAULT_MIN_FRAGMENT_SCAN_POINTS = 2;
+
+    @Getter @Setter
+    private int minFragmentScanPoints = DEFAULT_MIN_FRAGMENT_SCAN_POINTS;
+
+    /**
+     * Whether a fragment several precursors could have produced is split between them, see
+     * {@link FragmentIntensityShares}. Only useful to turn off in order to measure what it does.
+     */
+    @Getter @Setter
+    private boolean intensityShares = true;
+
     /** which quantile of a channel's intensities counts as its noise floor, see {@link DiaChannelNoise} */
     @Getter @Setter
     private double noiseQuantile = DiaChannelNoise.DEFAULT_QUANTILE;
@@ -236,7 +260,8 @@ public class DiaDeconvolution {
         for (int c = 0; c < channelCount; ++c) {
             final DiaChannel channel = channels.get(c);
             final float noiseLevel = DiaChannelNoise.estimate(sample, channel, noiseQuantile);
-            final DiaChannelFragments.Result fragments = DiaChannelFragments.pickAll(sample, channel, noiseLevel);
+            final DiaChannelFragments.Result fragments = DiaChannelFragments.pickAll(sample, channel, noiseLevel,
+                    minFragmentScanPoints);
             final List<PrecursorFeature> decoys = DiaDecoys.thin(decoyCandidates.get(c), maxDecoyPrecursors);
             drafts.add(new Draft(channel, noiseLevel, fragments.seedsTried(), decoys.size(),
                     DiaAssignmentGraph.build(channel, realFeatures.get(c), fragments.traces()),

@@ -11,6 +11,7 @@ import de.unijena.bioinf.lcms.centroiding.CentroidIndividualSpectraStrategy;
 import de.unijena.bioinf.lcms.centroiding.CentroidingStrategy;
 import de.unijena.bioinf.lcms.deconvolution.*;
 import de.unijena.bioinf.lcms.features.IsotopePatternExtractionStrategy;
+import de.unijena.bioinf.lcms.features.MergedFeatureExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedApexIsotopePatternExtractor;
 import de.unijena.bioinf.lcms.features.SegmentMergedFeatures;
 import de.unijena.bioinf.lcms.io.LCMSImporter;
@@ -111,8 +112,14 @@ public class LCMSProcessing {
     @Getter @Setter private TraceSegmentationStrategy mergedTraceSegmentationStrategy =
         new PersistentHomology(new NoFilter());
 
+    /**
+     * How a merged trace is split into features. The same instance is handed to the importer, so that the stage two
+     * DIA assignment measures over exactly the boundaries the importer will use.
+     */
+    @Getter @Setter private MergedFeatureExtractionStrategy mergedFeatureExtractionStrategy = new SegmentMergedFeatures();
+
     @Getter @Setter private ProjectSpaceImporter<?> importer = new PickFeaturesAndImportToSirius(
-            new SegmentMergedFeatures(), new MergedApexIsotopePatternExtractor(), new MergeGreedyStrategy()
+            mergedFeatureExtractionStrategy, new MergedApexIsotopePatternExtractor(), new MergeGreedyStrategy()
     );
 
     @Getter @Setter private Ms2MergeStrategy ms2MergeStrategy = new MergeGreedyStrategy();
@@ -122,10 +129,14 @@ public class LCMSProcessing {
     @Getter @Setter private DeconvolutionDecision deconvolutionDecision = new DeconvoluteForLargeIsolationWindows();
 
     /**
-     * Assigns the fragments of a DIA measurement to its precursors. Only used when
-     * {@link #deconvolutionDecision} says the sample is data independent.
+     * Assigns the fragments of a DIA measurement to its precursors, in both phases. Only used when
+     * {@link #deconvolutionDecision} says the sample is data independent. Which implementation is best is a question
+     * for measurement, see {@link DiaAssignmentStrategy}.
      */
-    @Getter @Setter private DiaDeconvolution diaDeconvolution = new DiaDeconvolution();
+    @Getter @Setter private DiaAssignmentStrategy diaAssignmentStrategy = new CorrelationAssignmentStrategy();
+
+    /** what {@link #refineDiaAssignments} reported, kept for inspection rather than only logged */
+    @Getter private String diaRefinementReport;
 
     /**
      * What the DIA deconvolution did, per sample. Kept for inspection rather than only logged, and keyed by the
@@ -495,20 +506,49 @@ public class LCMSProcessing {
             return;
         }
         final DiaScanIndex index = maybeIndex.get();
-        LoggerFactory.getLogger(LCMSProcessing.class).info("{}: {}", sample.getRun().getName(), index.describe());
-        final DiaDeconvolution.Result deconvoluted = diaDeconvolution.deconvolute(sample, index);
-        LoggerFactory.getLogger(LCMSProcessing.class).info("{}: {}", sample.getRun().getName(), deconvoluted.describe());
-        if (deconvoluted.nullDistributionTooThin()) {
-            diaReports.put(sample, new DiaReport(index, deconvoluted, null));
-            LoggerFactory.getLogger(LCMSProcessing.class).warn("{} does not contain enough precursors outside its "
-                    + "isolation windows to tell a real co-elution from an accidental one, so no fragment could be "
-                    + "assigned.", sample.getRun().getName());
-            return;
+        final DiaReport report = diaAssignmentStrategy.assign(sample, index);
+        LoggerFactory.getLogger(LCMSProcessing.class).info("{}: {}", sample.getRun().getName(), report.describe());
+        diaReports.put(sample, report);
+    }
+
+    /**
+     * Stage two of the DIA assignment: redo it over the final feature boundaries and across all samples at once.
+     * <p>
+     * Called between merging and feature extraction, and that position is what makes it possible at all. The
+     * boundaries feature extraction will use come from {@link MergedFeatureExtractionStrategy#featureFinding}, which
+     * is pure computation on the merged sample, so they can be had before anything is imported and the assignment
+     * can be redone over them without a way of writing corrections into a project. The segmentation is run twice as
+     * a result, which costs a fraction of a second and keeps the two from drifting apart.
+     * <p>
+     * Only the peaks of the pseudo spectra change, never the set of them: their references were copied into the
+     * projected traces during merging, and {@code SegmentMergedFeatures} uses their positions as points of interest,
+     * so adding or removing one would move the very boundaries this measures over.
+     *
+     * @return what was refined, or empty if no sample of this experiment is a deconvoluted DIA measurement
+     */
+    public Optional<String> refineDiaAssignments(ProcessedSample merged, AlignmentBackbone backbone) {
+        final List<DiaAssignmentStrategy.SampleIndex> diaSamples = new ArrayList<>();
+        for (ProcessedSample sample : backbone.getSamples()) {
+            getDiaReport(sample).map(DiaReport::index).ifPresent(index ->
+                    diaSamples.add(new DiaAssignmentStrategy.SampleIndex(sample, index)));
         }
-        final DiaPseudoSpectra.Result spectra = DiaPseudoSpectra.write(sample, deconvoluted);
-        LoggerFactory.getLogger(LCMSProcessing.class).info("{}: {}", sample.getRun().getName(), spectra.describe());
-        diaReports.put(sample, new DiaReport(index, deconvoluted, spectra));
-        sample.getStorage().commit();
+        if (diaSamples.isEmpty()) return Optional.empty();
+
+        final List<DiaFinalPrecursors.Aligned> features = new ArrayList<>();
+        for (final Rect rect : merged.getStorage().getMergeStorage().getRectangleMap()) {
+            final MergedTrace mergedTrace = collectMergedTrace(merged, rect.id);
+            if (mergedTrace == null || mergedTrace.getTraces().length == 0) continue;
+            features.addAll(DiaFinalPrecursors.of(merged, mergedTrace,
+                    mergedFeatureExtractionStrategy.featureFinding(mergedTraceSegmentationStrategy, merged, mergedTrace)));
+        }
+
+        final String report = diaAssignmentStrategy.refine(diaSamples, features,
+                backbone.getStatistics().getExpectedMassDeviationBetweenSamples(),
+                backbone.getStatistics().getExpectedRetentionTimeDeviation());
+        if (report != null) LoggerFactory.getLogger(LCMSProcessing.class).info(report);
+        for (DiaAssignmentStrategy.SampleIndex sample : diaSamples) sample.sample().getStorage().commit();
+        diaRefinementReport = report;
+        return Optional.ofNullable(report);
     }
 
     private void assignMs2Trace(ProcessedSample sample) {
