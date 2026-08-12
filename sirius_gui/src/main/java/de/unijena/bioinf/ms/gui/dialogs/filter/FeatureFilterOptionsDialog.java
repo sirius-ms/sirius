@@ -109,7 +109,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         this.gui = gui;
         this.filterModel = filterModel;
         this.compoundList = compoundList;
-        setPreferredSize(GuiUtils.getPreferredSizeLimitedByScreenSize(GuiUtils.WEB_VIEW_POPUP_SIZE));
+        setPreferredSize(GuiUtils.getPreferredSizeLimitedByScreenSize(new Dimension(700, 800)));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         setResizable(true); // the embedded query editor's chip area benefits from extra room
@@ -126,7 +126,9 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         // user's own query is typed/edited here with autocomplete, and both are applied together on Apply.
         {
             Box searchPanel = Box.createVerticalBox();
-            searchPanel.add(new JXTitledSeparator("Search query & active filters"));
+            JXTitledSeparator sep = new JXTitledSeparator("Search query");
+            sep.setToolTipText("Visualizes the final filter query that will be executed when applying the filter configuration.");
+            searchPanel.add(sep);
             searchPanel.add(Box.createVerticalStrut(3));
             queryEditor = buildQueryEditor();
             searchPanel.add(queryEditor);
@@ -136,22 +138,25 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
         // filter modifiers
         {
-            Box filterModifiers = Box.createVerticalBox();
-            filterModifiers.add(new JXTitledSeparator("Filter modifiers"));
+//            Box filterModifiers = Box.createVerticalBox();
+//            filterModifiers.add(new JXTitledSeparator("Filter modifiers"));
 
             invertFilter = new JCheckBox("Invert Filter");
             invertFilter.setSelected(filterModel.isInverted());
+            invertFilter.setToolTipText(GuiUtils.formatAndStripToolTip("Invert the final/full filter configuration. All matching element become unmatched elements and vise versa."));
 
-            deleteSelection = new JCheckBox("<html>Delete all <b>non-</b>matching compounds</html>");
+            deleteSelection = new JCheckBox("<html>Delete all <b>non-</b>matching features</html>");
             deleteSelection.setSelected(false);
+            deleteSelection.setToolTipText(GuiUtils.formatAndStripToolTip("Delete all non-matching features. This will reduce to project to the matching features. All non matching features get deleted and cannot be recovered."));
 
             final Box group = Box.createHorizontalBox();
             group.add(invertFilter);
             group.add(Box.createHorizontalStrut(25));
             group.add(deleteSelection);
             group.add(Box.createHorizontalGlue());
-            filterModifiers.add(group);
-            optionsPanel.add(filterModifiers, BorderLayout.SOUTH);
+//            filterModifiers.add(group);
+//            optionsPanel.add(filterModifiers, BorderLayout.SOUTH);
+            optionsPanel.add(group, BorderLayout.SOUTH);
         }
 
         //input data filters
@@ -372,8 +377,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         buttons.add(reset);
         buttons.add(Box.createHorizontalGlue());
-        buttons.add(discard);
         buttons.add(apply);
+        buttons.add(discard);
 
         add(buttons, BorderLayout.SOUTH);
 
@@ -522,8 +527,9 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 openFullEditor.run(); // a model chip was clicked -> just jump to its tab, don't close
             }
         };
+        // embedded: no in-editor funnel or full-reset clear (the dialog has its own Reset/Discard/Apply)
         return new QueryEditorPanel(filterModel, fieldsProvider, this::workingTerms, jumpToTab, renderState,
-                commit -> {}, () -> {}, host, true, null); // embedded: no in-editor "open filter panel" funnel
+                commit -> {}, () -> {}, host, true, null, null);
     }
 
     /**

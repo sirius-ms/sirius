@@ -136,14 +136,14 @@ public class DatabaseDialog extends JFrame {
         dbList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         dbView = new DatabaseView();
 
-        JButton addCustomDb = Buttons.getAddButton(BUTTON_ICON_SIZE, "Create custom database");
-        JButton deleteDB = Buttons.getRemoveButton(BUTTON_ICON_SIZE, "Delete custom database");
-        JButton editDB = Buttons.getEditButton(BUTTON_ICON_SIZE, "Edit custom database");
-        JButton openDB = Buttons.getPlainFolderButton(BUTTON_ICON_SIZE, "Add existing database");
-        JButton exportDB = Buttons.getExportButton(BUTTON_ICON_SIZE, "Export database");
-        JButton transformationDB = new ToolbarButton(Icons.TRANSFORMATION_DB.derive(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE), "Create Transformation product database");
-        JButton showContentsDB = new ToolbarButton(Icons.DB_LENS.derive(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE), "Show database contents");
-        JButton downloadableDBs = Buttons.getDownloadButton(BUTTON_ICON_SIZE, "Download curated custom databases for local use");
+        JButton addCustomDb = Buttons.getAddButton(BUTTON_ICON_SIZE, "Create custom database", true);
+        JButton deleteDB = Buttons.getRemoveButton(BUTTON_ICON_SIZE, "Delete custom database", true);
+        JButton editDB = Buttons.getEditButton(BUTTON_ICON_SIZE, "Edit custom database", true);
+        JButton openDB = Buttons.getPlainFolderButton(BUTTON_ICON_SIZE, "Add existing database", true);
+        JButton exportDB = Buttons.getExportButton(BUTTON_ICON_SIZE, "Export database", true);
+        JButton transformationDB = new ToolbarButton(Icons.TRANSFORMATION_DB.derive(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE), "Create Transformation product database", true);
+        JButton showContentsDB = new ToolbarButton(Icons.DB_LENS.derive(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE), "Show database contents", true);
+        JButton downloadableDBs = Buttons.getDownloadButton(BUTTON_ICON_SIZE, "Download curated custom databases for local use", true);
 
         downloadableDBs.addActionListener(e -> new DownloadableDBsDialog(this));
 
