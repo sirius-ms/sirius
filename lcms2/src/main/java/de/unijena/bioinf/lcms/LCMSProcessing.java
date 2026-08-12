@@ -270,6 +270,7 @@ public class LCMSProcessing {
         collectStatistics(sample);
         cleanupSample(sample);
         extractTraces(sample);
+        learnTraceCorrelations(sample);
         if (deconvolutionDecision.performDeconvolution(sample)) {
             deconvoluteDia(sample);
         } else {
@@ -320,12 +321,19 @@ public class LCMSProcessing {
             averagePeakWidth.add(sample.getTraceStats().getAveragePeakWidth());
             mint = Math.min(mint, s.getMinimumIntensity());
         }
-        SampleStats statistics = new SampleStats(
-                new float[0], (float)Statistics.robustAverage(ms2NoiseLevels.toFloatArray()), mint,
-                new Deviation(Statistics.robustAverage(ppmsWithinTraces.toFloatArray()),Statistics.robustAverage(absWithinTraces.toFloatArray())),
-                new Deviation(Statistics.robustAverage(ppmsBetweenTraces.toFloatArray()),Statistics.robustAverage(absBetweenTraces.toFloatArray())),
-                Statistics.robustAverage(averagePeakWidth.toDoubleArray())
-        );
+        // by name rather than by position, so that adding a statistic cannot silently shift the others
+        SampleStats statistics = SampleStats.builder()
+                .noiseLevelPerScan(new float[0])
+                .ms2NoiseLevel((float) Statistics.robustAverage(ms2NoiseLevels.toFloatArray()))
+                .minimumIntensity(mint)
+                .ms1MassDeviationWithinTraces(new Deviation(
+                        Statistics.robustAverage(ppmsWithinTraces.toFloatArray()),
+                        Statistics.robustAverage(absWithinTraces.toFloatArray())))
+                .minimumMs1MassDeviationBetweenTraces(new Deviation(
+                        Statistics.robustAverage(ppmsBetweenTraces.toFloatArray()),
+                        Statistics.robustAverage(absBetweenTraces.toFloatArray())))
+                .expectedPeakWidth(Statistics.robustAverage(averagePeakWidth.toDoubleArray()))
+                .build();
         merged.getStorage().setStatistics(statistics);
 
     }
@@ -474,6 +482,22 @@ public class LCMSProcessing {
         sample.setTraceStats(TraceStats.collect(sample));
     }
 
+
+    /**
+     * Learns how well two profiles of one and the same compound correlate on this sample, from its isotope pairs.
+     * <p>
+     * Runs directly after trace picking because that is the earliest point where the traces exist and the latest
+     * where nothing has used a correlation yet. Isotope detection proper happens much later, in
+     * {@link #extractMoIsForAlignment}, which is why {@link TraceCorrelationStatistics} finds its pairs itself.
+     */
+    private void learnTraceCorrelations(ProcessedSample sample) {
+        final SampleStats stats = sample.getStorage().getStatistics();
+        final TraceCorrelationStatistics learned = TraceCorrelationStatistics.learn(sample,
+                stats.getMs1MassDeviationWithinTraces(), TraceCorrelationStatistics.medianNoiseLevel(stats));
+        sample.getStorage().setStatistics(stats.withTraceCorrelations(learned));
+        LoggerFactory.getLogger(LCMSProcessing.class).info("{}: {}", sample.getRun().getName(),
+                learned.describe());
+    }
 
     private void extractTraces(ProcessedSample sample) {
         final TracePicker tracePicker = new TracePicker(sample, traceCachingStrategy, segmentationStrategy);

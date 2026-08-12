@@ -24,6 +24,10 @@ public class SampleStatsDataTypeTest {
                 .minimumMs1MassDeviationBetweenTraces(new Deviation(10, 5e-4))
                 .build();
         stats.setExpectedPeakWidth(7.5);
+        // a learned statistic has to survive too, or the cutoffs it carries are silently forgotten
+        final float[][] correlations = new float[TraceCorrelationStatistics.binCount()][];
+        for (int k = 0; k < correlations.length; ++k) correlations[k] = new float[]{0.1f * k, 0.5f, 0.99f};
+        stats.setTraceCorrelations(new TraceCorrelationStatistics(correlations));
         return stats;
     }
 
@@ -51,6 +55,10 @@ public class SampleStatsDataTypeTest {
         assertEquals(42.25f, restored.getMinimumIntensity(), 0f, "the minimum intensity has to survive");
         assertTrue(restored.getExpectedPeakWidth().isPresent(), "and so does the expected peak width");
         assertEquals(7.5, restored.getExpectedPeakWidth().get(), 1e-12);
+        for (int k = 0; k < TraceCorrelationStatistics.binCount(); ++k) {
+            assertArrayEquals(original.getTraceCorrelations().observations(k),
+                    restored.getTraceCorrelations().observations(k), 0f, "bin " + k);
+        }
     }
 
     @Test

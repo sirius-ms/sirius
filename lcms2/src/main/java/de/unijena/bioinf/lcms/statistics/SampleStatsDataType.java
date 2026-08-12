@@ -30,7 +30,11 @@ public class SampleStatsDataType extends CustomDataType<SampleStats> {
 
     @Override
     public int getMemory(SampleStats obj) {
-        return obj.getNoiseLevelPerScan().length * 4 + 48;
+        int correlations = 0;
+        for (int k = 0; k < TraceCorrelationStatistics.binCount(); ++k) {
+            correlations += obj.getTraceCorrelations().observations(k).length * 4 + 4;
+        }
+        return obj.getNoiseLevelPerScan().length * 4 + 48 + correlations;
     }
 
     @Override
@@ -47,6 +51,9 @@ public class SampleStatsDataType extends CustomDataType<SampleStats> {
         // depends on it off. An absent peak width is -1 rather than zero, so it has to round trip as it is.
         buff.putFloat(obj.getMinimumIntensity());
         buff.putDouble(obj.getExpectedPeakWidth().orElse(-1d));
+        for (int k = 0; k < TraceCorrelationStatistics.binCount(); ++k) {
+            writeFloat(buff, obj.getTraceCorrelations().observations(k));
+        }
     }
 
     @Override
@@ -58,6 +65,9 @@ public class SampleStatsDataType extends CustomDataType<SampleStats> {
                 .minimumIntensity(buff.getFloat())
                 .build();
         stats.setExpectedPeakWidth(buff.getDouble());
+        final float[][] correlations = new float[TraceCorrelationStatistics.binCount()][];
+        for (int k = 0; k < correlations.length; ++k) correlations[k] = readFloat(buff);
+        stats.setTraceCorrelations(new TraceCorrelationStatistics(correlations));
         return stats;
     }
 
