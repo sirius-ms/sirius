@@ -146,6 +146,22 @@ public class TokenInputModel {
                 return "full-text search";
             }
         }
+
+        /**
+         * Parse the typed text as a full lucene query and turn it into chips (for users who type a
+         * query directly rather than building it clause by clause).
+         */
+        record ParseQuerySuggestion(@NotNull String text) implements Suggestion {
+            @Override
+            public String display() {
+                return text;
+            }
+
+            @Override
+            public String description() {
+                return "parse as query";
+            }
+        }
     }
 
     /**
@@ -153,6 +169,13 @@ public class TokenInputModel {
      */
     public sealed interface Event {
         record ClauseCompleted(@NotNull QueryClause clause, @NotNull LogicOp logic) implements Event {
+        }
+
+        /**
+         * A whole parsed query to splice into the tree: its items joined to the existing container by
+         * {@code logic}, and to each other by the container's own {@code logics}.
+         */
+        record QueryParsed(@NotNull QueryContainer container, @NotNull LogicOp logic) implements Event {
         }
 
         record OpenGroup(boolean negated, @NotNull LogicOp logic) implements Event {
@@ -224,8 +247,25 @@ public class TokenInputModel {
         if (atEntryStage() && !trimmed.isEmpty()) {
             suggestions = new ArrayList<>(suggestions);
             suggestions.add(new Suggestion.FreeTextSuggestion(trimmed));
+            // ... and, when it reads as more than plain words (a field, operator, group or boolean),
+            // it can be parsed as a whole query and turned into chips
+            if (parsesToStructuredQuery(trimmed))
+                suggestions.add(new Suggestion.ParseQuerySuggestion(trimmed));
         }
         return suggestions;
+    }
+
+    /** True when {@code text} parses to a query richer than a single free-text clause (which the
+     *  free-text suggestion already covers), so offering "parse as query" is not redundant. */
+    private boolean parsesToStructuredQuery(String text) {
+        return QueryStringParser.parse(text, fields)
+                .filter(c -> !c.isEmpty() && !isSingleFreeText(c))
+                .isPresent();
+    }
+
+    private static boolean isSingleFreeText(QueryContainer container) {
+        return container.items().size() == 1
+                && container.items().get(0) instanceof QueryClause clause && clause.isFreeText();
     }
 
     private List<Suggestion> connectorSuggestions(String prefix) {
@@ -317,6 +357,15 @@ public class TokenInputModel {
         }
         if (suggestion instanceof Suggestion.FreeTextSuggestion freeText) {
             Event event = new Event.ClauseCompleted(QueryClause.freeText(freeText.text(), pendingNegated), effectiveLogic());
+            resetPending();
+            return Optional.of(event);
+        }
+        if (suggestion instanceof Suggestion.ParseQuerySuggestion parse) {
+            Optional<QueryContainer> parsed = QueryStringParser.parse(parse.text(), fields);
+            // it was only offered when it parses, but stay defensive and fall back to free text
+            Event event = parsed.filter(c -> !c.isEmpty())
+                    .<Event>map(c -> new Event.QueryParsed(c, effectiveLogic()))
+                    .orElseGet(() -> new Event.ClauseCompleted(QueryClause.freeText(parse.text(), pendingNegated), effectiveLogic()));
             resetPending();
             return Optional.of(event);
         }
