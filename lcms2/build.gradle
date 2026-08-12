@@ -18,7 +18,7 @@ application {
 // The tests that put a whole measurement through the pipeline need real memory, and Gradle defaults the test JVM
 // to 512m. The DIA/DDA comparison runs three measurements, so it needs the most.
 tasks.named('test') {
-    maxHeapSize = '8G'
+    maxHeapSize = '24G'
 }
 
 dependencies {

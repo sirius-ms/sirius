@@ -117,7 +117,7 @@ public class DiaProcessingFileTest {
         if (quantile != null && !quantile.isBlank()) deconvolution.setNoiseQuantile(Double.parseDouble(quantile));
         final String prior = System.getenv("SIRIUS_DIA_INTENSITY_PRIOR");
         if (prior != null && !prior.isBlank()) deconvolution.setIntensityPrior(Boolean.parseBoolean(prior));
-        processing.setDiaDeconvolution(deconvolution);
+        processing.setDiaAssignmentStrategy(new CorrelationAssignmentStrategy(deconvolution, new DiaRefinement()));
         System.out.printf("settings: noise quantile %.2f, intensity prior %s%n",
                 deconvolution.getNoiseQuantile(), deconvolution.isIntensityPrior());
         try {
@@ -159,9 +159,8 @@ public class DiaProcessingFileTest {
             System.out.printf("MS1 traces carrying MS/MS: %d of %d (%.1f %%)%n", tracesWithMsMs, ms1Traces,
                     ms1Traces == 0 ? 0d : 100d * tracesWithMsMs / ms1Traces);
 
-            assertNotNull(report.assignment(), "the sample must have been calibrated");
-            assertNotNull(report.spectra(), "and spectra must have been written");
-            assertEquals(pseudoSpectra, report.spectra().spectraWritten(),
+            assertTrue(report.spectraWritten() > 0, "spectra must have been written");
+            assertEquals(pseudoSpectra, report.spectraWritten(),
                     "the report has to agree with what is in the spectrum store");
 
             // the acquisition scheme must be unaffected by the spectra we wrote ourselves: every channel of a

@@ -30,6 +30,15 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 public class DiaPipelineFileTest {
 
+    /** the settings of the correlation strategy, which is what these tests vary */
+    static DiaDeconvolution deconvolutionOf(de.unijena.bioinf.lcms.LCMSProcessing processing) {
+        return ((CorrelationAssignmentStrategy) processing.getDiaAssignmentStrategy()).getDeconvolution();
+    }
+
+    static DiaRefinement refinementOf(de.unijena.bioinf.lcms.LCMSProcessing processing) {
+        return ((CorrelationAssignmentStrategy) processing.getDiaAssignmentStrategy()).getRefinement();
+    }
+
     static Optional<Path> file(String variable) {
         final List<Path> files = files(variable);
         return files.size() == 1 ? Optional.of(files.get(0)) : Optional.empty();
@@ -63,12 +72,20 @@ public class DiaPipelineFileTest {
         List<Path> files = files("SIRIUS_DIA_TEST_FILE");
         assumeTrue(!files.isEmpty(), "no test file given, set SIRIUS_DIA_TEST_FILE");
 
-        final PipelineRun run = PipelineRun.run(files, name(files), deconvolution -> {
+        final PipelineRun run = PipelineRun.run(files, name(files), processing -> {
             final String quantile = System.getenv("SIRIUS_DIA_NOISE_QUANTILE");
-            if (quantile != null && !quantile.isBlank()) deconvolution.setNoiseQuantile(Double.parseDouble(quantile));
+            if (quantile != null && !quantile.isBlank()) {
+                deconvolutionOf(processing).setNoiseQuantile(Double.parseDouble(quantile));
+            }
+            final String minPoints = System.getenv("SIRIUS_DIA_MIN_POINTS");
+            if (minPoints != null && !minPoints.isBlank()) {
+                deconvolutionOf(processing).setMinFragmentScanPoints(Integer.parseInt(minPoints));
+            }
             final String prior = System.getenv("SIRIUS_DIA_INTENSITY_PRIOR");
-            if (prior != null && !prior.isBlank()) deconvolution.setIntensityPrior(Boolean.parseBoolean(prior));
-        });
+            if (prior != null && !prior.isBlank()) {
+                deconvolutionOf(processing).setIntensityPrior(Boolean.parseBoolean(prior));
+            }
+        }, true);
 
         int withMsMs = 0, msnSpectra = 0, msnPeaks = 0, withIsotopes = 0;
         for (AlignedFeatures feature : run.features) {
@@ -88,6 +105,7 @@ public class DiaPipelineFileTest {
         System.out.printf("processSample %.1f s, alignment and features %.1f s%n",
                 run.processingSeconds, run.alignmentSeconds);
         for (DiaReport report : run.diaReports) if (report != null) System.out.print(report.describe());
+        if (run.refinement != null) System.out.print(run.refinement);
         System.out.printf("aligned features %d%n", run.features.size());
         System.out.printf("  with isotope pattern %d, with MS/MS %d (%.1f %%)%n", withIsotopes, withMsMs,
                 run.features.isEmpty() ? 0d : 100d * withMsMs / run.features.size());

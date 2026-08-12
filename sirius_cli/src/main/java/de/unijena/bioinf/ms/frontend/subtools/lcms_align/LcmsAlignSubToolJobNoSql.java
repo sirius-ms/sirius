@@ -340,6 +340,10 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
             System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
             */
+            // for a data independent acquisition: redo the fragment assignment now that the final feature
+            // boundaries exist and every sample can be judged at once. Does nothing for DDA runs.
+            processing.refineDiaAssignments(merged, bac);
+
             updateProgress(totalProgress, ++progress, "Importing features");
             if (processing.extractFeaturesAndExportToProjectSpace(merged, bac) == 0) {
                 System.err.println("No features found.");

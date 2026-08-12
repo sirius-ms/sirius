@@ -60,13 +60,27 @@ public class DiaConsensusGraph {
     @Getter
     private final int featuresWithoutShapeEvidence;
 
+    /** the feature as seen from this channel, per precursor and sample, null where that sample has no window */
+    private final PrecursorFeature[][] views;
+
     private DiaConsensusGraph(List<DiaFinalPrecursors.Aligned> precursors,
                               List<DiaAlignedFragments.Aligned> fragments, List<ConsensusEdge> edges,
-                              int featuresWithoutShapeEvidence) {
+                              int featuresWithoutShapeEvidence, PrecursorFeature[][] views) {
         this.precursors = precursors;
         this.fragments = fragments;
         this.edges = edges;
         this.featuresWithoutShapeEvidence = featuresWithoutShapeEvidence;
+        this.views = views;
+    }
+
+    /**
+     * @return the window this feature was measured over in the given sample, or null if that sample did not
+     * contribute to it. The peaks written back have to be read over the same window they were judged over, so this
+     * is deliberately the graph's own view rather than something recomputed.
+     */
+    public PrecursorFeature viewOf(int precursorIndex, int sampleIndex) {
+        final PrecursorFeature[] perSample = views[precursorIndex];
+        return perSample == null ? null : perSample[sampleIndex];
     }
 
     public static DiaConsensusGraph build(List<DiaAlignedFragments.SampleFragments> perSample,
@@ -90,10 +104,12 @@ public class DiaConsensusGraph {
         for (int s = 0; s < perSample.size(); ++s) sampleIndex.put(perSample.get(s).sample().getUid(), s);
 
         final List<ConsensusEdge> edges = new ArrayList<>();
+        final PrecursorFeature[][] allViews = new PrecursorFeature[precursors.size()][];
         int withoutShape = 0;
         for (int p = 0; p < precursors.size(); ++p) {
             final PrecursorFeature[] views = viewsOf(precursors.get(p), perSample, sampleIndex, decoy);
             if (views == null) continue;
+            allViews[p] = views;
             boolean anyShape = false;
             for (int f = 0; f < fragments.size(); ++f) {
                 final ConsensusEdge edge = edgeOf(p, f, fragments.get(f), views, perSample, apexTolerance,
@@ -105,7 +121,7 @@ public class DiaConsensusGraph {
             if (!anyShape) ++withoutShape;
         }
         return new DiaConsensusGraph(List.copyOf(precursors), List.copyOf(fragments), List.copyOf(edges),
-                withoutShape);
+                withoutShape, allViews);
     }
 
     /**
