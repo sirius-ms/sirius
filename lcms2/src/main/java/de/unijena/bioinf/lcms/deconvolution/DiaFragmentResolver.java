@@ -1,44 +1,37 @@
 package de.unijena.bioinf.lcms.deconvolution;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.Getter;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.List;
 
 /**
  * Turns the candidate edges of a channel into one {@link FragmentAssignment} per fragment.
  * <p>
- * Every fragment is a transient node of an {@link AbsorbingWalk}, every precursor feature an absorbing one, plus
- * one absorbing node standing for "belongs to none of them" that every fragment is connected to. Without that
- * node the walk would have to distribute all of a fragment's probability over the candidates, however weak the
- * evidence, and a noise fragment would be assigned with confidence.
+ * The graph is bipartite: a fragment is connected to the precursor features it could belong to and to nothing else.
+ * A fragment's probability of belonging to a candidate is therefore that candidate's weight as a share of everything
+ * the fragment could be, including the "belongs to none of them" alternative:
+ * <pre>
+ *     p(fragment -&gt; precursor)  =  weight(precursor) / (sum of all weights + unassigned weight)
+ * </pre>
+ * The unassigned weight is what keeps a noise fragment from being confidently assigned: without it every fragment
+ * would have to distribute all of its probability over its candidates however weak the evidence, and this mirrors the
+ * {@code PrecursorIonType.unknown()} entry an {@code AdductAssignment} carries.
  * <p>
- * Edges between fragments are supported but are not produced by {@link DiaAssignmentGraph} yet. Note what they
- * are for: a fragment that is too sparsely measured to be correlated with a precursor is equally too sparsely
- * measured to be correlated with a sibling fragment, so they are no help there. Their use is disambiguation - a
- * fragment torn between two co-eluting precursors can be settled by an unambiguous sibling. Because they connect
- * fragments, they are also the only thing that makes a component larger than a single fragment, which is why the
- * component machinery below matters even though it currently always sees components of size one.
- * <p>
- * The solver is chosen per component: exact below {@link #DEFAULT_EXACT_SOLVER_LIMIT} fragments, iterative above
- * it, because the exact solver materialises a dense matrix over a component's fragments. The distribution of
- * component sizes is reported, so a real run can tell us which regime we are actually in rather than us guessing.
+ * This used to be computed by an absorbing random walk over a graph that also had fragment-to-fragment edges, so that
+ * a fragment torn between two co-eluting precursors could be settled by an unambiguous sibling. Those edges were
+ * never produced - every connected component was a single fragment on every real sample - and for a single transient
+ * node with no neighbours the walk's {@code (I - P_QQ)^-1 P_QA} is exactly the division above. The solver, the
+ * component search and the choice between an exact and an iterative solution were computing nothing that this does
+ * not, so they are gone; the history has them if the sibling idea is ever picked up again.
  */
 public class DiaFragmentResolver {
 
-    /** above this many fragments in one component the exact solver's dense matrix gets out of hand */
-    public static final int DEFAULT_EXACT_SOLVER_LIMIT = 250;
-
-    /** steps of the truncated walk used above that limit */
-    public static final int DEFAULT_ITERATIVE_STEPS = 12;
-
     /**
-     * Weight of the "belongs to none of them" node. An edge has to be better than this to take probability away
-     * from it, so it sets how much evidence is needed before a fragment is assigned at all. It is on the same
-     * scale as the edge weights, i.e. units of log p-value beyond the significance floor.
+     * Weight of the "belongs to none of them" alternative. A candidate has to be better than this to take
+     * probability away from it, so it sets how much evidence is needed before a fragment is assigned at all. It is on
+     * the same scale as the edge weights, i.e. units of log p-value beyond the significance floor.
      */
     public static final double DEFAULT_UNASSIGNED_WEIGHT = 1d;
 
@@ -82,8 +75,7 @@ public class DiaFragmentResolver {
      * <em>only</em> candidate for a fragment keeps it, because the comparison is relative: capacities are
      * normalised within each fragment's own candidate set, so a lone candidate always has a factor of one. What
      * this cannot do on its own is stop an intense precursor absorbing more than it could physically have emitted;
-     * that needs the total to be capped at its capacity, which is a constraint over sets of edges rather than a
-     * per edge weight.
+     * that is what {@link FragmentIntensityShares} is for.
      */
     public interface PrecursorCapacity {
         double capacityOf(int precursorIndex);
@@ -92,17 +84,12 @@ public class DiaFragmentResolver {
     /** every precursor is equally able to explain a fragment, i.e. intensity is ignored */
     public static final PrecursorCapacity UNIFORM_CAPACITY = index -> 1d;
 
-    /** an edge between two fragments, see the note in the class comment */
-    public record FragmentEdge(int leftFragment, int rightFragment, double weight) {
-    }
-
     /**
      * A candidate edge whose weight has already been decided.
      * <p>
-     * The walk itself does not care what a precursor or a fragment is, only how strongly they are connected, which
-     * is what lets the same solver resolve both stages. Stage one's nodes are the features and traces of a single
-     * sample; stage two's are features and fragments aligned across samples, whose evidence is pooled before it
-     * gets here.
+     * The resolver does not care what a precursor or a fragment is, only how strongly they are connected, which is
+     * what lets it serve both stages. Stage one's nodes are the features and traces of a single sample; stage two's
+     * are features and fragments aligned across samples, whose evidence is pooled before it gets here.
      */
     public record WeightedEdge(int precursorIndex, int fragmentIndex, double weight) {
     }
@@ -111,23 +98,9 @@ public class DiaFragmentResolver {
     public static class Result {
         /** one per fragment of the graph, in the graph's fragment order */
         private final FragmentAssignment[] assignments;
-        /** number of fragments per connected component */
-        private final int[] componentSizes;
-        private final int componentsSolvedExactly;
-        private final int componentsSolvedIteratively;
 
-        Result(FragmentAssignment[] assignments, int[] componentSizes, int componentsSolvedExactly,
-               int componentsSolvedIteratively) {
+        Result(FragmentAssignment[] assignments) {
             this.assignments = assignments;
-            this.componentSizes = componentSizes;
-            this.componentsSolvedExactly = componentsSolvedExactly;
-            this.componentsSolvedIteratively = componentsSolvedIteratively;
-        }
-
-        public int largestComponent() {
-            int max = 0;
-            for (int size : componentSizes) max = Math.max(max, size);
-            return max;
         }
 
         /** @return number of fragments that were assigned to at least one precursor */
@@ -146,26 +119,22 @@ public class DiaFragmentResolver {
     }
 
     public static Result resolve(DiaAssignmentGraph graph, EdgeWeighting weighting) {
-        return resolve(graph, weighting, UNIFORM_CAPACITY, List.of(), DEFAULT_UNASSIGNED_WEIGHT,
-                FragmentAssignment.DEFAULT_MIN_PROBABILITY, DEFAULT_EXACT_SOLVER_LIMIT, DEFAULT_ITERATIVE_STEPS);
+        return resolve(graph, weighting, UNIFORM_CAPACITY, DEFAULT_UNASSIGNED_WEIGHT,
+                FragmentAssignment.DEFAULT_MIN_PROBABILITY);
     }
 
-    public static Result resolve(DiaAssignmentGraph graph, EdgeWeighting weighting, List<FragmentEdge> fragmentEdges,
-                                 double unassignedWeight, double minProbability, int exactSolverLimit,
-                                 int iterativeSteps) {
-        return resolve(graph, weighting, UNIFORM_CAPACITY, fragmentEdges, unassignedWeight, minProbability,
-                exactSolverLimit, iterativeSteps);
+    public static Result resolve(DiaAssignmentGraph graph, EdgeWeighting weighting, double unassignedWeight,
+                                 double minProbability) {
+        return resolve(graph, weighting, UNIFORM_CAPACITY, unassignedWeight, minProbability);
     }
 
     public static Result resolve(DiaAssignmentGraph graph, EdgeWeighting weighting, PrecursorCapacity capacity,
-                                 List<FragmentEdge> fragmentEdges, double unassignedWeight, double minProbability,
-                                 int exactSolverLimit, int iterativeSteps) {
+                                 double unassignedWeight, double minProbability) {
         final List<WeightedEdge> weighted = new ArrayList<>(graph.getPrecursorEdges().size());
         for (DiaAssignmentGraph.PrecursorEdge edge : graph.getPrecursorEdges()) {
             weighted.add(new WeightedEdge(edge.precursorIndex(), edge.fragmentIndex(), weighting.weight(edge)));
         }
-        return resolveWeighted(graph.getFragments().size(), weighted, capacity, fragmentEdges, unassignedWeight,
-                minProbability, exactSolverLimit, iterativeSteps);
+        return resolveWeighted(graph.getFragments().size(), weighted, capacity, unassignedWeight, minProbability);
     }
 
     /**
@@ -174,115 +143,43 @@ public class DiaFragmentResolver {
      * @param fragmentCount number of fragments; the edges index into {@code 0..fragmentCount-1}
      */
     public static Result resolveWeighted(int fragmentCount, List<WeightedEdge> edges, PrecursorCapacity capacity,
-                                         List<FragmentEdge> fragmentEdges, double unassignedWeight,
-                                         double minProbability, int exactSolverLimit, int iterativeSteps) {
+                                         double unassignedWeight, double minProbability) {
         final FragmentAssignment[] assignments = new FragmentAssignment[fragmentCount];
         java.util.Arrays.fill(assignments, FragmentAssignment.unassigned());
 
-        // candidate edges per fragment, and fragment neighbours, both by fragment index
         final List<List<WeightedEdge>> candidates = new ArrayList<>(fragmentCount);
         for (int k = 0; k < fragmentCount; ++k) candidates.add(new ArrayList<>());
         for (WeightedEdge edge : edges) {
-            candidates.get(edge.fragmentIndex()).add(edge);
-        }
-        final List<IntArrayList> neighbours = new ArrayList<>(fragmentCount);
-        for (int k = 0; k < fragmentCount; ++k) neighbours.add(new IntArrayList());
-        for (FragmentEdge edge : fragmentEdges) {
-            if (edge.weight() <= 0) continue;
-            neighbours.get(edge.leftFragment()).add(edge.rightFragment());
-            neighbours.get(edge.rightFragment()).add(edge.leftFragment());
+            if (edge.weight() > 0) candidates.get(edge.fragmentIndex()).add(edge);
         }
 
-        final IntArrayList componentSizes = new IntArrayList();
-        int exact = 0, iterative = 0;
-        final BitSet visited = new BitSet(fragmentCount);
-        for (int seed = 0; seed < fragmentCount; ++seed) {
-            if (visited.get(seed)) continue;
-            final IntArrayList component = spread(seed, neighbours, visited);
-            componentSizes.add(component.size());
-            if (component.size() > exactSolverLimit) ++iterative;
-            else ++exact;
-            solveComponent(component, candidates, fragmentEdges, capacity, unassignedWeight,
-                    minProbability, exactSolverLimit, iterativeSteps, assignments);
-        }
-        return new Result(assignments, componentSizes.toIntArray(), exact, iterative);
-    }
-
-    /** connected component of the fragment graph, as {@code AdductNetwork.spread} does it for adduct nodes */
-    private static IntArrayList spread(int seed, List<IntArrayList> neighbours, BitSet visited) {
-        final IntArrayList stack = new IntArrayList();
-        stack.add(seed);
-        visited.set(seed);
-        for (int i = 0; i < stack.size(); ++i) {
-            for (int neighbour : neighbours.get(stack.getInt(i))) {
-                if (!visited.get(neighbour)) {
-                    visited.set(neighbour);
-                    stack.add(neighbour);
-                }
-            }
-        }
-        return stack;
-    }
-
-    private static void solveComponent(IntArrayList component, List<List<WeightedEdge>> candidates,
-                                       List<FragmentEdge> fragmentEdges,
-                                       PrecursorCapacity capacity, double unassignedWeight, double minProbability,
-                                       int exactSolverLimit, int iterativeSteps, FragmentAssignment[] assignments) {
-        // local indices, so the walk only ever sees the nodes of this component
-        final Int2IntOpenHashMap fragmentToLocal = new Int2IntOpenHashMap(component.size());
-        for (int local = 0; local < component.size(); ++local) fragmentToLocal.put(component.getInt(local), local);
-        final Int2IntOpenHashMap precursorToLocal = new Int2IntOpenHashMap();
-        precursorToLocal.defaultReturnValue(-1);
-        final IntArrayList localToPrecursor = new IntArrayList();
-        for (int fragment : component) {
-            for (WeightedEdge edge : candidates.get(fragment)) {
-                if (edge.weight() <= 0) continue;
-                if (!precursorToLocal.containsKey(edge.precursorIndex())) {
-                    precursorToLocal.put(edge.precursorIndex(), localToPrecursor.size());
-                    localToPrecursor.add(edge.precursorIndex());
-                }
-            }
-        }
-        final int unassignedNode = localToPrecursor.size();
-        final AbsorbingWalk.Builder builder = AbsorbingWalk.builder(component.size(), unassignedNode + 1);
-        for (int local = 0; local < component.size(); ++local) {
-            final int fragment = component.getInt(local);
-            // capacities are normalised within this fragment's own candidate set, so the best supported candidate
-            // keeps its full weight and the unassigned node stays comparable. Only the ratios between candidates
-            // matter, and those are preserved.
+        for (int fragment = 0; fragment < fragmentCount; ++fragment) {
+            final List<WeightedEdge> mine = candidates.get(fragment);
+            if (mine.isEmpty()) continue;
+            // Capacities are normalised within this fragment's own candidate set, so the best supported candidate
+            // keeps its full weight and the unassigned alternative stays comparable. Only the ratios between
+            // candidates matter, and those are preserved.
             double largestCapacity = 0d;
-            for (WeightedEdge edge : candidates.get(fragment)) {
-                if (edge.weight() <= 0) continue;
+            for (WeightedEdge edge : mine) {
                 largestCapacity = Math.max(largestCapacity, capacity.capacityOf(edge.precursorIndex()));
             }
-            for (WeightedEdge edge : candidates.get(fragment)) {
-                final double weight = edge.weight();
-                if (weight <= 0) continue;
+            final IntArrayList precursors = new IntArrayList(mine.size());
+            final double[] weights = new double[mine.size()];
+            double total = Math.max(0d, unassignedWeight);
+            for (int k = 0; k < mine.size(); ++k) {
+                final WeightedEdge edge = mine.get(k);
                 final double share = largestCapacity > 0
                         ? Math.max(0d, capacity.capacityOf(edge.precursorIndex())) / largestCapacity
                         : 1d;
-                builder.addAbsorbingEdge(local, precursorToLocal.get(edge.precursorIndex()), weight * share);
+                weights[k] = edge.weight() * share;
+                precursors.add(edge.precursorIndex());
+                total += weights[k];
             }
-            builder.addAbsorbingEdge(local, unassignedNode, unassignedWeight);
+            if (!(total > 0d)) continue;  // nothing this fragment could be, not even unassigned
+            for (int k = 0; k < weights.length; ++k) weights[k] /= total;
+            assignments[fragment] = FragmentAssignment.of(precursors.toIntArray(), weights,
+                    Math.max(0d, unassignedWeight) / total, minProbability);
         }
-        for (FragmentEdge edge : fragmentEdges) {
-            if (edge.weight() <= 0) continue;
-            if (!fragmentToLocal.containsKey(edge.leftFragment()) || !fragmentToLocal.containsKey(edge.rightFragment())) continue;
-            builder.addTransientEdge(fragmentToLocal.get(edge.leftFragment()), fragmentToLocal.get(edge.rightFragment()),
-                    edge.weight());
-        }
-        final AbsorbingWalk walk = builder.build();
-        final double[][] absorption = component.size() > exactSolverLimit
-                ? walk.solveIterative(iterativeSteps)
-                : walk.solveExact();
-
-        final int[] precursorIndices = localToPrecursor.toIntArray();
-        for (int local = 0; local < component.size(); ++local) {
-            final double[] row = absorption[local];
-            final double[] probabilities = new double[precursorIndices.length];
-            System.arraycopy(row, 0, probabilities, 0, precursorIndices.length);
-            assignments[component.getInt(local)] = FragmentAssignment.of(precursorIndices, probabilities,
-                    row[unassignedNode], minProbability);
-        }
+        return new Result(assignments);
     }
 }

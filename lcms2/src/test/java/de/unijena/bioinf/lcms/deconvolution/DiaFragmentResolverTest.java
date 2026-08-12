@@ -142,8 +142,8 @@ public class DiaFragmentResolverTest {
                 List.of(fragmentTrace(150.1, 60.5d)));
         // the second precursor is worth a thousandth of the first
         DiaFragmentResolver.Result result = DiaFragmentResolver.resolve(graph,
-                edge -> edge.precursorIndex() == 0 ? 1000d : 0.5d, List.of(),
-                DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01, 250, 12);
+                edge -> edge.precursorIndex() == 0 ? 1000d : 0.5d,
+                DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01);
 
         FragmentAssignment assignment = result.getAssignments()[0];
         assertEquals(1, assignment.size(), "the negligible precursor must not be stored");
@@ -167,8 +167,8 @@ public class DiaFragmentResolverTest {
 
         // identical evidence, but the first precursor is a hundred times more intense
         DiaFragmentResolver.Result result = DiaFragmentResolver.resolve(graph, UNIFORM,
-                precursorIndex -> precursorIndex == 0 ? 1_000_000d : 10_000d, List.of(),
-                DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01, 250, 12);
+                precursorIndex -> precursorIndex == 0 ? 1_000_000d : 10_000d,
+                DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01);
 
         FragmentAssignment assignment = result.getAssignments()[0];
         assertEquals(0, assignment.precursorIndexAt(0), "the intense precursor has to come first");
@@ -188,80 +188,39 @@ public class DiaFragmentResolverTest {
                 List.of(feature(precursorTrace(400.2, 60d), 60d)), List.of(fragmentTrace(150.1, 60d)));
 
         DiaFragmentResolver.Result weak = DiaFragmentResolver.resolve(graph, UNIFORM,
-                precursorIndex -> 1d, List.of(), DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01, 250, 12);
+                precursorIndex -> 1d, DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01);
         DiaFragmentResolver.Result strong = DiaFragmentResolver.resolve(graph, UNIFORM,
-                precursorIndex -> 1_000_000d, List.of(), DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01, 250, 12);
+                precursorIndex -> 1_000_000d, DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01);
 
         assertEquals(1, weak.getAssignments()[0].size());
         assertEquals(strong.getAssignments()[0].probabilityAt(0), weak.getAssignments()[0].probabilityAt(0), 1e-9,
                 "with a single candidate the absolute intensity must not matter at all");
     }
 
-    /** Fragment edges are the only thing that makes a component bigger than one fragment. */
-    @Test
-    public void withoutFragmentEdgesEveryComponentIsASingleFragment() {
-        DiaAssignmentGraph graph = DiaAssignmentGraph.build(channel(),
-                List.of(feature(precursorTrace(400.2, 60d), 60d)),
-                List.of(fragmentTrace(150.1, 60d), fragmentTrace(233.4, 60d), fragmentTrace(301.9, 60d)));
-
-        DiaFragmentResolver.Result result = DiaFragmentResolver.resolve(graph, UNIFORM);
-
-        assertEquals(3, result.getComponentSizes().length);
-        assertEquals(1, result.largestComponent());
-        assertEquals(3, result.getComponentsSolvedExactly());
-        assertEquals(0, result.getComponentsSolvedIteratively());
-    }
-
     /**
-     * A fragment with no candidate of its own, settled through the sibling it is tied to. This is the
-     * disambiguation the fragment edges exist for.
+     * The formula itself, spelled out on numbers that can be checked by hand. This is what the absorbing walk
+     * reduced to for a bipartite graph, and the reason it could go.
      */
     @Test
-    public void aFragmentEdgeCarriesEvidenceToAFragmentWithoutItsOwn() {
-        ContiguousTrace precursor = precursorTrace(400.2, 60d);
-        ContiguousTrace anchored = fragmentTrace(150.1, 60d);
-        // far too heavy to be a candidate of this precursor, so it has no edge of its own
-        ContiguousTrace orphan = fragmentTrace(900.9, 60d);
+    public void aProbabilityIsAWeightsShareOfEverythingTheFragmentCouldBe() {
         DiaAssignmentGraph graph = DiaAssignmentGraph.build(channel(),
-                List.of(feature(precursor, 60d)), List.of(anchored, orphan));
-        assertEquals(1, graph.getPrecursorEdges().size(), "precondition: only the light fragment is a candidate");
+                List.of(feature(precursorTrace(400.2, 60d), 60d), feature(precursorTrace(420.7, 60d), 60d)),
+                List.of(fragmentTrace(150.1, 60d)));
+        assertEquals(2, graph.getPrecursorEdges().size(), "precondition: the fragment has two candidates");
 
-        DiaFragmentResolver.Result result = DiaFragmentResolver.resolve(graph, UNIFORM,
-                List.of(new DiaFragmentResolver.FragmentEdge(0, 1, 20d)),
-                DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01, 250, 12);
+        // weights 7 and 3, unassigned weight 1, so the shares are 0.7, 0.3 and 0.1 of eleven
+        DiaFragmentResolver.Result result = DiaFragmentResolver.resolveWeighted(1,
+                List.of(new DiaFragmentResolver.WeightedEdge(0, 0, 7d),
+                        new DiaFragmentResolver.WeightedEdge(1, 0, 3d)),
+                DiaFragmentResolver.UNIFORM_CAPACITY, 1d, 0.01);
 
-        assertEquals(1, result.getComponentSizes().length, "the fragment edge joins them into one component");
-        assertEquals(2, result.largestComponent());
-        FragmentAssignment orphanAssignment = result.getAssignments()[1];
-        assertEquals(1, orphanAssignment.size(), "it inherits the precursor through its sibling");
-        assertEquals(0, orphanAssignment.precursorIndexAt(0));
-        assertTrue(orphanAssignment.probabilityAt(0) > 0.5, "got " + orphanAssignment.probabilityAt(0));
-        // and it must remain less certain than the fragment that has direct evidence
-        assertTrue(orphanAssignment.probabilityAt(0) < result.getAssignments()[0].probabilityAt(0));
-    }
-
-    @Test
-    public void aLargeComponentIsSolvedIteratively() {
-        final int n = 6;
-        ContiguousTrace precursor = precursorTrace(400.2, 60d);
-        List<ContiguousTrace> fragments = new java.util.ArrayList<>();
-        for (int k = 0; k < n; ++k) fragments.add(fragmentTrace(150.1 + k, 60d));
-        DiaAssignmentGraph graph = DiaAssignmentGraph.build(channel(), List.of(feature(precursor, 60d)), fragments);
-
-        List<DiaFragmentResolver.FragmentEdge> chain = new java.util.ArrayList<>();
-        for (int k = 0; k + 1 < n; ++k) chain.add(new DiaFragmentResolver.FragmentEdge(k, k + 1, 5d));
-
-        // a limit of two forces the iterative solver for this component of six
-        DiaFragmentResolver.Result result = DiaFragmentResolver.resolve(graph, UNIFORM, chain,
-                DiaFragmentResolver.DEFAULT_UNASSIGNED_WEIGHT, 0.01, 2, 40);
-
-        assertEquals(1, result.getComponentSizes().length);
-        assertEquals(n, result.largestComponent());
-        assertEquals(0, result.getComponentsSolvedExactly());
-        assertEquals(1, result.getComponentsSolvedIteratively());
-        for (FragmentAssignment a : result.getAssignments()) {
-            assertTrue(a.storedProbability() + a.getUnassignedProbability() <= 1d + 1e-9);
-        }
+        FragmentAssignment assignment = result.getAssignments()[0];
+        assertEquals(2, assignment.size());
+        assertEquals(7d / 11d, assignment.probabilityAt(0), 1e-9);
+        assertEquals(3d / 11d, assignment.probabilityAt(1), 1e-9);
+        assertEquals(1d / 11d, assignment.getUnassignedProbability(), 1e-9);
+        assertEquals(1d, assignment.storedProbability() + assignment.getUnassignedProbability(), 1e-9,
+                "and everything the fragment could be adds up to one");
     }
 
     @Test
@@ -270,7 +229,6 @@ public class DiaFragmentResolverTest {
                 List.of(feature(precursorTrace(400.2, 60d), 60d)), List.of());
         DiaFragmentResolver.Result result = DiaFragmentResolver.resolve(graph, UNIFORM);
         assertEquals(0, result.getAssignments().length);
-        assertEquals(0, result.getComponentSizes().length);
     }
 
     @Test

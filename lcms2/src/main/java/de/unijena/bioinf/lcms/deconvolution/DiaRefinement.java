@@ -308,8 +308,7 @@ public class DiaRefinement {
         final List<DiaFinalPrecursors.Aligned> precursors = graph.getPrecursors();
         final DiaFragmentResolver.Result resolution = DiaFragmentResolver.resolveWeighted(fragments.size(), weighted,
                 intensityPrior ? index -> apexIntensityOf(precursors.get(index)) : DiaFragmentResolver.UNIFORM_CAPACITY,
-                List.of(), unassignedWeight, minProbability, DiaFragmentResolver.DEFAULT_EXACT_SOLVER_LIMIT,
-                DiaFragmentResolver.DEFAULT_ITERATIVE_STEPS);
+                unassignedWeight, minProbability);
 
         final int[] written = writeBack(perSample, graph, resolution);
         return new ChannelResult(key, precursors.size(), fragments.size(), graph.getEdges().size(), decoyEdges,
