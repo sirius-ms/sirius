@@ -35,6 +35,14 @@ import java.util.List;
  * Bare values keep the wildcard/fuzzy characters ({@code * ? ~}) usable and escape structural
  * characters (colons in time values, brackets in adducts); values with whitespace or quotes are
  * quoted.
+ * <p>
+ * This is one half of a codec: {@code de.unijena.bioinf.ms.gui.utils.search.QueryStringParser} is
+ * the inverse (string -> tree). The two are proven mutual inverses by {@code QueryCodecSymmetryTest}
+ * (compiled output re-parses and re-compiles unchanged), which is what makes it safe to hydrate a
+ * committed query string back into editable chips. A dedicated lucene-based serializer was evaluated
+ * and rejected: Lucene's flexible {@code QueryNode#toQueryString} is a debug form that mangles ranges
+ * ({@code [field:a field:b]}) and keyless terms ({@code :term}), and its only canonical path requires
+ * analysis (tokenization) we deliberately avoid.
  */
 public final class LuceneQueryCompiler {
 
