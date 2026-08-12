@@ -73,7 +73,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     QueryEditorPanel queryEditor;
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
-    JButton discard, apply, reset;
+    JButton discard, apply;
     final JCheckBox invertFilter, deleteSelection, /*elementsMatchFormula, elementsMatchPrecursorFormula,*/ hasMs1, hasMsMs;
 
     final JCheckBox blankFilter;
@@ -360,8 +360,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             }
         }
 
-        reset = new JButton("Reset");
-        reset.addActionListener(this);
+        // Reset lives in the embedded query editor now (its clear button, wired to resetFilter)
         discard = new JButton("Discard");
         discard.addActionListener(this);
         apply = new JButton("Apply");
@@ -370,7 +369,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         JPanel buttons = new JPanel();
         buttons.setLayout(new BoxLayout(buttons, BoxLayout.X_AXIS));
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        buttons.add(reset);
         buttons.add(Box.createHorizontalGlue());
         buttons.add(apply);
         buttons.add(discard);
@@ -532,9 +530,10 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 openFullEditor.run(); // a model chip was clicked -> just jump to its tab, don't close
             }
         };
-        // embedded: no in-editor funnel or full-reset clear (the dialog has its own Reset/Discard/Apply)
+        // embedded: no in-editor funnel (the dialog has its own tabs); the clear button does a full
+        // reset of every filter and the query (replacing the former separate Reset button)
         return new QueryEditorPanel(filterModel, fieldsProvider, this::workingTerms, jumpToTab, renderState,
-                commit -> {}, () -> {}, host, true, null, null);
+                commit -> {}, () -> {}, host, true, null, this::resetFilter);
     }
 
     /**
@@ -576,10 +575,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == reset) {
-            resetFilter();
-            return;
-        }
         if (e.getSource() == apply) {
             saveChanges();
         }
