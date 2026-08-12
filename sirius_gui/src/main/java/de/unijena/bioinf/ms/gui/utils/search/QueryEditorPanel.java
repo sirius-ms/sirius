@@ -46,10 +46,12 @@ import java.util.function.Supplier;
 
 /**
  * The reusable, host-agnostic inline lucene query builder, modeled after GitLab's filtered search.
- * ONE wrapping line holds the filter-dialog state as outlined chips, the user's committed clause
- * chips (groups as nested paren chips), the staged fragments of the token being built and the text
- * input; an embedded suggestion list below it offers all candidates for the current stage
- * ({@link TokenInputModel}) and narrows while typing.
+ * Two stacked zones: an upper CHIPS zone holds the finished terms (filter-dialog state as outlined
+ * chips, the user's committed clause chips, groups as nested paren chips), wrapping across rows in a
+ * height-capped scrollable area; a lower TYPING zone holds only the term currently being built - open
+ * -group markers, the staged token fragments and the text input - so the stage prompt stays readable
+ * however many chips fill the zone above. An embedded suggestion list below offers all candidates for
+ * the current stage ({@link TokenInputModel}) and narrows while typing.
  * <p>
  * This is a plain {@link JPanel} with no window/lifecycle knowledge: it delegates the two
  * host-specific concerns - "my content changed height, re-fit me" and "I want to be dismissed" - to
@@ -69,6 +71,10 @@ public class QueryEditorPanel extends JPanel {
 
     private static final int ICON_SIZE = 24; // px; sized to sit on the input row next to the field
     private static final int MAX_LIST_ROWS = 10;
+    /** The finished-chips zone shows at most this many rows, then scrolls (keeps the typing row visible). */
+    private static final int MAX_CHIP_ROWS = 3;
+    /** Vertical gap between chip rows; shared by the chips-zone {@link WrapLayout} and the height cap. */
+    private static final int CHIP_VGAP = 4;
 
     /**
      * What a commit produced - the collapsed bar renders its chips from this snapshot (never by
@@ -161,7 +167,12 @@ public class QueryEditorPanel extends JPanel {
     private final LinkedHashMap<String, Runnable> pendingModelRemovals = new LinkedHashMap<>();
 
     // --- ui ---
-    private final JPanel inlineRow;
+    /** Upper zone: the finished terms as chips (wraps across rows, height-capped + scrollable). */
+    private final JPanel chipsRow;
+    /** The scroll pane wrapping {@link #chipsRow}; kept so rebuilds can scroll it to the newest chips. */
+    private JScrollPane chipsScroll;
+    /** Lower zone: the term currently being built - open-group markers, staged fragments and the input. */
+    private final JPanel typingRow;
     private final PlaceholderTextField input;
     private final JList<TokenInputModel.Suggestion> suggestionList;
     private final JScrollPane suggestionScroll;
@@ -195,14 +206,29 @@ public class QueryEditorPanel extends JPanel {
                 BorderFactory.createLineBorder(Colors.Menu.FILTER_BUTTON, 1),
                 BorderFactory.createEmptyBorder(3, 5, 3, 5)));
 
-        // --- top: the one inline row (chips + staged fragments + input) plus trailing controls ---
-        inlineRow = new JPanel(new WrapLayout(FlowLayout.LEFT, 4, 4));
-        inlineRow.setOpaque(false);
+        // --- two zones: finished terms as chips (upper) over the term being built (lower) ---
+        // the chips zone wraps across rows in a height-capped, vertically-scrollable area so the
+        // typing row and its instructions stay visible no matter how many finished chips there are
+        chipsRow = new WrapScrollPanel(new WrapLayout(FlowLayout.LEFT, 4, CHIP_VGAP));
+        chipsScroll = new JScrollPane(chipsRow,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+            @Override
+            public Dimension getPreferredSize() {
+                Dimension d = super.getPreferredSize();
+                return new Dimension(d.width, Math.min(d.height, chipsZoneMaxHeight()));
+            }
+        };
+        chipsScroll.setOpaque(false);
+        chipsScroll.getViewport().setOpaque(false);
+        chipsScroll.setBorder(BorderFactory.createEmptyBorder());
 
         input = new PlaceholderTextField(18);
         input.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
         input.setOpaque(false);
         wireInput();
+
+        typingRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2)); // the term being built, on its own line
+        typingRow.setOpaque(false);
 
         Box controls = Box.createHorizontalBox();
 
@@ -245,14 +271,21 @@ public class QueryEditorPanel extends JPanel {
         styleModeToggle(modeToggle);
         controls.add(modeToggle);
 
-        JPanel top = new JPanel(new BorderLayout());
-        top.setOpaque(false);
-        top.add(inlineRow, BorderLayout.CENTER);
+        // chips zone with the trailing controls (funnel / clear / mode toggle) at its top-right,
+        // and the typing zone stacked directly beneath it
+        JPanel chipsHeader = new JPanel(new BorderLayout());
+        chipsHeader.setOpaque(false);
+        chipsHeader.add(chipsScroll, BorderLayout.CENTER);
         JPanel controlsAligned = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 2));
         controlsAligned.setOpaque(false);
         controlsAligned.add(controls);
-        top.add(controlsAligned, BorderLayout.EAST);
-        add(top, BorderLayout.NORTH);
+        chipsHeader.add(controlsAligned, BorderLayout.EAST);
+
+        Box northStack = Box.createVerticalBox();
+        northStack.setOpaque(false);
+        northStack.add(chipsHeader);
+        northStack.add(typingRow);
+        add(northStack, BorderLayout.NORTH);
 
         // the floating overlay's main actions live in a right-aligned footer (like the app's dialogs);
         // the embedded editor omits it - the filter dialog owns commit/dismissal (Apply / Discard)
@@ -685,8 +718,9 @@ public class QueryEditorPanel extends JPanel {
         // removeAll() detaches the (focused) input, which drops the keyboard focus; restore it
         // after the re-layout so typing continues seamlessly after choosing a suggestion
         boolean refocus = input.isFocusOwner();
-        inlineRow.removeAll();
+        chipsRow.removeAll();
 
+        // --- upper zone: the finished terms as chips ---
         // render only the model filters not staged for removal - a staged removal hides the chip but
         // does not touch the model until the search is committed (Cancel discards it, see revertToBaseline())
         List<FilterTerm> terms = termSupplier.get().stream()
@@ -694,10 +728,10 @@ public class QueryEditorPanel extends JPanel {
                 .toList();
         for (int i = 0; i < terms.size(); i++) {
             if (i > 0)
-                inlineRow.add(ChipComponent.implicitAndLabel()); // dialog filters always AND together
+                chipsRow.add(ChipComponent.implicitAndLabel()); // dialog filters always AND together
             FilterTerm term = terms.get(i);
             QueryNode node = term.toQueryNode();
-            inlineRow.add(new ChipComponent(
+            chipsRow.add(new ChipComponent(
                     QueryNodeRenderer.label(node, renderState.mode(), renderState.suffixLengthResolver()),
                     GuiUtils.formatToolTip(LuceneQueryCompiler.render(node),
                             embedded ? "Filter from the tabs above - click to jump to its control; combined with AND"
@@ -716,32 +750,83 @@ public class QueryEditorPanel extends JPanel {
         List<QueryNode> items = root.items();
         // the dialog filters and the user's own query are combined with AND - make that visible
         if (!terms.isEmpty() && !items.isEmpty())
-            inlineRow.add(ChipComponent.implicitAndLabel());
+            chipsRow.add(ChipComponent.implicitAndLabel());
         for (int i = 0; i < items.size(); i++) {
             if (i > 0)
-                inlineRow.add(buildLogicComponent(root.logics().get(i - 1), new int[]{i}));
-            inlineRow.add(buildNode(items.get(i), new int[]{i}));
+                chipsRow.add(buildLogicComponent(root.logics().get(i - 1), new int[]{i}));
+            chipsRow.add(buildNode(items.get(i), new int[]{i}));
         }
 
-        // the staged token fragments and the input render inside the open group, if any
-        if (openPath.length == 0)
-            addStagedFragmentsAndInput(inlineRow);
+        // --- lower zone: the term currently being built, on its own line ---
+        buildTypingRow();
 
         input.setPlaceholder(tokenModel.stagePrompt());
         refreshSuggestions();
-        inlineRow.revalidate();
-        inlineRow.repaint();
+        chipsRow.revalidate();
+        chipsRow.repaint();
+        typingRow.revalidate();
+        typingRow.repaint();
         if (isShowing())
             host.editorContentChanged();
+        // when the chips zone overflows (e.g. while building a group), keep the newest / in-progress
+        // chips in view rather than the already-finished ones at the top
+        SwingUtilities.invokeLater(this::scrollChipsToBottom);
         if (refocus)
             SwingUtilities.invokeLater(input::requestFocusInWindow);
     }
 
-    private void addStagedFragmentsAndInput(JPanel target) {
+    /** Scrolls the chips zone to the bottom; a no-op when everything already fits (no scrollbar). */
+    private void scrollChipsToBottom() {
+        JScrollBar bar = chipsScroll.getVerticalScrollBar();
+        bar.setValue(bar.getMaximum());
+    }
+
+    /**
+     * (Re)builds the lower typing zone: one open-group marker per open nesting level (so the user
+     * sees the committed clause will land inside those groups), then the staged token fragments and
+     * the text input. The input always lives on this line, so the stage prompt stays readable no
+     * matter how many finished chips fill the zone above.
+     */
+    private void buildTypingRow() {
+        typingRow.removeAll();
+        for (int depth = 0; depth < openPath.length; depth++)
+            typingRow.add(openGroupMarker());
         for (String fragment : tokenModel.pendingFragments())
-            target.add(new ChipComponent(fragment, "Being built - Backspace removes it",
+            typingRow.add(new ChipComponent(fragment, "Being built - Backspace removes it",
                     ChipComponent.Style.USER, null, null));
-        target.add(input);
+        typingRow.add(input);
+        // a clickable ) right where the user types, to close the innermost open group and continue
+        if (openPath.length > 0)
+            typingRow.add(closeGroupControl());
+    }
+
+    /** A dimmed "(" marker shown in the typing row while a group is open (one per nesting level). */
+    private JComponent openGroupMarker() {
+        JLabel marker = parenLabel("(");
+        marker.setToolTipText(GuiUtils.formatToolTip(
+                "Adding inside a group - the finished clause lands in the open group above; use the \")\" here to close it."));
+        return marker;
+    }
+
+    /** The interactive ")" in the typing row: closes the innermost open group (same as typing ")"). */
+    private JComponent closeGroupControl() {
+        JLabel close = parenLabel(")");
+        close.setToolTipText(GuiUtils.formatToolTip("Close the group and keep adding filters (or type \")\")"));
+        close.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        close.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                closeOpenGroup();
+            }
+        });
+        return close;
+    }
+
+    /** Closes the innermost open group and returns focus to the input. */
+    private void closeOpenGroup() {
+        applyEvent(new TokenInputModel.Event.CloseGroup());
+        rebuild();
+        input.requestFocusInWindow();
     }
 
     private JComponent buildLogicComponent(LogicOp logic, int[] pathOfFollowingNode) {
@@ -818,24 +903,10 @@ public class QueryEditorPanel extends JPanel {
             groupPanel.add(buildNode(children.get(i), childPath));
         }
 
-        // tokens built while this group is open belong inside it, so fragments + input render here
-        if (open)
-            addStagedFragmentsAndInput(groupPanel);
-
-        JLabel closing = parenLabel(")");
-        if (open) {
-            closing.setToolTipText("Close this group");
-            closing.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            closing.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    applyEvent(new TokenInputModel.Event.CloseGroup());
-                    rebuild();
-                    input.requestFocusInWindow();
-                }
-            });
-        }
-        groupPanel.add(closing);
+        // the in-progress token no longer renders inside the group - it lives in the typing row below,
+        // and so does the interactive close (see buildTypingRow / closeGroupControl); the open group
+        // here shows only its committed children, so its ) is purely visual
+        groupPanel.add(parenLabel(")"));
 
         if (!open)
             groupPanel.add(ChipComponent.closeLabel(Colors.Menu.FILTER_BUTTON, "Remove this group with all its filters",
@@ -852,6 +923,62 @@ public class QueryEditorPanel extends JPanel {
         label.setFont(label.getFont().deriveFont(Font.BOLD, label.getFont().getSize2D() + 2));
         label.setForeground(Colors.Menu.FILTER_BUTTON);
         return label;
+    }
+
+    /**
+     * Height of one chip row: a representative chip WITH a close button (its bold "x" label is the
+     * tallest element - the empty-close sample used before under-measured the real chips), plus a
+     * few px headroom so slightly taller rows (group / paren chips, e.g. adducts and quality) are
+     * not clipped either.
+     */
+    private static int chipRowHeight() {
+        return new ChipComponent("Ag", null, ChipComponent.Style.MODEL, null, () -> {}).getPreferredSize().height + 4;
+    }
+
+    /**
+     * The capped height of the chips zone: {@link WrapLayout} lays out N rows as
+     * {@code N*rowHeight + (N+1)*vgap}, so cap at exactly {@link #MAX_CHIP_ROWS} rows (fully visible,
+     * then scroll).
+     */
+    private static int chipsZoneMaxHeight() {
+        return MAX_CHIP_ROWS * chipRowHeight() + (MAX_CHIP_ROWS + 1) * CHIP_VGAP;
+    }
+
+    /**
+     * A panel that reports {@code true} for {@link #getScrollableTracksViewportWidth()} so its
+     * {@link WrapLayout} wraps to the enclosing scroll pane's viewport width (and grows in height)
+     * rather than scrolling horizontally.
+     */
+    private static final class WrapScrollPanel extends JPanel implements Scrollable {
+        WrapScrollPanel(LayoutManager layout) {
+            super(layout);
+            setOpaque(false);
+        }
+
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return 16;
+        }
+
+        @Override
+        public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return Math.max(16, visibleRect.height - 16);
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportHeight() {
+            return false;
+        }
     }
 
     /**

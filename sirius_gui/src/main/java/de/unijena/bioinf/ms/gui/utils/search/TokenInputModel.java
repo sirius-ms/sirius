@@ -229,11 +229,15 @@ public class TokenInputModel {
     }
 
     private List<Suggestion> connectorSuggestions(String prefix) {
-        List<Suggestion> suggestions = new ArrayList<>(2);
+        List<Suggestion> suggestions = new ArrayList<>(3);
         if (matches(SpecialToken.AND, prefix))
             suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.AND));
         if (matches(SpecialToken.OR, prefix))
             suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.OR));
+        // inside an open group, ) closes it - offered here too so the group can be finished from the
+        // keyboard (select + Tab, or type ")") right after a committed clause, without adding another
+        if (groupOpen && matches(SpecialToken.CLOSE_GROUP, prefix))
+            suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.CLOSE_GROUP));
         return suggestions;
     }
 
