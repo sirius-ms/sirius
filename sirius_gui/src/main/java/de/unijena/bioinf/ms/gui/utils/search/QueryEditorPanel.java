@@ -410,13 +410,20 @@ public class QueryEditorPanel extends JPanel {
      * then calls {@link #focusInputAndRefresh()}.
      */
     public void openSession(@Nullable String typeAhead) {
-        // the shared document was edited elsewhere -> degrade its content into the free text
         String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
         if (!docText.equals(lastCompiled)) {
-            root = QueryContainer.empty();
             openPath = new int[0];
             tokenModel.reset();
-            input.setText(docText);
+            // hydrate the existing query into editable chips; if it uses constructs we do not model
+            // (or is not valid lucene) fall back to showing its text in the input as a free-text edit
+            Optional<QueryContainer> parsed = QueryStringParser.parse(docText, fieldsProvider.getCached());
+            if (parsed.isPresent()) {
+                root = parsed.get();
+                input.setText("");
+            } else {
+                root = QueryContainer.empty();
+                input.setText(docText);
+            }
             lastCompiled = docText;
         }
         // the applied query is the baseline Cancel reverts to (before any type-ahead edit)
