@@ -746,9 +746,10 @@ public class QueryEditorPanel extends JPanel {
                     ChipComponent.Style.MODEL,
                     // hand off to the full editor (overlay: close + open dialog; embedded dialog: jump to the tab)
                     () -> host.editorHandoff(() -> term.openEditor(editorHost)),
-                    // embedded model chips are read-only (their value is edited via the widgets); the
-                    // overlay stages a removal (applied on commit, reverted on Cancel)
-                    embedded ? null : () -> {
+                    // remove the model filter: the embedded dialog resets the backing widget through the
+                    // host (its chips mirror widget state); the overlay stages a removal on its own
+                    // snapshot model (applied on commit, reverted on Cancel)
+                    embedded ? () -> editorHost.removeFilter(term) : () -> {
                         pendingModelRemovals.put(term.id(), term::remove);
                         rebuild();
                     }));
