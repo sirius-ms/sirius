@@ -27,13 +27,13 @@ import lombok.Getter;
  */
 @Getter
 public enum NumberOp {
-    RANGE_INCLUSIVE("[a TO b] (inclusive)", "[ TO ]"),
-    RANGE_EXCLUSIVE("{a TO b} (exclusive)", "{ TO }"),
-    GTE(">=", ">="),
-    GT(">", ">"),
-    LTE("<=", "<="),
-    LT("<", "<"),
-    EQ("=", "=");
+    RANGE_INCLUSIVE("[a TO b] (inclusive)", "[ TO ]", "between (bounds included)"),
+    RANGE_EXCLUSIVE("{a TO b} (exclusive)", "{ TO }", "between (bounds excluded)"),
+    GTE(">=", ">=", "greater than or equal"),
+    GT(">", ">", "greater than"),
+    LTE("<=", "<=", "less than or equal"),
+    LT("<", "<", "less than"),
+    EQ("=", "=", "equals");
 
     /**
      * Explanatory text for the operator dropdown.
@@ -43,10 +43,15 @@ public enum NumberOp {
      * Terse form shown on committed chips and staged token fragments.
      */
     private final String symbol;
+    /**
+     * Human-readable phrase shown next to the symbol in the operator autocompletion suggestions.
+     */
+    private final String description;
 
-    NumberOp(String label, String symbol) {
+    NumberOp(String label, String symbol, String description) {
         this.label = label;
         this.symbol = symbol;
+        this.description = description;
     }
 
     /**
