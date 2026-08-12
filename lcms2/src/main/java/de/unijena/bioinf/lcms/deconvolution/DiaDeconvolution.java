@@ -201,13 +201,11 @@ public class DiaDeconvolution {
             for (ChannelResult c : channels) {
                 buf.append(String.format(Locale.US,
                         "  channel %d [%.1f-%.1f]: noise %.0f, %d features (%d without shape), %d fragments from %d seeds, "
-                                + "%d edges, %d decoy edges, largest component %d, %d exact / %d iterative%n",
+                                + "%d edges, %d decoy edges%n",
                         c.getChannel().getChannelId(), c.getChannel().lowestMz(), c.getChannel().highestMz(),
                         c.getNoiseLevel(), c.getGraph().getPrecursors().size(),
                         c.getGraph().getFeaturesWithoutShapeEvidence(), c.getGraph().getFragments().size(),
-                        c.getFragmentSeeds(), c.getGraph().getPrecursorEdges().size(), c.getDecoyEdges(),
-                        c.getResolution().largestComponent(), c.getResolution().getComponentsSolvedExactly(),
-                        c.getResolution().getComponentsSolvedIteratively()));
+                        c.getFragmentSeeds(), c.getGraph().getPrecursorEdges().size(), c.getDecoyEdges()));
                 if (!c.isOwnNullDistribution()) {
                     buf.append("    (too few decoys of its own, using the null distribution of the whole sample)\n");
                 }
@@ -291,8 +289,7 @@ public class DiaDeconvolution {
                     edge -> DiaFragmentResolver.weightFromLogPValue(nulls.logPvalue(edge), significanceFloor),
                     intensityPrior ? precursorIndex -> features.get(precursorIndex).getApexIntensity()
                             : DiaFragmentResolver.UNIFORM_CAPACITY,
-                    List.of(), unassignedWeight, minProbability, DiaFragmentResolver.DEFAULT_EXACT_SOLVER_LIMIT,
-                    DiaFragmentResolver.DEFAULT_ITERATIVE_STEPS);
+                    unassignedWeight, minProbability);
             results.add(new ChannelResult(draft.channel, draft.graph, resolution, draft.noiseLevel,
                     draft.fragmentSeeds, draft.decoyPrecursors, decoyEdges, ownNull));
         }
