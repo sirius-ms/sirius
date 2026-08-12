@@ -53,6 +53,15 @@ public class SampleStats {
     @Builder.Default
     private double expectedPeakWidth = -1;
 
+    /**
+     * How well two profiles of one and the same compound correlate on this sample, learned from its isotope pairs.
+     * Never null; an instance that learned nothing reports that it cannot answer.
+     */
+    @With
+    @Getter @Setter
+    @Builder.Default
+    private TraceCorrelationStatistics traceCorrelations = TraceCorrelationStatistics.empty();
+
     public Optional<Double> getExpectedPeakWidth() {
         return expectedPeakWidth<0 ? Optional.empty() : Optional.of(expectedPeakWidth);
     }
