@@ -318,9 +318,10 @@ public class TokenInputModel {
     }
 
     /**
-     * Enter with raw typed text: value stages take it as the value; the operator stage matches it
-     * against the operators; at IDLE multi-token grammar input ({@code or not ion}) is applied in
-     * one go, anything else is the owner's free-text segment (no state change, empty result).
+     * Tab (or Enter on a terminal token) with raw typed text: value stages take it as the value; the
+     * operator stage matches it against the operators; at IDLE multi-token grammar input
+     * ({@code or not ion}) is applied in one go, anything else is the owner's free-text segment (no
+     * state change, empty result).
      */
     public Optional<Event> submitTyped(@NotNull String text) {
         String trimmed = text.trim();
@@ -457,19 +458,21 @@ public class TokenInputModel {
      * Placeholder/guidance text for the current stage.
      */
     public String stagePrompt() {
+        // Tab is the key that accepts/adds the current token (Enter runs the search); every prompt
+        // ends in ", then Tab" so users learn the accept key. Range bounds open with an empty Tab.
         return switch (stage) {
-            case CONNECTOR -> "Combine with the previous filter (AND / OR)";
-            case FIELD -> "Search, or filter by field name...";
-            case OPERATOR -> "How to compare - [ ] includes the bounds, { } excludes them";
+            case CONNECTOR -> "Combine with AND / OR, then Tab";
+            case FIELD -> "Search, or pick a field, then Tab";
+            case OPERATOR -> "Choose how to compare, then Tab ([ ] includes the bounds, { } excludes them)";
             case VALUE -> {
                 if (pendingOp != null && pendingOp.isRange())
-                    yield "Lower bound (Enter on empty = open)";
+                    yield "Lower bound, then Tab (empty = open end)";
                 if (pendingField != null && !CompletionParser.valueSuggestions(pendingField).isEmpty())
-                    yield "Select or type a value";
-                yield "Enter a value" + (pendingField != null && pendingField.getFieldType() == SearchableFieldType.TEXT
+                    yield "Select or type a value, then Tab";
+                yield "Type a value, then Tab" + (pendingField != null && pendingField.getFieldType() == SearchableFieldType.TEXT
                         ? " (*, ?, ~ wildcards)" : "");
             }
-            case VALUE2 -> "Upper bound (Enter on empty = open)";
+            case VALUE2 -> "Upper bound, then Tab (empty = open end)";
         };
     }
 

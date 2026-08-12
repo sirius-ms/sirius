@@ -138,24 +138,19 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
         // filter modifiers
         {
-//            Box filterModifiers = Box.createVerticalBox();
-//            filterModifiers.add(new JXTitledSeparator("Filter modifiers"));
-
             invertFilter = new JCheckBox("Invert Filter");
             invertFilter.setSelected(filterModel.isInverted());
-            invertFilter.setToolTipText(GuiUtils.formatAndStripToolTip("Invert the final/full filter configuration. All matching element become unmatched elements and vise versa."));
+            invertFilter.setToolTipText(GuiUtils.formatAndStripToolTip("Invert the full filter configuration: all matching features become non-matching and vice versa."));
 
             deleteSelection = new JCheckBox("<html>Delete all <b>non-</b>matching features</html>");
             deleteSelection.setSelected(false);
-            deleteSelection.setToolTipText(GuiUtils.formatAndStripToolTip("Delete all non-matching features. This will reduce to project to the matching features. All non matching features get deleted and cannot be recovered."));
+            deleteSelection.setToolTipText(GuiUtils.formatAndStripToolTip("Delete all non-matching features, reducing the project to the matching ones. Deleted features cannot be recovered."));
 
             final Box group = Box.createHorizontalBox();
             group.add(invertFilter);
             group.add(Box.createHorizontalStrut(25));
             group.add(deleteSelection);
             group.add(Box.createHorizontalGlue());
-//            filterModifiers.add(group);
-//            optionsPanel.add(filterModifiers, BorderLayout.SOUTH);
             optionsPanel.add(group, BorderLayout.SOUTH);
         }
 
@@ -197,7 +192,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             // Adduct filter
             {
                 inputParameters.add(Box.createVerticalStrut(5));
-                adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to  filter by. Selecting all or none mean every adducts can pass"));
+                adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to filter by. Selecting all or none means any adduct can pass."));
                 adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
                 adductOptions.checkBoxList.setVisibleRowCount(5);
 
@@ -246,10 +241,10 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 dataParameters.add(Box.createVerticalStrut(6));
                 dataParameters.add(new JXTitledSeparator("MS Data Quality"));
                 hasMs1 = new JCheckBox("MS1");
-                hasMs1.setToolTipText("Feature must have a least one MS1 Spectrum");
+                hasMs1.setToolTipText("Feature must have at least one MS1 spectrum");
                 hasMs1.setSelected(filterModel.isHasMs1());
                 hasMsMs = new JCheckBox("MS/MS");
-                hasMsMs.setToolTipText("Feature must have a least one MS/MS Spectrum");
+                hasMsMs.setToolTipText("Feature must have at least one MS/MS spectrum");
                 hasMsMs.setSelected(filterModel.isHasMsMs());
 
                 Box box = Box.createHorizontalBox();
@@ -325,7 +320,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 else
                     elementsField.setText(elements.toString());
             });
-            elementsField.setPlaceholder("Insert or Select formula constraints");
+            elementsField.setPlaceholder("Enter or select formula constraints");
             elementSelector.add(elementsField);
             elementSelector.add(selectElements);
 
