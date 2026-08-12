@@ -30,7 +30,7 @@ public class SampleStatsDataType extends CustomDataType<SampleStats> {
 
     @Override
     public int getMemory(SampleStats obj) {
-        return obj.getNoiseLevelPerScan().length * 4 + 36;
+        return obj.getNoiseLevelPerScan().length * 4 + 48;
     }
 
     @Override
@@ -41,13 +41,24 @@ public class SampleStatsDataType extends CustomDataType<SampleStats> {
         buff.putDouble(obj.getMs1MassDeviationWithinTraces().getAbsolute());
         buff.putDouble(obj.getMinimumMs1MassDeviationBetweenTraces().getPpm());
         buff.putDouble(obj.getMinimumMs1MassDeviationBetweenTraces().getAbsolute());
+        // These two used to be left out, so whether they survived depended on whether the store happened to hand
+        // back a cached instance or deserialised one - the expected peak width in particular is set on the merged
+        // sample after merging and read all over feature extraction, where losing it silently turns every rule that
+        // depends on it off. An absent peak width is -1 rather than zero, so it has to round trip as it is.
+        buff.putFloat(obj.getMinimumIntensity());
+        buff.putDouble(obj.getExpectedPeakWidth().orElse(-1d));
     }
 
     @Override
     public SampleStats read(ByteBuffer buff) {
-        return SampleStats.builder().ms2NoiseLevel(buff.getFloat()).noiseLevelPerScan(readFloat(buff)).
-                ms1MassDeviationWithinTraces(new Deviation(buff.getDouble(), buff.getDouble())).
-                minimumMs1MassDeviationBetweenTraces(new Deviation(buff.getDouble(), buff.getDouble())).build();
+        final SampleStats stats = SampleStats.builder().ms2NoiseLevel(buff.getFloat())
+                .noiseLevelPerScan(readFloat(buff))
+                .ms1MassDeviationWithinTraces(new Deviation(buff.getDouble(), buff.getDouble()))
+                .minimumMs1MassDeviationBetweenTraces(new Deviation(buff.getDouble(), buff.getDouble()))
+                .minimumIntensity(buff.getFloat())
+                .build();
+        stats.setExpectedPeakWidth(buff.getDouble());
+        return stats;
     }
 
     @Override
