@@ -159,16 +159,10 @@ public abstract class Buttons {
      * type), so no parent-background needs to be supplied.
      */
     public static JButton getBackspaceButton(int size, @Nullable Color color, String tooltip, boolean borderless) {
-        return new ToolbarButton(new BackspaceIcon(size, color != null ? color : defaultBackspaceColor()), tooltip, borderless);
+        return new ToolbarButton(new BackspaceIcon(size, color != null ? color : Colors.searchFieldIconColor()), tooltip, borderless);
     }
 
     public static JButton getBackspaceButton(int size, String tooltip, boolean borderless) {
         return getBackspaceButton(size, null, tooltip, borderless);
-    }
-
-    /** FlatLaf's search-field clear-icon color, or the data foreground if the L&F does not define it. */
-    private static Color defaultBackspaceColor() {
-        Color c = UIManager.getColor("SearchField.clearIconColor");
-        return c != null ? c : Colors.FOREGROUND_DATA;
     }
 }
