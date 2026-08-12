@@ -17,6 +17,8 @@
  */
 
 package de.unijena.bioinf.ms.gui.utils.search;
+import com.formdev.flatlaf.FlatClientProperties;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
@@ -68,7 +70,8 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
                             @NotNull SearchRenderState renderState,
                             @NotNull Consumer<QueryEditorPanel.Commit> onCommitted,
                             @NotNull Runnable refreshCollapsedBar,
-                            @NotNull Runnable openFilterPanel) {
+                            @NotNull Runnable openFilterPanel,
+                            @NotNull Runnable clearFilter) {
         super(owner);
 
         // A heavyweight top-level window so it floats above the native JxBrowser windows of the
@@ -78,12 +81,12 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
         // away to another window (see the window-focus listener) - which modality would prevent.
         // Only ONE window (the suggestion list is embedded), avoiding the multi-window focus/paint
         // fragility.
-        setUndecorated(true);
+        GuiUtils.setUndecorated(this);
         setModalityType(ModalityType.MODELESS);
         setFocusableWindowState(true);
 
         editor = new QueryEditorPanel(filterModel, fieldsProvider, termSupplier, editorHost, renderState,
-                onCommitted, refreshCollapsedBar, this, false, openFilterPanel);
+                onCommitted, refreshCollapsedBar, this, false, openFilterPanel, clearFilter);
         setContentPane(editor);
 
         // keep anchored while the main window is moved or resized (only while actually open - a

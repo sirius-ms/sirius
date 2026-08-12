@@ -94,7 +94,8 @@ public class CompoundList {
         searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel,
                 () -> PanelFilterTerms.of(filterModel, gui.getProperties().getConfidenceDisplayMode()),
                 term -> new FeatureFilterOptionsDialog(gui, filterModel, this, term.id()),
-                () -> new FeatureFilterOptionsDialog(gui, filterModel, this));
+                () -> new FeatureFilterOptionsDialog(gui, filterModel, this),
+                this::resetFilter);
 
         observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(observableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
@@ -144,6 +145,7 @@ public class CompoundList {
     public void resetFilter() {
         //filtering consists of the text filter and the filter model
         filterModel.resetFilter(); //also clears the shared search text document
+        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilter() only fires per-field events
         searchBar.refreshSummary(); // also re-tints the in-field funnel icon for the (now inactive) filter
     }
 

@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.utils;
 
+import com.formdev.flatlaf.FlatClientProperties;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -27,9 +29,14 @@ import java.awt.*;
  */
 public class ToolbarButton extends JButton {
     public ToolbarButton(String text, Icon icon, String tooltip) {
+        this(text, icon, tooltip, false);
+    }
+
+    public ToolbarButton(String text, Icon icon, String tooltip, boolean borderless) {
         super(text, icon);
         configureTButton();
         setToolTipText(tooltip);
+        setBorderless(borderless);
     }
 
     public ToolbarButton(Action action) {
@@ -46,8 +53,21 @@ public class ToolbarButton extends JButton {
         this(null, icon, tooltip);
     }
 
+    public ToolbarButton(Icon icon, String tooltip, boolean borderless) {
+        this(null, icon, tooltip, borderless);
+    }
+
     public ToolbarButton(String text, Icon icon) {
         this(text, icon, null);
+    }
+
+    /**
+     * Toggles the FlatLaf borderless look: transparent at rest, with the hover/pressed background
+     * animated by the theme. Passing {@code false} restores the default button chrome.
+     */
+    public void setBorderless(boolean borderless) {
+        putClientProperty(FlatClientProperties.BUTTON_TYPE,
+                borderless ? FlatClientProperties.BUTTON_TYPE_BORDERLESS : null);
     }
 
     private void configureTButton() {
