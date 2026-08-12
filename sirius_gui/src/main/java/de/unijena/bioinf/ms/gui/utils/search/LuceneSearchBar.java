@@ -44,9 +44,10 @@ import java.util.function.Supplier;
  * one perceived control that grows over the result view while editing and shrinks back on close.
  * A keystroke that triggered the expansion is forwarded, so typing "just continues" in the overlay.
  * <p>
- * The chips are rendered from the {@link QueryEditorPanel.Commit} snapshot of the last commit,
- * never by parsing the compiled query; if the shared search document was changed elsewhere (filter
- * dialog fulltext field, reset), the bar falls back to rendering the document text plainly.
+ * The user part of the summary is rendered by parsing the shared search document back into query
+ * chips ({@link QueryStringParser}), exactly like the query editor hydrates it - so the bar looks the
+ * same no matter where the query was committed (overlay, filter dialog, reset). Only a document that
+ * cannot be represented as chips (unsupported lucene constructs) falls back to plain text.
  */
 public class LuceneSearchBar extends JPanel {
 
@@ -81,8 +82,6 @@ public class LuceneSearchBar extends JPanel {
 
     @Nullable
     private SearchBarOverlay overlay;
-    @Nullable
-    private QueryEditorPanel.Commit lastCommit;
 
     public LuceneSearchBar(@NotNull SiriusClient siriusClient, @NotNull String projectId,
                            @NotNull FeatureFilterModel filterModel,
@@ -201,10 +200,7 @@ public class LuceneSearchBar extends JPanel {
             if (owner == null)
                 return;
             overlay = new SearchBarOverlay(owner, filterModel, fieldsProvider, termSupplier, editorHost,
-                    renderState, commit -> {
-                        lastCommit = commit;
-                        refreshSummary();
-                    }, this::refreshSummary, openFilterPanel, clearFilter);
+                    renderState, commit -> refreshSummary(), this::refreshSummary, openFilterPanel, clearFilter);
         }
         // Reopen unconditionally. If we reach here the collapsed bar received the gesture, which means
         // the overlay is NOT the active window - so a still-"open" overlay is a stale/stuck instance
@@ -232,19 +228,20 @@ public class LuceneSearchBar extends JPanel {
                     renderState.mode(), renderState.suffixLengthResolver()));
         }
 
+        // parse the shared document into chips - the same hydration the editor does, so the collapsed
+        // summary is consistent regardless of where the query was committed (overlay, filter dialog,
+        // reset). Free text folds into the parsed tree as "..." clauses, rendered by QueryNodeRenderer
+        // exactly like the editor renders them.
         String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
-        if (lastCommit != null && docText.equals(lastCommit.compiled())) {
-            // the document still holds what we compiled - render the real chips
-            boolean hasUserPart = !lastCommit.root().items().isEmpty() || !lastCommit.freeText().isEmpty();
-            if (!terms.isEmpty() && hasUserPart)
+        Optional<QueryContainer> parsed = QueryStringParser.parse(docText, fieldsProvider.getCached());
+        if (parsed.isPresent()) {
+            List<QueryNode> items = parsed.get().items();
+            if (!terms.isEmpty() && !items.isEmpty())
                 cells.add(andLabel());
-            for (QueryNode node : lastCommit.root().items())
+            for (QueryNode node : items)
                 cells.add(userChip(node, open));
-            if (!lastCommit.freeText().isEmpty())
-                cells.add(new ChipComponent("“" + lastCommit.freeText() + "”",
-                        "Full-text search in the default fields", ChipComponent.Style.USER, open, null));
         } else if (!docText.isEmpty()) {
-            // edited elsewhere - show the raw query text
+            // an unsupported lucene construct we cannot chip - show the raw query text
             cells.add(plainLabel(docText));
         }
 
