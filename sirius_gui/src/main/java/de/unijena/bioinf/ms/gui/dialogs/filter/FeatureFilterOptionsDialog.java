@@ -136,18 +136,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             optionsPanel.add(searchPanel, BorderLayout.CENTER);
         }
 
-        // filter modifiers (inversion now lives in the query editor's invert toggle)
-        {
-            deleteSelection = new JCheckBox("<html>Delete all <b>non-</b>matching features</html>");
-            deleteSelection.setSelected(false);
-            deleteSelection.setToolTipText(GuiUtils.formatAndStripToolTip("Delete all non-matching features, reducing the project to the matching ones. Deleted features cannot be recovered."));
-
-            final Box group = Box.createHorizontalBox();
-            group.add(deleteSelection);
-            group.add(Box.createHorizontalGlue());
-            optionsPanel.add(group, BorderLayout.SOUTH);
-        }
-
 
         //input data filters
         {
@@ -361,9 +349,15 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         apply = new JButton("Apply");
         apply.addActionListener(this);
 
+        // destructive delete option, left-aligned in the footer opposite Apply/Discard
+        deleteSelection = new JCheckBox("<html>Delete <b>non-</b>matching</html>");
+        deleteSelection.setSelected(false);
+        deleteSelection.setToolTipText(GuiUtils.formatAndStripToolTip("Delete all non-matching features, reducing the project to the matching ones. Deleted features cannot be recovered."));
+
         JPanel buttons = new JPanel();
         buttons.setLayout(new BoxLayout(buttons, BoxLayout.X_AXIS));
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        buttons.add(deleteSelection);
         buttons.add(Box.createHorizontalGlue());
         buttons.add(apply);
         buttons.add(discard);
