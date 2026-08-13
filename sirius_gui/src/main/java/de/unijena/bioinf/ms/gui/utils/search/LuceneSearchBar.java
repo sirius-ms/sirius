@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.utils.search;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.FilterButton;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
@@ -250,6 +251,14 @@ public class LuceneSearchBar extends JPanel {
             placeholder.setForeground(UIManager.getColor("TextField.inactiveForeground"));
             cells.add(placeholder);
         }
+
+        // an inverted query is shown by tinting its chips to the inverted (red-ish) accent rather than
+        // the normal (blue-ish) one - mirroring the editor
+        if (filterModel.isInverted())
+            cells.forEach(cell -> {
+                if (cell instanceof ChipComponent chip)
+                    chip.withAccent(Colors.Menu.FILTER_BUTTON_INVERTED);
+            });
 
         // the collapsed bar reads as a text field, so every summary cell keeps the text cursor - even
         // the chips, whose ChipComponent would otherwise show a hand. The click-to-edit hand cursor is

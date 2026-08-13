@@ -54,6 +54,9 @@ public class ChipComponent extends JPanel {
     private static final int FADE_WIDTH = 22;
 
     private final Style style;
+    /** The chip's accent colour (fill for USER, outline+wash for MODEL). Swapped to the inverted accent
+     *  to tint a whole inverted query; defaults to the normal filter accent. */
+    private Color accent = Colors.Menu.FILTER_BUTTON;
 
     public ChipComponent(@NotNull String text, @Nullable String tooltip, @NotNull Style style,
                          @Nullable Runnable onClick, @Nullable Runnable onClose) {
@@ -86,6 +89,13 @@ public class ChipComponent extends JPanel {
 
         if (onClose != null)
             add(closeLabel(label.getForeground(), "Remove", onClose));
+    }
+
+    /** Tints this chip to {@code accent} (e.g. the inverted accent for a whole inverted query). */
+    public ChipComponent withAccent(@NotNull Color accent) {
+        this.accent = accent;
+        repaint();
+        return this;
     }
 
     /**
@@ -206,13 +216,12 @@ public class ChipComponent extends JPanel {
         try {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             if (style == Style.USER) {
-                g2.setColor(Colors.Menu.FILTER_BUTTON);
+                g2.setColor(accent);
                 g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, ARC, ARC);
             } else {
-                Color base = Colors.Menu.FILTER_BUTTON;
-                g2.setColor(new Color(base.getRed(), base.getGreen(), base.getBlue(), 36));
+                g2.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 36));
                 g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, ARC, ARC);
-                g2.setColor(base);
+                g2.setColor(accent);
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, ARC, ARC);
             }
         } finally {

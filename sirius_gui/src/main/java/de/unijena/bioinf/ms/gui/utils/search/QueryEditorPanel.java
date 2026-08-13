@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.CompactToggleIcon;
 import de.unijena.bioinf.ms.gui.configs.FilterButton;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.configs.InvertIcon;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
@@ -156,17 +157,24 @@ public class QueryEditorPanel extends JPanel {
      * The field-name display toggle's glyph, kept so it can flip between compact/expanded on toggle.
      */
     private CompactToggleIcon modeIcon;
+    /** The invert toggle's glyph, kept so it can be re-tinted when the inversion state flips. */
+    private InvertIcon invertIcon;
+    private JButton invertToggle;
 
     // --- builder state ---
     private QueryContainer root = QueryContainer.empty();
     private int[] openPath = new int[0];
     private final TokenInputModel tokenModel = new TokenInputModel();
+    /** Whether the whole query is inverted ({@code *:* AND NOT (...)}); a model-level flag surfaced and
+     *  edited here (see the invert toggle), applied to the model at the host's commit point. */
+    private boolean inverted;
     /**
      * The applied query the working state reverts to on Cancel: captured when the session opens and
      * whenever a search is committed. Uncommitted edits made while open are discarded back to this.
      */
     private QueryContainer baselineRoot = QueryContainer.empty();
     private String baselineFreeText = "";
+    private boolean baselineInverted;
     /**
      * The query string this editor last wrote into the shared search document. If the document
      * differs on open, it was edited elsewhere (filter dialog) - the builder then degrades the
@@ -264,7 +272,6 @@ public class QueryEditorPanel extends JPanel {
             clearAll();
             input.requestFocusInWindow();
         });
-        controls.add(clear);
         if (openFilterPanel != null) {
 
             // hands off via the host so the overlay steps aside before the (modal) dialog opens
@@ -272,7 +279,6 @@ public class QueryEditorPanel extends JPanel {
             filterButton.setFocusable(false);
             filterButton.addActionListener(e -> host.editorHandoff(openFilterPanel));
             filterButton.setMargin(new Insets(0, 0, 0, 0));
-            controls.add(filterButton);
         }
 
         // field-name display toggle (compact terminal names <-> fully-qualified): a borderless icon
@@ -289,9 +295,23 @@ public class QueryEditorPanel extends JPanel {
             refreshCollapsedBar.run();
         });
         styleModeToggle(modeToggle);
-        controls.add(modeToggle);
 
-        // chips zone with the trailing controls (funnel / clear / mode toggle) at its top-right,
+        // invert toggle: flips the whole query to its complement (a model-level flag surfaced here),
+        // tinted like the funnel (grey / blue / red). A borderless in-field icon like the others.
+        invertIcon = new InvertIcon(ICON_SIZE, Colors.searchFieldIconColor());
+        invertToggle = new ToolbarButton(invertIcon, null, true);
+        invertToggle.setFocusable(false);
+        invertToggle.setMargin(new Insets(0, 0, 0, 0));
+        invertToggle.addActionListener(e -> setInverted(!inverted));
+
+        // order left-to-right: query-state actions (clear, invert) then meta controls (display mode, funnel)
+        controls.add(clear);
+        controls.add(invertToggle);
+        controls.add(modeToggle);
+        if (filterButton != null)
+            controls.add(filterButton);
+
+        // chips zone with the trailing controls (clear / invert / mode / funnel) at its top-right,
         // and the typing zone stacked directly beneath it
         JPanel chipsHeader = new JPanel(new BorderLayout());
         chipsHeader.setOpaque(false);
@@ -420,8 +440,10 @@ public class QueryEditorPanel extends JPanel {
         tokenModel.reset();
         input.setText("");
         pendingModelRemovals.clear();
+        inverted = false; // a full clear also drops the inversion
         baselineRoot = root;
         baselineFreeText = "";
+        baselineInverted = false;
         lastCompiled = Optional.ofNullable(filterModel.getSearchText()).orElse("");
         rebuild();
     }
@@ -444,8 +466,21 @@ public class QueryEditorPanel extends JPanel {
         // the user query rides in as the free-text segment, so it becomes "(facets) AND (userQuery)"
         String userQuery = LuceneQueryCompiler.compile(root, freeTextForCommit());
         String core = LuceneQueryCompiler.compile(new QueryContainer(facets, ands), userQuery);
-        String whole = filterModel.isInverted() && !core.isBlank() ? "*:* AND NOT (" + core + ")" : core;
+        String whole = inverted && !core.isBlank() ? "*:* AND NOT (" + core + ")" : core;
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(whole), null);
+    }
+
+    /** Whether the working query is inverted (applied to the model at the host's commit point). */
+    public boolean isInverted() {
+        return inverted;
+    }
+
+    /** Sets the working inversion and re-renders (the toggle tint and the inversion chip). */
+    public void setInverted(boolean inverted) {
+        if (this.inverted == inverted)
+            return;
+        this.inverted = inverted;
+        rebuild();
     }
 
     /**
@@ -460,6 +495,32 @@ public class QueryEditorPanel extends JPanel {
                 ? "Show fully-qualified field names"
                 : "Show compact field names"));
         button.repaint();
+    }
+
+    /** Tints the invert toggle exactly like the funnel: idle grey when no filter is active, the accent
+     *  (blue) when active and not inverted, the inverted accent (red) when inverted. */
+    private void styleInvertToggle() {
+        invertIcon.setColor(hasWorkingQuery()
+                ? (inverted ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON)
+                : Colors.searchFieldIconColor());
+        invertToggle.setToolTipText(GuiUtils.formatToolTip(inverted
+                ? "Query is inverted - click to un-invert (matching features become non-matching and vice versa)"
+                : "Invert the whole query (matching features become non-matching and vice versa)"));
+        invertToggle.repaint();
+    }
+
+    /** The accent colour for the query chips/groups: the inverted tone while the query is inverted,
+     *  the normal filter accent otherwise - so an inverted query reads red-ish rather than blue-ish. */
+    private Color queryAccent() {
+        return inverted ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON;
+    }
+
+    /** Whether the working query has anything to filter/invert: a user clause, free text, or a
+     *  (not-staged-for-removal) panel facet. Drives the live funnel / invert-toggle tint. */
+    private boolean hasWorkingQuery() {
+        return !root.items().isEmpty()
+                || !freeTextForCommit().isEmpty()
+                || termSupplier.get().stream().anyMatch(t -> !pendingModelRemovals.containsKey(t.id()));
     }
 
     // --- session lifecycle (driven by the host) ---
@@ -487,9 +548,12 @@ public class QueryEditorPanel extends JPanel {
             }
             lastCompiled = docText;
         }
+        // seed the working inversion from the applied model state each open
+        inverted = filterModel.isInverted();
         // the applied query is the baseline Cancel reverts to (before any type-ahead edit)
         baselineRoot = root;
         baselineFreeText = input.getText();
+        baselineInverted = inverted;
         if (typeAhead != null)
             input.setText(input.getText() + typeAhead);
 
@@ -521,6 +585,7 @@ public class QueryEditorPanel extends JPanel {
      */
     public void revertToBaseline() {
         root = baselineRoot;
+        inverted = baselineInverted;
         openPath = new int[0];
         tokenModel.reset();
         input.setText(baselineFreeText);
@@ -742,10 +807,12 @@ public class QueryEditorPanel extends JPanel {
         pendingModelRemovals.clear();
         String compiled = LuceneQueryCompiler.compile(root, freeText);
         writeDocument(compiled);
+        filterModel.setInverted(inverted); // the overlay applies inversion here (dialog does it in applyToModel)
         lastCompiled = compiled;
         // the applied query becomes the new baseline, so the close below keeps it (no revert)
         baselineRoot = root;
         baselineFreeText = freeText;
+        baselineInverted = inverted;
         filterModel.fireUpdateCompleted();
         Commit commit = new Commit(root, freeText, compiled);
         host.editorCloseRequested();
@@ -773,6 +840,7 @@ public class QueryEditorPanel extends JPanel {
         lastCompiled = compiled;
         baselineRoot = root;
         baselineFreeText = freeText;
+        baselineInverted = inverted; // the dialog's applyToModel reads isInverted() to apply it
     }
 
     private void writeDocument(String text) {
@@ -788,9 +856,11 @@ public class QueryEditorPanel extends JPanel {
     // --- rendering ---
 
     public void rebuild() {
-        // keep the funnel tint in sync with the active filter state (accent / inverted / idle)
+        // keep the funnel and invert toggle in sync with the WORKING filter state (grey / blue / red),
+        // so they recolour live as the query is built/inverted - not only after the change is committed
         if (filterButton != null)
-            filterButton.setFilterActive(filterModel.isActive(), filterModel.isInverted());
+            filterButton.setFilterActive(hasWorkingQuery(), inverted);
+        styleInvertToggle();
 
         // removeAll() detaches the (focused) input, which drops the keyboard focus; restore it
         // after the re-layout so typing continues seamlessly after choosing a suggestion
@@ -822,7 +892,7 @@ public class QueryEditorPanel extends JPanel {
                     embedded ? () -> editorHost.removeFilter(term) : () -> {
                         pendingModelRemovals.put(term.id(), term::remove);
                         rebuild();
-                    }));
+                    }).withAccent(queryAccent()));
         }
 
         List<QueryNode> items = root.items();
@@ -924,7 +994,7 @@ public class QueryEditorPanel extends JPanel {
             combo.addActionListener(e -> setLogicBefore(pathOfFollowingNode, (LogicOp) combo.getSelectedItem()));
             return combo;
         }
-        return new ChipComponent(logic.toString(), null, ChipComponent.Style.USER, null, null);
+        return new ChipComponent(logic.toString(), null, ChipComponent.Style.USER, null, null).withAccent(queryAccent());
     }
 
     private void setLogicBefore(int[] childPath, LogicOp logic) {
@@ -954,12 +1024,12 @@ public class QueryEditorPanel extends JPanel {
                 root = QueryTreeOps.removeNodeById(root, clause.id());
                 openPath = QueryTreeOps.resolvePath(root, openPath);
                 rebuild();
-            });
+            }).withAccent(queryAccent());
         }
 
         QueryGroup group = (QueryGroup) node;
         boolean open = Arrays.equals(path, openPath);
-        JPanel groupPanel = new GroupPanel(open);
+        JPanel groupPanel = new GroupPanel(open, queryAccent());
 
         if (open) {
             JToggleButton not = new JToggleButton("NOT", group.negated());
@@ -975,7 +1045,7 @@ public class QueryEditorPanel extends JPanel {
             });
             groupPanel.add(not);
         } else if (group.negated()) {
-            groupPanel.add(new ChipComponent("NOT", null, ChipComponent.Style.USER, null, null));
+            groupPanel.add(new ChipComponent("NOT", null, ChipComponent.Style.USER, null, null).withAccent(queryAccent()));
         }
 
         groupPanel.add(parenLabel("("));
@@ -995,7 +1065,7 @@ public class QueryEditorPanel extends JPanel {
         groupPanel.add(parenLabel(")"));
 
         if (!open)
-            groupPanel.add(ChipComponent.closeLabel(Colors.Menu.FILTER_BUTTON, "Remove this group with all its filters",
+            groupPanel.add(ChipComponent.closeLabel(queryAccent(), "Remove this group with all its filters",
                     () -> {
                         root = QueryTreeOps.removeNodeById(root, group.id());
                         openPath = QueryTreeOps.resolvePath(root, openPath);
@@ -1004,10 +1074,10 @@ public class QueryEditorPanel extends JPanel {
         return groupPanel;
     }
 
-    private static JLabel parenLabel(String paren) {
+    private JLabel parenLabel(String paren) {
         JLabel label = new JLabel(paren);
         label.setFont(label.getFont().deriveFont(Font.BOLD, label.getFont().getSize2D() + 2));
-        label.setForeground(Colors.Menu.FILTER_BUTTON);
+        label.setForeground(queryAccent());
         return label;
     }
 
@@ -1091,10 +1161,12 @@ public class QueryEditorPanel extends JPanel {
 
     private static class GroupPanel extends JPanel {
         private final boolean open;
+        private final Color accent;
 
-        GroupPanel(boolean open) {
+        GroupPanel(boolean open, @NotNull Color accent) {
             super(new FlowLayout(FlowLayout.LEFT, 3, 2));
             this.open = open;
+            this.accent = accent;
             setOpaque(false);
             setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
         }
@@ -1104,7 +1176,7 @@ public class QueryEditorPanel extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             try {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(Colors.Menu.FILTER_BUTTON);
+                g2.setColor(accent);
                 if (open) {
                     g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND,
                             0, new float[]{4, 3}, 0));
