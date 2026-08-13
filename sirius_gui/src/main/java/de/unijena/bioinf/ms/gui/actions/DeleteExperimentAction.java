@@ -83,31 +83,20 @@ public class DeleteExperimentAction extends AbstractGuiAction {
         //clear selection to prevent EventList from going crazy.
         mainFrame.getCompoundList().getCompoundListSelectionModel().clearSelection();
 
-        Jobs.runInBackgroundAndLoad(mainFrame, "Deleting Data...", false, new TinyBackgroundJJob<Boolean>() {
+        Jobs.runInBackgroundAndLoad(mainFrame, "Deleting Data...", true, new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() {
-                final int max = toRemove.size() + 2;
-                updateProgress(0, max, 0);
-                // Suppress the incremental per-feature event handling for the duration and rebuild the list once,
-                // authoritatively, afterwards - instead of letting the FEATURE_DELETED event storm churn the list.
-                gui.getProjectManager().runBlockingBulkFeatureMutation(() -> {
-                    List<InstanceBean> removed = new ArrayList<>();
-                    gui.acceptSiriusClient((client, pid) ->
-                            toRemove.forEach(feature -> {
-                                try {
-                                    updateProgress(0, max, removed.size(), "Removing '" + feature.getGUIName() + "'...");
-                                    if (!feature.isComputing()) {
-                                        client.features().deleteAlignedFeature(pid, feature.getFeatureId());
-                                        removed.add(feature);
-                                    } else {
-                                        log.warn("Cannot delete '{}' because it is currently computing. Skipping!", feature.getFeatureId());
-                                    }
-                                } catch (Exception e) {
-                                    log.error("Could not delete: {}", feature.getFeatureId(), e);
-                                }
-                            }));
-                    updateProgress(0, max, removed.size() + 2, "DONE!");
-                });
+                // Skip features that are currently computing (can't be deleted), mirroring the previous behaviour.
+                List<String> idsToDelete = new ArrayList<>(toRemove.size());
+                for (InstanceBean feature : toRemove) {
+                    if (feature.isComputing())
+                        log.warn("Cannot delete '{}' because it is currently computing. Skipping!", feature.getFeatureId());
+                    else
+                        idsToDelete.add(feature.getFeatureId());
+                }
+                // One bulk server call; the manager suppresses the FEATURE_DELETED storm and rebuilds the list
+                // once, authoritatively, afterwards (and reconciles list + counters even on failure/cancel).
+                gui.getProjectManager().deleteAlignedFeaturesByIds(idsToDelete);
                 return true;
             }
         });
