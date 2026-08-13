@@ -145,12 +145,16 @@ public class InstanceBean implements SiriusPCS {
         if (SwingUtilities.isEventDispatchThread())
             log.warn("Cache update happened in GUI thread. Might cause GUI stutters!");
         synchronized (this) {
-            this.optsLoaded.clear();
             try {
-                this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+                AlignedFeature reloaded = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+                this.sourceFeature = reloaded;
+                this.optsLoaded.clear();
                 this.optsLoaded.addAll(DEFAULT_OPT_FEATURE_FIELDS);
-            } catch (WebClientResponseException.NotFound e) {  // feature has been deleted on server, will be deleted on client with a following event
-                this.sourceFeature = null;
+            } catch (WebClientResponseException.NotFound e) {
+                // Feature deleted on the server; the following FEATURE_DELETED event will remove this bean.
+                // Keep the last-known snapshot (and its loaded opt-fields) rather than nulling it: a null
+                // source is a landmine - any EDT access in the meantime (the action-enablement list scan,
+                // the cell renderer) would otherwise force a blocking reload or NPE for every such bean.
             }
 
             //todo this should go into  clearResultCache but this seems to have side effects, due to suboptimal caching architecture
@@ -246,7 +250,7 @@ public class InstanceBean implements SiriusPCS {
                 // we update every time here since we do not know which optional fields are already loaded.
                 if (sourceFeature == null || !optsLoaded.containsAll(of)) {
                     if (SwingUtilities.isEventDispatchThread())
-                        log.warn("Reload Featured '{}' with nu [{}] vs current [{}] in Event Thread. Might cause GUI stutters!", sourceFeature.getAlignedFeatureId(), of.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")), this.optsLoaded.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")));
+                        log.warn("Reload Featured '{}' with nu [{}] vs current [{}] in Event Thread. Might cause GUI stutters!", getFeatureId(), of.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")), this.optsLoaded.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")));
 
                     optsLoaded.clear();
                     sourceFeature = withIds((pid, fid) ->
@@ -332,7 +336,10 @@ public class InstanceBean implements SiriusPCS {
 
 
     public boolean isComputing() {
-        return getSourceFeature().isComputing();
+        // Polled over the whole list on every list change (action enablement). Read the cached snapshot only:
+        // it must never force a blocking reload, and must tolerate a feature whose source is gone/not-yet-loaded
+        // (treated as not computing). isComputing is part of the default opt-fields, so the cache always has it.
+        return sourceFeature().map(AlignedFeature::isComputing).orElse(false);
     }
 
     public Optional<RetentionTime> getRT() {
