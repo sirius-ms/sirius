@@ -785,6 +785,13 @@ public class QueryEditorPanel extends JPanel {
         return tokenModel.atEntryStage() ? input.getText().trim() : "";
     }
 
+    /** The compiled user query (committed chips + any trailing free text) as it stands, WITHOUT
+     *  committing to the shared document - for callers that need the current search-bar query, e.g.
+     *  the dialog's delete-non-matching complement. Excludes a half-built (unaccepted) clause. */
+    public String userQuery() {
+        return LuceneQueryCompiler.compile(root, freeTextForCommit());
+    }
+
     /**
      * Accepts a terminal token as a chip, then runs the search. Shared by Enter and the Search
      * button so both behave the same.

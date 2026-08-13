@@ -50,6 +50,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -575,6 +576,16 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         // Flipping the filter's inversion turns the "keep" (visible) query into its complement.
         FeatureFilterModel deleteMatcher = new FeatureFilterModel();
         applyToModel(deleteMatcher);
+        // applyToModel copies only the widget facets + inversion; the search-bar (user) query lives in
+        // the editor and must be included, or the delete complement would not match the visible list
+        String userQuery = queryEditor.userQuery();
+        if (!userQuery.isBlank()) {
+            try {
+                deleteMatcher.getSearchTextDoc().insertString(0, userQuery, null);
+            } catch (BadLocationException e) {
+                log.error("Could not attach the search-bar query to the delete matcher", e);
+            }
+        }
         deleteMatcher.setInverted(!deleteMatcher.isInverted());
         Optional<String> deleteQuery = deleteMatcher.toLuceneQuery(gui.getProperties().getConfidenceDisplayMode());
 
