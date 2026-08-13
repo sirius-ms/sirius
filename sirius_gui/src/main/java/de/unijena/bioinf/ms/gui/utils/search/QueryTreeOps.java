@@ -20,9 +20,12 @@ package de.unijena.bioinf.ms.gui.utils.search;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.UnaryOperator;
 
 /**
@@ -162,11 +165,35 @@ public final class QueryTreeOps {
     }
 
     /**
+     * Removes the node {@code nodeId} and re-resolves {@code openPath} so it still points at the SAME
+     * open group afterwards - located by id, not by position, so a removal that shifts sibling indices
+     * (e.g. deleting a chip that sits before the open group) cannot silently close or mis-target it.
+     * The open group is also protected from the single-child auto-unpack while it is being edited, so
+     * removing one of its two children leaves it open rather than dissolving it under the cursor.
+     * Returns the new tree and the corrected cursor ({@code []} when the open group no longer exists).
+     */
+    public static PathResult removeNode(@NotNull QueryContainer root, int[] openPath, @NotNull String nodeId) {
+        String openGroupId = groupIdAt(root, openPath);
+        QueryContainer updated = removeNodeById(root, nodeId, openGroupId);
+        int[] newPath = openGroupId == null ? new int[0] : pathOfId(updated, openGroupId).orElseGet(() -> new int[0]);
+        return new PathResult(updated, newPath);
+    }
+
+    /**
      * Drops the node with {@code nodeId} from anywhere in the tree, along with the operator that
      * joined it. Groups are removed whole; a nested group reduced to a single child by the removal
      * auto-unpacks (negation XOR), mirroring what {@link #closeGroup} does.
      */
     public static QueryContainer removeNodeById(@NotNull QueryContainer root, @NotNull String nodeId) {
+        return removeNodeById(root, nodeId, null);
+    }
+
+    /**
+     * As {@link #removeNodeById(QueryContainer, String)}, but never auto-unpacks the group whose id is
+     * {@code protectedGroupId} (the one currently being edited) - it stays a group even with one child.
+     */
+    public static QueryContainer removeNodeById(@NotNull QueryContainer root, @NotNull String nodeId,
+                                                @Nullable String protectedGroupId) {
         int idx = -1;
         for (int i = 0; i < root.items().size(); i++) {
             if (root.items().get(i).id().equals(nodeId)) {
@@ -190,8 +217,8 @@ public final class QueryTreeOps {
                 items.add(node);
                 continue;
             }
-            QueryContainer inner = removeNodeById(new QueryContainer(group.items(), group.logics()), nodeId);
-            if (inner.items().size() == 1) {
+            QueryContainer inner = removeNodeById(new QueryContainer(group.items(), group.logics()), nodeId, protectedGroupId);
+            if (inner.items().size() == 1 && !group.id().equals(protectedGroupId)) {
                 // group down to one item auto-unpacks; the negations combine via XOR
                 QueryNode child = inner.items().get(0);
                 items.add(child.withNegated(child.negated() != group.negated()));
@@ -201,5 +228,40 @@ public final class QueryTreeOps {
         }
         // the operators at this level are untouched: the deletion happened deeper
         return new QueryContainer(items, root.logics());
+    }
+
+    /** The id of the group addressed by {@code path} ({@code null} for the top level or an invalid path). */
+    @Nullable
+    private static String groupIdAt(@NotNull QueryContainer root, int[] path) {
+        List<QueryNode> level = root.items();
+        QueryGroup group = null;
+        for (int idx : path) {
+            if (idx < 0 || idx >= level.size() || !(level.get(idx) instanceof QueryGroup g))
+                return null;
+            group = g;
+            level = g.items();
+        }
+        return group == null ? null : group.id();
+    }
+
+    /** The item-index path to the node with {@code id} anywhere in the tree, or empty if it is gone. */
+    public static Optional<int[]> pathOfId(@NotNull QueryContainer root, @NotNull String id) {
+        return pathOfId(root.items(), id, new int[0]);
+    }
+
+    private static Optional<int[]> pathOfId(List<QueryNode> items, String id, int[] prefix) {
+        for (int i = 0; i < items.size(); i++) {
+            QueryNode node = items.get(i);
+            int[] path = Arrays.copyOf(prefix, prefix.length + 1);
+            path[prefix.length] = i;
+            if (node.id().equals(id))
+                return Optional.of(path);
+            if (node instanceof QueryGroup group) {
+                Optional<int[]> found = pathOfId(group.items(), id, path);
+                if (found.isPresent())
+                    return found;
+            }
+        }
+        return Optional.empty();
     }
 }

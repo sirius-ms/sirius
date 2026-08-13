@@ -406,10 +406,11 @@ public class QueryEditorPanel extends JPanel {
             // Structured filters may change under the floating overlay (dialog, quick toggles).
             // The embedded editor instead re-renders from the dialog's live widget state (see the
             // widget listeners the dialog attaches) and would leak a listener per dialog open.
-            filterModel.addUpdateCompleteListener(evt -> {
+            // The event can be fired off the EDT (background project reload), so marshal onto it.
+            filterModel.addUpdateCompleteListener(evt -> SwingUtilities.invokeLater(() -> {
                 if (isShowing())
                     rebuild();
-            });
+            }));
         }
     }
 
@@ -706,8 +707,9 @@ public class QueryEditorPanel extends JPanel {
             }
             return;
         }
-        root = QueryTreeOps.removeNodeById(root, container.items().get(container.items().size() - 1).id());
-        openPath = QueryTreeOps.resolvePath(root, openPath);
+        QueryTreeOps.PathResult removed = QueryTreeOps.removeNode(root, openPath, container.items().get(container.items().size() - 1).id());
+        root = removed.root();
+        openPath = removed.path();
     }
 
     // --- embedded suggestion list handling ---
@@ -1021,8 +1023,9 @@ public class QueryEditorPanel extends JPanel {
                     : LuceneQueryCompiler.render(clause);
             return new ChipComponent(text, tooltip, ChipComponent.Style.USER,
                     null, () -> {
-                root = QueryTreeOps.removeNodeById(root, clause.id());
-                openPath = QueryTreeOps.resolvePath(root, openPath);
+                QueryTreeOps.PathResult removed = QueryTreeOps.removeNode(root, openPath, clause.id());
+                root = removed.root();
+                openPath = removed.path();
                 rebuild();
             }).withAccent(queryAccent());
         }
@@ -1067,8 +1070,9 @@ public class QueryEditorPanel extends JPanel {
         if (!open)
             groupPanel.add(ChipComponent.closeLabel(queryAccent(), "Remove this group with all its filters",
                     () -> {
-                        root = QueryTreeOps.removeNodeById(root, group.id());
-                        openPath = QueryTreeOps.resolvePath(root, openPath);
+                        QueryTreeOps.PathResult removed = QueryTreeOps.removeNode(root, openPath, group.id());
+                        root = removed.root();
+                        openPath = removed.path();
                         rebuild();
                     }));
         return groupPanel;
