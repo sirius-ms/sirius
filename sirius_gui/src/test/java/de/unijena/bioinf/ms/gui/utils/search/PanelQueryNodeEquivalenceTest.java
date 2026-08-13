@@ -254,4 +254,17 @@ public class PanelQueryNodeEquivalenceTest {
         model.setLipidFilter(FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED);
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
+
+    /** The invert flag (surfaced by the editor's invert toggle) wraps the whole query as the complement
+     *  {@code *:* AND NOT (core)} - the semantic the invert feature relies on. */
+    @Test
+    public void testInvertedQueryIsTheComplementOfTheCore() {
+        FeatureFilterModel model = new FeatureFilterModel();
+        model.setHasMsMs(true);
+        String core = model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow();
+        assertFalse(core.startsWith("*:*"), "a non-inverted query is the core as-is");
+
+        model.setInverted(true);
+        assertEquals("*:* AND NOT (" + core + ")", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
 }

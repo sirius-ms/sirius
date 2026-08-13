@@ -168,4 +168,62 @@ public class QueryTreeOpsTest {
         assertInstanceOf(QueryGroup.class, closed.root().items().get(0));
         assertEquals(2, ((QueryGroup) closed.root().items().get(0)).items().size());
     }
+
+    // --- removeNode: keeps the open group under the cursor across index shifts / auto-unpack ---
+
+    /** Removing a chip that sits BEFORE the open group must not close or mis-target it (Bug: the old
+     *  resolvePath only truncated the stale positional path and never accounted for the index shift). */
+    @Test
+    public void testRemoveNodeBeforeOpenGroupReResolvesCursorById() {
+        QueryContainer root = QueryTreeOps.append(QueryContainer.empty(), new int[0], clause("a", "1"), LogicOp.AND);
+        QueryTreeOps.PathResult opened = QueryTreeOps.openGroup(root, new int[0], false, LogicOp.AND); // group at index 1
+        root = QueryTreeOps.append(opened.root(), opened.path(), clause("b", "2"), LogicOp.AND);
+        String openGroupId = root.items().get(1).id();
+        assertArrayEquals(new int[]{1}, opened.path());
+
+        // delete the leading clause "a" -> the group shifts to index 0; the cursor must follow it
+        QueryTreeOps.PathResult removed = QueryTreeOps.removeNode(root, opened.path(), root.items().get(0).id());
+        assertEquals(1, removed.root().items().size());
+        assertInstanceOf(QueryGroup.class, removed.root().items().get(0));
+        assertEquals(openGroupId, removed.root().items().get(0).id(), "same group, now at index 0");
+        assertArrayEquals(new int[]{0}, removed.path(), "cursor re-resolved to the group by id");
+    }
+
+    /** Removing one of the two children of the OPEN group must leave it open (a group, one child) -
+     *  the open group is protected from the single-child auto-unpack while it is being edited. */
+    @Test
+    public void testRemoveChildOfOpenGroupKeepsItOpen() {
+        QueryTreeOps.PathResult opened = QueryTreeOps.openGroup(QueryContainer.empty(), new int[0], false, LogicOp.AND);
+        QueryContainer root = QueryTreeOps.append(opened.root(), opened.path(), clause("a", "1"), LogicOp.AND);
+        root = QueryTreeOps.append(root, opened.path(), clause("b", "2"), LogicOp.OR);
+        String childToRemove = ((QueryGroup) root.items().get(0)).items().get(0).id();
+
+        QueryTreeOps.PathResult removed = QueryTreeOps.removeNode(root, opened.path(), childToRemove);
+        assertInstanceOf(QueryGroup.class, removed.root().items().get(0), "open group is NOT unpacked to its lone child");
+        assertEquals(1, ((QueryGroup) removed.root().items().get(0)).items().size());
+        assertArrayEquals(new int[]{0}, removed.path(), "cursor stays in the open group");
+    }
+
+    /** A non-open group reduced to one child by a removal still auto-unpacks (unchanged behavior). */
+    @Test
+    public void testRemoveChildOfNonOpenGroupUnpacksIt() {
+        QueryTreeOps.PathResult opened = QueryTreeOps.openGroup(QueryContainer.empty(), new int[0], false, LogicOp.AND);
+        QueryContainer root = QueryTreeOps.append(opened.root(), opened.path(), clause("a", "1"), LogicOp.AND);
+        root = QueryTreeOps.append(root, opened.path(), clause("b", "2"), LogicOp.OR);
+        // the cursor is NOT in this group (top level); removing a child should collapse it to its lone child
+        String childToRemove = ((QueryGroup) root.items().get(0)).items().get(1).id();
+
+        QueryTreeOps.PathResult removed = QueryTreeOps.removeNode(root, new int[0], childToRemove);
+        assertInstanceOf(QueryClause.class, removed.root().items().get(0), "closed group unpacks to its lone child");
+        assertEquals("a", ((QueryClause) removed.root().items().get(0)).field());
+    }
+
+    @Test
+    public void testPathOfIdFindsNestedNode() {
+        QueryTreeOps.PathResult opened = QueryTreeOps.openGroup(QueryContainer.empty(), new int[0], false, LogicOp.AND);
+        QueryContainer root = QueryTreeOps.append(opened.root(), opened.path(), clause("a", "1"), LogicOp.AND);
+        String nestedId = ((QueryGroup) root.items().get(0)).items().get(0).id();
+        assertArrayEquals(new int[]{0, 0}, QueryTreeOps.pathOfId(root, nestedId).orElseThrow());
+        assertTrue(QueryTreeOps.pathOfId(root, "does-not-exist").isEmpty());
+    }
 }

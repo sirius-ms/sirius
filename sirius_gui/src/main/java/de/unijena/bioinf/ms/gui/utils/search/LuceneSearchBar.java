@@ -180,8 +180,9 @@ public class LuceneSearchBar extends JPanel {
             }
         });
 
-        // keep the summary in sync with commits from anywhere (overlay, dialog, reset)
-        filterModel.addUpdateCompleteListener(evt -> refreshSummary());
+        // keep the summary in sync with commits from anywhere (overlay, dialog, reset). The event can
+        // be fired off the EDT (e.g. a background project reload updating adducts), so marshal onto it.
+        filterModel.addUpdateCompleteListener(evt -> SwingUtilities.invokeLater(this::refreshSummary));
         refreshSummary();
     }
 
