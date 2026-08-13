@@ -1101,20 +1101,20 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             // take score of molecular formula
             final Decomposition decomp = decompositionFragmentAnnotation.get(v);
             double score = decomp==null ? 0d : decomp.getScore();
-            assert !Double.isInfinite(score);
+            assert !Double.isNaN(score);
             // add it to score of the peak
             score += peakScores[v.getColor()];//peakScores[peakAno.get(v).getIndex()];
-            assert !Double.isInfinite(score);
+            assert !Double.isNaN(score);
             // add it to the score of the peak pairs
             if (!u.isRoot() && lossShouldBeScoredbyPeakPairScorers(loss))
                 score +=  peakPairScores[u.getColor()][v.getColor()];//peakPairScores[peakAno.get(u).getIndex()][peakAno.get(v).getIndex()]; // TODO: Umdrehen!
-            assert !Double.isInfinite(score);
+            assert !Double.isNaN(score);
             // add the score of the loss
             if (!u.isRoot()) {
                 for (int i = 0; i < lossScorers.length; ++i) {
                     if (!isArtificial || lossScorers[i].processArtificialEdges()) {
                         score += lossScorers[i].score(loss, input, precomputeds[i]);
-                        assert !Double.isInfinite(score) : lossScorers[i].getClass().getSimpleName();
+                        assert !Double.isNaN(score) : lossScorers[i].getClass().getSimpleName();
                     }
                 }
             }
@@ -1124,7 +1124,29 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 final FragmentScorer<Object> scorer = (FragmentScorer<Object>)fragmentScorers.get(k);
                 score += scorer.score(v, correspondingPeak, v.isRoot(), precomputedForFragmentScorer[k]);
             }
-            assert !Double.isInfinite(score);
+            assert !Double.isNaN(score);
+            /*
+              Assertions are disabled in production, so this is the last place a broken scorer can be
+              stopped before its result becomes a loss weight. A NaN weight is corrupting: it makes
+              every critical path score above it NaN and used to disable the memoization of the
+              critical path heuristic entirely (see CriticalPathInsertionHeuristic).
+
+              There is no meaningful value to substitute here - the score is a sum over the
+              decomposition, the peak, the peak pair and every loss and fragment scorer, so a NaN
+              tells us nothing about which of them broke or what it meant. Since the score ends up in
+              the tree weight, and the tree weight ranks the molecular formula candidates, a made-up
+              replacement would be published as a result. Fail instead. This aborts the tree
+              computation of this compound only (FasterTreeComputationInstance is a job), so a batch
+              run reports it and carries on.
+
+              -Infinity is deliberately left alone, it is the established way of forbidding a loss.
+             */
+            if (Double.isNaN(score)) {
+                throw new RuntimeException("Loss " + loss.getFormula() + " (" + u.getFormula()
+                        + " -> " + v.getFormula() + ", peak " + correspondingPeak.getMass()
+                        + ") was scored NaN. This is a bug in one of the scorers - refusing to build"
+                        + " a tree from an undefined loss weight.");
+            }
             loss.setWeight(score);
         }
         // add graph scores
