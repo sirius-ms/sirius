@@ -54,7 +54,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -84,6 +90,25 @@ public class GuiProjectManager implements Closeable {
     private final PropertyChangeListenerEDT confidenceModeListender;
 
     private final BlockingQueue<Object> eventQueue = new LinkedBlockingDeque<>();
+
+    // >0 while a GUI-initiated blocking bulk mutation runs that ends in an authoritative reloadFeatures(). While
+    // set, out-of-band structural feature events are ignored: the trailing reload rebuilds the list from server
+    // truth, so per-event handling would be redundant and would race that reload. RESULT_*/compute events are
+    // NOT suppressed - they update bean caches / result panels and never drive a list refilter.
+    private final AtomicInteger structuralSuppression = new AtomicInteger(0);
+
+    // Coalesces out-of-band (3rd-party / external-client) structural feature changes into a single, slightly
+    // delayed authoritative reload, so a burst of external deletes collapses to one refilter instead of one
+    // reload per event. GUI-initiated bulk mutations do NOT use this - they suppress + reload explicitly.
+    private final ScheduledExecutorService ambientReloadScheduler =
+            Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "gui-ambient-reload");
+                t.setDaemon(true);
+                return t;
+            });
+    private final Object ambientReloadLock = new Object();
+    private ScheduledFuture<?> ambientReloadFuture;
+
     private final JJob<Void> eventExec;
 
     @Getter
@@ -94,6 +119,11 @@ public class GuiProjectManager implements Closeable {
     // in the background and may complete out of order; only the newest one is allowed to apply its result so a
     // slower earlier reload cannot overwrite the list with stale data.
     private final AtomicLong reloadGeneration = new AtomicLong(0);
+    // Snapshot of feature id -> bean for everything currently in INSTANCE_LIST. Rebuilt wholesale on every
+    // refill (single writer, on the EDT) and published as an immutable map read lock-free from the event
+    // thread. Lets the event loop decide list relevance in O(1) and lets the compute-state handler target the
+    // affected beans directly instead of scanning the whole list.
+    private volatile Map<String, InstanceBean> presentFeatures = Map.of();
     @Getter
     private @NotNull Set<PrecursorIonType> detectedAdducts;
 
@@ -171,39 +201,34 @@ public class GuiProjectManager implements Closeable {
                                     .collect(Collectors.toMap(Pair::key, Pair::value));
 
                             if (!idsToComputeState.isEmpty()) {
-                                INSTANCE_LIST.getReadWriteLock().readLock().lock();
-                                try {
-                                    INSTANCE_LIST.stream()
-                                            .filter(i -> idsToComputeState.containsKey(i.getFeatureId()))
-                                            .forEach(inst -> inst.changeComputeStateOfCache(idsToComputeState.get(inst.getFeatureId())));
-                                } finally {
-                                    // we just repaint since the compute state has no influence on sorting or filtering, result deletion or updates are handled later below.
-                                    Jobs.runEDTLater(() -> siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint());
-                                    INSTANCE_LIST.getReadWriteLock().readLock().unlock();
+                                // Target the affected beans directly via the present-features snapshot (O(affected))
+                                // instead of scanning the whole list per event. Compute state has no influence on
+                                // sorting or filtering, so we only repaint; result changes are handled below.
+                                Map<String, InstanceBean> present = presentFeatures;
+                                boolean anyAffected = false;
+                                for (Map.Entry<String, Boolean> e : idsToComputeState.entrySet()) {
+                                    InstanceBean inst = present.get(e.getKey());
+                                    if (inst != null) {
+                                        inst.changeComputeStateOfCache(e.getValue());
+                                        anyAffected = true;
+                                    }
                                 }
+                                if (anyAffected)
+                                    Jobs.runEDTLater(() -> siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint());
                             }
                         }
                     } else if (event instanceof ProjectChangeEvent projectEvent) {
                         switch (projectEvent.getEventType()) {
-                            case FEATURE_DELETED -> Jobs.runEDTLater(() -> {
-                                INSTANCE_LIST.getReadWriteLock().writeLock().lock();
-                                try {
-                                    Iterator<InstanceBean> iterator = INSTANCE_LIST.iterator();
-                                    while (iterator.hasNext()) {
-                                        InstanceBean inst = iterator.next();
-                                        if (inst.getFeatureId().equals(projectEvent.getFeaturedId())) {
-                                            iterator.remove();
-                                            inst.unregisterProjectSpaceListener();
-                                            totalInstances.decrementAndGet();
-                                            break;
-                                        }
-                                    }
-                                } finally {
-                                    INSTANCE_LIST.getReadWriteLock().writeLock().unlock();
-                                }
-                            });
-                            case RESULT_CREATED, RESULT_UPDATED, RESULT_DELETED ->
-                                    GuiProjectManager.this.pcs.firePropertyChange("project.updateInstance" + projectEvent.getFeaturedId(), null, projectEvent);
+                            case FEATURE_CREATED, FEATURE_UPDATED, FEATURE_DELETED -> {
+                                // Structural (membership) change. A GUI-initiated blocking bulk op suppresses these
+                                // and reloads authoritatively itself; otherwise reflect an out-of-band change with a
+                                // single debounced reload, but only when it can actually affect the shown set.
+                                if (structuralSuppression.get() == 0
+                                        && FeatureListEventPolicy.decideStructural(projectEvent.getEventType(),
+                                        projectEvent.getFeaturedId(), presentFeatures.keySet()) == FeatureListEventPolicy.Action.RELOAD)
+                                    requestAmbientReload();
+                            }
+                            case RESULT_CREATED, RESULT_UPDATED, RESULT_DELETED -> fireResultUpdate(projectEvent);
                         }
                     }
                 }
@@ -216,6 +241,42 @@ public class GuiProjectManager implements Closeable {
                 eventQueue.add(stopper);
             }
         });
+    }
+
+    /** Delivers a result change to the (per-feature) instance listener. */
+    private void fireResultUpdate(ProjectChangeEvent event) {
+        pcs.firePropertyChange("project.updateInstance" + event.getFeaturedId(), null, event);
+    }
+
+    /**
+     * Schedules a single debounced authoritative {@link #reloadFeatures()} for an out-of-band structural feature
+     * change (e.g. a deletion by a 3rd-party client). Cancels and reschedules on each event so a burst collapses
+     * to one refilter shortly after the last event, instead of one reload per event.
+     */
+    private void requestAmbientReload() {
+        synchronized (ambientReloadLock) {
+            if (ambientReloadFuture != null && !ambientReloadFuture.isDone())
+                ambientReloadFuture.cancel(false);
+            try {
+                ambientReloadFuture = ambientReloadScheduler.schedule(this::ambientRefresh, 200, TimeUnit.MILLISECONDS);
+            } catch (RejectedExecutionException e) {
+                // scheduler was shut down during close(); nothing left to reload
+            }
+        }
+    }
+
+    /**
+     * Authoritative refresh for an out-of-band change: refresh the project counters (so getTotalInstances() is
+     * not left stale, since incremental per-event bookkeeping is gone) and reload the feature list. Mirrors the
+     * import path.
+     */
+    private void ambientRefresh() {
+        try {
+            reloadProjectData();
+        } catch (Exception e) {
+            log.warn("Could not refresh project counters on out-of-band change", e);
+        }
+        reloadFeatures();
     }
 
     private synchronized void reloadProjectData() {
@@ -259,21 +320,49 @@ public class GuiProjectManager implements Closeable {
     }
 
     public synchronized void reloadFeatures() {
-        reloadFeatures(() -> featureFilterModel.toLuceneQuery(properties.getConfidenceDisplayMode())
-                .orElse(null), null);
+        reloadFeatures(currentFilterProvider(), null);
+    }
+
+    /** The lucene filter query for the current widget facets + search-bar query + confidence display mode. */
+    private Supplier<String> currentFilterProvider() {
+        return () -> featureFilterModel.toLuceneQuery(properties.getConfidenceDisplayMode()).orElse(null);
     }
 
     /**
-     * Delete all aligned features matching the given lucene query server-side (single call) and refresh the
-     * project counters and feature list. We do a full {@link #reloadProjectData()} refresh instead of relying
-     * on the incremental {@code FEATURE_DELETED} events, because those only adjust {@link #getTotalInstances()}
-     * for features still present in {@link #INSTANCE_LIST}; a bulk delete followed by a list reload would
-     * otherwise leave the total feature count stale.
+     * Runs a GUI-initiated blocking bulk mutation that changes feature-list membership, then rebuilds the list
+     * from server truth. Structural {@code FEATURE_*} events are ignored for the duration (the trailing reload is
+     * authoritative), so we avoid per-event list churn and mid-operation reloads that would race it;
+     * {@code RESULT_*}/compute events keep flowing. Project counters are refreshed too, so
+     * {@link #getTotalInstances()} is not left stale.
+     * <p>
+     * Must be called OFF the EDT (it awaits the list swap); the delete callers run it in a background job. It is
+     * intentionally not synchronized and never holds the manager monitor across the server call, so an EDT-driven
+     * {@link #reloadFeatures()} (e.g. from a filter change) cannot be blocked behind it.
      */
-    public synchronized void deleteAlignedFeaturesByQuery(@NotNull String searchQuery) {
-        siriusClient.features().deleteAlignedFeaturesByQueryExperimental(projectId, searchQuery);
-        reloadProjectData();
-        reloadFeatures();
+    public void runBlockingBulkFeatureMutation(@NotNull Runnable serverMutation) {
+        FilterableCompoundListPanel loadable = Optional.ofNullable(siriusGui.getMainFrame())
+                .map(MainFrame::getFilterableCompoundListPanel).orElse(null);
+        structuralSuppression.incrementAndGet();
+        if (loadable != null)
+            loadable.setLoading(true, true);
+        try {
+            serverMutation.run();
+            reloadProjectData();
+            reloadFeaturesBlocking();
+        } finally {
+            if (loadable != null)
+                loadable.setLoading(false, true);
+            structuralSuppression.decrementAndGet();
+        }
+    }
+
+    /**
+     * Delete all aligned features matching the given lucene query server-side (single call), then refresh the
+     * project counters and feature list authoritatively (see {@link #runBlockingBulkFeatureMutation}).
+     */
+    public void deleteAlignedFeaturesByQuery(@NotNull String searchQuery) {
+        runBlockingBulkFeatureMutation(() ->
+                siriusClient.features().deleteAlignedFeaturesByQueryExperimental(projectId, searchQuery));
     }
 
     // no sync needed because of blocking edt thread call.
@@ -283,33 +372,60 @@ public class GuiProjectManager implements Closeable {
                 .map(MainFrame::getFilterableCompoundListPanel).orElse(null);
 
         final long generation = reloadGeneration.incrementAndGet();
-        Runnable r = () -> {
-            String filterQuery = filterQueryProvider != null ? filterQueryProvider.get() : null;
-            List<String> sortQuery = sortQueryProvider != null ? sortQueryProvider.get() : null;
-            List<InstanceBean> tmpInst = siriusClient.features()
-                    .getAlignedFeaturesPage(projectId, 0, Integer.MAX_VALUE, sortQuery, filterQuery, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
-                    .getContent().stream().map(f -> new InstanceBean(f, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this)).toList();
-
-
-            try {
-                Jobs.runEDTAndWait(() -> {
-                    // A newer reload was requested while this one was loading -> drop this (stale) result.
-                    if (generation != reloadGeneration.get())
-                        return;
-                    INSTANCE_LIST.clear();
-                    INSTANCE_LIST.addAll(tmpInst);
-                });
-            } catch (InvocationTargetException | InterruptedException e) {
-                log.warn("Reloading features EDT wait interrupted", e);
-            }
-        };
-
+        Runnable r = () -> reloadFeaturesBody(generation, filterQueryProvider, sortQueryProvider);
 
         if (loadable != null)
             loadable.runInBackgroundAndLoad(r);
         else
             Jobs.runInBackground(r);
+    }
 
+    /**
+     * Synchronous reload for the blocking-bulk path: runs the reload body on the calling (background) thread and
+     * awaits the EDT list swap, so the caller can keep structural events suppressed until the authoritative list
+     * is in place. Not synchronized (see {@link #reloadFeaturesBody}).
+     */
+    private void reloadFeaturesBlocking() {
+        reloadFeaturesBody(reloadGeneration.incrementAndGet(), currentFilterProvider(), null);
+    }
+
+    /**
+     * Fetches the (server-side filtered) feature page and swaps it into {@link #INSTANCE_LIST} on the EDT,
+     * rebuilding the {@link #presentFeatures} snapshot. The async entry points hand this to a background job;
+     * the blocking-bulk path calls it directly to await the swap. Concurrency is governed by {@code generation}
+     * (only the newest reload applies), not by the manager monitor, so this is intentionally NOT synchronized:
+     * it must not hold the monitor across the network fetch.
+     */
+    private void reloadFeaturesBody(long generation, @Nullable Supplier<String> filterQueryProvider, @Nullable Supplier<List<String>> sortQueryProvider) {
+        String filterQuery = filterQueryProvider != null ? filterQueryProvider.get() : null;
+        List<String> sortQuery = sortQueryProvider != null ? sortQueryProvider.get() : null;
+        List<InstanceBean> tmpInst = siriusClient.features()
+                .getAlignedFeaturesPage(projectId, 0, Integer.MAX_VALUE, sortQuery, filterQuery, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
+                .getContent().stream().map(f -> new InstanceBean(f, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this)).toList();
+
+        try {
+            Jobs.runEDTAndWait(() -> {
+                // A newer reload was requested while this one was loading -> drop this (stale) result. These beans
+                // already registered their project-space listener in their constructor, so unregister them here
+                // or they would leak on pcs and keep reacting to result events.
+                if (generation != reloadGeneration.get()) {
+                    tmpInst.forEach(InstanceBean::unregisterProjectSpaceListener);
+                    return;
+                }
+                // Discard the outgoing beans: unregister their listeners (fixes a pre-existing pcs leak and stops
+                // ghost beans refetching on later result events), then swap in the fresh page.
+                INSTANCE_LIST.forEach(InstanceBean::unregisterProjectSpaceListener);
+                INSTANCE_LIST.clear();
+                INSTANCE_LIST.addAll(tmpInst);
+                // Republish the present-features snapshot (single writer).
+                Map<String, InstanceBean> idx = new HashMap<>(Math.max(16, (tmpInst.size() * 4 / 3) + 1));
+                for (InstanceBean b : tmpInst)
+                    idx.put(b.getFeatureId(), b);
+                presentFeatures = Map.copyOf(idx);
+            });
+        } catch (InvocationTargetException | InterruptedException e) {
+            log.warn("Reloading features EDT wait interrupted", e);
+        }
     }
 
     public void disableImportListener() {
@@ -403,6 +519,7 @@ public class GuiProjectManager implements Closeable {
         disableComputeListener();
         siriusClient.removeEventListener(computeListener);
         properties.removePropertyChangeListener(confidenceModeListender);
+        ambientReloadScheduler.shutdownNow();
         eventExec.cancel();
     }
 
