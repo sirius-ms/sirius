@@ -228,6 +228,11 @@ public class InstanceBean implements SiriusPCS {
         return Optional.ofNullable(sourceFeature);
     }
 
+    // Opt-fields preloaded for every bean in the compound list. This MUST cover everything the compound-list
+    // sort comparators and cell renderer read, or those accessors fall through to a lazy getSourceFeature(...)
+    // reload - a synchronous per-bean backend call on the EDT (the landmine class fixed elsewhere). In
+    // particular TOP_ANNOTATIONS_SUMMARY backs the confidence sort/column; COMPUTED_TOOLS backs isComputing().
+    // If you trim this list to save bandwidth, move the affected sort/render off the feature snapshot first.
     public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(COMPUTED_TOOLS, TOP_ANNOTATIONS_SUMMARY);
 
     private final Set<AlignedFeatureOptField> optsLoaded;
