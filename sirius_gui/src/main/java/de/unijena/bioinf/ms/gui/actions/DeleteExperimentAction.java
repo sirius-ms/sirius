@@ -86,30 +86,29 @@ public class DeleteExperimentAction extends AbstractGuiAction {
         Jobs.runInBackgroundAndLoad(mainFrame, "Deleting Data...", false, new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() {
-                synchronized (this) {
-                    final int max = toRemove.size() + 2;
-                    updateProgress(0, max, 0);
+                final int max = toRemove.size() + 2;
+                updateProgress(0, max, 0);
+                // Suppress the incremental per-feature event handling for the duration and rebuild the list once,
+                // authoritatively, afterwards - instead of letting the FEATURE_DELETED event storm churn the list.
+                gui.getProjectManager().runBlockingBulkFeatureMutation(() -> {
                     List<InstanceBean> removed = new ArrayList<>();
-                    try {
-                        gui.acceptSiriusClient((client, pid) ->
-                                toRemove.forEach(feature -> {
-                                    try {
-                                        updateProgress(0, max, removed.size(), "Removing '" + feature.getGUIName() + "'...");
-                                        if (!feature.isComputing()) {
-                                            client.features().deleteAlignedFeature(pid, feature.getFeatureId());
-                                            removed.add(feature);
-                                        } else {
-                                            log.warn("Cannot delete '{}' because it is currently computing. Skipping!", feature.getFeatureId());
-                                        }
-                                    } catch (Exception e) {
-                                        log.error("Could not delete: {}", feature.getFeatureId(), e);
+                    gui.acceptSiriusClient((client, pid) ->
+                            toRemove.forEach(feature -> {
+                                try {
+                                    updateProgress(0, max, removed.size(), "Removing '" + feature.getGUIName() + "'...");
+                                    if (!feature.isComputing()) {
+                                        client.features().deleteAlignedFeature(pid, feature.getFeatureId());
+                                        removed.add(feature);
+                                    } else {
+                                        log.warn("Cannot delete '{}' because it is currently computing. Skipping!", feature.getFeatureId());
                                     }
-                                }));
-                    } finally {
-                        updateProgress(0, toRemove.size(), removed.size() + 2, "DONE!");
-                    }
-                    return true;
-                }
+                                } catch (Exception e) {
+                                    log.error("Could not delete: {}", feature.getFeatureId(), e);
+                                }
+                            }));
+                    updateProgress(0, max, removed.size() + 2, "DONE!");
+                });
+                return true;
             }
         });
 
