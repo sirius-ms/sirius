@@ -314,6 +314,9 @@ public class GuiProjectManager implements Closeable {
 
     public synchronized void removeTemporaryJumpToFeatureIfNotSelected(String selectedFeatureid) {
         if (jumpToInstanceBean != null && !jumpToInstanceBean.getFeatureId().equals(selectedFeatureid)) {
+            // Unregister before discarding, or the bean's project-space listener leaks on pcs (its constructor
+            // registered it). Idempotent if a reload already unregistered it.
+            jumpToInstanceBean.unregisterProjectSpaceListener();
             INSTANCE_LIST.remove(jumpToInstanceBean);
             jumpToInstanceBean = null;
         }
