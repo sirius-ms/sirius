@@ -74,7 +74,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply;
-    final JCheckBox invertFilter, deleteSelection, /*elementsMatchFormula, elementsMatchPrecursorFormula,*/ hasMs1, hasMsMs;
+    final JCheckBox deleteSelection, hasMs1, hasMsMs;
 
     final JCheckBox blankFilter;
     final JSpinner blankSpinner;
@@ -136,23 +136,18 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             optionsPanel.add(searchPanel, BorderLayout.CENTER);
         }
 
-        // filter modifiers
+        // filter modifiers (inversion now lives in the query editor's invert toggle)
         {
-            invertFilter = new JCheckBox("Invert Filter");
-            invertFilter.setSelected(filterModel.isInverted());
-            invertFilter.setToolTipText(GuiUtils.formatAndStripToolTip("Invert the full filter configuration: all matching features become non-matching and vice versa."));
-
             deleteSelection = new JCheckBox("<html>Delete all <b>non-</b>matching features</html>");
             deleteSelection.setSelected(false);
             deleteSelection.setToolTipText(GuiUtils.formatAndStripToolTip("Delete all non-matching features, reducing the project to the matching ones. Deleted features cannot be recovered."));
 
             final Box group = Box.createHorizontalBox();
-            group.add(invertFilter);
-            group.add(Box.createHorizontalStrut(25));
             group.add(deleteSelection);
             group.add(Box.createHorizontalGlue());
             optionsPanel.add(group, BorderLayout.SOUTH);
         }
+
 
         //input data filters
         {
@@ -446,7 +441,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     }
 
     private void applyToModel(@NotNull FeatureFilterModel filterModel) {
-        filterModel.setInverted(invertFilter.isSelected());
+        filterModel.setInverted(queryEditor.isInverted());
 
         filterModel.setCurrentMinMz(getMinMz());
         filterModel.setCurrentMaxMz(getMaxMz());
@@ -559,7 +554,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         for (JSpinner s : new JSpinner[]{minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner,
                 minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, blankSpinner})
             s.addChangeListener(e -> refresh.run());
-        for (JCheckBox c : new JCheckBox[]{invertFilter, hasMs1, hasMsMs, blankFilter})
+        for (JCheckBox c : new JCheckBox[]{hasMs1, hasMsMs, blankFilter})
             c.addActionListener(e -> refresh.run());
         lipidFilterBox.addActionListener(e -> refresh.run());
         adductOptions.checkBoxList.addCheckBoxListener(e -> refresh.run());
@@ -633,13 +628,13 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         lipidFilterBox.setSelectedItem(FeatureFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
         elementsField.setText(null);
         searchDBList.checkBoxList.uncheckAll();
-        invertFilter.setSelected(false);
         deleteSelection.setSelected(false);
         hasMs1.setSelected(false);
         hasMsMs.setSelected(false);
 
         blankFilter.setSelected(false);
 
+        queryEditor.setInverted(false); // inversion lives in the editor now
         // clear the user query and re-render the chips from the freshly-reset widget state (a
         // programmatic checkbox reset does not fire the live-refresh listeners)
         queryEditor.clearUserQuery();
