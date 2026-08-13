@@ -350,12 +350,22 @@ public class GuiProjectManager implements Closeable {
             loadable.setLoading(true, true);
         try {
             serverMutation.run();
-            reloadProjectData();
-            reloadFeaturesBlocking();
         } finally {
-            if (loadable != null)
-                loadable.setLoading(false, true);
-            structuralSuppression.decrementAndGet();
+            // Reconcile with server truth even if the mutation threw or was cancelled: a partial / aborted
+            // delete still changed the server, so refreshing here keeps both the feature list and the total
+            // feature count (getTotalInstances(), set by reloadProjectData) from drifting. Only lower the
+            // suppression gate once the authoritative list is in place. If the refresh itself fails (e.g. the
+            // project was closed) we log rather than mask the original outcome.
+            try {
+                reloadProjectData();
+                reloadFeaturesBlocking();
+            } catch (Exception e) {
+                log.warn("Could not refresh feature list/counters after bulk mutation", e);
+            } finally {
+                if (loadable != null)
+                    loadable.setLoading(false, true);
+                structuralSuppression.decrementAndGet();
+            }
         }
     }
 
