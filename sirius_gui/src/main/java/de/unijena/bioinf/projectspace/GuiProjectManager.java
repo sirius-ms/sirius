@@ -378,6 +378,18 @@ public class GuiProjectManager implements Closeable {
                 siriusClient.features().deleteAlignedFeaturesByQueryExperimental(projectId, searchQuery));
     }
 
+    /**
+     * Delete the given aligned features server-side in a single bulk call, then refresh the project counters and
+     * feature list authoritatively (see {@link #runBlockingBulkFeatureMutation}). A no-op for an empty id set.
+     */
+    public void deleteAlignedFeaturesByIds(@NotNull Collection<String> alignedFeatureIds) {
+        if (alignedFeatureIds.isEmpty())
+            return;
+        List<String> ids = List.copyOf(alignedFeatureIds);
+        runBlockingBulkFeatureMutation(() ->
+                siriusClient.features().deleteAlignedFeatures(projectId, ids));
+    }
+
     // no sync needed because of blocking edt thread call.
     private synchronized void reloadFeatures(@Nullable Supplier<String> filterQueryProvider, @Nullable Supplier<List<String>> sortQueryProvider) {
         //todo LUCENE: handle loading mechanism for compound list.
