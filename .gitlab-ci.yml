@@ -23,15 +23,26 @@ stages:
   - sync
 
 variables:
-  GRADLE_OPTS: "-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true -Dorg.gradle.configuration-cache=true -Xmx4g -XX:MaxMetaspaceSize=512m"
+  # Memory for the Gradle daemon is NOT set here: GRADLE_OPTS only reaches the launcher JVM, while
+  # org.gradle.jvmargs from gradle.properties wins for the daemon. See before_script below.
+  GRADLE_OPTS: "-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true -Dorg.gradle.configuration-cache=true"
   GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
 
-#before_script:
-#  - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
-#  - echo "Using Gradle user home at $GRADLE_USER_HOME"
+before_script:
+  # The project gradle.properties asks for -Xmx16G, which is the entire RAM of a medium runner
+  # (4 vCPU / 16 GB). The daemon then GCs lazily and grows until the kernel OOM-kills a JVM; when
+  # that victim is a test worker, Gradle blocks forever reading its streams and the job burns its
+  # full timeout with no output. Developers override this in ~/.gradle, CI has no such file, so
+  # write one into GRADLE_USER_HOME (which takes precedence over the project file).
+  # Not part of the cached paths (.gradle/wrapper/, .gradle/caches/), so it is rewritten each job.
+  - mkdir -p "$GRADLE_USER_HOME"
+  - echo 'org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError' > "$GRADLE_USER_HOME/gradle.properties"
 
 build_test_publish_libs:
   stage: libs
+  # Backstop below the 60m default: the Gradle task timeouts should fire first and leave a stack
+  # dump, this only bounds the damage if the daemon itself stops responding.
+  timeout: 45m
   script:
     - |
       echo "===> Running Unit Tests"

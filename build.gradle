@@ -244,6 +244,16 @@ allprojects {
         }
     }
 
+    // A test worker that dies without a word - killed by the OOM killer, say - leaves Gradle
+    // blocked on its output streams forever, which on CI looks like a silent hang until the job
+    // timeout kills it an hour later. Make the worker exit loudly on OOM and bound every test task
+    // so a stuck one fails with a stack dump instead of stalling the pipeline.
+    tasks.withType(Test).configureEach {
+        maxHeapSize = "1g" //explicit; the Gradle default of 512m leaves little headroom
+        jvmArgs "-XX:+HeapDumpOnOutOfMemoryError", "-XX:+ExitOnOutOfMemoryError"
+        timeout.set(java.time.Duration.ofMinutes(30))
+    }
+
     tasks.named('test', Test) {
         useJUnitPlatform {
             filter { //filter test groups that do not have to run on every commit
@@ -253,6 +263,11 @@ allprojects {
                 failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
             }
         }
+        // Unit tests are quick (whole modules run in seconds), so a single method that blocks is a
+        // bug worth failing on. Only set for 'test': the integration suites legitimately run long.
+        systemProperty 'junit.jupiter.execution.timeout.testable.method.default', '5m'
+        systemProperty 'junit.jupiter.execution.timeout.lifecycle.method.default', '5m'
+        timeout.set(java.time.Duration.ofMinutes(15))
     }
 
 
