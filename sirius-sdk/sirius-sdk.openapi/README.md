@@ -42,7 +42,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
-  <version>3.1+sirius6.5.3</version>
+  <version>3.1+sirius6.5.4</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -58,7 +58,7 @@ Add this dependency to your project's build file:
   }
 
   dependencies {
-     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.5.3"
+     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.5.4"
   }
 ```
 
@@ -72,7 +72,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius-sdk.openapi-3.1+sirius6.5.3.jar`
+- `target/sirius-sdk.openapi-3.1+sirius6.5.4.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
