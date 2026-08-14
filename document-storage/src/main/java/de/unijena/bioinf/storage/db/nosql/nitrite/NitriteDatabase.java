@@ -84,6 +84,9 @@ public class NitriteDatabase implements Database<Document> {
 
     protected Path file;
 
+    // the compression the store writes with; used so compact() does not silently change it
+    protected final MVStoreCompression compression;
+
     protected final String systemUID;
 
     // NITRITE
@@ -126,6 +129,7 @@ public class NitriteDatabase implements Database<Document> {
     public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte, boolean readOnly) throws IOException {
         this.file = file;
         this.meta = meta;
+        this.compression = compression;
         this.db = initDB(file, meta, compression, cacheSizeMiB,commitBufferByte, readOnly);
         this.initCollections(meta);
         this.initRepositories(meta);
@@ -382,7 +386,14 @@ public class NitriteDatabase implements Database<Document> {
         stateWriteLock.lock();
         try {
             close();
-            MVStoreTool.compact(file.toString(), true);
+            // Compact with the same compression the store writes with, so compaction does not silently change
+            // a project's on-disk compression. MVStoreTool.compact only exposes an LZF on/off flag, so NONE and
+            // LZF are preserved exactly. DEFLATE cannot be reproduced by the tool, so it is rewritten as LZF; the
+            // store stays readable because MVStore auto-detects the compression per page on read.
+            if (compression == MVStoreCompression.DEFLATE)
+                log.warn("Compacting a DEFLATE-compressed store at {}: MVStoreTool cannot emit DEFLATE, so it is " +
+                        "rewritten with LZF compression. The store stays readable.", file);
+            MVStoreTool.compact(file.toString(), compression != MVStoreCompression.NONE);
         } finally {
             stateWriteLock.unlock();
         }
