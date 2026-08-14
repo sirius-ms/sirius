@@ -344,6 +344,44 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return result.stream();
     }
 
+    /**
+     * Streams the objects for the given {@code primaryKeys} by point-looking-up each key, skipping keys with no
+     * match. Results are returned in the iteration order of {@code primaryKeys} (duplicates looked up once) and
+     * fully materialized, so the stream holds no open cursor.
+     * <p>
+     * Prefer this over {@code Filter.where(idField).in(keys)} when {@code idField} is the collection's own
+     * primary key: Nitrite scans the whole collection for an {@code in} filter and does not treat a named id
+     * field as the map key, whereas {@link #getByPrimaryKey} is a direct point lookup. For a non-primary indexed
+     * field use {@link #findAllByIndexedFieldStr} instead.
+     */
+    default <T> Stream<T> findAllByPrimaryKeyStr(@NotNull Collection<?> primaryKeys, Class<T> clazz, String... withOptionalFields) throws IOException {
+        if (primaryKeys.isEmpty())
+            return Stream.empty();
+        List<T> result = new ArrayList<>();
+        Set<Object> seen = new HashSet<>();
+        for (Object key : primaryKeys) {
+            if (seen.add(key))
+                getByPrimaryKey(key, clazz, withOptionalFields).ifPresent(result::add);
+        }
+        return result.stream();
+    }
+
+    /**
+     * Removes the objects for the given {@code primaryKeys} by point-deleting each key and returns the number
+     * removed (duplicate keys removed once). Prefer over {@code removeAll(Filter.where(idField).in(keys))} for a
+     * collection's own primary key, for the same reason as {@link #findAllByPrimaryKeyStr}. This is not atomic on
+     * its own; wrap the call in {@link #write(Callable)} when the whole batch must be a single transaction.
+     */
+    default <T> int removeAllByPrimaryKey(@NotNull Collection<?> primaryKeys, Class<T> clazz) throws IOException {
+        int removed = 0;
+        Set<Object> seen = new HashSet<>();
+        for (Object key : primaryKeys) {
+            if (seen.add(key))
+                removed += removeByPrimaryKey(key, clazz);
+        }
+        return removed;
+    }
+
     default Stream<DocType> findStr(String collectionName, Filter filter, String... withOptionalFields) throws IOException {
         return StreamSupport.stream(find(collectionName, filter, withOptionalFields).spliterator(), false);
     }

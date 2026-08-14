@@ -269,7 +269,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                 //Handle Runs
                 if (Utils.notNullOrEmpty(runIds)) {
-                    List<Run> runsToUpdate = storage().findStr(Filter.where("runId").in(runIds.stream().sorted().toArray(Long[]::new)), LCMSRun.class)
+                    List<Run> runsToUpdate = storage().findAllByPrimaryKeyStr(runIds, LCMSRun.class)
                             .map(run -> convertToApiRun(run, EnumSet.of(Run.OptField.tags))) //tag might have been added during preprocessing.
                             .toList();
                     searchService.addDocuments(projectId, runsToUpdate);
@@ -1691,7 +1691,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
 
        if (!EnumSet.of(Compound.OptField.tags).containsAll(optFields)) {
-            List<Compound> cps = storage().findStr(Filter.where("compoundId").in(compounds.stream().map(Compound::getCompoundId).map(Long::parseLong).toArray(Long[]::new)), de.unijena.bioinf.ms.persistence.model.core.Compound.class)
+            List<Compound> cps = storage().findAllByPrimaryKeyStr(compounds.stream().map(Compound::getCompoundId).map(Long::parseLong).toList(), de.unijena.bioinf.ms.persistence.model.core.Compound.class)
                     .map(r -> convertToApiCompound(r, optFields, optFeatureFields)).toList();
             compounds = new PageImpl<>(cps, compounds.getPageable(), compounds.getTotalElements());
         }
@@ -1761,7 +1761,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 : compoundIds.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).toList();
 
         Map<Long, de.unijena.bioinf.ms.persistence.model.core.Compound> byId = storage()
-                .findStr(Filter.where("compoundId").in(pageIds.toArray(Long[]::new)), de.unijena.bioinf.ms.persistence.model.core.Compound.class)
+                .findAllByPrimaryKeyStr(pageIds, de.unijena.bioinf.ms.persistence.model.core.Compound.class)
                 .collect(Collectors.toMap(de.unijena.bioinf.ms.persistence.model.core.Compound::getCompoundId, Function.identity()));
 
         List<Compound> compounds = pageIds.stream()
@@ -1945,7 +1945,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private List<AlignedFeature> findAlignedFeaturesByIds(Collection<Long> featureIds, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) throws IOException {
         return annotateApiFeatures(
-                storage().findStr(Filter.where("alignedFeatureId").in(featureIds.toArray(Long[]::new)), AlignedFeatures.class),
+                storage().findAllByPrimaryKeyStr(featureIds, AlignedFeatures.class),
                 msDataAsCosineQuery,
                 optFields);
     }
@@ -2592,10 +2592,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             default -> throw new IllegalArgumentException("Unknown fold change target!");
         }
 
-        //delete fold changes from db
-        storage().removeAll(
-                Filter.where("id").in(toDelete.toArray(Long[]::new)),
-                statsTarget.getProjectFoldChangeClass());
+        //delete fold changes from db: point-delete by primary key (id) under one write lock so the batch stays
+        //atomic; a `Filter.where("id").in(...)` would scan the whole collection instead of using the id map.
+        storage().write(() -> {
+            storage().removeAllByPrimaryKey(toDelete, statsTarget.getProjectFoldChangeClass());
+        });
     }
 
     private SpectralLibraryMatchSummary summarize(Filter filter) throws IOException {
