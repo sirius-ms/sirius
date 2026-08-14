@@ -309,34 +309,38 @@ public class NitriteDatabase implements Database<Document> {
         List<IndexDescriptor> toDrop = new ArrayList<>();
         List<Index> toBuild = new ArrayList<>();
 
-        Map<Set<String>, IndexDescriptor> rI = new HashMap<>();
-        Map<Set<String>, Index> nI = new HashMap<>();
+        // Key indexes by their ORDERED field list, not an unordered set: for a compound index the field order
+        // defines its sort/prefix semantics, so re-declaring the same fields in a different order is a different
+        // index that must be dropped and rebuilt. An unordered key would treat the two as identical and silently
+        // keep the stale on-disk field order.
+        Map<List<String>, IndexDescriptor> rI = new HashMap<>();
+        Map<List<String>, Index> nI = new HashMap<>();
 
         for (IndexDescriptor descriptor : repository.listIndices()) {
-            rI.put(new HashSet<>(descriptor.getFields().getFieldNames()), descriptor);
+            rI.put(new ArrayList<>(descriptor.getFields().getFieldNames()), descriptor);
         }
         for (Index index : indices) {
-            Set<String> key = new HashSet<>(Arrays.asList(index.getFields()));
+            List<String> key = Arrays.asList(index.getFields());
             if (nI.containsKey(key)) {
                 throw new IllegalArgumentException("Duplicate index: " + String.join(",", key));
             }
             nI.put(key, index);
         }
 
-        Set<Set<String>> intersection = new HashSet<>(rI.keySet());
+        Set<List<String>> intersection = new HashSet<>(rI.keySet());
         intersection.retainAll(nI.keySet());
 
-        Set<Set<String>> dropSet = new HashSet<>(rI.keySet());
+        Set<List<String>> dropSet = new HashSet<>(rI.keySet());
         dropSet.removeAll(nI.keySet());
 
-        Set<Set<String>> addSet = new HashSet<>(nI.keySet());
+        Set<List<String>> addSet = new HashSet<>(nI.keySet());
         addSet.removeAll(rI.keySet());
 
         dropSet.stream().map(rI::get).forEach(toDrop::add);
         addSet.stream().map(nI::get).forEach(toBuild::add);
 
         // compare index types
-        for (Set<String> key : intersection) {
+        for (List<String> key : intersection) {
             IndexDescriptor repoIndex = rI.get(key);
             Index index = nI.get(key);
 
