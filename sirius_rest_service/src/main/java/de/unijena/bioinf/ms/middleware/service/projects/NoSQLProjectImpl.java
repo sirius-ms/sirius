@@ -1746,9 +1746,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             return Page.empty(pageable);
 
         Long[] featureIds = matchingFeatureIds.stream().map(Long::parseLong).toArray(Long[]::new);
-        // distinct compound ids of the matching features, in feature-match order (stable paging)
-        List<Long> compoundIds = storage()
-                .findStr(Filter.where("alignedFeatureId").in(featureIds), AlignedFeatures.class)
+        // alignedFeatureId is the AlignedFeatures primary key. For a modest match set, point-looking-up each id
+        // (deserializing only the matches) beats a `Filter...in(...)`, which Nitrite resolves with a full
+        // collection scan that deserializes every feature. But once the match set approaches the whole
+        // collection the scan wins, so guard on the (O(1)) collection size and only fan out below half of it.
+        // The point-lookup ids are sorted so both branches yield the same natural feature-id order.
+        long totalFeatures = storage().countAll(AlignedFeatures.class);
+        Stream<AlignedFeatures> matchingFeatures = (long) featureIds.length * 2 <= totalFeatures
+                ? storage().findAllByPrimaryKeyStr(Arrays.stream(featureIds).sorted().toList(), AlignedFeatures.class)
+                : storage().findStr(Filter.where("alignedFeatureId").in(featureIds), AlignedFeatures.class);
+        // distinct compound ids of the matching features (stable paging)
+        List<Long> compoundIds = matchingFeatures
                 .map(AlignedFeatures::getCompoundId)
                 .filter(Objects::nonNull)
                 .distinct()
