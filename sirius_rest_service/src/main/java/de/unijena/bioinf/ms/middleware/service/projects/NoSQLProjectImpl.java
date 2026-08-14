@@ -1988,17 +1988,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 // Tags are stored with a taggedObjectId (not an alignedFeatureId) field; filtering on the
                 // latter matched nothing, so this bulk query silently returned no tags and the per-feature
                 // path (annotateApiFeature) was the only thing that ever populated them.
-                Filter.FilterClause tagfilter = Filter.and(
-                        Filter.where("taggedObjectClass").eq(AlignedFeatures.class.getName()),
-                        Filter.where("taggedObjectId").in(ids)
-                );
-
+                final String afClass = AlignedFeatures.class.getName();
                 final Long2ObjectOpenHashMap<Map<String, Tag>> tagmap = new Long2ObjectOpenHashMap<>();
-                storage().find(tagfilter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class).forEach(tag ->
-                        tagmap.computeIfAbsent(tag.getTaggedObjectId(), id -> new HashMap<>())
-                                // convert like every other tag path so DATE/TIME values are returned formatted
-                                // (e.g. "yyyy-MM-dd"), not as the raw stored epoch millis.
-                                .put(tag.getTagName(), convertToApiTag(tag)));
+                // One eq lookup per feature on the (taggedObjectClass, taggedObjectId) prefix of the Tag index,
+                // instead of a taggedObjectId `in` that Nitrite would resolve with a full collection scan.
+                for (Long id : ids) {
+                    storage().find(Filter.and(
+                            Filter.where("taggedObjectClass").eq(afClass),
+                            Filter.where("taggedObjectId").eq(id)
+                    ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class).forEach(tag ->
+                            tagmap.computeIfAbsent(tag.getTaggedObjectId(), k -> new HashMap<>())
+                                    // convert like every other tag path so DATE/TIME values are returned formatted
+                                    // (e.g. "yyyy-MM-dd"), not as the raw stored epoch millis.
+                                    .put(tag.getTagName(), convertToApiTag(tag)));
+                }
                 return tagmap;
             });
         }
