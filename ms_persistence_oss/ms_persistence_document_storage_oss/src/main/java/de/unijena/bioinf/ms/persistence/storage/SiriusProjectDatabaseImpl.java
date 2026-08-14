@@ -103,15 +103,25 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
         if (alignedFeatureIds.size() == 1)
             return cascadeDeleteAlignedFeatures(alignedFeatureIds.getFirst());
 
+        // Nitrite's remove(filter) runs readOperations.find(filter); for `in`/`or` filters the optimizer picks NO
+        // index (indexDescriptor==null -> nitriteMap.entries() full scan + per-doc deserialization). A single `eq`
+        // on an indexed field DOES take the IndexedStream path (the same fast path the GUI uses to load a feature's
+        // results), so remove per id with `eq` instead of one `in`/`or` over the whole selection.
         return this.getStorage().write(() -> {
             long count = 0;
-            for (Class<?> clazz : getRelatedToAF()) {
-                try {
-                    count += getStorage().removeAll(Filter.where("alignedFeatureId").in(alignedFeatureIds.toArray(Long[]::new)), clazz);
-                } finally {
-                    getStorage().flush();
-                    System.gc();
+            try {
+                for (Class<?> clazz : getRelatedToAF()) {
+                    for (Long afid : alignedFeatureIds)
+                        count += getStorage().removeAll(Filter.where("alignedFeatureId").eq(afid), clazz);
                 }
+            } finally {
+                // Commit and GC once for the whole cascade, not per class: the entire write() runs under the
+                // storage write lock as a single transaction, so a per-class commit buys no consistency and only
+                // adds flush overhead. Doing it in finally still persists whatever was removed if the cascade
+                // fails or is cancelled part way through, and lets MVStore reclaim the superseded copy-on-write
+                // chunks accumulated during the bulk delete.
+                getStorage().flush();
+                System.gc();
             }
             return count;
         });
