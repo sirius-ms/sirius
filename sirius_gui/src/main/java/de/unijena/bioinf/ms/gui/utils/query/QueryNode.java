@@ -18,6 +18,8 @@
 
 package de.unijena.bioinf.ms.gui.utils.query;
 
+import de.unijena.bioinf.ms.gui.utils.search.QueryTreeOps;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 /**

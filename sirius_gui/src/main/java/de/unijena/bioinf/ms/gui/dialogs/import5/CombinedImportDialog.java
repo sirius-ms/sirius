@@ -96,7 +96,7 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
     }
 
     /**
-     * @return the user specified name of each LC/MS file in the order of {@link #getLCMSFiles()}. Files
+     * @return the user specified name of each LC/MS file, in LC/MS file order. Files
      * without a specified name have a null entry, so that their name is derived during import.
      */
     @NotNull
