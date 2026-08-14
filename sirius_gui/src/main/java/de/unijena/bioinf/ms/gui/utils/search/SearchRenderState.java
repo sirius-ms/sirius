@@ -44,7 +44,7 @@ public final class SearchRenderState {
         return mode;
     }
 
-    /** Flips compact <-> extensive. */
+    /** Flips compact &lt;-&gt; extensive. */
     public void toggleMode() {
         mode = mode == FieldDisplay.Mode.COMPACT ? FieldDisplay.Mode.EXTENSIVE : FieldDisplay.Mode.COMPACT;
     }

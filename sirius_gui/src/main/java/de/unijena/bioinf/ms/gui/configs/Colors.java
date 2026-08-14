@@ -596,7 +596,7 @@ public class Colors {
 
     /**
      * FlatLaf's search-field clear-icon colour - the idle tint of the in-field search icons (funnel,
-     * backspace clear, compact toggle); falls back to the data foreground for non-FlatLaf L&Fs.
+     * backspace clear, compact toggle); falls back to the data foreground for non-FlatLaf L&amp;Fs.
      */
     public static Color searchFieldIconColor() {
         Color c = UIManager.getColor("SearchField.clearIconColor");
