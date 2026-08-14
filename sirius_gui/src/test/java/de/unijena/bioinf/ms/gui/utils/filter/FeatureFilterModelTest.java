@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.utils.filter;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import org.junit.jupiter.api.Test;
 
@@ -60,5 +61,15 @@ public class FeatureFilterModelTest {
         // ... and the compiled query must therefore be present (isActive() gates toLuceneQuery)
         Optional<String> query = model.toLuceneQuery(ConfidenceDisplayMode.EXACT);
         assertTrue(query.isPresent(), "an active blank fold-change filter must produce a lucene query");
+    }
+
+    @Test
+    public void testIsSupportedAdduct() {
+        assertTrue(FeatureFilterModel.isSupportedAdduct(PrecursorIonType.fromString("[M + H]+")),
+                "single-charged monomeric adduct is supported");
+        // multiply-charged adducts are not constructible yet (MultipleChargeException), so only the
+        // multimeric case can be exercised here; isSupportedAdduct still guards both conditions.
+        assertFalse(FeatureFilterModel.isSupportedAdduct(PrecursorIonType.fromString("[2M + H]+")),
+                "multimeric adduct is not supported");
     }
 }
