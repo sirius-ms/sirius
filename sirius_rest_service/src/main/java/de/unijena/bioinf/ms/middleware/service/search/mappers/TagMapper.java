@@ -30,6 +30,10 @@ public class TagMapper implements FieldMapper<Map<String, Tag>> {
         if (tags != null) {
             for (Tag tag : tags.values()) {
                 ValueType vt = valueTypeProvider.apply(tag.getTagName());
+                if (vt == null)
+                    throw new IllegalStateException("No tag definition registered for tag '" + tag.getTagName()
+                            + "', so its value cannot be encoded for the search index. The definition must exist"
+                            + " before the tag is applied to an object.");
                 indexableFields.addAll(createTagFields(rootFieldName + "." + tag.getTagName(), tag.getValue(), vt));
             }
         }

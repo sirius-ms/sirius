@@ -203,7 +203,12 @@ public class PerPojoSearchContext implements SearchContext {
         return fields;
     }
 
-    @NotNull
+    /**
+     * @return the value type of the given tag, or {@code null} if no definition for it has been registered
+     * with this context. Callers must handle the null: this is a cache of the project's tag definitions, so a
+     * tag can legitimately be unknown here (e.g. before its definition has been registered).
+     */
+    @Nullable
     @Override
     public ValueType getTagValueType(String tagName) {
         synchronized (tagDefs) {

@@ -2346,9 +2346,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .filter(tagDef -> !existingNames.contains(tagDef.getTagName()))
                 .map(tagDef -> convertToProjectDefinition(tagDef, editable)).toList();
         storage().insertAll(filtered);
-
-        // flushing ensures that related events have been sent before returning this method
         storage().flush();
+
+        // The onInsert listener that feeds the search context its value types runs on a Nitrite worker
+        // thread, so flushing does NOT guarantee it has run by the time we return. A caller that tags an
+        // object with a definition it just created would then index against a missing ValueType and NPE
+        // inside the Lucene TagMapper. Register here, on the calling thread, so the definition is usable
+        // as soon as this method returns; the event doing it again is harmless, registration is idempotent.
+        if (searchService != null)
+            filtered.forEach(tagDef ->
+                    searchService.addTagValueType(projectId, tagDef.getTagName(), tagDef.getValueType()));
 
         return filtered.stream().map(this::convertToApiDefinition).toList();
     }
