@@ -62,6 +62,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -286,33 +287,74 @@ public class GuiProjectManager implements Closeable {
         featureFilterModel.updateAdducts(detectedAdducts);
     }
 
+    /**
+     * O(1) lookup of a feature currently shown in the list, from the {@link #presentFeatures} snapshot
+     * (a feature filtered out of the list is absent).
+     */
+    public @Nullable InstanceBean getPresentFeature(@NotNull String featureId) {
+        return presentFeatures.get(featureId);
+    }
+
+    // The single temporary "jump-to" feature spliced into the list for a feature that is filtered out.
+    // EDT-confined: read and written ONLY inside EDT runnables / the (EDT) selection listener, so these
+    // methods must NOT be synchronized. Holding the manager monitor across runEDTAndWait (as the previous
+    // synchronized version did) deadlocks.
     private InstanceBean jumpToInstanceBean = null;
-    public synchronized InstanceBean findAndAddTemporaryJumpToFeature(String alignedFeatureId) {
+    // EDT-confined guard: true only while a jump swap is mutating the list, so the re-entrant selection
+    // listener (triggered when the previously selected bean is removed) does not drop the bean being added.
+    // not thread safe use in edt only.
+    private boolean suppressJumpToCleanup = false;
+
+    public InstanceBean findAndAddTemporaryJumpToFeature(String alignedFeatureId) {
+        // Fetch off the EDT (network); all list / jumpToInstanceBean mutation then happens ON the EDT. No
+        // lock is held across the EDT hop, so the deadlock described above cannot occur. This method is
+        // invoked from REST/service threads (GuiServiceImpl.applyToGuiInstance).
         AlignedFeature feature = siriusClient.features()
                 .getAlignedFeature(projectId, alignedFeatureId, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS);
         if (feature == null)
             return null;
 
-        jumpToInstanceBean = new InstanceBean(feature, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this);
-        // INSTANCE_LIST is a Swing-bound BasicEventList. This method is also invoked from REST/service
-        // threads (GuiServiceImpl.applyToGuiInstance), so mutate the list on the EDT under the write lock,
-        // mirroring the FEATURE_DELETED handler. runEDTAndWait ensures the bean is in the list before we return it.
+        final AtomicReference<InstanceBean> result = new AtomicReference<>();
         try {
             Jobs.runEDTAndWait(() -> {
+                // Re-jump to the current temporary feature: keep it, no list churn.
+                if (jumpToInstanceBean != null && jumpToInstanceBean.getFeatureId().equals(alignedFeatureId)) {
+                    result.set(jumpToInstanceBean);
+                    return;
+                }
+
+                final InstanceBean previous = jumpToInstanceBean;
+                final InstanceBean newBean = new InstanceBean(feature, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this);
+                jumpToInstanceBean = newBean;
+                // Removing the previously selected bean below moves the list selection, which re-enters
+                // removeTemporaryJumpToFeatureIfNotSelected on this same (EDT) thread; suppress it so it
+                // does not discard the bean we are adding.
+                suppressJumpToCleanup = true;
                 INSTANCE_LIST.getReadWriteLock().writeLock().lock();
                 try {
-                    INSTANCE_LIST.add(jumpToInstanceBean);
+                    // Only one temporary jump-to feature may exist at a time: drop the previous one so a
+                    // cascade of jumps does not leak orphaned beans into the list. Unregister first or its
+                    // project-space listener leaks on pcs (registered in the bean's constructor).
+                    if (previous != null) {
+                        previous.unregisterProjectSpaceListener();
+                        INSTANCE_LIST.remove(previous);
+                    }
+                    INSTANCE_LIST.add(newBean);
                 } finally {
                     INSTANCE_LIST.getReadWriteLock().writeLock().unlock();
+                    suppressJumpToCleanup = false;
                 }
+                result.set(newBean);
             });
         } catch (InvocationTargetException | InterruptedException e) {
             log.warn("Adding temporary jump-to feature to the compound list was interrupted", e);
         }
-        return jumpToInstanceBean;
+        return result.get();
     }
 
-    public synchronized void removeTemporaryJumpToFeatureIfNotSelected(String selectedFeatureid) {
+    public void removeTemporaryJumpToFeatureIfNotSelected(String selectedFeatureid) {
+        if (suppressJumpToCleanup) // a jump swap is in progress; it manages the temporary feature itself
+            return;
         if (jumpToInstanceBean != null && !jumpToInstanceBean.getFeatureId().equals(selectedFeatureid)) {
             // Unregister before discarding, or the bean's project-space listener leaks on pcs (its constructor
             // registered it). Idempotent if a reload already unregistered it.
