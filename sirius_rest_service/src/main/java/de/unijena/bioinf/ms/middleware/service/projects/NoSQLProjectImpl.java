@@ -1964,8 +1964,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (optFields.contains(AlignedFeature.OptField.qualities)) {
             Long[] filterIds = Arrays.stream(ids).filter(fid -> dbalf.get(fid).getDataQuality() != DataQuality.NOT_APPLICABLE).toArray(Long[]::new);
             if (filterIds.length > 0) {
-                Filter qualFilter = Filter.where("alignedFeatureId").in(filterIds);
-                qualJob = SiriusJobs.runInBackground(() -> storage().findStr(qualFilter, QualityReport.class)
+                List<Long> qualIds = Arrays.asList(filterIds);
+                qualJob = SiriusJobs.runInBackground(() -> storage().findAllByIndexedFieldStr("alignedFeatureId", qualIds, QualityReport.class)
                         .collect(Collectors.toMap(AlignedFeatureAnnotation::getAlignedFeatureId, c -> c
                                 , (existing, replacement) -> existing, Long2ObjectOpenHashMap::new
                         )));
@@ -1975,7 +1975,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         TinyBackgroundJJob<Long2ObjectOpenHashMap<ComputedSubtools>> compJob = null;
         if (optFields.contains(AlignedFeature.OptField.computedTools) || optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) || optFields.contains(AlignedFeature.OptField.topAnnotations)) {
-            compJob = SiriusJobs.runInBackground(() -> storage().findStr(Filter.where("alignedFeatureId").in(ids), ComputedSubtools.class)
+            List<Long> compIds = Arrays.asList(ids);
+            compJob = SiriusJobs.runInBackground(() -> storage().findAllByIndexedFieldStr("alignedFeatureId", compIds, ComputedSubtools.class)
                     .collect(Collectors.toMap(AlignedFeatureAnnotation::getAlignedFeatureId, c -> c
                             , (existing, replacement) -> existing, Long2ObjectOpenHashMap::new
                     )));
@@ -2006,7 +2007,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary)) {
             statJob = SiriusJobs.runInBackground(() -> {
                 final Long2ObjectOpenHashMap<List<Statistics>> statsMap = new Long2ObjectOpenHashMap<>();
-                storage().find(Filter.where("alignedFeatureId").in(ids), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class)
+                storage().findAllByIndexedFieldStr("alignedFeatureId", Arrays.asList(ids), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class)
                         .forEach(foldChange ->
                                 statsMap.computeIfAbsent(foldChange.getAlignedFeatureId(), id -> new ArrayList<>())
                                         .add(convertToApiFoldChange(foldChange)));
@@ -2024,9 +2025,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) || optFields.contains(AlignedFeature.OptField.topAnnotations)) {
             Long[] filterIds = Arrays.stream(ids).filter(computed::containsKey).filter(id -> computed.get(id).hasResults()).toArray(Long[]::new);
             if (filterIds.length > 0) {
-                Filter resultFilter = Filter.where("alignedFeatureId").in(filterIds);
-
-                csiJob = SiriusJobs.runInBackground(() -> storage().findStr(resultFilter, CsiStructureSearchResult.class)
+                List<Long> csiIds = Arrays.asList(filterIds);
+                csiJob = SiriusJobs.runInBackground(() -> storage().findAllByIndexedFieldStr("alignedFeatureId", csiIds, CsiStructureSearchResult.class)
                         .collect(Collectors.toMap(AlignedFeatureAnnotation::getAlignedFeatureId, c -> c
                                 , (existing, replacement) -> existing, Long2ObjectOpenHashMap::new
                         )));
