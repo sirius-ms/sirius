@@ -318,6 +318,32 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(find(filter, clazz, offset, pageSize, sortFields, sortOrders, withOptionalFields).spliterator(), false);
     }
 
+    /**
+     * Streams all objects whose {@code indexedField} equals any of the given {@code values} by running one
+     * indexed {@code eq} lookup per distinct value instead of a single {@code in} filter.
+     * <p>
+     * Nitrite selects no index for {@code in}/{@code or} filters and falls back to a full collection scan with
+     * per-document deserialization, whereas a single {@code eq} on an indexed field takes the fast indexed path.
+     * For a small selection of values against a large, indexed collection this is dramatically cheaper than one
+     * {@code in}. Only use it when {@code indexedField} is (the leading component of) an index and the value list
+     * is small relative to the collection; for large selections or unindexed fields a single scanning {@code in}
+     * is preferable, and for a collection's own primary-key field prefer {@code getByPrimaryKey}.
+     * <p>
+     * Duplicate values are looked up once. Results are returned in per-value lookup order and fully materialized,
+     * so the stream holds no open cursor.
+     */
+    default <T> Stream<T> findAllByIndexedFieldStr(@NotNull String indexedField, @NotNull Collection<?> values, Class<T> clazz, String... withOptionalFields) throws IOException {
+        if (values.isEmpty())
+            return Stream.empty();
+        List<T> result = new ArrayList<>();
+        Set<Object> seen = new HashSet<>();
+        for (Object value : values) {
+            if (seen.add(value))
+                find(Filter.where(indexedField).eq(value), clazz, withOptionalFields).forEach(result::add);
+        }
+        return result.stream();
+    }
+
     default Stream<DocType> findStr(String collectionName, Filter filter, String... withOptionalFields) throws IOException {
         return StreamSupport.stream(find(collectionName, filter, withOptionalFields).spliterator(), false);
     }
