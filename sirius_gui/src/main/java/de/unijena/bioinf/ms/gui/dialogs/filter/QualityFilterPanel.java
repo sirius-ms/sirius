@@ -27,6 +27,12 @@ class QualityFilterPanel extends JPanel {
             jCheckBox.setSelected(true);
     }
 
+    /** Sets the checkboxes from the given quality filter's selection (mirrors the constructor). */
+    public void setFromModel(@NotNull QualityFilter qualityFilter) {
+        for (int i = 0; i < qualityBoxes.length; ++i)
+            qualityBoxes[i].setSelected(qualityFilter.isQualitySelected(i));
+    }
+
     public void updateModel(QualityFilter qualityFilter) {
         for (int k = 0; k < qualityBoxes.length; ++k)
             qualityFilter.setQualitySelected(k, qualityBoxes[k].isSelected());
