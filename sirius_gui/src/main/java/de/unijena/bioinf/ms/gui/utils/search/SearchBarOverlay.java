@@ -17,7 +17,6 @@
  */
 
 package de.unijena.bioinf.ms.gui.utils.search;
-import com.formdev.flatlaf.FlatClientProperties;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
@@ -86,7 +85,7 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
         setFocusableWindowState(true);
 
         editor = new QueryEditorPanel(filterModel, fieldsProvider, termSupplier, editorHost, renderState,
-                onCommitted, refreshCollapsedBar, this, false, openFilterPanel, clearFilter);
+                onCommitted, refreshCollapsedBar, this, false, openFilterPanel, clearFilter, null); // restore defaults is dialog-only
         setContentPane(editor);
 
         // keep anchored while the main window is moved or resized (only while actually open - a

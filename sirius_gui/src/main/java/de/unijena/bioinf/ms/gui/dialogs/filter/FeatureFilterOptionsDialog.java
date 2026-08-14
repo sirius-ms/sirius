@@ -83,6 +83,9 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     final FeatureFilterModel filterModel;
     final CompoundList compoundList;
 
+    /** While true, live chip refreshes are skipped so a bulk widget update rebuilds the chips only once. */
+    private boolean suppressChipRefresh = false;
+
 
     final JComboBox<FeatureFilterModel.LipidFilter> lipidFilterBox;
     final PlaceholderTextField elementsField;
@@ -188,6 +191,28 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 adductOptions.setEnabled(true);
 
                 adductOptions.checkBoxList.checkAll(filterModel.getSelectedAdducts());
+
+                // preset next to "all"/"none": select only the single-charged, monomeric adducts
+                JButton singleAdducts = new JButton("single");
+                singleAdducts.setToolTipText(GuiUtils.formatAndStripToolTip(
+                        "Select only single-charged, monomeric adducts. SIRIUS can currently run its annotation " +
+                                "(molecular formula, structure and compound class identification) only on features with " +
+                                "such adducts, so this is the recommended selection."));
+                singleAdducts.addActionListener(e -> {
+                    // batch the (potentially many) check toggles into a single chip rebuild to avoid lag
+                    suppressChipRefresh = true;
+                    try {
+                        adductOptions.checkBoxList.uncheckAll();
+                        adductOptions.checkBoxList.checkAll(filterModel.getPossibleAdducts().stream()
+                                .filter(FeatureFilterModel::isSupportedAdduct).toList());
+                    } finally {
+                        suppressChipRefresh = false;
+                    }
+                    if (queryEditor != null)
+                        queryEditor.rebuild();
+                });
+                adductOptions.buttons.add(singleAdducts);
+
                 inputParameters.add(adductOptions);
             }
             inputParameters.add(Box.createVerticalGlue());
@@ -523,7 +548,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         // embedded: no in-editor funnel (the dialog has its own tabs); the clear button does a full
         // reset of every filter and the query (replacing the former separate Reset button)
         return new QueryEditorPanel(filterModel, fieldsProvider, this::workingTerms, jumpToTab, renderState,
-                commit -> {}, () -> {}, host, true, null, this::resetFilter);
+                commit -> {}, () -> {}, host, true, null, this::resetFilter, this::resetFilterToDefaults);
     }
 
     /**
@@ -545,7 +570,10 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
     /** Re-renders the panel chips whenever any filter widget changes, so they track the tabs live. */
     private void wireLiveChipRefresh() {
-        Runnable refresh = () -> queryEditor.rebuild();
+        // The chip rebuild is not free (it recompiles a throwaway model). A bulk widget update (e.g. the
+        // adduct "single" preset checks many boxes at once) sets suppressChipRefresh and rebuilds ONCE at
+        // the end instead of once per box, so the preset does not lag.
+        Runnable refresh = () -> { if (!suppressChipRefresh) queryEditor.rebuild(); };
         for (JSpinner s : new JSpinner[]{minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner,
                 minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, blankSpinner})
             s.addChangeListener(e -> refresh.run());
@@ -643,6 +671,43 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         queryEditor.setInverted(false); // inversion lives in the editor now
         // clear the user query and re-render the chips from the freshly-reset widget state (a
         // programmatic checkbox reset does not fire the live-refresh listeners)
+        queryEditor.clearUserQuery();
+    }
+
+    /**
+     * only reset values in the dialog, not the actual filter model.
+     * <p>
+     * Restores the DEFAULT filter configuration (SIRIUS's recommended starting filter) into the dialog
+     * widgets instead of clearing them: MS/MS present, feature quality restricted to DECENT/GOOD, the
+     * single-charged monomeric detected adducts selected, everything else off / at full range. Like every
+     * edit here it is staged - it takes effect on Apply and is reverted by Discard/Esc.
+     */
+    private void resetFilterToDefaults() {
+        // batch the widget updates into a single chip rebuild (see wireLiveChipRefresh)
+        suppressChipRefresh = true;
+        try {
+            resetSpinnerValues();
+            adductOptions.checkBoxList.uncheckAll();
+            adductOptions.checkBoxList.checkAll(filterModel.getPossibleAdducts().stream()
+                    .filter(FeatureFilterModel::isSupportedAdduct).toList());
+            // default overall quality keeps only DECENT/GOOD; a fresh model carries exactly that default
+            overallQualityPanel.setFromModel(new FeatureFilterModel().getFeatureQualityFilter());
+            qualityPanels.forEach(QualityFilterPanel::reset);
+
+            lipidFilterBox.setSelectedItem(FeatureFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
+            elementsField.setText(null);
+            searchDBList.checkBoxList.uncheckAll();
+            deleteSelection.setSelected(false);
+            hasMs1.setSelected(false);
+            hasMsMs.setSelected(true); // default: require MS/MS
+
+            blankFilter.setSelected(false);
+
+            queryEditor.setInverted(false);
+        } finally {
+            suppressChipRefresh = false;
+        }
+        // clear the user query and re-render the chips from the freshly-set widget state
         queryEditor.clearUserQuery();
     }
 

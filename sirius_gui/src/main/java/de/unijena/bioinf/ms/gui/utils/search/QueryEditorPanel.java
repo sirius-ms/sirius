@@ -149,6 +149,12 @@ public class QueryEditorPanel extends JPanel {
     @Nullable
     private final Runnable clearFilter;
     /**
+     * Restores the default filter configuration (SIRIUS's recommended starting filter). When null the
+     * restore button is hidden (e.g. the embedded dialog manages its own defaults).
+     */
+    @Nullable
+    private final Runnable restoreDefaults;
+    /**
      * The overlay's funnel button, kept so its tint can track the active filter state; null when embedded.
      */
     @Nullable
@@ -216,7 +222,8 @@ public class QueryEditorPanel extends JPanel {
                             @NotNull Host host,
                             boolean embedded,
                             @Nullable Runnable openFilterPanel,
-                            @Nullable Runnable clearFilter) {
+                            @Nullable Runnable clearFilter,
+                            @Nullable Runnable restoreDefaults) {
         super(new BorderLayout());
         this.filterModel = filterModel;
         this.fieldsProvider = fieldsProvider;
@@ -229,6 +236,7 @@ public class QueryEditorPanel extends JPanel {
         this.embedded = embedded;
         this.openFilterPanel = openFilterPanel;
         this.clearFilter = clearFilter;
+        this.restoreDefaults = restoreDefaults;
 
         setBackground(UIManager.getColor("TextField.background"));
         setBorder(BorderFactory.createCompoundBorder(
@@ -272,6 +280,20 @@ public class QueryEditorPanel extends JPanel {
             clearAll();
             input.requestFocusInWindow();
         });
+
+        // restore the default filter configuration (distinct from Clear, which removes all filters);
+        // only shown when the host provides the action (the embedded filter dialog; the search overlay
+        // passes null, so no restore button there)
+        JButton restore = null;
+        if (restoreDefaults != null) {
+            restore = Buttons.getRestoreDefaultsButton(ICON_SIZE, "Restore default filters", true);
+            restore.setFocusable(false); // must not grab focus (would auto-close the search overlay)
+            restore.setMargin(new Insets(0, 0, 0, 0));
+            restore.addActionListener(e -> {
+                restoreDefaultsAll();
+                input.requestFocusInWindow();
+            });
+        }
         if (openFilterPanel != null) {
 
             // hands off via the host so the overlay steps aside before the (modal) dialog opens
@@ -304,8 +326,10 @@ public class QueryEditorPanel extends JPanel {
         invertToggle.setMargin(new Insets(0, 0, 0, 0));
         invertToggle.addActionListener(e -> setInverted(!inverted));
 
-        // order left-to-right: query-state actions (clear, invert) then meta controls (display mode, funnel)
+        // order left-to-right: query-state actions (clear, restore, invert) then meta controls (display mode, funnel)
         controls.add(clear);
+        if (restore != null)
+            controls.add(restore);
         controls.add(invertToggle);
         controls.add(modeToggle);
         if (filterButton != null)
@@ -427,21 +451,58 @@ public class QueryEditorPanel extends JPanel {
     }
 
     /**
-     * The overlay's Clear: a full reset of every filter and the search query, consistent with the
-     * collapsed bar's clear. Runs the host's full-reset ({@link #clearFilter}, which resets the model,
-     * clears the shared document and reloads) and then wipes the user query; the reset becomes the new
-     * baseline so a following Cancel/close does not resurrect the old query. Falls back to clearing
-     * only the user query when no full-reset action was supplied.
+     * Clear: reset every filter and the search query. The contract differs by host:
+     * <ul>
+     *   <li><b>Embedded dialog</b> - resets the backing widgets via {@link #clearFilter} and wipes the
+     *       working query. Staged like every dialog edit: applied on Apply, reverted by Discard/Esc.</li>
+     *   <li><b>Overlay</b> - stages a removal of every active facet and clears the working query, leaving
+     *       the baseline intact. Applied on Apply/Enter (commit), reverted on Esc/close; the model is not
+     *       touched on click.</li>
+     * </ul>
      */
     public void clearAll() {
-        if (clearFilter != null)
-            clearFilter.run();
+        if (embedded) {
+            if (clearFilter != null)
+                clearFilter.run(); // reset the backing widgets (staged; the model is not touched now)
+            resetLocalQueryToEmptyBaseline();
+        } else {
+            // overlay: stage a removal of every active facet and clear the working query, leaving the
+            // baseline intact so Esc/close restores the applied filter and Apply/Enter applies the clear.
+            for (FilterTerm term : termSupplier.get())
+                pendingModelRemovals.put(term.id(), term::remove);
+            root = QueryContainer.empty();
+            openPath = new int[0];
+            tokenModel.reset();
+            input.setText("");
+            inverted = false; // a full clear also drops the inversion
+            rebuild();
+        }
+    }
+
+    /**
+     * Restore the default filter configuration (SIRIUS's recommended starting filter) instead of clearing
+     * everything. Dialog-only and staged: {@link #restoreDefaults} resets the backing widgets to their
+     * defaults (applied on Apply, reverted by Discard/Esc), and the editor's own query state is reset to
+     * match.
+     */
+    public void restoreDefaultsAll() {
+        if (restoreDefaults != null)
+            restoreDefaults.run();
+        resetLocalQueryToEmptyBaseline();
+    }
+
+    /**
+     * Resets the editor's own working query (chips + free text + inversion) to empty and adopts that as the
+     * new baseline, so a later Cancel/close does not resurrect the old query. Shared by the embedded Clear
+     * and the Restore-defaults action.
+     */
+    private void resetLocalQueryToEmptyBaseline() {
         root = QueryContainer.empty();
         openPath = new int[0];
         tokenModel.reset();
         input.setText("");
         pendingModelRemovals.clear();
-        inverted = false; // a full clear also drops the inversion
+        inverted = false;
         baselineRoot = root;
         baselineFreeText = "";
         baselineInverted = false;
