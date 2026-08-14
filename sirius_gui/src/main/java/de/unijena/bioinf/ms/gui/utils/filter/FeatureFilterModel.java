@@ -18,7 +18,6 @@ package de.unijena.bioinf.ms.gui.utils.filter;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
@@ -32,12 +31,8 @@ import lombok.SneakyThrows;
 import lombok.Synchronized;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.custom.CustomAnalyzer;
-import org.apache.lucene.document.DoublePoint;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -358,7 +353,7 @@ public class FeatureFilterModel implements SiriusPCS {
         possibleAdducts.retainAll(listAdducts);
         adducts.retainAll(listAdducts);
         possibleAdducts.addAll(newAdducts);
-        adducts.addAll(newAdducts.stream().filter(p -> !p.isMultimere() && !p.isMultipleCharged()).collect(Collectors.toSet()));
+        adducts.addAll(newAdducts.stream().filter(FeatureFilterModel::isSupportedAdduct).collect(Collectors.toSet()));
 
         if (isAdductFilterActive() && !oldAdducts.equals(adducts)) { // if list of adducts in the actual filter changed, we have to refilter.
             fireUpdateCompleted();
@@ -382,16 +377,25 @@ public class FeatureFilterModel implements SiriusPCS {
         return adducts != null && !adducts.isEmpty();
     }
 
+    /**
+     * A "supported" adduct: single-charged and monomeric. SIRIUS can only run its annotation (molecular
+     * formula, structure and compound-class identification) on features with such adducts, so they are
+     * the default adduct selection.
+     */
+    public static boolean isSupportedAdduct(@NotNull PrecursorIonType ion) {
+        return !ion.isMultimere() && !ion.isMultipleCharged();
+    }
+
     @Synchronized
     public boolean isMultiAdductsAllowed() {
-        return !isAdductFilterActive() || adducts.stream().anyMatch(p -> p.isMultipleCharged() || p.isMultimere());
+        return !isAdductFilterActive() || adducts.stream().anyMatch(p -> !isSupportedAdduct(p));
     }
 
     @Synchronized
     public void removeMultiAdducts() {
-        adducts = adducts.stream().filter(p -> !p.isMultipleCharged()).filter(p -> !p.isMultimere()).collect(Collectors.toSet());
+        adducts = adducts.stream().filter(FeatureFilterModel::isSupportedAdduct).collect(Collectors.toSet());
         if (adducts.isEmpty())
-            adducts = possibleAdducts.stream().filter(p -> !p.isMultimere() && !p.isMultipleCharged()).collect(Collectors.toSet());
+            adducts = possibleAdducts.stream().filter(FeatureFilterModel::isSupportedAdduct).collect(Collectors.toSet());
     }
 
     @Synchronized
@@ -399,7 +403,7 @@ public class FeatureFilterModel implements SiriusPCS {
         if (!isAdductFilterActive())
             return;
 
-        possibleAdducts.stream().filter(p -> p.isMultimere() || p.isMultipleCharged()).forEach(adducts::add);
+        possibleAdducts.stream().filter(p -> !isSupportedAdduct(p)).forEach(adducts::add);
     }
 
 

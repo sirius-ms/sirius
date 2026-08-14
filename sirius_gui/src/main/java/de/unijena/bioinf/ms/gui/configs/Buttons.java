@@ -165,4 +165,17 @@ public abstract class Buttons {
     public static JButton getBackspaceButton(int size, String tooltip, boolean borderless) {
         return getBackspaceButton(size, null, tooltip, borderless);
     }
+
+    /**
+     * A borderless icon button showing a {@link RestoreDefaultsIcon} (a single circular "restore
+     * defaults" arrow). Styled like {@link #getBackspaceButton(int, String, boolean)} so the two reset
+     * affordances sit together consistently.
+     */
+    public static JButton getRestoreDefaultsButton(int size, @Nullable Color color, String tooltip, boolean borderless) {
+        return new ToolbarButton(new RestoreDefaultsIcon(size, color != null ? color : Colors.searchFieldIconColor()), tooltip, borderless);
+    }
+
+    public static JButton getRestoreDefaultsButton(int size, String tooltip, boolean borderless) {
+        return getRestoreDefaultsButton(size, null, tooltip, borderless);
+    }
 }
