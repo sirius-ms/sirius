@@ -951,4 +951,39 @@ public class NitriteDatabaseTest {
 
     }
 
+    /**
+     * A compound index's field order defines its sort/prefix semantics, so re-declaring the same fields in a
+     * different order must drop and rebuild the index. Reconciling indexes by an unordered set of field names
+     * would treat the two as identical and silently keep the stale on-disk order.
+     */
+    @Test
+    public void testCompoundIndexFieldReorderTriggersRebuild() throws Exception {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
+                .addRepository(NitriteEntryWithDoubleKey.class, Index.nonUnique("otherKey", "someProperty")))) {
+            db.insert(new NitriteEntryWithDoubleKey(1, 1.0, "a"));
+            assertEquals(List.of("otherKey", "someProperty"), twoFieldIndexOrder(db, NitriteEntryWithDoubleKey.class));
+        }
+
+        // reopen declaring the SAME fields in reversed order: it is a different index and must be rebuilt
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
+                .addRepository(NitriteEntryWithDoubleKey.class, Index.nonUnique("someProperty", "otherKey")))) {
+            assertEquals(List.of("someProperty", "otherKey"), twoFieldIndexOrder(db, NitriteEntryWithDoubleKey.class));
+        }
+    }
+
+    /** Reflectively read the ordered field names of the (single) two-field index on the repository. */
+    private static List<String> twoFieldIndexOrder(NitriteDatabase db, Class<?> clazz) throws Exception {
+        java.lang.reflect.Field dbField = NitriteDatabase.class.getDeclaredField("db");
+        dbField.setAccessible(true);
+        org.dizitart.no2.Nitrite nitrite = (org.dizitart.no2.Nitrite) dbField.get(db);
+        return nitrite.getRepository(clazz).listIndices().stream()
+                .map(d -> d.getFields().getFieldNames())
+                .filter(names -> names.size() == 2)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no two-field index found"));
+    }
+
 }
