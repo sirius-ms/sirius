@@ -612,9 +612,10 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         // Delete server-side by query (one call; cascades DB + search index) and refresh the project
         // counters and feature list.
         final String query = deleteQuery.get();
-        Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Deleting non-matching features...", false, new TinyBackgroundJJob<Boolean>() {
+        Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Deleting non-matching features...", true, new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() {
+                updateProgress(-1, "Deleting non-matching features...");
                 gui.getProjectManager().deleteAlignedFeaturesByQuery(query);
                 return true;
             }
