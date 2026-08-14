@@ -186,12 +186,12 @@ public class CompoundList {
      * @param featureId The non-null featureId of the InstanceBean to find and select.
      */
     public boolean selectInstanceByFeatureId(@NotNull String featureId) {
-        // 1. Search for the InstanceBean in the complete list (sortedSource).
-        InstanceBean targetInstance = sortedSource.stream()
-                .filter(bean -> bean.getFeatureId().equals(featureId))
-                .findAny().orElse(null);
+        // 1. O(1) check whether the feature is already shown, via the GuiProjectManager present-features
+        //    snapshot, instead of an O(n) scan over the whole list.
+        InstanceBean targetInstance = projectManager.getPresentFeature(featureId);
 
-        // 2. if not in list assume its filter by lucene search and try loading it from api
+        // 2. if not present assume it is filtered out by the lucene search and load it as a temporary
+        //    jump-to feature from the api (this also drops any previous jump-to feature from the list).
         if (targetInstance == null)
             targetInstance = projectManager.findAndAddTemporaryJumpToFeature(featureId);
 
