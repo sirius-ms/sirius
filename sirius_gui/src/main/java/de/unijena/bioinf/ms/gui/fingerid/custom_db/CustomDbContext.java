@@ -23,7 +23,12 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import io.sirius.ms.sdk.SiriusClient;
+import io.sirius.ms.sdk.model.AccountInfo;
+import io.sirius.ms.sdk.model.AllowedFeatures;
+import io.sirius.ms.sdk.model.Subscription;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 /**
  * Everything the custom database dialog and its child dialogs need from their environment.
@@ -48,5 +53,22 @@ public record CustomDbContext(@NotNull SiriusClient client,
     public static CustomDbContext of(@NotNull SiriusGui gui) {
         return new CustomDbContext(gui.getSiriusClient(), gui.getConnectionMonitor(),
                 gui.getBrowserPanelProvider(), gui.getProjectManager().getProjectId());
+    }
+
+    /**
+     * The allowed features of the active subscription (empty if not logged in / no active subscription).
+     * Mirrors {@link SiriusGui#getAllowedFeatures()} but resolves from the shared client, since the custom
+     * database dialog is decoupled from a specific {@link SiriusGui} instance.
+     */
+    public Optional<AllowedFeatures> getAllowedFeatures() {
+        if (!client.account().isLoggedIn())
+            return Optional.empty();
+        AccountInfo info = client.account().getAccountInfo(true);
+        if (info.getSubscriptions() == null)
+            return Optional.empty();
+        return info.getSubscriptions().stream()
+                .filter(s -> s.getSid() != null && s.getSid().equals(info.getActiveSubscriptionId()))
+                .findFirst()
+                .map(Subscription::getAllowedFeatures);
     }
 }

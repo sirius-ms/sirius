@@ -43,7 +43,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AllowedFeatures.JSON_PROPERTY_DE_NOVO,
   AllowedFeatures.JSON_PROPERTY_IMPORT_M_S_RUNS,
   AllowedFeatures.JSON_PROPERTY_IMPORT_PEAK_LISTS,
-  AllowedFeatures.JSON_PROPERTY_IMPORT_CEF
+  AllowedFeatures.JSON_PROPERTY_IMPORT_CEF,
+  AllowedFeatures.JSON_PROPERTY_TRANSFORMATION_PRODUCTS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class AllowedFeatures {
@@ -70,6 +71,10 @@ public class AllowedFeatures {
   public static final String JSON_PROPERTY_IMPORT_CEF = "importCef";
   @jakarta.annotation.Nullable
   private Boolean importCef;
+
+  public static final String JSON_PROPERTY_TRANSFORMATION_PRODUCTS = "transformationProducts";
+  @jakarta.annotation.Nullable
+  private Boolean transformationProducts;
 
   public AllowedFeatures() {
   }
@@ -224,6 +229,31 @@ public class AllowedFeatures {
     this.importCef = importCef;
   }
 
+  public AllowedFeatures transformationProducts(@jakarta.annotation.Nullable Boolean transformationProducts) {
+    
+    this.transformationProducts = transformationProducts;
+    return this;
+  }
+
+  /**
+   * Get transformationProducts
+   * @return transformationProducts
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_TRANSFORMATION_PRODUCTS, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isTransformationProducts() {
+    return transformationProducts;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_TRANSFORMATION_PRODUCTS, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setTransformationProducts(@jakarta.annotation.Nullable Boolean transformationProducts) {
+    this.transformationProducts = transformationProducts;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -239,12 +269,13 @@ public class AllowedFeatures {
         Objects.equals(this.deNovo, allowedFeatures.deNovo) &&
         Objects.equals(this.importMSRuns, allowedFeatures.importMSRuns) &&
         Objects.equals(this.importPeakLists, allowedFeatures.importPeakLists) &&
-        Objects.equals(this.importCef, allowedFeatures.importCef);
+        Objects.equals(this.importCef, allowedFeatures.importCef) &&
+        Objects.equals(this.transformationProducts, allowedFeatures.transformationProducts);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(cli, api, deNovo, importMSRuns, importPeakLists, importCef);
+    return Objects.hash(cli, api, deNovo, importMSRuns, importPeakLists, importCef, transformationProducts);
   }
 
   @Override
@@ -257,6 +288,7 @@ public class AllowedFeatures {
     sb.append("    importMSRuns: ").append(toIndentedString(importMSRuns)).append("\n");
     sb.append("    importPeakLists: ").append(toIndentedString(importPeakLists)).append("\n");
     sb.append("    importCef: ").append(toIndentedString(importCef)).append("\n");
+    sb.append("    transformationProducts: ").append(toIndentedString(transformationProducts)).append("\n");
     sb.append("}");
     return sb.toString();
   }
