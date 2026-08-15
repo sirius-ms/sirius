@@ -38,6 +38,7 @@ public class Authorities {
     public static final GrantedAuthority ALLOWED_FEATURE__IMPORT_PEAKLISTS;
     public static final GrantedAuthority ALLOWED_FEATURE__IMPORT_CEF;
     public static final GrantedAuthority ALLOWED_FEATURE__IMPORT_MSRUNS;
+    public static final GrantedAuthority ALLOWED_FEATURE__TRANSFORMATION_PRODUCTS;
 
 
     private static final Map<String, GrantedAuthority> AUTHORITIES = new HashMap<>();
@@ -48,7 +49,7 @@ public class Authorities {
         AUTHORITIES.put(BYPASS__EXPLORER.getAuthority(), BYPASS__EXPLORER);
         AUTHORITIES.put(BYPASS__GUI.getAuthority(), BYPASS__GUI);
 
-        AllowedFeatures allTrue = new AllowedFeatures(true, true, true, true, true, true);
+        AllowedFeatures allTrue = new AllowedFeatures(true, true, true, true, true, true, true);
         createAuthoritiesForAllowedFeatures(allTrue, SimpleGrantedAuthority::new)
                 .forEach(ga -> AUTHORITIES.putIfAbsent(ga.getAuthority(), ga));
 
@@ -57,6 +58,7 @@ public class Authorities {
         ALLOWED_FEATURE__IMPORT_MSRUNS = AUTHORITIES.get(ALLOWED_FEATURE_PREFIX + "importMSRuns");
         ALLOWED_FEATURE__IMPORT_PEAKLISTS = AUTHORITIES.get(ALLOWED_FEATURE_PREFIX + "importPeakLists");
         ALLOWED_FEATURE__IMPORT_CEF = AUTHORITIES.get(ALLOWED_FEATURE_PREFIX + "importCef");
+        ALLOWED_FEATURE__TRANSFORMATION_PRODUCTS = AUTHORITIES.get(ALLOWED_FEATURE_PREFIX + "transformationProducts");
     }
 
     public static boolean hasAuthority(String authority, Authentication authentication) {
