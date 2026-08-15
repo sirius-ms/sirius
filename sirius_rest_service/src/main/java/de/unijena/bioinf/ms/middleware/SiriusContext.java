@@ -108,7 +108,7 @@ public class SiriusContext{
             return (bufferSize, instances, tasks, dependJob, progressSupport) ->
                     new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, progressSupport, new JobSubmitter() {
                         @Override
-                        public <Job extends JJob<Result>, Result> Job submitJob(Job j) {
+                        public <Job extends JTask<Result>, Result> Job submitJob(Job j) {
                             if (j instanceof ToolChainJob<?> tj) {
                                 Jobs.submit((ProgressJJob<?>) j, j::identifier, tj::getProjectName, tj::getToolName);
                                 return j;

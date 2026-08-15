@@ -33,7 +33,7 @@ import java.util.concurrent.Callable;
 
 public class SiriusJobs {
 
-    private static volatile JobManagerFactory<?> instanceCreator = (cores) -> new JobManager(cores, Math.min(cores, 4));
+    private static volatile JobManagerFactory<?> instanceCreator = JobManager::new;
     private static volatile JobManager globalJobManager = null;
 
     private SiriusJobs() {/*prevent instantiation*/}
@@ -43,7 +43,7 @@ public class SiriusJobs {
     }
 
     public static synchronized void enforceClassLoaderGlobally(@NotNull final ClassLoader enforcedClassloader){
-        setJobManagerFactory((cores) -> new JobManager(cores, Math.min(cores, 4), enforcedClassloader));
+        setJobManagerFactory((cores) -> new JobManager(cores, enforcedClassloader));
     }
     
     private synchronized static void replace(JobManager jobManager) {

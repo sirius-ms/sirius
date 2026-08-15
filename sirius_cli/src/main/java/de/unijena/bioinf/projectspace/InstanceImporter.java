@@ -114,7 +114,7 @@ public class InstanceImporter {
             if (importTarget instanceof NoSQLProjectSpaceManager noSQLProject)
                 setProjectTypeOrThrow(noSQLProject.getProject());
 
-            prog = new JobProgressMerger(pcs);
+            prog = new JobProgressMerger(getPCS());
             List<Instance> instances = importMultipleSources();
 
             if (msInput != null && importTarget instanceof NoSQLProjectSpaceManager nsql){

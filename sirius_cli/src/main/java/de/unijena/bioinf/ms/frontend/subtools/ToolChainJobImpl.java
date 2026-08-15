@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JTask;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
@@ -91,8 +92,9 @@ public abstract class ToolChainJobImpl<R> extends BasicDependentMasterJJob<R> im
     }
 
     @Override
-    public <Job extends JJob<Result>, Result> Job submitJob(Job job) {
-        job.delegateLog(this);
+    public <Job extends JTask<Result>, Result> Job submitJob(Job job) {
+        if (job instanceof JJob<?> jjob)
+            jjob.delegateLog(this);
         return submitter.submitJob(job);
     }
 
