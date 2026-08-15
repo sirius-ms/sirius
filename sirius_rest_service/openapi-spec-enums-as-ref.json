@@ -9790,6 +9790,9 @@
           },
           "importCef": {
             "type": "boolean"
+          },
+          "transformationProducts": {
+            "type": "boolean"
           }
         }
       },

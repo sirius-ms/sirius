@@ -11,5 +11,6 @@ public record AllowedFeatures(
         boolean deNovo,
         boolean importMSRuns,
         boolean importPeakLists,
-        boolean importCef
+        boolean importCef,
+        boolean transformationProducts
 ) {}

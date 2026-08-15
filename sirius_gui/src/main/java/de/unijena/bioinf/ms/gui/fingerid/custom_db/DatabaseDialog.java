@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.gui.table.SiriusListCellRenderer;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
+import io.sirius.ms.sdk.model.AllowedFeatures;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -118,6 +119,10 @@ public class DatabaseDialog extends JFrame {
      */
     @Getter
     protected CustomDbContext context;
+
+    /** Whether the active subscription includes the transformation-products feature. Resolved on show;
+     *  gates the transformation-product tool button (the server enforces this too). */
+    private boolean transformationProductsAllowed = false;
 
     protected JList<SearchableDatabase> dbList;
     protected List<SearchableDatabase> customDatabases;
@@ -228,7 +233,12 @@ public class DatabaseDialog extends JFrame {
             editDB.setEnabled(editSelectedDb.isEnabled());
             deleteDB.setEnabled(deleteSelectedDb.isEnabled());
             exportDB.setEnabled(deleteSelectedDb.isEnabled());
-            transformationDB.setEnabled(editSelectedDb.isEnabled());
+            // gate the transformation-product tool on the license feature (button stays visible but is
+            // not executable without it); the server enforces the same via allowedFeature:transformationProducts
+            transformationDB.setEnabled(editSelectedDb.isEnabled() && transformationProductsAllowed);
+            transformationDB.setToolTipText(transformationProductsAllowed
+                    ? "Create Transformation product database"
+                    : GuiUtils.formatAndStripToolTip("The Transformation product tool is not included in your subscription (or you are not logged in)."));
             showContentsDB.setEnabled(db != null && !db.isUpdateNeeded());
         });
 
@@ -263,6 +273,8 @@ public class DatabaseDialog extends JFrame {
         showContentsDB.addActionListener(showSelectedDb);
 
         transformationDB.addActionListener(e -> {
+            if (!transformationProductsAllowed) // defense-in-depth: the button should already be disabled
+                return;
             SearchableDatabase db = dbList.getSelectedValue();
             if (db != null) //the tool may have created a database, so refresh the list when it is closed
                 CustomDbWebViews.showReactionTool(db, context, this, DatabaseDialog::refreshInstance);
@@ -329,6 +341,9 @@ public class DatabaseDialog extends JFrame {
      */
     private void showWithContext(@NotNull CustomDbContext context, @Nullable Window relativeTo) {
         this.context = context;
+        // resolve the license feature once per open; the selection listener reads this to gate the button
+        transformationProductsAllowed = context.getAllowedFeatures()
+                .map(AllowedFeatures::isTransformationProducts).orElse(false);
 
         if (relativeTo != null)
             setLocationRelativeTo(relativeTo);
