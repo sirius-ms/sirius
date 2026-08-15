@@ -57,7 +57,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
 
         pubChemFallback = new JCheckBox();
-        pubChemFallback.setToolTipText("Search in the specified set of databases and use the PubChem database as fallback if no good hit is available");
+        pubChemFallback.setToolTipText("Search in the specified set of databases and use the PubChem database as a fallback if no good hit is available");
 
         parameterBindings.put("StructureSearchDB", () -> {
             List<SearchableDatabase> checkedDBs = searchDbSource.getSearchDBs();

@@ -49,7 +49,7 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
         loadSize();
 
         JButton compactButton = new JButton("Compact");
-        compactButton.setToolTipText("Compacting the project tries to reduce the projects file size. May take some time for large projects.");
+        compactButton.setToolTipText("Compacting the project tries to reduce the project's file size. May take some time for large projects.");
         addNamed("", compactButton);
 
         compactButton.addActionListener(e -> {

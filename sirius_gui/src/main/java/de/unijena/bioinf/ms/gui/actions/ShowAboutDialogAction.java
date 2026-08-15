@@ -33,7 +33,7 @@ public class ShowAboutDialogAction extends AbstractGuiAction {
     public ShowAboutDialogAction(SiriusGui gui) {
         super("About", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.INFO.derive(32,32));
-        putValue(Action.SHORT_DESCRIPTION,"Information about this Software and how to cite it");
+        putValue(Action.SHORT_DESCRIPTION,"Information about this software and how to cite it");
     }
     @Override
     public void actionPerformed(ActionEvent e) {

@@ -143,7 +143,7 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
 
     //0d for filtering on the fly
     @Option(names = "--minLocalConnections", descriptionKey = "ZodiacEdgeFilterThresholds.minLocalConnections",
-            description = {"Minimum number of compounds to which at least one candidate per compound must be connected to."})
+            description = {"Minimum number of compounds to which at least one candidate per compound must be connected."})
     public void setMinLocalConnections(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.minLocalConnections", value);
     }
@@ -154,7 +154,7 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
     /////////////////////////
 
     @Option(names = "--ignore-spectra-quality",
-            description = {"As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining."})
+            description = {"By default, ZODIAC runs a 2-step approach: first running only 'good quality compounds', and afterwards including the remaining ones."})
     public void disableZodiacTwoStepApproach(boolean disable) throws Exception {
         if (disable)
             defaultConfigOptions.changeOption("ZodiacRunInTwoSteps", "false");

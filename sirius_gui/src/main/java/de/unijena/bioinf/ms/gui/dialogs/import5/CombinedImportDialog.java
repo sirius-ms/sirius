@@ -389,7 +389,7 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
         ));
         sensitiveMode = new JCheckBox("Sensitive mode");
         sensitiveMode.setToolTipText(GuiUtils.formatToolTip(
-                "If checked, min-snr is set to 2 instead of 3. Use this to pick very low intensity features. Features with good MS/MS are always picked, so use this option only if you are interested in low intensive MS-only features."
+                "If checked, min-snr is set to 2 instead of 3. Use this to pick very low intensity features. Features with good MS/MS are always picked, so use this option only if you are interested in low intensity MS-only features."
         ));
 
 
