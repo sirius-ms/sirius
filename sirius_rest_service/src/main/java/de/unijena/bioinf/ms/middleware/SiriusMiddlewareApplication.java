@@ -155,7 +155,6 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             // use non-swing is to prevent errors on headless systems
             SiriusJobs.setJobManagerFactory((cpuThreads) -> new JobManager(
                     cpuThreads,
-                    2,
                     Thread.currentThread().getContextClassLoader()
             ));
         } else {
@@ -163,7 +162,6 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             // SwingJobManager is needed to show loading screens in GUI
             SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
                     cpuThreads,
-                    2,
                     Thread.currentThread().getContextClassLoader()
             ));
             //start gui as default if no command is given and headless mode is not enabled
