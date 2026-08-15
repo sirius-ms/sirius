@@ -58,7 +58,7 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
         setBackground(Colors.StructuresView.Sources.SPECIAL);
         setOpaque(true);
         setToolTipText(GuiUtils.formatToolTip(
-                "El Gordo classified this compound as lipid and determined the lipid species de novo. " +
+                "El Gordo classified this compound as a lipid and determined the lipid species de novo. " +
                         "Structure candidates that belong to this lipid species are tagged as such. " +
                         "Candidates can be filtered to these candidates by selecting the 'Lipid' database flag."));
 
