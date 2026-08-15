@@ -1,7 +1,7 @@
 [versions]
 springBoot = "4.0.6"
 springDoc = "3.0.3"
-jjobs = "0.10.0"
+jjobs = "0.13.1"
 cdk = "2.12"
 jetbrainsAnnotations = "26.0.1"
 trove4j = "3.1.0"  # DEPRECATED -> use fast util instead

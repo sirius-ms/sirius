@@ -428,7 +428,7 @@ public final class BackgroundRuns {
                     try {
                         if (!affIds.isEmpty()){
                             affectedFeatureIds = affIds;
-                            submitJob(() -> project.updateSearchIndex(affectedFeatureIds), JobType.CPU).awaitResult();
+                            submitJob(() -> project.updateSearchIndex(affectedFeatureIds), JobType.IO).awaitResult();
                         }
                         logInfo("Unlocking Instances after Computation...");
                     } finally {
@@ -439,14 +439,14 @@ public final class BackgroundRuns {
                     logInfo("Collecting imported compounds...");
                     extractIds(peakImport.getImportedInstances());
                     if (affectedFeatureIds != null)
-                        submitJob(() -> project.addToSearchIndex(affectedFeatureIds, null), JobType.CPU).awaitResult();
+                        submitJob(() -> project.addToSearchIndex(affectedFeatureIds, null), JobType.IO).awaitResult();
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ImportMsFromResourceWorkflow msImport) {
                     logInfo("Collecting imported compounds...");
                     affectedFeatureIds = msImport.getImportedFeatureIds().longStream().mapToObj(String::valueOf).toList();
                     affectedCompoundIds = msImport.getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
                     if (affectedFeatureIds != null) // MS data import is once from scratch anyway. so rebuilding index is straightforward and fast
-                        submitJob(() -> project.createSearchIndex(true), JobType.CPU).awaitResult();
+                        submitJob(() -> project.createSearchIndex(true), JobType.IO).awaitResult();
 
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ToolChainWorkflow) {
