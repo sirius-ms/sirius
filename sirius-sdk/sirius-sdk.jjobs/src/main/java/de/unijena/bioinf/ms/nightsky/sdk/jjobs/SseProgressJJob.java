@@ -60,7 +60,10 @@ public class SseProgressJJob extends WaiterJJob<Job> {
         this.siriusClient = siriusClient;
         this.jobId = jobId;
         this.projectId = projectId;
-        setState(state);
+        // never seed a terminal state here: it is final in jjobs and would prevent the initial
+        // job fetch in onSubscribe from completing this waiter with the result/exception.
+        if (state.ordinal() <= JobState.RUNNING.ordinal())
+            setState(state);
 
         subscriber = new Flow.Subscriber<>() {
             @Override
@@ -123,8 +126,8 @@ public class SseProgressJJob extends WaiterJJob<Job> {
             updateProgress(p.getMaxProgress(), p.getCurrentProgress(), p.getMessage());
         }
 
-        setState(JobState.valueOf(p.getState().name()));
-
+        // terminal states must be reached via crash/cancel/finish: they are final in jjobs, so setting
+        // them directly would make the subsequent completion call a no-op and drop result/exception.
         if (p.getState() == io.sirius.ms.sdk.model.JobState.FAILED) {
             String errorMessage = Objects.requireNonNullElse(p.getErrorMessage(), "Job " + projectId + "." + jobId + " failed.");
             crash(new Exception(errorMessage));
@@ -140,6 +143,8 @@ public class SseProgressJJob extends WaiterJJob<Job> {
             finish(wrappedJob);
             return true;
         }
+
+        setState(JobState.valueOf(p.getState().name()));
         return false;
     }
 }
