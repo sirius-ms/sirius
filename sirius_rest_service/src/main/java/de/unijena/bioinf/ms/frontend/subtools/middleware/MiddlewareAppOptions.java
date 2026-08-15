@@ -269,9 +269,6 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                     if (guiService != null) {
                         if (isStartGui())
                             guiService.createGuiInstance(startPs.getProjectId());
-
-                        //increase priority of GUI thread.
-                        Jobs.runEDTLater(() -> Thread.currentThread().setPriority(9));
                     } else {
                         log.info("No GUI service found. Skipping GUI startup, likely due to headless mode!");
                     }

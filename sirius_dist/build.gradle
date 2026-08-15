@@ -28,7 +28,8 @@ ext {
 //                     '-XX:+ZGenerational',
                      '-XX:+ExitOnOutOfMemoryError',
                      '-Dspring.aot.enabled=true', // start sirius with spring aot optimization
-                     '--add-opens=java.desktop/java.awt=ALL-UNNAMED' // needed to run jxbrowser properly
+                     '--add-opens=java.desktop/java.awt=ALL-UNNAMED', // needed to run jxbrowser properly
+                     '-XX:ThreadPriorityPolicy=1' // needed on linux/macos so that jjobs can lower the CPU worker thread priority below NORM
     ]
     OS = DefaultNativePlatform.currentOperatingSystem
 
