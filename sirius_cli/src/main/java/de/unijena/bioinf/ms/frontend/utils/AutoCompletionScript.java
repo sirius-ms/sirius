@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * generates and installs an Autocompletion-Script with all subcommands
  */
-@Command(name = "install-autocompletion", description = "<INSTALL> generates and installs an Autocompletion-Script with " +
+@Command(name = "install-autocompletion", description = "<INSTALL> Generates and installs an autocompletion script with " +
         "all subcommands. Default installation is for the current user. %n %n", mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements StandaloneTool<Workflow> {
 
@@ -69,28 +69,28 @@ public class AutoCompletionScript implements StandaloneTool<Workflow> {
 
 
     /**
-     * Alternative name for the sirius Application
+     * Alternative name for the SIRIUS application
      */
-    @Option(names = {"--name", "-n"}, description = "Alternative name for the sirius Application", defaultValue = "sirius")
+    @Option(names = {"--name", "-n"}, description = "Alternative name for the SIRIUS application", defaultValue = "sirius")
     public String siriusName;
     /**
      * if the completion Script should be uninstalled
      */
-    @Option(names = {"--uninstall", "-u"}, defaultValue = "false", description = "uninstalls the completionScript. " +
-            "Please add -g for global uninstallation")
+    @Option(names = {"--uninstall", "-u"}, defaultValue = "false", description = "Uninstalls the completion script. " +
+            "Add -g for global uninstallation.")
     public boolean uninstall;
 
     /**
      *  type of the current OS
      */
-    @Option(names = {"--OStype", "-o"}, description = "Overrides specification of the SystemOS. " +
-            "(Detected automatically per Default) Possibilities: {Linux, Mac, Solaris}")
+    @Option(names = {"--OStype", "-o"}, description = "Overrides the detected operating system. " +
+            "(Detected automatically by default.) Possible values: {Linux, Mac, Solaris}")
     public String OS;
 
     /**
      *  if true, ignores the version check when uninstalling
      */
-    @Option(names = {"-i","--ignore-version"}, description = "ignores the version check while uninstalling the AutocompletionScript")
+    @Option(names = {"-i","--ignore-version"}, description = "Ignores the version check while uninstalling the autocompletion script.")
     public boolean ignore_version;
     private boolean firstsirius = true;
     private final HashSet<String> aliases = new HashSet<>();
@@ -634,10 +634,10 @@ public class AutoCompletionScript implements StandaloneTool<Workflow> {
  */
 class Installationtype {
     @Option(names = {"--global", "-g"}, defaultValue = "false",
-            description = "installs the Completionscript globally into /etc/bash-completion.d " +
+            description = "Installs the completion script globally into /etc/bash-completion.d " +
                     "(requires root permission and [bash-completion] (https://github.com/scop/bash-completion))")  private boolean global;
     @Option(names = {"--cancelinstall", "-c"}, defaultValue = "false",
-            description = "does not install the Completionscript")  private boolean cancel;
+            description = "Does not install the completion script.")  private boolean cancel;
 
     /**
      * returns true if any installation is required

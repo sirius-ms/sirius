@@ -173,7 +173,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
     private static final List<String> ADVANCED_EXCLUSIONS = List.of("/api/projects/*/gui/advanced");
 
 
-    @CommandLine.Option(names = {"--api-doc-mode", "--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true)
+    @CommandLine.Option(names = {"--api-doc-mode", "--stableDocOnly"}, description = "Show only the stable and non-deprecated API endpoints in the Swagger GUI and OpenAPI spec.", hidden = true)
     private void setStableDocOnly(boolean stableDocOnly) {
         if (stableDocOnly)
             setApiDocMode(ApiDocMode.STABLE);
@@ -223,7 +223,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         @CommandLine.Option(names = {"--gui", "-g"}, description = "Start GUI on specified project or on temporary project otherwise.")
         private boolean startGui;
 
-        @CommandLine.Option(names = {"--headless"}, description = {"Enforce headless or gui mode (default) for SIRIUS service.", "Headless mode Prevents loading features that are not available on headless systems. This is usually auto-detected but in case this gives not the expected behavior this parameter can be used to enforce it."}, defaultValue = "false", order = 1000, negatable = true)
+        @CommandLine.Option(names = {"--headless"}, description = {"Enforce headless or gui mode (default) for SIRIUS service.", "Headless mode prevents loading features that are not available on headless systems. This is usually auto-detected, but in case this does not give the expected behavior, this parameter can be used to enforce it."}, defaultValue = "false", order = 1000, negatable = true)
         private boolean headless;
     }
 

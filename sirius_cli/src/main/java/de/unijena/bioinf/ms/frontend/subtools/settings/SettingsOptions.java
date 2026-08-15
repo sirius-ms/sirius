@@ -70,13 +70,13 @@ public class SettingsOptions implements StandaloneTool<SettingsOptions.SettingsW
 
     private static class Credentials {
         @CommandLine.Option(names = "--user",
-                description = "Proxy user (only if proxy server needs credentials.",
+                description = "Proxy user (only if the proxy server needs credentials).",
                 required = true,
                 order = 341)
         String user;
 
         @CommandLine.Option(names = {"--password", "--pw"},
-                description = "Proxy password (only if proxy server needs credentials.",
+                description = "Proxy password (only if the proxy server needs credentials).",
                 required = true,
                 order = 351)
         String password;

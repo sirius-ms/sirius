@@ -256,7 +256,7 @@ public class GuiUtils {
     public static JPanel newNoResultsComputedPanel(@Nullable String message) {
         JPanel p = new JPanel(new BorderLayout());
         JPanel pp = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        pp.add(new JLabel(message == null ? "No results Computed!" : message));
+        pp.add(new JLabel(message == null ? "No results computed!" : message));
         p.add(pp, BorderLayout.SOUTH);
         return p;
     }
