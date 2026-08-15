@@ -184,7 +184,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
     }
 
     @Override
-    public <Job extends JJob<Result>, Result> Job submitJob(Job job) {
+    public <Job extends JTask<Result>, Result> Job submitJob(Job job) {
         return jobSubmitter.submitJob(job);
     }
 

@@ -65,7 +65,7 @@ public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
 
         List<SpectralMatchMasterJJob> jobs = new ArrayList<>();
 
-        JobProgressMerger progressMonitor = new JobProgressMerger(this.pcs);
+        JobProgressMerger progressMonitor = new JobProgressMerger(getPCS());
 
         List<SpectralMatchMasterJJob> dbJobs = getAlignmentJJobs(queryUtils, cosineQueries, references);
 
