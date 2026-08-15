@@ -13,6 +13,7 @@
 |**importMSRuns** | **Boolean** |  |  [optional] |
 |**importPeakLists** | **Boolean** |  |  [optional] |
 |**importCef** | **Boolean** |  |  [optional] |
+|**transformationProducts** | **Boolean** |  |  [optional] |
 
 
 
