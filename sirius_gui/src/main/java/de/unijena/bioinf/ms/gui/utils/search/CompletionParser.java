@@ -19,6 +19,7 @@
 package de.unijena.bioinf.ms.gui.utils.search;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
+import io.sirius.ms.sdk.model.DataQuality;
 import io.sirius.ms.sdk.model.SearchableField;
 import io.sirius.ms.sdk.model.SearchableFieldType;
 import org.jetbrains.annotations.NotNull;
@@ -145,10 +146,16 @@ public final class CompletionParser {
     /**
      * The values the draft editor can offer for a field: enum constants for ENUM fields,
      * true/false for BOOLEAN fields, nothing otherwise.
+     * <p>
+     * NOT_APPLICABLE is never offered. It does not mean bad quality but that there was nothing to judge, so it
+     * is not a choice a user makes: features in that state always pass a quality filter, which the query builder
+     * ensures by adding the term itself. Typing it by hand still works.
      */
     public static List<String> valueSuggestions(@NotNull SearchableField field) {
         if (field.getFieldType() == SearchableFieldType.ENUM && field.getPossibleValues() != null)
-            return field.getPossibleValues();
+            return field.getPossibleValues().stream()
+                    .filter(value -> !DataQuality.NOT_APPLICABLE.toString().equals(value))
+                    .toList();
         if (field.getFieldType() == SearchableFieldType.BOOLEAN)
             return List.of("true", "false");
         return List.of();
