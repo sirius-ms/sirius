@@ -92,7 +92,12 @@ public class SearchableField {
     protected boolean defaultSearchField;
 
     /**
-     * For ENUM fields: the values this field can take. Null otherwise.
+     * The values this field can take, exactly as they are indexed, or null if the field accepts free text.
+     * <p>
+     * Reported for ENUM and BOOLEAN fields, and for TEXT fields that hold a closed vocabulary. Note that for
+     * those the indexed value is not necessarily the name you would expect: the chromatography of a run, for
+     * example, is indexed as 'Liquid Chromatography', not as 'LC'. Use these values as offered rather than
+     * constructing them.
      */
     @Nullable
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
