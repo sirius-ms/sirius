@@ -47,7 +47,7 @@ public class Compound implements Taggable {
     public enum OptField {none, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations, tags}
 
     /**
-     * uid of this compound Entity
+     * Unique id of this compound entity.
      */
     @NotNull
     protected String compoundId;
@@ -71,7 +71,7 @@ public class Compound implements Taggable {
     protected Double rtEndSeconds;
 
     /**
-     * Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature of
+     * Neutral mass of this compound. Ion mass minus the mass of the assigned adduct of each feature of
      * this compound should result in the same neutral mass
      */
     @Schema(nullable = true)
@@ -84,14 +84,14 @@ public class Compound implements Taggable {
 
     /**
      * The consensus of the top annotations from all the features of this compound.
-     * Null if it was not requested und non-null otherwise. Might contain empty fields if results are not available
+     * Null if it was not requested and non-null otherwise. Might contain empty fields if results are not available
      */
     @Schema(nullable = true)
     ConsensusAnnotationsCSI consensusAnnotations;
 
     /**
      * The consensus of the top de novo annotations from all the features of this compound.
-     * Null if it was not requested und non-null otherwise. Might contain empty fields if results are not available
+     * Null if it was not requested and non-null otherwise. Might contain empty fields if results are not available
      */
     @Schema(nullable = true)
     ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo;

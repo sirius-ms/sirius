@@ -18,7 +18,7 @@
     },
     {
       "name": "Info",
-      "description": "Status und Information"
+      "description": "Status and version information"
     },
     {
       "name": "Feature Statistics",
@@ -94,7 +94,7 @@
           {
             "name": "projectId",
             "in": "path",
-            "description": "unique name/identifier tof the project-space to be accessed.",
+            "description": "unique name/identifier of the project-space to be accessed.",
             "required": true,
             "schema": {
               "type": "string"
@@ -148,7 +148,7 @@
           {
             "name": "pathToProject",
             "in": "query",
-            "description": "local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.",
+            "description": "local file path to open the project from. If NULL, project will be loaded by its projectId from default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.",
             "required": false,
             "deprecated": true,
             "schema": {
@@ -243,13 +243,13 @@
           "Projects"
         ],
         "summary": "Close project-space and remove it from the application",
-        "description": "Close project-space and remove it from the application. The Project will NOT be deleted from disk.\n \u003cp\u003e\n ATTENTION: This will cancel and remove all jobs running on this Project before closing it.\n If there are many jobs, this might take some time.",
+        "description": "Close project-space and remove it from the application. The project will NOT be deleted from disk.\n \u003cp\u003e\n ATTENTION: This will cancel and remove all jobs running on this project before closing it.\n If there are many jobs, this might take some time.",
         "operationId": "closeProject",
         "parameters": [
           {
             "name": "projectId",
             "in": "path",
-            "description": "unique name/identifier of the  project-space to be closed.",
+            "description": "unique name/identifier of the project-space to be closed.",
             "required": true,
             "schema": {
               "type": "string"
@@ -591,7 +591,7 @@
           {
             "name": "copyProjectId",
             "in": "query",
-            "description": "optional id/mame of the newly created project (copy). If given the project will be opened.",
+            "description": "optional id/name of the newly created project (copy). If given the project will be opened.",
             "required": false,
             "schema": {
               "type": "string"
@@ -874,7 +874,7 @@
           {
             "name": "smiles",
             "in": "query",
-            "description": "smiles",
+            "description": "SMILES strings of the structures to add",
             "required": false,
             "schema": {
               "type": "string",
@@ -1439,8 +1439,8 @@
         "tags": [
           "Jobs"
         ],
-        "summary": "[DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)",
-        "description": "[DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).\n \u003cp\u003e\n [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.\n This endpoint will be removed in the next major version of this API.",
+        "summary": "[DEPRECATED] Get list of all available jobs with information such as current state and progress (if available)",
+        "description": "[DEPRECATED] Get list of all available jobs with information such as current state and progress (if available).\n \u003cp\u003e\n [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.\n This endpoint will be removed in the next major version of this API.",
         "operationId": "getJobs",
         "parameters": [
           {
@@ -1520,7 +1520,7 @@
           }
         ],
         "requestBody": {
-          "description": "configuration of the job that will be submitted of the job to be returned",
+          "description": "configuration of the job to be submitted",
           "content": {
             "application/json": {
               "schema": {
@@ -1547,8 +1547,8 @@
         "tags": [
           "Jobs"
         ],
-        "summary": "* Delete ALL jobs.",
-        "description": "* Delete ALL jobs. Specify how to behave for running jobs.",
+        "summary": "Delete ALL jobs.",
+        "description": "Delete ALL jobs. Specify how to behave for running jobs.",
         "operationId": "deleteJobs",
         "parameters": [
           {
@@ -1669,7 +1669,7 @@
           {
             "name": "jobConfigName",
             "in": "query",
-            "description": "name if the config to be used",
+            "description": "name of the config to be used",
             "required": true,
             "schema": {
               "type": "string"
@@ -1734,8 +1734,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "[DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n ",
-        "description": "[DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
+        "summary": "[DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats: ms, mgf, cef, msp",
+        "description": "[DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats: ms, mgf, cef, msp.\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later\n versions of this API to allow for more flexible use cases. Use \u0027preprocessed-data-files\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
         "operationId": "importPreprocessedDataLocally",
         "parameters": [
           {
@@ -1801,7 +1801,7 @@
           "Projects"
         ],
         "summary": "[DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job",
-        "description": "[DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files-job\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
+        "description": "[DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats: ms, mgf, cef, msp.\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later\n versions of this API to allow for more flexible use cases. Use \u0027preprocessed-data-files-job\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
         "operationId": "importPreprocessedDataAsJobLocally",
         "parameters": [
           {
@@ -1880,8 +1880,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)",
-        "description": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)",
+        "summary": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats: ms, mgf, cef, msp.",
+        "description": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats: ms, mgf, cef, msp.",
         "operationId": "importPreprocessedData",
         "parameters": [
           {
@@ -1954,7 +1954,7 @@
           "Projects"
         ],
         "summary": "Import ms/ms data from the given format into the specified project-space as background job.",
-        "description": "Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats (ms, mgf, cef, msp)",
+        "description": "Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats: ms, mgf, cef, msp.",
         "operationId": "importPreprocessedDataAsJob",
         "parameters": [
           {
@@ -2041,8 +2041,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "[DEPRECATED] Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)\n ",
-        "description": "[DEPRECATED] Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027ms-data-files\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
+        "summary": "[DEPRECATED] Import and align full MS runs from various formats into the specified project\n Possible formats: mzML, mzXML",
+        "description": "[DEPRECATED] Import and align full MS runs from various formats into the specified project\n Possible formats: mzML, mzXML.\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later\n versions of this API to allow for more flexible use cases. Use \u0027ms-data-files\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
         "operationId": "importMsRunDataLocally",
         "parameters": [
           {
@@ -2098,8 +2098,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "[DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job",
-        "description": "[DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027ms-data-files-job\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
+        "summary": "[DEPRECATED] Import and align full MS runs from various formats into the specified project as background job",
+        "description": "[DEPRECATED] Import and align full MS runs from various formats into the specified project as background job.\n Possible formats: mzML, mzXML.\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later\n versions of this API to allow for more flexible use cases. Use \u0027ms-data-files-job\u0027 instead.\n \u003cp\u003e\n [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
         "operationId": "importMsRunDataAsJobLocally",
         "parameters": [
           {
@@ -2170,8 +2170,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)",
-        "description": "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)",
+        "summary": "Import and align full MS runs from various formats into the specified project\n Possible formats: mzML, mzXML.",
+        "description": "Import and align full MS runs from various formats into the specified project\n Possible formats: mzML, mzXML.",
         "operationId": "importMsRunData",
         "parameters": [
           {
@@ -2237,8 +2237,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Import and Align full MS-Runs from various formats into the specified project as background job.",
-        "description": "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)",
+        "summary": "Import and align full MS runs from various formats into the specified project as background job.",
+        "description": "Import and align full MS runs from various formats into the specified project as background job.\n Possible formats: mzML, mzXML.",
         "operationId": "importMsRunDataAsJob",
         "parameters": [
           {
@@ -2326,7 +2326,7 @@
           {
             "name": "projectId",
             "in": "path",
-            "description": "of project-space the GUI instance will connect to.",
+            "description": "project-space the GUI instance will connect to.",
             "required": true,
             "schema": {
               "type": "string"
@@ -2350,7 +2350,7 @@
           {
             "name": "projectId",
             "in": "path",
-            "description": "if project-space the GUI instance is connected to.",
+            "description": "project-space the GUI instance is connected to.",
             "required": true,
             "schema": {
               "type": "string"
@@ -2424,8 +2424,8 @@
         "tags": [
           "Tags"
         ],
-        "summary": "[EXPERIMENTAL] TagGroup tags in the project",
-        "description": "[EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.\n\n \u003cp\u003e\n See \u003ccode\u003e/tagged\u003c/code\u003e for filter syntax.\n \u003c/p\u003e\n\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "summary": "[EXPERIMENTAL] Group tags in the project",
+        "description": "[EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.\n\n \u003cp\u003e\n See \u003ccode\u003e/tagged\u003c/code\u003e for filter syntax.\n \u003c/p\u003e\n\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "addGroup",
         "parameters": [
           {
@@ -2591,8 +2591,8 @@
         "tags": [
           "Compounds"
         ],
-        "summary": "Import Compounds and its contained features.",
-        "description": "Import Compounds and its contained features. Compounds and Features must not exist in the project.\n Otherwise, they will exist twice.",
+        "summary": "Import compounds and their contained features.",
+        "description": "Import compounds and their contained features. Compounds and features must not exist in the project.\n Otherwise, they will exist twice.",
         "operationId": "addCompounds",
         "parameters": [
           {
@@ -2741,7 +2741,7 @@
           "Features"
         ],
         "summary": "Import (aligned) features into the project.",
-        "description": "Import (aligned) features into the project. Features must not exist in the project.\n Otherwise, they will exist twice.",
+        "description": "Import (aligned) features into the project. Features must not exist in the project, otherwise they will be duplicated.",
         "operationId": "addAlignedFeatures",
         "parameters": [
           {
@@ -2878,7 +2878,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{@link JobSubmission JobSubmission} for given name.",
+            "description": "\u003ccode\u003eJobSubmission\u003c/code\u003e for given name.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3210,7 +3210,7 @@
           {
             "name": "includeSubs",
             "in": "query",
-            "description": "include available and active subscriptions in {@link AccountInfo AccountInfo}.",
+            "description": "include available and active subscriptions in \u003ccode\u003eAccountInfo\u003c/code\u003e.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -3667,7 +3667,7 @@
           "Runs"
         ],
         "summary": "Get runs in the given project-space",
-        "description": "Get runs in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n\n Searchable fields are the indexed properties of the run (e.g. \u003ccode\u003ename\u003c/code\u003e, \u003ccode\u003esource\u003c/code\u003e,\n \u003ccode\u003echromatography\u003c/code\u003e, \u003ccode\u003eionization\u003c/code\u003e) and project tags prefixed with the namespace\n \u003ccode\u003etags.\u003c/code\u003e (e.g. \u003ccode\u003etags.MyTag\u003c/code\u003e).\n Use the \u003ccode\u003esearchable-fields\u003c/code\u003e endpoint (getRunsSearchableFields) to list all fields that can be\n searched, including their value type, whether they support word based (full text) search, and whether\n results can be sorted by them.\n Possible value types are \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003edouble\u003c/strong\u003e,\n \u003cstrong\u003eboolean\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e.\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003echromatography:LC\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003ename:\u0026quot;Blank Sample 25\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003ename:\u0026quot;Blank\u0026quot; AND chromatography:LC AND tags.city:\u0026quot;new york\u0026quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
+        "description": "Get runs in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefixed\n by a field name.\n \u003c/p\u003e\n\n Searchable fields are the indexed properties of the run (e.g. \u003ccode\u003ename\u003c/code\u003e, \u003ccode\u003esource\u003c/code\u003e,\n \u003ccode\u003echromatography\u003c/code\u003e, \u003ccode\u003eionization\u003c/code\u003e) and project tags prefixed with the namespace\n \u003ccode\u003etags.\u003c/code\u003e (e.g. \u003ccode\u003etags.MyTag\u003c/code\u003e).\n Use the \u003ccode\u003esearchable-fields\u003c/code\u003e endpoint (getRunsSearchableFields) to list all fields that can be\n searched, including their value type, whether they support word based (full text) search, and whether\n results can be sorted by them.\n Possible value types are \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003edouble\u003c/strong\u003e,\n \u003cstrong\u003eboolean\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e.\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003echromatography:LC\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003ename:\u0026quot;Blank Sample 25\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003ename:\u0026quot;Blank\u0026quot; AND chromatography:LC AND tags.city:\u0026quot;new york\u0026quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
         "operationId": "getRunsPage",
         "parameters": [
           {
@@ -3958,7 +3958,7 @@
           {
             "name": "jobId",
             "in": "path",
-            "description": "of the job to be returned",
+            "description": "id of the job to be returned",
             "required": true,
             "schema": {
               "type": "string"
@@ -4737,7 +4737,7 @@
           "Compounds"
         ],
         "summary": "Page of available compounds (group of ion identities) in the given project-space",
-        "description": "Page of available compounds (group of ion identities) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n \u003cp\u003e\n Use the \u003ccode\u003esearchable-fields\u003c/code\u003e endpoint (getCompoundsSearchableFields) to list the fields that can be\n searched - since compound-level indexing is not implemented yet, it currently returns an empty list\n (nothing searchable). The syntax below describes how queries will work once compound search is supported;\n tag based fields are prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types are \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003edouble\u003c/strong\u003e,\n \u003cstrong\u003eboolean\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e.\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n \u003cp\u003e\n \u003cstrong\u003eNote:\u003c/strong\u003e compound-level indexing is not implemented yet, so this endpoint always reads from the\n project database. Passing a non-empty \u003ccode\u003esearchQuery\u003c/code\u003e is therefore not supported and responds with\n 405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.",
+        "description": "Page of available compounds (group of ion identities) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefixed\n by a field name.\n \u003c/p\u003e\n \u003cp\u003e\n Use the \u003ccode\u003esearchable-fields\u003c/code\u003e endpoint (getCompoundsSearchableFields) to list the fields that can be\n searched - since compound-level indexing is not implemented yet, it currently returns an empty list\n (nothing searchable). The syntax below describes how queries will work once compound search is supported;\n tag based fields are prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types are \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003edouble\u003c/strong\u003e,\n \u003cstrong\u003eboolean\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e.\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n \u003cp\u003e\n \u003cstrong\u003eNote:\u003c/strong\u003e compound-level indexing is not implemented yet, so this endpoint always reads from the\n project database. Passing a non-empty \u003ccode\u003esearchQuery\u003c/code\u003e is therefore not supported and responds with\n 405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.",
         "operationId": "getCompoundsPage",
         "parameters": [
           {
@@ -5920,7 +5920,7 @@
           "Features"
         ],
         "summary": "[EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey\n ",
-        "description": "[EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey\n \u003cp\u003e\n Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result\n These annotations are only available if a fragmentation tree is available.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "description": "[EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey\n \u003cp\u003e\n Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result.\n These annotations are only available if a fragmentation tree is available.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "getStructureAnnotatedSpectrumExperimental",
         "parameters": [
           {
@@ -6720,7 +6720,7 @@
           "Features"
         ],
         "summary": "Return Best matching compound classes for given formulaId",
-        "description": "Return Best matching compound classes for given formulaId.\n \u003cp\u003e\n Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,",
+        "description": "Return Best matching compound classes for given formulaId.\n \u003cp\u003e\n Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of the ClassyFire and NPC ontology,",
         "operationId": "getBestMatchingCompoundClasses",
         "parameters": [
           {
@@ -6843,7 +6843,7 @@
           "Features"
         ],
         "summary": "Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId",
-        "description": "Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.\n \u003cp\u003e\n Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses\n for the given formula result identifier\n These annotations are only available if a fragmentation tree and the structure candidate are available.",
+        "description": "Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.\n \u003cp\u003e\n Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses\n for the given formula result identifier.\n These annotations are only available if a fragmentation tree and the structure candidate are available.",
         "operationId": "getFormulaAnnotatedMsMsData",
         "parameters": [
           {
@@ -7715,7 +7715,7 @@
           "Features"
         ],
         "summary": "Get features (aligned over runs) in the given project-space",
-        "description": "Get features (aligned over runs) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n\n Searchable fields are the indexed properties of the feature (e.g. \u003ccode\u003eionMass\u003c/code\u003e, \u003ccode\u003ename\u003c/code\u003e,\n \u003ccode\u003equality\u003c/code\u003e, \u003ccode\u003ehasMsMs\u003c/code\u003e), its annotations addressed via dot notation\n (e.g. \u003ccode\u003etopAnnotations.structureAnnotation.structureName\u003c/code\u003e), and project tags prefixed with the\n namespace \u003ccode\u003etags.\u003c/code\u003e (e.g. \u003ccode\u003etags.MyTag\u003c/code\u003e).\n Use the \u003ccode\u003esearchable-fields\u003c/code\u003e endpoint (getAlignedFeaturesSearchableFields) to list all fields that\n can be searched, including their value type, whether they support word based (full text) search, and\n whether results can be sorted by them.\n Possible value types are \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003edouble\u003c/strong\u003e,\n \u003cstrong\u003eboolean\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e.\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003ename:\u0026quot;Bicuculline methiodide\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003eionMass\u0026lt;300\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003eionMass:[300 TO 400]\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eboolean\u003c/strong\u003e: boolean fields are matched as follows: e.g. \u003ccode\u003ehasMsMs:true\u003c/code\u003e, \u003ccode\u003etags.MyTagA:false\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003evalue-less\u003c/strong\u003e: tags without values (See TagDefinition) are matched as follows: e.g. \u003ccode\u003etags.MyTagA:*\u003c/code\u003e or \u003ccode\u003etags.MyTagA:true\u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003eionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:\u0026quot;Alkaloids\u0026quot; AND tags.city:\u0026quot;new york\u0026quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
+        "description": "Get features (aligned over runs) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefixed\n by a field name.\n \u003c/p\u003e\n\n Searchable fields are the indexed properties of the feature (e.g. \u003ccode\u003eionMass\u003c/code\u003e, \u003ccode\u003ename\u003c/code\u003e,\n \u003ccode\u003equality\u003c/code\u003e, \u003ccode\u003ehasMsMs\u003c/code\u003e), its annotations addressed via dot notation\n (e.g. \u003ccode\u003etopAnnotations.structureAnnotation.structureName\u003c/code\u003e), and project tags prefixed with the\n namespace \u003ccode\u003etags.\u003c/code\u003e (e.g. \u003ccode\u003etags.MyTag\u003c/code\u003e).\n Use the \u003ccode\u003esearchable-fields\u003c/code\u003e endpoint (getAlignedFeaturesSearchableFields) to list all fields that\n can be searched, including their value type, whether they support word based (full text) search, and\n whether results can be sorted by them.\n Possible value types are \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003edouble\u003c/strong\u003e,\n \u003cstrong\u003eboolean\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e.\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003ename:\u0026quot;Bicuculline methiodide\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003eionMass\u0026lt;300\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003eionMass:[300 TO 400]\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eboolean\u003c/strong\u003e: boolean fields are matched as follows: e.g. \u003ccode\u003ehasMsMs:true\u003c/code\u003e, \u003ccode\u003etags.MyTagA:false\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003evalue-less\u003c/strong\u003e: tags without values (See TagDefinition) are matched as follows: e.g. \u003ccode\u003etags.MyTagA:*\u003c/code\u003e or \u003ccode\u003etags.MyTagA:true\u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003eionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:\u0026quot;Alkaloids\u0026quot; AND tags.city:\u0026quot;new york\u0026quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
         "operationId": "getAlignedFeaturesPage",
         "parameters": [
           {
@@ -7923,7 +7923,7 @@
         "operationId": "getJobConfigs",
         "responses": {
           "200": {
-            "description": "list of available {@link JobSubmission JobSubmission}s",
+            "description": "list of available \u003ccode\u003eJobSubmission\u003c/code\u003es",
             "content": {
               "application/json": {
                 "schema": {
@@ -8061,7 +8061,7 @@
           {
             "name": "includeCustomDbsForStructureSearch",
             "in": "query",
-            "description": "if true, default database selection of structure db search\n                                           spectral library search contains also all available custom DB.\n                                           If No custom dbs are selected, spectral library search is disabled by default.",
+            "description": "if true, default database selection of structure db search\n                                           and spectral library search also contains all available custom databases.\n                                           If no custom databases are selected, spectral library search is disabled by default.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -8071,7 +8071,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{@link JobSubmission JobSubmission} with all parameters set to default values.",
+            "description": "\u003ccode\u003eJobSubmission\u003c/code\u003e with all parameters set to default values.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8396,7 +8396,7 @@
           {
             "name": "includeSubs",
             "in": "query",
-            "description": "include available and active subscriptions in {@link AccountInfo AccountInfo}.",
+            "description": "include available and active subscriptions in \u003ccode\u003eAccountInfo\u003c/code\u003e.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -8959,11 +8959,11 @@
         "properties": {
           "projectId": {
             "type": "string",
-            "description": "a user selected unique name of the project for easy access."
+            "description": "A user-selected unique name of the project for easy access."
           },
           "location": {
             "type": "string",
-            "description": "storage location of the project."
+            "description": "Storage location of the project."
           },
           "description": {
             "type": "string",
@@ -8975,7 +8975,7 @@
           },
           "compatible": {
             "type": "boolean",
-            "description": "Indicates whether computed results (e.g. fingerprints, compounds classes) are compatible with the backend.\n If true project is up-to-date and there are no restrictions regarding usage.\n If false project is incompatible and therefore \"read only\" until the incompatible results have been removed. See updateProject endpoint for further information\n If NULL the information has not been requested.",
+            "description": "Indicates whether computed results (e.g. fingerprints, compound classes) are compatible with the backend.\n If true, the project is up-to-date and there are no restrictions regarding usage.\n If false, the project is incompatible and therefore \"read only\" until the incompatible results have been removed. See the updateProject endpoint for further information.\n If NULL, the information has not been requested.",
             "nullable": true
           },
           "numOfFeatures": {
@@ -8986,20 +8986,20 @@
           },
           "numOfCompounds": {
             "type": "integer",
-            "description": "Number of compounds (group of ion identities) in this project. If NULL, Information has not been requested (See OptField \u0027sizeInformation\u0027) or might be unavailable for this project type.",
+            "description": "Number of compounds (group of ion identities) in this project. If NULL, information has not been requested (See OptField \u0027sizeInformation\u0027) or might be unavailable for this project type.",
             "format": "int32",
             "nullable": true
           },
           "numOfBytes": {
             "type": "integer",
-            "description": "Size in Bytes this project consumes on disk If NULL, Information has not been requested (See OptField \u0027sizeInformation\u0027).",
+            "description": "Size in bytes this project consumes on disk. If NULL, information has not been requested (See OptField \u0027sizeInformation\u0027).",
             "format": "int64",
             "nullable": true
           },
           "detectedAdducts": {
             "uniqueItems": true,
             "type": "array",
-            "description": "Set of all detected adducts available in this projects",
+            "description": "Set of all detected adducts available in this project.",
             "nullable": true,
             "items": {
               "type": "string",
@@ -9142,11 +9142,11 @@
         "properties": {
           "taggedObjectId": {
             "type": "string",
-            "description": "ID of the object where the tag should be added.\n Then Object type is taken from context of the API endpoint."
+            "description": "ID of the object where the tag should be added.\n The object type is taken from the context of the API endpoint."
           },
           "tagName": {
             "type": "string",
-            "description": "Name of the tag as defined by the corresponding TagDefinition\n Links tag object to their definition."
+            "description": "Name of the tag as defined by the corresponding TagDefinition\n Links the tag object to its definition."
           },
           "value": {
             "$ref": "#/components/schemas/AnyValue"
@@ -9161,7 +9161,7 @@
         "properties": {
           "tagName": {
             "type": "string",
-            "description": "Name of the tag as defined by the corresponding TagDefinition\n Links tag object to their definition."
+            "description": "Name of the tag as defined by the corresponding TagDefinition\n Links the tag object to its definition."
           },
           "value": {
             "$ref": "#/components/schemas/AnyValue"
@@ -9233,7 +9233,7 @@
           },
           "affectedCompoundIds": {
             "type": "array",
-            "description": "List of compoundIds that are affected by this job.\n This lis will also contain compoundIds where not all features of the compound are affected by the job.\n If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished",
+            "description": "List of compoundIds that are affected by this job.\n This list will also contain compoundIds where not all features of the compound are affected by the job.\n If this job is creating compounds (e.g. data import jobs) this value will be NULL until the job has finished",
             "nullable": true,
             "items": {
               "type": "string",
@@ -9242,7 +9242,7 @@
           },
           "affectedAlignedFeatureIds": {
             "type": "array",
-            "description": "List of alignedFeatureIds that are affected by this job.\n If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished",
+            "description": "List of alignedFeatureIds that are affected by this job.\n If this job is creating features (e.g. data import jobs) this value will be NULL until the job has finished",
             "nullable": true,
             "items": {
               "type": "string",
@@ -9253,7 +9253,7 @@
             "$ref": "#/components/schemas/JobEffect"
           }
         },
-        "description": "Identifier created by the SIRIUS Nightsky API for a newly created Job.\n Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information.\n This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal."
+        "description": "Identifier created by the SIRIUS Nightsky API for a newly created Job.\n Object can be enriched with Job status/progress information (\u003ccode\u003eJobProgress\u003c/code\u003e) and/or Job command information.\n This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal."
       },
       "JobEffect": {
         "type": "string",
@@ -9294,11 +9294,11 @@
           },
           "errorMessage": {
             "type": "string",
-            "description": "Error message if the job did not finish successfully failed.",
+            "description": "Error message if the job did not finish successfully.",
             "nullable": true
           }
         },
-        "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n if  currentProgress \u003d\u003d maxProgress job is finished and should change to state done soon.\n if a job is DONE all results can be accessed via the Project-Spaces api.",
+        "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n If currentProgress \u003d\u003d maxProgress, the job is finished and should change to state DONE soon.\n If a job is DONE, all results can be accessed via the project-space API.",
         "nullable": true
       },
       "JobState": {
@@ -9323,7 +9323,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Optional Displayable name of this spectrum.",
+            "description": "Optional display name of this spectrum.",
             "nullable": true
           },
           "msLevel": {
@@ -9371,7 +9371,7 @@
           },
           "absIntensityFactor": {
             "type": "number",
-            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)\n \u003cp\u003e\n DEPRECATED: Spectra are always returned with raw intensities.\n Use provided normalization factors to normalize on the fly.",
+            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (e.g. artificial or merged spectra)\n \u003cp\u003e\n DEPRECATED: Spectra are always returned with raw intensities.\n Use provided normalization factors to normalize on the fly.",
             "format": "double",
             "nullable": true,
             "deprecated": true
@@ -9604,7 +9604,7 @@
           },
           "rank": {
             "type": "integer",
-            "description": "the overall rank of this candidate among all candidates of this feature",
+            "description": "The overall rank of this candidate among all candidates of this feature.",
             "format": "int32"
           },
           "csiScore": {
@@ -9614,7 +9614,7 @@
           },
           "tanimotoSimilarity": {
             "type": "number",
-            "description": "Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID",
+            "description": "Tanimoto similarity of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID",
             "format": "double",
             "nullable": true
           },
@@ -9658,7 +9658,7 @@
           },
           "matchRtOfReferenceSpectra": {
             "type": "boolean",
-            "description": "Indicates whether this database shall be used to use retention time information for library matching.\n Typically used for in-house spectral libraries that have been measured on",
+            "description": "Indicates whether this database shall be used to use retention time information for library matching.\n Typically used for in-house spectral libraries that were measured on the same\n chromatographic setup as the samples being analysed, so that retention times are comparable.",
             "nullable": true,
             "default": false
           }
@@ -9692,7 +9692,7 @@
           },
           "dbVersion": {
             "type": "integer",
-            "description": "database schema version",
+            "description": "Database schema version.",
             "format": "int32",
             "nullable": true
           },
@@ -9735,7 +9735,7 @@
           },
           "matchRtOfReferenceSpectra": {
             "type": "boolean",
-            "description": "Indicates whether this database shall be used to use retention time information for library matching.\n Typically used for in-house spectral libraries that have been measured on",
+            "description": "Indicates whether this database shall be used to use retention time information for library matching.\n Typically used for in-house spectral libraries that were measured on the same\n chromatographic setup as the samples being analysed, so that retention times are comparable.",
             "nullable": true,
             "default": false
           }
@@ -9805,7 +9805,7 @@
           },
           "subscriberId": {
             "type": "string",
-            "description": "ID of the owner of the subscription.\n This can be the ID of any SubscriptionOwner (e.g.  TagGroup or  User)\n depending on the level on which a subscription should be is valid."
+            "description": "ID of the owner of the subscription.\n This can be the ID of any SubscriptionOwner (e.g. TagGroup or User)\n depending on the level at which a subscription is valid."
           },
           "subscriberName": {
             "type": "string",
@@ -9834,7 +9834,7 @@
           },
           "instanceHashRecordingTime": {
             "type": "integer",
-            "description": "Hash is used to allow recomputing identical data without increasing counted instances (features).\n The recording time is the amount of time an instance is memorized is",
+            "description": "Hash is used to allow recomputing identical data without increasing counted instances (features).\n The recording time is the amount of time an instance is memorized.",
             "format": "int32",
             "nullable": true
           },
@@ -10039,10 +10039,10 @@
         "properties": {
           "enabled": {
             "type": "boolean",
-            "description": "tags whether the tool is enabled"
+            "description": "Indicates whether the tool is enabled."
           }
         },
-        "description": "User/developer friendly parameter subset for the CANOPUS tool\n CANOPUS is parameter free, so this Object is just a flag that canopus should be executed.\n Needs results from FingerprintPrediction Tool",
+        "description": "User/developer friendly parameter subset for the CANOPUS tool\n CANOPUS is parameter-free, so this object is just a flag that CANOPUS should be executed.\n Needs results from the FingerprintPrediction tool.",
         "nullable": true
       },
       "ConfidenceMode": {
@@ -10059,7 +10059,7 @@
         "properties": {
           "enabled": {
             "type": "boolean",
-            "description": "tags whether the tool is enabled"
+            "description": "Indicates whether the tool is enabled."
           },
           "useScoreThreshold": {
             "type": "boolean",
@@ -10068,11 +10068,11 @@
           },
           "alwaysPredictHighRefMatches": {
             "type": "boolean",
-            "description": "If true Fingerprint/Classes/Structures will be predicted for formulas candidates with\n reference spectrum similarity \u003e Sirius.minReferenceMatchScoreToInject will be predicted no matter which\n score threshold rules apply.\n If NULL default value will be used.",
+            "description": "If true, fingerprints, compound classes and structures will be predicted for formula candidates whose\n reference spectrum similarity is above Sirius.minReferenceMatchScoreToInject, no matter which\n score threshold rules would otherwise apply.\n If NULL default value will be used.",
             "nullable": true
           }
         },
-        "description": "User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool\n Needs results from Formula/SIRIUS Tool",
+        "description": "User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool\n Needs results from the Formula/SIRIUS tool.",
         "nullable": true
       },
       "InstrumentProfile": {
@@ -10098,7 +10098,7 @@
         "properties": {
           "fallbackAdducts": {
             "type": "array",
-            "description": "Describes how to deal with Adducts: Fallback adducts are considered if the auto detection did not find any indication for an ion mode.\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
+            "description": "Describes how to deal with adducts: fallback adducts are considered if the auto detection did not find any indication for an ion mode.\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
             "nullable": true,
             "items": {
               "type": "string",
@@ -10107,7 +10107,7 @@
           },
           "enforcedAdducts": {
             "type": "array",
-            "description": "Describes how to deal with Adducts:  Enforced adducts that are always considered.\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
+            "description": "Describes how to deal with adducts: enforced adducts that are always considered.\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
             "nullable": true,
             "items": {
               "type": "string",
@@ -10116,7 +10116,7 @@
           },
           "detectableAdducts": {
             "type": "array",
-            "description": "Describes how to deal with Adducts: Detectable adducts which are only considered if there is an indication in the MS1 scan (e.g. correct mass delta).\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
+            "description": "Describes how to deal with adducts: detectable adducts which are only considered if there is an indication in the MS1 scan (e.g. correct mass delta).\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
             "nullable": true,
             "items": {
               "type": "string",
@@ -10184,11 +10184,11 @@
         "properties": {
           "enabled": {
             "type": "boolean",
-            "description": "tags whether the tool is enabled"
+            "description": "Indicates whether the tool is enabled."
           },
           "numberOfCandidateToPredict": {
             "type": "integer",
-            "description": "Number of structure candidates to be predicted by MsNovelist.\n Max Value 128. Values \u003e 128 will be set to 128.\n Actual number of returned candidate might be lower du to duplicates being created by MsNovelist.",
+            "description": "Number of structure candidates to be predicted by MsNovelist.\n Max Value 128. Values \u003e 128 will be set to 128.\n The actual number of returned candidates might be lower due to duplicates being created by MsNovelist.",
             "format": "int32",
             "nullable": true
           }
@@ -10200,7 +10200,7 @@
         "properties": {
           "enabled": {
             "type": "boolean",
-            "description": "tags whether the tool is enabled"
+            "description": "Indicates whether the tool is enabled."
           },
           "profile": {
             "$ref": "#/components/schemas/InstrumentProfile"
@@ -10228,12 +10228,12 @@
           },
           "filterByIsotopePattern": {
             "type": "boolean",
-            "description": "When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.",
+            "description": "When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the measured one, even if their MS/MS pattern has high score.",
             "nullable": true
           },
           "enforceElGordoFormula": {
             "type": "boolean",
-            "description": "El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforeced as molecular formula candidate.",
+            "description": "El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforced as a molecular formula candidate.",
             "nullable": true
           },
           "performBottomUpSearch": {
@@ -10249,7 +10249,7 @@
           },
           "formulaSearchDBs": {
             "type": "array",
-            "description": "List Structure database to extract molecular formulas from to reduce formula search space.\n SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.",
+            "description": "List of structure databases to extract molecular formulas from, to reduce the formula search space.\n SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.",
             "nullable": true,
             "items": {
               "type": "string",
@@ -10288,12 +10288,12 @@
           },
           "injectSpecLibMatchFormulas": {
             "type": "boolean",
-            "description": "If true formula candidates that belong to spectral library matches above a certain threshold will\n we inject/preserved for further analyses no matter which score they have or which filter is applied",
+            "description": "If true formula candidates that belong to spectral library matches above a certain threshold will\n be injected and preserved for further analyses, no matter which score they have or which filter is applied",
             "nullable": true
           },
           "minScoreToInjectSpecLibMatch": {
             "type": "number",
-            "description": "Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.\n If threshold \u003e\u003d 0 formulas candidates with reference spectrum similarity above the threshold will be injected.",
+            "description": "Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.\n If the threshold is \u003e\u003d 0, formula candidates with a reference spectrum similarity above the threshold will be injected.",
             "format": "double",
             "nullable": true
           },
@@ -10312,11 +10312,11 @@
         "properties": {
           "enabled": {
             "type": "boolean",
-            "description": "tags whether the tool is enabled"
+            "description": "Indicates whether the tool is enabled."
           },
           "spectraSearchDBs": {
             "type": "array",
-            "description": "Structure Databases with Reference spectra to search in.\n \u003cp\u003e\n Defaults to BIO + Custom Databases. Possible values are available to Database API.",
+            "description": "Structure Databases with Reference spectra to search in.\n \u003cp\u003e\n Defaults to BIO + Custom Databases. Possible values are available via the Database API.",
             "nullable": true,
             "items": {
               "type": "string",
@@ -10386,11 +10386,11 @@
         "properties": {
           "enabled": {
             "type": "boolean",
-            "description": "tags whether the tool is enabled"
+            "description": "Indicates whether the tool is enabled."
           },
           "structureSearchDBs": {
             "type": "array",
-            "description": "Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem\n if not high confidence hit was found in the selected databases.\n \u003cp\u003e\n Defaults to BIO + Custom Databases. Possible values are available to Database API.",
+            "description": "Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem\n if no high confidence hit was found in the selected databases.\n \u003cp\u003e\n Defaults to BIO + Custom Databases. Possible values are available via the Database API.",
             "nullable": true,
             "items": {
               "type": "string",
@@ -10406,7 +10406,7 @@
             "$ref": "#/components/schemas/ConfidenceMode"
           }
         },
-        "description": "User/developer friendly parameter subset for the CSI:FingerID structure db search tool.\n Needs results from FingerprintPrediction and Canopus Tool.\n Non-Null parameters in this Object well override their equivalent value in the config map.",
+        "description": "User/developer friendly parameter subset for the CSI:FingerID structure db search tool.\n Needs results from the FingerprintPrediction and CANOPUS tools.\n Non-null parameters in this object override their equivalent value in the config map.",
         "nullable": true
       },
       "Timeout": {
@@ -10442,7 +10442,7 @@
         "properties": {
           "enabled": {
             "type": "boolean",
-            "description": "tags whether the tool is enabled"
+            "description": "Indicates whether the tool is enabled."
           },
           "consideredCandidatesAt300Mz": {
             "type": "integer",
@@ -10458,7 +10458,7 @@
           },
           "runInTwoSteps": {
             "type": "boolean",
-            "description": "As default ZODIAC runs a 2-step approach. First running \u0027good quality compounds\u0027 only, and afterwards including the remaining.",
+            "description": "By default, ZODIAC runs a 2-step approach: first running only \u0027good quality compounds\u0027, and afterwards including the remaining ones.",
             "nullable": true
           },
           "edgeFilterThresholds": {
@@ -10474,7 +10474,7 @@
             "$ref": "#/components/schemas/ZodiacAnalogueNodes"
           }
         },
-        "description": "User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).\n Needs results from Formula/SIRIUS Tool",
+        "description": "User/developer friendly parameter subset for the ZODIAC tool (network-based molecular formula re-ranking).\n Needs results from the Formula/SIRIUS tool.",
         "nullable": true
       },
       "ZodiacAnalogueNodes": {
@@ -10640,7 +10640,7 @@
           },
           "noiseIntensity": {
             "type": "number",
-            "description": "Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level\n to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.\n If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify\n this parameter, as the automated detection is usually sufficient.",
+            "description": "Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level\n to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.\n If not specified, the noise intensity is detected automatically from the data. We recommend NOT specifying\n this parameter, as the automated detection is usually sufficient.",
             "format": "double",
             "default": -1
           },
@@ -10652,13 +10652,13 @@
           },
           "alignMaxRetentionTimeDeviation": {
             "type": "number",
-            "description": "Maximal allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from data.",
+            "description": "Maximum allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from the data.",
             "format": "double",
             "default": -1
           },
           "minSNR": {
             "type": "number",
-            "description": "Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory",
+            "description": "Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensity features we recommend a min-snr of 2, but this will increase runtime and storage requirements",
             "format": "double",
             "default": 3
           }
@@ -10669,7 +10669,7 @@
         "properties": {
           "groupName": {
             "type": "string",
-            "description": "Name of this Grouping query."
+            "description": "Name of this grouping query."
           },
           "luceneQuery": {
             "type": "string",
@@ -10768,7 +10768,7 @@
           },
           "ms1Spectra": {
             "type": "array",
-            "description": "List of MS1Spectra belonging to this feature. These spectra will be merged an only a representative\n mergedMs1 spectrum will be stored in SIRIUS. At least one of these spectra should contain the\n isotope pattern of the precursor ion.\n Note: Will be ignored if \u0027mergedMs1\u0027 is given.",
+            "description": "List of MS1Spectra belonging to this feature. These spectra will be merged and only a representative\n mergedMs1 spectrum will be stored in SIRIUS. At least one of these spectra should contain the\n isotope pattern of the precursor ion.\n Note: Will be ignored if \u0027mergedMs1\u0027 is given.",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/BasicSpectrum"
@@ -10867,11 +10867,11 @@
           },
           "hasMs1": {
             "type": "boolean",
-            "description": "If true, the feature has at lease one MS1 spectrum"
+            "description": "If true, the feature has at least one MS1 spectrum"
           },
           "hasMsMs": {
             "type": "boolean",
-            "description": "If true, the feature has at lease one MS/MS spectrum"
+            "description": "If true, the feature has at least one MS/MS spectrum"
           },
           "msData": {
             "$ref": "#/components/schemas/MsData"
@@ -10933,7 +10933,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Optional Displayable name of this spectrum.",
+            "description": "Optional display name of this spectrum.",
             "nullable": true
           },
           "msLevel": {
@@ -10981,7 +10981,7 @@
           },
           "absIntensityFactor": {
             "type": "number",
-            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)\n \u003cp\u003e\n DEPRECATED: Spectra are always returned with raw intensities.\n Use provided normalization factors to normalize on the fly.",
+            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (e.g. artificial or merged spectra)\n \u003cp\u003e\n DEPRECATED: Spectra are always returned with raw intensities.\n Use provided normalization factors to normalize on the fly.",
             "format": "double",
             "nullable": true,
             "deprecated": true
@@ -11037,7 +11037,7 @@
             }
           }
         },
-        "description": "Container class that holds the CANOPUS compound class predictions for alle predictable compound classes.\n This is the full CANOPUS result.",
+        "description": "Container class that holds the CANOPUS compound class predictions for all predictable compound classes.\n This is the full CANOPUS result.",
         "nullable": true
       },
       "Compound": {
@@ -11045,7 +11045,7 @@
         "properties": {
           "compoundId": {
             "type": "string",
-            "description": "uid of this compound Entity"
+            "description": "Unique id of this compound entity."
           },
           "name": {
             "type": "string",
@@ -11066,7 +11066,7 @@
           },
           "neutralMass": {
             "type": "number",
-            "description": "Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature of\n this compound should result in the same neutral mass",
+            "description": "Neutral mass of this compound. Ion mass minus the mass of the assigned adduct of each feature of\n this compound should result in the same neutral mass",
             "format": "double",
             "nullable": true
           },
@@ -11131,7 +11131,7 @@
           },
           "probability": {
             "type": "number",
-            "description": "prediction probability",
+            "description": "Prediction probability.",
             "format": "double"
           },
           "index": {
@@ -11177,7 +11177,7 @@
           },
           "classyFireLineage": {
             "type": "array",
-            "description": "Most likely ClassyFire lineage from ordered from least specific to most specific class\n classyFireLineage.get(classyFireLineage.size() - 1) gives the most specific ClassyFire compound class annotation",
+            "description": "Most likely ClassyFire lineage, ordered from least specific to most specific class\n classyFireLineage.get(classyFireLineage.size() - 1) gives the most specific ClassyFire compound class annotation",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/CompoundClass"
@@ -11185,7 +11185,7 @@
           },
           "classyFireAlternatives": {
             "type": "array",
-            "description": "Alternative ClassyFire classes with high probability that do not fit into the linage",
+            "description": "Alternative ClassyFire classes with high probability that do not fit into the lineage",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/CompoundClass"
@@ -11220,7 +11220,7 @@
             "type": "boolean"
           }
         },
-        "description": "Specifies which tools have been executed for this feature. Can be used to estimate which results can be expected. Null if it was not requested und non-null otherwise.",
+        "description": "Specifies which tools have been executed for this feature. Can be used to estimate which results can be expected. Null if it was not requested and non-null otherwise.",
         "nullable": true
       },
       "ConsensusAnnotationsCSI": {
@@ -11340,7 +11340,7 @@
           },
           "specifiedDatabases": {
             "type": "array",
-            "description": "List of databases that have been specified by for structure db search. Null if no structure db search has been performed.",
+            "description": "List of databases that have been specified for structure db search. Null if no structure db search has been performed.",
             "nullable": true,
             "items": {
               "type": "string",
@@ -11369,7 +11369,7 @@
           },
           "molecularFormula": {
             "type": "string",
-            "description": "molecular formula of this formula candidate"
+            "description": "Molecular formula of this formula candidate."
           },
           "adduct": {
             "type": "string",
@@ -11471,7 +11471,7 @@
           },
           "adduct": {
             "type": "string",
-            "description": "This combines the ionization plus adduct of the fragment. In contrast to the {@link FragmentationTree FragmentationTree}s adduct,\n this adduct may not include any in-source loss.",
+            "description": "This combines the ionization plus adduct of the fragment. In contrast to the \u003ccode\u003eFragmentationTree\u003c/code\u003e\u0027s adduct,\n this adduct may not include any in-source loss.",
             "nullable": true
           },
           "massDeviationDa": {
@@ -11527,7 +11527,7 @@
             "type": "string"
           }
         },
-        "description": "Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges\n Root fragment has index 0;\n Molecular formula and adduct are identical to the ones of the corresponding molecular formula candidate and SpectrumAnnotation",
+        "description": "Simple and easy serializable fragmentation tree model with annotated fragments/nodes and losses/edges\n Root fragment has index 0;\n Molecular formula and adduct are identical to the ones of the corresponding molecular formula candidate and SpectrumAnnotation",
         "nullable": true
       },
       "IsotopePatternAnnotation": {
@@ -11567,7 +11567,7 @@
           },
           "chainsUnknown": {
             "type": "boolean",
-            "description": "True of the formula composition of the chains could not be determined from the MS/MS.",
+            "description": "True if the formula composition of the chains could not be determined from the MS/MS.",
             "nullable": true
           }
         },
@@ -11723,7 +11723,7 @@
           },
           "substructureBondsCut": {
             "type": "array",
-            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n\n Array/List of indices of the bonds of the structure candidate that need to be cut to produce this fragments\n substructure (highlighted cutted bonds).\n\n Null if substructure annotation not available or not requested.",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n\n Array/List of indices of the bonds of the structure candidate that need to be cut to produce this fragments\n substructure (highlighted cut bonds).\n\n Null if substructure annotation not available or not requested.",
             "nullable": true,
             "items": {
               "type": "integer",
@@ -11884,7 +11884,7 @@
           },
           "rank": {
             "type": "integer",
-            "description": "the overall rank of this candidate among all candidates of this feature",
+            "description": "The overall rank of this candidate among all candidates of this feature.",
             "format": "int32"
           },
           "csiScore": {
@@ -11894,7 +11894,7 @@
           },
           "tanimotoSimilarity": {
             "type": "number",
-            "description": "Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID",
+            "description": "Tanimoto similarity of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID",
             "format": "double",
             "nullable": true
           },
@@ -11947,7 +11947,7 @@
           },
           "useDB": {
             "type": "boolean",
-            "description": "\"Specify if you want to enable the retrieving from database (HMDB) feature.\"",
+            "description": "Specify whether structures should additionally be retrieved from the HMDB database.",
             "default": true
           },
           "bioTransformerSequenceSteps": {
@@ -12673,7 +12673,7 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/Category"
             },
-            "description": "Contains all pre-computation quality information that belong to\n this feature (aligned over runs), such as information about the quality of the peak shape, MS2 spectrum etc.,"
+            "description": "Contains all pre-computation quality information that belong to\n this feature (aligned over runs), such as information about the quality of the peak shape, MS2 spectrum, etc."
           }
         },
         "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
@@ -12845,13 +12845,13 @@
           },
           "apexIntensity": {
             "type": "number",
-            "description": "Feature Quantity measured as Intensity of the apex of the feature",
+            "description": "Feature quantity measured as the intensity of the apex of the feature",
             "format": "double",
             "nullable": true
           },
           "areaUnderCurve": {
             "type": "number",
-            "description": "Feature Quantity measured as Area under curve of the whole feature",
+            "description": "Feature quantity measured as the area under the curve of the whole feature",
             "format": "double",
             "nullable": true
           }
@@ -12929,7 +12929,7 @@
           },
           "updateAvailable": {
             "type": "boolean",
-            "description": "true if newer SIRIUS version is available"
+            "description": "True if a newer SIRIUS version is available."
           },
           "siriusLibVersion": {
             "type": "string",
@@ -12968,7 +12968,7 @@
             "additionalProperties": {
               "type": "string"
             },
-            "description": "Set of ILP Solvers that are Supported and their version information"
+            "description": "Set of ILP solvers that are supported, and their version information"
           }
         }
       },
@@ -13056,7 +13056,7 @@
           },
           "errors": {
             "type": "array",
-            "description": "List of errors ordered by significance. first error should be reported and addressed first.\n Following errors might just be follow-up errors",
+            "description": "List of errors ordered by significance. First error should be reported and addressed first.\n Following errors might just be follow-up errors",
             "items": {
               "$ref": "#/components/schemas/ConnectionError"
             }

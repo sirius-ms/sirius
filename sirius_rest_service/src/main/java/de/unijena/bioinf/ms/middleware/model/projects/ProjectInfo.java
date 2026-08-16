@@ -39,11 +39,11 @@ public final class ProjectInfo {
     public enum OptField {none, compatibilityInfo, sizeInformation, detectedAdducts}
 
     /**
-     * a user selected unique name of the project for easy access.
+     * A user-selected unique name of the project for easy access.
      */
     public final @NotNull String projectId;
     /**
-     * storage location of the project.
+     * Storage location of the project.
      */
     public final @NotNull String location;
 
@@ -63,10 +63,10 @@ public final class ProjectInfo {
 
     //compatibilityCheck
     /**
-     * Indicates whether computed results (e.g. fingerprints, compounds classes) are compatible with the backend.
-     * If true project is up-to-date and there are no restrictions regarding usage.
-     * If false project is incompatible and therefore "read only" until the incompatible results have been removed. See updateProject endpoint for further information
-     * If NULL the information has not been requested.
+     * Indicates whether computed results (e.g. fingerprints, compound classes) are compatible with the backend.
+     * If true, the project is up-to-date and there are no restrictions regarding usage.
+     * If false, the project is incompatible and therefore "read only" until the incompatible results have been removed. See the updateProject endpoint for further information.
+     * If NULL, the information has not been requested.
      */
     @Schema(nullable = true)
     public final @Nullable Boolean compatible;
@@ -78,18 +78,18 @@ public final class ProjectInfo {
     @Schema(nullable = true)
     public final @Nullable Integer numOfFeatures;
     /**
-     * Number of compounds (group of ion identities) in this project. If NULL, Information has not been requested (See OptField 'sizeInformation') or might be unavailable for this project type.
+     * Number of compounds (group of ion identities) in this project. If NULL, information has not been requested (See OptField 'sizeInformation') or might be unavailable for this project type.
      */
     @Schema(nullable = true)
     public final @Nullable Integer numOfCompounds;
     /**
-     * Size in Bytes this project consumes on disk If NULL, Information has not been requested (See OptField 'sizeInformation').
+     * Size in bytes this project consumes on disk. If NULL, information has not been requested (See OptField 'sizeInformation').
      */
     @Schema(nullable = true)
     public final @Nullable Long numOfBytes;
 
     /**
-     * Set of all detected adducts available in this projects
+     * Set of all detected adducts available in this project.
      */
     @Schema(nullable = true)
     private Set<String> detectedAdducts;

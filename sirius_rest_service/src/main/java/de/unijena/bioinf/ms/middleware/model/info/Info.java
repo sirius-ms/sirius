@@ -55,7 +55,7 @@ public class Info {
     private final String latestSiriusLink;
 
     /**
-     * true if newer SIRIUS version is available
+     * True if a newer SIRIUS version is available.
      */
     @Schema(nullable = false)
     private final boolean updateAvailable;
@@ -95,7 +95,7 @@ public class Info {
     private final EnumSet<TreeBuilderFactory.DefaultBuilder> availableILPSolvers;
 
     /**
-     * Set of ILP Solvers that are Supported and their version information
+     * Set of ILP solvers that are supported, and their version information
      */
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private final Map<TreeBuilderFactory.DefaultBuilder, String> supportedILPSolvers =  Map.of(

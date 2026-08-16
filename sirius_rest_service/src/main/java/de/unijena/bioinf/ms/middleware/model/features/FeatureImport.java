@@ -80,7 +80,7 @@ public class FeatureImport {
     protected BasicSpectrum mergedMs1;
 
     /**
-     * List of MS1Spectra belonging to this feature. These spectra will be merged an only a representative
+     * List of MS1Spectra belonging to this feature. These spectra will be merged and only a representative
      * mergedMs1 spectrum will be stored in SIRIUS. At least one of these spectra should contain the
      * isotope pattern of the precursor ion.
      * Note: Will be ignored if 'mergedMs1' is given.

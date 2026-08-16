@@ -110,7 +110,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * <h2>Supported filter syntax</h2>
      *
-     * <p>The filter string must contain one or more clauses. A clause is prefíxed
+     * <p>The filter string must contain one or more clauses. A clause is prefixed
      * by a field name.
      * </p>
      *
@@ -259,8 +259,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * Import (aligned) features into the project. Features must not exist in the project.
-     * Otherwise, they will exist twice.
+     * Import (aligned) features into the project. Features must not exist in the project, otherwise they will be duplicated.
      *
      * @param projectId project-space to import into.
      * @param features  the feature data to be imported
@@ -444,7 +443,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * @param projectId           project-space to read from.
      * @param alignedFeatureId    feature (aligned over runs) the structure candidates belong to.
-     * @param smiles              smiles
+     * @param smiles              SMILES strings of the structures to add
      * @param skipExistenceCheck  if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return StructureCandidate of this feature candidate with specified optional fields.
      */
@@ -812,7 +811,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     /**
      * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey
      * <p>
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result.
      * These annotations are only available if a fragmentation tree is available.
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -956,7 +955,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.
      * <p>
      * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses
-     * for the given formula result identifier
+     * for the given formula result identifier.
      * These annotations are only available if a fragmentation tree and the structure candidate are available.
      *
      * @param projectId        project-space to read from.
@@ -1069,7 +1068,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     /**
      * Return Best matching compound classes for given formulaId.
      * <p>
-     * Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     * Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of the ClassyFire and NPC ontology,
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
