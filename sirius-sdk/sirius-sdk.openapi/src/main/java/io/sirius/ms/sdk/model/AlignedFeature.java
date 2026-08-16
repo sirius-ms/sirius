@@ -446,7 +446,7 @@ public class AlignedFeature {
   }
 
   /**
-   * If true, the feature has at lease one MS1 spectrum
+   * If true, the feature has at least one MS1 spectrum
    * @return hasMs1
    */
   @jakarta.annotation.Nullable
@@ -471,7 +471,7 @@ public class AlignedFeature {
   }
 
   /**
-   * If true, the feature has at lease one MS/MS spectrum
+   * If true, the feature has at least one MS/MS spectrum
    * @return hasMsMs
    */
   @jakarta.annotation.Nullable

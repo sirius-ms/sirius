@@ -56,6 +56,9 @@ public class ProjectsApi {
      * Create a search index for the given project.
      * Create a search index for the given project.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project to create the index for.
      * @param force if true an existing index will be deleted and recreated.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -93,6 +96,9 @@ public class ProjectsApi {
      * Create a search index for the given project.
      * Create a search index for the given project.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project to create the index for.
      * @param force if true an existing index will be deleted and recreated.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -106,6 +112,9 @@ public class ProjectsApi {
      * Create a search index for the given project.
      * Create a search index for the given project.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project to create the index for.
      * @param force if true an existing index will be deleted and recreated.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -119,6 +128,9 @@ public class ProjectsApi {
      * Create a search index for the given project.
      * Create a search index for the given project.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project to create the index for.
      * @param force if true an existing index will be deleted and recreated.
      * @return ResponseSpec
@@ -130,9 +142,12 @@ public class ProjectsApi {
 
     /**
      * Close project-space and remove it from the application
-     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application. The project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier of the  project-space to be closed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -167,9 +182,12 @@ public class ProjectsApi {
 
     /**
      * Close project-space and remove it from the application
-     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application. The project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier of the  project-space to be closed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -180,9 +198,12 @@ public class ProjectsApi {
 
     /**
      * Close project-space and remove it from the application
-     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application. The project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier of the  project-space to be closed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -193,9 +214,12 @@ public class ProjectsApi {
 
     /**
      * Close project-space and remove it from the application
-     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+     * Close project-space and remove it from the application. The project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier of the  project-space to be closed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -208,9 +232,12 @@ public class ProjectsApi {
      * [DEPRECATED] [INTERNAL] This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [DEPRECATED] Move an existing (opened) project-space to another location.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
-     * @param copyProjectId optional id/mame of the newly created project (copy). If given the project will be opened.
+     * @param copyProjectId optional id/name of the newly created project (copy). If given the project will be opened.
      * @param optFields The optFields parameter
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -242,7 +269,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -258,9 +285,12 @@ public class ProjectsApi {
      * [DEPRECATED] [INTERNAL] This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [DEPRECATED] Move an existing (opened) project-space to another location.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
-     * @param copyProjectId optional id/mame of the newly created project (copy). If given the project will be opened.
+     * @param copyProjectId optional id/name of the newly created project (copy). If given the project will be opened.
      * @param optFields The optFields parameter
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -274,9 +304,12 @@ public class ProjectsApi {
      * [DEPRECATED] [INTERNAL] This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [DEPRECATED] Move an existing (opened) project-space to another location.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
-     * @param copyProjectId optional id/mame of the newly created project (copy). If given the project will be opened.
+     * @param copyProjectId optional id/name of the newly created project (copy). If given the project will be opened.
      * @param optFields The optFields parameter
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -290,9 +323,12 @@ public class ProjectsApi {
      * [DEPRECATED] [INTERNAL] This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [DEPRECATED] Move an existing (opened) project-space to another location.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
-     * @param copyProjectId optional id/mame of the newly created project (copy). If given the project will be opened.
+     * @param copyProjectId optional id/name of the newly created project (copy). If given the project will be opened.
      * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -305,6 +341,8 @@ public class ProjectsApi {
      * Create and open a new project with unique autogenerated projectId.
      * Create and open a new project with unique autogenerated projectId. On local filesystems the project will be located in temporary directory.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param optFields The optFields parameter
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -322,7 +360,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -338,6 +376,8 @@ public class ProjectsApi {
      * Create and open a new project with unique autogenerated projectId.
      * Create and open a new project with unique autogenerated projectId. On local filesystems the project will be located in temporary directory.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param optFields The optFields parameter
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -351,6 +391,8 @@ public class ProjectsApi {
      * Create and open a new project with unique autogenerated projectId.
      * Create and open a new project with unique autogenerated projectId. On local filesystems the project will be located in temporary directory.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param optFields The optFields parameter
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -364,6 +406,8 @@ public class ProjectsApi {
      * Create and open a new project with unique autogenerated projectId.
      * Create and open a new project with unique autogenerated projectId. On local filesystems the project will be located in temporary directory.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -376,6 +420,9 @@ public class ProjectsApi {
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      * @param optFields The optFields parameter
@@ -402,7 +449,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -418,6 +465,9 @@ public class ProjectsApi {
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      * @param optFields The optFields parameter
@@ -433,6 +483,9 @@ public class ProjectsApi {
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      * @param optFields The optFields parameter
@@ -448,6 +501,9 @@ public class ProjectsApi {
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      * @param optFields The optFields parameter
@@ -462,6 +518,9 @@ public class ProjectsApi {
      * Get CANOPUS prediction vector definition for ClassyFire classes
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return String
@@ -490,7 +549,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
 
         final String[] localVarAccepts = { 
-            "application/csv", "application/CSV"
+            "application/csv", "application/CSV", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -506,6 +565,9 @@ public class ProjectsApi {
      * Get CANOPUS prediction vector definition for ClassyFire classes
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return String
@@ -520,6 +582,9 @@ public class ProjectsApi {
      * Get CANOPUS prediction vector definition for ClassyFire classes
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return ResponseEntity&lt;String&gt;
@@ -534,6 +599,9 @@ public class ProjectsApi {
      * Get CANOPUS prediction vector definition for ClassyFire classes
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return ResponseSpec
@@ -547,6 +615,9 @@ public class ProjectsApi {
      * Get CANOPUS prediction vector definition for NPC classes
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return String
@@ -575,7 +646,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
 
         final String[] localVarAccepts = { 
-            "application/csv", "application/CSV"
+            "application/csv", "application/CSV", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -591,6 +662,9 @@ public class ProjectsApi {
      * Get CANOPUS prediction vector definition for NPC classes
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return String
@@ -605,6 +679,9 @@ public class ProjectsApi {
      * Get CANOPUS prediction vector definition for NPC classes
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return ResponseEntity&lt;String&gt;
@@ -619,6 +696,9 @@ public class ProjectsApi {
      * Get CANOPUS prediction vector definition for NPC classes
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return ResponseSpec
@@ -632,6 +712,9 @@ public class ProjectsApi {
      * Get CSI:FingerID fingerprint (prediction vector) definition
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return String
@@ -660,7 +743,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
 
         final String[] localVarAccepts = { 
-            "application/csv", "application/CSV"
+            "application/csv", "application/CSV", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -676,6 +759,9 @@ public class ProjectsApi {
      * Get CSI:FingerID fingerprint (prediction vector) definition
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return String
@@ -690,6 +776,9 @@ public class ProjectsApi {
      * Get CSI:FingerID fingerprint (prediction vector) definition
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return ResponseEntity&lt;String&gt;
@@ -704,6 +793,9 @@ public class ProjectsApi {
      * Get CSI:FingerID fingerprint (prediction vector) definition
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param charge The charge parameter
      * @return ResponseSpec
@@ -717,7 +809,10 @@ public class ProjectsApi {
      * Get project space info by its projectId.
      * Get project space info by its projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier tof the project-space to be accessed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier of the project-space to be accessed.
      * @param optFields The optFields parameter
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -741,7 +836,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -757,7 +852,10 @@ public class ProjectsApi {
      * Get project space info by its projectId.
      * Get project space info by its projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier tof the project-space to be accessed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier of the project-space to be accessed.
      * @param optFields The optFields parameter
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -771,7 +869,10 @@ public class ProjectsApi {
      * Get project space info by its projectId.
      * Get project space info by its projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier tof the project-space to be accessed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier of the project-space to be accessed.
      * @param optFields The optFields parameter
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -785,7 +886,10 @@ public class ProjectsApi {
      * Get project space info by its projectId.
      * Get project space info by its projectId.
      * <p><b>200</b> - OK
-     * @param projectId unique name/identifier tof the project-space to be accessed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier of the project-space to be accessed.
      * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -798,6 +902,7 @@ public class ProjectsApi {
      * List opened project spaces.
      * List opened project spaces.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -812,7 +917,7 @@ public class ProjectsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -828,6 +933,7 @@ public class ProjectsApi {
      * List opened project spaces.
      * List opened project spaces.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -840,6 +946,7 @@ public class ProjectsApi {
      * List opened project spaces.
      * List opened project spaces.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;List&lt;ProjectInfo&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -852,6 +959,7 @@ public class ProjectsApi {
      * List opened project spaces.
      * List opened project spaces.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -860,9 +968,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.
+     * Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param inputFiles files to import into project
      * @param parameters The parameters parameter
@@ -899,7 +1010,7 @@ public class ProjectsApi {
             formParams.add("parameters", parameters);
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -914,9 +1025,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.
+     * Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param inputFiles files to import into project
      * @param parameters The parameters parameter
@@ -929,9 +1043,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.
+     * Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param inputFiles files to import into project
      * @param parameters The parameters parameter
@@ -944,9 +1061,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.
+     * Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param inputFiles files to import into project
      * @param parameters The parameters parameter
@@ -958,9 +1078,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job.
-     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project as background job.
+     * Import and align full MS runs from various formats into the specified project as background job.  Possible formats: mzML, mzXML.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param inputFiles files to import into project
      * @param parameters The parameters parameter
@@ -1000,7 +1123,7 @@ public class ProjectsApi {
             formParams.add("parameters", parameters);
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -1015,9 +1138,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job.
-     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project as background job.
+     * Import and align full MS runs from various formats into the specified project as background job.  Possible formats: mzML, mzXML.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param inputFiles files to import into project
      * @param parameters The parameters parameter
@@ -1031,9 +1157,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job.
-     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project as background job.
+     * Import and align full MS runs from various formats into the specified project as background job.  Possible formats: mzML, mzXML.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param inputFiles files to import into project
      * @param parameters The parameters parameter
@@ -1047,9 +1176,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job.
-     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project as background job.
+     * Import and align full MS runs from various formats into the specified project as background job.  Possible formats: mzML, mzXML.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param inputFiles files to import into project
      * @param parameters The parameters parameter
@@ -1062,9 +1194,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project as background job
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project as background job.  Possible formats: mzML, mzXML.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param parameters Parameters for feature alignment and feature finding.
      * @param requestBody Local files to import into project.
@@ -1109,7 +1244,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -1124,9 +1259,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project as background job
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project as background job.  Possible formats: mzML, mzXML.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param parameters Parameters for feature alignment and feature finding.
      * @param requestBody Local files to import into project.
@@ -1140,9 +1278,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project as background job
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project as background job.  Possible formats: mzML, mzXML.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param parameters Parameters for feature alignment and feature finding.
      * @param requestBody Local files to import into project.
@@ -1156,9 +1297,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project as background job
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project as background job.  Possible formats: mzML, mzXML.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project-space to import into.
      * @param parameters Parameters for feature alignment and feature finding.
      * @param requestBody Local files to import into project.
@@ -1171,9 +1315,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project to import into.
      * @param parameters Parameters for feature alignment and feature finding.
      * @param requestBody Local files to import into project.
@@ -1216,7 +1363,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSNR", parameters.getMinSNR()));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -1231,9 +1378,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project to import into.
      * @param parameters Parameters for feature alignment and feature finding.
      * @param requestBody Local files to import into project.
@@ -1246,9 +1396,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project to import into.
      * @param parameters Parameters for feature alignment and feature finding.
      * @param requestBody Local files to import into project.
@@ -1261,9 +1414,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId Project to import into.
      * @param parameters Parameters for feature alignment and feature finding.
      * @param requestBody Local files to import into project.
@@ -1275,9 +1431,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1312,7 +1471,7 @@ public class ProjectsApi {
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -1327,9 +1486,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1343,9 +1505,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1359,9 +1524,12 @@ public class ProjectsApi {
     }
 
     /**
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1375,8 +1543,11 @@ public class ProjectsApi {
 
     /**
      * Import ms/ms data from the given format into the specified project-space as background job.
-     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats: ms, mgf, cef, msp.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1413,7 +1584,7 @@ public class ProjectsApi {
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -1429,8 +1600,11 @@ public class ProjectsApi {
 
     /**
      * Import ms/ms data from the given format into the specified project-space as background job.
-     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats: ms, mgf, cef, msp.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1446,8 +1620,11 @@ public class ProjectsApi {
 
     /**
      * Import ms/ms data from the given format into the specified project-space as background job.
-     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats: ms, mgf, cef, msp.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1463,8 +1640,11 @@ public class ProjectsApi {
 
     /**
      * Import ms/ms data from the given format into the specified project-space as background job.
-     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats: ms, mgf, cef, msp.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param inputFiles files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1479,8 +1659,11 @@ public class ProjectsApi {
 
     /**
      * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
-     * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.  Possible formats: ms, mgf, cef, msp.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param requestBody The requestBody parameter
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1516,7 +1699,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -1532,8 +1715,11 @@ public class ProjectsApi {
 
     /**
      * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
-     * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.  Possible formats: ms, mgf, cef, msp.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param requestBody The requestBody parameter
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1549,8 +1735,11 @@ public class ProjectsApi {
 
     /**
      * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
-     * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.  Possible formats: ms, mgf, cef, msp.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param requestBody The requestBody parameter
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1566,8 +1755,11 @@ public class ProjectsApi {
 
     /**
      * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
-     * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.  Possible formats: ms, mgf, cef, msp.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - the import job.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param requestBody The requestBody parameter
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1581,9 +1773,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
-     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp
+     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param requestBody files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1617,7 +1812,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -1632,9 +1827,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
-     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp
+     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param requestBody files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1648,9 +1846,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
-     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp
+     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param requestBody files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1664,9 +1865,12 @@ public class ProjectsApi {
     }
 
     /**
-     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
-     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp
+     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later  versions of this API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param requestBody files to import into project
      * @param ignoreFormulas The ignoreFormulas parameter
@@ -1682,8 +1886,11 @@ public class ProjectsApi {
      * Open an existing project-space and make it accessible via the given projectId.
      * Open an existing project-space and make it accessible via the given projectId.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
-     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by its projectId from default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      * @param optFields The optFields parameter
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1708,7 +1915,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1724,8 +1931,11 @@ public class ProjectsApi {
      * Open an existing project-space and make it accessible via the given projectId.
      * Open an existing project-space and make it accessible via the given projectId.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
-     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by its projectId from default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      * @param optFields The optFields parameter
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1739,8 +1949,11 @@ public class ProjectsApi {
      * Open an existing project-space and make it accessible via the given projectId.
      * Open an existing project-space and make it accessible via the given projectId.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
-     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by its projectId from default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      * @param optFields The optFields parameter
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1754,8 +1967,11 @@ public class ProjectsApi {
      * Open an existing project-space and make it accessible via the given projectId.
      * Open an existing project-space and make it accessible via the given projectId.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
-     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by its projectId from default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
