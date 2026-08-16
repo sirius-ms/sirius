@@ -3,19 +3,30 @@ package de.unijena.bioinf.ms.gui.dialogs.filter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import io.sirius.ms.sdk.model.DataQuality;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.awt.GraphicsEnvironment;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
  * The quality slider has to show exactly the selection it was given. Getting this wrong is easy to miss, because
  * a wrong range still looks plausible - it just quietly widens the filter.
  */
 public class QualityFilterPanelTest {
+
+    @BeforeEach
+    public void requiresADisplay() {
+        // RangeSliderUI renders its thumb in its constructor, which JSlider triggers from its own constructor
+        // via updateUI(), so the component cannot even be instantiated without a screen device. These tests
+        // therefore only run where there is a display and are skipped on a headless build agent.
+        assumeFalse(GraphicsEnvironment.isHeadless(), "needs a display: RangeSlider cannot be built headless");
+    }
 
     private static QualityFilter filterWith(DataQuality... selected) {
         QualityFilter filter = new QualityFilter("quality", "Quality", new FeatureFilterModel());
