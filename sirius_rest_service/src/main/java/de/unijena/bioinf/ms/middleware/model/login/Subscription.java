@@ -41,8 +41,8 @@ public class Subscription {
 
     /**
      * ID of the owner of the subscription.
-     * This can be the ID of any SubscriptionOwner (e.g.  TagGroup or  User)
-     * depending on the level on which a subscription should be is valid.
+     * This can be the ID of any SubscriptionOwner (e.g. TagGroup or User)
+     * depending on the level at which a subscription is valid.
      */
     private String subscriberId;
 
@@ -69,7 +69,7 @@ public class Subscription {
 
     /**
      * Hash is used to allow recomputing identical data without increasing counted instances (features).
-     * The recording time is the amount of time an instance is memorized is
+     * The recording time is the amount of time an instance is memorized.
      */
     @Schema(nullable = true)
     private Integer instanceHashRecordingTime;

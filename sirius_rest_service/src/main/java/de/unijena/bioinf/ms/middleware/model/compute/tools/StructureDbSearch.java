@@ -42,8 +42,8 @@ import java.util.stream.Collectors;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.
- * Needs results from FingerprintPrediction and Canopus Tool.
- * Non-Null parameters in this Object well override their equivalent value in the config map.
+ * Needs results from the FingerprintPrediction and CANOPUS tools.
+ * Non-null parameters in this object override their equivalent value in the config map.
  */
 @Getter
 @Setter
@@ -52,9 +52,9 @@ import java.util.stream.Collectors;
 public class StructureDbSearch extends Tool<FingerblastOptions> {
     /**
      * Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem
-     * if not high confidence hit was found in the selected databases.
+     * if no high confidence hit was found in the selected databases.
      * <p>
-     * Defaults to BIO + Custom Databases. Possible values are available to Database API.
+     * Defaults to BIO + Custom Databases. Possible values are available via the Database API.
      */
     @Schema(nullable = true)
     List<String> structureSearchDBs;

@@ -82,7 +82,7 @@ public class CompoundController implements TaggableController<Compound, Compound
      *
      * <h2>Supported filter syntax</h2>
      *
-     * <p>The filter string must contain one or more clauses. A clause is prefíxed
+     * <p>The filter string must contain one or more clauses. A clause is prefixed
      * by a field name.
      * </p>
      * <p>
@@ -204,7 +204,7 @@ public class CompoundController implements TaggableController<Compound, Compound
     }
 
     /**
-     * Import Compounds and its contained features. Compounds and Features must not exist in the project.
+     * Import compounds and their contained features. Compounds and features must not exist in the project.
      * Otherwise, they will exist twice.
      *
      * @param projectId         project-space to import into.

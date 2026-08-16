@@ -45,7 +45,7 @@ public class ILPSettings extends TwoColumnPanel implements SettingsPanel {
             items.add(selected);
         solver = new JComboBox<>(items);
         solver.setSelectedItem(selected);
-        solver.setToolTipText("Choose the allowed solvers and in which order they should be checked. Note that glpk is part of Sirius whereas the others not");
+        solver.setToolTipText("Choose the allowed solvers and the order in which they should be checked. Note that GLPK is part of SIRIUS, whereas the others are not.");
         add(new JLabel("Select solver(s):"), solver);
 
         add(new JXTitledSeparator("Gurobi"));

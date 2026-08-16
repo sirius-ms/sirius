@@ -323,7 +323,7 @@ public class StructureCandidateFormula {
   }
 
   /**
-   * the overall rank of this candidate among all candidates of this feature
+   * The overall rank of this candidate among all candidates of this feature.
    * @return rank
    */
   @jakarta.annotation.Nullable
@@ -373,7 +373,7 @@ public class StructureCandidateFormula {
   }
 
   /**
-   * Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
+   * Tanimoto similarity of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
    * @return tanimotoSimilarity
    */
   @jakarta.annotation.Nullable

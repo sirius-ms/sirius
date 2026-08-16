@@ -36,7 +36,7 @@ public class StructureCandidateScored extends StructureCandidate {
     public enum OptField {none, fingerprint, dbLinks, libraryMatches, structureSvg}
 
     /**
-     * the overall rank of this candidate among all candidates of this feature
+     * The overall rank of this candidate among all candidates of this feature.
      */
     protected Integer rank;
 
@@ -46,7 +46,7 @@ public class StructureCandidateScored extends StructureCandidate {
      */
     protected Double csiScore;
     /**
-     * Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
+     * Tanimoto similarity of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
      */
     @Schema(nullable = true)
     protected Double tanimotoSimilarity;

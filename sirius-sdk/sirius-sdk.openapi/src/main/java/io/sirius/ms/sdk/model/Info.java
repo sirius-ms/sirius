@@ -217,7 +217,7 @@ public class Info {
   }
 
   /**
-   * true if newer SIRIUS version is available
+   * True if a newer SIRIUS version is available.
    * @return updateAvailable
    */
   @jakarta.annotation.Nullable
@@ -405,7 +405,7 @@ public class Info {
   }
 
   /**
-   * Set of ILP Solvers that are Supported and their version information
+   * Set of ILP solvers that are supported, and their version information
    * @return supportedILPSolvers
    */
   @jakarta.annotation.Nonnull

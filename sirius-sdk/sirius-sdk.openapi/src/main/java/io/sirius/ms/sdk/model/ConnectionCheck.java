@@ -99,7 +99,7 @@ public class ConnectionCheck {
   }
 
   /**
-   * List of errors ordered by significance. first error should be reported and addressed first.  Following errors might just be follow-up errors
+   * List of errors ordered by significance. First error should be reported and addressed first.  Following errors might just be follow-up errors
    * @return errors
    */
   @jakarta.annotation.Nonnull

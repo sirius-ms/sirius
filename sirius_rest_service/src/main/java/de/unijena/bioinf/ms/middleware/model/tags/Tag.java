@@ -41,7 +41,7 @@ public class Tag {
 
     /**
      * Name of the tag as defined by the corresponding TagDefinition
-     * Links tag object to their definition.
+     * Links the tag object to its definition.
      */
     @NotNull
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)

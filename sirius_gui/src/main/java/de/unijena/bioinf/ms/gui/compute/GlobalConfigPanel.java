@@ -126,7 +126,7 @@ public class GlobalConfigPanel extends ConfigPanel {
             parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
 
             enforceAdducts = new JToggleButton("enforce", false);
-            enforceAdducts.setToolTipText(GuiUtils.formatToolTip("Enforce the selected adducts instead of using them only as fallback only."));
+            enforceAdducts.setToolTipText(GuiUtils.formatToolTip("Enforce the selected adducts instead of using them only as a fallback."));
             if (isBatchDialog()) {
                 adductList.buttons.add(enforceAdducts);
                 parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString() : PossibleAdducts.empty().toString());

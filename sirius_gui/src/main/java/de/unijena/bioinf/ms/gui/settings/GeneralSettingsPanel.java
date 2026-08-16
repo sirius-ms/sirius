@@ -137,7 +137,7 @@ public class GeneralSettingsPanel extends TwoColumnPanel implements SettingsPane
                 new WarningDialog(gui.getMainFrame(),
                         "Activate spectral library results tab",
                         GuiUtils.formatToolTip(
-                                "Library hits can be viewed via the \"Structures\" and  \"Substructure Annotations\"  tab after performing structure database search. This integrated view allows you to seamlessly compare structure database and spectral library hits.",
+                                "Library hits can be viewed via the \"Structures\" and \"Substructure Annotations\" tabs after performing a structure database search. This integrated view allows you to seamlessly compare structure database and spectral library hits.",
                                 "By activating the \"Library Matches\" tab, you can also view the spectral library hits independently of the molecular structure list from the \"CSI:FingerID\" structure database search results.", "",
                                 "NOTE: In SIRIUS, each spectral library is also a molecular structure database. ANY hit in this library can also be found via CSI:FingerID structure database search. " +
                                         "Since structure database results depend on the selected molecular formula, SIRIUS ensures that molecular structures with a formula corresponding to a good spectral library hit are considered - even if this molecular formula receives a low score. " +
@@ -169,7 +169,7 @@ public class GeneralSettingsPanel extends TwoColumnPanel implements SettingsPane
             items.add(selected);
         solver = new JComboBox<>(items);
         solver.setSelectedItem(selected);
-        solver.setToolTipText(GuiUtils.formatToolTip("Choose the allowed solvers and in which order they should be checked. Note that glpk is part of Sirius whereas the others not"));
+        solver.setToolTipText(GuiUtils.formatToolTip("Choose the allowed solvers and the order in which they should be checked. Note that GLPK is part of SIRIUS, whereas the others are not."));
         add(new JLabel("Allowed solvers:"), solver);
 
         add(new JXTitledSeparator("CSI:FingerID"));

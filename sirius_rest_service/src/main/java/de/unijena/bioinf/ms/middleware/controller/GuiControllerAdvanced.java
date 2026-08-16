@@ -53,7 +53,7 @@ public class GuiControllerAdvanced{
      *
      * @param readOnly  open in read-only mode.
      * @param guiParameters parameters that to be applied.
-     * @param projectId of project-space the GUI instance will connect to.
+     * @param projectId project-space the GUI instance will connect to.
      */
     @PostMapping(value = "/api/projects/{projectId}/gui/advanced", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)

@@ -34,7 +34,7 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         GuiApi apiInstance = new GuiApi(defaultClient);
-        String projectId = "projectId_example"; // String | if project-space the GUI instance is connected to.
+        String projectId = "projectId_example"; // String | project-space the GUI instance is connected to.
         Boolean closeProject = true; // Boolean | 
         try {
             Boolean result = apiInstance.closeGui(projectId, closeProject);
@@ -55,7 +55,7 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| if project-space the GUI instance is connected to. | |
+| **projectId** | **String**| project-space the GUI instance is connected to. | |
 | **closeProject** | **Boolean**|  | [optional] |
 
 ### Return type
@@ -69,13 +69,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getGuis
@@ -131,13 +134,14 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | List of GUI windows that are currently managed by this SIRIUS instance. |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 
 
 ## openGui
@@ -164,7 +168,7 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         GuiApi apiInstance = new GuiApi(defaultClient);
-        String projectId = "projectId_example"; // String | of project-space the GUI instance will connect to.
+        String projectId = "projectId_example"; // String | project-space the GUI instance will connect to.
         try {
             apiInstance.openGui(projectId);
         } catch (ApiException e) {
@@ -183,7 +187,7 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| of project-space the GUI instance will connect to. | |
+| **projectId** | **String**| project-space the GUI instance will connect to. | |
 
 ### Return type
 
@@ -203,4 +207,7 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **201** | Created |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 

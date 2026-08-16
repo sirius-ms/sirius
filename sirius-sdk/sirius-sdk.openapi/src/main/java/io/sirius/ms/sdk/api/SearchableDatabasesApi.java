@@ -53,9 +53,11 @@ public class SearchableDatabasesApi {
 
     /**
      * [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
-     * 
-     * <p><b>200</b> - OK
-     * @param requestBody The requestBody parameter
+     * Register existing custom database files with this SIRIUS instance, so that they become searchable.  &lt;p&gt;  Use this to make databases that already exist on disk available again, for example after reinstalling  SIRIUS or when sharing a database file with a colleague. The files are opened in place, not copied.
+     * <p><b>200</b> - the databases that were successfully registered. Files that exist but could not be opened are          skipped and are absent from the result.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - A path does not exist or is not a file, is already registered, or its database name is already in use. No database is registered in that case.
+     * @param requestBody local file paths of the database files (.siriusdb) to register. Each must exist,                         must not already be registered, and its name must not collide with an existing                         database.
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      * @deprecated
@@ -76,7 +78,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -92,9 +94,11 @@ public class SearchableDatabasesApi {
 
     /**
      * [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
-     * 
-     * <p><b>200</b> - OK
-     * @param requestBody The requestBody parameter
+     * Register existing custom database files with this SIRIUS instance, so that they become searchable.  &lt;p&gt;  Use this to make databases that already exist on disk available again, for example after reinstalling  SIRIUS or when sharing a database file with a colleague. The files are opened in place, not copied.
+     * <p><b>200</b> - the databases that were successfully registered. Files that exist but could not be opened are          skipped and are absent from the result.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - A path does not exist or is not a file, is already registered, or its database name is already in use. No database is registered in that case.
+     * @param requestBody local file paths of the database files (.siriusdb) to register. Each must exist,                         must not already be registered, and its name must not collide with an existing                         database.
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -105,9 +109,11 @@ public class SearchableDatabasesApi {
 
     /**
      * [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
-     * 
-     * <p><b>200</b> - OK
-     * @param requestBody The requestBody parameter
+     * Register existing custom database files with this SIRIUS instance, so that they become searchable.  &lt;p&gt;  Use this to make databases that already exist on disk available again, for example after reinstalling  SIRIUS or when sharing a database file with a colleague. The files are opened in place, not copied.
+     * <p><b>200</b> - the databases that were successfully registered. Files that exist but could not be opened are          skipped and are absent from the result.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - A path does not exist or is not a file, is already registered, or its database name is already in use. No database is registered in that case.
+     * @param requestBody local file paths of the database files (.siriusdb) to register. Each must exist,                         must not already be registered, and its name must not collide with an existing                         database.
      * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -118,9 +124,11 @@ public class SearchableDatabasesApi {
 
     /**
      * [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
-     * 
-     * <p><b>200</b> - OK
-     * @param requestBody The requestBody parameter
+     * Register existing custom database files with this SIRIUS instance, so that they become searchable.  &lt;p&gt;  Use this to make databases that already exist on disk available again, for example after reinstalling  SIRIUS or when sharing a database file with a colleague. The files are opened in place, not copied.
+     * <p><b>200</b> - the databases that were successfully registered. Files that exist but could not be opened are          skipped and are absent from the result.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - A path does not exist or is not a file, is already registered, or its database name is already in use. No database is registered in that case.
+     * @param requestBody local file paths of the database files (.siriusdb) to register. Each must exist,                         must not already be registered, and its name must not collide with an existing                         database.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -129,11 +137,14 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param searchableDatabaseParameters The searchableDatabaseParameters parameter
+     * Create a new, empty custom database
+     * Create a new, empty custom database.  &lt;p&gt;  The new database is created on disk and registered with this SIRIUS instance, so it can immediately be  used as a search parameter and imported into via the import endpoint. It contains no structures and no  reference spectra until something is imported.
+     * <p><b>200</b> - the created database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The database id is not a valid database name. It must consist of letters, digits, &#39;-&#39; and &#39;_&#39; only.
+     * <p><b>409</b> - A database with this id already exists, or a file already exists at the target location.
+     * @param databaseId id of the new database. Must be URL-safe, that is letters, digits, &#39;-&#39; and &#39;_&#39; only,                     and must not be in use by another database.
+     * @param searchableDatabaseParameters optional settings for the new database. If omitted, the database is created in the                     default custom database directory with default settings. Supply a location to place                     the database file elsewhere, a displayName for the user interface, and                     matchRtOfReferenceSpectra for in-house libraries whose retention times are comparable                     to the measured samples.
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -154,7 +165,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -169,11 +180,14 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param searchableDatabaseParameters The searchableDatabaseParameters parameter
+     * Create a new, empty custom database
+     * Create a new, empty custom database.  &lt;p&gt;  The new database is created on disk and registered with this SIRIUS instance, so it can immediately be  used as a search parameter and imported into via the import endpoint. It contains no structures and no  reference spectra until something is imported.
+     * <p><b>200</b> - the created database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The database id is not a valid database name. It must consist of letters, digits, &#39;-&#39; and &#39;_&#39; only.
+     * <p><b>409</b> - A database with this id already exists, or a file already exists at the target location.
+     * @param databaseId id of the new database. Must be URL-safe, that is letters, digits, &#39;-&#39; and &#39;_&#39; only,                     and must not be in use by another database.
+     * @param searchableDatabaseParameters optional settings for the new database. If omitted, the database is created in the                     default custom database directory with default settings. Supply a location to place                     the database file elsewhere, a displayName for the user interface, and                     matchRtOfReferenceSpectra for in-house libraries whose retention times are comparable                     to the measured samples.
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -183,11 +197,14 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param searchableDatabaseParameters The searchableDatabaseParameters parameter
+     * Create a new, empty custom database
+     * Create a new, empty custom database.  &lt;p&gt;  The new database is created on disk and registered with this SIRIUS instance, so it can immediately be  used as a search parameter and imported into via the import endpoint. It contains no structures and no  reference spectra until something is imported.
+     * <p><b>200</b> - the created database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The database id is not a valid database name. It must consist of letters, digits, &#39;-&#39; and &#39;_&#39; only.
+     * <p><b>409</b> - A database with this id already exists, or a file already exists at the target location.
+     * @param databaseId id of the new database. Must be URL-safe, that is letters, digits, &#39;-&#39; and &#39;_&#39; only,                     and must not be in use by another database.
+     * @param searchableDatabaseParameters optional settings for the new database. If omitted, the database is created in the                     default custom database directory with default settings. Supply a location to place                     the database file elsewhere, a displayName for the user interface, and                     matchRtOfReferenceSpectra for in-house libraries whose retention times are comparable                     to the measured samples.
      * @return ResponseEntity&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -197,11 +214,14 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param searchableDatabaseParameters The searchableDatabaseParameters parameter
+     * Create a new, empty custom database
+     * Create a new, empty custom database.  &lt;p&gt;  The new database is created on disk and registered with this SIRIUS instance, so it can immediately be  used as a search parameter and imported into via the import endpoint. It contains no structures and no  reference spectra until something is imported.
+     * <p><b>200</b> - the created database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The database id is not a valid database name. It must consist of letters, digits, &#39;-&#39; and &#39;_&#39; only.
+     * <p><b>409</b> - A database with this id already exists, or a file already exists at the target location.
+     * @param databaseId id of the new database. Must be URL-safe, that is letters, digits, &#39;-&#39; and &#39;_&#39; only,                     and must not be in use by another database.
+     * @param searchableDatabaseParameters optional settings for the new database. If omitted, the database is created in the                     default custom database directory with default settings. Supply a location to place                     the database file elsewhere, a displayName for the user interface, and                     matchRtOfReferenceSpectra for in-house libraries whose retention times are comparable                     to the measured samples.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -210,11 +230,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
-     * @param includeWithErrors The includeWithErrors parameter
+     * List only the custom databases, that is the structure databases and spectral libraries the user has  created or added.
+     * List only the custom databases, that is the structure databases and spectral libraries the user has  created or added. These are the databases that can be modified and imported into.
+     * <p><b>200</b> - all custom databases known to this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included                           per database. Slower, since the database files have to be read.
+     * @param includeWithErrors if true, databases that could not be loaded are listed as well, carrying the                           reason in their errorMessage field.
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -232,7 +254,7 @@ public class SearchableDatabasesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeWithErrors", includeWithErrors));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -245,11 +267,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
-     * @param includeWithErrors The includeWithErrors parameter
+     * List only the custom databases, that is the structure databases and spectral libraries the user has  created or added.
+     * List only the custom databases, that is the structure databases and spectral libraries the user has  created or added. These are the databases that can be modified and imported into.
+     * <p><b>200</b> - all custom databases known to this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included                           per database. Slower, since the database files have to be read.
+     * @param includeWithErrors if true, databases that could not be loaded are listed as well, carrying the                           reason in their errorMessage field.
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -259,11 +283,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
-     * @param includeWithErrors The includeWithErrors parameter
+     * List only the custom databases, that is the structure databases and spectral libraries the user has  created or added.
+     * List only the custom databases, that is the structure databases and spectral libraries the user has  created or added. These are the databases that can be modified and imported into.
+     * <p><b>200</b> - all custom databases known to this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included                           per database. Slower, since the database files have to be read.
+     * @param includeWithErrors if true, databases that could not be loaded are listed as well, carrying the                           reason in their errorMessage field.
      * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -273,11 +299,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
-     * @param includeWithErrors The includeWithErrors parameter
+     * List only the custom databases, that is the structure databases and spectral libraries the user has  created or added.
+     * List only the custom databases, that is the structure databases and spectral libraries the user has  created or added. These are the databases that can be modified and imported into.
+     * <p><b>200</b> - all custom databases known to this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included                           per database. Slower, since the database files have to be read.
+     * @param includeWithErrors if true, databases that could not be loaded are listed as well, carrying the                           reason in their errorMessage field.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -286,11 +314,14 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param includeStats The includeStats parameter
+     * Get a single searchable database by its id.
+     * Get a single searchable database by its id.
+     * <p><b>200</b> - the requested database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No database with the given id exists.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to retrieve, as reported by the listing endpoints.
+     * @param includeStats if true (the default here), the number of structures, formulas and reference spectra                      is included.
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -313,7 +344,7 @@ public class SearchableDatabasesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -326,11 +357,14 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param includeStats The includeStats parameter
+     * Get a single searchable database by its id.
+     * Get a single searchable database by its id.
+     * <p><b>200</b> - the requested database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No database with the given id exists.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to retrieve, as reported by the listing endpoints.
+     * @param includeStats if true (the default here), the number of structures, formulas and reference spectra                      is included.
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -340,11 +374,14 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param includeStats The includeStats parameter
+     * Get a single searchable database by its id.
+     * Get a single searchable database by its id.
+     * <p><b>200</b> - the requested database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No database with the given id exists.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to retrieve, as reported by the listing endpoints.
+     * @param includeStats if true (the default here), the number of structures, formulas and reference spectra                      is included.
      * @return ResponseEntity&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -354,11 +391,14 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param includeStats The includeStats parameter
+     * Get a single searchable database by its id.
+     * Get a single searchable database by its id.
+     * <p><b>200</b> - the requested database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No database with the given id exists.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to retrieve, as reported by the listing endpoints.
+     * @param includeStats if true (the default here), the number of structures, formulas and reference spectra                      is included.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -367,11 +407,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
-     * @param includeWithErrors The includeWithErrors parameter
+     * List all searchable databases, both the ones included in SIRIUS and the custom ones added by the user
+     * List all searchable databases, both the ones included in SIRIUS and the custom ones added by the user.  &lt;p&gt;  A searchable database provides structures and reference spectra (optional), and can be selected as a search  parameter for structure database search and spectral library search. Note that every imported spectral  library also acts as a structure database.
+     * <p><b>200</b> - all databases known to this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included                            per database. Computing these counts touches the database files, so requesting                            them is noticeably slower than a plain listing.
+     * @param includeWithErrors if true, databases that could not be loaded are listed as well, carrying the                            reason in their errorMessage field. Use this to show a broken database to the                            user instead of silently hiding it.
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -389,7 +431,7 @@ public class SearchableDatabasesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeWithErrors", includeWithErrors));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -402,11 +444,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
-     * @param includeWithErrors The includeWithErrors parameter
+     * List all searchable databases, both the ones included in SIRIUS and the custom ones added by the user
+     * List all searchable databases, both the ones included in SIRIUS and the custom ones added by the user.  &lt;p&gt;  A searchable database provides structures and reference spectra (optional), and can be selected as a search  parameter for structure database search and spectral library search. Note that every imported spectral  library also acts as a structure database.
+     * <p><b>200</b> - all databases known to this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included                            per database. Computing these counts touches the database files, so requesting                            them is noticeably slower than a plain listing.
+     * @param includeWithErrors if true, databases that could not be loaded are listed as well, carrying the                            reason in their errorMessage field. Use this to show a broken database to the                            user instead of silently hiding it.
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -416,11 +460,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
-     * @param includeWithErrors The includeWithErrors parameter
+     * List all searchable databases, both the ones included in SIRIUS and the custom ones added by the user
+     * List all searchable databases, both the ones included in SIRIUS and the custom ones added by the user.  &lt;p&gt;  A searchable database provides structures and reference spectra (optional), and can be selected as a search  parameter for structure database search and spectral library search. Note that every imported spectral  library also acts as a structure database.
+     * <p><b>200</b> - all databases known to this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included                            per database. Computing these counts touches the database files, so requesting                            them is noticeably slower than a plain listing.
+     * @param includeWithErrors if true, databases that could not be loaded are listed as well, carrying the                            reason in their errorMessage field. Use this to show a broken database to the                            user instead of silently hiding it.
      * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -430,11 +476,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
-     * @param includeWithErrors The includeWithErrors parameter
+     * List all searchable databases, both the ones included in SIRIUS and the custom ones added by the user
+     * List all searchable databases, both the ones included in SIRIUS and the custom ones added by the user.  &lt;p&gt;  A searchable database provides structures and reference spectra (optional), and can be selected as a search  parameter for structure database search and spectral library search. Note that every imported spectral  library also acts as a structure database.
+     * <p><b>200</b> - all databases known to this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included                            per database. Computing these counts touches the database files, so requesting                            them is noticeably slower than a plain listing.
+     * @param includeWithErrors if true, databases that could not be loaded are listed as well, carrying the                            reason in their errorMessage field. Use this to show a broken database to the                            user instead of silently hiding it.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -446,6 +494,7 @@ public class SearchableDatabasesApi {
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - list of databases available for downloading.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;DownloadableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      * @deprecated
@@ -478,6 +527,7 @@ public class SearchableDatabasesApi {
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - list of databases available for downloading.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;DownloadableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -490,6 +540,7 @@ public class SearchableDatabasesApi {
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - list of databases available for downloading.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;List&lt;DownloadableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -502,6 +553,7 @@ public class SearchableDatabasesApi {
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use
      * Get list of curated custom databases downloadable from the SIRIUS web service for local use.  &lt;p&gt;  [DEPRECATED] This endpoint will likely be removed or changed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - list of databases available for downloading.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -510,10 +562,12 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
+     * List only the databases that ship with SIRIUS, such as PubChem and the bio databases.
+     * List only the databases that ship with SIRIUS, such as PubChem and the bio databases. These are  read-only: they cannot be imported into, modified or removed.
+     * <p><b>200</b> - all databases included in SIRIUS.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included per                      database. Slower, since the database files have to be read.
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -530,7 +584,7 @@ public class SearchableDatabasesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -543,10 +597,12 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
+     * List only the databases that ship with SIRIUS, such as PubChem and the bio databases.
+     * List only the databases that ship with SIRIUS, such as PubChem and the bio databases. These are  read-only: they cannot be imported into, modified or removed.
+     * <p><b>200</b> - all databases included in SIRIUS.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included per                      database. Slower, since the database files have to be read.
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -556,10 +612,12 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
+     * List only the databases that ship with SIRIUS, such as PubChem and the bio databases.
+     * List only the databases that ship with SIRIUS, such as PubChem and the bio databases. These are  read-only: they cannot be imported into, modified or removed.
+     * <p><b>200</b> - all databases included in SIRIUS.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included per                      database. Slower, since the database files have to be read.
      * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -569,10 +627,12 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param includeStats The includeStats parameter
+     * List only the databases that ship with SIRIUS, such as PubChem and the bio databases.
+     * List only the databases that ship with SIRIUS, such as PubChem and the bio databases. These are  read-only: they cannot be imported into, modified or removed.
+     * <p><b>200</b> - all databases included in SIRIUS.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeStats if true, the number of structures, formulas and reference spectra is included per                      database. Slower, since the database files have to be read.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -581,21 +641,24 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
+     * [EXPERIMENTAL] Page through the structures contained in a custom database
+     * [EXPERIMENTAL] Page through the structures contained in a custom database.  &lt;p&gt;  Returns the stored structures with their name, SMILES, InChI, InChI key, molecular formula and mass.  Only custom databases are supported; the databases included in SIRIUS cannot be enumerated this way.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint  can change at any time, even in minor updates.
+     * <p><b>200</b> - a page of the structures in the database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No custom database with the given id exists. Databases included in SIRIUS cannot be enumerated.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the custom database to read from.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @return PagedModelDatabaseStructure
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructuresExperimentalRequestCreation(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+    private ResponseSpec getStructuresRequestCreation(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'databaseId' is set
         if (databaseId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling getStructuresExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling getStructures", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -612,7 +675,7 @@ public class SearchableDatabasesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -625,59 +688,71 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
+     * [EXPERIMENTAL] Page through the structures contained in a custom database
+     * [EXPERIMENTAL] Page through the structures contained in a custom database.  &lt;p&gt;  Returns the stored structures with their name, SMILES, InChI, InChI key, molecular formula and mass.  Only custom databases are supported; the databases included in SIRIUS cannot be enumerated this way.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint  can change at any time, even in minor updates.
+     * <p><b>200</b> - a page of the structures in the database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No custom database with the given id exists. Databases included in SIRIUS cannot be enumerated.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the custom database to read from.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @return PagedModelDatabaseStructure
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelDatabaseStructure getStructuresExperimental(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+    public PagedModelDatabaseStructure getStructures(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelDatabaseStructure> localVarReturnType = new ParameterizedTypeReference<PagedModelDatabaseStructure>() {};
-        return getStructuresExperimentalRequestCreation(databaseId, page, size, sort).bodyToMono(localVarReturnType).block();
+        return getStructuresRequestCreation(databaseId, page, size, sort).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
+     * [EXPERIMENTAL] Page through the structures contained in a custom database
+     * [EXPERIMENTAL] Page through the structures contained in a custom database.  &lt;p&gt;  Returns the stored structures with their name, SMILES, InChI, InChI key, molecular formula and mass.  Only custom databases are supported; the databases included in SIRIUS cannot be enumerated this way.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint  can change at any time, even in minor updates.
+     * <p><b>200</b> - a page of the structures in the database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No custom database with the given id exists. Databases included in SIRIUS cannot be enumerated.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the custom database to read from.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @return ResponseEntity&lt;PagedModelDatabaseStructure&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelDatabaseStructure> getStructuresExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+    public ResponseEntity<PagedModelDatabaseStructure> getStructuresWithHttpInfo(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelDatabaseStructure> localVarReturnType = new ParameterizedTypeReference<PagedModelDatabaseStructure>() {};
-        return getStructuresExperimentalRequestCreation(databaseId, page, size, sort).toEntity(localVarReturnType).block();
+        return getStructuresRequestCreation(databaseId, page, size, sort).toEntity(localVarReturnType).block();
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
+     * [EXPERIMENTAL] Page through the structures contained in a custom database
+     * [EXPERIMENTAL] Page through the structures contained in a custom database.  &lt;p&gt;  Returns the stored structures with their name, SMILES, InChI, InChI key, molecular formula and mass.  Only custom databases are supported; the databases included in SIRIUS cannot be enumerated this way.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint  can change at any time, even in minor updates.
+     * <p><b>200</b> - a page of the structures in the database.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No custom database with the given id exists. Databases included in SIRIUS cannot be enumerated.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the custom database to read from.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructuresExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
-        return getStructuresExperimentalRequestCreation(databaseId, page, size, sort);
+    public ResponseSpec getStructuresWithResponseSpec(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort) throws WebClientResponseException {
+        return getStructuresRequestCreation(databaseId, page, size, sort);
     }
 
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
-     * @param databaseId database to import into
+     * <p><b>200</b> - the affected database, including its updated statistics.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No database with the given id exists.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the custom database to import into. Must exist.
      * @param inputFiles files to import into project
-     * @param bufferSize The bufferSize parameter
+     * @param bufferSize number of compounds to keep in memory before writing them to the                                  database. Raise it to speed up large imports on machines with enough RAM.
      * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -710,7 +785,7 @@ public class SearchableDatabasesApi {
             formParams.add("bioTransformerParameters", bioTransformerParameters);
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -727,10 +802,13 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
-     * @param databaseId database to import into
+     * <p><b>200</b> - the affected database, including its updated statistics.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No database with the given id exists.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the custom database to import into. Must exist.
      * @param inputFiles files to import into project
-     * @param bufferSize The bufferSize parameter
+     * @param bufferSize number of compounds to keep in memory before writing them to the                                  database. Raise it to speed up large imports on machines with enough RAM.
      * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -743,10 +821,13 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
-     * @param databaseId database to import into
+     * <p><b>200</b> - the affected database, including its updated statistics.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No database with the given id exists.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the custom database to import into. Must exist.
      * @param inputFiles files to import into project
-     * @param bufferSize The bufferSize parameter
+     * @param bufferSize number of compounds to keep in memory before writing them to the                                  database. Raise it to speed up large imports on machines with enough RAM.
      * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return ResponseEntity&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -759,10 +840,13 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Meta-Information of the affected database after the import has been performed.
-     * @param databaseId database to import into
+     * <p><b>200</b> - the affected database, including its updated statistics.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - No database with the given id exists.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the custom database to import into. Must exist.
      * @param inputFiles files to import into project
-     * @param bufferSize The bufferSize parameter
+     * @param bufferSize number of compounds to keep in memory before writing them to the                                  database. Raise it to speed up large imports on machines with enough RAM.
      * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -772,11 +856,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
+     * Remove a custom database from this SIRIUS instance, and optionally delete it from disk
+     * Remove a custom database from this SIRIUS instance, and optionally delete it from disk.  &lt;p&gt;  This is idempotent: removing a database that is not registered succeeds and does nothing, so a client  does not have to check first.
      * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param delete The delete parameter
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to remove.
+     * @param delete if true, the database file is deleted from disk and the data is lost. If false (the                    default), only the registration is removed and the file is kept, so the database can                    be registered again later.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec removeDatabaseRequestCreation(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Boolean delete) throws WebClientResponseException {
@@ -809,11 +895,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
+     * Remove a custom database from this SIRIUS instance, and optionally delete it from disk
+     * Remove a custom database from this SIRIUS instance, and optionally delete it from disk.  &lt;p&gt;  This is idempotent: removing a database that is not registered succeeds and does nothing, so a client  does not have to check first.
      * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param delete The delete parameter
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to remove.
+     * @param delete if true, the database file is deleted from disk and the data is lost. If false (the                    default), only the registration is removed and the file is kept, so the database can                    be registered again later.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public void removeDatabase(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Boolean delete) throws WebClientResponseException {
@@ -822,11 +910,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
+     * Remove a custom database from this SIRIUS instance, and optionally delete it from disk
+     * Remove a custom database from this SIRIUS instance, and optionally delete it from disk.  &lt;p&gt;  This is idempotent: removing a database that is not registered succeeds and does nothing, so a client  does not have to check first.
      * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param delete The delete parameter
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to remove.
+     * @param delete if true, the database file is deleted from disk and the data is lost. If false (the                    default), only the registration is removed and the file is kept, so the database can                    be registered again later.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ResponseEntity<Void> removeDatabaseWithHttpInfo(@jakarta.annotation.Nonnull String databaseId, @jakarta.annotation.Nullable Boolean delete) throws WebClientResponseException {
@@ -835,11 +925,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
+     * Remove a custom database from this SIRIUS instance, and optionally delete it from disk
+     * Remove a custom database from this SIRIUS instance, and optionally delete it from disk.  &lt;p&gt;  This is idempotent: removing a database that is not registered succeeds and does nothing, so a client  does not have to check first.
      * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param delete The delete parameter
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to remove.
+     * @param delete if true, the database file is deleted from disk and the data is lost. If false (the                    default), only the registration is removed and the file is kept, so the database can                    be registered again later.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -848,11 +940,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param searchableDatabaseParameters The searchableDatabaseParameters parameter
+     * Change the settings of an existing custom database
+     * Change the settings of an existing custom database.  &lt;p&gt;  NOT IMPLEMENTED YET: changing the display name and the retention time matching flag of an existing database  is not supported so far, and every request currently fails. The request and response shape is settled  though, so a client can be written against this endpoint today: it will start succeeding in a future  version without any change on the client side.  &lt;p&gt;  Until then, create a new database with the desired settings and import into it.
+     * <p><b>200</b> - the updated database.
+     * <p><b>500</b> - Currently always, since updating custom databases is not implemented yet. This will become a normal server-side error once the endpoint is implemented.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to update.
+     * @param searchableDatabaseParameters the settings to apply.
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -873,7 +967,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -888,11 +982,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param searchableDatabaseParameters The searchableDatabaseParameters parameter
+     * Change the settings of an existing custom database
+     * Change the settings of an existing custom database.  &lt;p&gt;  NOT IMPLEMENTED YET: changing the display name and the retention time matching flag of an existing database  is not supported so far, and every request currently fails. The request and response shape is settled  though, so a client can be written against this endpoint today: it will start succeeding in a future  version without any change on the client side.  &lt;p&gt;  Until then, create a new database with the desired settings and import into it.
+     * <p><b>200</b> - the updated database.
+     * <p><b>500</b> - Currently always, since updating custom databases is not implemented yet. This will become a normal server-side error once the endpoint is implemented.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to update.
+     * @param searchableDatabaseParameters the settings to apply.
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -902,11 +998,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param searchableDatabaseParameters The searchableDatabaseParameters parameter
+     * Change the settings of an existing custom database
+     * Change the settings of an existing custom database.  &lt;p&gt;  NOT IMPLEMENTED YET: changing the display name and the retention time matching flag of an existing database  is not supported so far, and every request currently fails. The request and response shape is settled  though, so a client can be written against this endpoint today: it will start succeeding in a future  version without any change on the client side.  &lt;p&gt;  Until then, create a new database with the desired settings and import into it.
+     * <p><b>200</b> - the updated database.
+     * <p><b>500</b> - Currently always, since updating custom databases is not implemented yet. This will become a normal server-side error once the endpoint is implemented.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to update.
+     * @param searchableDatabaseParameters the settings to apply.
      * @return ResponseEntity&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -916,11 +1014,13 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param searchableDatabaseParameters The searchableDatabaseParameters parameter
+     * Change the settings of an existing custom database
+     * Change the settings of an existing custom database.  &lt;p&gt;  NOT IMPLEMENTED YET: changing the display name and the retention time matching flag of an existing database  is not supported so far, and every request currently fails. The request and response shape is settled  though, so a client can be written against this endpoint today: it will start succeeding in a future  version without any change on the client side.  &lt;p&gt;  Until then, create a new database with the desired settings and import into it.
+     * <p><b>200</b> - the updated database.
+     * <p><b>500</b> - Currently always, since updating custom databases is not implemented yet. This will become a normal server-side error once the endpoint is implemented.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param databaseId id of the database to update.
+     * @param searchableDatabaseParameters the settings to apply.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */

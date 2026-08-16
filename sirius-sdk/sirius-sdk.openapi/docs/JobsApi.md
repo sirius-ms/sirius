@@ -6,14 +6,14 @@ All URIs are relative to *http://localhost:8888*
 |------------- | ------------- | -------------|
 | [**deleteJob**](JobsApi.md#deleteJob) | **DELETE** /api/projects/{projectId}/jobs/{jobId} | Delete job. |
 | [**deleteJobConfig**](JobsApi.md#deleteJobConfig) | **DELETE** /api/job-configs/{name} | Delete job configuration with given name. |
-| [**deleteJobs**](JobsApi.md#deleteJobs) | **DELETE** /api/projects/{projectId}/jobs | * Delete ALL jobs. |
+| [**deleteJobs**](JobsApi.md#deleteJobs) | **DELETE** /api/projects/{projectId}/jobs | Delete ALL jobs. |
 | [**getCommand**](JobsApi.md#getCommand) | **POST** /api/job-configs/get-command | Get a CLI command for the given job configuration. |
 | [**getDefaultJobConfig**](JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration |
 | [**getJob**](JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available). |
 | [**getJobConfig**](JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name. |
 | [**getJobConfigNames**](JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | [DEPRECATED] Get all (non-default) job configuration names   |
 | [**getJobConfigs**](JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations |
-| [**getJobs**](JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available) |
+| [**getJobs**](JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | [DEPRECATED] Get list of all available jobs with information such as current state and progress (if available) |
 | [**getJobsPage**](JobsApi.md#getJobsPage) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available). |
 | [**hasJobs**](JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs |  |
 | [**saveJobConfig**](JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name. |
@@ -92,6 +92,9 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **202** | Accepted |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## deleteJobConfig
@@ -157,15 +160,18 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **202** | Accepted |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## deleteJobs
 
 > deleteJobs(projectId, cancelIfRunning, awaitDeletion)
 
-* Delete ALL jobs.
+Delete ALL jobs.
 
-* Delete ALL jobs. Specify how to behave for running jobs.
+Delete ALL jobs. Specify how to behave for running jobs.
 
 ### Example
 
@@ -226,6 +232,9 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **202** | Accepted |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getCommand
@@ -285,13 +294,15 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getDefaultJobConfig
@@ -320,7 +331,7 @@ public class Example {
         JobsApi apiInstance = new JobsApi(defaultClient);
         Boolean includeConfigMap = false; // Boolean | if true, generic configmap with-defaults will be included
         Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters
-        Boolean includeCustomDbsForStructureSearch = false; // Boolean | if true, default database selection of structure db search                                            spectral library search contains also all available custom DB.                                            If No custom dbs are selected, spectral library search is disabled by default.
+        Boolean includeCustomDbsForStructureSearch = false; // Boolean | if true, default database selection of structure db search                                            and spectral library search also contains all available custom databases.                                            If no custom databases are selected, spectral library search is disabled by default.
         try {
             JobSubmission result = apiInstance.getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch);
             System.out.println(result);
@@ -342,7 +353,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **includeConfigMap** | **Boolean**| if true, generic configmap with-defaults will be included | [optional] [default to false] |
 | **moveParametersToConfigMap** | **Boolean**| if true, object-based parameters will be converted to and added to the generic configMap parameters | [optional] [default to false] |
-| **includeCustomDbsForStructureSearch** | **Boolean**| if true, default database selection of structure db search                                            spectral library search contains also all available custom DB.                                            If No custom dbs are selected, spectral library search is disabled by default. | [optional] [default to false] |
+| **includeCustomDbsForStructureSearch** | **Boolean**| if true, default database selection of structure db search                                            and spectral library search also contains all available custom databases.                                            If no custom databases are selected, spectral library search is disabled by default. | [optional] [default to false] |
 
 ### Return type
 
@@ -355,13 +366,15 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | {@link JobSubmission JobSubmission} with all parameters set to default values. |  -  |
+| **200** | &lt;code&gt;JobSubmission&lt;/code&gt; with all parameters set to default values. |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getJob
@@ -389,7 +402,7 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to run jobs on
-        String jobId = "jobId_example"; // String | of the job to be returned
+        String jobId = "jobId_example"; // String | id of the job to be returned
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
             Job result = apiInstance.getJob(projectId, jobId, optFields);
@@ -411,7 +424,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to run jobs on | |
-| **jobId** | **String**| of the job to be returned | |
+| **jobId** | **String**| id of the job to be returned | |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -425,13 +438,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getJobConfig
@@ -493,13 +509,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | {@link JobSubmission JobSubmission} for given name. |  -  |
+| **200** | &lt;code&gt;JobSubmission&lt;/code&gt; for given name. |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getJobConfigNames
@@ -555,13 +574,14 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 
 
 ## getJobConfigs
@@ -617,22 +637,23 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | list of available {@link JobSubmission JobSubmission}s |  -  |
+| **200** | list of available &lt;code&gt;JobSubmission&lt;/code&gt;s |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 
 
 ## getJobs
 
 > List&lt;Job&gt; getJobs(projectId, optFields)
 
-[DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)
+[DEPRECATED] Get list of all available jobs with information such as current state and progress (if available)
 
-[DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
+[DEPRECATED] Get list of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
 
 ### Example
 
@@ -685,13 +706,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getJobsPage
@@ -759,13 +783,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## hasJobs
@@ -825,13 +852,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## saveJobConfig
@@ -897,13 +927,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility). |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## startCommand
@@ -967,13 +1000,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Job of the command to be executed. |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## startJob
@@ -1001,7 +1037,7 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to run jobs on
-        JobSubmission jobSubmission = new JobSubmission(); // JobSubmission | configuration of the job that will be submitted of the job to be returned
+        JobSubmission jobSubmission = new JobSubmission(); // JobSubmission | configuration of the job to be submitted
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
             Job result = apiInstance.startJob(projectId, jobSubmission, optFields);
@@ -1023,7 +1059,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to run jobs on | |
-| **jobSubmission** | [**JobSubmission**](JobSubmission.md)| configuration of the job that will be submitted of the job to be returned | |
+| **jobSubmission** | [**JobSubmission**](JobSubmission.md)| configuration of the job to be submitted | |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -1037,13 +1073,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **202** | Accepted |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## startJobFromConfig
@@ -1071,7 +1110,7 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to run jobs on
-        String jobConfigName = "jobConfigName_example"; // String | name if the config to be used
+        String jobConfigName = "jobConfigName_example"; // String | name of the config to be used
         List<String> requestBody = Arrays.asList(); // List<String> | List of alignedFeatureIds to be computed
         Boolean recompute = true; // Boolean | enable or disable recompute. If null the stored value will be used.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
@@ -1095,7 +1134,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to run jobs on | |
-| **jobConfigName** | **String**| name if the config to be used | |
+| **jobConfigName** | **String**| name of the config to be used | |
 | **requestBody** | [**List&lt;String&gt;**](String.md)| List of alignedFeatureIds to be computed | |
 | **recompute** | **Boolean**| enable or disable recompute. If null the stored value will be used. | [optional] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
@@ -1111,11 +1150,14 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **202** | Accepted |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 

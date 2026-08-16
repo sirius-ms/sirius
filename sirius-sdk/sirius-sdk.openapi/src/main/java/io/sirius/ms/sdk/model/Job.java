@@ -40,7 +40,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Identifier created by the SIRIUS Nightsky API for a newly created Job.  Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information.  This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal.
+ * Identifier created by the SIRIUS Nightsky API for a newly created Job.  Object can be enriched with Job status/progress information (&lt;code&gt;JobProgress&lt;/code&gt;) and/or Job command information.  This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal.
  */
 @JsonPropertyOrder({
   Job.JSON_PROPERTY_ID,
@@ -169,7 +169,7 @@ public class Job {
   }
 
   /**
-   * List of compoundIds that are affected by this job.  This lis will also contain compoundIds where not all features of the compound are affected by the job.  If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished
+   * List of compoundIds that are affected by this job.  This list will also contain compoundIds where not all features of the compound are affected by the job.  If this job is creating compounds (e.g. data import jobs) this value will be NULL until the job has finished
    * @return affectedCompoundIds
    */
   @jakarta.annotation.Nullable
@@ -202,7 +202,7 @@ public class Job {
   }
 
   /**
-   * List of alignedFeatureIds that are affected by this job.  If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished
+   * List of alignedFeatureIds that are affected by this job.  If this job is creating features (e.g. data import jobs) this value will be NULL until the job has finished
    * @return affectedAlignedFeatureIds
    */
   @jakarta.annotation.Nullable

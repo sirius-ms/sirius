@@ -40,7 +40,7 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
-        Boolean includeSubs = false; // Boolean | include available and active subscriptions in {@link AccountInfo AccountInfo}.
+        Boolean includeSubs = false; // Boolean | include available and active subscriptions in <code>AccountInfo</code>.
         try {
             AccountInfo result = apiInstance.getAccountInfo(includeSubs);
             System.out.println(result);
@@ -60,7 +60,7 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **includeSubs** | **Boolean**| include available and active subscriptions in {@link AccountInfo AccountInfo}. | [optional] [default to false] |
+| **includeSubs** | **Boolean**| include available and active subscriptions in &lt;code&gt;AccountInfo&lt;/code&gt;. | [optional] [default to false] |
 
 ### Return type
 
@@ -73,13 +73,15 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Basic information about the account that has been logged in and its subscriptions. |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getSignUpURL
@@ -135,13 +137,14 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: text/plain;charset=UTF-8
+- **Accept**: text/plain;charset=UTF-8, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 
 
 ## getSubscriptions
@@ -197,13 +200,14 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 
 
 ## isLoggedIn
@@ -259,13 +263,14 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | true if the user is logged in |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 
 
 ## login
@@ -295,7 +300,7 @@ public class Example {
         Boolean acceptTerms = true; // Boolean | 
         AccountCredentials accountCredentials = new AccountCredentials(); // AccountCredentials | used to log in.
         Boolean failWhenLoggedIn = false; // Boolean | if true request fails if an active login already exists.
-        Boolean includeSubs = false; // Boolean | include available and active subscriptions in {@link AccountInfo AccountInfo}.
+        Boolean includeSubs = false; // Boolean | include available and active subscriptions in <code>AccountInfo</code>.
         try {
             AccountInfo result = apiInstance.login(acceptTerms, accountCredentials, failWhenLoggedIn, includeSubs);
             System.out.println(result);
@@ -318,7 +323,7 @@ public class Example {
 | **acceptTerms** | **Boolean**|  | |
 | **accountCredentials** | [**AccountCredentials**](AccountCredentials.md)| used to log in. | |
 | **failWhenLoggedIn** | **Boolean**| if true request fails if an active login already exists. | [optional] [default to false] |
-| **includeSubs** | **Boolean**| include available and active subscriptions in {@link AccountInfo AccountInfo}. | [optional] [default to false] |
+| **includeSubs** | **Boolean**| include available and active subscriptions in &lt;code&gt;AccountInfo&lt;/code&gt;. | [optional] [default to false] |
 
 ### Return type
 
@@ -331,13 +336,15 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Basic information about the account that has been logged in and its subscriptions. |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## logout
@@ -399,6 +406,7 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 
 
 ## openPortal
@@ -460,6 +468,7 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 
 
 ## selectSubscription
@@ -519,13 +528,15 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Account information with updated active subscription |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## signUp
@@ -581,11 +592,12 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: text/plain;charset=UTF-8
+- **Accept**: text/plain;charset=UTF-8, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 

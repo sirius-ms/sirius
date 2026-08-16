@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool  Needs results from Formula/SIRIUS Tool
+ * User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool  Needs results from the Formula identification tool (Sirius).
  */
 @JsonPropertyOrder({
   FingerprintPrediction.JSON_PROPERTY_ENABLED,
@@ -66,7 +66,7 @@ public class FingerprintPrediction {
   }
 
   /**
-   * tags whether the tool is enabled
+   * Indicates whether the tool is enabled.
    * @return enabled
    */
   @jakarta.annotation.Nullable
@@ -116,7 +116,7 @@ public class FingerprintPrediction {
   }
 
   /**
-   * If true Fingerprint/Classes/Structures will be predicted for formulas candidates with  reference spectrum similarity &gt; Sirius.minReferenceMatchScoreToInject will be predicted no matter which  score threshold rules apply.  If NULL default value will be used.
+   * If true, fingerprints, compound classes and structures will be predicted for formula candidates whose  reference spectrum similarity is above Sirius.minReferenceMatchScoreToInject, no matter which  score threshold rules would otherwise apply.  If NULL default value will be used.
    * @return alwaysPredictHighRefMatches
    */
   @jakarta.annotation.Nullable

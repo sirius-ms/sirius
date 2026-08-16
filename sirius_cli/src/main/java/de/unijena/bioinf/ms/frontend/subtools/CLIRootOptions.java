@@ -90,7 +90,7 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
 
     }
 
-    @Option(names = {"--threads", "--cores", "--processors"}, description = "Number of simultaneous worker thread to be used for compute intense workload. If not specified SIRIUS chooses a reasonable number based you CPU specs.", order = 10)
+    @Option(names = {"--threads", "--cores", "--processors"}, description = "Number of simultaneous worker threads to be used for compute-intensive workloads. If not specified, SIRIUS chooses a reasonable number based on your CPU specs.", order = 10)
     public void setNumOfCores(int numOfCores) {
         if (numOfCores < 3) {
             LOG.warn("Number of Cores must be at least 3. Specified: {}. Using 3 instead.", numOfCores);
@@ -104,7 +104,7 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
         LOG.info("Adjusted JobManager CPU threads to '{}' by command line.", SiriusJobs.getGlobalJobManager().getCPUThreads());
     }
 
-    @Option(names = {"--buffer", "--instance-buffer"}, defaultValue = "0", description = "Number of instances that will be loaded into the Memory. A larger buffer ensures that there are enough instances available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all instances immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
+    @Option(names = {"--buffer", "--instance-buffer"}, defaultValue = "0", description = "Number of instances that will be loaded into the Memory. A larger buffer ensures that there are enough instances available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all instances immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because these tools may have to load compounds simultaneously into memory.", order = 20)
     public void setInitialInstanceBuffer(int initialInstanceBuffer) {
         this.instanceBuffer = initialInstanceBuffer;
         if (instanceBuffer == 0) {
@@ -116,20 +116,20 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
 
     private Integer instanceBuffer = null;
 
-    @Option(names = {"--workspace"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius-<MINOR_VERSION>", order = 30)
+    @Option(names = {"--workspace"}, description = "Specify sirius workspace location. This is the directory for storing property files, logs, databases and caches. This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius-<MINOR_VERSION>", order = 30)
     public void setWorkspace(File ws) {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.ws.location", ws == null ? null : ws.getAbsolutePath());
     }
 
     public Files workspace; //todo change in application core
 
-    @Option(names = "--recompute", descriptionKey = "RecomputeResults", description = "Recompute results of ALL tools where results are already present. Per default already present results will be preserved and the instance will be skipped for the corresponding Task/Tool", order = 100)
+    @Option(names = "--recompute", descriptionKey = "RecomputeResults", description = "Recompute results of ALL tools where results are already present. By default, already present results will be preserved and the instance will be skipped for the corresponding task/tool", order = 100)
     public void setRecompute(boolean para) throws Exception {
         defaultConfigOptions.changeOption("RecomputeResults", para);
     }
 
     @Deprecated(forRemoval = true) //sirius 7
-    @Option(names = "--maxmz", description = "[DEPRECATED] Only considers compounds with a precursor m/z lower or equal [--maxmz] when importing peak-list data into project. All other features in the input data will be skipped.", defaultValue = "Infinity", order = 110, hidden = true)
+    @Option(names = "--maxmz", description = "[DEPRECATED] Only considers compounds with a precursor m/z lower than or equal to [--maxmz] when importing peak-list data into project. All other features in the input data will be skipped.", defaultValue = "Infinity", order = 110, hidden = true)
     public double maxMz;
 
 

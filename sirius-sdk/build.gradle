@@ -89,9 +89,15 @@ openApiGenerate {
     configFile.set("$projectDir/openapi-gen-config.json")
 
     typeMappings.set([
-            "AnyValue": "Object"
+            "AnyValue": "Object",
+            // The error responses reference ProblemDetail. Map it onto Spring's own class instead of generating
+            // a duplicate model: spring-webflux is on every consumer's classpath anyway, and SiriusClient
+            // .unwrapErrorResponse() already returns org.springframework.http.ProblemDetail. Generating a second
+            // type of the same name in our model package would only be something to trip over.
+            "ProblemDetail": "org.springframework.http.ProblemDetail"
     ])
     importMappings.set([
-            "Object": "java.lang.Object"
+            "Object": "java.lang.Object",
+            "ProblemDetail": "org.springframework.http.ProblemDetail"
     ])
 }

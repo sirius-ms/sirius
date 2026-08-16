@@ -77,7 +77,7 @@ public class ProjectController {
     /**
      * Get project space info by its projectId.
      *
-     * @param projectId unique name/identifier tof the project-space to be accessed.
+     * @param projectId unique name/identifier of the project-space to be accessed.
      */
     @GetMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo getProject(@PathVariable String projectId, @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields) {
@@ -88,7 +88,7 @@ public class ProjectController {
      * Open an existing project-space and make it accessible via the given projectId.
      *
      * @param projectId     unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
-     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by its projectId from default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      */
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo openProject(@PathVariable String projectId,
@@ -122,12 +122,12 @@ public class ProjectController {
     }
 
     /**
-     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.
+     * Close project-space and remove it from the application. The project will NOT be deleted from disk.
      * <p>
-     * ATTENTION: This will cancel and remove all jobs running on this Project before closing it.
+     * ATTENTION: This will cancel and remove all jobs running on this project before closing it.
      * If there are many jobs, this might take some time.
      *
-     * @param projectId unique name/identifier of the  project-space to be closed.
+     * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      */
     @DeleteMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -141,8 +141,8 @@ public class ProjectController {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job.
-     * Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project as background job.
+     * Possible formats: mzML, mzXML.
      *
      * @param projectId    Project-space to import into.
      * @param inputFiles   Files to import into project.
@@ -150,8 +150,8 @@ public class ProjectController {
      * @param optFields    Set of optional fields to be included. Use 'none' only to override defaults.
      * @return the import job.
      */
-    @Operation(summary = "Import and Align full MS-Runs from various formats into the specified project as background job.",
-            description = "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)",
+    @Operation(summary = "Import and align full MS runs from various formats into the specified project as background job.",
+            description = "Import and align full MS runs from various formats into the specified project as background job.\n Possible formats: mzML, mzXML.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
                             mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -184,14 +184,14 @@ public class ProjectController {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project
-     * Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project
+     * Possible formats: mzML, mzXML.
      *
      * @param projectId    Project-space to import into.
      * @param inputFiles   Files to import into project.
      * @param parameters   Parameters for feature alignment and feature finding.
      */
-    @Operation(summary = "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)",
+    @Operation(summary = "Import and align full MS runs from various formats into the specified project\n Possible formats: mzML, mzXML.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
                             mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -218,15 +218,16 @@ public class ProjectController {
 
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.
-     * Possible formats (mzML, mzXML)
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project as background job.
+     * Possible formats: mzML, mzXML.
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
      * not on the system where the client SDK is running.
-     * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
+     * It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * API to allow for more flexible use cases. Use 'ms-data-files-job' instead.
+     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later
+     * versions of this API to allow for more flexible use cases. Use 'ms-data-files-job' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
@@ -260,15 +261,16 @@ public class ProjectController {
     }
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project
-     * Possible formats (mzML, mzXML)
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project
+     * Possible formats: mzML, mzXML.
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
      * not on the system where the client SDK is running.
-     * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
+     * It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * API to allow for more flexible use cases. Use 'ms-data-files' instead.
+     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later
+     * versions of this API to allow for more flexible use cases. Use 'ms-data-files' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
@@ -296,7 +298,7 @@ public class ProjectController {
 
     /**
      * Import ms/ms data from the given format into the specified project-space as background job.
-     * Possible formats (ms, mgf, cef, msp)
+     * Possible formats: ms, mgf, cef, msp.
      *
      * @param projectId project-space to import into.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
@@ -321,7 +323,7 @@ public class ProjectController {
 
     /**
      * Import already preprocessed ms/ms data from various formats into the specified project
-     * Possible formats (ms, mgf, cef, msp)
+     * Possible formats: ms, mgf, cef, msp.
      *
      * @param projectId  project-space to import into.
      * @param inputFiles files to import into project
@@ -343,14 +345,15 @@ public class ProjectController {
 
     /**
      * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.
-     * Possible formats (ms, mgf, cef, msp)
+     * Possible formats: ms, mgf, cef, msp.
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
      * not on the system where the client SDK is running.
-     * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
+     * It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * API to allow for more flexible use cases. Use 'preprocessed-data-files-job' instead.
+     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later
+     * versions of this API to allow for more flexible use cases. Use 'preprocessed-data-files-job' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
@@ -379,14 +382,15 @@ public class ProjectController {
 
     /**
      * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project
-     * Possible formats (ms, mgf, cef, msp)
+     * Possible formats: ms, mgf, cef, msp.
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
      * not on the system where the client SDK is running.
-     * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
+     * It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * API to allow for more flexible use cases. Use 'preprocessed-data-files' instead.
+     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later
+     * versions of this API to allow for more flexible use cases. Use 'preprocessed-data-files' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
@@ -419,7 +423,7 @@ public class ProjectController {
      *
      * @param projectId           unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
-     * @param copyProjectId       optional id/mame of the newly created project (copy). If given the project will be opened.
+     * @param copyProjectId       optional id/name of the newly created project (copy). If given the project will be opened.
      * @return ProjectInfo of the newly created project if opened (copyProjectId != null) or the project info of
      * the source project otherwise
      */

@@ -36,7 +36,7 @@ public class FragmentNode {
     String molecularFormula;
 
     /**
-     * This combines the ionization plus adduct of the fragment. In contrast to the {@link FragmentationTree}s adduct,
+     * This combines the ionization plus adduct of the fragment. In contrast to the {@code FragmentationTree}'s adduct,
      * this adduct may not include any in-source loss.
      */
     @Schema(nullable = true)

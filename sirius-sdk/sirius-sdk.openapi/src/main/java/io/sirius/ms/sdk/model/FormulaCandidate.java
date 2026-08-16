@@ -186,7 +186,7 @@ public class FormulaCandidate {
   }
 
   /**
-   * molecular formula of this formula candidate
+   * Molecular formula of this formula candidate.
    * @return molecularFormula
    */
   @jakarta.annotation.Nullable

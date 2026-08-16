@@ -176,7 +176,7 @@ public class LipidAnnotation {
   }
 
   /**
-   * True of the formula composition of the chains could not be determined from the MS/MS.
+   * True if the formula composition of the chains could not be determined from the MS/MS.
    * @return chainsUnknown
    */
   @jakarta.annotation.Nullable

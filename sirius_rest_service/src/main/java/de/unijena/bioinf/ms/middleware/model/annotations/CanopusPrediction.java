@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Container class that holds the CANOPUS compound class predictions for alle predictable compound classes.
+ * Container class that holds the CANOPUS compound class predictions for all predictable compound classes.
  * This is the full CANOPUS result.
  */
 @Getter

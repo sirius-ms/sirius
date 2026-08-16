@@ -395,8 +395,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
             if (!isBatchDialog) {
                 if (hasMs1AndIsSingleMode) {
                     detectElementsAndLoad(ecs.getFirst(), allAutoDetectableElements, elementFilterEnforcedTextBox);
-                    buttonAutodetect.setToolTipText("Element detection has already been performed once opened the compute dialog."
-                            + "Auto detectable element are: " + join(allAutoDetectableElements)
+                    buttonAutodetect.setToolTipText("Element detection was already performed when the compute dialog was opened."
+                            + "Auto-detectable elements are: " + join(allAutoDetectableElements)
                             + ".\nIf no elements can be detected the following fallback is used: " + formulaSettings.getFallbackAlphabet().toString(",")
                             + ".\nAdditionally, the following default elements are always used: " + getEnforedElements(formulaSettings, allAutoDetectableElements).toString(","));
                 } else {
@@ -560,7 +560,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             setText("Re-detect");
             if (!isActivatable) {
                 super.setEnabled(false);
-                setToolTipText("Element detection requires MS1 spectrum with isotope pattern. " +
+                setToolTipText("Element detection requires an MS1 spectrum with an isotope pattern. " +
                         "\nSuggesting default set of elements.");
             }
         }

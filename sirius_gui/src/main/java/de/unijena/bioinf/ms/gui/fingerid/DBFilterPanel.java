@@ -135,7 +135,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
                     checkbox.setToolTipText("Was selected for searching");
                 } else if (fallbackDBs.contains(checkbox.getName())) {
                     checkbox.setForeground(fallbackDbBgColor);
-                    checkbox.setToolTipText("Was used as to expand search space by expansive search.");
+                    checkbox.setToolTipText("Was used to expand the search space by expansive search.");
                 } else {
                     checkbox.setForeground(null);
                     checkbox.setToolTipText(null);

@@ -127,7 +127,7 @@ public class BioTransformerParameters {
   }
 
   /**
-   * \&quot;Specify if you want to enable the retrieving from database (HMDB) feature.\&quot;
+   * Specify whether structures should additionally be retrieved from the HMDB database.
    * @return useDB
    */
   @jakarta.annotation.Nullable

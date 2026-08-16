@@ -123,7 +123,7 @@ Class | Method | HTTP request | Description
 *CompoundStatisticsApi* | [**deleteCompoundFoldChangesExperimental**](docs/CompoundStatisticsApi.md#deleteCompoundFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/compounds/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes
 *CompoundStatisticsApi* | [**getCompoundFoldChangeTableExperimental**](docs/CompoundStatisticsApi.md#getCompoundFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
 *CompoundStatisticsApi* | [**getFoldChangesByCompoundExperimental**](docs/CompoundStatisticsApi.md#getFoldChangesByCompoundExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges/{objectId} | [EXPERIMENTAL] List all fold changes that are associated with an object
-*CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features.
+*CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import compounds and their contained features.
 *CompoundsApi* | [**addTagsToCompoundExperimental**](docs/CompoundsApi.md#addTagsToCompoundExperimental) | **PUT** /api/projects/{projectId}/compounds/tags/{compoundId} | [EXPERIMENTAL] Tags with the same name will be overwritten
 *CompoundsApi* | [**addTagsToCompoundsExperimental**](docs/CompoundsApi.md#addTagsToCompoundsExperimental) | **PUT** /api/projects/{projectId}/compounds/tags | [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project
 *CompoundsApi* | [**deleteCompound**](docs/CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
@@ -147,7 +147,7 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**addTagsToAlignedFeaturesExperimental**](docs/FeaturesApi.md#addTagsToAlignedFeaturesExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**deleteAlignedFeatures**](docs/FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space.
-*FeaturesApi* | [**deleteAlignedFeaturesByQueryExperimental**](docs/FeaturesApi.md#deleteAlignedFeaturesByQueryExperimental) | **PUT** /api/projects/{projectId}/aligned-features/delete-by-query | Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
+*FeaturesApi* | [**deleteAlignedFeaturesByQuery**](docs/FeaturesApi.md#deleteAlignedFeaturesByQuery) | **PUT** /api/projects/{projectId}/aligned-features/delete-by-query | Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
 *FeaturesApi* | [**getAdductNetworkWithMergedTracesExperimental**](docs/FeaturesApi.md#getAdductNetworkWithMergedTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
 *FeaturesApi* | [**getAlignedFeature**](docs/FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**getAlignedFeatureQualityExperimental**](docs/FeaturesApi.md#getAlignedFeatureQualityExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report | [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
@@ -197,14 +197,14 @@ Class | Method | HTTP request | Description
 *InfoApi* | [**getInfo**](docs/InfoApi.md#getInfo) | **GET** /api/info | 
 *JobsApi* | [**deleteJob**](docs/JobsApi.md#deleteJob) | **DELETE** /api/projects/{projectId}/jobs/{jobId} | Delete job.
 *JobsApi* | [**deleteJobConfig**](docs/JobsApi.md#deleteJobConfig) | **DELETE** /api/job-configs/{name} | Delete job configuration with given name.
-*JobsApi* | [**deleteJobs**](docs/JobsApi.md#deleteJobs) | **DELETE** /api/projects/{projectId}/jobs | * Delete ALL jobs.
+*JobsApi* | [**deleteJobs**](docs/JobsApi.md#deleteJobs) | **DELETE** /api/projects/{projectId}/jobs | Delete ALL jobs.
 *JobsApi* | [**getCommand**](docs/JobsApi.md#getCommand) | **POST** /api/job-configs/get-command | Get a CLI command for the given job configuration.
 *JobsApi* | [**getDefaultJobConfig**](docs/JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration
 *JobsApi* | [**getJob**](docs/JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available).
 *JobsApi* | [**getJobConfig**](docs/JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name.
 *JobsApi* | [**getJobConfigNames**](docs/JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | [DEPRECATED] Get all (non-default) job configuration names  
 *JobsApi* | [**getJobConfigs**](docs/JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations
-*JobsApi* | [**getJobs**](docs/JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available)
+*JobsApi* | [**getJobs**](docs/JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | [DEPRECATED] Get list of all available jobs with information such as current state and progress (if available)
 *JobsApi* | [**getJobsPage**](docs/JobsApi.md#getJobsPage) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available).
 *JobsApi* | [**hasJobs**](docs/JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs | 
 *JobsApi* | [**saveJobConfig**](docs/JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name.
@@ -233,14 +233,14 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**getFingerIdData**](docs/ProjectsApi.md#getFingerIdData) | **GET** /api/projects/{projectId}/fingerid-data | Get CSI:FingerID fingerprint (prediction vector) definition
 *ProjectsApi* | [**getProject**](docs/ProjectsApi.md#getProject) | **GET** /api/projects/{projectId} | Get project space info by its projectId.
 *ProjectsApi* | [**getProjects**](docs/ProjectsApi.md#getProjects) | **GET** /api/projects | List opened project spaces.
-*ProjectsApi* | [**importMsRunData**](docs/ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
-*ProjectsApi* | [**importMsRunDataAsJob**](docs/ProjectsApi.md#importMsRunDataAsJob) | **POST** /api/projects/{projectId}/import/ms-data-files-job | Import and Align full MS-Runs from various formats into the specified project as background job.
-*ProjectsApi* | [**importMsRunDataAsJobLocally**](docs/ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/import/ms-data-local-files-job | [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job
-*ProjectsApi* | [**importMsRunDataLocally**](docs/ProjectsApi.md#importMsRunDataLocally) | **POST** /api/projects/{projectId}/import/ms-local-data-files | [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
-*ProjectsApi* | [**importPreprocessedData**](docs/ProjectsApi.md#importPreprocessedData) | **POST** /api/projects/{projectId}/import/preprocessed-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
+*ProjectsApi* | [**importMsRunData**](docs/ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.
+*ProjectsApi* | [**importMsRunDataAsJob**](docs/ProjectsApi.md#importMsRunDataAsJob) | **POST** /api/projects/{projectId}/import/ms-data-files-job | Import and align full MS runs from various formats into the specified project as background job.
+*ProjectsApi* | [**importMsRunDataAsJobLocally**](docs/ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/import/ms-data-local-files-job | [DEPRECATED] Import and align full MS runs from various formats into the specified project as background job
+*ProjectsApi* | [**importMsRunDataLocally**](docs/ProjectsApi.md#importMsRunDataLocally) | **POST** /api/projects/{projectId}/import/ms-local-data-files | [DEPRECATED] Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML
+*ProjectsApi* | [**importPreprocessedData**](docs/ProjectsApi.md#importPreprocessedData) | **POST** /api/projects/{projectId}/import/preprocessed-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp.
 *ProjectsApi* | [**importPreprocessedDataAsJob**](docs/ProjectsApi.md#importPreprocessedDataAsJob) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-job | Import ms/ms data from the given format into the specified project-space as background job.
 *ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
-*ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
+*ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp
 *ProjectsApi* | [**openProject**](docs/ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
 *ReactionsApi* | [**addReaction**](docs/ReactionsApi.md#addReaction) | **POST** /api/reactions/library | [EXPERIMENTAL] Add a new reaction to the library.
 *ReactionsApi* | [**addSequence**](docs/ReactionsApi.md#addSequence) | **POST** /api/reactions/sequences/library | [EXPERIMENTAL] Add a new reaction sequence to the library.
@@ -260,17 +260,17 @@ Class | Method | HTTP request | Description
 *RunsApi* | [**getTagsForRunExperimental**](docs/RunsApi.md#getTagsForRunExperimental) | **GET** /api/projects/{projectId}/runs/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Run
 *RunsApi* | [**removeTagFromRunExperimental**](docs/RunsApi.md#removeTagFromRunExperimental) | **DELETE** /api/projects/{projectId}/runs/tags/{runId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the run with the specified ID in the specified project-space
 *SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | [DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.
-*SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | 
-*SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | 
-*SearchableDatabasesApi* | [**getDatabase**](docs/SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} | 
-*SearchableDatabasesApi* | [**getDatabases**](docs/SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases | 
+*SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | Create a new, empty custom database
+*SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | List only the custom databases, that is the structure databases and spectral libraries the user has  created or added.
+*SearchableDatabasesApi* | [**getDatabase**](docs/SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} | Get a single searchable database by its id.
+*SearchableDatabasesApi* | [**getDatabases**](docs/SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases | List all searchable databases, both the ones included in SIRIUS and the custom ones added by the user
 *SearchableDatabasesApi* | [**getDownloadableDatabases**](docs/SearchableDatabasesApi.md#getDownloadableDatabases) | **GET** /api/databases/downloadable | Get list of curated custom databases downloadable from the SIRIUS web service for local use
-*SearchableDatabasesApi* | [**getIncludedDatabases**](docs/SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included | 
-*SearchableDatabasesApi* | [**getStructuresExperimental**](docs/SearchableDatabasesApi.md#getStructuresExperimental) | **GET** /api/databases/{databaseId}/structures | 
+*SearchableDatabasesApi* | [**getIncludedDatabases**](docs/SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included | List only the databases that ship with SIRIUS, such as PubChem and the bio databases.
+*SearchableDatabasesApi* | [**getStructures**](docs/SearchableDatabasesApi.md#getStructures) | **GET** /api/databases/{databaseId}/structures | [EXPERIMENTAL] Page through the structures contained in a custom database
 *SearchableDatabasesApi* | [**importIntoDatabase**](docs/SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database.
-*SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
-*SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | 
-*TagsApi* | [**addGroup**](docs/TagsApi.md#addGroup) | **POST** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] TagGroup tags in the project
+*SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | Remove a custom database from this SIRIUS instance, and optionally delete it from disk
+*SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | Change the settings of an existing custom database
+*TagsApi* | [**addGroup**](docs/TagsApi.md#addGroup) | **POST** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Group tags in the project
 *TagsApi* | [**addPossibleValuesToTagDefinition**](docs/TagsApi.md#addPossibleValuesToTagDefinition) | **PATCH** /api/projects/{projectId}/tags/{tagName} | [EXPERIMENTAL] Add a possible value to the tag definition in the project
 *TagsApi* | [**createTags**](docs/TagsApi.md#createTags) | **PUT** /api/projects/{projectId}/tags | [EXPERIMENTAL] Add tags to the project
 *TagsApi* | [**deleteGroup**](docs/TagsApi.md#deleteGroup) | **DELETE** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space
@@ -379,6 +379,7 @@ Class | Method | HTTP request | Description
  - [ParentPeak](docs/ParentPeak.md)
  - [PeakAnnotation](docs/PeakAnnotation.md)
  - [PeakPair](docs/PeakPair.md)
+ - [ProblemDetail](docs/ProblemDetail.md)
  - [ProjectChangeEvent](docs/ProjectChangeEvent.md)
  - [ProjectEventType](docs/ProjectEventType.md)
  - [ProjectInfo](docs/ProjectInfo.md)
