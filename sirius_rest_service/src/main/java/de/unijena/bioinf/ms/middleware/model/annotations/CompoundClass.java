@@ -74,7 +74,7 @@ public class CompoundClass {
     @Schema(nullable = true)
     protected Integer id;
     /**
-     * prediction probability
+     * Prediction probability.
      */
     protected Double probability;
 

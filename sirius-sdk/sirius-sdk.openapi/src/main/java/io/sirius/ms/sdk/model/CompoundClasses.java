@@ -163,7 +163,7 @@ public class CompoundClasses {
   }
 
   /**
-   * Most likely ClassyFire lineage from ordered from least specific to most specific class  classyFireLineage.get(classyFireLineage.size() - 1) gives the most specific ClassyFire compound class annotation
+   * Most likely ClassyFire lineage, ordered from least specific to most specific class  classyFireLineage.get(classyFireLineage.size() - 1) gives the most specific ClassyFire compound class annotation
    * @return classyFireLineage
    */
   @jakarta.annotation.Nullable
@@ -196,7 +196,7 @@ public class CompoundClasses {
   }
 
   /**
-   * Alternative ClassyFire classes with high probability that do not fit into the linage
+   * Alternative ClassyFire classes with high probability that do not fit into the lineage
    * @return classyFireAlternatives
    */
   @jakarta.annotation.Nullable

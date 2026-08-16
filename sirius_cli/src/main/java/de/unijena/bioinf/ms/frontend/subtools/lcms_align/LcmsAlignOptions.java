@@ -47,7 +47,7 @@ import java.util.regex.Pattern;
 @CommandLine.Command(name = "lcms-align", aliases = {"A"}, description = "@|bold <PREPROCESSING>|@ Align and merge compounds of multiple LCMS Runs. Use this tool if you want to import from mzML/mzXml. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? extends ProjectSpaceManager>> {
 
-    @CommandLine.Option(names={"--in-memory"}, description = "Keep the merged traces and alignments in memory. This might speed up the preprocessing, but increases the RAM requirement by a significant amount..", hidden = true)
+    @CommandLine.Option(names={"--in-memory"}, description = "Keep the merged traces and alignments in memory. This might speed up the preprocessing, but increases the RAM requirement by a significant amount.", hidden = true)
     public boolean inMemory;
 
     @Override
@@ -76,7 +76,7 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
     public boolean noAlign;
 
     @CommandLine.Option(names={"--noise-intensity"},
-            description="Intensity under which every peak is considered to be likely noise. If not specified, the noise level is detected automatically. We recommend to not set this parameter except when the automated detected value is way off the real noise level.",
+            description="Intensity under which every peak is considered to be likely noise. If not specified, the noise level is detected automatically. We recommend not setting this parameter unless the automatically detected value is far off the real noise level.",
             defaultValue = "-1"
 
     )
@@ -84,14 +84,14 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
 
     static class SignalToNoiseOptions {
         @CommandLine.Option(names={"--min-snr"},
-                description="Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory.",
+                description="Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensity features we recommend a min-snr of 2, but this will increase runtime and storage requirements.",
                 defaultValue = "3"
 
         )
         public double minSNR;
 
         @CommandLine.Option(names={"--sensitive-mode"},
-                description="In sensitive mode, SIRIUS will detect smaller and low sensitive features even when they have no MS/MS associated. This uses a lower min-snr and will increase running time and storage memory.",
+                description="In sensitive mode, SIRIUS will detect smaller and less intense features even when they have no MS/MS associated. This uses a lower min-snr and will increase runtime and storage requirements.",
                 required = false
         )
         public boolean sensitive;
@@ -102,14 +102,14 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
 
 
     @CommandLine.Option(names={"--align-rt-max"},
-            description="Maximal allowed retention time deviation for aligning features in seconds. If not specified, this parameter is estimated from data. We recommend to not set this parameter except when the automatically detected value is very wrong.",
+            description="Maximum allowed retention time deviation for aligning features in seconds. If not specified, this parameter is estimated from the data. We recommend not setting this parameter unless the automatically detected value is clearly wrong.",
             defaultValue = "-1"
 
     )
     public double alignRtMax;
 
     @CommandLine.Option(names={"--align-ppm-max"},
-            description="Maximal allowed mass deviation for aligning features in ppm. If not specified, this parameter is estimated from data. We recommend to not set this parameter except when the automatically detected value is very wrong.",
+            description="Maximum allowed mass deviation for aligning features in ppm. If not specified, this parameter is estimated from the data. We recommend not setting this parameter unless the automatically detected value is clearly wrong.",
             defaultValue = "-1"
 
     )

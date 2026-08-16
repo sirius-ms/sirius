@@ -45,11 +45,11 @@ public class SimilarityMatrixOptions implements StandaloneTool<SimilarityMatrixW
     protected File useFtblast;
 
     @CommandLine.Option(names = "--tanimoto",
-            description = {"compute fingerprint similarity between all compounds in the dataset"})
+            description = {"Compute fingerprint similarity between all compounds in the dataset"})
     protected boolean useTanimoto;
 
     @CommandLine.Option(names = "--tanimoto-canopus",
-            description = {"compute canopus fingerprint similarity between all compounds in the dataset"})
+            description = {"Compute CANOPUS fingerprint similarity between all compounds in the dataset"})
     protected boolean useCanopus;
 
     @CommandLine.Option(names = "--cosine",

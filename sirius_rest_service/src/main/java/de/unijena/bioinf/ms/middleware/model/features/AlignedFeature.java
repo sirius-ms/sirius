@@ -118,12 +118,12 @@ public class AlignedFeature implements Taggable {
     @NotNull
     protected DataQuality quality = DataQuality.NOT_APPLICABLE;
     /**
-     * If true, the feature has at lease one MS1 spectrum
+     * If true, the feature has at least one MS1 spectrum
      */
     @IndexField
     protected boolean hasMs1;
     /**
-     * If true, the feature has at lease one MS/MS spectrum
+     * If true, the feature has at least one MS/MS spectrum
      */
     @IndexField
     protected boolean hasMsMs;
@@ -140,7 +140,7 @@ public class AlignedFeature implements Taggable {
      * structureAnnotation is returned. Otherwise, it's the FormulaCandidate with the highest SiriusScore is returned.
      * CANOPUS Compound classes correspond to the FormulaCandidate no matter how it was selected
      *
-     * Null if it was not requested und non-null otherwise.
+     * Null if it was not requested and non-null otherwise.
      */
     @IndexField
     @Schema(nullable = true)
@@ -151,7 +151,7 @@ public class AlignedFeature implements Taggable {
      * The FormulaCandidate with the highest SiriusScore is returned. MSNovelist structureAnnotation and
      * CANOPUS compoundClasses correspond to the FormulaCandidate.
      *
-     * Null if it was not requested und non-null otherwise.
+     * Null if it was not requested and non-null otherwise.
      */
     @Schema(nullable = true)
     protected FeatureAnnotations topAnnotationsDeNovo;
@@ -167,7 +167,7 @@ public class AlignedFeature implements Taggable {
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, description =
                     "Specifies which tools have been executed for this feature. " +
                     "Can be used to estimate which results can be expected. " +
-                            "Null if it was not requested und non-null otherwise.")
+                            "Null if it was not requested and non-null otherwise.")
     @JsonIgnoreProperties(value = { "alignedFeatureId" })
     protected ComputedSubtools computedTools;
 
