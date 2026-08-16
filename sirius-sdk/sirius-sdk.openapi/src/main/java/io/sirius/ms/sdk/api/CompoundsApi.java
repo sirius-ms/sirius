@@ -59,9 +59,12 @@ public class CompoundsApi {
     }
 
     /**
-     * Import Compounds and its contained features.
-     * Import Compounds and its contained features. Compounds and Features must not exist in the project.  Otherwise, they will exist twice.
+     * Import compounds and their contained features.
+     * Import compounds and their contained features. Compounds and features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
      * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
@@ -95,7 +98,7 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -110,9 +113,12 @@ public class CompoundsApi {
     }
 
     /**
-     * Import Compounds and its contained features.
-     * Import Compounds and its contained features. Compounds and Features must not exist in the project.  Otherwise, they will exist twice.
+     * Import compounds and their contained features.
+     * Import compounds and their contained features. Compounds and features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
      * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
@@ -127,9 +133,12 @@ public class CompoundsApi {
     }
 
     /**
-     * Import Compounds and its contained features.
-     * Import Compounds and its contained features. Compounds and Features must not exist in the project.  Otherwise, they will exist twice.
+     * Import compounds and their contained features.
+     * Import compounds and their contained features. Compounds and features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
      * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
@@ -144,9 +153,12 @@ public class CompoundsApi {
     }
 
     /**
-     * Import Compounds and its contained features.
-     * Import Compounds and its contained features. Compounds and Features must not exist in the project.  Otherwise, they will exist twice.
+     * Import compounds and their contained features.
+     * Import compounds and their contained features. Compounds and features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
      * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
@@ -163,6 +175,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Tags with the same name will be overwritten
      * [EXPERIMENTAL] Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param compoundId compound (group of ion identities) to add tags to.
      * @param tag tags to add.
@@ -195,7 +210,7 @@ public class CompoundsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -213,6 +228,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Tags with the same name will be overwritten
      * [EXPERIMENTAL] Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param compoundId compound (group of ion identities) to add tags to.
      * @param tag tags to add.
@@ -228,6 +246,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Tags with the same name will be overwritten
      * [EXPERIMENTAL] Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param compoundId compound (group of ion identities) to add tags to.
      * @param tag tags to add.
@@ -243,6 +264,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Tags with the same name will be overwritten
      * [EXPERIMENTAL] Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param compoundId compound (group of ion identities) to add tags to.
      * @param tag tags to add.
@@ -257,6 +281,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project
      * [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagSubmission tags with the id of compound (group of ion identities) they shall be added to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -298,6 +325,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project
      * [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagSubmission tags with the id of compound (group of ion identities) they shall be added to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -311,6 +341,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project
      * [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagSubmission tags with the id of compound (group of ion identities) they shall be added to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -324,6 +357,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project
      * [EXPERIMENTAL] Add tags to a compound (group of ion identities) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagSubmission tags with the id of compound (group of ion identities) they shall be added to.
      * @return ResponseSpec
@@ -337,6 +373,9 @@ public class CompoundsApi {
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param compoundId identifier of the compound to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -377,6 +416,9 @@ public class CompoundsApi {
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param compoundId identifier of the compound to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -390,6 +432,9 @@ public class CompoundsApi {
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param compoundId identifier of the compound to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -403,6 +448,9 @@ public class CompoundsApi {
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param compoundId identifier of the compound to delete.
      * @return ResponseSpec
@@ -416,6 +464,9 @@ public class CompoundsApi {
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -450,7 +501,7 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -466,6 +517,9 @@ public class CompoundsApi {
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -483,6 +537,9 @@ public class CompoundsApi {
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -500,6 +557,9 @@ public class CompoundsApi {
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -516,6 +576,9 @@ public class CompoundsApi {
      * Returns the full quantification table of compounds
      * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.  &lt;p&gt;  Compounds are not indexed yet, so the optional search query may only refer to the compound id, e.g.  &lt;code&gt;compoundId:1 OR compoundId:2&lt;/code&gt; or &lt;code&gt;NOT compoundId:3&lt;/code&gt;. Such a query is answered with the same  semantics the search index would apply. Any query referring to other fields is rejected. Omit the query to  quantify all compounds.
      * <p><b>200</b> - Quant table of the compounds of this project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
@@ -544,7 +607,7 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -560,6 +623,9 @@ public class CompoundsApi {
      * Returns the full quantification table of compounds
      * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.  &lt;p&gt;  Compounds are not indexed yet, so the optional search query may only refer to the compound id, e.g.  &lt;code&gt;compoundId:1 OR compoundId:2&lt;/code&gt; or &lt;code&gt;NOT compoundId:3&lt;/code&gt;. Such a query is answered with the same  semantics the search index would apply. Any query referring to other fields is rejected. Omit the query to  quantify all compounds.
      * <p><b>200</b> - Quant table of the compounds of this project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
@@ -576,6 +642,9 @@ public class CompoundsApi {
      * Returns the full quantification table of compounds
      * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.  &lt;p&gt;  Compounds are not indexed yet, so the optional search query may only refer to the compound id, e.g.  &lt;code&gt;compoundId:1 OR compoundId:2&lt;/code&gt; or &lt;code&gt;NOT compoundId:3&lt;/code&gt;. Such a query is answered with the same  semantics the search index would apply. Any query referring to other fields is rejected. Omit the query to  quantify all compounds.
      * <p><b>200</b> - Quant table of the compounds of this project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
@@ -592,6 +661,9 @@ public class CompoundsApi {
      * Returns the full quantification table of compounds
      * Returns the full quantification table of compounds.  &lt;p&gt;  The quantification table contains the quantities of the compounds within all runs they are contained in.  Rows refer to compounds, columns to runs, both given as ids and names.  &lt;p&gt;  Compounds are not indexed yet, so the optional search query may only refer to the compound id, e.g.  &lt;code&gt;compoundId:1 OR compoundId:2&lt;/code&gt; or &lt;code&gt;NOT compoundId:3&lt;/code&gt;. Such a query is answered with the same  semantics the search index would apply. Any query referring to other fields is rejected. Omit the query to  quantify all compounds.
      * <p><b>200</b> - Quant table of the compounds of this project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional query in lucene syntax selecting compounds by id. Omit this parameter to quantify all compounds.
      * @param type quantification type.
@@ -607,6 +679,9 @@ public class CompoundsApi {
      * [INTERNAL] Returns a quantification table that contains the given compound as its only row
      * [INTERNAL] Returns a quantification table that contains the given compound as its only row.  &lt;p&gt;  The columns of the row refer to the runs the compound has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId compound which should be read out
      * @param type quantification type.
@@ -641,7 +716,7 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -657,6 +732,9 @@ public class CompoundsApi {
      * [INTERNAL] Returns a quantification table that contains the given compound as its only row
      * [INTERNAL] Returns a quantification table that contains the given compound as its only row.  &lt;p&gt;  The columns of the row refer to the runs the compound has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId compound which should be read out
      * @param type quantification type.
@@ -673,6 +751,9 @@ public class CompoundsApi {
      * [INTERNAL] Returns a quantification table that contains the given compound as its only row
      * [INTERNAL] Returns a quantification table that contains the given compound as its only row.  &lt;p&gt;  The columns of the row refer to the runs the compound has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId compound which should be read out
      * @param type quantification type.
@@ -689,6 +770,9 @@ public class CompoundsApi {
      * [INTERNAL] Returns a quantification table that contains the given compound as its only row
      * [INTERNAL] Returns a quantification table that contains the given compound as its only row.  &lt;p&gt;  The columns of the row refer to the runs the compound has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId compound which should be read out
      * @param type quantification type.
@@ -704,6 +788,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Returns the traces of the given compound
      * [EXPERIMENTAL] Returns the traces of the given compound.  &lt;p&gt;  A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
      * <p><b>200</b> - Traces of the given compound.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId compound which intensities should be read out
      * @param featureId The featureId parameter
@@ -734,7 +821,7 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "featureId", featureId));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -750,6 +837,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Returns the traces of the given compound
      * [EXPERIMENTAL] Returns the traces of the given compound.  &lt;p&gt;  A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
      * <p><b>200</b> - Traces of the given compound.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId compound which intensities should be read out
      * @param featureId The featureId parameter
@@ -765,6 +855,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Returns the traces of the given compound
      * [EXPERIMENTAL] Returns the traces of the given compound.  &lt;p&gt;  A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
      * <p><b>200</b> - Traces of the given compound.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId compound which intensities should be read out
      * @param featureId The featureId parameter
@@ -780,6 +873,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Returns the traces of the given compound
      * [EXPERIMENTAL] Returns the traces of the given compound.  &lt;p&gt;  A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
      * <p><b>200</b> - Traces of the given compound.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param compoundId compound which intensities should be read out
      * @param featureId The featureId parameter
@@ -794,6 +890,9 @@ public class CompoundsApi {
      * [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space
      * [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space.  &lt;p&gt;  [DEPRECATED] Use /compounds/page instead. Loading all compounds at once does not scale for large projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -824,7 +923,7 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -840,6 +939,9 @@ public class CompoundsApi {
      * [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space
      * [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space.  &lt;p&gt;  [DEPRECATED] Use /compounds/page instead. Loading all compounds at once does not scale for large projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -856,6 +958,9 @@ public class CompoundsApi {
      * [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space
      * [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space.  &lt;p&gt;  [DEPRECATED] Use /compounds/page instead. Loading all compounds at once does not scale for large projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -872,6 +977,9 @@ public class CompoundsApi {
      * [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space
      * [DEPRECATED] List of all available compounds (group of ion identities) in the given project-space.  &lt;p&gt;  [DEPRECATED] Use /compounds/page instead. Loading all compounds at once does not scale for large projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -887,6 +995,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - tagged compounds (group of ion identities)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName tag group name.
      * @param page Zero-based page index (0..N)
@@ -927,7 +1038,7 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -943,6 +1054,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - tagged compounds (group of ion identities)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName tag group name.
      * @param page Zero-based page index (0..N)
@@ -963,6 +1077,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - tagged compounds (group of ion identities)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName tag group name.
      * @param page Zero-based page index (0..N)
@@ -983,6 +1100,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - tagged compounds (group of ion identities)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName tag group name.
      * @param page Zero-based page index (0..N)
@@ -1000,8 +1120,11 @@ public class CompoundsApi {
 
     /**
      * Page of available compounds (group of ion identities) in the given project-space
-     * Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getCompoundsSearchableFields) to list the fields that can be  searched - since compound-level indexing is not implemented yet, it currently returns an empty list  (nothing searchable). The syntax below describes how queries will work once compound search is supported;  tag based fields are prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  &lt;strong&gt;Note:&lt;/strong&gt; compound-level indexing is not implemented yet, so this endpoint always reads from the  project database. Passing a non-empty &lt;code&gt;searchQuery&lt;/code&gt; is therefore not supported and responds with  405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.
+     * Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefixed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getCompoundsSearchableFields) to list the fields that can be  searched - since compound-level indexing is not implemented yet, it currently returns an empty list  (nothing searchable). The syntax below describes how queries will work once compound search is supported;  tag based fields are prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  &lt;strong&gt;Note:&lt;/strong&gt; compound-level indexing is not implemented yet, so this endpoint always reads from the  project database. Passing a non-empty &lt;code&gt;searchQuery&lt;/code&gt; is therefore not supported and responds with  405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.
      * <p><b>200</b> - tagged compounds (group of ion identities)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Not yet supported for compounds; a non-empty                      query responds with 405 METHOD_NOT_ALLOWED. Omit this parameter to page over all compounds.
      * @param page Zero-based page index (0..N)
@@ -1038,7 +1161,7 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1052,8 +1175,11 @@ public class CompoundsApi {
 
     /**
      * Page of available compounds (group of ion identities) in the given project-space
-     * Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getCompoundsSearchableFields) to list the fields that can be  searched - since compound-level indexing is not implemented yet, it currently returns an empty list  (nothing searchable). The syntax below describes how queries will work once compound search is supported;  tag based fields are prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  &lt;strong&gt;Note:&lt;/strong&gt; compound-level indexing is not implemented yet, so this endpoint always reads from the  project database. Passing a non-empty &lt;code&gt;searchQuery&lt;/code&gt; is therefore not supported and responds with  405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.
+     * Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefixed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getCompoundsSearchableFields) to list the fields that can be  searched - since compound-level indexing is not implemented yet, it currently returns an empty list  (nothing searchable). The syntax below describes how queries will work once compound search is supported;  tag based fields are prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  &lt;strong&gt;Note:&lt;/strong&gt; compound-level indexing is not implemented yet, so this endpoint always reads from the  project database. Passing a non-empty &lt;code&gt;searchQuery&lt;/code&gt; is therefore not supported and responds with  405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.
      * <p><b>200</b> - tagged compounds (group of ion identities)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Not yet supported for compounds; a non-empty                      query responds with 405 METHOD_NOT_ALLOWED. Omit this parameter to page over all compounds.
      * @param page Zero-based page index (0..N)
@@ -1072,8 +1198,11 @@ public class CompoundsApi {
 
     /**
      * Page of available compounds (group of ion identities) in the given project-space
-     * Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getCompoundsSearchableFields) to list the fields that can be  searched - since compound-level indexing is not implemented yet, it currently returns an empty list  (nothing searchable). The syntax below describes how queries will work once compound search is supported;  tag based fields are prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  &lt;strong&gt;Note:&lt;/strong&gt; compound-level indexing is not implemented yet, so this endpoint always reads from the  project database. Passing a non-empty &lt;code&gt;searchQuery&lt;/code&gt; is therefore not supported and responds with  405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.
+     * Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefixed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getCompoundsSearchableFields) to list the fields that can be  searched - since compound-level indexing is not implemented yet, it currently returns an empty list  (nothing searchable). The syntax below describes how queries will work once compound search is supported;  tag based fields are prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  &lt;strong&gt;Note:&lt;/strong&gt; compound-level indexing is not implemented yet, so this endpoint always reads from the  project database. Passing a non-empty &lt;code&gt;searchQuery&lt;/code&gt; is therefore not supported and responds with  405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.
      * <p><b>200</b> - tagged compounds (group of ion identities)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Not yet supported for compounds; a non-empty                      query responds with 405 METHOD_NOT_ALLOWED. Omit this parameter to page over all compounds.
      * @param page Zero-based page index (0..N)
@@ -1092,8 +1221,11 @@ public class CompoundsApi {
 
     /**
      * Page of available compounds (group of ion identities) in the given project-space
-     * Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getCompoundsSearchableFields) to list the fields that can be  searched - since compound-level indexing is not implemented yet, it currently returns an empty list  (nothing searchable). The syntax below describes how queries will work once compound search is supported;  tag based fields are prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  &lt;strong&gt;Note:&lt;/strong&gt; compound-level indexing is not implemented yet, so this endpoint always reads from the  project database. Passing a non-empty &lt;code&gt;searchQuery&lt;/code&gt; is therefore not supported and responds with  405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.
+     * Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefixed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getCompoundsSearchableFields) to list the fields that can be  searched - since compound-level indexing is not implemented yet, it currently returns an empty list  (nothing searchable). The syntax below describes how queries will work once compound search is supported;  tag based fields are prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  &lt;strong&gt;Note:&lt;/strong&gt; compound-level indexing is not implemented yet, so this endpoint always reads from the  project database. Passing a non-empty &lt;code&gt;searchQuery&lt;/code&gt; is therefore not supported and responds with  405 METHOD_NOT_ALLOWED. Omit the parameter to page over all compounds.
      * <p><b>200</b> - tagged compounds (group of ion identities)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Not yet supported for compounds; a non-empty                      query responds with 405 METHOD_NOT_ALLOWED. Omit this parameter to page over all compounds.
      * @param page Zero-based page index (0..N)
@@ -1113,6 +1245,9 @@ public class CompoundsApi {
      * Get all fields that can be used in the searchQuery parameter of compound endpoints
      * Get all fields that can be used in the searchQuery parameter of compound endpoints.  &lt;p&gt;  An empty list means there are no searchable fields. Since compound-level indexing is not implemented yet,  this currently always returns an empty list; it will list the searchable compound fields once compound  search is supported.
      * <p><b>200</b> - fields usable in searchQuery parameters of compound endpoints.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to read the searchable compound fields from.
      * @return List&lt;SearchableField&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1134,7 +1269,7 @@ public class CompoundsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1150,6 +1285,9 @@ public class CompoundsApi {
      * Get all fields that can be used in the searchQuery parameter of compound endpoints
      * Get all fields that can be used in the searchQuery parameter of compound endpoints.  &lt;p&gt;  An empty list means there are no searchable fields. Since compound-level indexing is not implemented yet,  this currently always returns an empty list; it will list the searchable compound fields once compound  search is supported.
      * <p><b>200</b> - fields usable in searchQuery parameters of compound endpoints.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to read the searchable compound fields from.
      * @return List&lt;SearchableField&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1163,6 +1301,9 @@ public class CompoundsApi {
      * Get all fields that can be used in the searchQuery parameter of compound endpoints
      * Get all fields that can be used in the searchQuery parameter of compound endpoints.  &lt;p&gt;  An empty list means there are no searchable fields. Since compound-level indexing is not implemented yet,  this currently always returns an empty list; it will list the searchable compound fields once compound  search is supported.
      * <p><b>200</b> - fields usable in searchQuery parameters of compound endpoints.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to read the searchable compound fields from.
      * @return ResponseEntity&lt;List&lt;SearchableField&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1176,6 +1317,9 @@ public class CompoundsApi {
      * Get all fields that can be used in the searchQuery parameter of compound endpoints
      * Get all fields that can be used in the searchQuery parameter of compound endpoints.  &lt;p&gt;  An empty list means there are no searchable fields. Since compound-level indexing is not implemented yet,  this currently always returns an empty list; it will list the searchable compound fields once compound  search is supported.
      * <p><b>200</b> - fields usable in searchQuery parameters of compound endpoints.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to read the searchable compound fields from.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1188,6 +1332,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Get all tags associated with this Compound
      * [EXPERIMENTAL] Get all tags associated with this Compound
      * <p><b>200</b> - the tags of the requested Compound
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to get from.
      * @param objectId CompoundId to get tags for.
      * @return List&lt;Tag&gt;
@@ -1215,7 +1362,7 @@ public class CompoundsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1231,6 +1378,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Get all tags associated with this Compound
      * [EXPERIMENTAL] Get all tags associated with this Compound
      * <p><b>200</b> - the tags of the requested Compound
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to get from.
      * @param objectId CompoundId to get tags for.
      * @return List&lt;Tag&gt;
@@ -1245,6 +1395,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Get all tags associated with this Compound
      * [EXPERIMENTAL] Get all tags associated with this Compound
      * <p><b>200</b> - the tags of the requested Compound
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to get from.
      * @param objectId CompoundId to get tags for.
      * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
@@ -1259,6 +1412,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Get all tags associated with this Compound
      * [EXPERIMENTAL] Get all tags associated with this Compound
      * <p><b>200</b> - the tags of the requested Compound
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to get from.
      * @param objectId CompoundId to get tags for.
      * @return ResponseSpec
@@ -1272,6 +1428,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space
      * [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param compoundId compound (group of ion identities) to delete tag from.
      * @param tagName name of the tag to delete.
@@ -1318,6 +1477,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space
      * [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param compoundId compound (group of ion identities) to delete tag from.
      * @param tagName name of the tag to delete.
@@ -1332,6 +1494,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space
      * [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param compoundId compound (group of ion identities) to delete tag from.
      * @param tagName name of the tag to delete.
@@ -1346,6 +1511,9 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space
      * [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param compoundId compound (group of ion identities) to delete tag from.
      * @param tagName name of the tag to delete.

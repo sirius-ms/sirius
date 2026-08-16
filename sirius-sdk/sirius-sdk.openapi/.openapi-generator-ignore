@@ -51,4 +51,9 @@ src/test/java/io/sirius/ms/sdk/api/GuiAdvancedApiTest.java
 src/main/java/io/sirius/ms/sdk/model/AnyValue.java
 docs/AnyValue.md
 
+# error responses are typed as org.springframework.http.ProblemDetail (see typeMappings in build.gradle),
+# so do not generate a second class of that name into our model package
+src/main/java/io/sirius/ms/sdk/model/ProblemDetail.java
+docs/ProblemDetail.md
+
 

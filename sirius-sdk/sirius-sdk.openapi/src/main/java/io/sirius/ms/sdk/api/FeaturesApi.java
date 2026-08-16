@@ -82,8 +82,11 @@ public class FeaturesApi {
 
     /**
      * Import (aligned) features into the project.
-     * Import (aligned) features into the project. Features must not exist in the project.  Otherwise, they will exist twice.
+     * Import (aligned) features into the project. Features must not exist in the project, otherwise they will be duplicated.
      * <p><b>200</b> - the Features that have been imported with specified optional fields
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
      * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
@@ -115,7 +118,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -131,8 +134,11 @@ public class FeaturesApi {
 
     /**
      * Import (aligned) features into the project.
-     * Import (aligned) features into the project. Features must not exist in the project.  Otherwise, they will exist twice.
+     * Import (aligned) features into the project. Features must not exist in the project, otherwise they will be duplicated.
      * <p><b>200</b> - the Features that have been imported with specified optional fields
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
      * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
@@ -147,8 +153,11 @@ public class FeaturesApi {
 
     /**
      * Import (aligned) features into the project.
-     * Import (aligned) features into the project. Features must not exist in the project.  Otherwise, they will exist twice.
+     * Import (aligned) features into the project. Features must not exist in the project, otherwise they will be duplicated.
      * <p><b>200</b> - the Features that have been imported with specified optional fields
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
      * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
@@ -163,8 +172,11 @@ public class FeaturesApi {
 
     /**
      * Import (aligned) features into the project.
-     * Import (aligned) features into the project. Features must not exist in the project.  Otherwise, they will exist twice.
+     * Import (aligned) features into the project. Features must not exist in the project, otherwise they will be duplicated.
      * <p><b>200</b> - the Features that have been imported with specified optional fields
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
      * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
@@ -180,9 +192,12 @@ public class FeaturesApi {
      * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures.
      * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
      * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param smiles smiles
+     * @param smiles SMILES strings of the structures to add
      * @param skipExistenceCheck if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return List&lt;StructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -212,7 +227,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "skipExistenceCheck", skipExistenceCheck));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -228,9 +243,12 @@ public class FeaturesApi {
      * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures.
      * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
      * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param smiles smiles
+     * @param smiles SMILES strings of the structures to add
      * @param skipExistenceCheck if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return List&lt;StructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -244,9 +262,12 @@ public class FeaturesApi {
      * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures.
      * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
      * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param smiles smiles
+     * @param smiles SMILES strings of the structures to add
      * @param skipExistenceCheck if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return ResponseEntity&lt;List&lt;StructureCandidateFormula&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -260,9 +281,12 @@ public class FeaturesApi {
      * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures.
      * [INTERNAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
      * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param smiles smiles
+     * @param smiles SMILES strings of the structures to add
      * @param skipExistenceCheck if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -275,6 +299,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param alignedFeatureId feature to add tags to.
      * @param tag tags to add.
@@ -307,7 +334,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -325,6 +352,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param alignedFeatureId feature to add tags to.
      * @param tag tags to add.
@@ -340,6 +370,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param alignedFeatureId feature to add tags to.
      * @param tag tags to add.
@@ -355,6 +388,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param alignedFeatureId feature to add tags to.
      * @param tag tags to add.
@@ -369,6 +405,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagSubmission tags with the id of feature they shall be added to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -410,6 +449,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagSubmission tags with the id of feature they shall be added to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -423,6 +465,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagSubmission tags with the id of feature they shall be added to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -436,6 +481,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagSubmission tags with the id of feature they shall be added to.
      * @return ResponseSpec
@@ -449,6 +497,9 @@ public class FeaturesApi {
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -489,6 +540,9 @@ public class FeaturesApi {
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -502,6 +556,9 @@ public class FeaturesApi {
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -515,6 +572,9 @@ public class FeaturesApi {
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to delete.
      * @return ResponseSpec
@@ -528,6 +588,9 @@ public class FeaturesApi {
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param requestBody The requestBody parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -569,6 +632,9 @@ public class FeaturesApi {
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param requestBody The requestBody parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -582,6 +648,9 @@ public class FeaturesApi {
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param requestBody The requestBody parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -595,6 +664,9 @@ public class FeaturesApi {
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param requestBody The requestBody parameter
      * @return ResponseSpec
@@ -608,19 +680,22 @@ public class FeaturesApi {
      * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
      * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space. The query is resolved server-side against the search index, so callers do not need to  page the matching ids to the client and send them back for deletion.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match                     every feature).
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteAlignedFeaturesByQueryExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
+    private ResponseSpec deleteAlignedFeaturesByQueryRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteAlignedFeaturesByQueryExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteAlignedFeaturesByQuery", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'searchQuery' is set
         if (searchQuery == null) {
-            throw new WebClientResponseException("Missing the required parameter 'searchQuery' when calling deleteAlignedFeaturesByQueryExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'searchQuery' when calling deleteAlignedFeaturesByQuery", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -649,45 +724,57 @@ public class FeaturesApi {
      * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
      * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space. The query is resolved server-side against the search index, so callers do not need to  page the matching ids to the client and send them back for deletion.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match                     every feature).
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteAlignedFeaturesByQueryExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
+    public void deleteAlignedFeaturesByQuery(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        deleteAlignedFeaturesByQueryExperimentalRequestCreation(projectId, searchQuery).bodyToMono(localVarReturnType).block();
+        deleteAlignedFeaturesByQueryRequestCreation(projectId, searchQuery).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
      * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space. The query is resolved server-side against the search index, so callers do not need to  page the matching ids to the client and send them back for deletion.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match                     every feature).
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteAlignedFeaturesByQueryExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteAlignedFeaturesByQueryWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return deleteAlignedFeaturesByQueryExperimentalRequestCreation(projectId, searchQuery).toEntity(localVarReturnType).block();
+        return deleteAlignedFeaturesByQueryRequestCreation(projectId, searchQuery).toEntity(localVarReturnType).block();
     }
 
     /**
      * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space.
      * Delete all features (aligned over runs) that match the given lucene search query from the specified  project-space. The query is resolved server-side against the search index, so callers do not need to  page the matching ids to the client and send them back for deletion.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match                     every feature).
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteAlignedFeaturesByQueryExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
-        return deleteAlignedFeaturesByQueryExperimentalRequestCreation(projectId, searchQuery);
+    public ResponseSpec deleteAlignedFeaturesByQueryWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String searchQuery) throws WebClientResponseException {
+        return deleteAlignedFeaturesByQueryRequestCreation(projectId, searchQuery);
     }
 
     /**
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId one feature that is considered the main feature of the adduct network
      * @return TraceSetExperimental
@@ -715,7 +802,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -731,6 +818,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId one feature that is considered the main feature of the adduct network
      * @return TraceSetExperimental
@@ -745,6 +835,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId one feature that is considered the main feature of the adduct network
      * @return ResponseEntity&lt;TraceSetExperimental&gt;
@@ -759,6 +852,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
      * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId one feature that is considered the main feature of the adduct network
      * @return ResponseSpec
@@ -772,6 +868,9 @@ public class FeaturesApi {
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - AlignedFeature with additional annotations and MS/MS data (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -804,7 +903,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -820,6 +919,9 @@ public class FeaturesApi {
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - AlignedFeature with additional annotations and MS/MS data (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -836,6 +938,9 @@ public class FeaturesApi {
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - AlignedFeature with additional annotations and MS/MS data (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -852,6 +957,9 @@ public class FeaturesApi {
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - AlignedFeature with additional annotations and MS/MS data (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -867,6 +975,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
      * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  &lt;p&gt;  Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @return AlignedFeatureQualityExperimental
@@ -894,7 +1005,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -910,6 +1021,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
      * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  &lt;p&gt;  Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @return AlignedFeatureQualityExperimental
@@ -924,6 +1038,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
      * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  &lt;p&gt;  Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @return ResponseEntity&lt;AlignedFeatureQualityExperimental&gt;
@@ -938,6 +1055,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
      * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  &lt;p&gt;  Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @return ResponseSpec
@@ -951,6 +1071,9 @@ public class FeaturesApi {
      * [DEPRECATED] Get all available features (aligned over runs) in the given project-space
      * [DEPRECATED] Get all available features (aligned over runs) in the given project-space.  &lt;p&gt;  [DEPRECATED] Use /aligned-features/page instead. Loading all features at once does not scale for large  projects. This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - AlignedFeatures with additional annotations and MS/MS data (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -979,7 +1102,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -995,6 +1118,9 @@ public class FeaturesApi {
      * [DEPRECATED] Get all available features (aligned over runs) in the given project-space
      * [DEPRECATED] Get all available features (aligned over runs) in the given project-space.  &lt;p&gt;  [DEPRECATED] Use /aligned-features/page instead. Loading all features at once does not scale for large  projects. This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - AlignedFeatures with additional annotations and MS/MS data (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1010,6 +1136,9 @@ public class FeaturesApi {
      * [DEPRECATED] Get all available features (aligned over runs) in the given project-space
      * [DEPRECATED] Get all available features (aligned over runs) in the given project-space.  &lt;p&gt;  [DEPRECATED] Use /aligned-features/page instead. Loading all features at once does not scale for large  projects. This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - AlignedFeatures with additional annotations and MS/MS data (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1025,6 +1154,9 @@ public class FeaturesApi {
      * [DEPRECATED] Get all available features (aligned over runs) in the given project-space
      * [DEPRECATED] Get all available features (aligned over runs) in the given project-space.  &lt;p&gt;  [DEPRECATED] Use /aligned-features/page instead. Loading all features at once does not scale for large  projects. This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - AlignedFeatures with additional annotations and MS/MS data (if specified).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1039,6 +1171,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Get features (aligned over runs) by tag group
      * [EXPERIMENTAL] Get features (aligned over runs) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - tagged features (aligned over runs)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName tag group name.
      * @param page Zero-based page index (0..N)
@@ -1077,7 +1212,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1093,6 +1228,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Get features (aligned over runs) by tag group
      * [EXPERIMENTAL] Get features (aligned over runs) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - tagged features (aligned over runs)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName tag group name.
      * @param page Zero-based page index (0..N)
@@ -1112,6 +1250,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Get features (aligned over runs) by tag group
      * [EXPERIMENTAL] Get features (aligned over runs) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - tagged features (aligned over runs)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName tag group name.
      * @param page Zero-based page index (0..N)
@@ -1131,6 +1272,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Get features (aligned over runs) by tag group
      * [EXPERIMENTAL] Get features (aligned over runs) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - tagged features (aligned over runs)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName tag group name.
      * @param page Zero-based page index (0..N)
@@ -1147,8 +1291,11 @@ public class FeaturesApi {
 
     /**
      * Get features (aligned over runs) in the given project-space
-     * Get features (aligned over runs) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Searchable fields are the indexed properties of the feature (e.g. &lt;code&gt;ionMass&lt;/code&gt;, &lt;code&gt;name&lt;/code&gt;,  &lt;code&gt;quality&lt;/code&gt;, &lt;code&gt;hasMsMs&lt;/code&gt;), its annotations addressed via dot notation  (e.g. &lt;code&gt;topAnnotations.structureAnnotation.structureName&lt;/code&gt;), and project tags prefixed with the  namespace &lt;code&gt;tags.&lt;/code&gt; (e.g. &lt;code&gt;tags.MyTag&lt;/code&gt;).  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getAlignedFeaturesSearchableFields) to list all fields that  can be searched, including their value type, whether they support word based (full text) search, and  whether results can be sorted by them.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;name:&amp;quot;Bicuculline methiodide&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;ionMass&amp;lt;300&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;boolean&lt;/strong&gt;: boolean fields are matched as follows: e.g. &lt;code&gt;hasMsMs:true&lt;/code&gt;, &lt;code&gt;tags.MyTagA:false&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;value-less&lt;/strong&gt;: tags without values (See TagDefinition) are matched as follows: e.g. &lt;code&gt;tags.MyTagA:*&lt;/code&gt; or &lt;code&gt;tags.MyTagA:true&lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:&amp;quot;Alkaloids&amp;quot; AND tags.city:&amp;quot;new york&amp;quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
+     * Get features (aligned over runs) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefixed  by a field name.  &lt;/p&gt;   Searchable fields are the indexed properties of the feature (e.g. &lt;code&gt;ionMass&lt;/code&gt;, &lt;code&gt;name&lt;/code&gt;,  &lt;code&gt;quality&lt;/code&gt;, &lt;code&gt;hasMsMs&lt;/code&gt;), its annotations addressed via dot notation  (e.g. &lt;code&gt;topAnnotations.structureAnnotation.structureName&lt;/code&gt;), and project tags prefixed with the  namespace &lt;code&gt;tags.&lt;/code&gt; (e.g. &lt;code&gt;tags.MyTag&lt;/code&gt;).  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getAlignedFeaturesSearchableFields) to list all fields that  can be searched, including their value type, whether they support word based (full text) search, and  whether results can be sorted by them.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;name:&amp;quot;Bicuculline methiodide&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;ionMass&amp;lt;300&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;boolean&lt;/strong&gt;: boolean fields are matched as follows: e.g. &lt;code&gt;hasMsMs:true&lt;/code&gt;, &lt;code&gt;tags.MyTagA:false&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;value-less&lt;/strong&gt;: tags without values (See TagDefinition) are matched as follows: e.g. &lt;code&gt;tags.MyTagA:*&lt;/code&gt; or &lt;code&gt;tags.MyTagA:true&lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:&amp;quot;Alkaloids&amp;quot; AND tags.city:&amp;quot;new york&amp;quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
      * <p><b>200</b> - tagged features (aligned over runs)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to get features (aligned over runs) from.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
@@ -1183,7 +1330,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1197,8 +1344,11 @@ public class FeaturesApi {
 
     /**
      * Get features (aligned over runs) in the given project-space
-     * Get features (aligned over runs) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Searchable fields are the indexed properties of the feature (e.g. &lt;code&gt;ionMass&lt;/code&gt;, &lt;code&gt;name&lt;/code&gt;,  &lt;code&gt;quality&lt;/code&gt;, &lt;code&gt;hasMsMs&lt;/code&gt;), its annotations addressed via dot notation  (e.g. &lt;code&gt;topAnnotations.structureAnnotation.structureName&lt;/code&gt;), and project tags prefixed with the  namespace &lt;code&gt;tags.&lt;/code&gt; (e.g. &lt;code&gt;tags.MyTag&lt;/code&gt;).  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getAlignedFeaturesSearchableFields) to list all fields that  can be searched, including their value type, whether they support word based (full text) search, and  whether results can be sorted by them.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;name:&amp;quot;Bicuculline methiodide&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;ionMass&amp;lt;300&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;boolean&lt;/strong&gt;: boolean fields are matched as follows: e.g. &lt;code&gt;hasMsMs:true&lt;/code&gt;, &lt;code&gt;tags.MyTagA:false&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;value-less&lt;/strong&gt;: tags without values (See TagDefinition) are matched as follows: e.g. &lt;code&gt;tags.MyTagA:*&lt;/code&gt; or &lt;code&gt;tags.MyTagA:true&lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:&amp;quot;Alkaloids&amp;quot; AND tags.city:&amp;quot;new york&amp;quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
+     * Get features (aligned over runs) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefixed  by a field name.  &lt;/p&gt;   Searchable fields are the indexed properties of the feature (e.g. &lt;code&gt;ionMass&lt;/code&gt;, &lt;code&gt;name&lt;/code&gt;,  &lt;code&gt;quality&lt;/code&gt;, &lt;code&gt;hasMsMs&lt;/code&gt;), its annotations addressed via dot notation  (e.g. &lt;code&gt;topAnnotations.structureAnnotation.structureName&lt;/code&gt;), and project tags prefixed with the  namespace &lt;code&gt;tags.&lt;/code&gt; (e.g. &lt;code&gt;tags.MyTag&lt;/code&gt;).  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getAlignedFeaturesSearchableFields) to list all fields that  can be searched, including their value type, whether they support word based (full text) search, and  whether results can be sorted by them.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;name:&amp;quot;Bicuculline methiodide&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;ionMass&amp;lt;300&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;boolean&lt;/strong&gt;: boolean fields are matched as follows: e.g. &lt;code&gt;hasMsMs:true&lt;/code&gt;, &lt;code&gt;tags.MyTagA:false&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;value-less&lt;/strong&gt;: tags without values (See TagDefinition) are matched as follows: e.g. &lt;code&gt;tags.MyTagA:*&lt;/code&gt; or &lt;code&gt;tags.MyTagA:true&lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:&amp;quot;Alkaloids&amp;quot; AND tags.city:&amp;quot;new york&amp;quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
      * <p><b>200</b> - tagged features (aligned over runs)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to get features (aligned over runs) from.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
@@ -1216,8 +1366,11 @@ public class FeaturesApi {
 
     /**
      * Get features (aligned over runs) in the given project-space
-     * Get features (aligned over runs) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Searchable fields are the indexed properties of the feature (e.g. &lt;code&gt;ionMass&lt;/code&gt;, &lt;code&gt;name&lt;/code&gt;,  &lt;code&gt;quality&lt;/code&gt;, &lt;code&gt;hasMsMs&lt;/code&gt;), its annotations addressed via dot notation  (e.g. &lt;code&gt;topAnnotations.structureAnnotation.structureName&lt;/code&gt;), and project tags prefixed with the  namespace &lt;code&gt;tags.&lt;/code&gt; (e.g. &lt;code&gt;tags.MyTag&lt;/code&gt;).  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getAlignedFeaturesSearchableFields) to list all fields that  can be searched, including their value type, whether they support word based (full text) search, and  whether results can be sorted by them.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;name:&amp;quot;Bicuculline methiodide&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;ionMass&amp;lt;300&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;boolean&lt;/strong&gt;: boolean fields are matched as follows: e.g. &lt;code&gt;hasMsMs:true&lt;/code&gt;, &lt;code&gt;tags.MyTagA:false&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;value-less&lt;/strong&gt;: tags without values (See TagDefinition) are matched as follows: e.g. &lt;code&gt;tags.MyTagA:*&lt;/code&gt; or &lt;code&gt;tags.MyTagA:true&lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:&amp;quot;Alkaloids&amp;quot; AND tags.city:&amp;quot;new york&amp;quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
+     * Get features (aligned over runs) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefixed  by a field name.  &lt;/p&gt;   Searchable fields are the indexed properties of the feature (e.g. &lt;code&gt;ionMass&lt;/code&gt;, &lt;code&gt;name&lt;/code&gt;,  &lt;code&gt;quality&lt;/code&gt;, &lt;code&gt;hasMsMs&lt;/code&gt;), its annotations addressed via dot notation  (e.g. &lt;code&gt;topAnnotations.structureAnnotation.structureName&lt;/code&gt;), and project tags prefixed with the  namespace &lt;code&gt;tags.&lt;/code&gt; (e.g. &lt;code&gt;tags.MyTag&lt;/code&gt;).  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getAlignedFeaturesSearchableFields) to list all fields that  can be searched, including their value type, whether they support word based (full text) search, and  whether results can be sorted by them.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;name:&amp;quot;Bicuculline methiodide&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;ionMass&amp;lt;300&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;boolean&lt;/strong&gt;: boolean fields are matched as follows: e.g. &lt;code&gt;hasMsMs:true&lt;/code&gt;, &lt;code&gt;tags.MyTagA:false&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;value-less&lt;/strong&gt;: tags without values (See TagDefinition) are matched as follows: e.g. &lt;code&gt;tags.MyTagA:*&lt;/code&gt; or &lt;code&gt;tags.MyTagA:true&lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:&amp;quot;Alkaloids&amp;quot; AND tags.city:&amp;quot;new york&amp;quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
      * <p><b>200</b> - tagged features (aligned over runs)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to get features (aligned over runs) from.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
@@ -1235,8 +1388,11 @@ public class FeaturesApi {
 
     /**
      * Get features (aligned over runs) in the given project-space
-     * Get features (aligned over runs) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Searchable fields are the indexed properties of the feature (e.g. &lt;code&gt;ionMass&lt;/code&gt;, &lt;code&gt;name&lt;/code&gt;,  &lt;code&gt;quality&lt;/code&gt;, &lt;code&gt;hasMsMs&lt;/code&gt;), its annotations addressed via dot notation  (e.g. &lt;code&gt;topAnnotations.structureAnnotation.structureName&lt;/code&gt;), and project tags prefixed with the  namespace &lt;code&gt;tags.&lt;/code&gt; (e.g. &lt;code&gt;tags.MyTag&lt;/code&gt;).  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getAlignedFeaturesSearchableFields) to list all fields that  can be searched, including their value type, whether they support word based (full text) search, and  whether results can be sorted by them.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;name:&amp;quot;Bicuculline methiodide&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;ionMass&amp;lt;300&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;boolean&lt;/strong&gt;: boolean fields are matched as follows: e.g. &lt;code&gt;hasMsMs:true&lt;/code&gt;, &lt;code&gt;tags.MyTagA:false&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;value-less&lt;/strong&gt;: tags without values (See TagDefinition) are matched as follows: e.g. &lt;code&gt;tags.MyTagA:*&lt;/code&gt; or &lt;code&gt;tags.MyTagA:true&lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:&amp;quot;Alkaloids&amp;quot; AND tags.city:&amp;quot;new york&amp;quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
+     * Get features (aligned over runs) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefixed  by a field name.  &lt;/p&gt;   Searchable fields are the indexed properties of the feature (e.g. &lt;code&gt;ionMass&lt;/code&gt;, &lt;code&gt;name&lt;/code&gt;,  &lt;code&gt;quality&lt;/code&gt;, &lt;code&gt;hasMsMs&lt;/code&gt;), its annotations addressed via dot notation  (e.g. &lt;code&gt;topAnnotations.structureAnnotation.structureName&lt;/code&gt;), and project tags prefixed with the  namespace &lt;code&gt;tags.&lt;/code&gt; (e.g. &lt;code&gt;tags.MyTag&lt;/code&gt;).  Use the &lt;code&gt;searchable-fields&lt;/code&gt; endpoint (getAlignedFeaturesSearchableFields) to list all fields that  can be searched, including their value type, whether they support word based (full text) search, and  whether results can be sorted by them.  Possible value types are &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;double&lt;/strong&gt;,  &lt;strong&gt;boolean&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt;.   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;name:&amp;quot;Bicuculline methiodide&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;ionMass&amp;lt;300&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;boolean&lt;/strong&gt;: boolean fields are matched as follows: e.g. &lt;code&gt;hasMsMs:true&lt;/code&gt;, &lt;code&gt;tags.MyTagA:false&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;value-less&lt;/strong&gt;: tags without values (See TagDefinition) are matched as follows: e.g. &lt;code&gt;tags.MyTagA:*&lt;/code&gt; or &lt;code&gt;tags.MyTagA:true&lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:&amp;quot;Alkaloids&amp;quot; AND tags.city:&amp;quot;new york&amp;quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
      * <p><b>200</b> - tagged features (aligned over runs)
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to get features (aligned over runs) from.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
@@ -1255,6 +1411,9 @@ public class FeaturesApi {
      * Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints
      * Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints.  &lt;p&gt;  Use this to build valid lucene queries: the field type determines which clauses are supported  (e.g. range queries like &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt; for numeric fields, word based search for  full-text fields). Includes the dynamic tag fields (&lt;code&gt;tags.&amp;lt;tagName&amp;gt;&lt;/code&gt;) of this project.  An empty list means there are no searchable fields.
      * <p><b>200</b> - fields usable in searchQuery parameters of feature endpoints.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to read the searchable feature fields from.
      * @return List&lt;SearchableField&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1276,7 +1435,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1292,6 +1451,9 @@ public class FeaturesApi {
      * Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints
      * Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints.  &lt;p&gt;  Use this to build valid lucene queries: the field type determines which clauses are supported  (e.g. range queries like &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt; for numeric fields, word based search for  full-text fields). Includes the dynamic tag fields (&lt;code&gt;tags.&amp;lt;tagName&amp;gt;&lt;/code&gt;) of this project.  An empty list means there are no searchable fields.
      * <p><b>200</b> - fields usable in searchQuery parameters of feature endpoints.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to read the searchable feature fields from.
      * @return List&lt;SearchableField&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1305,6 +1467,9 @@ public class FeaturesApi {
      * Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints
      * Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints.  &lt;p&gt;  Use this to build valid lucene queries: the field type determines which clauses are supported  (e.g. range queries like &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt; for numeric fields, word based search for  full-text fields). Includes the dynamic tag fields (&lt;code&gt;tags.&amp;lt;tagName&amp;gt;&lt;/code&gt;) of this project.  An empty list means there are no searchable fields.
      * <p><b>200</b> - fields usable in searchQuery parameters of feature endpoints.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to read the searchable feature fields from.
      * @return ResponseEntity&lt;List&lt;SearchableField&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1318,6 +1483,9 @@ public class FeaturesApi {
      * Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints
      * Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints.  &lt;p&gt;  Use this to build valid lucene queries: the field type determines which clauses are supported  (e.g. range queries like &lt;code&gt;ionMass:[300 TO 400]&lt;/code&gt; for numeric fields, word based search for  full-text fields). Includes the dynamic tag fields (&lt;code&gt;tags.&amp;lt;tagName&amp;gt;&lt;/code&gt;) of this project.  An empty list means there are no searchable fields.
      * <p><b>200</b> - fields usable in searchQuery parameters of feature endpoints.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project space to read the searchable feature fields from.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1328,8 +1496,11 @@ public class FeaturesApi {
 
     /**
      * Return Best matching compound classes for given formulaId
-     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of the ClassyFire and NPC ontology,
      * <p><b>200</b> - Best matching Predicted compound classes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1363,7 +1534,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1377,8 +1548,11 @@ public class FeaturesApi {
 
     /**
      * Return Best matching compound classes for given formulaId
-     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of the ClassyFire and NPC ontology,
      * <p><b>200</b> - Best matching Predicted compound classes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1392,8 +1566,11 @@ public class FeaturesApi {
 
     /**
      * Return Best matching compound classes for given formulaId
-     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of the ClassyFire and NPC ontology,
      * <p><b>200</b> - Best matching Predicted compound classes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1407,8 +1584,11 @@ public class FeaturesApi {
 
     /**
      * Return Best matching compound classes for given formulaId
-     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of the ClassyFire and NPC ontology,
      * <p><b>200</b> - Best matching Predicted compound classes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1423,6 +1603,9 @@ public class FeaturesApi {
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
      * <p><b>200</b> - Predicted compound classes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1456,7 +1639,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1472,6 +1655,9 @@ public class FeaturesApi {
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
      * <p><b>200</b> - Predicted compound classes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1487,6 +1673,9 @@ public class FeaturesApi {
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
      * <p><b>200</b> - Predicted compound classes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1502,6 +1691,9 @@ public class FeaturesApi {
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
      * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
      * <p><b>200</b> - Predicted compound classes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1516,6 +1708,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of de novo structure candidates (e
      * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /denovo-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1548,7 +1743,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1564,6 +1759,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of de novo structure candidates (e
      * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /denovo-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1579,6 +1777,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of de novo structure candidates (e
      * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /denovo-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1594,6 +1795,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of de novo structure candidates (e
      * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /denovo-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1608,6 +1812,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of de novo structure candidates (e
      * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/{formulaId}/denovo-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1646,7 +1853,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1662,6 +1869,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of de novo structure candidates (e
      * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/{formulaId}/denovo-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1678,6 +1888,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of de novo structure candidates (e
      * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/{formulaId}/denovo-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1694,6 +1907,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of de novo structure candidates (e
      * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/{formulaId}/denovo-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1709,6 +1925,9 @@ public class FeaturesApi {
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1751,7 +1970,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1767,6 +1986,9 @@ public class FeaturesApi {
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1786,6 +2008,9 @@ public class FeaturesApi {
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1805,6 +2030,9 @@ public class FeaturesApi {
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -1823,6 +2051,9 @@ public class FeaturesApi {
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -1859,7 +2090,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1875,6 +2106,9 @@ public class FeaturesApi {
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -1893,6 +2127,9 @@ public class FeaturesApi {
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -1911,6 +2148,9 @@ public class FeaturesApi {
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -1928,6 +2168,9 @@ public class FeaturesApi {
      * Returns the full quantification table of features
      * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.  &lt;p&gt;  The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene  syntax as the paged listing endpoints. Omit it to quantify all objects of the project.
      * <p><b>200</b> - Quant table of the features of this project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
@@ -1956,7 +2199,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -1972,6 +2215,9 @@ public class FeaturesApi {
      * Returns the full quantification table of features
      * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.  &lt;p&gt;  The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene  syntax as the paged listing endpoints. Omit it to quantify all objects of the project.
      * <p><b>200</b> - Quant table of the features of this project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
@@ -1988,6 +2234,9 @@ public class FeaturesApi {
      * Returns the full quantification table of features
      * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.  &lt;p&gt;  The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene  syntax as the paged listing endpoints. Omit it to quantify all objects of the project.
      * <p><b>200</b> - Quant table of the features of this project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
@@ -2004,6 +2253,9 @@ public class FeaturesApi {
      * Returns the full quantification table of features
      * Returns the full quantification table of features.  &lt;p&gt;  The quantification table contains the quantities of the features within all runs they are contained in.  Rows refer to features, columns to runs, both given as ids and names.  &lt;p&gt;  The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene  syntax as the paged listing endpoints. Omit it to quantify all objects of the project.
      * <p><b>200</b> - Quant table of the features of this project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
      * @param type quantification type.
@@ -2019,6 +2271,9 @@ public class FeaturesApi {
      * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row
      * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row.  &lt;p&gt;  The columns of the row refer to the runs the feature has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
      * <p><b>200</b> - Quant table row for this feature
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
@@ -2053,7 +2308,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -2069,6 +2324,9 @@ public class FeaturesApi {
      * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row
      * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row.  &lt;p&gt;  The columns of the row refer to the runs the feature has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
      * <p><b>200</b> - Quant table row for this feature
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
@@ -2085,6 +2343,9 @@ public class FeaturesApi {
      * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row
      * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row.  &lt;p&gt;  The columns of the row refer to the runs the feature has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
      * <p><b>200</b> - Quant table row for this feature
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
@@ -2101,6 +2362,9 @@ public class FeaturesApi {
      * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row
      * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row.  &lt;p&gt;  The columns of the row refer to the runs the feature has been quantified in, given as run ids and run names.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.  [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows  to request the quantification of an arbitrary subset of the project.
      * <p><b>200</b> - Quant table row for this feature
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. APEX_INTENSITY is the intensity of the feature at its apex,                          AREA_UNDER_CURVE the area under its curve.
@@ -2116,6 +2380,9 @@ public class FeaturesApi {
      * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from
      * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from.  &lt;p&gt;  [DEPRECATED] Use /features/page instead. Loading all features at once does not scale for a project with many  runs, since a feature is aligned from one feature per run it was detected in.
      * <p><b>200</b> - Features of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) whose features to read.
      * @return List&lt;Feature&gt;
@@ -2145,7 +2412,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -2161,6 +2428,9 @@ public class FeaturesApi {
      * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from
      * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from.  &lt;p&gt;  [DEPRECATED] Use /features/page instead. Loading all features at once does not scale for a project with many  runs, since a feature is aligned from one feature per run it was detected in.
      * <p><b>200</b> - Features of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) whose features to read.
      * @return List&lt;Feature&gt;
@@ -2175,6 +2445,9 @@ public class FeaturesApi {
      * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from
      * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from.  &lt;p&gt;  [DEPRECATED] Use /features/page instead. Loading all features at once does not scale for a project with many  runs, since a feature is aligned from one feature per run it was detected in.
      * <p><b>200</b> - Features of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) whose features to read.
      * @return ResponseEntity&lt;List&lt;Feature&gt;&gt;
@@ -2189,6 +2462,9 @@ public class FeaturesApi {
      * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from
      * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from.  &lt;p&gt;  [DEPRECATED] Use /features/page instead. Loading all features at once does not scale for a project with many  runs, since a feature is aligned from one feature per run it was detected in.
      * <p><b>200</b> - Features of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) whose features to read.
      * @return ResponseSpec
@@ -2202,6 +2478,9 @@ public class FeaturesApi {
      * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in
      * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in.  &lt;p&gt;  A feature carries what is specific to the run it was detected in: where it sits on that run&#39;s retention time  axis, the m/z it was measured at there, and how much of it was measured. Use the run id to relate it to the run  it belongs to; a feature of a project that was imported from preprocessed data belongs to no run and has none.
      * <p><b>200</b> - Features of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) whose features to read.
      * @param page Zero-based page index (0..N)
@@ -2236,7 +2515,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -2252,6 +2531,9 @@ public class FeaturesApi {
      * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in
      * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in.  &lt;p&gt;  A feature carries what is specific to the run it was detected in: where it sits on that run&#39;s retention time  axis, the m/z it was measured at there, and how much of it was measured. Use the run id to relate it to the run  it belongs to; a feature of a project that was imported from preprocessed data belongs to no run and has none.
      * <p><b>200</b> - Features of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) whose features to read.
      * @param page Zero-based page index (0..N)
@@ -2269,6 +2551,9 @@ public class FeaturesApi {
      * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in
      * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in.  &lt;p&gt;  A feature carries what is specific to the run it was detected in: where it sits on that run&#39;s retention time  axis, the m/z it was measured at there, and how much of it was measured. Use the run id to relate it to the run  it belongs to; a feature of a project that was imported from preprocessed data belongs to no run and has none.
      * <p><b>200</b> - Features of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) whose features to read.
      * @param page Zero-based page index (0..N)
@@ -2286,6 +2571,9 @@ public class FeaturesApi {
      * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in
      * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in.  &lt;p&gt;  A feature carries what is specific to the run it was detected in: where it sits on that run&#39;s retention time  axis, the m/z it was measured at there, and how much of it was measured. Use the run id to relate it to the run  it belongs to; a feature of a project that was imported from preprocessed data belongs to no run and has none.
      * <p><b>200</b> - Features of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) whose features to read.
      * @param page Zero-based page index (0..N)
@@ -2302,6 +2590,9 @@ public class FeaturesApi {
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  &lt;p&gt;  This fingerprint is used to perform structure database search and predict compound classes.
      * <p><b>200</b> - probabilistic fingerprint predicted by CSI:FingerID
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2335,7 +2626,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -2351,6 +2642,9 @@ public class FeaturesApi {
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  &lt;p&gt;  This fingerprint is used to perform structure database search and predict compound classes.
      * <p><b>200</b> - probabilistic fingerprint predicted by CSI:FingerID
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2366,6 +2660,9 @@ public class FeaturesApi {
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  &lt;p&gt;  This fingerprint is used to perform structure database search and predict compound classes.
      * <p><b>200</b> - probabilistic fingerprint predicted by CSI:FingerID
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2381,6 +2678,9 @@ public class FeaturesApi {
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  
      * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  &lt;p&gt;  This fingerprint is used to perform structure database search and predict compound classes.
      * <p><b>200</b> - probabilistic fingerprint predicted by CSI:FingerID
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2393,8 +2693,11 @@ public class FeaturesApi {
 
     /**
      * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
-     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier.  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectra annotated with fragment formulas and losses.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2431,7 +2734,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -2445,8 +2748,11 @@ public class FeaturesApi {
 
     /**
      * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
-     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier.  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectra annotated with fragment formulas and losses.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2461,8 +2767,11 @@ public class FeaturesApi {
 
     /**
      * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
-     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier.  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectra annotated with fragment formulas and losses.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2477,8 +2786,11 @@ public class FeaturesApi {
 
     /**
      * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
-     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier.  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectra annotated with fragment formulas and losses.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2494,6 +2806,9 @@ public class FeaturesApi {
      * Returns a fragmentation spectrum (e
      * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  &lt;p&gt;  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2532,7 +2847,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchPrepared", searchPrepared));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -2548,6 +2863,9 @@ public class FeaturesApi {
      * Returns a fragmentation spectrum (e
      * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  &lt;p&gt;  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2565,6 +2883,9 @@ public class FeaturesApi {
      * Returns a fragmentation spectrum (e
      * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  &lt;p&gt;  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2582,6 +2903,9 @@ public class FeaturesApi {
      * Returns a fragmentation spectrum (e
      * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  &lt;p&gt;  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2598,6 +2922,9 @@ public class FeaturesApi {
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.  Can be enriched with an optional results overview and formula candidate information.
      * <p><b>200</b> - FormulaCandidate of this feature (aligned over runs) with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2636,7 +2963,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -2652,6 +2979,9 @@ public class FeaturesApi {
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.  Can be enriched with an optional results overview and formula candidate information.
      * <p><b>200</b> - FormulaCandidate of this feature (aligned over runs) with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2669,6 +2999,9 @@ public class FeaturesApi {
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.  Can be enriched with an optional results overview and formula candidate information.
      * <p><b>200</b> - FormulaCandidate of this feature (aligned over runs) with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2686,6 +3019,9 @@ public class FeaturesApi {
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.  Can be enriched with an optional results overview and formula candidate information.
      * <p><b>200</b> - FormulaCandidate of this feature (aligned over runs) with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2702,6 +3038,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of FormulaResultContainers available for this feature with minimal information
      * [DEPRECATED] List of FormulaResultContainers available for this feature with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  Can be enriched with an optional results overview.
      * <p><b>200</b> - All FormulaCandidate of this feature with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -2736,7 +3075,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -2752,6 +3091,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of FormulaResultContainers available for this feature with minimal information
      * [DEPRECATED] List of FormulaResultContainers available for this feature with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  Can be enriched with an optional results overview.
      * <p><b>200</b> - All FormulaCandidate of this feature with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -2768,6 +3110,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of FormulaResultContainers available for this feature with minimal information
      * [DEPRECATED] List of FormulaResultContainers available for this feature with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  Can be enriched with an optional results overview.
      * <p><b>200</b> - All FormulaCandidate of this feature with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -2784,6 +3129,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of FormulaResultContainers available for this feature with minimal information
      * [DEPRECATED] List of FormulaResultContainers available for this feature with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  Can be enriched with an optional results overview.
      * <p><b>200</b> - All FormulaCandidate of this feature with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
@@ -2799,6 +3147,9 @@ public class FeaturesApi {
      * Page of FormulaResultContainers available for this feature with minimal information.
      * Page of FormulaResultContainers available for this feature with minimal information.  Can be enriched with an optional results overview.
      * <p><b>200</b> - All FormulaCandidate of this feature with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param page Zero-based page index (0..N)
@@ -2837,7 +3188,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -2853,6 +3204,9 @@ public class FeaturesApi {
      * Page of FormulaResultContainers available for this feature with minimal information.
      * Page of FormulaResultContainers available for this feature with minimal information.  Can be enriched with an optional results overview.
      * <p><b>200</b> - All FormulaCandidate of this feature with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param page Zero-based page index (0..N)
@@ -2872,6 +3226,9 @@ public class FeaturesApi {
      * Page of FormulaResultContainers available for this feature with minimal information.
      * Page of FormulaResultContainers available for this feature with minimal information.  Can be enriched with an optional results overview.
      * <p><b>200</b> - All FormulaCandidate of this feature with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param page Zero-based page index (0..N)
@@ -2891,6 +3248,9 @@ public class FeaturesApi {
      * Page of FormulaResultContainers available for this feature with minimal information.
      * Page of FormulaResultContainers available for this feature with minimal information.  Can be enriched with an optional results overview.
      * <p><b>200</b> - All FormulaCandidate of this feature with.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param page Zero-based page index (0..N)
@@ -2909,6 +3269,9 @@ public class FeaturesApi {
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  &lt;p&gt;  This tree is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Fragmentation Tree
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2942,7 +3305,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -2958,6 +3321,9 @@ public class FeaturesApi {
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  &lt;p&gt;  This tree is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Fragmentation Tree
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2973,6 +3339,9 @@ public class FeaturesApi {
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  &lt;p&gt;  This tree is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Fragmentation Tree
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2988,6 +3357,9 @@ public class FeaturesApi {
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  &lt;p&gt;  This tree is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Fragmentation Tree
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3002,6 +3374,9 @@ public class FeaturesApi {
      * Returns Isotope pattern information for given formulaId  
      * Returns Isotope pattern information for given formulaId  &lt;p&gt;  Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Isotope pattern information
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3035,7 +3410,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -3051,6 +3426,9 @@ public class FeaturesApi {
      * Returns Isotope pattern information for given formulaId  
      * Returns Isotope pattern information for given formulaId  &lt;p&gt;  Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Isotope pattern information
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3066,6 +3444,9 @@ public class FeaturesApi {
      * Returns Isotope pattern information for given formulaId  
      * Returns Isotope pattern information for given formulaId  &lt;p&gt;  Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Isotope pattern information
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3081,6 +3462,9 @@ public class FeaturesApi {
      * Returns Isotope pattern information for given formulaId  
      * Returns Isotope pattern information for given formulaId  &lt;p&gt;  Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Isotope pattern information
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3095,6 +3479,9 @@ public class FeaturesApi {
      * Returns Lipid annotation (ElGordo) for the given formulaId
      * Returns Lipid annotation (ElGordo) for the given formulaId.  &lt;p&gt;  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
      * <p><b>200</b> - LipidAnnotation
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3128,7 +3515,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -3144,6 +3531,9 @@ public class FeaturesApi {
      * Returns Lipid annotation (ElGordo) for the given formulaId
      * Returns Lipid annotation (ElGordo) for the given formulaId.  &lt;p&gt;  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
      * <p><b>200</b> - LipidAnnotation
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3159,6 +3549,9 @@ public class FeaturesApi {
      * Returns Lipid annotation (ElGordo) for the given formulaId
      * Returns Lipid annotation (ElGordo) for the given formulaId.  &lt;p&gt;  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
      * <p><b>200</b> - LipidAnnotation
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3174,6 +3567,9 @@ public class FeaturesApi {
      * Returns Lipid annotation (ElGordo) for the given formulaId
      * Returns Lipid annotation (ElGordo) for the given formulaId.  &lt;p&gt;  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
      * <p><b>200</b> - LipidAnnotation
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3188,6 +3584,9 @@ public class FeaturesApi {
      * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
      * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
      * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belongs to.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
@@ -3218,7 +3617,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -3234,6 +3633,9 @@ public class FeaturesApi {
      * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
      * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
      * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belongs to.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
@@ -3249,6 +3651,9 @@ public class FeaturesApi {
      * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
      * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
      * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belongs to.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
@@ -3264,6 +3669,9 @@ public class FeaturesApi {
      * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
      * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
      * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belongs to.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
@@ -3278,6 +3686,9 @@ public class FeaturesApi {
      * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format
      * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.  &lt;p&gt;  [INTERNAL]: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time.
      * <p><b>200</b> - Fragmentation Tree in internal format.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3311,7 +3722,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -3327,6 +3738,9 @@ public class FeaturesApi {
      * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format
      * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.  &lt;p&gt;  [INTERNAL]: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time.
      * <p><b>200</b> - Fragmentation Tree in internal format.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3342,6 +3756,9 @@ public class FeaturesApi {
      * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format
      * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.  &lt;p&gt;  [INTERNAL]: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time.
      * <p><b>200</b> - Fragmentation Tree in internal format.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3357,6 +3774,9 @@ public class FeaturesApi {
      * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format
      * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.  &lt;p&gt;  [INTERNAL]: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time.
      * <p><b>200</b> - Fragmentation Tree in internal format.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3371,6 +3791,9 @@ public class FeaturesApi {
      * Spectral library match for the given &#39;alignedFeatureId&#39;.
      * Spectral library match for the given &#39;alignedFeatureId&#39;.
      * <p><b>200</b> - Spectral library match with requested mathcId.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param matchId id of the library match to be returned.
@@ -3407,7 +3830,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -3423,6 +3846,9 @@ public class FeaturesApi {
      * Spectral library match for the given &#39;alignedFeatureId&#39;.
      * Spectral library match for the given &#39;alignedFeatureId&#39;.
      * <p><b>200</b> - Spectral library match with requested mathcId.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param matchId id of the library match to be returned.
@@ -3439,6 +3865,9 @@ public class FeaturesApi {
      * Spectral library match for the given &#39;alignedFeatureId&#39;.
      * Spectral library match for the given &#39;alignedFeatureId&#39;.
      * <p><b>200</b> - Spectral library match with requested mathcId.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param matchId id of the library match to be returned.
@@ -3455,6 +3884,9 @@ public class FeaturesApi {
      * Spectral library match for the given &#39;alignedFeatureId&#39;.
      * Spectral library match for the given &#39;alignedFeatureId&#39;.
      * <p><b>200</b> - Spectral library match with requested mathcId.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param matchId id of the library match to be returned.
@@ -3470,6 +3902,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of spectral library matches for the given &#39;alignedFeatureId&#39;
      * [DEPRECATED] List of spectral library matches for the given &#39;alignedFeatureId&#39;.  &lt;p&gt;  [DEPRECATED] Use /spectral-library-matches/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks The minSharedPeaks parameter
@@ -3508,7 +3943,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -3524,6 +3959,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of spectral library matches for the given &#39;alignedFeatureId&#39;
      * [DEPRECATED] List of spectral library matches for the given &#39;alignedFeatureId&#39;.  &lt;p&gt;  [DEPRECATED] Use /spectral-library-matches/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks The minSharedPeaks parameter
@@ -3542,6 +3980,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of spectral library matches for the given &#39;alignedFeatureId&#39;
      * [DEPRECATED] List of spectral library matches for the given &#39;alignedFeatureId&#39;.  &lt;p&gt;  [DEPRECATED] Use /spectral-library-matches/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks The minSharedPeaks parameter
@@ -3560,6 +4001,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of spectral library matches for the given &#39;alignedFeatureId&#39;
      * [DEPRECATED] List of spectral library matches for the given &#39;alignedFeatureId&#39;.  &lt;p&gt;  [DEPRECATED] Use /spectral-library-matches/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks The minSharedPeaks parameter
@@ -3577,6 +4021,9 @@ public class FeaturesApi {
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -3619,7 +4066,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -3635,6 +4082,9 @@ public class FeaturesApi {
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -3656,6 +4106,9 @@ public class FeaturesApi {
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -3677,6 +4130,9 @@ public class FeaturesApi {
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -3697,6 +4153,9 @@ public class FeaturesApi {
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
      * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks min threshold of shared peaks.
@@ -3731,7 +4190,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "inchiKey", inchiKey));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -3747,6 +4206,9 @@ public class FeaturesApi {
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
      * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks min threshold of shared peaks.
@@ -3764,6 +4226,9 @@ public class FeaturesApi {
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
      * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks min threshold of shared peaks.
@@ -3781,6 +4246,9 @@ public class FeaturesApi {
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
      * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks min threshold of shared peaks.
@@ -3797,6 +4265,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
      * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey.  &lt;p&gt;  Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3839,7 +4310,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -3855,6 +4326,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
      * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey.  &lt;p&gt;  Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3872,6 +4346,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
      * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey.  &lt;p&gt;  Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3889,6 +4366,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
      * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey.  &lt;p&gt;  Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3905,6 +4385,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations
      * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Spectral library match with requested mathcId.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param matchId id of the library match to be returned.
@@ -3938,7 +4421,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -3954,6 +4437,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations
      * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Spectral library match with requested mathcId.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param matchId id of the library match to be returned.
@@ -3969,6 +4455,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations
      * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Spectral library match with requested mathcId.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param matchId id of the library match to be returned.
@@ -3984,6 +4473,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations
      * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Spectral library match with requested mathcId.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param matchId id of the library match to be returned.
@@ -3996,8 +4488,11 @@ public class FeaturesApi {
 
     /**
      * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
-     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result.  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4042,7 +4537,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchPrepared", searchPrepared));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -4056,8 +4551,11 @@ public class FeaturesApi {
 
     /**
      * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
-     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result.  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4074,8 +4572,11 @@ public class FeaturesApi {
 
     /**
      * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
-     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result.  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4092,8 +4593,11 @@ public class FeaturesApi {
 
     /**
      * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
-     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result.  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4111,6 +4615,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information
      * [DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /db-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -4143,7 +4650,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -4159,6 +4666,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information
      * [DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /db-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -4174,6 +4684,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information
      * [DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /db-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -4189,6 +4702,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information
      * [DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /db-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -4203,6 +4719,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information
      * [DEPRECATED] List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/{formulaId}/db-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4241,7 +4760,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -4257,6 +4776,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information
      * [DEPRECATED] List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/{formulaId}/db-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4273,6 +4795,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information
      * [DEPRECATED] List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/{formulaId}/db-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4289,6 +4814,9 @@ public class FeaturesApi {
      * [DEPRECATED] List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information
      * [DEPRECATED] List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.  &lt;p&gt;  [DEPRECATED] Use /formulas/{formulaId}/db-structures/page instead. Loading all entries at once does not scale for large  result sets. This endpoint will be removed in the next major version of this API.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4304,6 +4832,9 @@ public class FeaturesApi {
      * Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
      * Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4346,7 +4877,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -4362,6 +4893,9 @@ public class FeaturesApi {
      * Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
      * Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4381,6 +4915,9 @@ public class FeaturesApi {
      * Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
      * Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4400,6 +4937,9 @@ public class FeaturesApi {
      * Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
      * Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this formula candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -4418,6 +4958,9 @@ public class FeaturesApi {
      * Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
      * Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -4454,7 +4997,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -4470,6 +5013,9 @@ public class FeaturesApi {
      * Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
      * Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -4488,6 +5034,9 @@ public class FeaturesApi {
      * Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
      * Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -4506,6 +5055,9 @@ public class FeaturesApi {
      * Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
      * Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
      * <p><b>200</b> - StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
@@ -4523,6 +5075,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Get all tags associated with this Object
      * [EXPERIMENTAL] Get all tags associated with this Object
      * <p><b>200</b> - the tags of the requested object
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to get from.
      * @param objectId object to get tags for.
      * @return List&lt;Tag&gt;
@@ -4550,7 +5105,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -4566,6 +5121,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Get all tags associated with this Object
      * [EXPERIMENTAL] Get all tags associated with this Object
      * <p><b>200</b> - the tags of the requested object
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to get from.
      * @param objectId object to get tags for.
      * @return List&lt;Tag&gt;
@@ -4580,6 +5138,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Get all tags associated with this Object
      * [EXPERIMENTAL] Get all tags associated with this Object
      * <p><b>200</b> - the tags of the requested object
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to get from.
      * @param objectId object to get tags for.
      * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
@@ -4594,6 +5155,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Get all tags associated with this Object
      * [EXPERIMENTAL] Get all tags associated with this Object
      * <p><b>200</b> - the tags of the requested object
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to get from.
      * @param objectId object to get tags for.
      * @return ResponseSpec
@@ -4607,6 +5171,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
      * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).  &lt;p&gt;  Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Traces of the given feature.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
@@ -4637,7 +5204,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeAll", includeAll));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -4653,6 +5220,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
      * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).  &lt;p&gt;  Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Traces of the given feature.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
@@ -4668,6 +5238,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
      * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).  &lt;p&gt;  Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Traces of the given feature.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
@@ -4683,6 +5256,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
      * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).  &lt;p&gt;  Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Traces of the given feature.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
@@ -4697,6 +5273,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
      * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param alignedFeatureId feature (aligned over runs) to delete tag from.
      * @param tagName name of the tag to delete.
@@ -4743,6 +5322,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
      * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param alignedFeatureId feature (aligned over runs) to delete tag from.
      * @param tagName name of the tag to delete.
@@ -4757,6 +5339,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
      * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param alignedFeatureId feature (aligned over runs) to delete tag from.
      * @param tagName name of the tag to delete.
@@ -4771,6 +5356,9 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
      * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param alignedFeatureId feature (aligned over runs) to delete tag from.
      * @param tagName name of the tag to delete.

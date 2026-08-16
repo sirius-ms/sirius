@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.  Needs results from FingerprintPrediction and Canopus Tool.  Non-Null parameters in this Object well override their equivalent value in the config map.
+ * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.  Needs results from the FingerprintPrediction and CANOPUS tools.  Non-null parameters in this object override their equivalent value in the config map.
  */
 @JsonPropertyOrder({
   StructureDbSearch.JSON_PROPERTY_ENABLED,
@@ -75,7 +75,7 @@ public class StructureDbSearch {
   }
 
   /**
-   * tags whether the tool is enabled
+   * Indicates whether the tool is enabled.
    * @return enabled
    */
   @jakarta.annotation.Nullable
@@ -108,7 +108,7 @@ public class StructureDbSearch {
   }
 
   /**
-   * Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem  if not high confidence hit was found in the selected databases.  &lt;p&gt;  Defaults to BIO + Custom Databases. Possible values are available to Database API.
+   * Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem  if no high confidence hit was found in the selected databases.  &lt;p&gt;  Defaults to BIO + Custom Databases. Possible values are available via the Database API.
    * @return structureSearchDBs
    */
   @jakarta.annotation.Nullable

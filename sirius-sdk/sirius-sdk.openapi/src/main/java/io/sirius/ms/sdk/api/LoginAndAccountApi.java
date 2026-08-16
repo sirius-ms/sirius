@@ -52,7 +52,9 @@ public class LoginAndAccountApi {
      * Get information about the account currently logged in.
      * Get information about the account currently logged in. Fails if not logged in.
      * <p><b>200</b> - Basic information about the account that has been logged in and its subscriptions.
-     * @param includeSubs include available and active subscriptions in {@link AccountInfo AccountInfo}.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeSubs include available and active subscriptions in &lt;code&gt;AccountInfo&lt;/code&gt;.
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -69,7 +71,7 @@ public class LoginAndAccountApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeSubs", includeSubs));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -85,7 +87,9 @@ public class LoginAndAccountApi {
      * Get information about the account currently logged in.
      * Get information about the account currently logged in. Fails if not logged in.
      * <p><b>200</b> - Basic information about the account that has been logged in and its subscriptions.
-     * @param includeSubs include available and active subscriptions in {@link AccountInfo AccountInfo}.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeSubs include available and active subscriptions in &lt;code&gt;AccountInfo&lt;/code&gt;.
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -98,7 +102,9 @@ public class LoginAndAccountApi {
      * Get information about the account currently logged in.
      * Get information about the account currently logged in. Fails if not logged in.
      * <p><b>200</b> - Basic information about the account that has been logged in and its subscriptions.
-     * @param includeSubs include available and active subscriptions in {@link AccountInfo AccountInfo}.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeSubs include available and active subscriptions in &lt;code&gt;AccountInfo&lt;/code&gt;.
      * @return ResponseEntity&lt;AccountInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -111,7 +117,9 @@ public class LoginAndAccountApi {
      * Get information about the account currently logged in.
      * Get information about the account currently logged in. Fails if not logged in.
      * <p><b>200</b> - Basic information about the account that has been logged in and its subscriptions.
-     * @param includeSubs include available and active subscriptions in {@link AccountInfo AccountInfo}.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param includeSubs include available and active subscriptions in &lt;code&gt;AccountInfo&lt;/code&gt;.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -123,6 +131,7 @@ public class LoginAndAccountApi {
      * Get SignUp URL (For signUp via web browser)
      * Get SignUp URL (For signUp via web browser)
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -137,7 +146,7 @@ public class LoginAndAccountApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "text/plain;charset=UTF-8"
+            "text/plain;charset=UTF-8", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -153,6 +162,7 @@ public class LoginAndAccountApi {
      * Get SignUp URL (For signUp via web browser)
      * Get SignUp URL (For signUp via web browser)
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -165,6 +175,7 @@ public class LoginAndAccountApi {
      * Get SignUp URL (For signUp via web browser)
      * Get SignUp URL (For signUp via web browser)
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -177,6 +188,7 @@ public class LoginAndAccountApi {
      * Get SignUp URL (For signUp via web browser)
      * Get SignUp URL (For signUp via web browser)
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -188,6 +200,7 @@ public class LoginAndAccountApi {
      * Get available subscriptions of the account currently logged in.
      * Get available subscriptions of the account currently logged in. Fails if not logged in.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;Subscription&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -202,7 +215,7 @@ public class LoginAndAccountApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -218,6 +231,7 @@ public class LoginAndAccountApi {
      * Get available subscriptions of the account currently logged in.
      * Get available subscriptions of the account currently logged in. Fails if not logged in.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;Subscription&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -230,6 +244,7 @@ public class LoginAndAccountApi {
      * Get available subscriptions of the account currently logged in.
      * Get available subscriptions of the account currently logged in. Fails if not logged in.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;List&lt;Subscription&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -242,6 +257,7 @@ public class LoginAndAccountApi {
      * Get available subscriptions of the account currently logged in.
      * Get available subscriptions of the account currently logged in. Fails if not logged in.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -253,6 +269,7 @@ public class LoginAndAccountApi {
      * Check if a user is logged in.
      * Check if a user is logged in.
      * <p><b>200</b> - true if the user is logged in
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return Boolean
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -267,7 +284,7 @@ public class LoginAndAccountApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -283,6 +300,7 @@ public class LoginAndAccountApi {
      * Check if a user is logged in.
      * Check if a user is logged in.
      * <p><b>200</b> - true if the user is logged in
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return Boolean
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -295,6 +313,7 @@ public class LoginAndAccountApi {
      * Check if a user is logged in.
      * Check if a user is logged in.
      * <p><b>200</b> - true if the user is logged in
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;Boolean&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -307,6 +326,7 @@ public class LoginAndAccountApi {
      * Check if a user is logged in.
      * Check if a user is logged in.
      * <p><b>200</b> - true if the user is logged in
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -318,10 +338,12 @@ public class LoginAndAccountApi {
      * Login into SIRIUS web services and activate default subscription if available.
      * Login into SIRIUS web services and activate default subscription if available.
      * <p><b>200</b> - Basic information about the account that has been logged in and its subscriptions.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param acceptTerms The acceptTerms parameter
      * @param accountCredentials used to log in.
      * @param failWhenLoggedIn if true request fails if an active login already exists.
-     * @param includeSubs include available and active subscriptions in {@link AccountInfo AccountInfo}.
+     * @param includeSubs include available and active subscriptions in &lt;code&gt;AccountInfo&lt;/code&gt;.
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -348,7 +370,7 @@ public class LoginAndAccountApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeSubs", includeSubs));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -366,10 +388,12 @@ public class LoginAndAccountApi {
      * Login into SIRIUS web services and activate default subscription if available.
      * Login into SIRIUS web services and activate default subscription if available.
      * <p><b>200</b> - Basic information about the account that has been logged in and its subscriptions.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param acceptTerms The acceptTerms parameter
      * @param accountCredentials used to log in.
      * @param failWhenLoggedIn if true request fails if an active login already exists.
-     * @param includeSubs include available and active subscriptions in {@link AccountInfo AccountInfo}.
+     * @param includeSubs include available and active subscriptions in &lt;code&gt;AccountInfo&lt;/code&gt;.
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -382,10 +406,12 @@ public class LoginAndAccountApi {
      * Login into SIRIUS web services and activate default subscription if available.
      * Login into SIRIUS web services and activate default subscription if available.
      * <p><b>200</b> - Basic information about the account that has been logged in and its subscriptions.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param acceptTerms The acceptTerms parameter
      * @param accountCredentials used to log in.
      * @param failWhenLoggedIn if true request fails if an active login already exists.
-     * @param includeSubs include available and active subscriptions in {@link AccountInfo AccountInfo}.
+     * @param includeSubs include available and active subscriptions in &lt;code&gt;AccountInfo&lt;/code&gt;.
      * @return ResponseEntity&lt;AccountInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -398,10 +424,12 @@ public class LoginAndAccountApi {
      * Login into SIRIUS web services and activate default subscription if available.
      * Login into SIRIUS web services and activate default subscription if available.
      * <p><b>200</b> - Basic information about the account that has been logged in and its subscriptions.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param acceptTerms The acceptTerms parameter
      * @param accountCredentials used to log in.
      * @param failWhenLoggedIn if true request fails if an active login already exists.
-     * @param includeSubs include available and active subscriptions in {@link AccountInfo AccountInfo}.
+     * @param includeSubs include available and active subscriptions in &lt;code&gt;AccountInfo&lt;/code&gt;.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -413,6 +441,7 @@ public class LoginAndAccountApi {
      * Logout from SIRIUS web services.
      * Logout from SIRIUS web services.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec logoutRequestCreation() throws WebClientResponseException {
@@ -440,6 +469,7 @@ public class LoginAndAccountApi {
      * Logout from SIRIUS web services.
      * Logout from SIRIUS web services.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public void logout() throws WebClientResponseException {
@@ -451,6 +481,7 @@ public class LoginAndAccountApi {
      * Logout from SIRIUS web services.
      * Logout from SIRIUS web services.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ResponseEntity<Void> logoutWithHttpInfo() throws WebClientResponseException {
@@ -462,6 +493,7 @@ public class LoginAndAccountApi {
      * Logout from SIRIUS web services.
      * Logout from SIRIUS web services.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -473,6 +505,7 @@ public class LoginAndAccountApi {
      * Open User portal in browser.
      * Open User portal in browser. If user is logged in SIRIUS tries to transfer the login state to the browser.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec openPortalRequestCreation() throws WebClientResponseException {
@@ -500,6 +533,7 @@ public class LoginAndAccountApi {
      * Open User portal in browser.
      * Open User portal in browser. If user is logged in SIRIUS tries to transfer the login state to the browser.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public void openPortal() throws WebClientResponseException {
@@ -511,6 +545,7 @@ public class LoginAndAccountApi {
      * Open User portal in browser.
      * Open User portal in browser. If user is logged in SIRIUS tries to transfer the login state to the browser.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ResponseEntity<Void> openPortalWithHttpInfo() throws WebClientResponseException {
@@ -522,6 +557,7 @@ public class LoginAndAccountApi {
      * Open User portal in browser.
      * Open User portal in browser. If user is logged in SIRIUS tries to transfer the login state to the browser.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -533,6 +569,8 @@ public class LoginAndAccountApi {
      * Select a subscription as active subscription to be used for computations.
      * Select a subscription as active subscription to be used for computations.
      * <p><b>200</b> - Account information with updated active subscription
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param sid The sid parameter
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -554,7 +592,7 @@ public class LoginAndAccountApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sid", sid));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -570,6 +608,8 @@ public class LoginAndAccountApi {
      * Select a subscription as active subscription to be used for computations.
      * Select a subscription as active subscription to be used for computations.
      * <p><b>200</b> - Account information with updated active subscription
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param sid The sid parameter
      * @return AccountInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -583,6 +623,8 @@ public class LoginAndAccountApi {
      * Select a subscription as active subscription to be used for computations.
      * Select a subscription as active subscription to be used for computations.
      * <p><b>200</b> - Account information with updated active subscription
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param sid The sid parameter
      * @return ResponseEntity&lt;AccountInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -596,6 +638,8 @@ public class LoginAndAccountApi {
      * Select a subscription as active subscription to be used for computations.
      * Select a subscription as active subscription to be used for computations.
      * <p><b>200</b> - Account information with updated active subscription
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param sid The sid parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -608,6 +652,7 @@ public class LoginAndAccountApi {
      * Open SignUp window in system browser and return signUp link.
      * Open SignUp window in system browser and return signUp link.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -622,7 +667,7 @@ public class LoginAndAccountApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "text/plain;charset=UTF-8"
+            "text/plain;charset=UTF-8", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -638,6 +683,7 @@ public class LoginAndAccountApi {
      * Open SignUp window in system browser and return signUp link.
      * Open SignUp window in system browser and return signUp link.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -650,6 +696,7 @@ public class LoginAndAccountApi {
      * Open SignUp window in system browser and return signUp link.
      * Open SignUp window in system browser and return signUp link.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -662,6 +709,7 @@ public class LoginAndAccountApi {
      * Open SignUp window in system browser and return signUp link.
      * Open SignUp window in system browser and return signUp link.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */

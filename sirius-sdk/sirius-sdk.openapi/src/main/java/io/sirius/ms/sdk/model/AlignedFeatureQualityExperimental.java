@@ -125,7 +125,7 @@ public class AlignedFeatureQualityExperimental {
   }
 
   /**
-   * Contains all pre-computation quality information that belong to  this feature (aligned over runs), such as information about the quality of the peak shape, MS2 spectrum etc.,
+   * Contains all pre-computation quality information that belong to  this feature (aligned over runs), such as information about the quality of the peak shape, MS2 spectrum, etc.
    * @return categories
    */
   @jakarta.annotation.Nonnull

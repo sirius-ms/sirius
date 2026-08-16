@@ -55,7 +55,7 @@ public class SearchableDatabaseParameters {
     /**
      * Indicates whether this database shall be used to use retention time information for library matching.
      * Typically used for in-house spectral libraries that were measured on the same
-     * chromatographic setup as the samples being analysed, so that retention times are comparable.
+     * chromatographic setup as the samples being analyzed, so that retention times are comparable.
      */
     @Schema(nullable = true, defaultValue = "false", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected Boolean matchRtOfReferenceSpectra;
