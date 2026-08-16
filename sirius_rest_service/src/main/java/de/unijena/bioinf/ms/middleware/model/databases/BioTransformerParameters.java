@@ -34,14 +34,14 @@ public class BioTransformerParameters {
 
     /**
      * Specify the Phase II mode for all provided BioTransformerSequenceSteps. Will only be applied to Steps that
-     * require the Phase II mode  as parameter. Can be null in cases where only BioTransformerSequenceSteps are specified
+     * require the Phase II mode as parameter. Can be null in cases where only BioTransformerSequenceSteps are specified
      * that do not need the Phase II mode.
      */
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.REQUIRED, defaultValue = "BT_RULE_BASED")
     private P2Mode p2Mode = P2Mode.BT_RULE_BASED;
 
     /**
-     * "Specify if you want to enable the retrieving from database (HMDB) feature."
+     * Specify whether structures should additionally be retrieved from the HMDB database.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "true")
     private boolean useDB = true;
@@ -65,7 +65,7 @@ public class BioTransformerParameters {
         }
 
         if (bioTransformerSequenceSteps.stream().map(BioTransformerSequenceStep::getMetabolicTransformation).anyMatch(HUMAN_CUSTOM_MULTI::equals))
-            throw new IllegalArgumentException(HUMAN_CUSTOM_MULTI.getDisplayName() + " is not allowed as parameter. Please the specify the individual steps instead.");
+            throw new IllegalArgumentException(HUMAN_CUSTOM_MULTI.getDisplayName() + " is not allowed as parameter. Please specify the individual steps instead.");
 
         BioTransformerSettings settings = new BioTransformerSettings()
                 .setUseSub(true)
