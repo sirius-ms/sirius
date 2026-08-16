@@ -188,7 +188,8 @@ public class CompoundList {
     }
 
     public int getFullSize() {
-        return sortedSource.size();
+        // read locked: the pipeline may be mutated from any thread (e.g. a feature reload swapping the page)
+        return EventLists.readLocked(sortedSource, sortedSource::size);
     }
 
     /**
