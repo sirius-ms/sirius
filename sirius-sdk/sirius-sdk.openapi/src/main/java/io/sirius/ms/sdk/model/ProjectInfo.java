@@ -101,7 +101,7 @@ public class ProjectInfo {
   }
 
   /**
-   * a user selected unique name of the project for easy access.
+   * A user-selected unique name of the project for easy access.
    * @return projectId
    */
   @jakarta.annotation.Nullable
@@ -126,7 +126,7 @@ public class ProjectInfo {
   }
 
   /**
-   * storage location of the project.
+   * Storage location of the project.
    * @return location
    */
   @jakarta.annotation.Nullable
@@ -201,7 +201,7 @@ public class ProjectInfo {
   }
 
   /**
-   * Indicates whether computed results (e.g. fingerprints, compounds classes) are compatible with the backend.  If true project is up-to-date and there are no restrictions regarding usage.  If false project is incompatible and therefore \&quot;read only\&quot; until the incompatible results have been removed. See updateProject endpoint for further information  If NULL the information has not been requested.
+   * Indicates whether computed results (e.g. fingerprints, compound classes) are compatible with the backend.  If true, the project is up-to-date and there are no restrictions regarding usage.  If false, the project is incompatible and therefore \&quot;read only\&quot; until the incompatible results have been removed. See the updateProject endpoint for further information.  If NULL, the information has not been requested.
    * @return compatible
    */
   @jakarta.annotation.Nullable
@@ -251,7 +251,7 @@ public class ProjectInfo {
   }
 
   /**
-   * Number of compounds (group of ion identities) in this project. If NULL, Information has not been requested (See OptField &#39;sizeInformation&#39;) or might be unavailable for this project type.
+   * Number of compounds (group of ion identities) in this project. If NULL, information has not been requested (See OptField &#39;sizeInformation&#39;) or might be unavailable for this project type.
    * @return numOfCompounds
    */
   @jakarta.annotation.Nullable
@@ -276,7 +276,7 @@ public class ProjectInfo {
   }
 
   /**
-   * Size in Bytes this project consumes on disk If NULL, Information has not been requested (See OptField &#39;sizeInformation&#39;).
+   * Size in bytes this project consumes on disk. If NULL, information has not been requested (See OptField &#39;sizeInformation&#39;).
    * @return numOfBytes
    */
   @jakarta.annotation.Nullable
@@ -309,7 +309,7 @@ public class ProjectInfo {
   }
 
   /**
-   * Set of all detected adducts available in this projects
+   * Set of all detected adducts available in this project.
    * @return detectedAdducts
    */
   @jakarta.annotation.Nullable

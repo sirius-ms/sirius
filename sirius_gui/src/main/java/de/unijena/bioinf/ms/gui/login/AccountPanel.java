@@ -98,7 +98,7 @@ public class AccountPanel extends LoadablePanel implements PropertyChangeListene
                 }));
         refresh.setPreferredSize(new Dimension(45, 45));
         refresh.setToolTipText(
-                GuiUtils.formatToolTip("Refresh access token (also reloads account an license information)."));
+                GuiUtils.formatToolTip("Refresh access token (also reloads account and license information)."));
 
         Box right = Box.createHorizontalBox();
         right.add(Box.createHorizontalGlue());

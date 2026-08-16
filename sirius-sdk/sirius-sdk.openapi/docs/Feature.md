@@ -17,8 +17,8 @@ A feature as it has been detected in one single run, in contrast to an AlignedFe
 |**rtEndSeconds** | **Double** | End of the feature on the retention time axis in seconds |  [optional] |
 |**rtApexSeconds** | **Double** | Apex of the feature on the retention time axis in seconds |  [optional] |
 |**rtFwhmSeconds** | **Double** | Full width at half maximum of the feature on the retention time axis in seconds |  [optional] |
-|**apexIntensity** | **Double** | Feature Quantity measured as Intensity of the apex of the feature |  [optional] |
-|**areaUnderCurve** | **Double** | Feature Quantity measured as Area under curve of the whole feature |  [optional] |
+|**apexIntensity** | **Double** | Feature quantity measured as the intensity of the apex of the feature |  [optional] |
+|**areaUnderCurve** | **Double** | Feature quantity measured as the area under the curve of the whole feature |  [optional] |
 
 
 

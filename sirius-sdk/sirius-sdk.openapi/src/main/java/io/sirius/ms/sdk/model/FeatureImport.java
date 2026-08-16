@@ -386,7 +386,7 @@ public class FeatureImport {
   }
 
   /**
-   * List of MS1Spectra belonging to this feature. These spectra will be merged an only a representative  mergedMs1 spectrum will be stored in SIRIUS. At least one of these spectra should contain the  isotope pattern of the precursor ion.  Note: Will be ignored if &#39;mergedMs1&#39; is given.
+   * List of MS1Spectra belonging to this feature. These spectra will be merged and only a representative  mergedMs1 spectrum will be stored in SIRIUS. At least one of these spectra should contain the  isotope pattern of the precursor ion.  Note: Will be ignored if &#39;mergedMs1&#39; is given.
    * @return ms1Spectra
    */
   @jakarta.annotation.Nullable

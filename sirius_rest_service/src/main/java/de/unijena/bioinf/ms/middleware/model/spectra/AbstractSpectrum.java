@@ -46,7 +46,7 @@ import java.util.List;
         isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectrum<P> {
     /**
-     * Optional Displayable name of this spectrum.
+     * Optional display name of this spectrum.
      */
     @Schema(nullable = true)
     @Getter @Setter
@@ -120,7 +120,7 @@ public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectru
 
     /**
      * Factor to convert relative intensities to absolute intensities.
-     * Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)
+     * Might be null or 1 for spectra where absolute intensities are not available (e.g. artificial or merged spectra)
      * <p>
      * DEPRECATED: Spectra are always returned with raw intensities.
      * Use provided normalization factors to normalize on the fly.

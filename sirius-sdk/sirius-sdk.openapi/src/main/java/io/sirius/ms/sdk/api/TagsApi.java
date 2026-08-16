@@ -49,9 +49,12 @@ public class TagsApi {
     }
 
     /**
-     * [EXPERIMENTAL] TagGroup tags in the project
-     * [EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Group tags in the project
+     * [EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tag group that was added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param groupName name of the new group
      * @param filter filter query to create the group
@@ -92,7 +95,7 @@ public class TagsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -105,9 +108,12 @@ public class TagsApi {
     }
 
     /**
-     * [EXPERIMENTAL] TagGroup tags in the project
-     * [EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Group tags in the project
+     * [EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tag group that was added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param groupName name of the new group
      * @param filter filter query to create the group
@@ -121,9 +127,12 @@ public class TagsApi {
     }
 
     /**
-     * [EXPERIMENTAL] TagGroup tags in the project
-     * [EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Group tags in the project
+     * [EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tag group that was added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param groupName name of the new group
      * @param filter filter query to create the group
@@ -137,9 +146,12 @@ public class TagsApi {
     }
 
     /**
-     * [EXPERIMENTAL] TagGroup tags in the project
-     * [EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Group tags in the project
+     * [EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tag group that was added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param groupName name of the new group
      * @param filter filter query to create the group
@@ -155,6 +167,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Add a possible value to the tag definition in the project
      * [EXPERIMENTAL] Add a possible value to the tag definition in the project.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the definitions of the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagName the tag definition to add the values to
      * @param requestBody The requestBody parameter
@@ -187,7 +202,7 @@ public class TagsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -205,6 +220,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Add a possible value to the tag definition in the project
      * [EXPERIMENTAL] Add a possible value to the tag definition in the project.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the definitions of the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagName the tag definition to add the values to
      * @param requestBody The requestBody parameter
@@ -220,6 +238,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Add a possible value to the tag definition in the project
      * [EXPERIMENTAL] Add a possible value to the tag definition in the project.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the definitions of the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagName the tag definition to add the values to
      * @param requestBody The requestBody parameter
@@ -235,6 +256,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Add a possible value to the tag definition in the project
      * [EXPERIMENTAL] Add a possible value to the tag definition in the project.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the definitions of the tags that have been added
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagName the tag definition to add the values to
      * @param requestBody The requestBody parameter
@@ -249,6 +273,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Add tags to the project
      * [EXPERIMENTAL] Add tags to the project. Tag names must not exist in the project.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the definitions of the tags that have been created
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagDefinitionImport the tag definitions to be created
      * @return List&lt;TagDefinition&gt;
@@ -275,7 +302,7 @@ public class TagsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -293,6 +320,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Add tags to the project
      * [EXPERIMENTAL] Add tags to the project. Tag names must not exist in the project.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the definitions of the tags that have been created
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagDefinitionImport the tag definitions to be created
      * @return List&lt;TagDefinition&gt;
@@ -307,6 +337,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Add tags to the project
      * [EXPERIMENTAL] Add tags to the project. Tag names must not exist in the project.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the definitions of the tags that have been created
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagDefinitionImport the tag definitions to be created
      * @return ResponseEntity&lt;List&lt;TagDefinition&gt;&gt;
@@ -321,6 +354,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Add tags to the project
      * [EXPERIMENTAL] Add tags to the project. Tag names must not exist in the project.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the definitions of the tags that have been created
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to add to.
      * @param tagDefinitionImport the tag definitions to be created
      * @return ResponseSpec
@@ -334,6 +370,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space
      * [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName name of group to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -374,6 +413,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space
      * [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName name of group to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -387,6 +429,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space
      * [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName name of group to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -400,6 +445,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space
      * [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param groupName name of group to delete.
      * @return ResponseSpec
@@ -413,6 +461,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  This will also remove all tags belonging to this definition from every tagged entity.  &lt;/p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param tagName name of the tag definition to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -453,6 +504,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  This will also remove all tags belonging to this definition from every tagged entity.  &lt;/p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param tagName name of the tag definition to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -466,6 +520,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  This will also remove all tags belonging to this definition from every tagged entity.  &lt;/p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param tagName name of the tag definition to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -479,6 +536,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  This will also remove all tags belonging to this definition from every tagged entity.  &lt;/p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param tagName name of the tag definition to delete.
      * @return ResponseSpec
@@ -492,6 +552,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get tag group by name in the given project-space
      * [EXPERIMENTAL] Get tag group by name in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag group.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param groupName name of the group
      * @return TagGroup
@@ -519,7 +582,7 @@ public class TagsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -535,6 +598,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get tag group by name in the given project-space
      * [EXPERIMENTAL] Get tag group by name in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag group.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param groupName name of the group
      * @return TagGroup
@@ -549,6 +615,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get tag group by name in the given project-space
      * [EXPERIMENTAL] Get tag group by name in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag group.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param groupName name of the group
      * @return ResponseEntity&lt;TagGroup&gt;
@@ -563,6 +632,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get tag group by name in the given project-space
      * [EXPERIMENTAL] Get tag group by name in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag group.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param groupName name of the group
      * @return ResponseSpec
@@ -576,6 +648,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag based groups in the given project-space
      * [EXPERIMENTAL] Get all tag based groups in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Groups.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param groupType type of the group
      * @return List&lt;TagGroup&gt;
@@ -600,7 +675,7 @@ public class TagsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "groupType", groupType));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -616,6 +691,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag based groups in the given project-space
      * [EXPERIMENTAL] Get all tag based groups in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Groups.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param groupType type of the group
      * @return List&lt;TagGroup&gt;
@@ -630,6 +708,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag based groups in the given project-space
      * [EXPERIMENTAL] Get all tag based groups in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Groups.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param groupType type of the group
      * @return ResponseEntity&lt;List&lt;TagGroup&gt;&gt;
@@ -644,6 +725,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag based groups in the given project-space
      * [EXPERIMENTAL] Get all tag based groups in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Groups.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param groupType type of the group
      * @return ResponseSpec
@@ -657,6 +741,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definition.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param tagName name of the tag
      * @return TagDefinition
@@ -684,7 +771,7 @@ public class TagsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -700,6 +787,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definition.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param tagName name of the tag
      * @return TagDefinition
@@ -714,6 +804,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definition.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param tagName name of the tag
      * @return ResponseEntity&lt;TagDefinition&gt;
@@ -728,6 +821,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definition.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param tagName name of the tag
      * @return ResponseSpec
@@ -741,6 +837,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag definitions in the given project-space
      * [EXPERIMENTAL] Get all tag definitions in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definitions.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param tagType scope of the tag (optional)
      * @return List&lt;TagDefinition&gt;
@@ -765,7 +864,7 @@ public class TagsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "tagType", tagType));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -781,6 +880,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag definitions in the given project-space
      * [EXPERIMENTAL] Get all tag definitions in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definitions.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param tagType scope of the tag (optional)
      * @return List&lt;TagDefinition&gt;
@@ -795,6 +897,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag definitions in the given project-space
      * [EXPERIMENTAL] Get all tag definitions in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definitions.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param tagType scope of the tag (optional)
      * @return ResponseEntity&lt;List&lt;TagDefinition&gt;&gt;
@@ -809,6 +914,9 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag definitions in the given project-space
      * [EXPERIMENTAL] Get all tag definitions in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definitions.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param tagType scope of the tag (optional)
      * @return ResponseSpec

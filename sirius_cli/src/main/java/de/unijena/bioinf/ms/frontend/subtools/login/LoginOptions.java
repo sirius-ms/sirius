@@ -78,7 +78,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
     protected String sid = null;
 
     @CommandLine.Option(names = {"--request-token-only"},
-            description = {"Requests and prints a new SECRET refresh token but does not store the token as login.", "This can be used to request a token to be used in third party applications that wish to call SIRIUS Web Services using your account.", "Do never store your username and password in third party apps.", "Do not store the output of this command in any log. We recommend redirecting the output into a file."})
+            description = {"Requests and prints a new SECRET refresh token but does not store the token as login.", "This can be used to request a token to be used in third-party applications that wish to call SIRIUS Web Services using your account.", "Never store your username and password in third-party apps.", "Do not store the output of this command in any log. We recommend redirecting the output into a file."})
     protected boolean tokenRequestOnly = false;
 
     //todo token invalidation command.

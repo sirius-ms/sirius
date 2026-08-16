@@ -75,7 +75,7 @@ public class LcmsSubmissionParameters {
     /**
      * Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level
      * to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.
-     * If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify
+     * If not specified, the noise intensity is detected automatically from the data. We recommend NOT specifying
      * this parameter, as the automated detection is usually sufficient.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "-1")
@@ -98,7 +98,7 @@ public class LcmsSubmissionParameters {
     protected Deviation alignMaxMassDeviation = null;
 
     /**
-     * Maximal allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from data.
+     * Maximum allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from the data.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "-1")
     protected double alignMaxRetentionTimeDeviation = -1;
@@ -110,7 +110,7 @@ public class LcmsSubmissionParameters {
     protected DataSmoothing filter = DataSmoothing.AUTO;
 
     /**
-     * Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory
+     * Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensity features we recommend a min-snr of 2, but this will increase runtime and storage requirements
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "3", hidden = false)
     protected double minSNR = 3;
@@ -128,8 +128,8 @@ public class LcmsSubmissionParameters {
     protected int waveletScale = 8;
 
     /**
-     * Checks that sample names and types can be matched to the given input files, see {@link #sampleNames}
-     * and {@link #sampleTypes} for the respective rules.
+     * Checks that sample names and types can be matched to the given input files, see {@code sampleNames}
+     * and {@code sampleTypes} for the respective rules.
      *
      * @param numberOfInputFiles number of input files these parameters are submitted with
      * @throws IllegalArgumentException if names or types cannot be applied to the input files

@@ -146,7 +146,7 @@ public class JobDialog extends JFrame {
 
         JPanel cleaningButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton clearFailedB = new JButton("Clear");
-        clearFailedB.setToolTipText("Remove all done/canceled/failed jobs from job list. This will also remove the logs");
+        clearFailedB.setToolTipText("Remove all done/canceled/failed jobs from the job list. This will also remove their logs.");
         clearFailedB.addActionListener(e -> Jobs.MANAGER().clearFinished()); //todo this could be a global action
 
 

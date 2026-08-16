@@ -61,7 +61,7 @@ public class GuiController {
 
     /**
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
-     * @param projectId of project-space the GUI instance will connect to.
+     * @param projectId project-space the GUI instance will connect to.
      */
     @PostMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
@@ -72,7 +72,7 @@ public class GuiController {
     /**
      * Close GUI instance of given project-space if available.
      *
-     * @param projectId if project-space the GUI instance is connected to.
+     * @param projectId project-space the GUI instance is connected to.
      */
     @DeleteMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
     public boolean closeGui(@PathVariable String projectId, @RequestParam(required = false) boolean closeProject) throws IOException {

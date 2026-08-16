@@ -85,7 +85,7 @@ public class JobController {
     }
 
     /**
-     * [DEPRECATED] Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get list of all available jobs with information such as current state and progress (if available).
      * <p>
      * [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.
      * This endpoint will be removed in the next major version of this API.
@@ -114,7 +114,7 @@ public class JobController {
      * Get job information and its current state and progress (if available).
      *
      * @param projectId project-space to run jobs on
-     * @param jobId     of the job to be returned
+     * @param jobId     id of the job to be returned
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      */
     @GetMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -129,7 +129,7 @@ public class JobController {
      * Start computation for given compounds and with given parameters.
      *
      * @param projectId     project-space to run jobs on
-     * @param jobSubmission configuration of the job that will be submitted of the job to be returned
+     * @param jobSubmission configuration of the job to be submitted
      * @param optFields     set of optional fields to be included. Use 'none' only to override defaults.
      */
     @PostMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -148,7 +148,7 @@ public class JobController {
      * Start computation for given compounds and with parameters from a stored job-config.
      *
      * @param projectId     project-space to run jobs on
-     * @param jobConfigName name if the config to be used
+     * @param jobConfigName name of the config to be used
      * @param alignedFeatureIds  List of alignedFeatureIds to be computed
      * @param recompute     enable or disable recompute. If null the stored value will be used.
      * @param optFields     set of optional fields to be included. Use 'none' only to override defaults.
@@ -197,7 +197,7 @@ public class JobController {
     }
 
     /**
-     * * Delete ALL jobs. Specify how to behave for running jobs.
+     * Delete ALL jobs. Specify how to behave for running jobs.
      *
      * @param projectId       project-space to delete jobs from
      * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,
@@ -243,9 +243,9 @@ public class JobController {
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search
-     *                                           spectral library search contains also all available custom DB.
-     *                                           If No custom dbs are selected, spectral library search is disabled by default.
-     * @return {@link JobSubmission} with all parameters set to default values.
+     *                                           and spectral library search also contains all available custom databases.
+     *                                           If no custom databases are selected, spectral library search is disabled by default.
+     * @return {@code JobSubmission} with all parameters set to default values.
      */
     @GetMapping(value = "/default-job-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
@@ -265,7 +265,7 @@ public class JobController {
     /**
      * Request all available job configurations
      *
-     * @return list of available {@link JobSubmission}s
+     * @return list of available {@code JobSubmission}s
      */
     @GetMapping(value = "/job-configs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
@@ -296,7 +296,7 @@ public class JobController {
      *
      * @param name             name of the job-config to return
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @return {@link JobSubmission} for given name.
+     * @return {@code JobSubmission} for given name.
      */
     @GetMapping(value = "/job-configs/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
