@@ -273,9 +273,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                             .fullTextSearch(textLike && indexField.fullTextSearch())
                             .sortable(indexField.sortable() && getSortTypeForType(elementType) != null)
                             .defaultSearchField(indexField.defaultSearchField())
-                            .possibleValues(elementType.isEnum()
-                                    ? Arrays.stream(elementType.getEnumConstants()).map(e -> ((Enum<?>) e).name()).toList()
-                                    : null)
+                            .possibleValues(possibleValuesOf(elementType))
                             .description(fieldDescriptionProvider.apply(field))
                             .build());
                 }
@@ -517,5 +515,20 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 throw new IndexMapperNotFoundException(clz, e);
             }
         });
+    }
+
+    /**
+     * The values a field can take, if they are known.
+     * <p>
+     * Enums report their constants and booleans report true/false, both exactly as they are indexed, so that a
+     * client can offer them for completion instead of leaving the user to guess. Booleans are keyword indexed
+     * from {@link Boolean#toString()}, hence the lower case literals.
+     */
+    private static List<String> possibleValuesOf(Class<?> elementType) {
+        if (elementType.isEnum())
+            return Arrays.stream(elementType.getEnumConstants()).map(e -> ((Enum<?>) e).name()).toList();
+        if (elementType.equals(Boolean.class) || elementType.equals(boolean.class))
+            return List.of("true", "false");
+        return null;
     }
 }
