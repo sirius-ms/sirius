@@ -409,6 +409,12 @@ public class LuceneMappingUtils {
             return SortField.Type.FLOAT;
         } else if (type.equals(Date.class)) {
             return SortField.Type.LONG;
+        } else if (type.isEnum()) {
+            // Enums sort by ordinal, not by constant name: for an ordered enum such as DataQuality the
+            // alphabetical order (BAD, DECENT, GOOD, LOWEST, NOT_APPLICABLE) carries no meaning, while the
+            // declaration order does. The ordinal is written as a numeric doc value, see
+            // getIndexedFieldsFromSimpleValue; the searchable term stays the constant name.
+            return SortField.Type.INT;
         } else if (type.equals(boolean.class) || type.equals(Boolean.class) || type.equals(String.class)) {
             return SortField.Type.STRING;
         }
@@ -441,10 +447,15 @@ public class LuceneMappingUtils {
             return fields;
 
         if (value.getClass().isEnum()) {
-            String enumVal = ((Enum<?>) value).name();
-            fields.add(new StringField(fieldName, enumVal, storeOption));
+            Enum<?> enumValue = (Enum<?>) value;
+            fields.add(new StringField(fieldName, enumValue.name(), storeOption));
             if (sorted)
-                fields.add(new SortedDocValuesField(fieldName, new BytesRef(enumVal)));
+                // sort by declaration order, which is the meaningful one for ordered enums such as DataQuality;
+                // sorting by the constant name would order GOOD before LOWEST. The term above stays the name, so
+                // queries are unaffected. See getSortTypeForType.
+                fields.add(inCollection
+                        ? new SortedNumericDocValuesField(fieldName, enumValue.ordinal())
+                        : new NumericDocValuesField(fieldName, enumValue.ordinal()));
             return fields;
         }
 
