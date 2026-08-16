@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
@@ -479,6 +480,10 @@ public class GuiProjectManager implements Closeable {
                     tmpInst.forEach(InstanceBean::unregisterProjectSpaceListener);
                     return;
                 }
+                // Drop the selection before touching the list: the whole page is replaced, so the selection
+                // cannot survive anyway, and an empty selection keeps the selection model from re-indexing (and
+                // re-firing) across the swap - which is where half-updated list/selection state was observed.
+                clearCompoundListSelection();
                 // Discard the outgoing beans: unregister their listeners (fixes a pre-existing pcs leak and stops
                 // ghost beans refetching on later result events), then swap in the fresh page.
                 INSTANCE_LIST.forEach(InstanceBean::unregisterProjectSpaceListener);
@@ -493,6 +498,17 @@ public class GuiProjectManager implements Closeable {
         } catch (InvocationTargetException | InterruptedException e) {
             log.warn("Reloading features EDT wait interrupted", e);
         }
+    }
+
+    /**
+     * Clears the compound list selection (EDT only). No-op while the main frame / compound list does not exist
+     * yet - the initial reload runs from the constructor, before the GUI is built.
+     */
+    private void clearCompoundListSelection() {
+        Optional.ofNullable(siriusGui.getMainFrame())
+                .map(MainFrame::getCompoundList)
+                .map(CompoundList::getCompoundListSelectionModel)
+                .ifPresent(ListSelectionModel::clearSelection);
     }
 
     public void disableImportListener() {

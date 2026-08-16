@@ -114,6 +114,9 @@ public class CompoundList {
 
 
     private boolean selectionListenerRegistered = false;
+    // Applies a selection change outside the event dispatch that caused it, see applySelectionChange().
+    private final CoalescingEdtUpdater selectionUpdater = new CoalescingEdtUpdater("compound list selection", this::applySelectionChange);
+
     public synchronized void initializedSelectionListener(@NotNull LazyLoadingPanel<ResultPanel> resultPanelProvider){
         if (!selectionListenerRegistered) {
             compoundListSelectionModel.addListSelectionListener(e -> {
@@ -122,20 +125,31 @@ public class CompoundList {
                 if (c instanceof Loadable l)
                     l.setLoading(true, true);
 
-                if (!e.getValueIsAdjusting()) {
-                    //we only enable listener for first selected because this is the one where results are visible.
-                    compoundListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
-                    compoundListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
-                    if (!compoundListSelectionModel.isSelectionEmpty()){
-                        InstanceBean selected = compoundListSelectionModel.getSelected().getFirst();
-                        selected.enableProjectSpaceListener();
-                        projectManager.removeTemporaryJumpToFeatureIfNotSelected(selected.getFeatureId());
-                    }
-                    notifyListenerSelectionChange();
-                }
+                if (!e.getValueIsAdjusting())
+                    selectionUpdater.request();
             });
             selectionListenerRegistered = true;
         }
+    }
+
+    /**
+     * Reacts to a finished selection change. Runs deferred on the EDT (never inline in the listener) because a
+     * selection change caused by a <i>list</i> change is fired from within the GlazedLists event dispatch: reading
+     * the live selection views there sees a half-updated list (the swing thread proxy cache and the selection
+     * barcode disagree, e.g. "Index 64 out of bounds for length 63"), and removing the temporary jump-to feature
+     * would be a nested structural mutation. Either one aborts the dispatch and leaves the selection model
+     * permanently broken ("Invalid range for invert selection"), i.e. kills the whole feature list.
+     */
+    private void applySelectionChange() {
+        //we only enable listener for first selected because this is the one where results are visible.
+        compoundListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
+        compoundListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
+        if (!compoundListSelectionModel.isSelectionEmpty()) {
+            InstanceBean selected = compoundListSelectionModel.getSelected().getFirst();
+            selected.enableProjectSpaceListener();
+            projectManager.removeTemporaryJumpToFeatureIfNotSelected(selected.getFeatureId());
+        }
+        notifyListenerSelectionChange();
     }
 
     public void orderBy(@NotNull final Comparator<InstanceBean> comp) {
