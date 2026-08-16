@@ -116,7 +116,7 @@ public class SearchableDatabaseParameters {
   }
 
   /**
-   * Indicates whether this database shall be used to use retention time information for library matching.  Typically used for in-house spectral libraries that have been measured on
+   * Indicates whether this database shall be used to use retention time information for library matching.  Typically used for in-house spectral libraries that were measured on the same  chromatographic setup as the samples being analyzed, so that retention times are comparable.
    * @return matchRtOfReferenceSpectra
    */
   @jakarta.annotation.Nullable

@@ -252,7 +252,6 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match
      *                    every feature).
      */
-    @Operation(operationId = "deleteAlignedFeaturesByQueryExperimental")
     @PutMapping(value = "/delete-by-query")
     public void deleteAlignedFeaturesByQuery(@PathVariable String projectId, @RequestParam String searchQuery) {
         projectsProvider.getProjectOrThrow(projectId).deleteAlignedFeaturesByQuery(searchQuery);

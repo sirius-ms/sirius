@@ -424,7 +424,7 @@ public class PeakAnnotation {
   }
 
   /**
-   * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.   Array/List of indices of the bonds of the structure candidate that need to be cut to produce this fragments  substructure (highlighted cutted bonds).   Null if substructure annotation not available or not requested.
+   * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.   Array/List of indices of the bonds of the structure candidate that need to be cut to produce this fragments  substructure (highlighted cut bonds).   Null if substructure annotation not available or not requested.
    * @return substructureBondsCut
    */
   @jakarta.annotation.Nullable

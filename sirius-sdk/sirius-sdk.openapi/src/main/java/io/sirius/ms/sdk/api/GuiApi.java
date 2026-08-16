@@ -50,7 +50,10 @@ public class GuiApi {
      * Close GUI instance of given project-space if available.
      * Close GUI instance of given project-space if available.
      * <p><b>200</b> - OK
-     * @param projectId if project-space the GUI instance is connected to.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project-space the GUI instance is connected to.
      * @param closeProject The closeProject parameter
      * @return Boolean
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -74,7 +77,7 @@ public class GuiApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "closeProject", closeProject));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -90,7 +93,10 @@ public class GuiApi {
      * Close GUI instance of given project-space if available.
      * Close GUI instance of given project-space if available.
      * <p><b>200</b> - OK
-     * @param projectId if project-space the GUI instance is connected to.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project-space the GUI instance is connected to.
      * @param closeProject The closeProject parameter
      * @return Boolean
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -104,7 +110,10 @@ public class GuiApi {
      * Close GUI instance of given project-space if available.
      * Close GUI instance of given project-space if available.
      * <p><b>200</b> - OK
-     * @param projectId if project-space the GUI instance is connected to.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project-space the GUI instance is connected to.
      * @param closeProject The closeProject parameter
      * @return ResponseEntity&lt;Boolean&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -118,7 +127,10 @@ public class GuiApi {
      * Close GUI instance of given project-space if available.
      * Close GUI instance of given project-space if available.
      * <p><b>200</b> - OK
-     * @param projectId if project-space the GUI instance is connected to.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project-space the GUI instance is connected to.
      * @param closeProject The closeProject parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -131,6 +143,7 @@ public class GuiApi {
      * Get list of currently running gui windows, managed by this SIRIUS instance.
      * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
      * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;GuiInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -145,7 +158,7 @@ public class GuiApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -161,6 +174,7 @@ public class GuiApi {
      * Get list of currently running gui windows, managed by this SIRIUS instance.
      * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
      * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;GuiInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -173,6 +187,7 @@ public class GuiApi {
      * Get list of currently running gui windows, managed by this SIRIUS instance.
      * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
      * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;List&lt;GuiInfo&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -185,6 +200,7 @@ public class GuiApi {
      * Get list of currently running gui windows, managed by this SIRIUS instance.
      * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
      * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -196,7 +212,10 @@ public class GuiApi {
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      * <p><b>201</b> - Created
-     * @param projectId of project-space the GUI instance will connect to.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project-space the GUI instance will connect to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec openGuiRequestCreation(@jakarta.annotation.Nonnull String projectId) throws WebClientResponseException {
@@ -230,7 +249,10 @@ public class GuiApi {
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      * <p><b>201</b> - Created
-     * @param projectId of project-space the GUI instance will connect to.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project-space the GUI instance will connect to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public void openGui(@jakarta.annotation.Nonnull String projectId) throws WebClientResponseException {
@@ -242,7 +264,10 @@ public class GuiApi {
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      * <p><b>201</b> - Created
-     * @param projectId of project-space the GUI instance will connect to.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project-space the GUI instance will connect to.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ResponseEntity<Void> openGuiWithHttpInfo(@jakarta.annotation.Nonnull String projectId) throws WebClientResponseException {
@@ -254,7 +279,10 @@ public class GuiApi {
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      * <p><b>201</b> - Created
-     * @param projectId of project-space the GUI instance will connect to.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project-space the GUI instance will connect to.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */

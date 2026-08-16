@@ -66,7 +66,7 @@ public class TagSubmission {
   }
 
   /**
-   * ID of the object where the tag should be added.  Then Object type is taken from context of the API endpoint.
+   * ID of the object where the tag should be added.  The object type is taken from the context of the API endpoint.
    * @return taggedObjectId
    */
   @jakarta.annotation.Nonnull
@@ -91,7 +91,7 @@ public class TagSubmission {
   }
 
   /**
-   * Name of the tag as defined by the corresponding TagDefinition  Links tag object to their definition.
+   * Name of the tag as defined by the corresponding TagDefinition  Links the tag object to its definition.
    * @return tagName
    */
   @jakarta.annotation.Nonnull

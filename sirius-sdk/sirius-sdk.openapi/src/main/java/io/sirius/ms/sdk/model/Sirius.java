@@ -158,7 +158,7 @@ public class Sirius {
   }
 
   /**
-   * tags whether the tool is enabled
+   * Indicates whether the tool is enabled.
    * @return enabled
    */
   @jakarta.annotation.Nullable
@@ -308,7 +308,7 @@ public class Sirius {
   }
 
   /**
-   * When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.
+   * When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the measured one, even if their MS/MS pattern has high score.
    * @return filterByIsotopePattern
    */
   @jakarta.annotation.Nullable
@@ -333,7 +333,7 @@ public class Sirius {
   }
 
   /**
-   * El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforeced as molecular formula candidate.
+   * El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforced as a molecular formula candidate.
    * @return enforceElGordoFormula
    */
   @jakarta.annotation.Nullable
@@ -416,7 +416,7 @@ public class Sirius {
   }
 
   /**
-   * List Structure database to extract molecular formulas from to reduce formula search space.  SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.
+   * List of structure databases to extract molecular formulas from, to reduce the formula search space.  SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.
    * @return formulaSearchDBs
    */
   @jakarta.annotation.Nullable
@@ -599,7 +599,7 @@ public class Sirius {
   }
 
   /**
-   * If true formula candidates that belong to spectral library matches above a certain threshold will  we inject/preserved for further analyses no matter which score they have or which filter is applied
+   * If true formula candidates that belong to spectral library matches above a certain threshold will  be injected and preserved for further analyses, no matter which score they have or which filter is applied
    * @return injectSpecLibMatchFormulas
    */
   @jakarta.annotation.Nullable
@@ -624,7 +624,7 @@ public class Sirius {
   }
 
   /**
-   * Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.  If threshold &gt;&#x3D; 0 formulas candidates with reference spectrum similarity above the threshold will be injected.
+   * Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.  If the threshold is &gt;&#x3D; 0, formula candidates with a reference spectrum similarity above the threshold will be injected.
    * @return minScoreToInjectSpecLibMatch
    */
   @jakarta.annotation.Nullable

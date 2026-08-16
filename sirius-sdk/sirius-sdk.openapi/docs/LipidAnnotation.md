@@ -11,7 +11,7 @@
 |**lipidMapsId** | **String** | LIPID MAPS id of the predicted lipid class. |  [optional] |
 |**lipidClassName** | **String** | Human-readable name of the predicted lipid class. |  [optional] |
 |**hypotheticalStructure** | **String** | Hypothetical molecular structure of the predicted lipid species as SMILES.  NULL if hypothetical structure not available. |  [optional] |
-|**chainsUnknown** | **Boolean** | True of the formula composition of the chains could not be determined from the MS/MS. |  [optional] |
+|**chainsUnknown** | **Boolean** | True if the formula composition of the chains could not be determined from the MS/MS. |  [optional] |
 
 
 

@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Progress information of a computation job that has already been submitted to SIRIUS.  if  currentProgress &#x3D;&#x3D; maxProgress job is finished and should change to state done soon.  if a job is DONE all results can be accessed via the Project-Spaces api.
+ * Progress information of a computation job that has already been submitted to SIRIUS.  If currentProgress &#x3D;&#x3D; maxProgress, the job is finished and should change to state DONE soon.  If a job is DONE, all results can be accessed via the project-space API.
  */
 @JsonPropertyOrder({
   JobProgress.JSON_PROPERTY_INDETERMINATE,
@@ -207,7 +207,7 @@ public class JobProgress {
   }
 
   /**
-   * Error message if the job did not finish successfully failed.
+   * Error message if the job did not finish successfully.
    * @return errorMessage
    */
   @jakarta.annotation.Nullable

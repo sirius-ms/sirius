@@ -110,7 +110,7 @@ public class Compound {
   }
 
   /**
-   * uid of this compound Entity
+   * Unique id of this compound entity.
    * @return compoundId
    */
   @jakarta.annotation.Nullable
@@ -210,7 +210,7 @@ public class Compound {
   }
 
   /**
-   * Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature of  this compound should result in the same neutral mass
+   * Neutral mass of this compound. Ion mass minus the mass of the assigned adduct of each feature of  this compound should result in the same neutral mass
    * @return neutralMass
    */
   @jakarta.annotation.Nullable

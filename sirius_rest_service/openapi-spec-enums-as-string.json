@@ -132,6 +132,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       },
@@ -191,6 +221,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProjectInfo"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -256,6 +316,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       },
@@ -291,6 +381,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -333,6 +432,36 @@
                   "items": {
                     "$ref": "#/components/schemas/TagDefinition"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -384,6 +513,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -424,6 +583,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -480,6 +648,36 @@
                   "items": {
                     "$ref": "#/components/schemas/Tag"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -549,6 +747,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -585,6 +813,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -657,6 +894,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         },
         "deprecated": true
@@ -698,6 +965,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -754,6 +1030,36 @@
                   "items": {
                     "$ref": "#/components/schemas/Tag"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -823,6 +1129,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -886,6 +1222,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -954,6 +1320,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -994,6 +1390,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -1050,6 +1455,36 @@
                   "items": {
                     "$ref": "#/components/schemas/Tag"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -1119,6 +1554,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -1158,6 +1623,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -1169,7 +1643,7 @@
         ],
         "summary": "Delete all features (aligned over runs) that match the given lucene search query from the specified\n project-space.",
         "description": "Delete all features (aligned over runs) that match the given lucene search query from the specified\n project-space. The query is resolved server-side against the search index, so callers do not need to\n page the matching ids to the client and send them back for deletion.",
-        "operationId": "deleteAlignedFeaturesByQueryExperimental",
+        "operationId": "deleteAlignedFeaturesByQuery",
         "parameters": [
           {
             "name": "projectId",
@@ -1193,6 +1667,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -1202,11 +1685,14 @@
         "tags": [
           "Searchable Databases"
         ],
+        "summary": "Get a single searchable database by its id.",
+        "description": "Get a single searchable database by its id.",
         "operationId": "getDatabase",
         "parameters": [
           {
             "name": "databaseId",
             "in": "path",
+            "description": "id of the database to retrieve, as reported by the listing endpoints.",
             "required": true,
             "schema": {
               "type": "string"
@@ -1215,6 +1701,7 @@
           {
             "name": "includeStats",
             "in": "query",
+            "description": "if true (the default here), the number of structures, formulas and reference spectra\n                     is included.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -1224,11 +1711,41 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "the requested database.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchableDatabase"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No database with the given id exists.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -1239,11 +1756,14 @@
         "tags": [
           "Searchable Databases"
         ],
+        "summary": "Change the settings of an existing custom database",
+        "description": "Change the settings of an existing custom database.\n \u003cp\u003e\n NOT IMPLEMENTED YET: changing the display name and the retention time matching flag of an existing database\n is not supported so far, and every request currently fails. The request and response shape is settled\n though, so a client can be written against this endpoint today: it will start succeeding in a future\n version without any change on the client side.\n \u003cp\u003e\n Until then, create a new database with the desired settings and import into it.",
         "operationId": "updateDatabase",
         "parameters": [
           {
             "name": "databaseId",
             "in": "path",
+            "description": "id of the database to update.",
             "required": true,
             "schema": {
               "type": "string"
@@ -1251,6 +1771,7 @@
           }
         ],
         "requestBody": {
+          "description": "the settings to apply.",
           "content": {
             "application/json": {
               "schema": {
@@ -1261,11 +1782,31 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "the updated database.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchableDatabase"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Currently always, since updating custom databases is not implemented yet. This will become a normal server-side error once the endpoint is implemented.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -1276,11 +1817,14 @@
         "tags": [
           "Searchable Databases"
         ],
+        "summary": "Create a new, empty custom database",
+        "description": "Create a new, empty custom database.\n \u003cp\u003e\n The new database is created on disk and registered with this SIRIUS instance, so it can immediately be\n used as a search parameter and imported into via the import endpoint. It contains no structures and no\n reference spectra until something is imported.",
         "operationId": "createDatabase",
         "parameters": [
           {
             "name": "databaseId",
             "in": "path",
+            "description": "id of the new database. Must be URL-safe, that is letters, digits, \u0027-\u0027 and \u0027_\u0027 only,\n                    and must not be in use by another database.",
             "required": true,
             "schema": {
               "pattern": "^[a-zA-Z0-9-_]+$",
@@ -1289,6 +1833,7 @@
           }
         ],
         "requestBody": {
+          "description": "optional settings for the new database. If omitted, the database is created in the\n                    default custom database directory with default settings. Supply a location to place\n                    the database file elsewhere, a displayName for the user interface, and\n                    matchRtOfReferenceSpectra for in-house libraries whose retention times are comparable\n                    to the measured samples.",
           "content": {
             "application/json": {
               "schema": {
@@ -1299,11 +1844,41 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "the created database.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchableDatabase"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The database id is not a valid database name. It must consist of letters, digits, \u0027-\u0027 and \u0027_\u0027 only.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A database with this id already exists, or a file already exists at the target location.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -1314,11 +1889,14 @@
         "tags": [
           "Searchable Databases"
         ],
+        "summary": "Remove a custom database from this SIRIUS instance, and optionally delete it from disk",
+        "description": "Remove a custom database from this SIRIUS instance, and optionally delete it from disk.\n \u003cp\u003e\n This is idempotent: removing a database that is not registered succeeds and does nothing, so a client\n does not have to check first.",
         "operationId": "removeDatabase",
         "parameters": [
           {
             "name": "databaseId",
             "in": "path",
+            "description": "id of the database to remove.",
             "required": true,
             "schema": {
               "type": "string"
@@ -1327,6 +1905,7 @@
           {
             "name": "delete",
             "in": "query",
+            "description": "if true, the database file is deleted from disk and the data is lost. If false (the\n                   default), only the registration is removed and the file is kept, so the database can\n                   be registered again later.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -1337,6 +1916,12 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -1369,6 +1954,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -1391,6 +1996,16 @@
                   "items": {
                     "$ref": "#/components/schemas/Reaction"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -1436,6 +2051,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -1461,6 +2096,12 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -1486,6 +2127,12 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -1541,6 +2188,36 @@
                   "items": {
                     "$ref": "#/components/schemas/Job"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -1610,6 +2287,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       },
@@ -1654,6 +2361,15 @@
         "responses": {
           "202": {
             "description": "Accepted"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -1717,6 +2433,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -1809,6 +2555,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -1871,6 +2647,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -1961,6 +2767,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         },
         "deprecated": true
@@ -2032,6 +2868,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -2130,6 +2996,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -2183,6 +3079,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -2265,6 +3191,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         },
         "deprecated": true
@@ -2330,6 +3286,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -2422,6 +3408,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -2448,6 +3464,15 @@
         "responses": {
           "201": {
             "description": "Created"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       },
@@ -2484,6 +3509,36 @@
               "application/json": {
                 "schema": {
                   "type": "boolean"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -2526,6 +3581,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TagGroup"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -2587,6 +3672,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       },
@@ -2620,6 +3735,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -2711,6 +3835,36 @@
                   "items": {
                     "$ref": "#/components/schemas/Compound"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -2826,6 +3980,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -2895,6 +4079,36 @@
                   "items": {
                     "$ref": "#/components/schemas/AlignedFeature"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -2987,6 +4201,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -3032,6 +4276,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -3072,6 +4336,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StoredJobSubmission"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -3136,6 +4430,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       },
@@ -3160,6 +4484,15 @@
         "responses": {
           "202": {
             "description": "Accepted"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -3195,6 +4528,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -3204,11 +4557,14 @@
         "tags": [
           "Searchable Databases"
         ],
+        "summary": "List all searchable databases, both the ones included in SIRIUS and the custom ones added by the user",
+        "description": "List all searchable databases, both the ones included in SIRIUS and the custom ones added by the user.\n \u003cp\u003e\n A searchable database provides structures and reference spectra (optional), and can be selected as a search\n parameter for structure database search and spectral library search. Note that every imported spectral\n library also acts as a structure database.",
         "operationId": "getDatabases",
         "parameters": [
           {
             "name": "includeStats",
             "in": "query",
+            "description": "if true, the number of structures, formulas and reference spectra is included\n                           per database. Computing these counts touches the database files, so requesting\n                           them is noticeably slower than a plain listing.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -3218,6 +4574,7 @@
           {
             "name": "includeWithErrors",
             "in": "query",
+            "description": "if true, databases that could not be loaded are listed as well, carrying the\n                           reason in their errorMessage field. Use this to show a broken database to the\n                           user instead of silently hiding it.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -3227,7 +4584,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "all databases known to this SIRIUS instance.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3235,6 +4592,26 @@
                   "items": {
                     "$ref": "#/components/schemas/SearchableDatabase"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -3246,8 +4623,10 @@
           "Searchable Databases"
         ],
         "summary": "[DEPRECATED] This endpoint is based on local file paths and will likely be replaced in future versions of this API.",
+        "description": "Register existing custom database files with this SIRIUS instance, so that they become searchable.\n \u003cp\u003e\n Use this to make databases that already exist on disk available again, for example after reinstalling\n SIRIUS or when sharing a database file with a colleague. The files are opened in place, not copied.",
         "operationId": "addDatabases",
         "requestBody": {
+          "description": "local file paths of the database files (.siriusdb) to register. Each must exist,\n                        must not already be registered, and its name must not collide with an existing\n                        database.",
           "content": {
             "application/json": {
               "schema": {
@@ -3262,7 +4641,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "the databases that were successfully registered. Files that exist but could not be opened are\n         skipped and are absent from the result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3270,6 +4649,26 @@
                   "items": {
                     "$ref": "#/components/schemas/SearchableDatabase"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A path does not exist or is not a file, is already registered, or its database name is already in use. No database is registered in that case.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -3290,7 +4689,7 @@
           {
             "name": "databaseId",
             "in": "path",
-            "description": "database to import into",
+            "description": "id of the custom database to import into. Must exist.",
             "required": true,
             "schema": {
               "type": "string"
@@ -3299,6 +4698,7 @@
           {
             "name": "bufferSize",
             "in": "query",
+            "description": "number of compounds to keep in memory before writing them to the\n                                 database. Raise it to speed up large imports on machines with enough RAM.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -3342,11 +4742,41 @@
         },
         "responses": {
           "200": {
-            "description": "Meta-Information of the affected database after the import has been performed.",
+            "description": "the affected database, including its updated statistics.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchableDatabase"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No database with the given id exists.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -3365,6 +4795,9 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
           }
         }
       }
@@ -3428,6 +4861,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -3445,6 +4898,9 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
           }
         }
       }
@@ -3487,6 +4943,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       },
@@ -3520,6 +5006,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       },
@@ -3573,6 +5068,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -3595,6 +5120,16 @@
                   "items": {
                     "$ref": "#/components/schemas/ReactionSequence"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -3630,6 +5165,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -3662,6 +5227,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       },
@@ -3685,6 +5280,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -3707,6 +5311,16 @@
                   "items": {
                     "$ref": "#/components/schemas/ProjectInfo"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -3765,6 +5379,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -3810,6 +5454,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -3843,6 +5517,36 @@
                   "items": {
                     "$ref": "#/components/schemas/SearchableField"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -3932,6 +5636,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PagedModelRun"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -4026,6 +5760,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -4068,6 +5832,36 @@
               "application/CSV": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -4130,6 +5924,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StatisticsTable"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -4197,6 +6021,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       },
@@ -4250,6 +6104,15 @@
         "responses": {
           "202": {
             "description": "Accepted"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -4339,6 +6202,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -4375,6 +6268,36 @@
               "application/json": {
                 "schema": {
                   "type": "boolean"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -4423,6 +6346,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -4465,6 +6418,36 @@
               "application/CSV": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -4568,6 +6551,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       },
@@ -4601,6 +6614,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -4649,6 +6671,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TraceSetExperimental"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -4722,6 +6774,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         },
         "deprecated": true
@@ -4768,6 +6850,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -4810,6 +6922,36 @@
                   "items": {
                     "$ref": "#/components/schemas/FoldChange"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -4875,6 +7017,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -4908,6 +7080,36 @@
                   "items": {
                     "$ref": "#/components/schemas/SearchableField"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -4978,6 +7180,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QuantTable"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -5115,6 +7347,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -5249,6 +7511,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -5311,6 +7603,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -5353,6 +7675,36 @@
               "application/CSV": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -5434,6 +7786,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       },
@@ -5467,6 +7849,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -5516,6 +7907,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TraceSetExperimental"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -5612,6 +8033,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         },
         "deprecated": true
@@ -5683,6 +8134,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -5731,6 +8212,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnotatedSpectrum"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -5805,6 +8316,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SpectralLibraryMatchSummary"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -5932,6 +8473,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -6002,6 +8573,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         },
         "deprecated": true
@@ -6042,6 +8643,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AlignedFeatureQualityExperimental"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -6094,6 +8725,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MsData"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -6176,6 +8837,36 @@
                   "items": {
                     "$ref": "#/components/schemas/FormulaCandidate"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -6268,6 +8959,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -6348,6 +9069,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -6418,6 +9169,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -6466,6 +9247,36 @@
               "application/json": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -6520,6 +9331,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -6571,6 +9412,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -6619,6 +9490,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FragmentationTree"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -6674,6 +9575,36 @@
                     "type": "number",
                     "format": "double"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -6751,6 +9682,36 @@
                   "items": {
                     "$ref": "#/components/schemas/StructureCandidateScored"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -6863,6 +9824,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -6937,6 +9928,36 @@
                   "items": {
                     "$ref": "#/components/schemas/StructureCandidateScored"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -7049,6 +10070,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -7100,6 +10151,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -7148,6 +10229,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CompoundClasses"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -7223,6 +10334,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -7281,6 +10422,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnotatedMsMsData"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -7397,6 +10568,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -7439,6 +10640,36 @@
                   "items": {
                     "$ref": "#/components/schemas/Feature"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -7519,6 +10750,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -7584,6 +10845,36 @@
                   "items": {
                     "$ref": "#/components/schemas/StructureCandidateFormula"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -7687,6 +10978,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -7752,6 +11073,36 @@
                   "items": {
                     "$ref": "#/components/schemas/StructureCandidateFormula"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -7855,6 +11206,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -7894,6 +11275,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TraceSetExperimental"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -7942,6 +11353,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -7984,6 +11425,36 @@
                   "items": {
                     "$ref": "#/components/schemas/FoldChange"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -8049,6 +11520,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -8082,6 +11583,36 @@
                   "items": {
                     "$ref": "#/components/schemas/SearchableField"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -8152,6 +11683,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QuantTable"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -8269,6 +11830,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -8381,6 +11972,36 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -8406,6 +12027,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -8428,6 +12059,16 @@
                   "items": {
                     "type": "string"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -8472,6 +12113,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -8494,6 +12155,16 @@
                   "items": {
                     "$ref": "#/components/schemas/GuiInfo"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -8551,6 +12222,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -8560,11 +12251,14 @@
         "tags": [
           "Searchable Databases"
         ],
-        "operationId": "getStructuresExperimental",
+        "summary": "[EXPERIMENTAL] Page through the structures contained in a custom database",
+        "description": "[EXPERIMENTAL] Page through the structures contained in a custom database.\n \u003cp\u003e\n Returns the stored structures with their name, SMILES, InChI, InChI key, molecular formula and mass.\n Only custom databases are supported; the databases included in SIRIUS cannot be enumerated this way.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint\n can change at any time, even in minor updates.",
+        "operationId": "getStructures",
         "parameters": [
           {
             "name": "databaseId",
             "in": "path",
+            "description": "id of the custom database to read from.",
             "required": true,
             "schema": {
               "type": "string"
@@ -8607,11 +12301,41 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "a page of the structures in the database.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PagedModelDatabaseStructure"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No custom database with the given id exists. Databases included in SIRIUS cannot be enumerated.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -8624,11 +12348,14 @@
         "tags": [
           "Searchable Databases"
         ],
+        "summary": "List only the databases that ship with SIRIUS, such as PubChem and the bio databases.",
+        "description": "List only the databases that ship with SIRIUS, such as PubChem and the bio databases. These are\n read-only: they cannot be imported into, modified or removed.",
         "operationId": "getIncludedDatabases",
         "parameters": [
           {
             "name": "includeStats",
             "in": "query",
+            "description": "if true, the number of structures, formulas and reference spectra is included per\n                     database. Slower, since the database files have to be read.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -8638,7 +12365,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "all databases included in SIRIUS.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8646,6 +12373,26 @@
                   "items": {
                     "$ref": "#/components/schemas/SearchableDatabase"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -8682,6 +12429,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         },
         "deprecated": true
@@ -8692,11 +12449,14 @@
         "tags": [
           "Searchable Databases"
         ],
+        "summary": "List only the custom databases, that is the structure databases and spectral libraries the user has\n created or added.",
+        "description": "List only the custom databases, that is the structure databases and spectral libraries the user has\n created or added. These are the databases that can be modified and imported into.",
         "operationId": "getCustomDatabases",
         "parameters": [
           {
             "name": "includeStats",
             "in": "query",
+            "description": "if true, the number of structures, formulas and reference spectra is included\n                          per database. Slower, since the database files have to be read.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -8706,6 +12466,7 @@
           {
             "name": "includeWithErrors",
             "in": "query",
+            "description": "if true, databases that could not be loaded are listed as well, carrying the\n                          reason in their errorMessage field.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -8715,7 +12476,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "all custom databases known to this SIRIUS instance.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8723,6 +12484,26 @@
                   "items": {
                     "$ref": "#/components/schemas/SearchableDatabase"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -8743,6 +12524,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConnectionCheck"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -8771,6 +12562,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -8790,6 +12591,16 @@
               "text/plain;charset\u003dUTF-8": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -8815,6 +12626,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -8830,6 +12651,9 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
           }
         }
       }
@@ -8849,6 +12673,16 @@
               "application/json": {
                 "schema": {
                   "type": "boolean"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -8886,6 +12720,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -8917,6 +12771,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -8942,6 +12806,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -8986,6 +12859,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -9057,6 +12939,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -9101,6 +12992,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -9172,6 +13072,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -9243,6 +13152,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -9287,6 +13205,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -9358,6 +13285,15 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason."
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project."
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint."
           }
         }
       }
@@ -10144,7 +14080,7 @@
           },
           "matchRtOfReferenceSpectra": {
             "type": "boolean",
-            "description": "Indicates whether this database shall be used to use retention time information for library matching.\n Typically used for in-house spectral libraries that were measured on the same\n chromatographic setup as the samples being analysed, so that retention times are comparable.",
+            "description": "Indicates whether this database shall be used to use retention time information for library matching.\n Typically used for in-house spectral libraries that were measured on the same\n chromatographic setup as the samples being analyzed, so that retention times are comparable.",
             "nullable": true,
             "default": false
           }
@@ -10549,7 +14485,7 @@
             "nullable": true
           }
         },
-        "description": "User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool\n Needs results from the Formula/SIRIUS tool.",
+        "description": "User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool\n Needs results from the Formula identification tool (Sirius).",
         "nullable": true
       },
       "JobSubmission": {
@@ -10557,7 +14493,7 @@
         "properties": {
           "fallbackAdducts": {
             "type": "array",
-            "description": "Describes how to deal with adducts: fallback adducts are considered if the auto detection did not find any indication for an ion mode.\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
+            "description": "Fallback adducts are considered if the auto-detection did not find any indication for an ion mode.\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
             "nullable": true,
             "items": {
               "type": "string",
@@ -10566,7 +14502,7 @@
           },
           "enforcedAdducts": {
             "type": "array",
-            "description": "Describes how to deal with adducts: enforced adducts that are always considered.\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
+            "description": "Enforced adducts that are always considered.\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
             "nullable": true,
             "items": {
               "type": "string",
@@ -10575,7 +14511,7 @@
           },
           "detectableAdducts": {
             "type": "array",
-            "description": "Describes how to deal with adducts: detectable adducts which are only considered if there is an indication in the MS1 scan (e.g. correct mass delta).\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
+            "description": "Detectable adducts which are only considered if there is an indication in the MS1 scan (e.g. correct mass delta).\n Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+\n Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-",
             "nullable": true,
             "items": {
               "type": "string",
@@ -13660,6 +17596,35 @@
               "name": {
                 "type": "string"
               }
+            }
+          }
+        }
+      },
+      "ProblemDetail": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
             }
           }
         }

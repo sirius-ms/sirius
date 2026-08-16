@@ -124,6 +124,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
     );
 
     private final static List<String> EXPERIMENTAL_EXCLUSIONS = List.of(
+            "/api/databases/*/structures",
             "/api/projects/*/aligned-features/*/adducts",
             "/api/projects/*/aligned-features/*/formulas/*/structures/*/annotated-msmsdata",
             "/api/projects/*/aligned-features/*/formulas/*/structures/*/annotated-spectrum",

@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).  Needs results from Formula/SIRIUS Tool
+ * User/developer friendly parameter subset for the ZODIAC tool (network-based molecular formula re-ranking).  Needs results from the Formula/SIRIUS tool.
  */
 @JsonPropertyOrder({
   Zodiac.JSON_PROPERTY_ENABLED,
@@ -95,7 +95,7 @@ public class Zodiac {
   }
 
   /**
-   * tags whether the tool is enabled
+   * Indicates whether the tool is enabled.
    * @return enabled
    */
   @jakarta.annotation.Nullable
@@ -170,7 +170,7 @@ public class Zodiac {
   }
 
   /**
-   * As default ZODIAC runs a 2-step approach. First running &#39;good quality compounds&#39; only, and afterwards including the remaining.
+   * By default, ZODIAC runs a 2-step approach: first running only &#39;good quality compounds&#39;, and afterwards including the remaining ones.
    * @return runInTwoSteps
    */
   @jakarta.annotation.Nullable

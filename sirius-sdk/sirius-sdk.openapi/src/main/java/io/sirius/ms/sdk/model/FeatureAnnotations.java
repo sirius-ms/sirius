@@ -256,7 +256,7 @@ public class FeatureAnnotations {
   }
 
   /**
-   * List of databases that have been specified by for structure db search. Null if no structure db search has been performed.
+   * List of databases that have been specified for structure db search. Null if no structure db search has been performed.
    * @return specifiedDatabases
    */
   @jakarta.annotation.Nullable

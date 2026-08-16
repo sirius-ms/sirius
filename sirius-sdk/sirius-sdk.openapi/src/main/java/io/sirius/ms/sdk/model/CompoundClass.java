@@ -252,7 +252,7 @@ public class CompoundClass {
   }
 
   /**
-   * prediction probability
+   * Prediction probability.
    * @return probability
    */
   @jakarta.annotation.Nullable

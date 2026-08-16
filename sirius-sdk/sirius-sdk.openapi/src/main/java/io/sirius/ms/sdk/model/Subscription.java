@@ -158,7 +158,7 @@ public class Subscription {
   }
 
   /**
-   * ID of the owner of the subscription.  This can be the ID of any SubscriptionOwner (e.g.  TagGroup or  User)  depending on the level on which a subscription should be is valid.
+   * ID of the owner of the subscription.  This can be the ID of any SubscriptionOwner (e.g. TagGroup or User)  depending on the level at which a subscription is valid.
    * @return subscriberId
    */
   @jakarta.annotation.Nullable
@@ -308,7 +308,7 @@ public class Subscription {
   }
 
   /**
-   * Hash is used to allow recomputing identical data without increasing counted instances (features).  The recording time is the amount of time an instance is memorized is
+   * Hash is used to allow recomputing identical data without increasing counted instances (features).  The recording time is the amount of time an instance is memorized.
    * @return instanceHashRecordingTime
    */
   @jakarta.annotation.Nullable

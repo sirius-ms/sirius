@@ -331,7 +331,7 @@ public class Feature {
   }
 
   /**
-   * Feature Quantity measured as Intensity of the apex of the feature
+   * Feature quantity measured as the intensity of the apex of the feature
    * @return apexIntensity
    */
   @jakarta.annotation.Nullable
@@ -356,7 +356,7 @@ public class Feature {
   }
 
   /**
-   * Feature Quantity measured as Area under curve of the whole feature
+   * Feature quantity measured as the area under the curve of the whole feature
    * @return areaUnderCurve
    */
   @jakarta.annotation.Nullable

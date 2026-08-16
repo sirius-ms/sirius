@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Container class that holds the CANOPUS compound class predictions for alle predictable compound classes.  This is the full CANOPUS result.
+ * Container class that holds the CANOPUS compound class predictions for all predictable compound classes.  This is the full CANOPUS result.
  */
 @JsonPropertyOrder({
   CanopusPrediction.JSON_PROPERTY_CLASSY_FIRE_CLASSES,

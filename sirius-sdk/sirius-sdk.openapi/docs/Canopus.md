@@ -2,13 +2,13 @@
 
 # Canopus
 
-User/developer friendly parameter subset for the CANOPUS tool  CANOPUS is parameter free, so this Object is just a flag that canopus should be executed.  Needs results from FingerprintPrediction Tool
+User/developer friendly parameter subset for the CANOPUS tool  CANOPUS is parameter-free, so this object is just a flag that CANOPUS should be executed.  Needs results from the FingerprintPrediction tool.
 
 ## Properties
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**enabled** | **Boolean** | tags whether the tool is enabled |  [optional] |
+|**enabled** | **Boolean** | Indicates whether the tool is enabled. |  [optional] |
 
 
 

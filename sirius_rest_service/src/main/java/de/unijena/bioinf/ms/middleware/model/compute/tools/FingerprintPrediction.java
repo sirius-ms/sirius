@@ -37,7 +37,7 @@ import java.util.Map;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool
- * Needs results from the Formula/SIRIUS tool.
+ * Needs results from the Formula identification tool (Sirius).
  */
 
 @Getter

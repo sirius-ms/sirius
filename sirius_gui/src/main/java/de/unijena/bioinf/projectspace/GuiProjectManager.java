@@ -417,7 +417,7 @@ public class GuiProjectManager implements Closeable {
      */
     public void deleteAlignedFeaturesByQuery(@NotNull String searchQuery) {
         runBlockingBulkFeatureMutation(() ->
-                siriusClient.features().deleteAlignedFeaturesByQueryExperimental(projectId, searchQuery));
+                siriusClient.features().deleteAlignedFeaturesByQuery(projectId, searchQuery));
     }
 
     /**
