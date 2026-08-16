@@ -52,7 +52,7 @@ public class FormulaCandidate {
      */
     protected String formulaId;
     /**
-     * molecular formula of this formula candidate
+     * Molecular formula of this formula candidate.
      */
     @IndexFieldWithMapper(mapper = FormulaElementMapper.class)
     protected String molecularFormula;

@@ -55,23 +55,23 @@ import java.util.stream.Stream;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JobSubmission extends AbstractSubmission {
     /**
-     * Describes how to deal with Adducts: Fallback adducts are considered if the auto detection did not find any indication for an ion mode.
+     * Describes how to deal with adducts: fallback adducts are considered if the auto detection did not find any indication for an ion mode.
      * Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+
-     * Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-
+     * Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-
      */
     @Schema(nullable = true)
     List<String> fallbackAdducts;
     /**
-     * Describes how to deal with Adducts:  Enforced adducts that are always considered.
+     * Describes how to deal with adducts: enforced adducts that are always considered.
      * Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+
-     * Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-
+     * Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-
      */
     @Schema(nullable = true)
     List<String> enforcedAdducts;
     /**
-     * Describes how to deal with Adducts: Detectable adducts which are only considered if there is an indication in the MS1 scan (e.g. correct mass delta).
+     * Describes how to deal with adducts: detectable adducts which are only considered if there is an indication in the MS1 scan (e.g. correct mass delta).
      * Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+
-     * Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-
+     * Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,[M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-
      */
     @Schema(nullable = true)
     List<String> detectableAdducts;
@@ -219,7 +219,7 @@ public class JobSubmission extends AbstractSubmission {
     }
 
     /**
-     * Merges the result of {@link #asCombinedConfigMap(boolean enabledOnly)} into the config map if this JobSubmission.
+     * Merges the result of {@code asCombinedConfigMap(boolean enabledOnly)} into the config map if this JobSubmission.
      */
     @JsonIgnore
     public void mergeCombinedConfigMap() {

@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * API (wire) model for a single reaction in the reaction library. Kept separate from the persistence
- * domain model ({@link reactionTool.sirius.model.Reaction}) so the public contract is decoupled from
+ * domain model ({@code reactionTool.sirius.model.Reaction}) so the public contract is decoupled from
  * how reactions are stored; {@code ReactionServiceImpl} maps between the two.
  */
 public class Reaction {

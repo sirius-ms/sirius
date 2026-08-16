@@ -63,7 +63,7 @@ public class RunController implements TaggableController<Run, Run.OptField> {
      *
      * <h2>Supported filter syntax</h2>
      *
-     * <p>The filter string must contain one or more clauses. A clause is prefíxed
+     * <p>The filter string must contain one or more clauses. A clause is prefixed
      * by a field name.
      * </p>
      *

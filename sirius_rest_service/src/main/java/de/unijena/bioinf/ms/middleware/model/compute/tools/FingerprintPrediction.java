@@ -37,7 +37,7 @@ import java.util.Map;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool
- * Needs results from Formula/SIRIUS Tool
+ * Needs results from the Formula/SIRIUS tool.
  */
 
 @Getter
@@ -53,9 +53,9 @@ public class FingerprintPrediction extends Tool<FingerprintOptions> {
     Boolean useScoreThreshold;
 
     /**
-     * If true Fingerprint/Classes/Structures will be predicted for formulas candidates with
-     * reference spectrum similarity > Sirius.minReferenceMatchScoreToInject will be predicted no matter which
-     * score threshold rules apply.
+     * If true, fingerprints, compound classes and structures will be predicted for formula candidates whose
+     * reference spectrum similarity is above Sirius.minReferenceMatchScoreToInject, no matter which
+     * score threshold rules would otherwise apply.
      * If NULL default value will be used.
      */
     @Schema(nullable = true)
