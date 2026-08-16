@@ -112,7 +112,7 @@ public class AlignedFeature implements Taggable {
      * Overall Quality of this feature.
      * If no Quality data are available for this feature the value is NOT_APPLICABLE
      */
-    @IndexField
+    @IndexField(sortable = true)
     @Schema
     @Builder.Default
     @NotNull
