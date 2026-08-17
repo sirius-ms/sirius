@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.projectspace.IndexField;
+import de.unijena.bioinf.projectspace.PossibleValueProvider;
 import de.unijena.bioinf.projectspace.QueryRewriter;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -25,6 +26,14 @@ import java.util.function.Function;
 import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils.*;
 
 public class GenericPojoMapper<T> implements PojoMapper<T> {
+    /**
+     * Providers are required to be stateless (see {@link PossibleValueProvider}), so one instance per provider
+     * class serves all fields of this mapper - reflection is not free and describing the searchable fields walks
+     * every annotated field. The cache is owned by the mapper and dies with it; sharing it process-wide would
+     * save next to nothing (mappers rarely declare the same provider) at the price of a lifecycle to manage.
+     */
+    private final Map<Class<? extends PossibleValueProvider>, PossibleValueProvider> possibleValueProviders = new ConcurrentHashMap<>();
+
     private final Map<Class<? extends FieldMapper>, FieldMapper> fieldMappers;
     @Getter
     private final @NotNull Class<T> pojoClass;
@@ -273,7 +282,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                             .fullTextSearch(textLike && indexField.fullTextSearch())
                             .sortable(indexField.sortable() && getSortTypeForType(elementType) != null)
                             .defaultSearchField(indexField.defaultSearchField())
-                            .possibleValues(possibleValuesOf(elementType))
+                            .possibleValues(possibleValuesOf(indexField, fieldName, elementType))
                             .description(fieldDescriptionProvider.apply(field))
                             .build());
                 }
@@ -520,15 +529,43 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
     /**
      * The values a field can take, if they are known.
      * <p>
-     * Enums report their constants and booleans report true/false, both exactly as they are indexed, so that a
-     * client can offer them for completion instead of leaving the user to guess. Booleans are keyword indexed
-     * from {@link Boolean#toString()}, hence the lower case literals.
+     * A field may declare them via {@link IndexField#possibleValueProvider()}; that is the more specific
+     * statement and therefore wins. Otherwise they follow from the java type: enums report their constants and
+     * booleans report true/false, both exactly as they are indexed, so that a client can offer them for
+     * completion instead of leaving the user to guess. Booleans are keyword indexed from
+     * {@link Boolean#toString()}, hence the lower case literals.
+     *
+     * @param fieldName the full lucene field name, as passed to the provider - one provider can serve several fields
      */
-    private static List<String> possibleValuesOf(Class<?> elementType) {
+    @Nullable
+    private List<String> possibleValuesOf(@NotNull IndexField indexField, @NotNull String fieldName, @NotNull Class<?> elementType) {
+        List<String> declared = declaredPossibleValuesOf(indexField, fieldName);
+        if (declared != null)
+            return declared;
         if (elementType.isEnum())
             return Arrays.stream(elementType.getEnumConstants()).map(e -> ((Enum<?>) e).name()).toList();
         if (elementType.equals(Boolean.class) || elementType.equals(boolean.class))
             return List.of("true", "false");
         return null;
+    }
+
+    /**
+     * @return the vocabulary declared for the field, or null if none is declared or the provider has no
+     * vocabulary for this field
+     */
+    @Nullable
+    private List<String> declaredPossibleValuesOf(@NotNull IndexField indexField, @NotNull String fieldName) {
+        Class<? extends PossibleValueProvider> providerClass = indexField.possibleValueProvider();
+        if (providerClass == PossibleValueProvider.None.class)
+            return null;
+        return possibleValueProviders.computeIfAbsent(providerClass, clz -> {
+            try {
+                return clz.getDeclaredConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                     NoSuchMethodException e) {
+                throw new IllegalStateException("Could not instantiate PossibleValueProvider '" + clz.getName()
+                        + "' declared on indexed field '" + fieldName + "'. It needs a public no-arg constructor.", e);
+            }
+        }).getPossibleValues(fieldName);
     }
 }
