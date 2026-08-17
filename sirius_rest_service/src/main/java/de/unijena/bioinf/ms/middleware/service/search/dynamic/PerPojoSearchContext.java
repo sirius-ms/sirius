@@ -6,6 +6,7 @@ import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import de.unijena.bioinf.projectspace.PossibleValueProvider;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.store.ByteBuffersDirectory;
@@ -48,14 +49,29 @@ public class PerPojoSearchContext implements SearchContext {
     @Nullable
     protected final Function<Field, String> fieldDescriptionProvider;
 
+    /**
+     * Supplies the vocabulary of a tag field ({@code tags.<tagName>}) from the project's tag definitions.
+     * Injected by the caller, which owns them; null if the values are not available (fields are then described
+     * as accepting free text).
+     */
+    @Nullable
+    protected final PossibleValueProvider tagPossibleValueProvider;
+
     public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions) {
         this(indexRootDir, tagDefinitions, null);
     }
 
     public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
                                 @Nullable Function<Field, String> fieldDescriptionProvider) {
+        this(indexRootDir, tagDefinitions, fieldDescriptionProvider, null);
+    }
+
+    public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
+                                @Nullable Function<Field, String> fieldDescriptionProvider,
+                                @Nullable PossibleValueProvider tagPossibleValueProvider) {
         this.indexRootDir = indexRootDir;
         this.fieldDescriptionProvider = fieldDescriptionProvider;
+        this.tagPossibleValueProvider = tagPossibleValueProvider;
         indices = new ConcurrentHashMap<>();
         tagDefs = tagDefinitions != null ? tagDefinitions : new HashMap<>();
     }
@@ -196,8 +212,13 @@ public class PerPojoSearchContext implements SearchContext {
         // consistent with the query parser configuration. Sorted for a deterministic response.
         if (manager.isTaggable()) {
             synchronized (tagDefs) {
-                tagDefs.keySet().stream().sorted().forEach(tagName -> fields.add(
-                        LuceneMappingUtils.toTagSearchableField(Taggable.makeTagFieldName(tagName), tagName, tagDefs.get(tagName))));
+                tagDefs.keySet().stream().sorted().forEach(tagName -> {
+                    String fieldName = Taggable.makeTagFieldName(tagName);
+                    // read on demand: possible values can be added to a tag definition at any time
+                    List<String> possibleValues = tagPossibleValueProvider == null
+                            ? null : tagPossibleValueProvider.getPossibleValues(fieldName);
+                    fields.add(LuceneMappingUtils.toTagSearchableField(fieldName, tagName, tagDefs.get(tagName), possibleValues));
+                });
             }
         }
         return fields;
