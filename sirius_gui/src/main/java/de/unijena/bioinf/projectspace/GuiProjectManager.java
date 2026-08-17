@@ -29,8 +29,10 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
+import de.unijena.bioinf.ms.gui.utils.EventLists;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -68,6 +70,12 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class GuiProjectManager implements Closeable {
+    /**
+     * Source of the GUI feature list pipeline. Mutate it only through {@link EventLists} (or under its write
+     * lock): the transformations downstream (ObservableElementList / SortedList / swing thread proxy) share one
+     * event publisher, and GlazedLists itself dispatches into that publisher from background threads whenever an
+     * {@link InstanceBean} fires a property change, so unlocked mutation corrupts the whole list.
+     */
     public final BasicEventList<InstanceBean> INSTANCE_LIST;
 
     public final String projectId;
@@ -330,18 +338,18 @@ public class GuiProjectManager implements Closeable {
                 // removeTemporaryJumpToFeatureIfNotSelected on this same (EDT) thread; suppress it so it
                 // does not discard the bean we are adding.
                 suppressJumpToCleanup = true;
-                INSTANCE_LIST.getReadWriteLock().writeLock().lock();
                 try {
-                    // Only one temporary jump-to feature may exist at a time: drop the previous one so a
-                    // cascade of jumps does not leak orphaned beans into the list. Unregister first or its
-                    // project-space listener leaks on pcs (registered in the bean's constructor).
-                    if (previous != null) {
-                        previous.unregisterProjectSpaceListener();
-                        INSTANCE_LIST.remove(previous);
-                    }
-                    INSTANCE_LIST.add(newBean);
+                    EventLists.writeLocked(INSTANCE_LIST, () -> {
+                        // Only one temporary jump-to feature may exist at a time: drop the previous one so a
+                        // cascade of jumps does not leak orphaned beans into the list. Unregister first or its
+                        // project-space listener leaks on pcs (registered in the bean's constructor).
+                        if (previous != null) {
+                            previous.unregisterProjectSpaceListener();
+                            INSTANCE_LIST.remove(previous);
+                        }
+                        INSTANCE_LIST.add(newBean);
+                    });
                 } finally {
-                    INSTANCE_LIST.getReadWriteLock().writeLock().unlock();
                     suppressJumpToCleanup = false;
                 }
                 result.set(newBean);
@@ -359,7 +367,7 @@ public class GuiProjectManager implements Closeable {
             // Unregister before discarding, or the bean's project-space listener leaks on pcs (its constructor
             // registered it). Idempotent if a reload already unregistered it.
             jumpToInstanceBean.unregisterProjectSpaceListener();
-            INSTANCE_LIST.remove(jumpToInstanceBean);
+            EventLists.remove(INSTANCE_LIST, jumpToInstanceBean);
             jumpToInstanceBean = null;
         }
     }
@@ -479,11 +487,18 @@ public class GuiProjectManager implements Closeable {
                     tmpInst.forEach(InstanceBean::unregisterProjectSpaceListener);
                     return;
                 }
+                // Drop the selection before touching the list: the whole page is replaced, so the selection
+                // cannot survive anyway, and an empty selection keeps the selection model from re-indexing (and
+                // re-firing) across the swap - which is where half-updated list/selection state was observed.
+                clearCompoundListSelection();
                 // Discard the outgoing beans: unregister their listeners (fixes a pre-existing pcs leak and stops
-                // ghost beans refetching on later result events), then swap in the fresh page.
-                INSTANCE_LIST.forEach(InstanceBean::unregisterProjectSpaceListener);
-                INSTANCE_LIST.clear();
-                INSTANCE_LIST.addAll(tmpInst);
+                // ghost beans refetching on later result events), then swap in the fresh page. The swap holds the
+                // list write lock, so it cannot interleave with an element change dispatched from another thread.
+                EventLists.writeLocked(INSTANCE_LIST, () -> {
+                    INSTANCE_LIST.forEach(InstanceBean::unregisterProjectSpaceListener);
+                    INSTANCE_LIST.clear();
+                    INSTANCE_LIST.addAll(tmpInst);
+                });
                 // Republish the present-features snapshot (single writer).
                 Map<String, InstanceBean> idx = new HashMap<>(Math.max(16, (tmpInst.size() * 4 / 3) + 1));
                 for (InstanceBean b : tmpInst)
@@ -493,6 +508,17 @@ public class GuiProjectManager implements Closeable {
         } catch (InvocationTargetException | InterruptedException e) {
             log.warn("Reloading features EDT wait interrupted", e);
         }
+    }
+
+    /**
+     * Clears the compound list selection (EDT only). No-op while the main frame / compound list does not exist
+     * yet - the initial reload runs from the constructor, before the GUI is built.
+     */
+    private void clearCompoundListSelection() {
+        Optional.ofNullable(siriusGui.getMainFrame())
+                .map(MainFrame::getCompoundList)
+                .map(CompoundList::getCompoundListSelectionModel)
+                .ifPresent(ListSelectionModel::clearSelection);
     }
 
     public void disableImportListener() {
