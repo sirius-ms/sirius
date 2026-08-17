@@ -208,20 +208,52 @@ public final class CompletionParser {
     }
 
     /**
-     * The values the draft editor can offer for a field: enum constants for ENUM fields,
+     * The values the draft editor can offer for a field: whatever closed vocabulary the field reports,
      * true/false for BOOLEAN fields, nothing otherwise.
+     * <p>
+     * Having a vocabulary is a property of the field, not of its type: a text field holds one when its values
+     * come from a fixed domain (a compound class ontology, a tag restricted by its definition), and those are
+     * exactly the fields a user cannot type from memory. The vocabulary stays an offer - the field can still be
+     * queried with anything, e.g. a wildcard.
      * <p>
      * NOT_APPLICABLE is never offered. It does not mean bad quality but that there was nothing to judge, so it
      * is not a choice a user makes: features in that state always pass a quality filter, which the query builder
      * ensures by adding the term itself. Typing it by hand still works.
      */
     public static List<String> valueSuggestions(@NotNull SearchableField field) {
-        if (field.getFieldType() == SearchableFieldType.ENUM && field.getPossibleValues() != null)
+        if (field.getPossibleValues() != null)
             return field.getPossibleValues().stream()
                     .filter(value -> !DataQuality.NOT_APPLICABLE.toString().equals(value))
                     .toList();
         if (field.getFieldType() == SearchableFieldType.BOOLEAN)
             return List.of("true", "false");
         return List.of();
+    }
+
+    /**
+     * The offered values matching the typed prefix, best match first.
+     * <p>
+     * A vocabulary can be a whole ontology, where matching only the start of a value would hide
+     * "Carboxylic acids and derivatives" from someone typing "acids" - so every word of a value starts a match,
+     * with values matching from the start ranked first (same rule as for field names, see
+     * {@link #fieldMatches}). Within a rank the given order is kept: it carries meaning, e.g. the declaration
+     * order of an ordered enum or the curated order of a tag definition.
+     */
+    public static List<String> valueMatches(@NotNull String prefix, @NotNull List<String> values) {
+        String lowerPrefix = prefix.toLowerCase();
+        return values.stream()
+                .filter(value -> valueMatchRank(value, lowerPrefix) < 2)
+                .sorted(Comparator.comparingInt((String value) -> valueMatchRank(value, lowerPrefix)))
+                .toList();
+    }
+
+    private static int valueMatchRank(String value, String lowerPrefix) {
+        String lower = value.toLowerCase();
+        if (lower.startsWith(lowerPrefix))
+            return 0;
+        for (String word : lower.split("\\s+"))
+            if (word.startsWith(lowerPrefix))
+                return 1;
+        return 2;
     }
 }

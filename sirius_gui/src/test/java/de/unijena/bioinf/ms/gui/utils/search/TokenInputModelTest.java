@@ -46,7 +46,9 @@ public class TokenInputModelTest {
             field("name", SearchableFieldType.TEXT),
             field("quality", SearchableFieldType.ENUM).possibleValues(List.of("GOOD", "DECENT", "BAD")),
             field("hasMsMs", SearchableFieldType.BOOLEAN),
-            field("tags.city", SearchableFieldType.TEXT));
+            field("tags.city", SearchableFieldType.TEXT),
+            field("npcPathway", SearchableFieldType.TEXT)
+                    .possibleValues(List.of("Alkaloids", "Amino acids and Peptides", "Terpenoids")));
 
     private TokenInputModel model;
 
@@ -153,6 +155,40 @@ public class TokenInputModelTest {
                 model.choose(suggestion("GOOD", "")).orElseThrow();
         assertEquals("quality", completed.clause().field());
         assertEquals("GOOD", completed.clause().value1());
+    }
+
+    /**
+     * A text field with a closed vocabulary (a compound class ontology, a restricted tag) behaves like
+     * an enum at the value stage: its values are offered, and picking one completes the clause.
+     */
+    @Test
+    public void testTextFieldWithVocabularySuggestsItsValues() {
+        model.choose(suggestion("npcPathway", ""));
+        assertEquals(TokenInputModel.Stage.VALUE, model.stage());
+        assertEquals(List.of("Alkaloids", "Amino acids and Peptides", "Terpenoids"),
+                model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList());
+
+        // a word inside the value narrows too - nobody recalls where "acids" sits in the name
+        assertEquals(List.of("Amino acids and Peptides"),
+                model.suggestions("acids").stream().map(TokenInputModel.Suggestion::display).toList());
+
+        TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
+                model.choose(suggestion("Amino acids and Peptides", "")).orElseThrow();
+        assertEquals("npcPathway", completed.clause().field());
+        assertEquals("Amino acids and Peptides", completed.clause().value1());
+    }
+
+    /**
+     * The vocabulary is an offer, not a restriction: the field stays queryable with anything, e.g. a
+     * wildcard over the ontology.
+     */
+    @Test
+    public void testTypedValueIsAcceptedBesideTheVocabulary() {
+        model.choose(suggestion("npcPathway", ""));
+
+        TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
+                model.submitTyped("Alka*").orElseThrow();
+        assertEquals("Alka*", completed.clause().value1());
     }
 
     @Test

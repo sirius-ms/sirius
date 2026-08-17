@@ -365,8 +365,7 @@ public class TokenInputModel {
     private List<Suggestion> valueSuggestions(String prefix) {
         if (pendingField == null)
             return List.of();
-        return CompletionParser.valueSuggestions(pendingField).stream()
-                .filter(value -> value.toLowerCase(Locale.ROOT).startsWith(prefix))
+        return CompletionParser.valueMatches(prefix, CompletionParser.valueSuggestions(pendingField)).stream()
                 .map(value -> (Suggestion) new Suggestion.ValueSuggestion(value))
                 .toList();
     }
