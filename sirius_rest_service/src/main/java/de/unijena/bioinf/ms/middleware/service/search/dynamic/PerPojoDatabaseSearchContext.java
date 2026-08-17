@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.ms.persistence.model.core.PersistentSearchIndex;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import de.unijena.bioinf.projectspace.PossibleValueProvider;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,13 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
 
     public PerPojoDatabaseSearchContext(@NotNull DB database, @Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
                                         @Nullable Function<Field, String> fieldDescriptionProvider) {
-        super(indexRootDir, tagDefinitions, fieldDescriptionProvider);
+        this(database, indexRootDir, tagDefinitions, fieldDescriptionProvider, null);
+    }
+
+    public PerPojoDatabaseSearchContext(@NotNull DB database, @Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
+                                        @Nullable Function<Field, String> fieldDescriptionProvider,
+                                        @Nullable PossibleValueProvider tagPossibleValueProvider) {
+        super(indexRootDir, tagDefinitions, fieldDescriptionProvider, tagPossibleValueProvider);
         this.database = database;
     }
 

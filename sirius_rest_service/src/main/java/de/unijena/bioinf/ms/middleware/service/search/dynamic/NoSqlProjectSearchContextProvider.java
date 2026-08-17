@@ -59,7 +59,11 @@ public class NoSqlProjectSearchContextProvider implements SearchContextProvider<
 
         // Field descriptions come from the API documentation of the models (schema annotations/javadoc);
         // injected here (REST-side glue) so the search machinery itself stays free of presentation concerns.
-        return new PerPojoDatabaseSearchContext<>(project.storage(), projectIndexRoot, tagDefinitions, ApiDocFieldDescriptions.PROVIDER);
+        // The possible values of a tag are read from its definition when the fields are described, so that
+        // values added to a definition later are reported without reopening the project.
+        return new PerPojoDatabaseSearchContext<>(project.storage(), projectIndexRoot, tagDefinitions,
+                ApiDocFieldDescriptions.PROVIDER,
+                new TagDefinitionPossibleValues(tagName -> project.project().findTagDefinitionByName(tagName)));
     }
 
     @Override
