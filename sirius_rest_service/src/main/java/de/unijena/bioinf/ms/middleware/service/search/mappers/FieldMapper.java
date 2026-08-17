@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
+import de.unijena.bioinf.projectspace.PossibleValueProvider;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
@@ -14,7 +15,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public interface FieldMapper<T> {
+/**
+ * Maps one pojo field onto the lucene fields it is indexed as, and back.
+ * <p>
+ * A mapper is also the {@link PossibleValueProvider} for the fields it contributes: it typically contributes
+ * several of them (e.g. one per ontology level), which is why the vocabulary is requested per field name. The
+ * default is "no vocabulary", so a mapper only implements it if it actually knows its values.
+ */
+public interface FieldMapper<T> extends PossibleValueProvider {
 
     default void toDocument(@NotNull String rootFieldName, @NotNull Document docToAdd, @Nullable T pojo){
         toIndexableFields(rootFieldName, pojo).forEach(docToAdd::add);
@@ -34,11 +42,21 @@ public interface FieldMapper<T> {
     );
 
     /**
+     * The values a field contributed by this mapper can take, or null (the default) if this mapper does not know
+     * a closed vocabulary for it. Asked per field because one mapper usually contributes several fields.
+     */
+    @Override
+    default @Nullable List<String> getPossibleValues(@NotNull String fieldName) {
+        return null;
+    }
+
+    /**
      * Describes the searchable fields this mapper contributes below the given root field name.
      * <p>
      * The default implementation derives the description from {@link #applyAnalyzersAndPointConfigs}, so it is
-     * always consistent with the actual query parser configuration. Override to add descriptions or to expose
-     * fields that need no parser configuration.
+     * always consistent with the actual query parser configuration, and attaches the vocabulary this mapper
+     * reports for each of them (see {@link #getPossibleValues(String)}). Override to add descriptions or to
+     * expose fields that need no parser configuration.
      */
     default List<SearchableField> describeSearchableFields(@NotNull String rootFieldName) {
         Map<String, PointsConfig> pointsConfigMap = new HashMap<>();
@@ -46,6 +64,12 @@ public interface FieldMapper<T> {
         List<CharSequence> defaultSearchFields = new ArrayList<>();
         Map<String, SortField.Type> sortTypes = new HashMap<>();
         applyAnalyzersAndPointConfigs(rootFieldName, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
-        return LuceneMappingUtils.toSearchableFields(pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+        List<SearchableField> fields = LuceneMappingUtils.toSearchableFields(pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+        fields.forEach(field -> {
+            List<String> possibleValues = getPossibleValues(field.getName());
+            if (possibleValues != null)
+                field.setPossibleValues(possibleValues);
+        });
+        return fields;
     }
 }
