@@ -73,8 +73,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -542,7 +546,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         }
 
         if (matches != null && removeNone(optFields).contains(SpectralLibraryMatch.OptField.referenceSpectrum))
-            matches.getContent().forEach(this::extractRefSpectraSneaky);
+            extractRefSpectraSneaky(matches.getContent());
         return matches;
     }
 
@@ -1303,14 +1307,44 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not load Spectrum: '%s'. Database '%s' does not exist!", match.getUuid(), match.getDbName())));
     }
 
+    /**
+     * Loads the reference spectrum of the given match, leaving it without reference spectrum if unavailable.
+     * A reference spectrum that cannot be loaded (usually a custom database that is not installed on this
+     * machine anymore) is a user-side condition, not a server error, so it is reported as a plain warning
+     * without a stack trace. The stack trace is available on debug level.
+     */
     @Nullable
     private ReferenceSpectrum extractRefSpectraSneaky(SpectralLibraryMatch match) {
         try {
             return extractRefSpectra(match);
         } catch (ResponseStatusException e) {
-            log.error(e.getReason(), e);
+            log.warn("{}", e.getReason());
+            log.debug("Could not load reference spectrum of match '{}'.", match.getUuid(), e);
             return null;
         }
+    }
+
+    /**
+     * Loads the reference spectra of all given matches (see the single-match variant above). Failures are
+     * summarized per database, so a single missing database does not produce one warning per match.
+     */
+    private void extractRefSpectraSneaky(Collection<SpectralLibraryMatch> matches) {
+        Map<String, List<String>> reasonsByDb = new LinkedHashMap<>();
+        for (SpectralLibraryMatch match : matches) {
+            try {
+                extractRefSpectra(match);
+            } catch (ResponseStatusException e) {
+                reasonsByDb.computeIfAbsent(match.getDbName(), db -> new ArrayList<>()).add(e.getReason());
+                log.debug("Could not load reference spectrum of match '{}'.", match.getUuid(), e);
+            }
+        }
+
+        reasonsByDb.values().forEach(reasons -> {
+            if (reasons.size() == 1)
+                log.warn("{}", reasons.getFirst());
+            else
+                log.warn("{} ({} of {} spectral library matches affected)", reasons.getFirst(), reasons.size(), matches.size());
+        });
     }
 
     /**
