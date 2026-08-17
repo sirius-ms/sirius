@@ -281,16 +281,35 @@ public class LuceneMappingUtils {
     /**
      * Describes the dynamic search field of a project tag ({@code tags.<tagName>}), consistent with how tag
      * values are indexed and queried.
+     *
+     * @param possibleValues the values the tag definition restricts this tag to (in query form), or null if it
+     *                       accepts any value
      */
-    public static SearchableField toTagSearchableField(@NotNull String fieldName, @NotNull String tagName, @NotNull ValueType valueType) {
+    public static SearchableField toTagSearchableField(@NotNull String fieldName, @NotNull String tagName,
+                                                       @NotNull ValueType valueType, @Nullable List<String> possibleValues) {
         return SearchableField.builder()
                 .name(fieldName)
                 .fieldType(getSearchableFieldTypeForValueType(valueType))
                 .fullTextSearch(valueType == ValueType.TEXT)
                 .significantSuffixLength(2) // "tags.<tagName>" - the tag field plus the tag key
+                .possibleValues(tagPossibleValues(valueType, possibleValues))
                 .description("Project tag '" + tagName + "'"
                         + (valueType == ValueType.NONE ? "; presence flag, search for value 'true'" : ""))
                 .build();
+    }
+
+    /**
+     * Same precedence as for annotated fields: a declared vocabulary is the more specific statement and wins,
+     * otherwise the values follow from the type. Boolean tags cannot declare values (the tag definition rejects
+     * that) but are queried as true/false, and so are value-less tags, which are indexed as a presence flag.
+     */
+    @Nullable
+    private static List<String> tagPossibleValues(@NotNull ValueType valueType, @Nullable List<String> declared) {
+        if (declared != null && !declared.isEmpty())
+            return declared;
+        return getSearchableFieldTypeForValueType(valueType) == SearchableField.FieldType.BOOLEAN
+                ? List.of("true", "false")
+                : null;
     }
 
     /**
