@@ -237,10 +237,6 @@ public class LuceneMappingUtils {
     }
 
     /**
-     * Maps a simple java type of an indexed field to the {@link SearchableField.FieldType} exposed to API users.
-     * Same type support as {@link #getPointsConfigForType} plus text, boolean and enum; null for unsupported types.
-     */
-    /**
      * Returns a SortField.Type if depending on the type.
      * If the type is not supported for sorting, returns null.
      */
