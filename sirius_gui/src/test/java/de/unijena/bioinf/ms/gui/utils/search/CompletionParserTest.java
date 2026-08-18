@@ -168,6 +168,93 @@ public class CompletionParserTest {
         assertTrue(parse(")", false, false).isEmpty());
     }
 
+    // --- field name matching: full name, dot segments and words inside a segment ---
+
+    /** Field names in the shapes the index actually reports them. */
+    private static final List<SearchableField> NAMES = List.of(
+            field("ionMass", SearchableFieldType.DOUBLE),
+            field("rtApexSeconds", SearchableFieldType.DOUBLE),
+            field("detectedAdducts", SearchableFieldType.TEXT),
+            field("hasMs1", SearchableFieldType.BOOLEAN),
+            field("hasMsMs", SearchableFieldType.BOOLEAN),
+            field("name", SearchableFieldType.TEXT),
+            field("qualities.PEAK_QUALITY", SearchableFieldType.ENUM),
+            field("topAnnotations.confidenceExactMatch", SearchableFieldType.DOUBLE),
+            field("topAnnotations.structureAnnotation.structureName", SearchableFieldType.TEXT),
+            field("topAnnotations.GNPSLibraryHit", SearchableFieldType.TEXT),
+            field("stats.fold-change", SearchableFieldType.DOUBLE));
+
+    private static List<String> matches(String prefix) {
+        return CompletionParser.fieldMatches(prefix, NAMES).stream().map(SearchableField::getName).toList();
+    }
+
+    @Test
+    public void testCamelCaseWordIsMatched() {
+        // the point of the feature: the user thinks "mass", not "ionMass"
+        assertEquals(List.of("ionMass"), matches("mass"));
+        assertEquals(List.of("rtApexSeconds"), matches("apex"));
+        assertEquals(List.of("rtApexSeconds"), matches("seconds"));
+        assertEquals(List.of("detectedAdducts"), matches("adducts"));
+        assertEquals(List.of("topAnnotations.confidenceExactMatch"), matches("exact"));
+    }
+
+    @Test
+    public void testOnlyWordStartsMatchNotArbitrarySubstrings() {
+        // "ass" inside ionMass must not match, or the list fills with noise
+        assertTrue(matches("ass").isEmpty());
+        assertTrue(matches("econds").isEmpty());
+        assertTrue(matches("dducts").isEmpty());
+    }
+
+    @Test
+    public void testDigitsStayAttachedToTheirWord() {
+        assertEquals(List.of("hasMs1"), matches("ms1"));
+        assertEquals(List.of("hasMs1", "hasMsMs"), matches("ms"));
+    }
+
+    @Test
+    public void testUnderscoreAndDashAreWordBoundaries() {
+        assertEquals(List.of("qualities.PEAK_QUALITY"), matches("peak"));
+        assertEquals(List.of("stats.fold-change"), matches("change"));
+    }
+
+    @Test
+    public void testAnAcronymFollowedByAWordSplits() {
+        assertEquals(List.of("topAnnotations.GNPSLibraryHit"), matches("library"));
+        assertEquals(List.of("topAnnotations.GNPSLibraryHit"), matches("gnps"));
+    }
+
+    @Test
+    public void testBetterMatchesComeFirst() {
+        // full-name prefix beats dot-segment beats word inside a segment
+        assertEquals(List.of("name", "topAnnotations.structureAnnotation.structureName"), matches("name"));
+        assertEquals("qualities.PEAK_QUALITY", matches("quality").get(0),
+                "the segment PEAK_QUALITY names it; a word match must not outrank the segment match");
+        assertEquals(List.of("topAnnotations.confidenceExactMatch"), matches("confidence"),
+                "dot-segment matching still works");
+        assertEquals(List.of("ionMass"), matches("ionm"), "full-name prefix still works");
+    }
+
+    @Test
+    public void testWordMatchAlsoResolvesTypedInputOnTab() {
+        Completion.ClauseStart clause = (Completion.ClauseStart) CompletionParser
+                .parse("mass", NAMES, false, false).orElseThrow();
+        assertEquals("ionMass", clause.field().getName());
+        assertFalse(clause.negated());
+
+        Completion.ClauseStart negated = (Completion.ClauseStart) CompletionParser
+                .parse("not adducts", NAMES, false, false).orElseThrow();
+        assertEquals("detectedAdducts", negated.field().getName());
+        assertTrue(negated.negated());
+    }
+
+    @Test
+    public void testWordMatchingDoesNotBreakTheGrammarGuards() {
+        // the connector/not forms still need their whitespace, whatever the words are
+        assertTrue(CompletionParser.parse("orma", NAMES, true, false).isEmpty());
+        assertTrue(CompletionParser.parse("notion", NAMES, false, false).isEmpty());
+    }
+
     // --- value suggestions for the draft editor ---
 
     @Test
