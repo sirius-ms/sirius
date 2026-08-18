@@ -31,6 +31,20 @@ public interface PossibleValueProvider {
     List<String> getPossibleValues(@NotNull String fieldName);
 
     /**
+     * Combines providers that each know the vocabulary of different fields: the first one with an answer wins.
+     */
+    static PossibleValueProvider firstOf(@NotNull PossibleValueProvider... providers) {
+        return fieldName -> {
+            for (PossibleValueProvider provider : providers) {
+                List<String> values = provider.getPossibleValues(fieldName);
+                if (values != null)
+                    return values;
+            }
+            return null;
+        };
+    }
+
+    /**
      * The default: the field has no closed vocabulary and accepts free text.
      */
     class None implements PossibleValueProvider {
