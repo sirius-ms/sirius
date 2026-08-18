@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabular
 import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
+import de.unijena.bioinf.ms.middleware.service.search.description.TagFieldDocs;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchContext;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FieldMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
@@ -85,7 +86,11 @@ final class DescribedFields {
      * only the project can supply.
      */
     static SearchableFieldService serviceFor(SearchContext context, @Nullable FieldVocabulary projectVocabulary) {
-        return new SearchableFieldService(IndexFacts.of(context), projectVocabulary);
+        return new SearchableFieldService(IndexFacts.of(context), projectVocabulary, null);
+    }
+
+    static SearchableFieldService serviceFor(SearchContext context, @Nullable TagFieldDocs tagDocs) {
+        return new SearchableFieldService(IndexFacts.of(context), null, tagDocs);
     }
 
     static List<SearchableField> of(SearchContext context, @Nullable FieldVocabulary projectVocabulary, Class<?> modelClass) {

@@ -32,8 +32,9 @@ import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.description.DetectedAdductPossibleValues;
 import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
+import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
-import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionPossibleValues;
+import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionDocs;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoSearchContext;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
@@ -124,9 +125,9 @@ public class OfferedValuesAreFindableTest {
     @BeforeEach
     public void setup() {
         context = new PerPojoSearchContext(null, TAG_TYPES);
-        searchableFields = DescribedFields.serviceFor(context, FieldVocabulary.firstOf(
-                new TagDefinitionPossibleValues(name -> Optional.ofNullable(TAG_DEFINITIONS.get(name))),
-                new DetectedAdductPossibleValues(() -> DETECTED_ADDUCTS)));
+        searchableFields = new SearchableFieldService(IndexFacts.of(context),
+                new DetectedAdductPossibleValues(() -> DETECTED_ADDUCTS),
+                new TagDefinitionDocs(name -> Optional.ofNullable(TAG_DEFINITIONS.get(name))));
 
         context.addDocument(feature());
         context.addDocument(run());

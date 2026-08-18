@@ -23,7 +23,6 @@ package de.unijena.bioinf.ms.middleware.service.search.description;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueFormatter;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,40 +33,46 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * The vocabulary of a project tag ({@code tags.<tagName>}), taken from the tag definition that restricts it.
+ * Reads what a tag's definition says about it: the values it is restricted to, and the sentence explaining what
+ * it means.
  * <p>
- * The definition is looked up when the fields are described, not cached: possible values may be added to a tag
- * at any time (see the tag controller), and a cached copy would report a stale vocabulary until the project is
- * reopened. Describing the searchable fields is not a hot path, so one lookup per tag is cheap enough to buy
- * always-current values.
+ * Both come from the one record, and it is read once per tag and per description. Not cached beyond that: a
+ * definition can gain values or be edited while the project is open (see the tag controller), and a cached copy
+ * would report a stale vocabulary until the project was reopened. Describing the searchable fields is not a hot
+ * path, so one read per tag buys always-current answers.
  */
 @RequiredArgsConstructor
-public class TagDefinitionPossibleValues implements FieldVocabulary {
+public class TagDefinitionDocs implements TagFieldDocs {
 
     private final @NotNull Function<String, Optional<TagDefinition>> tagDefinitionByName;
 
     @Override
-    public @Nullable List<String> getPossibleValues(@NotNull String fieldName) {
-        String tagName = Taggable.tagNameOf(fieldName);
-        if (tagName == null)
-            return null; // not a tag field
+    public @Nullable TagFieldDoc describe(@NotNull String tagName) {
         return tagDefinitionByName.apply(tagName)
-                .map(TagDefinitionPossibleValues::valuesInQueryForm)
-                .filter(values -> !values.isEmpty()) // an unrestricted tag accepts free text
+                .map(definition -> new TagFieldDoc(valuesInQueryForm(definition), description(definition)))
                 .orElse(null);
     }
 
     /**
      * The values as a query has to contain them, which for dates and times is their formatted form rather than
      * the number they are stored and indexed as - the same conversion the tag definition API reports them with.
+     * Null when the tag is not restricted at all, which is not the same as restricted to nothing.
      */
+    @Nullable
     private static List<String> valuesInQueryForm(@NotNull TagDefinition definition) {
         ValueDefinition<?> valueDefinition = definition.getValueDefinition();
         ValueFormatter<?, ?> formatter = valueDefinition.getValueType().getFormatter();
-        return valueDefinition.getPossibleValues().stream()
+        List<String> values = valueDefinition.getPossibleValues().stream()
                 .map(formatter::toFormattedGeneric)
                 .filter(Objects::nonNull)
                 .map(Object::toString)
                 .toList();
+        return values.isEmpty() ? null : values;
+    }
+
+    @Nullable
+    private static String description(@NotNull TagDefinition definition) {
+        String description = definition.getDescription();
+        return description == null || description.isBlank() ? null : description;
     }
 }

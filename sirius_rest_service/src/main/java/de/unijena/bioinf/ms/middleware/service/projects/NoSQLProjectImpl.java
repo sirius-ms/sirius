@@ -60,11 +60,10 @@ import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
-import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
+import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionDocs;
 import de.unijena.bioinf.ms.middleware.service.search.description.DetectedAdductPossibleValues;
-import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionPossibleValues;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
@@ -178,10 +177,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         this.searchService = searchService;
         this.searchableFieldService = searchService == null ? null : new SearchableFieldService(
                 IndexFacts.of(searchService, projectId),
-                FieldVocabulary.firstOf(
-                        new TagDefinitionPossibleValues(tagName -> project().findTagDefinitionByName(tagName)),
-                        new DetectedAdductPossibleValues(() -> project().findDetectedAdducts()
-                                .map(ProjectDetectedAdducts::getDetectedAdducts).orElse(null))));
+                new DetectedAdductPossibleValues(() -> project().findDetectedAdducts()
+                        .map(ProjectDetectedAdducts::getDetectedAdducts).orElse(null)),
+                new TagDefinitionDocs(tagName -> project().findTagDefinitionByName(tagName)));
 
         if (this.searchService != null) {
             synchronized (searchIndexLock) {

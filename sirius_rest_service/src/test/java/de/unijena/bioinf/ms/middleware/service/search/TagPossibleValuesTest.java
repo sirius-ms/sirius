@@ -23,7 +23,8 @@ package de.unijena.bioinf.ms.middleware.service.search;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoSearchContext;
-import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionPossibleValues;
+import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionDocs;
+import de.unijena.bioinf.ms.middleware.service.search.description.TagFieldDocs;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
@@ -49,18 +50,34 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TagPossibleValuesTest {
 
     private static TagDefinition tagDefinition(String tagName, ValueType valueType, List<?> possibleValues) {
+        return tagDefinition(tagName, valueType, possibleValues, null);
+    }
+
+    private static TagDefinition tagDefinition(String tagName, ValueType valueType, List<?> possibleValues,
+                                               String description) {
         return TagDefinition.builder()
                 .tagName(tagName)
                 .tagType("TEST")
+                .description(description)
                 .valueDefinition(new ValueDefinition<>(valueType, possibleValues, null, null))
                 .build();
     }
 
-    private static TagDefinitionPossibleValues providerFor(TagDefinition... definitions) {
+    private static TagDefinitionDocs providerFor(TagDefinition... definitions) {
         Map<String, TagDefinition> byName = new HashMap<>();
         for (TagDefinition definition : definitions)
             byName.put(definition.getTagName(), definition);
-        return new TagDefinitionPossibleValues(tagName -> Optional.ofNullable(byName.get(tagName)));
+        return new TagDefinitionDocs(tagName -> Optional.ofNullable(byName.get(tagName)));
+    }
+
+    private static List<String> valuesOf(TagDefinitionDocs docs, String tagName) {
+        TagFieldDocs.TagFieldDoc doc = docs.describe(tagName);
+        return doc == null ? null : doc.possibleValues();
+    }
+
+    private static String descriptionOf(TagDefinitionDocs docs, String tagName) {
+        TagFieldDocs.TagFieldDoc doc = docs.describe(tagName);
+        return doc == null ? null : doc.description();
     }
 
     // ---- the field name a tag is searched under ------------------------------------------------------------
@@ -84,10 +101,10 @@ public class TagPossibleValuesTest {
 
     @Test
     public void testPossibleValuesOfATextTagAreReported() {
-        TagDefinitionPossibleValues provider = providerFor(
+        TagDefinitionDocs provider = providerFor(
                 tagDefinition("sampleType", ValueType.TEXT, List.of("Sample", "Blank", "Standard")));
 
-        assertEquals(List.of("Sample", "Blank", "Standard"), provider.getPossibleValues("tags.sampleType"));
+        assertEquals(List.of("Sample", "Blank", "Standard"), valuesOf(provider, "sampleType"));
     }
 
     /**
@@ -96,28 +113,27 @@ public class TagPossibleValuesTest {
      */
     @Test
     public void testValuesAreReportedInTheirQueryForm() {
-        TagDefinitionPossibleValues provider = providerFor(
+        TagDefinitionDocs provider = providerFor(
                 tagDefinition("measured", ValueType.DATE, List.of(0L, 86_400_000L)),
                 tagDefinition("replicate", ValueType.INTEGER, List.of(1, 2, 3)));
 
-        assertEquals(List.of("1970-01-01", "1970-01-02"), provider.getPossibleValues("tags.measured"));
-        assertEquals(List.of("1", "2", "3"), provider.getPossibleValues("tags.replicate"));
+        assertEquals(List.of("1970-01-01", "1970-01-02"), valuesOf(provider, "measured"));
+        assertEquals(List.of("1", "2", "3"), valuesOf(provider, "replicate"));
     }
 
     @Test
     public void testTagWithoutRestrictedValuesHasNone() {
-        TagDefinitionPossibleValues provider = providerFor(tagDefinition("comment", ValueType.TEXT, List.of()));
+        TagDefinitionDocs provider = providerFor(tagDefinition("comment", ValueType.TEXT, List.of()));
 
-        assertNull(provider.getPossibleValues("tags.comment"));
+        assertNull(valuesOf(provider, "comment"));
     }
 
     @Test
     public void testUnknownTagAndNonTagFieldsHaveNoValues() {
-        TagDefinitionPossibleValues provider = providerFor(
+        TagDefinitionDocs provider = providerFor(
                 tagDefinition("sampleType", ValueType.TEXT, List.of("Sample")));
 
-        assertNull(provider.getPossibleValues("tags.neverDefined"));
-        assertNull(provider.getPossibleValues("ionMass"));
+        assertNull(provider.describe("neverDefined"), "a tag this project does not define says nothing at all");
     }
 
     // ---- how the tag search field reports them -------------------------------------------------------------
@@ -125,7 +141,7 @@ public class TagPossibleValuesTest {
     @Test
     public void testTagFieldCarriesTheDeclaredValues() {
         SearchableField field = SearchableFields.toTagSearchableField(
-                "tags.sampleType", "sampleType", ValueType.TEXT, List.of("Sample", "Blank"));
+                "tags.sampleType", "sampleType", ValueType.TEXT, List.of("Sample", "Blank"), null);
 
         assertEquals(List.of("Sample", "Blank"), field.getPossibleValues());
     }
@@ -133,7 +149,7 @@ public class TagPossibleValuesTest {
     @Test
     public void testUnrestrictedTagFieldAcceptsFreeText() {
         SearchableField field = SearchableFields.toTagSearchableField(
-                "tags.comment", "comment", ValueType.TEXT, null);
+                "tags.comment", "comment", ValueType.TEXT, null, null);
 
         assertNull(field.getPossibleValues());
     }
@@ -145,7 +161,7 @@ public class TagPossibleValuesTest {
     @Test
     public void testABooleanTagOffersBothValues() {
         assertEquals(List.of("true", "false"), SearchableFields
-                .toTagSearchableField("tags.isBlank", "isBlank", ValueType.BOOLEAN, null).getPossibleValues());
+                .toTagSearchableField("tags.isBlank", "isBlank", ValueType.BOOLEAN, null, null).getPossibleValues());
     }
 
     /**
@@ -156,7 +172,7 @@ public class TagPossibleValuesTest {
     @Test
     public void testAValuelessTagOffersOnlyTrue() {
         assertEquals(List.of("true"), SearchableFields
-                .toTagSearchableField("tags.pfas", "pfas", ValueType.NONE, null).getPossibleValues());
+                .toTagSearchableField("tags.pfas", "pfas", ValueType.NONE, null, null).getPossibleValues());
     }
 
     // ---- end to end through the search context -------------------------------------------------------------
@@ -172,7 +188,7 @@ public class TagPossibleValuesTest {
         Function<String, Optional<TagDefinition>> lookup = name -> Optional.ofNullable(definitions.get(name));
 
         try (PerPojoSearchContext context = new PerPojoSearchContext(null, new HashMap<>(Map.of("sampleType", ValueType.TEXT)))) {
-            SearchableFieldService fields = DescribedFields.serviceFor(context, new TagDefinitionPossibleValues(lookup));
+            SearchableFieldService fields = DescribedFields.serviceFor(context, new TagDefinitionDocs(lookup));
 
             assertEquals(List.of("Sample"), tagField(fields).getPossibleValues());
 
@@ -189,7 +205,7 @@ public class TagPossibleValuesTest {
     @Test
     public void testDescriptionWithoutVocabularyReportsNoValues() throws IOException {
         try (PerPojoSearchContext context = new PerPojoSearchContext(null, new HashMap<>(Map.of("sampleType", ValueType.TEXT)))) {
-            assertNull(tagField(DescribedFields.serviceFor(context, null)).getPossibleValues());
+            assertNull(tagField(DescribedFields.serviceFor(context, (TagFieldDocs) null)).getPossibleValues());
         }
     }
 
@@ -197,5 +213,45 @@ public class TagPossibleValuesTest {
         return fields.describe(Run.class).stream()
                 .collect(Collectors.toMap(SearchableField::getName, Function.identity()))
                 .get("tags.sampleType");
+    }
+
+    // ---- what a tag field says about itself ----------------------------------------------------------------
+
+    /**
+     * A tag definition carries the sentence explaining what the tag means - the PFAS tag says what makes a
+     * feature a potential PFAS - and that is what a client should show for the field, rather than a restating
+     * of the field name.
+     */
+    @Test
+    public void testTheDescriptionOfATagIsWhatItsDefinitionSays() {
+        TagDefinitionDocs docs = providerFor(
+                tagDefinition("pfas", ValueType.TEXT, List.of(), "Features that look like a PFAS."));
+
+        assertEquals("Features that look like a PFAS.", descriptionOf(docs, "pfas"));
+    }
+
+    @Test
+    public void testATagWithoutADescriptionHasNone() {
+        TagDefinitionDocs docs = providerFor(tagDefinition("comment", ValueType.TEXT, List.of()));
+
+        assertNull(descriptionOf(docs, "comment"));
+        assertNull(docs.describe("neverDefined"), "a tag this project does not define says nothing at all");
+    }
+
+    /**
+     * The definition's sentence replaces the generated one; what the field name alone cannot say - that a
+     * value-less tag is matched by searching for true - is kept either way.
+     */
+    @Test
+    public void testTheTagFieldUsesTheDefinitionDescriptionWhenThereIsOne() {
+        assertEquals("Features that look like a PFAS.", SearchableFields
+                .toTagSearchableField("tags.pfas", "pfas", ValueType.TEXT, null, "Features that look like a PFAS.")
+                .getDescription());
+
+        assertEquals("Project tag 'pfas'", SearchableFields
+                .toTagSearchableField("tags.pfas", "pfas", ValueType.TEXT, null, null).getDescription());
+
+        assertEquals("A flag.; presence flag, search for value 'true'", SearchableFields
+                .toTagSearchableField("tags.flag", "flag", ValueType.NONE, null, "A flag.").getDescription());
     }
 }
