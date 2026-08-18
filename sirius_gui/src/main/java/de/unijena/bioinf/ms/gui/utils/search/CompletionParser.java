@@ -231,6 +231,23 @@ public final class CompletionParser {
     }
 
     /**
+     * Whether naming this field says everything there is to say: it holds a flag, and the flag has one value.
+     * <p>
+     * A field like {@code lipid} is written into the index only when the property holds, so the value carries
+     * nothing and its presence carries everything - "no lipid class" is the negation of it. Completing such a
+     * field to its value at once hides that from the user, who should not have to know how it is stored.
+     * <p>
+     * Both halves are needed. A real boolean holds either value and has to be asked about; a field that offers
+     * one value today - a tag whose definition currently allows one - is not a flag either, since the
+     * definition can be extended while the project is open. Only a boolean with a single value is one.
+     */
+    public static boolean isSingleValued(@NotNull SearchableField field) {
+        return field.getFieldType() == SearchableFieldType.BOOLEAN
+                && field.getPossibleValues() != null
+                && field.getPossibleValues().size() == 1;
+    }
+
+    /**
      * The offered values matching the typed prefix, best match first.
      * <p>
      * Values are not typed the way they are written. A vocabulary can be a whole ontology, where matching only
@@ -250,9 +267,13 @@ public final class CompletionParser {
                 .toList();
     }
 
-    private static final int NO_MATCH = 3;
-
-    /** Words of a value: what is left between the punctuation it is written with. */
+    /**
+     * Words of a value: what is left between the punctuation it is written with.
+     * <p>
+     * Not {@link #words}, which splits an identifier - dots, underscores, camel case - and would leave an
+     * adduct as {@code [m} and {@code h]}. A value is arbitrary text and every punctuation mark in it
+     * separates.
+     */
     private static final Pattern NON_WORD = Pattern.compile("\\W+");
 
     private static int valueMatchRank(String value, String lowerPrefix) {

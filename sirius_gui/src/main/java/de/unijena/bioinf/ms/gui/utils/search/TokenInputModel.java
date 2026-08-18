@@ -378,9 +378,7 @@ public class TokenInputModel {
         if (suggestion instanceof Suggestion.RunActionSuggestion)
             return Optional.empty();
         if (suggestion instanceof Suggestion.FieldSuggestion field) {
-            pendingField = field.field();
-            stage = NUMERIC_TYPES.contains(field.field().getFieldType()) ? Stage.OPERATOR : Stage.VALUE;
-            return Optional.empty();
+            return stageField(field.field());
         }
         if (suggestion instanceof Suggestion.TokenSuggestion token) {
             return switch (token.token()) {
@@ -484,22 +482,52 @@ public class TokenInputModel {
             Event event = new Event.OpenGroup(group.groupNegated(),
                     group.logic() != null ? group.logic() : effectiveLogic());
             resetPending();
-            if (group.clause() != null)
-                applyClauseStart(group.clause());
+            if (group.clause() != null) {
+                // only one event can be returned, and the group is it - so a clause typed with the paren is
+                // staged as a draft even when naming its field would otherwise have been enough
+                stageClauseStart(group.clause());
+                stageFieldWithoutCompleting(group.clause().field());
+            }
             return Optional.of(event);
         }
 
-        applyClauseStart((Completion.ClauseStart) completion);
-        return Optional.empty();
+        return applyClauseStart((Completion.ClauseStart) completion);
     }
 
-    private void applyClauseStart(Completion.ClauseStart clause) {
+    private void stageFieldWithoutCompleting(SearchableField field) {
+        pendingField = field;
+        stage = NUMERIC_TYPES.contains(field.getFieldType()) ? Stage.OPERATOR : Stage.VALUE;
+    }
+
+    /**
+     * Stages the field of a clause and, for a field that can only hold one value, finishes the clause with it
+     * - see {@link CompletionParser#isSingleValued}. The pending negation and connector are applied either way.
+     */
+    private Optional<Event> applyClauseStart(Completion.ClauseStart clause) {
+        stageClauseStart(clause);
+        return stageField(clause.field());
+    }
+
+    /** The clause context without the field: what a group carries when its first clause is typed with it. */
+    private void stageClauseStart(Completion.ClauseStart clause) {
         if (clause.logic() != null)
             pendingLogic = clause.logic();
         if (clause.negated())
             pendingNegated = true;
-        pendingField = clause.field();
-        stage = NUMERIC_TYPES.contains(clause.field().getFieldType()) ? Stage.OPERATOR : Stage.VALUE;
+    }
+
+    /**
+     * @return the finished clause when naming the field was enough, empty when a value (or an operator and a
+     * value) is still to come
+     */
+    private Optional<Event> stageField(SearchableField field) {
+        pendingField = field;
+        if (CompletionParser.isSingleValued(field)) {
+            stage = Stage.VALUE;
+            return acceptValue(field.getPossibleValues().get(0));
+        }
+        stage = NUMERIC_TYPES.contains(field.getFieldType()) ? Stage.OPERATOR : Stage.VALUE;
+        return Optional.empty();
     }
 
     private Optional<Event> acceptValue(String value) {
