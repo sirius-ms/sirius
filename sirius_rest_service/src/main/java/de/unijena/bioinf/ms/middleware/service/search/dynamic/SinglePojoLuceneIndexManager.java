@@ -38,7 +38,6 @@ import de.unijena.bioinf.ms.middleware.service.search.IndexedFields;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;

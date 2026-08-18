@@ -51,20 +51,6 @@ public interface FieldVocabulary {
     List<String> getPossibleValues(@NotNull String fieldName);
 
     /**
-     * Combines vocabularies that each know different fields: the first one with an answer wins.
-     */
-    static FieldVocabulary firstOf(@NotNull FieldVocabulary... vocabularies) {
-        return fieldName -> {
-            for (FieldVocabulary vocabulary : vocabularies) {
-                List<String> values = vocabulary.getPossibleValues(fieldName);
-                if (values != null)
-                    return values;
-            }
-            return null;
-        };
-    }
-
-    /**
      * The default: the field has no closed vocabulary and accepts free text.
      */
     class None implements FieldVocabulary {

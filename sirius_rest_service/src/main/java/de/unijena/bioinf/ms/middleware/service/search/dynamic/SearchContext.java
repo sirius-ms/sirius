@@ -16,7 +16,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -68,10 +67,6 @@ public interface SearchContext extends Closeable {
     <T, R> Page<R> searchFields(@Nullable String query, Pageable pageable, Class<T> beanClass,
                                 Set<String> fields, Function<IndexedFields, R> mapper);
 
-    /**
-     * Describes the fields that can be used in search queries for the given object type, including the
-     * project's dynamic tag fields. Empty if the object type has no search index.
-     */
     /** What the index of the given type holds, as recorded when it was configured. */
     <T> IndexSchema getIndexSchema(Class<T> beanClass);
 

@@ -34,7 +34,6 @@ import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
-import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
@@ -53,8 +52,9 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for the searchable-field introspection ({@link GenericPojoMapper#describeSearchableFields()}) that backs
- * the searchable-fields API endpoint. Users need this metadata to design their lucene queries.
+ * Tests for the searchable-field introspection that backs the searchable-fields API endpoint: the index
+ * reports what it holds as an {@link IndexSchema}, and {@link SearchableFieldDescriber} explains it. Users
+ * need this metadata to design their lucene queries.
  */
 public class SearchableFieldsDescriptionTest {
 
