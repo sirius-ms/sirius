@@ -23,11 +23,12 @@ package de.unijena.bioinf.ms.middleware.service.search;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoSearchContext;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.TagDefinitionPossibleValues;
+import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionPossibleValues;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFields;
 import org.junit.jupiter.api.Test;
 
@@ -161,32 +162,30 @@ public class TagPossibleValuesTest {
         definitions.put("sampleType", tagDefinition("sampleType", ValueType.TEXT, List.of("Sample")));
         Function<String, Optional<TagDefinition>> lookup = name -> Optional.ofNullable(definitions.get(name));
 
-        try (PerPojoSearchContext context = new PerPojoSearchContext(null,
-                new HashMap<>(Map.of("sampleType", ValueType.TEXT)), null,
-                new TagDefinitionPossibleValues(lookup))) {
+        try (PerPojoSearchContext context = new PerPojoSearchContext(null, new HashMap<>(Map.of("sampleType", ValueType.TEXT)))) {
+            SearchableFieldService fields = DescribedFields.serviceFor(context, new TagDefinitionPossibleValues(lookup));
 
-            assertEquals(List.of("Sample"), tagField(context).getPossibleValues());
+            assertEquals(List.of("Sample"), tagField(fields).getPossibleValues());
 
-            // a value added to the definition afterwards must show up without touching the search context
+            // a value added to the definition afterwards must show up without describing the index again
             definitions.put("sampleType", tagDefinition("sampleType", ValueType.TEXT, List.of("Sample", "Blank")));
 
-            assertEquals(List.of("Sample", "Blank"), tagField(context).getPossibleValues());
+            assertEquals(List.of("Sample", "Blank"), tagField(fields).getPossibleValues());
         }
     }
 
     /**
-     * Without a provider the tag fields are described as before - free text.
+     * Without a vocabulary the tag fields are described as free text.
      */
     @Test
-    public void testSearchContextWithoutProviderReportsNoValues() throws IOException {
-        try (PerPojoSearchContext context = new PerPojoSearchContext(null,
-                new HashMap<>(Map.of("sampleType", ValueType.TEXT)))) {
-            assertNull(tagField(context).getPossibleValues());
+    public void testDescriptionWithoutVocabularyReportsNoValues() throws IOException {
+        try (PerPojoSearchContext context = new PerPojoSearchContext(null, new HashMap<>(Map.of("sampleType", ValueType.TEXT)))) {
+            assertNull(tagField(DescribedFields.serviceFor(context, null)).getPossibleValues());
         }
     }
 
-    private static SearchableField tagField(PerPojoSearchContext context) {
-        return context.getSearchableFields(Run.class).stream()
+    private static SearchableField tagField(SearchableFieldService fields) {
+        return fields.describe(Run.class).stream()
                 .collect(Collectors.toMap(SearchableField::getName, Function.identity()))
                 .get("tags.sampleType");
     }

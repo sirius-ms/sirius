@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
+import de.unijena.bioinf.ms.middleware.service.search.description.ApiDocFieldDescriptions;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FieldMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;

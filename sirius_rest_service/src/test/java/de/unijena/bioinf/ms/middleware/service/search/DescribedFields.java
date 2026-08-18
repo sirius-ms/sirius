@@ -21,7 +21,11 @@
 package de.unijena.bioinf.ms.middleware.service.search;
 
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
+import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
+import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchContext;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FieldMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
@@ -74,5 +78,17 @@ final class DescribedFields {
     static Map<String, SearchableField> asMap(Class<?> pojoClass, @Nullable Function<Field, String> descriptions) {
         return of(pojoClass, descriptions).stream()
                 .collect(Collectors.toMap(SearchableField::getName, Function.identity()));
+    }
+
+    /**
+     * The whole answer for one project, the way the project assembles it: index facts plus the vocabularies
+     * only the project can supply.
+     */
+    static SearchableFieldService serviceFor(SearchContext context, @Nullable FieldVocabulary projectVocabulary) {
+        return new SearchableFieldService(IndexFacts.of(context), projectVocabulary);
+    }
+
+    static List<SearchableField> of(SearchContext context, @Nullable FieldVocabulary projectVocabulary, Class<?> modelClass) {
+        return serviceFor(context, projectVocabulary).describe(modelClass);
     }
 }
