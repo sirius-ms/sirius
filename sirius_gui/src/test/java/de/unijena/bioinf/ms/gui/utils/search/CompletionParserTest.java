@@ -314,4 +314,18 @@ public class CompletionParserTest {
         assertEquals(classes, CompletionParser.valueMatches("", classes));
         assertTrue(CompletionParser.valueMatches("xyz", classes).isEmpty());
     }
+
+    /**
+     * Adducts are indexed bracketed and spaced ([M + H]+), which is not how anyone types them into a value
+     * box: they type the adduct itself. Neither the leading bracket nor the spacing may hide a value.
+     */
+    @Test
+    public void testAdductValuesAreFoundTheWayTheyAreTyped() {
+        List<String> adducts = List.of("[M + ?]+", "[M + H]+", "[M + Na]+", "[M - H2O + H]+");
+
+        assertEquals(List.of("[M + H]+"), CompletionParser.valueMatches("[M+H]+", adducts));
+        assertEquals(List.of("[M + H]+"), CompletionParser.valueMatches("M+H", adducts));
+        assertEquals(List.of("[M + Na]+"), CompletionParser.valueMatches("Na", adducts));
+        assertEquals(adducts, CompletionParser.valueMatches("", adducts));
+    }
 }
