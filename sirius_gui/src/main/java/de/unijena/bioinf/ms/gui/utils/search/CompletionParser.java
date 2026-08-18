@@ -32,7 +32,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * The Tab-completion grammar of the search bar: {@code [and|or] [not] <field-prefix>} for a clause,
+ * The completion grammar of the search bar (what the accept key makes of typed text): {@code [and|or] [not] <field-prefix>} for a clause,
  * {@code [and|or] [not] (} to open a group, and {@code )} to close one - so {@code or not (ma}
  * opens a negated OR-group and starts a clause inside it. The two {@code not} positions are told
  * apart purely by which side of the paren they fall on: before it negates the group, after it the
