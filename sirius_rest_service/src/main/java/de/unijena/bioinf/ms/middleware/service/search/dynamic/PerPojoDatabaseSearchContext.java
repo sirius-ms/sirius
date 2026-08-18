@@ -2,7 +2,6 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.ms.persistence.model.core.PersistentSearchIndex;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
-import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -34,18 +32,7 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
     }
 
     public PerPojoDatabaseSearchContext(@NotNull DB database, @Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions) {
-        this(database, indexRootDir, tagDefinitions, null);
-    }
-
-    public PerPojoDatabaseSearchContext(@NotNull DB database, @Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
-                                        @Nullable Function<Field, String> fieldDescriptionProvider) {
-        this(database, indexRootDir, tagDefinitions, fieldDescriptionProvider, null);
-    }
-
-    public PerPojoDatabaseSearchContext(@NotNull DB database, @Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
-                                        @Nullable Function<Field, String> fieldDescriptionProvider,
-                                        @Nullable FieldVocabulary projectFieldVocabulary) {
-        super(indexRootDir, tagDefinitions, fieldDescriptionProvider, projectFieldVocabulary);
+        super(indexRootDir, tagDefinitions);
         this.database = database;
     }
 

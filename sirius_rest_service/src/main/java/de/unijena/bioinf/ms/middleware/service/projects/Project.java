@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
@@ -72,12 +73,25 @@ public interface Project<PSM extends ProjectSpaceManager> {
      * Describes the fields that can be used in lucene search queries (searchQuery parameter) for the given
      * API model type (e.g. AlignedFeature, Run), including this project's dynamic tag fields.
      * Empty if no searchable fields exist for the given type.
+     * <p>
+     * Answered outside the search engine: the index is asked what it holds, and this project adds what only it
+     * knows - its tag definitions and the adducts it detected.
      */
     default List<SearchableField> getSearchableFields(@NotNull Class<?> modelClass) {
-        SearchService searchService = getSearchService();
-        if (searchService == null)
+        SearchableFieldService searchableFields = getSearchableFieldService();
+        if (searchableFields == null)
             return List.of();
-        return searchService.getSearchableFields(getProjectId(), modelClass);
+        return searchableFields.describe(modelClass);
+    }
+
+    /**
+     * Describes this project's searchable fields, or null if it has no search index. Held by the project
+     * because the vocabularies it reports - the tags defined here, the adducts detected here - are project
+     * state that nothing else can answer.
+     */
+    @Nullable
+    default SearchableFieldService getSearchableFieldService() {
+        return null;
     }
 
     /**
