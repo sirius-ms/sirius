@@ -25,8 +25,10 @@ import io.sirius.ms.sdk.model.SearchableFieldType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -117,15 +119,24 @@ public final class CompletionParser {
     }
 
     /**
-     * All fields matching the prefix, deterministically ordered: full-name prefix matches first,
-     * then dot-segment (leaf name) matches, alphabetical within each.
+     * All fields matching the prefix, deterministically ordered: full-name prefix matches first, then
+     * dot-segment (leaf name) matches, then matches on a word INSIDE a segment, alphabetical within each.
+     * <p>
+     * The word tier is what lets the user search the way they think about a field: {@code mass} finds
+     * {@code ionMass}, {@code adducts} finds {@code detectedAdducts}. It also decides typed input, so
+     * {@code mass} + Tab starts a clause on {@code ionMass} - the suggestion list and Tab always agree.
      */
     public static List<SearchableField> fieldMatches(@NotNull String prefix, @NotNull List<SearchableField> fields) {
-        String lowerPrefix = prefix.toLowerCase();
+        String lowerPrefix = prefix.toLowerCase(Locale.ROOT);
+        // rank once per field (matching tokenizes the name), then sort the survivors
+        record Ranked(SearchableField field, int rank) {
+        }
         return fields.stream()
-                .filter(field -> matchRank(field, lowerPrefix) < 2)
-                .sorted(Comparator.comparingInt((SearchableField field) -> matchRank(field, lowerPrefix))
-                        .thenComparing(SearchableField::getName))
+                .map(field -> new Ranked(field, matchRank(field, lowerPrefix)))
+                .filter(ranked -> ranked.rank() < NO_MATCH)
+                .sorted(Comparator.comparingInt(Ranked::rank)
+                        .thenComparing(ranked -> ranked.field().getName()))
+                .map(Ranked::field)
                 .toList();
     }
 
@@ -133,14 +144,67 @@ public final class CompletionParser {
         return fieldMatches(prefix, fields).stream().findFirst();
     }
 
+    /** Rank of a non-matching field; anything below it is offered, lower is a better match. */
+    private static final int NO_MATCH = 3;
+
     private static int matchRank(SearchableField field, String lowerPrefix) {
-        String name = field.getName().toLowerCase();
+        String name = field.getName().toLowerCase(Locale.ROOT);
         if (name.startsWith(lowerPrefix))
             return 0;
         for (String segment : name.split("\\."))
             if (segment.startsWith(lowerPrefix))
                 return 1;
-        return 2;
+        for (String word : words(field.getName()))
+            if (word.startsWith(lowerPrefix))
+                return 2;
+        return NO_MATCH;
+    }
+
+    /**
+     * The lower-cased words a field name is made of, so a prefix can be matched against each of them:
+     * {@code rtApexSeconds} is {@code rt|apex|seconds}, {@code qualities.PEAK_QUALITY} is
+     * {@code qualities|peak|quality}, {@code topAnnotations.GNPSLibraryHit} is
+     * {@code top|annotations|gnps|library|hit}.
+     * <p>
+     * Boundaries are the separators that occur in field names ({@code . _ -}), a lower-to-upper case
+     * change and the end of an upper-case run that starts a new word (the {@code L} in
+     * {@code GNPSLibrary}). Digits deliberately do NOT start a word, so {@code hasMs1} stays
+     * {@code has|ms1} and both {@code ms} and {@code ms1} find it. This mirrors how the index tokenizes
+     * the VALUES it stores (SiriusStandardAnalyzer splits on case changes just the same).
+     */
+    static List<String> words(@NotNull String fieldName) {
+        List<String> words = new ArrayList<>();
+        StringBuilder word = new StringBuilder(fieldName.length());
+        for (int i = 0; i < fieldName.length(); i++) {
+            char c = fieldName.charAt(i);
+            if (c == '.' || c == '_' || c == '-' || Character.isWhitespace(c)) {
+                flush(word, words);
+                continue;
+            }
+            if (Character.isUpperCase(c) && startsNewWord(fieldName, i))
+                flush(word, words);
+            word.append(c);
+        }
+        flush(word, words);
+        return words;
+    }
+
+    /** Whether the upper-case character at {@code i} starts a word rather than continuing an acronym. */
+    private static boolean startsNewWord(String name, int i) {
+        if (i == 0)
+            return false;
+        char previous = name.charAt(i - 1);
+        if (Character.isLowerCase(previous) || Character.isDigit(previous))
+            return true; // ionMass -> ion|Mass
+        // inside an upper-case run only the last one starts a word: GNPSLibrary -> gnps|library
+        return Character.isUpperCase(previous)
+                && i + 1 < name.length() && Character.isLowerCase(name.charAt(i + 1));
+    }
+
+    private static void flush(StringBuilder word, List<String> words) {
+        if (!word.isEmpty())
+            words.add(word.toString().toLowerCase(Locale.ROOT));
+        word.setLength(0);
     }
 
     /**
