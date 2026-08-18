@@ -3,7 +3,6 @@ package de.unijena.bioinf.ms.middleware.service.search.mappers;
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.ms.middleware.model.annotations.LipidAnnotation;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
-import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.index.IndexableField;
