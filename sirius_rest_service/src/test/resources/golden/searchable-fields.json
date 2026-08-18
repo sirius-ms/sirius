@@ -163,7 +163,7 @@
     "description" : null
   }, {
     "name" : "topAnnotations.formulaAnnotation.lipidAnnotation.lipid",
-    "fieldType" : "TEXT",
+    "fieldType" : "BOOLEAN",
     "fullTextSearch" : false,
     "sortable" : false,
     "defaultSearchField" : false,
