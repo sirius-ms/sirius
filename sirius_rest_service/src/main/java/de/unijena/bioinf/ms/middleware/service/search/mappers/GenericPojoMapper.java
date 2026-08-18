@@ -190,13 +190,8 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                             sortTypes.put(fieldName, sortType);
                     }
 
-                    if (indexField.queryRewriter() != QueryRewriter.NoOp.class) {
-                        try {
-                            queryRewriters.put(fieldName, indexField.queryRewriter().getDeclaredConstructor().newInstance());
-                        } catch (Exception e) {
-                            throw new RuntimeException("Could not instantiate QueryRewriter: " + indexField.queryRewriter().getName(), e);
-                        }
-                    }
+                    if (indexField.queryRewriter() != QueryRewriter.NoOp.class)
+                        queryRewriters.put(fieldName, newQueryRewriter(indexField.queryRewriter()));
 
                     facts.add(factsOf(fieldName, elementType, field, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes));
                 }
@@ -208,12 +203,20 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 // A mapper names its own fields, so which ones it added is only visible as the difference it
                 // made to the configuration. Recorded in name order, the only order a mapper implies.
                 Set<String> before = configuredFieldNames(pointsConfigMap, analyzerMap);
-                mapper.applyAnalyzersAndPointConfigs(fieldName, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters);
-                configuredFieldNames(pointsConfigMap, analyzerMap).stream()
+                mapper.applyAnalyzersAndPointConfigs(fieldName, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+                List<String> contributed = configuredFieldNames(pointsConfigMap, analyzerMap).stream()
                         .filter(name -> !before.contains(name))
                         .sorted()
-                        .forEach(name -> facts.add(factsOf(name, null, field,
-                                pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes)));
+                        .toList();
+                contributed.forEach(name -> facts.add(factsOf(name, null, field,
+                        pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes)));
+
+                // the field declares how a query for what this mapper writes is read; the mapper is what knows
+                // the names, so the two meet here
+                if (mapperAnno.queryRewriter() != QueryRewriter.NoOp.class) {
+                    QueryRewriter rewriter = newQueryRewriter(mapperAnno.queryRewriter());
+                    contributed.forEach(name -> queryRewriters.put(name, rewriter));
+                }
             }
         }
     }
@@ -273,6 +276,14 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
         // case a future lucene version widens that set.
         throw new IllegalStateException("Points config has unsupported number type '"
                 + pointsConfig.getType().getName() + "'. Cannot report the kind of this field.");
+    }
+
+    private static QueryRewriter newQueryRewriter(@NotNull Class<? extends QueryRewriter> rewriterClass) {
+        try {
+            return rewriterClass.getDeclaredConstructor().newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Could not instantiate QueryRewriter: " + rewriterClass.getName(), e);
+        }
     }
 
     private static Set<String> configuredFieldNames(@NotNull Map<String, PointsConfig> pointsConfigMap,

@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.elgordo.LipidClass;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.LipidAnnotationMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils;
 import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.search.Query;
@@ -66,6 +67,8 @@ public class LipidClassQueryRewriter implements QueryRewriter {
     public Query rewrite(String field, String text, boolean isPhrase) {
         if (text == null || text.isBlank())
             return null;
+        if (!field.endsWith(LipidAnnotationMapper.LIPID_CLASS_NAME))
+            return null; // registered for everything the lipid mapper writes; only the class name is a class name
 
         String longName = LONG_NAME_BY_ABBREVIATION.get(normalize(text));
         if (longName == null)

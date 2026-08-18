@@ -80,8 +80,7 @@ public class TagMapper implements FieldMapper<Map<String, Tag>> {
             @NotNull Map<String, PointsConfig> pointsConfigMap,
             @NotNull Map<String, Analyzer> analyzerMap,
             @NotNull List<CharSequence> defaultSearchFields,
-            @NotNull Map<String, SortField.Type> sortTypes,
-            @NotNull Map<String, QueryRewriter> queryRewriters
+            @NotNull Map<String, SortField.Type> sortTypes
     ) {
        // this is handled but TagValueManagement
         // we could move the handling to here though
