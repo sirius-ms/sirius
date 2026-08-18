@@ -92,8 +92,4 @@ final class DescribedFields {
     static SearchableFieldService serviceFor(SearchContext context, @Nullable TagFieldDocs tagDocs) {
         return new SearchableFieldService(IndexFacts.of(context), null, tagDocs);
     }
-
-    static List<SearchableField> of(SearchContext context, @Nullable FieldVocabulary projectVocabulary, Class<?> modelClass) {
-        return serviceFor(context, projectVocabulary).describe(modelClass);
-    }
 }
