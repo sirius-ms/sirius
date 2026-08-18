@@ -62,6 +62,50 @@ public final class LuceneQueryCompiler {
     }
 
     /**
+     * The query as it must be EXECUTED against the index: {@link #compile}, plus a match-all anchor
+     * where lucene needs one.
+     * <p>
+     * A lucene boolean query built only from negations matches nothing - {@code NOT lipid:true} returns
+     * zero features instead of "everything that is not a lipid". Such a query therefore has to be
+     * anchored as {@code *:* AND NOT lipid:true}. The anchor must sit in the same boolean query as the
+     * negations, not around them: {@code (NOT lipid:true) AND (name:caffeine)} matches nothing as well,
+     * while {@code (*:* AND NOT lipid:true) AND (name:caffeine)} is correct. An OR of negations cannot
+     * share a single anchor either, since each alternative is its own boolean query.
+     * <p>
+     * Only the executed query is anchored; {@link #compile} keeps the plain form used for the chips and
+     * for the query-string codec.
+     */
+    public static String compileExecutable(@NotNull QueryContainer root, @NotNull String freeText) {
+        return compile(anchorNegations(root), freeText);
+    }
+
+    /**
+     * The container with a match-all anchor added if all its items are negated, otherwise unchanged
+     * (a single positive item already anchors the query for all of them).
+     */
+    private static QueryContainer anchorNegations(@NotNull QueryContainer root) {
+        if (root.isEmpty() || root.items().stream().anyMatch(item -> !item.negated()))
+            return root;
+
+        if (root.logics().stream().allMatch(op -> op == LogicOp.AND)) {
+            // conjunction: one leading anchor covers every negation
+            List<QueryNode> items = new ArrayList<>(root.items().size() + 1);
+            items.add(QueryClause.matchAll());
+            items.addAll(root.items());
+            List<LogicOp> logics = new ArrayList<>(root.logics().size() + 1);
+            logics.add(LogicOp.AND);
+            logics.addAll(root.logics());
+            return new QueryContainer(items, logics);
+        }
+
+        // disjunction: anchor each alternative on its own
+        return new QueryContainer(root.items().stream()
+                .<QueryNode>map(item -> new QueryGroup(QueryNode.nextId("group"), false,
+                        List.of(QueryClause.matchAll(), item), List.of(LogicOp.AND)))
+                .toList(), root.logics());
+    }
+
+    /**
      * One node as lucene, empty string when it compiles to nothing (empty groups).
      */
     public static String render(@NotNull QueryNode node) {

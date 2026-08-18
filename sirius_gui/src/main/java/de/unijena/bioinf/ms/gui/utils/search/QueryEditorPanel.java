@@ -525,9 +525,11 @@ public class QueryEditorPanel extends JPanel {
         List<LogicOp> ands = new ArrayList<>(Math.max(0, facets.size() - 1));
         for (int i = 1; i < facets.size(); i++)
             ands.add(LogicOp.AND);
-        // the user query rides in as the free-text segment, so it becomes "(facets) AND (userQuery)"
+        // the user query rides in as the free-text segment, so it becomes "(facets) AND (userQuery)".
+        // The facets are compiled as executed (incl. the match-all anchor for negation-only facets such
+        // as "no lipid class"), so the copied query runs as-is; the user query stays verbatim.
         String userQuery = LuceneQueryCompiler.compile(root, freeTextForCommit());
-        String core = LuceneQueryCompiler.compile(new QueryContainer(facets, ands), userQuery);
+        String core = LuceneQueryCompiler.compileExecutable(new QueryContainer(facets, ands), userQuery);
         String whole = inverted && !core.isBlank() ? "*:* AND NOT (" + core + ")" : core;
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(whole), null);
     }

@@ -93,7 +93,9 @@ public class PanelQueryNodeEquivalenceTest {
         List<LogicOp> ands = new ArrayList<>();
         for (int i = 1; i < nodes.size(); i++)
             ands.add(LogicOp.AND);
-        return LuceneQueryCompiler.compile(new QueryContainer(nodes, ands), "");
+        // the EXECUTED compilation (incl. the match-all anchor for negation-only facets), which is what
+        // the model runs against the index
+        return LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), "");
     }
 
     private static void assertQueriesEquivalent(String reference, String candidate, String... intFields) {
@@ -178,14 +180,28 @@ public class PanelQueryNodeEquivalenceTest {
     @Test
     public void testLipidAny() {
         FeatureFilterModel model = cleanSlate();
-        model.setLipidFilter(FeatureFilterModel.LipidFilter.ANY_LIPID_CLASS_DETECTED);
+        model.setLipidClassDetected(true);
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testLipidNo() {
         FeatureFilterModel model = cleanSlate();
-        model.setLipidFilter(FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED);
+        model.setLipidClassDetected(false);
+        assertEquivalent(model, ConfidenceDisplayMode.EXACT);
+    }
+
+    @Test
+    public void testPfasTagged() {
+        FeatureFilterModel model = cleanSlate();
+        model.setPfasDetected(true);
+        assertEquivalent(model, ConfidenceDisplayMode.EXACT);
+    }
+
+    @Test
+    public void testNoPfasTag() {
+        FeatureFilterModel model = cleanSlate();
+        model.setPfasDetected(false);
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
@@ -251,7 +267,7 @@ public class PanelQueryNodeEquivalenceTest {
         model.setCurrentMinMz(300);
         model.setCurrentMinRt(10);
         model.setAdducts(java.util.Set.of(de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType.fromString("[M+H]+")));
-        model.setLipidFilter(FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED);
+        model.setLipidClassDetected(false);
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 

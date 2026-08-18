@@ -38,6 +38,15 @@ public record QueryClause(@NotNull String id, @NotNull String field, @Nullable N
     }
 
     /**
+     * The lucene match-all clause {@code *:*}. Used to anchor a query that consists only of negations
+     * (see {@link LuceneQueryCompiler#compileExecutable}); it is never part of a user- or panel-built
+     * query, so it needs no display form.
+     */
+    public static QueryClause matchAll() {
+        return new QueryClause(QueryNode.nextId("clause"), "*", null, "*", null, false);
+    }
+
+    /**
      * A keyless full-text clause (no field): matches the value against the index' default search
      * fields, e.g. a bare {@code caffeine} that can be combined with fielded clauses.
      */

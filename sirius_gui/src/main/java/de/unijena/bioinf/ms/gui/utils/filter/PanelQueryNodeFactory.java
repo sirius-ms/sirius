@@ -64,6 +64,7 @@ public final class PanelQueryNodeFactory {
     static final String PREFIX_CATEGORIZED_QUALITY = FeatureFilterModel.PREFIX_CATEGORIZED_QUALITY;
     static final String PREFIX_ELEMENT = FeatureFilterModel.PREFIX_ELEMENT;
     static final String FIELD_LIPID = FeatureFilterModel.FIELD_LIPID;
+    static final String FIELD_PFAS = FeatureFilterModel.FIELD_PFAS;
     static final String PREFIX_DB = FeatureFilterModel.PREFIX_DB;
     static final String FIELD_BLANK = FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME;
 
@@ -175,10 +176,19 @@ public final class PanelQueryNodeFactory {
                     m -> m.getSampleBlankFoldChange().reset()));
 
         if (model.isLipidFilterEnabled()) {
-            // "no lipid class" is a negated clause; "any lipid class" a plain one
-            boolean noLipid = model.getLipidFilter() == FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED;
+            // "no lipid class" is a negated clause; "a lipid class" a plain one
+            boolean noLipid = Boolean.FALSE.equals(model.getLipidClassDetected());
             facets.add(new Facet("lipid", QueryClause.text(FIELD_LIPID, "true", noLipid),
-                    m -> m.setLipidFilter(FeatureFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS)));
+                    m -> m.setLipidClassDetected(null)));
+        }
+
+        if (model.isPfasFilterEnabled()) {
+            // presence of the tag as an open range: the parser rejects a bare wildcard (no leading
+            // wildcards), and "no pfas" is its negation - which only matches thanks to the match-all
+            // anchor compileExecutable adds
+            boolean noPfas = Boolean.FALSE.equals(model.getPfasDetected());
+            facets.add(new Facet("pfas", QueryClause.numeric(FIELD_PFAS, NumberOp.RANGE_INCLUSIVE, "", "", noPfas),
+                    m -> m.setPfasDetected(null)));
         }
 
         if (model.isDbFilterEnabled()) {

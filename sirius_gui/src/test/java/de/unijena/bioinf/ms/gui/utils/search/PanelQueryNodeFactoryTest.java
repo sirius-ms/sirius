@@ -180,17 +180,49 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testNoLipidIsNegatedClauseAndAnyLipidIsPlain() {
         FeatureFilterModel noLipid = cleanSlate();
-        noLipid.setLipidFilter(FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED);
-        assertTrue(onlyClause(nodes(noLipid)).negated(), "'no lipids' must be a NOT clause");
+        noLipid.setLipidClassDetected(false);
+        assertTrue(onlyClause(nodes(noLipid)).negated(), "'no lipid class' must be a NOT clause");
 
         FeatureFilterModel anyLipid = cleanSlate();
-        anyLipid.setLipidFilter(FeatureFilterModel.LipidFilter.ANY_LIPID_CLASS_DETECTED);
-        assertFalse(onlyClause(nodes(anyLipid)).negated(), "'any lipid' must be a plain clause");
+        anyLipid.setLipidClassDetected(true);
+        assertFalse(onlyClause(nodes(anyLipid)).negated(), "'a lipid class' must be a plain clause");
     }
 
     @Test
     public void testInactiveModelYieldsNoNodes() {
         assertTrue(nodes(cleanSlate()).isEmpty());
+    }
+
+    // --- pfas tag filter ---
+
+    @Test
+    public void testPfasTaggedIsAnOpenRangeOnTheTagField() {
+        FeatureFilterModel model = cleanSlate();
+        model.setPfasDetected(true);
+
+        QueryClause pfas = onlyClause(nodes(model));
+        assertEquals(FeatureFilterModel.FIELD_PFAS, pfas.field());
+        assertEquals(NumberOp.RANGE_INCLUSIVE, pfas.op());
+        assertFalse(pfas.negated());
+        assertEquals("tags.pfas:[* TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow(),
+                "a bare wildcard would be rejected by the parser, an open range is not");
+    }
+
+    @Test
+    public void testNoPfasIsTheNegatedRangeAndNeedsTheAnchor() {
+        FeatureFilterModel model = cleanSlate();
+        model.setPfasDetected(false);
+
+        assertTrue(onlyClause(nodes(model)).negated(), "'no pfas' must be a NOT clause");
+        assertEquals("*:* AND NOT tags.pfas:[* TO *]",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    @Test
+    public void testUnsetPfasFilterYieldsNoFacet() {
+        FeatureFilterModel model = cleanSlate();
+        model.setPfasDetected(null);
+        assertTrue(nodes(model).isEmpty());
     }
 
     @Test
@@ -205,7 +237,7 @@ public class PanelQueryNodeFactoryTest {
         model.setElementFilter(new ElementFilter("CHNOPS"));
         model.setDbFilter(new DbFilter(List.of(new SearchableDatabase().databaseId("PubChem")), 5));
         model.getSampleBlankFoldChange().setEnabled(true);
-        model.setLipidFilter(FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED);
+        model.setLipidClassDetected(false);
 
         String compiled = model.toLuceneQuery(ConfidenceDisplayMode.EXACT)
                 .orElseThrow(() -> new AssertionError("model with active filters must compile to a query"));
