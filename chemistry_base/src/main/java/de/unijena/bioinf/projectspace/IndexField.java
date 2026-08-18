@@ -42,14 +42,4 @@ public @interface IndexField {
      * Optional: A custom query rewriter class used to dynamically transform query terms/phrases for this field at parse-time.
      */
     Class<? extends QueryRewriter> queryRewriter() default QueryRewriter.NoOp.class;
-
-    /**
-     * Optional: A provider for the closed vocabulary of this field, so that clients can offer its values for
-     * completion instead of leaving the user to guess them. A provider class is named here rather than the values
-     * themselves, so the vocabulary stays where it is defined (see {@link PossibleValueProvider}).
-     * <p>
-     * Fields whose values follow from their java type (enums, booleans) need no provider. A declared provider is
-     * more specific and wins over those derived values.
-     */
-    Class<? extends PossibleValueProvider> possibleValueProvider() default PossibleValueProvider.None.class;
 }
