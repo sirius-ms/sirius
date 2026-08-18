@@ -64,6 +64,10 @@ public class TokenInputModelTest {
                                 .map(TokenInputModel.Suggestion::display).toList()));
     }
 
+    private List<String> fragmentTexts() {
+        return model.pendingFragments().stream().map(TokenInputModel.Fragment::text).toList();
+    }
+
     // --- entry-stage suggestions ---
 
     @Test
@@ -199,7 +203,7 @@ public class TokenInputModelTest {
         model.updateContext(FIELDS, true, false);
         model.choose(suggestion("OR", ""));
         model.choose(suggestion("NOT", ""));
-        assertEquals(List.of("OR", "NOT"), model.pendingFragments());
+        assertEquals(List.of("OR", "NOT"), fragmentTexts());
 
         model.choose(suggestion("quality", ""));
         TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
@@ -345,7 +349,7 @@ public class TokenInputModelTest {
         model.updateContext(FIELDS, true, false);
         assertTrue(model.submitTyped("or not ion").isEmpty());
         assertEquals(TokenInputModel.Stage.OPERATOR, model.stage());
-        assertEquals(List.of("OR", "NOT", "ionMass"), model.pendingFragments());
+        assertEquals(List.of("OR", "NOT", "ionMass"), fragmentTexts());
     }
 
     @Test
@@ -370,7 +374,7 @@ public class TokenInputModelTest {
 
         assertTrue(model.backspaceOnEmpty().isEmpty());
         assertEquals(TokenInputModel.Stage.FIELD, model.stage());
-        assertEquals(List.of("NOT"), model.pendingFragments(), "field popped, NOT still pending");
+        assertEquals(List.of("NOT"), fragmentTexts(), "field popped, NOT still pending");
 
         assertTrue(model.backspaceOnEmpty().isEmpty());
         assertTrue(model.pendingFragments().isEmpty(), "NOT popped");
@@ -565,6 +569,34 @@ public class TokenInputModelTest {
         // no run action (the row is off) -> the empty entry stage still guides, without a search key
         assertFalse(model.stagePrompt().isEmpty());
         assertFalse(model.stagePrompt().contains("Tab"));
+    }
+
+    // --- staged fragments name their field, so the chip can show it per display mode ---
+
+    @Test
+    public void testOnlyTheFieldFragmentCarriesAFieldName() {
+        model.choose(suggestion("ionMass", ""));
+        model.choose(model.suggestions(">=").get(0));
+
+        List<TokenInputModel.Fragment> fragments = model.pendingFragments();
+        assertEquals(List.of("ionMass", ">="), fragmentTexts());
+        // the field name lets the chip render compact/fully-qualified and put the real name in its tooltip
+        assertEquals("ionMass", fragments.get(0).fieldName());
+        assertNull(fragments.get(1).fieldName(), "the operator is display text, not a field");
+    }
+
+    @Test
+    public void testConnectorAndNegationFragmentsNameNoField() {
+        model.updateContext(FIELDS, true, false);
+        model.choose(suggestion("OR", ""));
+        model.choose(suggestion("NOT", ""));
+        model.choose(suggestion("tags.city", ""));
+
+        List<TokenInputModel.Fragment> fragments = model.pendingFragments();
+        assertEquals(List.of("OR", "NOT", "tags.city"), fragmentTexts());
+        assertNull(fragments.get(0).fieldName());
+        assertNull(fragments.get(1).fieldName());
+        assertEquals("tags.city", fragments.get(2).fieldName());
     }
 
     private static boolean isRunAction(TokenInputModel.Suggestion suggestion) {

@@ -1138,9 +1138,18 @@ public class QueryEditorPanel extends JPanel {
         typingRow.removeAll();
         for (int depth = 0; depth < openPath.length; depth++)
             typingRow.add(openGroupMarker());
-        for (String fragment : tokenModel.pendingFragments())
-            typingRow.add(new ChipComponent(fragment, "Being built - Backspace removes it",
-                    ChipComponent.Style.USER, null, null));
+        for (TokenInputModel.Fragment fragment : tokenModel.pendingFragments()) {
+            // a field fragment follows the display mode like every committed chip; its tooltip keeps
+            // the fully-qualified name that will actually be submitted
+            boolean isField = fragment.fieldName() != null;
+            String text = isField
+                    ? QueryNodeRenderer.displayField(fragment.fieldName(), renderState.mode(), renderState.suffixLengthResolver())
+                    : fragment.text();
+            String tooltip = isField
+                    ? GuiUtils.formatToolTip(fragment.fieldName(), "Being built - Backspace removes it")
+                    : "Being built - Backspace removes it";
+            typingRow.add(new ChipComponent(text, tooltip, ChipComponent.Style.USER, null, null));
+        }
         // the input sits between these two (BorderLayout.CENTER), so it fills the rest of the line
         typingTrailing.removeAll();
         // a clickable ) at the end of the line being typed, to close the innermost open group and continue
