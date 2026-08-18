@@ -23,7 +23,7 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueFormatter;
-import de.unijena.bioinf.projectspace.PossibleValueProvider;
+import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ import java.util.function.Function;
  * always-current values.
  */
 @RequiredArgsConstructor
-public class TagDefinitionPossibleValues implements PossibleValueProvider {
+public class TagDefinitionPossibleValues implements FieldVocabulary {
 
     private final @NotNull Function<String, Optional<TagDefinition>> tagDefinitionByName;
 

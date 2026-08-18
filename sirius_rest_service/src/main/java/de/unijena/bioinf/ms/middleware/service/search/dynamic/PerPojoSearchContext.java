@@ -8,7 +8,7 @@ import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFiel
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
-import de.unijena.bioinf.projectspace.PossibleValueProvider;
+import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.store.ByteBuffersDirectory;
@@ -64,7 +64,7 @@ public class PerPojoSearchContext implements SearchContext {
      * reports wins over the vocabulary a field declares statically, being the more specific answer.
      */
     @Nullable
-    protected final PossibleValueProvider projectPossibleValueProvider;
+    protected final FieldVocabulary projectFieldVocabulary;
 
     public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions) {
         this(indexRootDir, tagDefinitions, null);
@@ -77,10 +77,10 @@ public class PerPojoSearchContext implements SearchContext {
 
     public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
                                 @Nullable Function<Field, String> fieldDescriptionProvider,
-                                @Nullable PossibleValueProvider projectPossibleValueProvider) {
+                                @Nullable FieldVocabulary projectFieldVocabulary) {
         this.indexRootDir = indexRootDir;
         this.fieldDescriptionProvider = fieldDescriptionProvider;
-        this.projectPossibleValueProvider = projectPossibleValueProvider;
+        this.projectFieldVocabulary = projectFieldVocabulary;
         indices = new ConcurrentHashMap<>();
         tagDefs = tagDefinitions != null ? tagDefinitions : new HashMap<>();
         describer = new SearchableFieldDescriber(fieldDescriptionProvider);
@@ -229,9 +229,9 @@ public class PerPojoSearchContext implements SearchContext {
         // Vocabularies that are project state (tag definitions, detected adducts) are read here, on every
         // description, rather than cached: they change while the project is open - a tag definition gets more
         // possible values, an import detects more adducts - and a cached copy would report a stale vocabulary.
-        if (projectPossibleValueProvider != null) {
+        if (projectFieldVocabulary != null) {
             fields.forEach(field -> {
-                List<String> possibleValues = projectPossibleValueProvider.getPossibleValues(field.getName());
+                List<String> possibleValues = projectFieldVocabulary.getPossibleValues(field.getName());
                 if (possibleValues != null)
                     field.setPossibleValues(possibleValues);
             });

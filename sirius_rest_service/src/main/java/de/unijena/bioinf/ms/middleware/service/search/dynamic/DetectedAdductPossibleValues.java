@@ -21,7 +21,7 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.projectspace.PossibleValueProvider;
+import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,7 @@ import java.util.stream.Stream;
  * adducts of everything imported since the project was opened.
  */
 @RequiredArgsConstructor
-public class DetectedAdductPossibleValues implements PossibleValueProvider {
+public class DetectedAdductPossibleValues implements FieldVocabulary {
 
     /**
      * The searchable field this provider answers for, i.e. the indexed name of the adducts of a feature.

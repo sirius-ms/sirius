@@ -5,7 +5,7 @@ import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.search.ApiDocFieldDescriptions;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
-import de.unijena.bioinf.projectspace.PossibleValueProvider;
+import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +66,7 @@ public class NoSqlProjectSearchContextProvider implements SearchContextProvider<
         // extended or an import run later is reflected without reopening the project.
         return new PerPojoDatabaseSearchContext<>(project.storage(), projectIndexRoot, tagDefinitions,
                 ApiDocFieldDescriptions.PROVIDER,
-                PossibleValueProvider.firstOf(
+                FieldVocabulary.firstOf(
                         new TagDefinitionPossibleValues(tagName -> project.project().findTagDefinitionByName(tagName)),
                         new DetectedAdductPossibleValues(() -> project.project().findDetectedAdducts()
                                 .map(ProjectDetectedAdducts::getDetectedAdducts).orElse(null))));
