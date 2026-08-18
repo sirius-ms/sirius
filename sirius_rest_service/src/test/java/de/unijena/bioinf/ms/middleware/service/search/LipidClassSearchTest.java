@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.LipidAnnotation;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.search.description.LipidClassVocabulary;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoSearchContext;
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -216,5 +218,35 @@ public class LipidClassSearchTest {
                 assertTrue(offeredIds.contains(lipidClass.getLipidMapsId()),
                         lipidClass + " is indexed with id " + lipidClass.getLipidMapsId() + " but not offered");
         }
+    }
+
+    // ---- what the lipid marker says it is ------------------------------------------------------------------
+
+    /**
+     * {@code lipid} is written by the mapper as true and only for features that have a lipid annotation, so it
+     * is a flag rather than text: the value carries nothing, only its presence does. The index cannot say that
+     * - a mapper-contributed field is a keyword as far as lucene is concerned - so the field says it, and a
+     * client that is told BOOLEAN with one possible value knows it is looking at a flag.
+     */
+    @Test
+    public void testTheLipidMarkerIsDescribedAsTheFlagItIs() {
+        Map<String, SearchableField> fields = DescribedFields.asMap(AlignedFeature.class);
+
+        SearchableField lipid = fields.get("topAnnotations.formulaAnnotation.lipidAnnotation.lipid");
+        assertEquals(SearchableField.FieldType.BOOLEAN, lipid.getFieldType());
+        assertEquals(List.of("true"), lipid.getPossibleValues());
+        assertFalse(lipid.isFullTextSearch());
+    }
+
+    /**
+     * The type is stated per field, so the other fields the same mapper writes keep the type they have.
+     */
+    @Test
+    public void testTheOtherLipidFieldsStayText() {
+        Map<String, SearchableField> fields = DescribedFields.asMap(AlignedFeature.class);
+
+        for (String field : List.of("lipidClassName", "lipidMapsId", "lipidSpecies"))
+            assertEquals(SearchableField.FieldType.TEXT,
+                    fields.get("topAnnotations.formulaAnnotation.lipidAnnotation." + field).getFieldType(), field);
     }
 }

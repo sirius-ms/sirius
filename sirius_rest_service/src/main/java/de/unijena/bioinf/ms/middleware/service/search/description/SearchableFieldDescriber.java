@@ -51,6 +51,9 @@ public class SearchableFieldDescriber {
      */
     private final Map<Class<? extends FieldVocabulary>, FieldVocabulary> vocabularies = new ConcurrentHashMap<>();
 
+    /** Same contract as the vocabularies: stateless, one instance per class, owned by this describer. */
+    private final Map<Class<? extends FieldTypes>, FieldTypes> fieldTypes = new ConcurrentHashMap<>();
+
     /**
      * Human-readable descriptions of a java field, e.g. from its OpenAPI annotations or javadoc. Injected so
      * that the description of a field and the framework it is documented with stay separable.
@@ -84,9 +87,11 @@ public class SearchableFieldDescriber {
      */
     @Nullable
     private SearchableField describe(@NotNull FieldFacts facts) {
-        SearchableField.FieldType fieldType = facts.javaType() != null
-                ? SearchableFields.fieldTypeOf(facts.javaType())
-                : SearchableFields.fieldTypeOf(facts.kind());
+        SearchableField.FieldType fieldType = declaredTypeOf(facts);
+        if (fieldType == null)
+            fieldType = facts.javaType() != null
+                    ? SearchableFields.fieldTypeOf(facts.javaType())
+                    : SearchableFields.fieldTypeOf(facts.kind());
         if (fieldType == null)
             return null;
 
@@ -130,6 +135,28 @@ public class SearchableFieldDescriber {
     }
 
     /**
+     * @return the type declared for this field, or null if none is declared or the declaration says nothing
+     * about it - then the type follows from the java type, or from how the index holds it
+     */
+    @Nullable
+    private SearchableField.FieldType declaredTypeOf(@NotNull FieldFacts facts) {
+        SearchableFieldDoc doc = facts.declaredBy().getAnnotation(SearchableFieldDoc.class);
+        if (doc == null || doc.fieldTypes() == FieldTypes.None.class)
+            return null;
+        return fieldTypes.computeIfAbsent(doc.fieldTypes(), clz -> instantiate(clz, facts.name()))
+                .typeOf(facts.name());
+    }
+
+    private static <T> T instantiate(@NotNull Class<T> declared, @NotNull String fieldName) {
+        try {
+            return declared.getDeclaredConstructor().newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Could not instantiate '" + declared.getName() + "' declared on indexed"
+                    + " field '" + fieldName + "'. It needs a public no-arg constructor.", e);
+        }
+    }
+
+    /**
      * @return the vocabulary declared on the java field, or null if none is declared or the provider has no
      * vocabulary for this field
      */
@@ -142,13 +169,7 @@ public class SearchableFieldDescriber {
         Class<? extends FieldVocabulary> vocabularyClass = doc.possibleValues();
         if (vocabularyClass == FieldVocabulary.None.class)
             return null;
-        return vocabularies.computeIfAbsent(vocabularyClass, clz -> {
-            try {
-                return clz.getDeclaredConstructor().newInstance();
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalStateException("Could not instantiate FieldVocabulary '" + clz.getName()
-                        + "' declared on indexed field '" + facts.name() + "'. It needs a public no-arg constructor.", e);
-            }
-        }).getPossibleValues(facts.name());
+        return vocabularies.computeIfAbsent(vocabularyClass, clz -> instantiate(clz, facts.name()))
+                .getPossibleValues(facts.name());
     }
 }

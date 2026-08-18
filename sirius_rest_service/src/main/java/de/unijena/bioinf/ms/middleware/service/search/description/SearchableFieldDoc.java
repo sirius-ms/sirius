@@ -46,4 +46,14 @@ public @interface SearchableFieldDoc {
      * not declared here at all - it is handed to the description by whoever owns the project state.
      */
     Class<? extends FieldVocabulary> possibleValues() default FieldVocabulary.None.class;
+
+    /**
+     * What kind of value this field holds, for a field the index can only report as the keyword it stores -
+     * see {@link FieldTypes}. Names a class for the same reason {@link #possibleValues()} does: one statement
+     * covers every field a mapper contributes, and which of them it applies to is decided by the field name.
+     * <p>
+     * A field mapped straight from a java field needs none; its java type is more precise than anything that
+     * could be declared here.
+     */
+    Class<? extends FieldTypes> fieldTypes() default FieldTypes.None.class;
 }
