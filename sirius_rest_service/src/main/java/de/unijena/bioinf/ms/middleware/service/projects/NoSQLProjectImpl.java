@@ -164,12 +164,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private final @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
 
-    @SneakyThrows
     @Override
     public List<SearchableField> getSearchableFields(@NotNull Class<?> modelClass) {
         return searchableFieldService == null ? List.of() : searchableFieldService.describe(modelClass);
     }
 
+    @SneakyThrows
     public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager, SearchService searchService, @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider) {
         this.projectId = projectId;
         this.projectSpaceManager = projectSpaceManager;
