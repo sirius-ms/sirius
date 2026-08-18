@@ -123,7 +123,7 @@ public class PanelQueryApiEquivalenceTest {
         for (int i = 1; i < nodes.size(); i++)
             ands.add(LogicOp.AND);
         String freeText = model.getSearchText() == null ? "" : model.getSearchText().trim();
-        String core = LuceneQueryCompiler.compile(new QueryContainer(nodes, ands), freeText);
+        String core = LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), freeText);
         if (core.isBlank())
             return null;
         return model.isInverted() ? "*:* AND NOT (" + core + ")" : core;

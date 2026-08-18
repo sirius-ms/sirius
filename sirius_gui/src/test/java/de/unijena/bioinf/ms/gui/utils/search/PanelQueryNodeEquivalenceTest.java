@@ -93,7 +93,9 @@ public class PanelQueryNodeEquivalenceTest {
         List<LogicOp> ands = new ArrayList<>();
         for (int i = 1; i < nodes.size(); i++)
             ands.add(LogicOp.AND);
-        return LuceneQueryCompiler.compile(new QueryContainer(nodes, ands), "");
+        // the EXECUTED compilation (incl. the match-all anchor for negation-only facets), which is what
+        // the model runs against the index
+        return LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), "");
     }
 
     private static void assertQueriesEquivalent(String reference, String candidate, String... intFields) {
