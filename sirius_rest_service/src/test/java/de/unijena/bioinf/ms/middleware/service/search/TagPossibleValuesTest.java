@@ -175,6 +175,27 @@ public class TagPossibleValuesTest {
                 .toTagSearchableField("tags.pfas", "pfas", ValueType.NONE, null, null).getPossibleValues());
     }
 
+    /**
+     * The invariant a client leans on when it treats a single-valued boolean field as a presence flag: no tag
+     * can be a boolean and restricted to one value at the same time, so a boolean field offering one value is
+     * never a tag that might offer two after its definition is extended.
+     * <p>
+     * Pinned here because the rule is enforced far away - in the persistence model, when the definition is
+     * built - while what depends on it is in the GUI (see {@code CompletionParser.isSingleValued}), with the
+     * API in between. Relaxing it there would silently make naming such a tag complete it to a value.
+     */
+    @Test
+    public void testAFlagTagCannotBeRestrictedToValues() {
+        for (ValueType flagType : List.of(ValueType.BOOLEAN, ValueType.NONE))
+            assertThrows(IllegalArgumentException.class,
+                    () -> new ValueDefinition<>(flagType, List.of(true), null, null),
+                    "a " + flagType + " tag must not be allowed to declare its values");
+
+        // the same call for a tag that may be restricted, so the assertions above are about the flag types
+        assertEquals(List.of("Sample"),
+                List.copyOf(new ValueDefinition<>(ValueType.TEXT, List.of("Sample"), null, null).getPossibleValues()));
+    }
+
     // ---- end to end through the search context -------------------------------------------------------------
 
     /**
