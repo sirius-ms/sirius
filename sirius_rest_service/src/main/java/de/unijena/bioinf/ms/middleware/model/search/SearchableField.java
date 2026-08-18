@@ -94,10 +94,13 @@ public class SearchableField {
     /**
      * The values this field can take, exactly as they are indexed, or null if the field accepts free text.
      * <p>
-     * Reported for ENUM and BOOLEAN fields, and for TEXT fields that hold a closed vocabulary. Note that for
-     * those the indexed value is not necessarily the name you would expect: the chromatography of a run, for
-     * example, is indexed as 'Liquid Chromatography', not as 'LC'. Use these values as offered rather than
-     * constructing them.
+     * Reported for ENUM and BOOLEAN fields, for TEXT fields that hold a closed vocabulary (the compound class
+     * ontologies), and for fields whose values are project state: a tag restricted by its definition, or the
+     * adducts detected in this project. Searchable fields are described per project, so the latter are the
+     * values actually present in it rather than everything that could ever occur.
+     * <p>
+     * Note that the indexed value is not always the notation you would expect: an adduct is indexed as
+     * '[M + H]+', with spaces. Use the values as offered rather than constructing them.
      */
     @Nullable
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
