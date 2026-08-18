@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
+import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
@@ -283,7 +284,8 @@ public class SearchableFieldsDescriptionTest {
         @Override
         public void applyAnalyzersAndPointConfigs(String rootFieldName, Map<String, PointsConfig> pointsConfigMap,
                                                   Map<String, Analyzer> analyzerMap, List<CharSequence> defaultSearchFields,
-                                                  Map<String, SortField.Type> sortTypes) {
+                                                  Map<String, SortField.Type> sortTypes,
+                                                  Map<String, QueryRewriter> queryRewriters) {
             pointsConfigMap.put(rootFieldName + ".dual", LuceneMappingUtils.getPointsConfigForType(Double.class));
             analyzerMap.put(rootFieldName + ".dual", new KeywordAnalyzer());
         }

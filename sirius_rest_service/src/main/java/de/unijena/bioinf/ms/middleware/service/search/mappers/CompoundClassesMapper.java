@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
 import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClass;
 import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClasses;
+import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
@@ -84,7 +85,8 @@ public class CompoundClassesMapper implements FieldMapper<CompoundClasses> {
             @NotNull Map<String, PointsConfig> pointsConfigMap,
             @NotNull Map<String, Analyzer> analyzerMap,
             @NotNull List<CharSequence> defaultSearchFields,
-            @NotNull Map<String, SortField.Type> sortTypes
+            @NotNull Map<String, SortField.Type> sortTypes,
+            @NotNull Map<String, QueryRewriter> queryRewriters
     ) {
         analyzerMap.put(rootFieldName + CLASSY_FIRE, SIRIUS_TEXT_ANALYZER);
         analyzerMap.put(rootFieldName + NPC_PATHWAY, SIRIUS_TEXT_ANALYZER);
