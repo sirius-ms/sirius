@@ -90,6 +90,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
 
     final SegmentedFilterToggle lipidFilter;
+    private final PfasFilterPanel pfasPanel;
     final PlaceholderTextField elementsField;
 
     final JCheckboxListPanel<SearchableDatabase> searchDBList;
@@ -366,8 +367,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             }
         }
 
-        // structure properties. Last block of the tab: below the structure-DB controls, directly above
-        // the query editor.
+        // structure properties: lipid (a yes/no/any criterion) and PFAS (an ordinal evidence scale).
+        // Last block of the tab: below the structure-DB controls, directly above the query editor.
         {
             resultParameters.add(Box.createVerticalStrut(10));
             resultParameters.add(new JXTitledSeparator("Structure Properties"));
@@ -384,6 +385,11 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             lipidRow.add(Box.createHorizontalGlue());
             // the name shows the same tooltip as the control, so hovering either explains the filter
             classFilters.add(liveToolTipLabel("Lipid", lipidFilter::composeToolTip), lipidRow);
+
+            pfasPanel = new PfasFilterPanel(filterModel.getPfasFilter(),
+                    fieldDescription(FeatureFilterModel.FIELD_PFAS, null));
+            // the slider carries its scale labels below it, so it needs room above to not crowd the capsule
+            classFilters.add(liveToolTipLabel("PFAS", pfasPanel::composeToolTip), pfasPanel, MEDIUM_GAP, false);
 
             resultParameters.add(classFilters);
         }
@@ -428,7 +434,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             case "mz", "rt", "adducts" -> "Input";
             case "blank" -> "Fold Change";
             case "hasMs1", "hasMsMs", "quality" -> "Data Quality";
-            case "confidence", "elements", "lipid", "db" -> "Results";
+            case "confidence", "elements", "lipid", "pfas", "db" -> "Results";
             default -> null;
         };
     }
@@ -500,6 +506,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             qualityPanelIt.next().updateModel(qualityFilterIt.next());
 
         filterModel.setLipidClassDetected(lipidFilter.getFilterState());
+        pfasPanel.updateModel(filterModel.getPfasFilter());
 
         filterModel.setElementFilter(new ElementFilter(
                         elementsField.getText() == null || elementsField.getText().isBlank()
@@ -624,6 +631,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         for (JCheckBox c : new JCheckBox[]{hasMs1, hasMsMs, blankFilter})
             c.addActionListener(e -> refresh.run());
         lipidFilter.onChange(refresh);
+        pfasPanel.onChange(refresh);
         adductOptions.checkBoxList.addCheckBoxListener(e -> refresh.run());
         searchDBList.checkBoxList.addCheckBoxListener(e -> refresh.run());
         overallQualityPanel.onChange(refresh);
@@ -704,6 +712,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         qualityPanels.forEach(QualityFilterPanel::reset);
 
         lipidFilter.setFilterState(null);
+        pfasPanel.reset();
         elementsField.setText(null);
         searchDBList.checkBoxList.uncheckAll();
         deleteSelection.setSelected(false);
@@ -739,6 +748,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             qualityPanels.forEach(QualityFilterPanel::reset);
 
             lipidFilter.setFilterState(null);
+            pfasPanel.reset();
             elementsField.setText(null);
             searchDBList.checkBoxList.uncheckAll();
             deleteSelection.setSelected(false);
@@ -798,6 +808,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 blankSpinner.setValue(filterModel.getSampleBlankFoldChange().getMinFoldChange());
             }
             case "lipid" -> lipidFilter.setFilterState(null);
+            case "pfas" -> pfasPanel.reset();
             case "db" -> {
                 searchDBList.checkBoxList.uncheckAll();
                 candidateSpinner.setValue(1);
