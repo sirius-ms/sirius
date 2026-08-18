@@ -148,8 +148,7 @@ public class FieldVocabularyTest {
                                                   @NotNull Map<String, PointsConfig> pointsConfigMap,
                                                   @NotNull Map<String, Analyzer> analyzerMap,
                                                   @NotNull List<CharSequence> defaultSearchFields,
-                                                  @NotNull Map<String, SortField.Type> sortTypes,
-            @NotNull Map<String, QueryRewriter> queryRewriters) {
+                                                  @NotNull Map<String, SortField.Type> sortTypes) {
             analyzerMap.put(rootFieldName + ".level", new KeywordAnalyzer());
             analyzerMap.put(rootFieldName + ".name", new KeywordAnalyzer());
         }

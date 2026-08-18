@@ -2,7 +2,6 @@ package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.ms.middleware.model.annotations.LipidAnnotation;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.LipidClassQueryRewriter;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
@@ -66,16 +65,12 @@ public class LipidAnnotationMapper implements FieldMapper<LipidAnnotation> {
             @NotNull Map<String, PointsConfig> pointsConfigMap,
             @NotNull Map<String, Analyzer> analyzerMap,
             @NotNull List<CharSequence> defaultSearchFields,
-            @NotNull Map<String, SortField.Type> sortTypes,
-            @NotNull Map<String, QueryRewriter> queryRewriters
+            @NotNull Map<String, SortField.Type> sortTypes
     ) {
         analyzerMap.put(rootFieldName + LIPID, new KeywordAnalyzer());
         analyzerMap.put(rootFieldName + LIPID_SPECIES, new KeywordAnalyzer());
         analyzerMap.put(rootFieldName + LIPID_MAPS_ID, new KeywordAnalyzer());
         analyzerMap.put(rootFieldName + LIPID_CLASS_NAME, SIRIUS_TEXT_ANALYZER); //todo do we want specif lipid class analyzer?
         defaultSearchFields.add(rootFieldName + LIPID_CLASS_NAME);
-
-        // a lipid class is indexed under its long name; let the abbreviation people actually use find it too
-        queryRewriters.put(rootFieldName + LIPID_CLASS_NAME, new LipidClassQueryRewriter());
     }
 }

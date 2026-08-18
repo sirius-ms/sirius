@@ -284,8 +284,7 @@ public class SearchableFieldsDescriptionTest {
         @Override
         public void applyAnalyzersAndPointConfigs(String rootFieldName, Map<String, PointsConfig> pointsConfigMap,
                                                   Map<String, Analyzer> analyzerMap, List<CharSequence> defaultSearchFields,
-                                                  Map<String, SortField.Type> sortTypes,
-                                                  Map<String, QueryRewriter> queryRewriters) {
+                                                  Map<String, SortField.Type> sortTypes) {
             pointsConfigMap.put(rootFieldName + ".dual", LuceneMappingUtils.getPointsConfigForType(Double.class));
             analyzerMap.put(rootFieldName + ".dual", new KeywordAnalyzer());
         }
