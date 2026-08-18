@@ -22,7 +22,8 @@ package de.unijena.bioinf.ms.middleware.service.search;
 
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FieldMapper;
-import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.projectspace.IndexField;
 import de.unijena.bioinf.projectspace.PossibleValueProvider;
@@ -206,8 +207,7 @@ public class PossibleValueProviderTest {
     }
 
     private static Map<String, SearchableField> describeAsMap(Class<?> pojoClass) {
-        return new GenericPojoMapper<>(pojoClass).describeSearchableFields().stream()
-                .collect(Collectors.toMap(SearchableField::getName, Function.identity()));
+        return DescribedFields.asMap(pojoClass);
     }
 
     /**
@@ -269,18 +269,19 @@ public class PossibleValueProviderTest {
     }
 
     /**
-     * Providers are stateless, so a mapper constructs each of them once and reuses it - for every field that
-     * declares it and however often the fields are described. The cache is owned by the mapper, so a new mapper
+     * Providers are stateless, so a describer constructs each of them once and reuses it - for every field that
+     * declares it and however often the fields are described. The cache is owned by the describer, so a new one
      * legitimately builds its own instance; that is the trade for not having a process-wide cache to manage.
      */
     @Test
-    public void testProviderIsInstantiatedOncePerMapper() {
-        GenericPojoMapper<TestPojo> mapper = new GenericPojoMapper<>(TestPojo.class);
+    public void testProviderIsInstantiatedOncePerDescriber() {
+        IndexSchema schema = DescribedFields.schemaOf(TestPojo.class);
+        SearchableFieldDescriber describer = new SearchableFieldDescriber();
         int before = CountingValues.INSTANTIATIONS.get();
 
         // two fields declare the provider, and both descriptions walk them
-        mapper.describeSearchableFields();
-        mapper.describeSearchableFields();
+        describer.describe(schema);
+        describer.describe(schema);
 
         assertEquals(before + 1, CountingValues.INSTANTIATIONS.get());
     }
@@ -304,10 +305,10 @@ public class PossibleValueProviderTest {
      */
     @Test
     public void testMapperWithoutOverrideReportsNoPossibleValues() {
-        List<SearchableField> fields = new TestClassMapper().describeSearchableFields("classes");
+        TestClassMapper mapper = new TestClassMapper();
 
-        assertEquals(2, fields.size());
-        fields.forEach(field -> assertNull(field.getPossibleValues(), field.getName() + " must have no values"));
+        assertNull(mapper.getPossibleValues("classes.level"));
+        assertNull(mapper.getPossibleValues("classes.name"));
     }
 
     /**
@@ -315,11 +316,10 @@ public class PossibleValueProviderTest {
      */
     @Test
     public void testMapperSuppliesValuesPerField() {
-        Map<String, SearchableField> fields = new VocabularyAwareMapper().describeSearchableFields("classes").stream()
-                .collect(Collectors.toMap(SearchableField::getName, Function.identity()));
+        VocabularyAwareMapper mapper = new VocabularyAwareMapper();
 
-        assertEquals(List.of("PATHWAY", "SUPERCLASS", "CLASS"), fields.get("classes.level").getPossibleValues());
-        assertNull(fields.get("classes.name").getPossibleValues());
+        assertEquals(List.of("PATHWAY", "SUPERCLASS", "CLASS"), mapper.getPossibleValues("classes.level"));
+        assertNull(mapper.getPossibleValues("classes.name"));
     }
 
     /**

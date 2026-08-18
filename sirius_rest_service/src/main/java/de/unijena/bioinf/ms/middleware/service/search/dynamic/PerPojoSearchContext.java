@@ -3,6 +3,8 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFields;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
@@ -50,6 +52,12 @@ public class PerPojoSearchContext implements SearchContext {
     protected final Function<Field, String> fieldDescriptionProvider;
 
     /**
+     * Explains the index to API users. Lives alongside the index rather than inside it: it reads what the
+     * index reports about itself and adds what only the model knows.
+     */
+    private final SearchableFieldDescriber describer;
+
+    /**
      * Supplies the vocabulary of fields whose values are project state rather than a property of the model -
      * the tags defined in the project, the adducts detected in it. Injected by the caller, which owns that
      * state; null if it is not available (such fields are then described as accepting free text). What it
@@ -75,6 +83,7 @@ public class PerPojoSearchContext implements SearchContext {
         this.projectPossibleValueProvider = projectPossibleValueProvider;
         indices = new ConcurrentHashMap<>();
         tagDefs = tagDefinitions != null ? tagDefinitions : new HashMap<>();
+        describer = new SearchableFieldDescriber(fieldDescriptionProvider);
     }
 
     @Override
@@ -206,14 +215,14 @@ public class PerPojoSearchContext implements SearchContext {
         // Dynamic-key fields (e.g. matchedDatabases.*, qualities.*, molecularFormula.*) are described
         // statically with a trailing ".*", which is not a usable query token. Expand each into the
         // concrete keys actually present in the index so the autocomplete offers real field names.
-        List<SearchableField> fields = new ArrayList<>(LuceneMappingUtils.expandDynamicKeyFields(
-                manager.getStaticSearchableFields(), manager.getIndexedFieldNames()));
+        List<SearchableField> fields = new ArrayList<>(SearchableFields.expandDynamicKeyFields(
+                describer.describe(manager.getIndexSchema()), manager.getIndexedFieldNames()));
         // Tag fields are derived on demand from the tag definition registry - the same monitor that also
         // brackets propagation of registry changes to the index managers, so the report is always
         // consistent with the query parser configuration. Sorted for a deterministic response.
         if (manager.isTaggable()) {
             synchronized (tagDefs) {
-                tagDefs.keySet().stream().sorted().forEach(tagName -> fields.add(LuceneMappingUtils
+                tagDefs.keySet().stream().sorted().forEach(tagName -> fields.add(SearchableFields
                         .toTagSearchableField(Taggable.makeTagFieldName(tagName), tagName, tagDefs.get(tagName), null)));
             }
         }
@@ -305,7 +314,7 @@ public class PerPojoSearchContext implements SearchContext {
             synchronized (tagDefs) {
                 tagDefSnapshot = new HashMap<>(tagDefs);
             }
-            return new SinglePojoLuceneIndexManager<>(createIndexDirectory(pc), pc, tagDefSnapshot, this::getTagValueType, fieldDescriptionProvider);
+            return new SinglePojoLuceneIndexManager<>(createIndexDirectory(pc), pc, tagDefSnapshot, this::getTagValueType);
         });
     }
 

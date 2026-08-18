@@ -24,6 +24,10 @@ import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.FieldMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
@@ -110,17 +114,8 @@ public class SearchableFieldsDescriptionTest {
         public String comment;
     }
 
-    /**
-     * Same construction as in SinglePojoLuceneIndexManager: the TagMapper has no no-arg constructor and
-     * must be pre-registered.
-     */
-    private static GenericPojoMapper<?> mapperFor(Class<?> pojoClass) {
-        return new GenericPojoMapper<>(pojoClass, new TagMapper(tagName -> ValueType.TEXT));
-    }
-
     private static Map<String, SearchableField> describeAsMap(Class<?> pojoClass) {
-        return mapperFor(pojoClass).describeSearchableFields().stream()
-                .collect(Collectors.toMap(SearchableField::getName, Function.identity()));
+        return DescribedFields.asMap(pojoClass);
     }
 
     @Test
@@ -171,9 +166,7 @@ public class SearchableFieldsDescriptionTest {
     }
 
     private static Map<String, SearchableField> describeWithApiDocs(Class<?> pojoClass) {
-        return new GenericPojoMapper<>(pojoClass, ApiDocFieldDescriptions.PROVIDER, new TagMapper(tagName -> ValueType.TEXT))
-                .describeSearchableFields().stream()
-                .collect(Collectors.toMap(SearchableField::getName, Function.identity()));
+        return DescribedFields.asMap(pojoClass, ApiDocFieldDescriptions.PROVIDER);
     }
 
     /**
@@ -272,38 +265,64 @@ public class SearchableFieldsDescriptionTest {
     }
 
     /**
-     * A field registered with BOTH a points config and an analyzer (as the index manager does for dynamic
-     * tag fields) must be described only once - the numeric config is authoritative.
+     * A mapper may register a field with BOTH a points config and an analyzer (as the index manager does for
+     * dynamic tag fields). It must be described once, as the numeric field it is.
      */
+    public static class DualConfigMapper implements FieldMapper<String> {
+        @Override
+        public Iterable<org.apache.lucene.index.IndexableField> toIndexableFields(String rootFieldName, String pojo) {
+            return List.of();
+        }
+
+        @Override
+        public String toPojo(String rootFieldName, Iterable<org.apache.lucene.index.IndexableField> document) {
+            return null;
+        }
+
+        @Override
+        public void applyAnalyzersAndPointConfigs(String rootFieldName, Map<String, PointsConfig> pointsConfigMap,
+                                                  Map<String, Analyzer> analyzerMap, List<CharSequence> defaultSearchFields,
+                                                  Map<String, SortField.Type> sortTypes) {
+            pointsConfigMap.put(rootFieldName + ".dual", LuceneMappingUtils.getPointsConfigForType(Double.class));
+            analyzerMap.put(rootFieldName + ".dual", new KeywordAnalyzer());
+        }
+    }
+
+    public static class DualConfigPojo {
+        @IndexField(documentId = true)
+        public String id;
+
+        @IndexFieldWithMapper(mapper = DualConfigMapper.class)
+        public String stats;
+    }
+
     @Test
     public void testFieldInBothConfigMapsIsDescribedOnce() {
-        List<SearchableField> fields = LuceneMappingUtils.toSearchableFields(
-                Map.of("stats.dual", LuceneMappingUtils.getPointsConfigForType(Double.class)),
-                Map.of("stats.dual", new KeywordAnalyzer()),
-                List.of(), Map.of());
+        List<SearchableField> fields = DescribedFields.of(DualConfigPojo.class).stream()
+                .filter(field -> field.getName().startsWith("stats."))
+                .toList();
 
         assertEquals(1, fields.size());
         assertEquals("stats.dual", fields.get(0).getName());
         assertEquals(SearchableField.FieldType.DOUBLE, fields.get(0).getFieldType());
+        assertFalse(fields.get(0).isFullTextSearch(), "a numeric field is not searched word by word");
     }
 
     /**
-     * Drift guard: the described fields must stay consistent with what the query parser is actually configured
-     * with ({@link GenericPojoMapper#detectAnalyzersAndPointConfigs}). If a new field kind is added to one walk
-     * but not the other, this test fails.
+     * Everything the query parser is configured with has to be described, and with the same flags. One walk
+     * produces both now, so this guards the describer against silently dropping or relabelling a field.
      */
     @Test
     public void testDescriptionIsConsistentWithQueryParserConfiguration() {
         for (Class<?> pojoClass : List.of(AlignedFeature.class, Run.class, TestPojo.class)) {
-            GenericPojoMapper<?> mapper = mapperFor(pojoClass);
-
             Map<String, PointsConfig> pointsConfigMap = new HashMap<>();
             Map<String, Analyzer> analyzerMap = new HashMap<>();
             List<CharSequence> defaultSearchFields = new java.util.ArrayList<>();
             Map<String, SortField.Type> sortTypes = new HashMap<>();
-            mapper.detectAnalyzersAndPointConfigs(pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, new HashMap<>());
+            IndexSchema schema = new GenericPojoMapper<>(pojoClass, new TagMapper(tagName -> ValueType.TEXT))
+                    .detectAnalyzersAndPointConfigs(pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, new HashMap<>());
 
-            Map<String, SearchableField> described = mapper.describeSearchableFields().stream()
+            Map<String, SearchableField> described = new SearchableFieldDescriber().describe(schema).stream()
                     .collect(Collectors.toMap(SearchableField::getName, Function.identity()));
 
             Set<String> configuredFields = new HashSet<>();

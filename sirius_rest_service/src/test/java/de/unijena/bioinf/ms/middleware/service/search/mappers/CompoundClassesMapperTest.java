@@ -25,15 +25,11 @@ import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClass;
 import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClasses;
-import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import org.apache.lucene.index.IndexableField;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -46,13 +42,10 @@ public class CompoundClassesMapperTest {
 
     private static final String ROOT = "topAnnotations.compoundClassAnnotation";
 
-    private static Map<String, SearchableField> describe() {
-        return new CompoundClassesMapper().describeSearchableFields(ROOT).stream()
-                .collect(Collectors.toMap(SearchableField::getName, Function.identity()));
-    }
+    private static final CompoundClassesMapper MAPPER = new CompoundClassesMapper();
 
     private static List<String> valuesOf(String field) {
-        return describe().get(ROOT + "." + field).getPossibleValues();
+        return MAPPER.getPossibleValues(ROOT + "." + field);
     }
 
     @Test
@@ -109,13 +102,12 @@ public class CompoundClassesMapperTest {
         classes.setClassyFireLineage(List.of(CompoundClass.of(cfLeaf, 0.9, 0)));
         classes.setClassyFireAlternatives(List.of(CompoundClass.of(classyFire.getMolecularProperty(0), 0.5, 1)));
 
-        Map<String, SearchableField> fields = describe();
         List<IndexableField> indexed = new ArrayList<>();
-        new CompoundClassesMapper().toIndexableFields(ROOT, classes).forEach(indexed::add);
+        MAPPER.toIndexableFields(ROOT, classes).forEach(indexed::add);
 
         assertFalse(indexed.isEmpty(), "test feature must produce indexed terms");
         indexed.forEach(field -> {
-            List<String> offered = fields.get(field.name()).getPossibleValues();
+            List<String> offered = MAPPER.getPossibleValues(field.name());
             assertNotNull(offered, field.name() + " must offer possible values");
             assertTrue(offered.contains(field.stringValue()),
                     "indexed term '" + field.stringValue() + "' is not offered for " + field.name());
