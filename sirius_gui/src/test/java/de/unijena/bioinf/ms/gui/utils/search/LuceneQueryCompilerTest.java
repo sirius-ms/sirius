@@ -208,4 +208,76 @@ public class LuceneQueryCompilerTest {
     public void testCompileEmptyIsEmptyString() {
         assertEquals("", LuceneQueryCompiler.compile(QueryContainer.empty(), "   "));
     }
+
+    // --- compileExecutable: negation-only queries need a match-all anchor ---
+
+    private static QueryClause lipidAbsent() {
+        return QueryClause.text("topAnnotations.formulaAnnotation.lipidAnnotation.lipid", "true", true);
+    }
+
+    private static QueryClause pfasAbsent() {
+        return QueryClause.numeric("tags.pfas", NumberOp.RANGE_INCLUSIVE, "", "", true);
+    }
+
+    @Test
+    public void testNegationOnlyQueryIsAnchoredOnlyForExecution() {
+        QueryContainer root = container(lipidAbsent());
+        // the chip / codec form stays the plain negation ...
+        assertEquals("NOT topAnnotations.formulaAnnotation.lipidAnnotation.lipid:true",
+                LuceneQueryCompiler.compile(root, ""));
+        // ... while the executed query gets the anchor, without which lucene matches nothing
+        assertEquals("*:* AND NOT topAnnotations.formulaAnnotation.lipidAnnotation.lipid:true",
+                LuceneQueryCompiler.compileExecutable(root, ""));
+    }
+
+    @Test
+    public void testSeveralNegatedFacetsShareOneAnchor() {
+        QueryContainer root = container(lipidAbsent(), pfasAbsent());
+        assertEquals("*:* AND NOT topAnnotations.formulaAnnotation.lipidAnnotation.lipid:true"
+                        + " AND NOT tags.pfas:[* TO *]",
+                LuceneQueryCompiler.compileExecutable(root, ""));
+    }
+
+    @Test
+    public void testNegatedGroupIsAnchoredToo() {
+        // the shape the ordinal PFAS facet emits: exclude the unselected tag values
+        QueryGroup excluded = new QueryGroup("g1", true,
+                List.of(QueryClause.text("tags.pfas", "PFAS Molecular Formula", false),
+                        QueryClause.text("tags.pfas", "PFAS Molecular Structure", false)),
+                List.of(LogicOp.OR));
+        assertEquals("*:* AND NOT (tags.pfas:\"PFAS Molecular Formula\" OR tags.pfas:\"PFAS Molecular Structure\")",
+                LuceneQueryCompiler.compileExecutable(container(excluded), ""));
+    }
+
+    @Test
+    public void testAnchorSitsInsideTheStructuredSegmentSoFreeTextStillNarrows() {
+        // (NOT x) AND (free text) would match nothing - the anchor has to be inside the negated group
+        assertEquals("(*:* AND NOT topAnnotations.formulaAnnotation.lipidAnnotation.lipid:true) AND (name:caffeine)",
+                LuceneQueryCompiler.compileExecutable(container(lipidAbsent()), "name:caffeine"));
+    }
+
+    @Test
+    public void testOnePositiveClauseMakesTheAnchorUnnecessary() {
+        QueryContainer root = container(QueryClause.text("hasMsMs", "true", false), lipidAbsent());
+        assertEquals("hasMsMs:true AND NOT topAnnotations.formulaAnnotation.lipidAnnotation.lipid:true",
+                LuceneQueryCompiler.compileExecutable(root, ""));
+    }
+
+    @Test
+    public void testEachAlternativeOfANegatedOrIsAnchoredSeparately() {
+        // an OR of negations cannot share one anchor: every alternative is its own boolean query
+        QueryContainer root = new QueryContainer(List.of(lipidAbsent(), pfasAbsent()), List.of(LogicOp.OR));
+        assertEquals("(*:* AND NOT topAnnotations.formulaAnnotation.lipidAnnotation.lipid:true)"
+                        + " OR (*:* AND NOT tags.pfas:[* TO *])",
+                LuceneQueryCompiler.compileExecutable(root, ""));
+    }
+
+    @Test
+    public void testExecutableCompileOfPositiveOrEmptyQueriesIsUnchanged() {
+        QueryContainer positive = container(QueryClause.text("quality", "GOOD", false));
+        assertEquals(LuceneQueryCompiler.compile(positive, ""), LuceneQueryCompiler.compileExecutable(positive, ""));
+        assertEquals("", LuceneQueryCompiler.compileExecutable(QueryContainer.empty(), ""));
+        // free text alone is passed through verbatim, anchor or not
+        assertEquals("caffeine", LuceneQueryCompiler.compileExecutable(QueryContainer.empty(), "caffeine"));
+    }
 }

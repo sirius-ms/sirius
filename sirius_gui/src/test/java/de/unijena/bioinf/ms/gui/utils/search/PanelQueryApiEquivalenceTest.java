@@ -86,8 +86,10 @@ public class PanelQueryApiEquivalenceTest {
                 new State("default-quality", m -> { /* fresh model keeps the default feature-quality filter */ }),
                 new State("elements", m -> m.setElementFilter(new ElementFilter("CHNOPS"))),
                 new State("blank", m -> m.getSampleBlankFoldChange().setEnabled(true)),
-                new State("lipid-any", m -> m.setLipidFilter(FeatureFilterModel.LipidFilter.ANY_LIPID_CLASS_DETECTED)),
-                new State("lipid-no", m -> m.setLipidFilter(FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED)),
+                new State("lipid-any", m -> m.setLipidClassDetected(true)),
+                new State("lipid-no", m -> m.setLipidClassDetected(false)),
+                new State("pfas-tagged", m -> m.setPfasDetected(true)),
+                new State("pfas-none", m -> m.setPfasDetected(false)),
                 new State("mz+hasMsMs", m -> { m.setCurrentMinMz(300); m.setHasMsMs(true); }),
                 new State("inverted-mz", m -> { m.setCurrentMinMz(300); m.setInverted(true); }),
                 new State("freetext-only", m -> setSearchText(m, "name:caffeine")),
@@ -123,7 +125,7 @@ public class PanelQueryApiEquivalenceTest {
         for (int i = 1; i < nodes.size(); i++)
             ands.add(LogicOp.AND);
         String freeText = model.getSearchText() == null ? "" : model.getSearchText().trim();
-        String core = LuceneQueryCompiler.compile(new QueryContainer(nodes, ands), freeText);
+        String core = LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), freeText);
         if (core.isBlank())
             return null;
         return model.isInverted() ? "*:* AND NOT (" + core + ")" : core;

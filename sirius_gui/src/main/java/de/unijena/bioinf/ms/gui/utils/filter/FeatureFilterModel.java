@@ -104,8 +104,13 @@ public class FeatureFilterModel implements SiriusPCS {
     @Setter
     private Set<PrecursorIonType> adducts = new HashSet<>();
 
+    /** null = no lipid filter, TRUE = a lipid class must be detected, FALSE = none may be. */
     @Getter
-    private LipidFilter lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
+    private @Nullable Boolean lipidClassDetected = null;
+
+    /** null = no pfas filter, TRUE = the feature must carry a pfas tag, FALSE = it must not. */
+    @Getter
+    private @Nullable Boolean pfasDetected = null;
 
     @NotNull
     private ElementFilter elementFilter = ElementFilter.disabled();
@@ -180,13 +185,23 @@ public class FeatureFilterModel implements SiriusPCS {
 
 
     public boolean isLipidFilterEnabled() {
-        return lipidFilter != LipidFilter.KEEP_ALL_COMPOUNDS;
+        return lipidClassDetected != null;
     }
 
-    public void setLipidFilter(LipidFilter value) {
-        LipidFilter oldValue = lipidFilter;
-        lipidFilter = value;
-        pcs.firePropertyChange("setLipidFilter", oldValue, value);
+    public void setLipidClassDetected(@Nullable Boolean value) {
+        Boolean oldValue = lipidClassDetected;
+        lipidClassDetected = value;
+        pcs.firePropertyChange("setLipidClassDetected", oldValue, value);
+    }
+
+    public boolean isPfasFilterEnabled() {
+        return pfasDetected != null;
+    }
+
+    public void setPfasDetected(@Nullable Boolean value) {
+        Boolean oldValue = pfasDetected;
+        pfasDetected = value;
+        pcs.firePropertyChange("setPfasDetected", oldValue, value);
     }
 
     public void setDbFilter(@Nullable DbFilter dbFilter) {
@@ -299,7 +314,7 @@ public class FeatureFilterModel implements SiriusPCS {
         ) return true;
         if (!adducts.isEmpty()) return true;
 
-        if (getCategorizedQualityFilters().stream().anyMatch(QualityFilter::isEnabled) || getFeatureQualityFilter().isEnabled() || isLipidFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled())
+        if (getCategorizedQualityFilters().stream().anyMatch(QualityFilter::isEnabled) || getFeatureQualityFilter().isEnabled() || isLipidFilterEnabled() || isPfasFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled())
             return true;
 
         if (getSampleBlankFoldChange().isEnabled()) // contributes a range clause to toLuceneQuery
@@ -430,7 +445,8 @@ public class FeatureFilterModel implements SiriusPCS {
         setCurrentMinConfidence(minConfidence);
         getFeatureQualityFilter().reset();
         getPeakShapeQualityFilter().reset();
-        setLipidFilter(LipidFilter.KEEP_ALL_COMPOUNDS);
+        setLipidClassDetected(null);
+        setPfasDetected(null);
         setDbFilter(null);
         setElementFilter(ElementFilter.disabled());
         adducts = Set.of();
@@ -464,11 +480,6 @@ public class FeatureFilterModel implements SiriusPCS {
     }
 
 
-    public enum LipidFilter {
-        KEEP_ALL_COMPOUNDS, ANY_LIPID_CLASS_DETECTED, NO_LIPID_CLASS_DETECTED
-    }
-
-
     private static final String FAKE_FIELD = "__FAKE_FIELD__";
     private final QueryParser textFieldParser;
 
@@ -488,13 +499,17 @@ public class FeatureFilterModel implements SiriusPCS {
         return Optional.of(isInverted() ? "*:* AND NOT (" + core + ")" : core);
     }
 
-    /** The active structured facets (as query nodes) AND the free-text segment, compiled to lucene. */
+    /**
+     * The active structured facets (as query nodes) AND the free-text segment, compiled to lucene as it
+     * is EXECUTED - facets that are pure negations (no lipid class, no pfas tag) get the match-all anchor
+     * they need to match anything at all, see {@link LuceneQueryCompiler#compileExecutable}.
+     */
     private String compileCore(@NotNull ConfidenceDisplayMode confidenceMode) {
         List<QueryNode> nodes = PanelQueryNodeFactory.nodesFor(this, confidenceMode);
         List<LogicOp> ands = new ArrayList<>(Math.max(0, nodes.size() - 1));
         for (int i = 1; i < nodes.size(); i++)
             ands.add(LogicOp.AND);
-        return LuceneQueryCompiler.compile(new QueryContainer(nodes, ands), freeTextQuery());
+        return LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), freeTextQuery());
     }
 
     /**
@@ -537,5 +552,10 @@ public class FeatureFilterModel implements SiriusPCS {
     public static final String PREFIX_ELEMENT = "topAnnotations.formulaAnnotation.molecularFormula.";
     public static final String FIELD_LIPID = "topAnnotations.formulaAnnotation.lipidAnnotation.lipid";
     public static final String PREFIX_DB = "topAnnotations.matchedDatabases.";
+    /**
+     * The dynamic tag field of the pfas tag SIRIUS assigns during preprocessing/annotation. Mirrored as a
+     * literal like the other field names: the GUI knows the index only through the REST API.
+     */
+    public static final String FIELD_PFAS = "tags.pfas";
 
 }
