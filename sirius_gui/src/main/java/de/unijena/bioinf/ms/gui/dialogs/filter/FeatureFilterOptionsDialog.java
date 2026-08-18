@@ -89,8 +89,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     private boolean suppressChipRefresh = false;
 
 
-    final SegmentedFilterToggle lipidFilter;
-    private final PfasFilterPanel pfasPanel;
+    final SegmentedFilterToggle lipidFilter, pfasFilter;
     final PlaceholderTextField elementsField;
 
     final JCheckboxListPanel<SearchableDatabase> searchDBList;
@@ -367,29 +366,30 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             }
         }
 
-        // structure properties: lipid (a yes/no/any criterion) and PFAS (an ordinal evidence scale).
-        // Last block of the tab: below the structure-DB controls, directly above the query editor.
+        // structure properties: two yes / no / do-not-filter criteria. Last block of the tab: below the
+        // structure-DB controls, directly above the query editor.
         {
             resultParameters.add(Box.createVerticalStrut(10));
             resultParameters.add(new JXTitledSeparator("Structure Properties"));
 
             TwoColumnPanel classFilters = new TwoColumnPanel();
 
-            lipidFilter = new SegmentedFilterToggle("any", "lipid", "no lipid",
+            // Both criteria use the same generic segment labels, so the two capsules come out identical
+            // in size and line up; what is being asked is in the row name ("is Lipid: yes").
+            lipidFilter = new SegmentedFilterToggle("any", "yes", "no",
                     fieldDescription(FeatureFilterModel.FIELD_LIPID,
                             "A lipid class was detected (El Gordo) for the top molecular formula of the feature."));
             lipidFilter.setFilterState(filterModel.getLipidClassDetected());
-            // the row is stretched by the layout, the capsule must not be: the glue takes the extra space
-            Box lipidRow = Box.createHorizontalBox();
-            lipidRow.add(lipidFilter);
-            lipidRow.add(Box.createHorizontalGlue());
             // the name shows the same tooltip as the control, so hovering either explains the filter
-            classFilters.add(liveToolTipLabel("Lipid", lipidFilter::composeToolTip), lipidRow);
+            classFilters.add(liveToolTipLabel("Lipid detected", lipidFilter::composeToolTip), hugging(lipidFilter));
 
-            pfasPanel = new PfasFilterPanel(filterModel.getPfasFilter(),
-                    fieldDescription(FeatureFilterModel.FIELD_PFAS, null));
-            // the slider carries its scale labels below it, so it needs room above to not crowd the capsule
-            classFilters.add(liveToolTipLabel("PFAS", pfasPanel::composeToolTip), pfasPanel, MEDIUM_GAP, false);
+            pfasFilter = new SegmentedFilterToggle("any", "yes", "no",
+                    fieldDescription(FeatureFilterModel.FIELD_PFAS,
+                            "The feature carries a PFAS tag: SIRIUS found it in a PFAS homologue series, "
+                                    + "or annotated a PFAS molecular formula or structure for it."));
+            pfasFilter.setFilterState(filterModel.getPfasDetected());
+            classFilters.add(liveToolTipLabel("PFAS detected", pfasFilter::composeToolTip), hugging(pfasFilter),
+                    MEDIUM_GAP, false); // the two control rows need air between them
 
             resultParameters.add(classFilters);
         }
@@ -506,7 +506,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             qualityPanelIt.next().updateModel(qualityFilterIt.next());
 
         filterModel.setLipidClassDetected(lipidFilter.getFilterState());
-        pfasPanel.updateModel(filterModel.getPfasFilter());
+        filterModel.setPfasDetected(pfasFilter.getFilterState());
 
         filterModel.setElementFilter(new ElementFilter(
                         elementsField.getText() == null || elementsField.getText().isBlank()
@@ -535,6 +535,17 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 .map(SearchableField::getDescription)
                 .filter(description -> description != null && !description.isBlank())
                 .findFirst().orElse(fallback);
+    }
+
+    /**
+     * The control in a row that can be stretched by the layout while the control itself is not: the glue
+     * behind it takes the extra width, so the capsule keeps hugging its segments.
+     */
+    private static Box hugging(@NotNull JComponent control) {
+        Box row = Box.createHorizontalBox();
+        row.add(control);
+        row.add(Box.createHorizontalGlue());
+        return row;
     }
 
     /** A name label that asks for its tooltip when shown, so it always matches its control's. */
@@ -631,7 +642,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         for (JCheckBox c : new JCheckBox[]{hasMs1, hasMsMs, blankFilter})
             c.addActionListener(e -> refresh.run());
         lipidFilter.onChange(refresh);
-        pfasPanel.onChange(refresh);
+        pfasFilter.onChange(refresh);
         adductOptions.checkBoxList.addCheckBoxListener(e -> refresh.run());
         searchDBList.checkBoxList.addCheckBoxListener(e -> refresh.run());
         overallQualityPanel.onChange(refresh);
@@ -712,7 +723,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         qualityPanels.forEach(QualityFilterPanel::reset);
 
         lipidFilter.setFilterState(null);
-        pfasPanel.reset();
+        pfasFilter.setFilterState(null);
         elementsField.setText(null);
         searchDBList.checkBoxList.uncheckAll();
         deleteSelection.setSelected(false);
@@ -748,7 +759,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             qualityPanels.forEach(QualityFilterPanel::reset);
 
             lipidFilter.setFilterState(null);
-            pfasPanel.reset();
+            pfasFilter.setFilterState(null);
             elementsField.setText(null);
             searchDBList.checkBoxList.uncheckAll();
             deleteSelection.setSelected(false);
@@ -808,7 +819,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 blankSpinner.setValue(filterModel.getSampleBlankFoldChange().getMinFoldChange());
             }
             case "lipid" -> lipidFilter.setFilterState(null);
-            case "pfas" -> pfasPanel.reset();
+            case "pfas" -> pfasFilter.setFilterState(null);
             case "db" -> {
                 searchDBList.checkBoxList.uncheckAll();
                 candidateSpinner.setValue(1);
