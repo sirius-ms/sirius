@@ -57,8 +57,7 @@ public class FormulaElementMapper implements FieldMapper<String> {
             @NotNull Map<String, PointsConfig> pointsConfigMap,
             @NotNull Map<String, Analyzer> analyzerMap,
             @NotNull List<CharSequence> defaultSearchFields,
-            @NotNull Map<String, SortField.Type> sortTypes,
-            @NotNull Map<String, QueryRewriter> queryRewriters
+            @NotNull Map<String, SortField.Type> sortTypes
     ) {
         analyzerMap.put(rootFieldName, new KeywordAnalyzer());
         pointsConfigMap.put(rootFieldName + ".*", getPointsConfigForType(Integer.class));

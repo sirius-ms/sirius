@@ -126,8 +126,7 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
     }
 
     @Override
-    public void applyAnalyzersAndPointConfigs(@NotNull String rootFieldName, @NotNull Map<String, PointsConfig> pointsConfigMap, @NotNull Map<String, Analyzer> analyzerMap, @NotNull List<CharSequence> defaultSearchFields, @NotNull Map<String, SortField.Type> sortTypes,
-            @NotNull Map<String, QueryRewriter> queryRewriters) {
+    public void applyAnalyzersAndPointConfigs(@NotNull String rootFieldName, @NotNull Map<String, PointsConfig> pointsConfigMap, @NotNull Map<String, Analyzer> analyzerMap, @NotNull List<CharSequence> defaultSearchFields, @NotNull Map<String, SortField.Type> sortTypes) {
         // add pointsconfig for foldchange
         pointsConfigMap.put(rootFieldName + ".foldChange.*", LuceneMappingUtils.getPointsConfigForType(Double.class));
         sortTypes.put(rootFieldName + ".foldChange.*", SortField.Type.DOUBLE);

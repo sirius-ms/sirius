@@ -85,8 +85,7 @@ public class CompoundClassesMapper implements FieldMapper<CompoundClasses> {
             @NotNull Map<String, PointsConfig> pointsConfigMap,
             @NotNull Map<String, Analyzer> analyzerMap,
             @NotNull List<CharSequence> defaultSearchFields,
-            @NotNull Map<String, SortField.Type> sortTypes,
-            @NotNull Map<String, QueryRewriter> queryRewriters
+            @NotNull Map<String, SortField.Type> sortTypes
     ) {
         analyzerMap.put(rootFieldName + CLASSY_FIRE, SIRIUS_TEXT_ANALYZER);
         analyzerMap.put(rootFieldName + NPC_PATHWAY, SIRIUS_TEXT_ANALYZER);
