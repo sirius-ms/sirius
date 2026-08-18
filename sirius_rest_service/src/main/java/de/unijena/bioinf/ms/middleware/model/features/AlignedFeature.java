@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
 import de.unijena.bioinf.ms.middleware.model.statistics.Statistics;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.PrecursorIonTypeQueryRewriter;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FoldChangeMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
@@ -94,7 +95,7 @@ public class AlignedFeature implements Taggable {
      * Never empty: if no adduct could be detected, the unknown ion type matching the feature's
      * charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.
      */
-    @IndexField
+    @IndexField(queryRewriter = PrecursorIonTypeQueryRewriter.class)
     @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
     protected Set<String> detectedAdducts;
 

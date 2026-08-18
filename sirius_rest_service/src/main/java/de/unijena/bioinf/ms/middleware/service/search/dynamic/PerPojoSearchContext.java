@@ -50,12 +50,13 @@ public class PerPojoSearchContext implements SearchContext {
     protected final Function<Field, String> fieldDescriptionProvider;
 
     /**
-     * Supplies the vocabulary of a tag field ({@code tags.<tagName>}) from the project's tag definitions.
-     * Injected by the caller, which owns them; null if the values are not available (fields are then described
-     * as accepting free text).
+     * Supplies the vocabulary of fields whose values are project state rather than a property of the model -
+     * the tags defined in the project, the adducts detected in it. Injected by the caller, which owns that
+     * state; null if it is not available (such fields are then described as accepting free text). What it
+     * reports wins over the vocabulary a field declares statically, being the more specific answer.
      */
     @Nullable
-    protected final PossibleValueProvider tagPossibleValueProvider;
+    protected final PossibleValueProvider projectPossibleValueProvider;
 
     public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions) {
         this(indexRootDir, tagDefinitions, null);
@@ -68,10 +69,10 @@ public class PerPojoSearchContext implements SearchContext {
 
     public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
                                 @Nullable Function<Field, String> fieldDescriptionProvider,
-                                @Nullable PossibleValueProvider tagPossibleValueProvider) {
+                                @Nullable PossibleValueProvider projectPossibleValueProvider) {
         this.indexRootDir = indexRootDir;
         this.fieldDescriptionProvider = fieldDescriptionProvider;
-        this.tagPossibleValueProvider = tagPossibleValueProvider;
+        this.projectPossibleValueProvider = projectPossibleValueProvider;
         indices = new ConcurrentHashMap<>();
         tagDefs = tagDefinitions != null ? tagDefinitions : new HashMap<>();
     }
@@ -212,14 +213,19 @@ public class PerPojoSearchContext implements SearchContext {
         // consistent with the query parser configuration. Sorted for a deterministic response.
         if (manager.isTaggable()) {
             synchronized (tagDefs) {
-                tagDefs.keySet().stream().sorted().forEach(tagName -> {
-                    String fieldName = Taggable.makeTagFieldName(tagName);
-                    // read on demand: possible values can be added to a tag definition at any time
-                    List<String> possibleValues = tagPossibleValueProvider == null
-                            ? null : tagPossibleValueProvider.getPossibleValues(fieldName);
-                    fields.add(LuceneMappingUtils.toTagSearchableField(fieldName, tagName, tagDefs.get(tagName), possibleValues));
-                });
+                tagDefs.keySet().stream().sorted().forEach(tagName -> fields.add(LuceneMappingUtils
+                        .toTagSearchableField(Taggable.makeTagFieldName(tagName), tagName, tagDefs.get(tagName), null)));
             }
+        }
+        // Vocabularies that are project state (tag definitions, detected adducts) are read here, on every
+        // description, rather than cached: they change while the project is open - a tag definition gets more
+        // possible values, an import detects more adducts - and a cached copy would report a stale vocabulary.
+        if (projectPossibleValueProvider != null) {
+            fields.forEach(field -> {
+                List<String> possibleValues = projectPossibleValueProvider.getPossibleValues(field.getName());
+                if (possibleValues != null)
+                    field.setPossibleValues(possibleValues);
+            });
         }
         return fields;
     }

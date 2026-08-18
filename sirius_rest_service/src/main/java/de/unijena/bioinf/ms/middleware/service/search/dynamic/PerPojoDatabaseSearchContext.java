@@ -44,8 +44,8 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
 
     public PerPojoDatabaseSearchContext(@NotNull DB database, @Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
                                         @Nullable Function<Field, String> fieldDescriptionProvider,
-                                        @Nullable PossibleValueProvider tagPossibleValueProvider) {
-        super(indexRootDir, tagDefinitions, fieldDescriptionProvider, tagPossibleValueProvider);
+                                        @Nullable PossibleValueProvider projectPossibleValueProvider) {
+        super(indexRootDir, tagDefinitions, fieldDescriptionProvider, projectPossibleValueProvider);
         this.database = database;
     }
 
