@@ -139,14 +139,23 @@ public class TagPossibleValuesTest {
     }
 
     /**
-     * Boolean tags cannot declare values (the tag definition rejects that), but they have some: a boolean tag is
-     * queried as true/false, and so is a value-less tag, which is indexed as a presence flag.
+     * Neither kind of flag tag can declare values (the tag definition rejects that), but both have some, and
+     * they are not the same: a boolean tag is written as true or false, a value-less tag only as true.
      */
     @Test
-    public void testBooleanAndPresenceTagsOfferTrueAndFalse() {
+    public void testABooleanTagOffersBothValues() {
         assertEquals(List.of("true", "false"), SearchableFields
                 .toTagSearchableField("tags.isBlank", "isBlank", ValueType.BOOLEAN, null).getPossibleValues());
-        assertEquals(List.of("true", "false"), SearchableFields
+    }
+
+    /**
+     * A value-less tag is a presence flag: the tag mapper writes true and nothing else, so offering false would
+     * offer a value that matches nothing, whatever the tag. Absence is matched by negating the clause, which
+     * needs a second clause to negate against - a purely negative query matches nothing in lucene.
+     */
+    @Test
+    public void testAValuelessTagOffersOnlyTrue() {
+        assertEquals(List.of("true"), SearchableFields
                 .toTagSearchableField("tags.pfas", "pfas", ValueType.NONE, null).getPossibleValues());
     }
 
