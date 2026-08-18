@@ -64,6 +64,10 @@ public class TokenInputModelTest {
                                 .map(TokenInputModel.Suggestion::display).toList()));
     }
 
+    private List<String> fragmentTexts() {
+        return model.pendingFragments().stream().map(TokenInputModel.Fragment::text).toList();
+    }
+
     // --- entry-stage suggestions ---
 
     @Test
@@ -199,7 +203,7 @@ public class TokenInputModelTest {
         model.updateContext(FIELDS, true, false);
         model.choose(suggestion("OR", ""));
         model.choose(suggestion("NOT", ""));
-        assertEquals(List.of("OR", "NOT"), model.pendingFragments());
+        assertEquals(List.of("OR", "NOT"), fragmentTexts());
 
         model.choose(suggestion("quality", ""));
         TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
@@ -259,7 +263,7 @@ public class TokenInputModelTest {
     @Test
     public void testConnectorStageInsideOpenGroupOffersCloseGroup() {
         // sibling + a group open -> connector stage; ) is offered here too so the group can be closed
-        // from the keyboard (select + Tab) right after a committed clause, without adding another
+        // from the keyboard (select + Enter) right after a committed clause, without adding another
         model.updateContext(FIELDS, true, true);
         assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage());
         List<String> displays = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
@@ -345,7 +349,7 @@ public class TokenInputModelTest {
         model.updateContext(FIELDS, true, false);
         assertTrue(model.submitTyped("or not ion").isEmpty());
         assertEquals(TokenInputModel.Stage.OPERATOR, model.stage());
-        assertEquals(List.of("OR", "NOT", "ionMass"), model.pendingFragments());
+        assertEquals(List.of("OR", "NOT", "ionMass"), fragmentTexts());
     }
 
     @Test
@@ -370,7 +374,7 @@ public class TokenInputModelTest {
 
         assertTrue(model.backspaceOnEmpty().isEmpty());
         assertEquals(TokenInputModel.Stage.FIELD, model.stage());
-        assertEquals(List.of("NOT"), model.pendingFragments(), "field popped, NOT still pending");
+        assertEquals(List.of("NOT"), fragmentTexts(), "field popped, NOT still pending");
 
         assertTrue(model.backspaceOnEmpty().isEmpty());
         assertTrue(model.pendingFragments().isEmpty(), "NOT popped");
@@ -443,5 +447,159 @@ public class TokenInputModelTest {
         QueryContainer container = ((TokenInputModel.Event.QueryParsed) event).container();
         assertEquals(2, container.items().size());
         assertEquals(List.of(LogicOp.OR), container.logics());
+    }
+
+    // --- the run-search row: Enter on an empty input runs the search ---
+
+    private static final TokenInputModel.RunAction RUN_SEARCH = new TokenInputModel.RunAction(
+            "Search", "run the search (Enter)", "Enter to search, type to add query terms");
+
+    @Test
+    public void testRunActionRowIsOfferedFirstWhileNothingIsTyped() {
+        model.setRunAction(RUN_SEARCH);
+        List<TokenInputModel.Suggestion> suggestions = model.suggestions("");
+        // on top so it is the default pick of an untouched input - Enter runs the search right away
+        assertInstanceOf(TokenInputModel.Suggestion.RunActionSuggestion.class, suggestions.get(0));
+        assertEquals("Search", suggestions.get(0).display());
+        assertEquals("run the search (Enter)", suggestions.get(0).description());
+        // the normal field/token rows still follow it
+        assertTrue(suggestions.stream().skip(1)
+                .anyMatch(s -> s instanceof TokenInputModel.Suggestion.FieldSuggestion));
+    }
+
+    @Test
+    public void testRunActionRowDisappearsAsSoonAsSomethingIsTyped() {
+        model.setRunAction(RUN_SEARCH);
+        assertTrue(model.suggestions("ion").stream().noneMatch(TokenInputModelTest::isRunAction),
+                "a typed field prefix must make the field the default pick again");
+        assertTrue(model.suggestions("caffeine").stream().noneMatch(TokenInputModelTest::isRunAction),
+                "typed free text must not keep the search row selected");
+        // whitespace is not "typed something"
+        assertInstanceOf(TokenInputModel.Suggestion.RunActionSuggestion.class, model.suggestions("  ").get(0));
+    }
+
+    @Test
+    public void testRunActionRowIsSuppressedWhileATokenIsStaged() {
+        model.setRunAction(RUN_SEARCH);
+        model.choose(suggestion("NOT", "")); // still the field stage, but NOT is staged
+        assertTrue(model.suggestions("").stream().noneMatch(TokenInputModelTest::isRunAction),
+                "a staged NOT means the user is mid-token - do not offer to run the search");
+
+        model.choose(suggestion("ionMass", "")); // operator stage
+        assertTrue(model.suggestions("").stream().noneMatch(TokenInputModelTest::isRunAction));
+    }
+
+    @Test
+    public void testRunActionRowIsOfferedAtTheConnectorStage() {
+        model.setRunAction(RUN_SEARCH);
+        model.updateContext(FIELDS, true, false); // sibling -> connector stage
+        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage());
+        assertInstanceOf(TokenInputModel.Suggestion.RunActionSuggestion.class, model.suggestions("").get(0));
+    }
+
+    @Test
+    public void testRunActionRowRequiresAConfiguredAction() {
+        // no run action configured (a host that has no such key) -> the row never shows
+        assertTrue(model.suggestions("").stream().noneMatch(TokenInputModelTest::isRunAction));
+    }
+
+    @Test
+    public void testChoosingTheRunActionChangesNothing() {
+        // the owner intercepts the row and runs the search; the model must not touch its token state
+        model.setRunAction(RUN_SEARCH);
+        TokenInputModel.Suggestion runAction = model.suggestions("").get(0);
+        assertTrue(model.choose(runAction).isEmpty());
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage());
+        assertTrue(model.pendingFragments().isEmpty());
+    }
+
+    // --- canAccept: whether Enter/Tab has anything to add (else Enter falls through to the search) ---
+
+    @Test
+    public void testCanAcceptMirrorsWhatSubmitTypedConsumes() {
+        // entry stage: grammar text is consumed; plain free text is not (the free-text ROW handles it)
+        assertTrue(model.canAccept("not ion"));
+        assertFalse(model.canAccept("caffeine metabolite"));
+        assertFalse(model.canAccept(""));
+
+        model.choose(suggestion("ionMass", "")); // operator stage
+        assertTrue(model.canAccept(">="));
+        assertFalse(model.canAccept(">"), "ambiguous between > and >= - submitTyped does not consume it");
+        assertFalse(model.canAccept("nonsense"));
+        assertFalse(model.canAccept(""));
+
+        model.choose(model.suggestions(">=").get(0)); // single-valued value stage
+        assertTrue(model.canAccept("300"));
+        assertFalse(model.canAccept(""), "an empty single value cannot complete a clause");
+    }
+
+    @Test
+    public void testCanAcceptOpenRangeBounds() {
+        model.choose(suggestion("ionMass", ""));
+        model.choose(model.suggestions("[").get(0)); // inclusive range
+        assertTrue(model.canAccept(""), "an empty lower bound is an open range start");
+        model.submitTyped("300");
+        assertTrue(model.canAccept(""), "an empty upper bound is an open range end");
+    }
+
+    // --- prompts point at Enter (Tab keeps working as a synonym) ---
+
+    @Test
+    public void testStagePromptsPointAtEnterAsTheAcceptKey() {
+        model.setRunAction(RUN_SEARCH);
+        assertEquals(RUN_SEARCH.emptyPrompt(), model.stagePrompt(),
+                "an untouched input advertises the search key and how to build a query");
+
+        model.choose(suggestion("NOT", "")); // staged token -> back to the stage guidance
+        assertNotEquals(RUN_SEARCH.emptyPrompt(), model.stagePrompt());
+        assertTrue(model.stagePrompt().contains("Enter"));
+        assertFalse(model.stagePrompt().contains("Tab"));
+
+        model.choose(suggestion("ionMass", "")); // operator stage
+        assertTrue(model.stagePrompt().contains("Enter"));
+        assertFalse(model.stagePrompt().contains("Tab"));
+
+        model.choose(model.suggestions("[").get(0)); // range lower bound
+        assertTrue(model.stagePrompt().contains("Enter"));
+        assertFalse(model.stagePrompt().contains("Tab"));
+    }
+
+    @Test
+    public void testStagePromptWithoutARunActionKeepsTheStageGuidance() {
+        // no run action (the row is off) -> the empty entry stage still guides, without a search key
+        assertFalse(model.stagePrompt().isEmpty());
+        assertFalse(model.stagePrompt().contains("Tab"));
+    }
+
+    // --- staged fragments name their field, so the chip can show it per display mode ---
+
+    @Test
+    public void testOnlyTheFieldFragmentCarriesAFieldName() {
+        model.choose(suggestion("ionMass", ""));
+        model.choose(model.suggestions(">=").get(0));
+
+        List<TokenInputModel.Fragment> fragments = model.pendingFragments();
+        assertEquals(List.of("ionMass", ">="), fragmentTexts());
+        // the field name lets the chip render compact/fully-qualified and put the real name in its tooltip
+        assertEquals("ionMass", fragments.get(0).fieldName());
+        assertNull(fragments.get(1).fieldName(), "the operator is display text, not a field");
+    }
+
+    @Test
+    public void testConnectorAndNegationFragmentsNameNoField() {
+        model.updateContext(FIELDS, true, false);
+        model.choose(suggestion("OR", ""));
+        model.choose(suggestion("NOT", ""));
+        model.choose(suggestion("tags.city", ""));
+
+        List<TokenInputModel.Fragment> fragments = model.pendingFragments();
+        assertEquals(List.of("OR", "NOT", "tags.city"), fragmentTexts());
+        assertNull(fragments.get(0).fieldName());
+        assertNull(fragments.get(1).fieldName());
+        assertEquals("tags.city", fragments.get(2).fieldName());
+    }
+
+    private static boolean isRunAction(TokenInputModel.Suggestion suggestion) {
+        return suggestion instanceof TokenInputModel.Suggestion.RunActionSuggestion;
     }
 }

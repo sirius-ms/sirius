@@ -568,7 +568,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
      * Builds the embedded {@link QueryEditorPanel}. Its panel chips are rendered from a live snapshot
      * of the dialog's own widget state ({@link #workingTerms()}), so they mirror the tabs without
      * touching the real model until Apply; the host wires the dialog's transaction boundary
-     * (Esc = Discard, Enter = Apply) and turns a model-chip click into a jump to its tab.
+     * (Esc = Discard, Enter with nothing left to add = Apply) and turns a model-chip click into a
+     * jump to its tab.
      */
     private QueryEditorPanel buildQueryEditor() {
         SearchRenderState renderState = new SearchRenderState(fieldsProvider);
@@ -598,7 +599,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
             @Override
             public void editorCommitRequested() {
-                saveChanges(); // Enter inside the editor == Apply
+                saveChanges(); // the editor has nothing left to add -> Enter == Apply
                 dispose();
             }
 
