@@ -258,13 +258,23 @@ public final class CompletionParser {
      * <p>
      * Ranked from the most literal match to the loosest, and within a rank the given order is kept: it carries
      * meaning, e.g. the declaration order of an ordered enum or the curated order of a tag definition.
+     * <p>
+     * Each value is ranked once and sorted by the result, rather than ranked again on every comparison: this
+     * runs on the event thread for every keystroke, and a vocabulary can be a whole ontology - which turns
+     * "once per value" and "once per comparison" into thousands of regex splits apart.
      */
     public static List<String> valueMatches(@NotNull String prefix, @NotNull List<String> values) {
         String lowerPrefix = prefix.toLowerCase();
         return values.stream()
-                .filter(value -> valueMatchRank(value, lowerPrefix) < NO_MATCH)
-                .sorted(Comparator.comparingInt((String value) -> valueMatchRank(value, lowerPrefix)))
+                .map(value -> new RankedValue(value, valueMatchRank(value, lowerPrefix)))
+                .filter(ranked -> ranked.rank() < NO_MATCH)
+                .sorted(Comparator.comparingInt(RankedValue::rank))
+                .map(RankedValue::value)
                 .toList();
+    }
+
+    /** A value with how well it matches, so that the sort does not have to work that out again. */
+    private record RankedValue(String value, int rank) {
     }
 
     /**
