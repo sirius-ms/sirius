@@ -26,7 +26,8 @@ import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFiel
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.projectspace.IndexField;
-import de.unijena.bioinf.projectspace.PossibleValueProvider;
+import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDoc;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.index.IndexableField;
@@ -45,14 +46,17 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for the {@link PossibleValueProvider} mechanism that lets a field declare its closed vocabulary, so that
+ * Tests for the {@link FieldVocabulary} mechanism that lets a field declare its closed vocabulary, so that
  * clients can offer the values for completion instead of leaving the user to guess them.
  * <p>
- * The vocabulary is never written into the annotation itself: {@link IndexField#possibleValueProvider()} names a
- * provider class, and {@link FieldMapper} is a provider itself for the fields it contributes. Both are asked per
- * field name, because one mapper typically contributes several fields with different vocabularies.
+ * The vocabulary is never written into the annotation itself: {@link SearchableFieldDoc#possibleValues()} names
+ * a vocabulary class, and a {@link FieldMapper} may implement one for the fields it contributes. Both are asked
+ * per field name, because one mapper typically contributes several fields with different vocabularies.
+ * <p>
+ * Note which annotation this is: declaring a vocabulary says nothing about how the field is indexed, so it does
+ * not belong on {@code @IndexField}.
  */
-public class PossibleValueProviderTest {
+public class FieldVocabularyTest {
 
     public enum TestQuality {GOOD, DECENT, BAD}
 
@@ -60,7 +64,7 @@ public class PossibleValueProviderTest {
      * A vocabulary that is the same for every field it is asked for - the common case for a field whose values
      * come from a fixed domain list (e.g. the chromatography of a run).
      */
-    public static class ChromatographyValues implements PossibleValueProvider {
+    public static class ChromatographyValues implements FieldVocabulary {
         @Override
         public List<String> getPossibleValues(@NotNull String fieldName) {
             return List.of("Liquid Chromatography", "Gas Chromatography");
@@ -70,7 +74,7 @@ public class PossibleValueProviderTest {
     /**
      * Echoes the field name it was asked for, so a test can assert which name the machinery passes in.
      */
-    public static class FieldNameEchoingValues implements PossibleValueProvider {
+    public static class FieldNameEchoingValues implements FieldVocabulary {
         @Override
         public List<String> getPossibleValues(@NotNull String fieldName) {
             return List.of(fieldName);
@@ -80,7 +84,7 @@ public class PossibleValueProviderTest {
     /**
      * A provider that has no opinion about the field - the values derived from the java type must still apply.
      */
-    public static class NoOpinionValues implements PossibleValueProvider {
+    public static class NoOpinionValues implements FieldVocabulary {
         @Override
         public @Nullable List<String> getPossibleValues(@NotNull String fieldName) {
             return null;
@@ -88,9 +92,10 @@ public class PossibleValueProviderTest {
     }
 
     /**
-     * Providers are expected to be stateless and are instantiated once, see {@link #testProviderIsInstantiatedOncePerMapper}.
+     * Vocabularies are expected to be stateless and are instantiated once, see
+     * {@link #testProviderIsInstantiatedOncePerDescriber}.
      */
-    public static class CountingValues implements PossibleValueProvider {
+    public static class CountingValues implements FieldVocabulary {
         static final AtomicInteger INSTANTIATIONS = new AtomicInteger();
 
         public CountingValues() {
@@ -104,9 +109,9 @@ public class PossibleValueProviderTest {
     }
 
     /**
-     * Has no no-arg constructor, so it cannot be instantiated by the mapper.
+     * Has no no-arg constructor, so it cannot be instantiated by the describer.
      */
-    public static class UninstantiableValues implements PossibleValueProvider {
+    public static class UninstantiableValues implements FieldVocabulary {
         @SuppressWarnings("unused")
         public UninstantiableValues(String needsAnArgument) {
         }
@@ -118,7 +123,8 @@ public class PossibleValueProviderTest {
     }
 
     public static class TestNested {
-        @IndexField(possibleValueProvider = FieldNameEchoingValues.class)
+        @IndexField
+        @SearchableFieldDoc(possibleValues = FieldNameEchoingValues.class)
         public String origin;
     }
 
@@ -150,7 +156,7 @@ public class PossibleValueProviderTest {
     /**
      * Same mapper, but it knows the vocabulary of one of its two fields.
      */
-    public static class VocabularyAwareMapper extends TestClassMapper {
+    public static class VocabularyAwareMapper extends TestClassMapper implements FieldVocabulary {
         @Override
         public @Nullable List<String> getPossibleValues(@NotNull String fieldName) {
             return fieldName.endsWith(".level") ? List.of("PATHWAY", "SUPERCLASS", "CLASS") : null;
@@ -164,31 +170,38 @@ public class PossibleValueProviderTest {
         @IndexField
         public String freeText;
 
-        @IndexField(possibleValueProvider = ChromatographyValues.class)
+        @IndexField
+        @SearchableFieldDoc(possibleValues = ChromatographyValues.class)
         public String chromatography;
 
-        @IndexField(name = "analyzers", possibleValueProvider = FieldNameEchoingValues.class)
+        @IndexField(name = "analyzers")
+        @SearchableFieldDoc(possibleValues = FieldNameEchoingValues.class)
         public List<String> massAnalyzers;
 
-        @IndexField(possibleValueProvider = FieldNameEchoingValues.class)
+        @IndexField
+        @SearchableFieldDoc(possibleValues = FieldNameEchoingValues.class)
         public Map<String, String> labels;
 
         @IndexField
         public TestQuality quality;
 
-        @IndexField(possibleValueProvider = ChromatographyValues.class)
+        @IndexField
+        @SearchableFieldDoc(possibleValues = ChromatographyValues.class)
         public TestQuality overriddenQuality;
 
-        @IndexField(possibleValueProvider = NoOpinionValues.class)
+        @IndexField
+        @SearchableFieldDoc(possibleValues = NoOpinionValues.class)
         public TestQuality undecidedQuality;
 
         @IndexField
         public boolean hasMs1;
 
-        @IndexField(possibleValueProvider = CountingValues.class)
+        @IndexField
+        @SearchableFieldDoc(possibleValues = CountingValues.class)
         public String counted;
 
-        @IndexField(possibleValueProvider = CountingValues.class)
+        @IndexField
+        @SearchableFieldDoc(possibleValues = CountingValues.class)
         public String countedTwice;
 
         @IndexField
@@ -196,13 +209,17 @@ public class PossibleValueProviderTest {
 
         @IndexFieldWithMapper(mapper = VocabularyAwareMapper.class)
         public String compoundClasses;
+
+        @IndexFieldWithMapper(mapper = TestClassMapper.class)
+        public String plainClasses;
     }
 
     public static class BrokenProviderPojo {
         @IndexField(documentId = true)
         public String id;
 
-        @IndexField(possibleValueProvider = UninstantiableValues.class)
+        @IndexField
+        @SearchableFieldDoc(possibleValues = UninstantiableValues.class)
         public String broken;
     }
 
@@ -294,21 +311,22 @@ public class PossibleValueProviderTest {
     public void testUninstantiableProviderFailsWithAClearMessage() {
         Exception e = assertThrows(Exception.class, () -> describeAsMap(BrokenProviderPojo.class));
         assertTrue(e.getMessage().contains(UninstantiableValues.class.getName()),
-                "message must name the provider: " + e.getMessage());
+                "message must name the vocabulary: " + e.getMessage());
         assertTrue(e.getMessage().contains("broken"),
                 "message must name the field: " + e.getMessage());
     }
 
     /**
-     * A mapper that does not know its vocabulary contributes fields without possible values - the default, so
-     * that existing mappers keep working unchanged.
+     * Knowing a vocabulary is not part of being a mapper: a mapper that has nothing to say about its values
+     * simply is not a vocabulary, and its fields are described without any.
      */
     @Test
-    public void testMapperWithoutOverrideReportsNoPossibleValues() {
-        TestClassMapper mapper = new TestClassMapper();
+    public void testMapperThatIsNoVocabularyContributesFieldsWithoutValues() {
+        assertFalse(new TestClassMapper() instanceof FieldVocabulary);
 
-        assertNull(mapper.getPossibleValues("classes.level"));
-        assertNull(mapper.getPossibleValues("classes.name"));
+        Map<String, SearchableField> fields = describeAsMap(TestPojo.class);
+        assertNull(fields.get("plainClasses.level").getPossibleValues());
+        assertNull(fields.get("plainClasses.name").getPossibleValues());
     }
 
     /**

@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ClassyFireFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClass;
 import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClasses;
+import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
@@ -22,7 +23,7 @@ import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappi
 /**
  * Mapper for predicted compound classes (ClassyFire lineage).
  */
-public class CompoundClassesMapper implements FieldMapper<CompoundClasses> {
+public class CompoundClassesMapper implements FieldMapper<CompoundClasses>, FieldVocabulary {
 
     @Override
     public Iterable<IndexableField> toIndexableFields(@NotNull String rootFieldName, @org.jspecify.annotations.Nullable CompoundClasses pojo) {

@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
-import de.unijena.bioinf.projectspace.PossibleValueProvider;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
@@ -15,11 +14,11 @@ import java.util.Map;
 /**
  * Maps one pojo field onto the lucene fields it is indexed as, and back.
  * <p>
- * A mapper is also the {@link PossibleValueProvider} for the fields it contributes: it typically contributes
- * several of them (e.g. one per ontology level), which is why the vocabulary is requested per field name. The
- * default is "no vocabulary", so a mapper only implements it if it actually knows its values.
+ * A mapper that knows a closed vocabulary for the fields it contributes may say so by also implementing
+ * {@code FieldVocabulary} of the description package - that is documentation and no concern of the mapping, so
+ * it is not part of this contract.
  */
-public interface FieldMapper<T> extends PossibleValueProvider {
+public interface FieldMapper<T> {
 
     default void toDocument(@NotNull String rootFieldName, @NotNull Document docToAdd, @Nullable T pojo){
         toIndexableFields(rootFieldName, pojo).forEach(docToAdd::add);
@@ -37,13 +36,4 @@ public interface FieldMapper<T> extends PossibleValueProvider {
             @NotNull final List<CharSequence> defaultSearchFields,
             @NotNull final Map<String, SortField.Type> sortTypes
     );
-
-    /**
-     * The values a field contributed by this mapper can take, or null (the default) if this mapper does not know
-     * a closed vocabulary for it. Asked per field because one mapper usually contributes several fields.
-     */
-    @Override
-    default @Nullable List<String> getPossibleValues(@NotNull String fieldName) {
-        return null;
-    }
 }
