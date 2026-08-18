@@ -25,6 +25,8 @@ import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.filter.DbFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.PfasFilter;
+import de.unijena.bioinf.ms.gui.utils.filter.PfasFilter.PfasEvidence;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import org.junit.jupiter.api.Test;
 
@@ -191,6 +193,77 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testInactiveModelYieldsNoNodes() {
         assertTrue(nodes(cleanSlate()).isEmpty());
+    }
+
+    // --- ordinal pfas evidence filter ---
+
+    @Test
+    public void testFullPfasScaleIsNoFacet() {
+        assertTrue(nodes(cleanSlate()).isEmpty(), "all evidence levels selected means no pfas filter");
+    }
+
+    @Test
+    public void testPfasWithoutNoPfasLevelMatchesTheSelectedTagValues() {
+        FeatureFilterModel model = cleanSlate();
+        // range [Potential .. Structure]: the feature must carry one of those tag values
+        model.getPfasFilter().setLevelSelected(PfasFilter.PfasEvidence.NO_PFAS, false);
+
+        QueryGroup pfas = onlyGroup(nodes(model));
+        assertFalse(pfas.negated(), "a union of tag values is a plain group");
+        assertEquals(List.of(LogicOp.OR, LogicOp.OR), pfas.logics());
+        assertEquals(List.of(PfasEvidence.POTENTIAL.getTagValue(), PfasEvidence.MOLECULAR_FORMULA.getTagValue(), PfasEvidence.MOLECULAR_STRUCTURE.getTagValue()),
+                pfas.items().stream().map(item -> ((QueryClause) item).value1()).toList());
+        pfas.items().forEach(item -> {
+            assertEquals(FeatureFilterModel.FIELD_PFAS, ((QueryClause) item).field());
+            assertFalse(item.negated());
+        });
+    }
+
+    @Test
+    public void testPfasIncludingNoPfasLevelExcludesTheUnselectedTagValues() {
+        FeatureFilterModel model = cleanSlate();
+        // range [None .. Potential]: untagged features pass too, so the facet excludes the rest instead
+        model.getPfasFilter().setLevelSelected(PfasFilter.PfasEvidence.MOLECULAR_FORMULA, false);
+        model.getPfasFilter().setLevelSelected(PfasFilter.PfasEvidence.MOLECULAR_STRUCTURE, false);
+
+        QueryGroup pfas = onlyGroup(nodes(model));
+        assertTrue(pfas.negated(), "'no pfas' passes, so the facet is the complement of the excluded values");
+        assertEquals(List.of(PfasEvidence.MOLECULAR_FORMULA.getTagValue(), PfasEvidence.MOLECULAR_STRUCTURE.getTagValue()),
+                pfas.items().stream().map(item -> ((QueryClause) item).value1()).toList());
+    }
+
+    @Test
+    public void testOnlyNoPfasSelectedExcludesEveryTagValue() {
+        FeatureFilterModel model = cleanSlate();
+        for (PfasFilter.PfasEvidence level : PfasFilter.PfasEvidence.values())
+            if (level != PfasFilter.PfasEvidence.NO_PFAS)
+                model.getPfasFilter().setLevelSelected(level, false);
+
+        QueryGroup pfas = onlyGroup(nodes(model));
+        assertTrue(pfas.negated());
+        assertEquals(3, pfas.items().size());
+    }
+
+    @Test
+    public void testPfasFacetCompilesToTheExpectedLucene() {
+        FeatureFilterModel model = cleanSlate();
+        model.getPfasFilter().setLevelSelected(PfasFilter.PfasEvidence.MOLECULAR_STRUCTURE, false);
+
+        // negation-only query: the executed query is anchored so it matches everything but the excluded
+        // value (a single excluded value collapses the OR group to a plain negated clause)
+        assertEquals("*:* AND NOT tags.pfas:\"PFAS Molecular Structure\"",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    @Test
+    public void testPfasEvidenceOnlyQueryNeedsNoAnchor() {
+        FeatureFilterModel model = cleanSlate();
+        model.getPfasFilter().setLevelSelected(PfasFilter.PfasEvidence.NO_PFAS, false);
+        model.getPfasFilter().setLevelSelected(PfasFilter.PfasEvidence.MOLECULAR_FORMULA, false);
+        model.getPfasFilter().setLevelSelected(PfasFilter.PfasEvidence.MOLECULAR_STRUCTURE, false);
+
+        assertEquals("tags.pfas:\"Potential PFAS\"", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow(),
+                "a single selected tag value collapses the OR group to a plain clause");
     }
 
     @Test

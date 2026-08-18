@@ -192,6 +192,22 @@ public class PanelQueryNodeEquivalenceTest {
     }
 
     @Test
+    public void testPfasEvidenceLevelsOnly() {
+        FeatureFilterModel model = cleanSlate();
+        model.getPfasFilter().setLevelSelected(
+                de.unijena.bioinf.ms.gui.utils.filter.PfasFilter.PfasEvidence.NO_PFAS, false);
+        assertEquivalent(model, ConfidenceDisplayMode.EXACT);
+    }
+
+    @Test
+    public void testPfasIncludingUntaggedFeatures() {
+        FeatureFilterModel model = cleanSlate();
+        model.getPfasFilter().setLevelSelected(
+                de.unijena.bioinf.ms.gui.utils.filter.PfasFilter.PfasEvidence.MOLECULAR_STRUCTURE, false);
+        assertEquivalent(model, ConfidenceDisplayMode.EXACT);
+    }
+
+    @Test
     public void testElements() {
         FeatureFilterModel model = cleanSlate();
         model.setElementFilter(new de.unijena.bioinf.ms.gui.utils.filter.ElementFilter("CHNOPS"));

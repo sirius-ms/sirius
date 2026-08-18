@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -64,6 +65,7 @@ public final class PanelQueryNodeFactory {
     static final String PREFIX_CATEGORIZED_QUALITY = FeatureFilterModel.PREFIX_CATEGORIZED_QUALITY;
     static final String PREFIX_ELEMENT = FeatureFilterModel.PREFIX_ELEMENT;
     static final String FIELD_LIPID = FeatureFilterModel.FIELD_LIPID;
+    static final String FIELD_PFAS = FeatureFilterModel.FIELD_PFAS;
     static final String PREFIX_DB = FeatureFilterModel.PREFIX_DB;
     static final String FIELD_BLANK = FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME;
 
@@ -181,6 +183,9 @@ public final class PanelQueryNodeFactory {
                     m -> m.setLipidClassDetected(null)));
         }
 
+        if (model.getPfasFilter().isEnabled())
+            pfasFacet(model.getPfasFilter()).ifPresent(facets::add);
+
         if (model.isDbFilterEnabled()) {
             int candidates = model.getDbFilter().getNumOfCandidates();
             facets.add(new Facet("db", group(LogicOp.OR, model.getDbFilter().getDbs().stream()
@@ -192,6 +197,30 @@ public final class PanelQueryNodeFactory {
         }
 
         return facets;
+    }
+
+    /**
+     * The facet of the ordinal pfas evidence filter, or empty if the selection cannot be expressed as a
+     * query (nothing selected at all - unreachable from the slider).
+     * <p>
+     * The evidence levels are tag values, "no PFAS" is the absence of the tag. A selection that includes
+     * "no PFAS" is therefore rendered as the COMPLEMENT of the unselected tag values ({@code NOT (v1 OR
+     * v2)}) rather than as a union: a feature carries at most one pfas tag value, so excluding the
+     * unselected values keeps exactly the untagged features plus the selected ones - and it avoids
+     * mixing a "field absent" clause into an OR, which lucene cannot evaluate as an alternative.
+     * A selection without "no PFAS" is the plain union of the selected tag values.
+     */
+    private static Optional<Facet> pfasFacet(@NotNull PfasFilter filter) {
+        boolean excluding = filter.isNoPfasSelected();
+        List<String> values = excluding ? filter.getExcludedTagValues() : filter.getSelectedTagValues();
+        if (values.isEmpty())
+            return Optional.empty();
+
+        QueryNode node = group(LogicOp.OR, values.stream()
+                .<QueryNode>map(value -> QueryClause.text(FIELD_PFAS, value, false))
+                .toList());
+        return Optional.of(new Facet("pfas", excluding ? node.withNegated(true) : node,
+                m -> m.getPfasFilter().reset()));
     }
 
     /**

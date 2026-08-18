@@ -108,6 +108,8 @@ public class FeatureFilterModel implements SiriusPCS {
     @Getter
     private @Nullable Boolean lipidClassDetected = null;
 
+    @Getter
+    private final PfasFilter pfasFilter = new PfasFilter(this);
 
     @NotNull
     private ElementFilter elementFilter = ElementFilter.disabled();
@@ -301,7 +303,7 @@ public class FeatureFilterModel implements SiriusPCS {
         ) return true;
         if (!adducts.isEmpty()) return true;
 
-        if (getCategorizedQualityFilters().stream().anyMatch(QualityFilter::isEnabled) || getFeatureQualityFilter().isEnabled() || isLipidFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled())
+        if (getCategorizedQualityFilters().stream().anyMatch(QualityFilter::isEnabled) || getFeatureQualityFilter().isEnabled() || isLipidFilterEnabled() || pfasFilter.isEnabled() || isElementFilterEnabled() || isDbFilterEnabled())
             return true;
 
         if (getSampleBlankFoldChange().isEnabled()) // contributes a range clause to toLuceneQuery
@@ -433,6 +435,7 @@ public class FeatureFilterModel implements SiriusPCS {
         getFeatureQualityFilter().reset();
         getPeakShapeQualityFilter().reset();
         setLipidClassDetected(null);
+        pfasFilter.reset();
         setDbFilter(null);
         setElementFilter(ElementFilter.disabled());
         adducts = Set.of();
@@ -538,5 +541,7 @@ public class FeatureFilterModel implements SiriusPCS {
     public static final String PREFIX_ELEMENT = "topAnnotations.formulaAnnotation.molecularFormula.";
     public static final String FIELD_LIPID = "topAnnotations.formulaAnnotation.lipidAnnotation.lipid";
     public static final String PREFIX_DB = "topAnnotations.matchedDatabases.";
+    /** The dynamic tag field of the pfas tag SIRIUS assigns during preprocessing/annotation. */
+    public static final String FIELD_PFAS = "tags." + PfasFilter.TAG_NAME;
 
 }

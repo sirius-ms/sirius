@@ -40,6 +40,7 @@ public class FeatureFilterOptionsDialogTest {
         assertEquals("Results", FeatureFilterOptionsDialog.tabTitleForFacet("confidence"));
         assertEquals("Results", FeatureFilterOptionsDialog.tabTitleForFacet("elements"));
         assertEquals("Results", FeatureFilterOptionsDialog.tabTitleForFacet("lipid"));
+        assertEquals("Results", FeatureFilterOptionsDialog.tabTitleForFacet("pfas"));
         assertEquals("Results", FeatureFilterOptionsDialog.tabTitleForFacet("db"));
     }
 
