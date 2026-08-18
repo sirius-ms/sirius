@@ -25,10 +25,10 @@ import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoSearchContext;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.TagDefinitionPossibleValues;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
-import de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFields;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -123,7 +123,7 @@ public class TagPossibleValuesTest {
 
     @Test
     public void testTagFieldCarriesTheDeclaredValues() {
-        SearchableField field = LuceneMappingUtils.toTagSearchableField(
+        SearchableField field = SearchableFields.toTagSearchableField(
                 "tags.sampleType", "sampleType", ValueType.TEXT, List.of("Sample", "Blank"));
 
         assertEquals(List.of("Sample", "Blank"), field.getPossibleValues());
@@ -131,7 +131,7 @@ public class TagPossibleValuesTest {
 
     @Test
     public void testUnrestrictedTagFieldAcceptsFreeText() {
-        SearchableField field = LuceneMappingUtils.toTagSearchableField(
+        SearchableField field = SearchableFields.toTagSearchableField(
                 "tags.comment", "comment", ValueType.TEXT, null);
 
         assertNull(field.getPossibleValues());
@@ -143,9 +143,9 @@ public class TagPossibleValuesTest {
      */
     @Test
     public void testBooleanAndPresenceTagsOfferTrueAndFalse() {
-        assertEquals(List.of("true", "false"), LuceneMappingUtils
+        assertEquals(List.of("true", "false"), SearchableFields
                 .toTagSearchableField("tags.isBlank", "isBlank", ValueType.BOOLEAN, null).getPossibleValues());
-        assertEquals(List.of("true", "false"), LuceneMappingUtils
+        assertEquals(List.of("true", "false"), SearchableFields
                 .toTagSearchableField("tags.pfas", "pfas", ValueType.NONE, null).getPossibleValues());
     }
 
