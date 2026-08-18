@@ -175,10 +175,10 @@ public final class PanelQueryNodeFactory {
                     m -> m.getSampleBlankFoldChange().reset()));
 
         if (model.isLipidFilterEnabled()) {
-            // "no lipid class" is a negated clause; "any lipid class" a plain one
-            boolean noLipid = model.getLipidFilter() == FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED;
+            // "no lipid class" is a negated clause; "a lipid class" a plain one
+            boolean noLipid = Boolean.FALSE.equals(model.getLipidClassDetected());
             facets.add(new Facet("lipid", QueryClause.text(FIELD_LIPID, "true", noLipid),
-                    m -> m.setLipidFilter(FeatureFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS)));
+                    m -> m.setLipidClassDetected(null)));
         }
 
         if (model.isDbFilterEnabled()) {
