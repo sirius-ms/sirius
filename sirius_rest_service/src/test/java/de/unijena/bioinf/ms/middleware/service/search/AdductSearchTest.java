@@ -30,9 +30,6 @@ import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFiel
 import de.unijena.bioinf.ms.middleware.service.search.description.DetectedAdductPossibleValues;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PrecursorIonTypeQueryRewriter;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
-import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
-import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
-import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.projectspace.IndexField;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;

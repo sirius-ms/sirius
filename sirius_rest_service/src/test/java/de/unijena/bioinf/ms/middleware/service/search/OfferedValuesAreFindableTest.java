@@ -31,7 +31,6 @@ import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.description.DetectedAdductPossibleValues;
-import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
 import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionDocs;
@@ -218,9 +217,10 @@ public class OfferedValuesAreFindableTest {
             assertTrue(field.getPossibleValues().contains(value),
                     "the value this test indexes for " + field.getName() + " is not one the field offers: " + value);
 
-            long hits = context.searchIds(query(field, value), PageRequest.of(0, 10), modelClass).getTotalElements();
-            assertEquals(1, hits, () -> "searching " + query(field, value) + " must find the "
-                    + modelClass.getSimpleName() + " that carries it");
+            assertEquals(List.of(expectedId),
+                    context.searchIds(query(field, value), PageRequest.of(0, 10), modelClass).getContent(),
+                    () -> "searching " + query(field, value) + " must find the "
+                            + modelClass.getSimpleName() + " that carries it");
             checked++;
         }
 

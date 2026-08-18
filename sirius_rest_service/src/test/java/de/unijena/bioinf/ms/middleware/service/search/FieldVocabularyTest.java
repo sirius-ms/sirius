@@ -28,7 +28,6 @@ import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapp
 import de.unijena.bioinf.projectspace.IndexField;
 import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDoc;
-import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.index.IndexableField;
@@ -41,8 +40,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
