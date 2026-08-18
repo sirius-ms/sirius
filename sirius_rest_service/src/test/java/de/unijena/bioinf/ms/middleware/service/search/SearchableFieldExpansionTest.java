@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.middleware.service.search;
 
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField.FieldType;
-import de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFields;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests {@link LuceneMappingUtils#expandDynamicKeyFields} - turning a {@code prefix.*} dynamic-key
+ * Tests {@link SearchableFields#expandDynamicKeyFields} - turning a {@code prefix.*} dynamic-key
  * template into one concrete {@link SearchableField} per key actually present in the index, so the
  * autocomplete offers real field names (e.g. {@code topAnnotations.matchedDatabases.PubChem})
  * instead of the un-queryable {@code .*} template.
@@ -52,7 +52,7 @@ public class SearchableFieldExpansionTest {
     @Test
     public void testNonDynamicFieldsPassThroughUnchanged() {
         SearchableField ionMass = field("ionMass", FieldType.DOUBLE);
-        List<SearchableField> out = LuceneMappingUtils.expandDynamicKeyFields(List.of(ionMass), Set.of("ionMass", "name"));
+        List<SearchableField> out = SearchableFields.expandDynamicKeyFields(List.of(ionMass), Set.of("ionMass", "name"));
         assertEquals(1, out.size());
         assertSame(ionMass, out.get(0), "a field without a .* terminal must pass through untouched");
     }
@@ -62,7 +62,7 @@ public class SearchableFieldExpansionTest {
         SearchableField template = SearchableField.builder()
                 .name("topAnnotations.matchedDatabases.*").fieldType(FieldType.INTEGER).sortable(true).build();
 
-        List<SearchableField> out = LuceneMappingUtils.expandDynamicKeyFields(List.of(template),
+        List<SearchableField> out = SearchableFields.expandDynamicKeyFields(List.of(template),
                 Set.of("topAnnotations.matchedDatabases.PubChem", "topAnnotations.matchedDatabases.CHEBI",
                         "ionMass", "tags.foo"));
 
@@ -82,7 +82,7 @@ public class SearchableFieldExpansionTest {
                 .name("qualities.*").fieldType(FieldType.ENUM)
                 .possibleValues(List.of("GOOD", "BAD", "NOT_APPLICABLE")).build();
 
-        Map<String, SearchableField> out = byName(LuceneMappingUtils.expandDynamicKeyFields(
+        Map<String, SearchableField> out = byName(SearchableFields.expandDynamicKeyFields(
                 List.of(template), Set.of("qualities.peakShape")));
 
         SearchableField concrete = out.get("qualities.peakShape");
@@ -97,7 +97,7 @@ public class SearchableFieldExpansionTest {
         SearchableField dbTemplate = field("topAnnotations.matchedDatabases.*", FieldType.INTEGER);
         SearchableField foldTemplate = field("stats.foldChange.*", FieldType.DOUBLE);
 
-        Map<String, SearchableField> out = byName(LuceneMappingUtils.expandDynamicKeyFields(
+        Map<String, SearchableField> out = byName(SearchableFields.expandDynamicKeyFields(
                 List.of(dbTemplate, foldTemplate),
                 Set.of("topAnnotations.matchedDatabases.GNPS",                 // single-segment key -> 1 + 1
                         "stats.foldChange.SAMPLE.BLANK.APEX_INTENSITY.AVG")));  // four-segment key  -> 1 + 4
@@ -109,7 +109,7 @@ public class SearchableFieldExpansionTest {
     @Test
     public void testPlainFieldsDefaultToSuffixLengthOne() {
         SearchableField ionMass = field("ionMass", FieldType.DOUBLE);
-        assertEquals(1, LuceneMappingUtils.expandDynamicKeyFields(List.of(ionMass), Set.of("ionMass"))
+        assertEquals(1, SearchableFields.expandDynamicKeyFields(List.of(ionMass), Set.of("ionMass"))
                 .get(0).getSignificantSuffixLength());
     }
 
@@ -117,14 +117,14 @@ public class SearchableFieldExpansionTest {
     public void testTemplateWithoutMatchingKeysIsDropped() {
         SearchableField template = field("topAnnotations.matchedDatabases.*", FieldType.INTEGER);
         // index holds no matchedDatabases.* keys yet -> nothing concrete to query -> drop the template
-        List<SearchableField> out = LuceneMappingUtils.expandDynamicKeyFields(List.of(template), Set.of("ionMass"));
+        List<SearchableField> out = SearchableFields.expandDynamicKeyFields(List.of(template), Set.of("ionMass"));
         assertTrue(out.isEmpty(), "a dynamic template with no materialized keys must be dropped, not left as .*");
     }
 
     @Test
     public void testPrefixBoundaryDoesNotMatchSiblingsOrBareStem() {
         SearchableField template = field("qualities.*", FieldType.ENUM);
-        List<SearchableField> out = LuceneMappingUtils.expandDynamicKeyFields(List.of(template),
+        List<SearchableField> out = SearchableFields.expandDynamicKeyFields(List.of(template),
                 Set.of("qualitiesExtra",     // sibling with a shared prefix but no dot boundary -> no match
                         "qualities",          // bare stem, no terminal key -> no match
                         "qualities.peakShape",// real key -> match
