@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
-import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;

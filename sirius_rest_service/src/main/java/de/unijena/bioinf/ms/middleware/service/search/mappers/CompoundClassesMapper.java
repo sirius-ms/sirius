@@ -2,7 +2,6 @@ package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
 import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClass;
 import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClasses;
-import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
