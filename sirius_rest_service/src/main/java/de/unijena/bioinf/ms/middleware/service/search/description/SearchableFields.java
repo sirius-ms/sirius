@@ -105,16 +105,21 @@ public final class SearchableFields {
      *
      * @param possibleValues the values the tag definition restricts this tag to (in query form), or null if it
      *                       accepts any value
+     * @param description    what the tag definition says this tag means, or null if it says nothing - then the
+     *                       field is described by naming the tag, which is all that is known about it
      */
     public static SearchableField toTagSearchableField(@NotNull String fieldName, @NotNull String tagName,
-                                                       @NotNull ValueType valueType, @Nullable List<String> possibleValues) {
+                                                       @NotNull ValueType valueType, @Nullable List<String> possibleValues,
+                                                       @Nullable String description) {
         return SearchableField.builder()
                 .name(fieldName)
                 .fieldType(fieldTypeOf(valueType))
                 .fullTextSearch(valueType == ValueType.TEXT)
                 .significantSuffixLength(2) // "tags.<tagName>" - the tag field plus the tag key
                 .possibleValues(tagPossibleValues(valueType, possibleValues))
-                .description("Project tag '" + tagName + "'"
+                .description((description != null && !description.isBlank()
+                        ? description : "Project tag '" + tagName + "'")
+                        // what a definition cannot say for itself: absence of a value-less tag is the negation
                         + (valueType == ValueType.NONE ? "; presence flag, search for value 'true'" : ""))
                 .build();
     }

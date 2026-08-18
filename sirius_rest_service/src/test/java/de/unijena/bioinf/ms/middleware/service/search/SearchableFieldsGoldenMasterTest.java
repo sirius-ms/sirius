@@ -29,12 +29,13 @@ import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.description.DetectedAdductPossibleValues;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoSearchContext;
-import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionPossibleValues;
+import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionDocs;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.middleware.service.search.description.ApiDocFieldDescriptions;
 import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
+import de.unijena.bioinf.ms.middleware.service.search.description.TagFieldDocs;
 import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
@@ -61,15 +62,19 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Pins the complete searchable-field description of the API models against a checked-in fixture.
  * <p>
  * The description is what clients build their queries from - the SDK, and the GUI search bar that offers fields
- * and values - so it is public behaviour, not an implementation detail. This test exists so that moving the
- * description out of the search engine can be shown to change nothing: every field name, type, flag, vocabulary
- * and description text has to come out exactly as before.
+ * and values - so it is public behaviour rather than an implementation detail. Every other test here checks one
+ * field or one rule; this one is the only place the whole answer is looked at at once: every field of every
+ * model, in the order they are reported, with its type, flags, vocabulary, suffix length and description.
+ * <p>
+ * A failure is therefore not automatically a defect. It says the described surface changed, and the question is
+ * whether that was meant: rewrite the fixture, read the diff, then keep it or fix what moved. The diff is the
+ * point - it is the only place a change to one field is shown next to the sixty it was not supposed to touch.
  * <p>
  * Vocabularies are recorded as "&lt;count&gt; values sha256:&lt;digest&gt;" once they get long, so that the whole
  * ClassyFire ontology does not end up in the fixture while still being pinned exactly.
  * <p>
- * Run with {@code -Dsearchable.golden.update=true} to rewrite the fixture after a deliberate change, then read
- * the diff before committing it.
+ * Rewrite it with {@code SEARCHABLE_GOLDEN_UPDATE=true ./gradlew :sirius_rest_service:test} - an environment
+ * variable rather than a system property, because gradle does not forward its own properties to the test JVM.
  */
 public class SearchableFieldsGoldenMasterTest {
 
@@ -97,7 +102,9 @@ public class SearchableFieldsGoldenMasterTest {
 
     private static Map<String, TagDefinition> tagDefinitions() {
         return Map.of(
-                "sampleType", tagDefinition("sampleType", ValueType.TEXT, List.of("Sample", "Blank", "Standard")),
+                // one tag with a description, so the fixture pins that a definition's own sentence is forwarded
+                "sampleType", tagDefinition("sampleType", ValueType.TEXT, List.of("Sample", "Blank", "Standard"),
+                        "What kind of sample a run was measured from."),
                 "comment", tagDefinition("comment", ValueType.TEXT, List.of()),
                 "concentration", tagDefinition("concentration", ValueType.REAL, List.of()),
                 "replicate", tagDefinition("replicate", ValueType.INTEGER, List.of(1, 2, 3)),
@@ -108,18 +115,29 @@ public class SearchableFieldsGoldenMasterTest {
     }
 
     /**
+     * What a project's own tag definitions say about their tags - the values they allow and what they mean.
+     */
+    private static TagFieldDocs tagDocs() {
+        Map<String, TagDefinition> definitions = tagDefinitions();
+        return new TagDefinitionDocs(name -> Optional.ofNullable(definitions.get(name)));
+    }
+
+    /**
      * The vocabularies a project owns, the way the project supplies them.
      */
     private static FieldVocabulary projectVocabulary() {
-        Map<String, TagDefinition> definitions = tagDefinitions();
         Set<String> detectedAdducts = Set.of("[M + H]+", "[M + Na]+", "[M - H]-");
-        return FieldVocabulary.firstOf(
-                new TagDefinitionPossibleValues(name -> Optional.ofNullable(definitions.get(name))),
-                new DetectedAdductPossibleValues(() -> detectedAdducts));
+        return new DetectedAdductPossibleValues(() -> detectedAdducts);
     }
 
     private static TagDefinition tagDefinition(String tagName, ValueType valueType, List<?> possibleValues) {
+        return tagDefinition(tagName, valueType, possibleValues, null);
+    }
+
+    private static TagDefinition tagDefinition(String tagName, ValueType valueType, List<?> possibleValues,
+                                               String description) {
         return TagDefinition.builder()
+                .description(description)
                 .tagName(tagName)
                 .tagType("TEST")
                 .valueDefinition(new ValueDefinition<>(valueType, possibleValues, null, null))
@@ -187,7 +205,7 @@ public class SearchableFieldsGoldenMasterTest {
     }
 
     private static List<Map<String, Object>> describe(PerPojoSearchContext context, Class<?> modelClass) {
-        return new SearchableFieldService(IndexFacts.of(context), projectVocabulary(),
+        return new SearchableFieldService(IndexFacts.of(context), projectVocabulary(), tagDocs(),
                 new SearchableFieldDescriber(ApiDocFieldDescriptions.PROVIDER))
                 .describe(modelClass).stream()
                 .map(SearchableFieldsGoldenMasterTest::canonical)
