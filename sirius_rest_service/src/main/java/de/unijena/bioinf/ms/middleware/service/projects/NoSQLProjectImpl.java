@@ -58,6 +58,7 @@ import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsType;
 import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
@@ -150,8 +151,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * Describes this project's searchable fields. Built here because the vocabularies it reports are project
      * state: the tag definitions stored in this project and the adducts its imports detected. Both are read
      * when the fields are described, so a definition extended or an import run later shows up right away.
+     * <p>
+     * Not exposed: callers ask this project what is searchable, not how it works that out.
      */
-    @Getter
     private final SearchableFieldService searchableFieldService;
 
     /**
@@ -164,6 +166,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private final @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
 
     @SneakyThrows
+    @Override
+    public List<SearchableField> getSearchableFields(@NotNull Class<?> modelClass) {
+        return searchableFieldService == null ? List.of() : searchableFieldService.describe(modelClass);
+    }
+
     public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager, SearchService searchService, @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider) {
         this.projectId = projectId;
         this.projectSpaceManager = projectSpaceManager;
