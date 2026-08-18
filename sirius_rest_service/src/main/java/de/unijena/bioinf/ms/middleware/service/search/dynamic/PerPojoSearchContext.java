@@ -1,14 +1,11 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
-import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFields;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
-import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.store.ByteBuffersDirectory;
@@ -44,46 +41,10 @@ public class PerPojoSearchContext implements SearchContext {
     protected final ConcurrentHashMap<Class<?>, SinglePojoLuceneIndexManager<?>> indices;
     protected final Map<String, ValueType> tagDefs;
 
-    /**
-     * Provides human-readable descriptions for indexed fields, e.g. from OpenAPI annotations. Injected by the
-     * caller so the lucene machinery stays free of presentation-layer concerns; null for no descriptions.
-     */
-    @Nullable
-    protected final Function<Field, String> fieldDescriptionProvider;
-
-    /**
-     * Explains the index to API users. Lives alongside the index rather than inside it: it reads what the
-     * index reports about itself and adds what only the model knows.
-     */
-    private final SearchableFieldDescriber describer;
-
-    /**
-     * Supplies the vocabulary of fields whose values are project state rather than a property of the model -
-     * the tags defined in the project, the adducts detected in it. Injected by the caller, which owns that
-     * state; null if it is not available (such fields are then described as accepting free text). What it
-     * reports wins over the vocabulary a field declares statically, being the more specific answer.
-     */
-    @Nullable
-    protected final FieldVocabulary projectFieldVocabulary;
-
     public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions) {
-        this(indexRootDir, tagDefinitions, null);
-    }
-
-    public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
-                                @Nullable Function<Field, String> fieldDescriptionProvider) {
-        this(indexRootDir, tagDefinitions, fieldDescriptionProvider, null);
-    }
-
-    public PerPojoSearchContext(@Nullable Path indexRootDir, @Nullable Map<String, ValueType> tagDefinitions,
-                                @Nullable Function<Field, String> fieldDescriptionProvider,
-                                @Nullable FieldVocabulary projectFieldVocabulary) {
         this.indexRootDir = indexRootDir;
-        this.fieldDescriptionProvider = fieldDescriptionProvider;
-        this.projectFieldVocabulary = projectFieldVocabulary;
         indices = new ConcurrentHashMap<>();
         tagDefs = tagDefinitions != null ? tagDefinitions : new HashMap<>();
-        describer = new SearchableFieldDescriber(fieldDescriptionProvider);
     }
 
     @Override
@@ -206,37 +167,25 @@ public class PerPojoSearchContext implements SearchContext {
     }
 
     @Override
-    public <T> List<SearchableField> getSearchableFields(Class<T> beanClass) {
-        // Objects without a document id field have no search index at all - report "nothing searchable"
-        // instead of failing to create an index manager for them.
+    public <T> IndexSchema getIndexSchema(Class<T> beanClass) {
+        // Objects without a document id field have no search index at all - they hold nothing.
         if (!GenericPojoMapper.isIndexable(beanClass))
-            return List.of();
-        SinglePojoLuceneIndexManager<T> manager = getIndexManager(beanClass);
-        // Dynamic-key fields (e.g. matchedDatabases.*, qualities.*, molecularFormula.*) are described
-        // statically with a trailing ".*", which is not a usable query token. Expand each into the
-        // concrete keys actually present in the index so the autocomplete offers real field names.
-        List<SearchableField> fields = new ArrayList<>(SearchableFields.expandDynamicKeyFields(
-                describer.describe(manager.getIndexSchema()), manager.getIndexedFieldNames()));
-        // Tag fields are derived on demand from the tag definition registry - the same monitor that also
-        // brackets propagation of registry changes to the index managers, so the report is always
-        // consistent with the query parser configuration. Sorted for a deterministic response.
-        if (manager.isTaggable()) {
-            synchronized (tagDefs) {
-                tagDefs.keySet().stream().sorted().forEach(tagName -> fields.add(SearchableFields
-                        .toTagSearchableField(Taggable.makeTagFieldName(tagName), tagName, tagDefs.get(tagName), null)));
-            }
+            return IndexSchema.EMPTY;
+        return getIndexManager(beanClass).getIndexSchema();
+    }
+
+    @Override
+    public <T> Set<String> getMaterializedFieldNames(Class<T> beanClass) {
+        if (!GenericPojoMapper.isIndexable(beanClass))
+            return Set.of();
+        return getIndexManager(beanClass).getIndexedFieldNames();
+    }
+
+    @Override
+    public Map<String, ValueType> getTagValueTypes() {
+        synchronized (tagDefs) {
+            return Map.copyOf(tagDefs);
         }
-        // Vocabularies that are project state (tag definitions, detected adducts) are read here, on every
-        // description, rather than cached: they change while the project is open - a tag definition gets more
-        // possible values, an import detects more adducts - and a cached copy would report a stale vocabulary.
-        if (projectFieldVocabulary != null) {
-            fields.forEach(field -> {
-                List<String> possibleValues = projectFieldVocabulary.getPossibleValues(field.getName());
-                if (possibleValues != null)
-                    field.setPossibleValues(possibleValues);
-            });
-        }
-        return fields;
     }
 
     /**

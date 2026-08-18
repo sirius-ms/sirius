@@ -2,10 +2,7 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
-import de.unijena.bioinf.ms.middleware.service.search.ApiDocFieldDescriptions;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
-import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
-import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,17 +56,7 @@ public class NoSqlProjectSearchContextProvider implements SearchContextProvider<
         Map<String, ValueType> tagDefinitions = new HashMap<>();
         project.project().findAllTagDefinitionsStr().forEach(td -> tagDefinitions.put(td.getTagName(), td.getValueType()));
 
-        // Field descriptions come from the API documentation of the models (schema annotations/javadoc);
-        // injected here (REST-side glue) so the search machinery itself stays free of presentation concerns.
-        // Vocabularies that are project state: the possible values of a tag, taken from its definition, and the
-        // adducts the project has detected. Both are read when the fields are described, so a definition
-        // extended or an import run later is reflected without reopening the project.
-        return new PerPojoDatabaseSearchContext<>(project.storage(), projectIndexRoot, tagDefinitions,
-                ApiDocFieldDescriptions.PROVIDER,
-                FieldVocabulary.firstOf(
-                        new TagDefinitionPossibleValues(tagName -> project.project().findTagDefinitionByName(tagName)),
-                        new DetectedAdductPossibleValues(() -> project.project().findDetectedAdducts()
-                                .map(ProjectDetectedAdducts::getDetectedAdducts).orElse(null))));
+        return new PerPojoDatabaseSearchContext<>(project.storage(), projectIndexRoot, tagDefinitions);
     }
 
     @Override

@@ -31,6 +31,8 @@ import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -70,8 +72,13 @@ public class SearchServiceSearchableFieldsTest {
         searchService.closeProjectIndex(mockProject, true);
     }
 
+    /** Describing is done outside the search engine, over the facts it reports. */
+    private SearchableFieldService searchableFields() {
+        return new SearchableFieldService(IndexFacts.of(searchService, projectId), null);
+    }
+
     private Map<String, SearchableField> fieldsAsMap(Class<?> pojoClass) {
-        return searchService.getSearchableFields(projectId, pojoClass).stream()
+        return searchableFields().describe(pojoClass).stream()
                 .collect(Collectors.toMap(SearchableField::getName, Function.identity()));
     }
 
@@ -101,7 +108,7 @@ public class SearchServiceSearchableFieldsTest {
         assertFalse(concentration.isFullTextSearch());
 
         // tag fields are reported in deterministic (alphabetical) order
-        List<String> tagFieldNames = searchService.getSearchableFields(projectId, Run.class).stream()
+        List<String> tagFieldNames = searchableFields().describe(Run.class).stream()
                 .map(SearchableField::getName)
                 .filter(name -> name.startsWith("tags."))
                 .toList();
@@ -139,11 +146,11 @@ public class SearchServiceSearchableFieldsTest {
     @Test
     public void testObjectsWithoutIndexHaveNoSearchableFields() {
         // Compound has no search index (no document id field)
-        List<SearchableField> compoundFields = searchService.getSearchableFields(projectId, Compound.class);
+        List<SearchableField> compoundFields = searchableFields().describe(Compound.class);
         assertNotNull(compoundFields);
         assertTrue(compoundFields.isEmpty(), "objects without index must yield an empty field list");
 
         // completely unannotated classes as well
-        assertTrue(searchService.getSearchableFields(projectId, String.class).isEmpty());
+        assertTrue(searchableFields().describe(String.class).isEmpty());
     }
 }

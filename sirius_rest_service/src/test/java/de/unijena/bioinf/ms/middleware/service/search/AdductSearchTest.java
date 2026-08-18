@@ -26,7 +26,8 @@ import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoSearchContext;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.DetectedAdductPossibleValues;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
+import de.unijena.bioinf.ms.middleware.service.search.description.DetectedAdductPossibleValues;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PrecursorIonTypeQueryRewriter;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
@@ -258,22 +259,23 @@ public class AdductSearchTest {
     @Test
     public void testTheSearchContextReportsTheProjectsAdducts() throws IOException {
         Set<String> detected = new HashSet<>(Set.of("[M + H]+"));
-        try (PerPojoSearchContext context = new PerPojoSearchContext(null, new HashMap<>(), null,
-                new DetectedAdductPossibleValues(() -> detected))) {
+        try (PerPojoSearchContext context = new PerPojoSearchContext(null, new HashMap<>())) {
+            SearchableFieldService fields = DescribedFields.serviceFor(context,
+                    new DetectedAdductPossibleValues(() -> detected));
 
             // the unknown ion types come first, as SIRIUS ranks them: "any adduct" before a specific one
             assertEquals(List.of(PrecursorIonType.unknownPositive().toString(),
                             PrecursorIonType.unknownNegative().toString(), "[M + H]+"),
-                    adductField(context).getPossibleValues());
+                    adductField(fields).getPossibleValues());
 
-            // an import detecting another adduct is reported without reopening the project
+            // an import detecting another adduct is reported without describing the index again
             detected.add("[M + Na]+");
-            assertTrue(adductField(context).getPossibleValues().contains("[M + Na]+"));
+            assertTrue(adductField(fields).getPossibleValues().contains("[M + Na]+"));
         }
     }
 
-    private static SearchableField adductField(PerPojoSearchContext context) {
-        return context.getSearchableFields(AlignedFeature.class).stream()
+    private static SearchableField adductField(SearchableFieldService fields) {
+        return fields.describe(AlignedFeature.class).stream()
                 .collect(Collectors.toMap(SearchableField::getName, Function.identity()))
                 .get(FIELD);
     }

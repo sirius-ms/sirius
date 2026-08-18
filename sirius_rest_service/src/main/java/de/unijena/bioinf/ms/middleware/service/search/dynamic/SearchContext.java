@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
-import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +72,14 @@ public interface SearchContext extends Closeable {
      * Describes the fields that can be used in search queries for the given object type, including the
      * project's dynamic tag fields. Empty if the object type has no search index.
      */
-    <T> List<SearchableField> getSearchableFields(Class<T> beanClass);
+    /** What the index of the given type holds, as recorded when it was configured. */
+    <T> IndexSchema getIndexSchema(Class<T> beanClass);
+
+    /** The field names actually present in that index, including the keys a dynamic field has taken. */
+    <T> Set<String> getMaterializedFieldNames(Class<T> beanClass);
+
+    /** The tag definitions this context knows, by name. */
+    Map<String, ValueType> getTagValueTypes();
 
     ValueType getTagValueType(String tagName);
 

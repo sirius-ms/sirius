@@ -27,13 +27,17 @@ import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.DetectedAdductPossibleValues;
+import de.unijena.bioinf.ms.middleware.service.search.description.DetectedAdductPossibleValues;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoSearchContext;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.TagDefinitionPossibleValues;
+import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionPossibleValues;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import de.unijena.bioinf.ms.middleware.service.search.description.ApiDocFieldDescriptions;
 import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
+import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -88,7 +92,11 @@ public class SearchableFieldsGoldenMasterTest {
                 "isBlank", ValueType.BOOLEAN,
                 "pfas", ValueType.NONE));
 
-        Map<String, TagDefinition> definitions = Map.of(
+        return new PerPojoSearchContext(null, tagValueTypes);
+    }
+
+    private static Map<String, TagDefinition> tagDefinitions() {
+        return Map.of(
                 "sampleType", tagDefinition("sampleType", ValueType.TEXT, List.of("Sample", "Blank", "Standard")),
                 "comment", tagDefinition("comment", ValueType.TEXT, List.of()),
                 "concentration", tagDefinition("concentration", ValueType.REAL, List.of()),
@@ -97,13 +105,17 @@ public class SearchableFieldsGoldenMasterTest {
                 "injectedAt", tagDefinition("injectedAt", ValueType.TIME, List.of()),
                 "isBlank", tagDefinition("isBlank", ValueType.BOOLEAN, List.of()),
                 "pfas", tagDefinition("pfas", ValueType.NONE, List.of()));
+    }
 
+    /**
+     * The vocabularies a project owns, the way the project supplies them.
+     */
+    private static FieldVocabulary projectVocabulary() {
+        Map<String, TagDefinition> definitions = tagDefinitions();
         Set<String> detectedAdducts = Set.of("[M + H]+", "[M + Na]+", "[M - H]-");
-
-        return new PerPojoSearchContext(null, tagValueTypes, ApiDocFieldDescriptions.PROVIDER,
-                FieldVocabulary.firstOf(
-                        new TagDefinitionPossibleValues(name -> Optional.ofNullable(definitions.get(name))),
-                        new DetectedAdductPossibleValues(() -> detectedAdducts)));
+        return FieldVocabulary.firstOf(
+                new TagDefinitionPossibleValues(name -> Optional.ofNullable(definitions.get(name))),
+                new DetectedAdductPossibleValues(() -> detectedAdducts));
     }
 
     private static TagDefinition tagDefinition(String tagName, ValueType valueType, List<?> possibleValues) {
@@ -175,7 +187,9 @@ public class SearchableFieldsGoldenMasterTest {
     }
 
     private static List<Map<String, Object>> describe(PerPojoSearchContext context, Class<?> modelClass) {
-        return context.getSearchableFields(modelClass).stream()
+        return new SearchableFieldService(IndexFacts.of(context), projectVocabulary(),
+                new SearchableFieldDescriber(ApiDocFieldDescriptions.PROVIDER))
+                .describe(modelClass).stream()
                 .map(SearchableFieldsGoldenMasterTest::canonical)
                 .toList();
     }

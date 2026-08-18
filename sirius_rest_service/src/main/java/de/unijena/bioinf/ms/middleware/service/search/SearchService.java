@@ -1,9 +1,9 @@
 package de.unijena.bioinf.ms.middleware.service.search;
 
-import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +104,14 @@ public interface SearchService extends AutoCloseable {
      * Describes the fields that can be used in search queries for the given object type, including the
      * project's dynamic tag fields. Empty if the object type has no search index.
      */
-    <T> List<SearchableField> getSearchableFields(String projectId, Class<T> beanClass);
+    /** What the given project's index of that type holds, as recorded when it was configured. */
+    <T> IndexSchema getIndexSchema(String projectId, Class<T> beanClass);
+
+    /** The field names actually present in that index, including the keys a dynamic field has taken. */
+    <T> Set<String> getMaterializedFieldNames(String projectId, Class<T> beanClass);
+
+    /** The tag definitions the given project knows, by name. */
+    Map<String, ValueType> getTagValueTypes(String projectId);
 
     ValueType getTagValueType(String projectId, String tagName);
     void addTagValueType(String projectId, String tagName, ValueType valueType);
