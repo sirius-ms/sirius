@@ -63,4 +63,36 @@ When asked (or you notice yourself that you need these insights) to analyze, upd
 * Only commit if you are asked to by the user or ask the user before commiting for permission.
 * **Never** add AI agent watermarks to commit messages.
 * **Never** Push to remote. Even if the user asks you to do so.
-* Prefer small self-contained commits over big and bulky commits that contain multiple topics. 
+* Prefer small self-contained commits over big and bulky commits that contain multiple topics.
+
+## 9. Nitrite / Document Storage (project spaces & custom databases)
+
+Persistent document storage (SIRIUS project spaces, custom structure/spectral databases) uses
+Nitrite 4 on an MVStore backend, wrapped by our `Database` abstraction in `document-storage`
+(`NitriteDatabase`). We run a **fork** of Nitrite (`4.3.3-siriusN`); the patches it carries and
+why they exist are documented in `gradle/libs.versions.toml`. Behavior and best practices:
+
+* **Never use `Filter.in()` for k-key lookups.** Nitrite's `InFilter.applyOnIndex` does a full
+  index scan (iterates every index entry and hash-tests it) — it never does point lookups.
+  Verified in our tests and code reviews. `in()` is only acceptable when the key set covers a
+  large fraction (>~50%) of the collection. For looking up a batch of keys, use per-key
+  `Filter.where(field).eq(key)` — `EqualsFilter` does a real indexed point lookup
+  (`indexMap.get`).
+* **Only top-level fields are indexable.** Filters on nested document fields (e.g.
+  `candidate.inchikey`, `candidate.name`) always full-scan the collection and deserialize every
+  document. Check the `Metadata`/`Index` declarations (e.g. `ChemicalNoSQLDatabase.initMetadata`,
+  `SpectralNoSQLDatabase.initMetadata`) before writing a filter; if a query needs a nested field,
+  promote it to a top-level indexed field instead.
+* **Storage is expensive per record.** MVMaps use Java serialization (`ObjectDataType`) for keys
+  and documents, and the Jackson mapper turns array fields into boxed `ArrayList`s. Prefer
+  primitive arrays / `byte[]` blobs in entities and custom serializers for bulk numeric data
+  (fingerprints, peak lists); avoid designs that read or rewrite large documents per item.
+* **`upsertAll` is not a batch operation.** It loops a find-then-replace per object under a global
+  write lock. When you know records are new, use `insertAll`; reserve update/upsert for records
+  known to exist.
+* **Use optional-field projection.** Large fields (`fingerprint`, `spectrum`,
+  `searchPreparedSpectrum`) are declared optional; only request them (`withOptionalFields`) when
+  actually needed.
+* **MVStore is append-only.** Updates and deletes leave dead chunks; files never shrink on their
+  own. Bulk writes should end with `compact()` (note: it closes the store — make it the terminal
+  step, as `NoSQLProjectSpaceManager` does).
