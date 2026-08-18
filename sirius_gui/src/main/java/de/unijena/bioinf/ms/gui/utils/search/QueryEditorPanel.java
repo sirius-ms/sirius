@@ -60,9 +60,11 @@ import java.util.function.Supplier;
  * a {@link Host}. {@link SearchBarOverlay} hosts it in a floating dialog; the feature filter dialog
  * embeds it directly.
  * <p>
- * Up/Down navigate the suggestion list and Tab is the only key that builds the query (it picks the
- * highlighted suggestion or commits a typed value). Backspace on empty input pops a stage. Enter
- * runs the search, accepting a terminal token as a chip first.
+ * Up/Down navigate the suggestion list; Enter and Tab both ADD the highlighted suggestion (or the
+ * typed value) to the query. An untouched input highlights the run-action row ("Search") on top
+ * instead, so Enter on an empty input runs the search - typing a term and pressing Enter twice is the
+ * quick full-text search. Tab never runs the search (it skips that row); Backspace on empty input
+ * pops a stage.
  * <p>
  * The builder state compiles into the {@link FeatureFilterModel}'s shared search text document on
  * commit - the model itself needs no change and the filter dialog's fulltext field shows the
@@ -104,9 +106,9 @@ public class QueryEditorPanel extends JPanel {
         void editorCloseRequested();
 
         /**
-         * Enter was pressed to run/apply the query. The floating overlay handles Enter itself (it
-         * runs the search), so this is only overridden by the embedded host (the filter dialog), for
-         * which Enter means Apply.
+         * Enter was pressed with nothing left to add, i.e. the query should be run/applied. The
+         * floating overlay handles that itself (it runs the search), so this is only overridden by
+         * the embedded host (the filter dialog), for which it means Apply.
          */
         default void editorCommitRequested() {
         }
@@ -205,12 +207,32 @@ public class QueryEditorPanel extends JPanel {
      */
     private JScrollPane chipsScroll;
     /**
-     * Lower zone: the term currently being built - open-group markers, staged fragments and the input.
+     * Lower zone, left part: the open-group markers and staged fragments of the term being built.
+     * The input itself takes the rest of that line (see {@link #typingLine}).
      */
     private final JPanel typingRow;
+    /** Right end of the typing line: the close-group control (while a group is open) and the key hint. */
+    private final JPanel typingTrailing = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 2));
+    /**
+     * The whole typing line: staged fragments (west), the input (center, grows to the full remaining
+     * width) and the trailing controls (east).
+     */
+    private JPanel typingLine;
     private final PlaceholderTextField input;
+    /**
+     * Trailing hint on the typing row telling what the accept/run keys do RIGHT NOW. Only shown while
+     * something is typed - on an empty input the highlighted run-action row says it instead.
+     */
+    private final JLabel keyHint = new JLabel();
     private final JList<TokenInputModel.Suggestion> suggestionList;
     private final JScrollPane suggestionScroll;
+    /**
+     * Where the pointer sat when the session opened. Hover-selection is ignored while it is still
+     * there, so an editor popping up UNDER the cursor (Ctrl+F with the mouse over the result view)
+     * does not silently move the selection off the default row. Cleared by the first real move.
+     */
+    @Nullable
+    private Point hoverAnchor;
 
     public QueryEditorPanel(@NotNull FeatureFilterModel filterModel,
                             @NotNull SearchableFieldsProvider fieldsProvider,
@@ -237,6 +259,11 @@ public class QueryEditorPanel extends JPanel {
         this.openFilterPanel = openFilterPanel;
         this.clearFilter = clearFilter;
         this.restoreDefaults = restoreDefaults;
+
+        // the top row of an untouched input: Enter runs the search (overlay) / applies the dialog
+        tokenModel.setRunAction(new TokenInputModel.RunAction("Search",
+                "Apply the filter and close (Enter)",
+                "Type to add query terms"));
 
         setBackground(UIManager.getColor("TextField.background"));
         setBorder(BorderFactory.createCompoundBorder(
@@ -266,6 +293,18 @@ public class QueryEditorPanel extends JPanel {
 
         typingRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2)); // the term being built, on its own line
         typingRow.setOpaque(false);
+
+        keyHint.setForeground(UIManager.getColor("TextField.inactiveForeground"));
+        keyHint.setFont(keyHint.getFont().deriveFont(Font.PLAIN, keyHint.getFont().getSize2D() - 1f));
+        keyHint.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 4));
+        typingTrailing.setOpaque(false);
+        // the staged fragments on the left and the trailing controls on the right take their natural
+        // width; everything in between belongs to the input, so there is room to type a long term
+        typingLine = new JPanel(new BorderLayout());
+        typingLine.setOpaque(false);
+        typingLine.add(typingRow, BorderLayout.WEST);
+        typingLine.add(input, BorderLayout.CENTER);
+        typingLine.add(typingTrailing, BorderLayout.EAST);
 
         Box controls = Box.createHorizontalBox();
 
@@ -348,7 +387,7 @@ public class QueryEditorPanel extends JPanel {
         Box northStack = Box.createVerticalBox();
         northStack.setOpaque(false);
         northStack.add(chipsHeader);
-        northStack.add(typingRow);
+        northStack.add(typingLine);
         add(northStack, BorderLayout.NORTH);
 
         // the floating overlay's main actions live in a right-aligned footer (like the app's dialogs);
@@ -356,7 +395,7 @@ public class QueryEditorPanel extends JPanel {
         if (!embedded) {
             JButton apply = new JButton("Apply");
             apply.setFocusable(false); // keep keyboard focus in the input (Enter still applies)
-            apply.setToolTipText("Apply the filter and close (Enter)");
+            apply.setToolTipText("Apply the filter and close (Enter on an empty input)");
             apply.addActionListener(e -> runSearch());
 
             JButton discard = new JButton("Discard");
@@ -398,13 +437,24 @@ public class QueryEditorPanel extends JPanel {
                 int index = suggestionList.locationToIndex(e.getPoint());
                 if (index >= 0) {
                     suggestionList.setSelectedIndex(index);
-                    chooseSelectedSuggestion();
+                    // a click on a row does what Enter on it would do (the run-action row runs the search)
+                    if (isRunActionSelected())
+                        runOrCommit();
+                    else
+                        acceptCurrentToken(false);
                 }
             }
         });
         suggestionList.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
+                // a list that appears under a resting cursor gets a mouseMoved without any actual
+                // movement - that must not hijack the default selection (the run-action row)
+                if (hoverAnchor != null) {
+                    if (hoverAnchor.equals(e.getLocationOnScreen()))
+                        return;
+                    hoverAnchor = null;
+                }
                 int index = suggestionList.locationToIndex(e.getPoint());
                 if (index >= 0)
                     suggestionList.setSelectedIndex(index);
@@ -596,6 +646,7 @@ public class QueryEditorPanel extends JPanel {
      * then calls {@link #focusInputAndRefresh()}.
      */
     public void openSession(@Nullable String typeAhead) {
+        hoverAnchor = pointerLocation(); // ignore hover-selection until the mouse really moves
         String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
         if (!docText.equals(lastCompiled)) {
             openPath = new int[0];
@@ -631,6 +682,18 @@ public class QueryEditorPanel extends JPanel {
         });
 
         rebuild();
+    }
+
+    /** The pointer's screen position, or null when it cannot be determined (headless, no pointer). */
+    @Nullable
+    private static Point pointerLocation() {
+        try {
+            PointerInfo info = MouseInfo.getPointerInfo();
+            return info == null ? null : info.getLocation();
+        } catch (RuntimeException e) {
+            log.debug("Could not read the pointer location", e);
+            return null;
+        }
     }
 
     /**
@@ -687,24 +750,20 @@ public class QueryEditorPanel extends JPanel {
                         e.consume();
                     }
                     case KeyEvent.VK_TAB -> {
-                        // Tab is the only key that builds the query: pick the highlighted
-                        // suggestion, or (at a free-form value stage with no suggestion) commit
-                        // the typed value / advance the token.
-                        if (!chooseSelectedSuggestion()) {
-                            tokenModel.submitTyped(input.getText()).ifPresent(QueryEditorPanel.this::applyEvent);
-                            input.setText("");
-                            rebuild();
-                        }
+                        // Tab only ever ADDS to the query: it picks the highlighted suggestion (the
+                        // run-action row is skipped - Tab never runs the search) or commits the
+                        // typed value / advances the token.
+                        acceptCurrentToken(true);
                         e.consume();
                     }
                     case KeyEvent.VK_ENTER -> {
-                        // Enter runs the search, accepting a terminal token as a chip first. It
-                        // never *selects* a field/operator/connector - Tab does. Embedded, Enter is
-                        // the dialog's Apply (which bakes any terminal token via commitToDocument).
-                        if (embedded)
-                            host.editorCommitRequested();
-                        else
-                            runSearch();
+                        // Enter applies the highlighted row: the run-action row on top of an
+                        // untouched input runs the search, everything else is added like Tab. With
+                        // nothing left to add, Enter runs the search too - so typing a term and
+                        // pressing Enter twice is the quick full-text search. Embedded, "run" is
+                        // the dialog's Apply (which bakes a terminal token via commitToDocument).
+                        if (isRunActionSelected() || !acceptCurrentToken(false))
+                            runOrCommit();
                         e.consume();
                     }
                     case KeyEvent.VK_BACK_SPACE -> {
@@ -783,6 +842,7 @@ public class QueryEditorPanel extends JPanel {
         if (isShowing())
             showSuggestions(tokenModel.suggestions(input.getText()));
         validateInput();
+        updateKeyHint();
     }
 
     private void showSuggestions(List<TokenInputModel.Suggestion> suggestions) {
@@ -795,7 +855,10 @@ public class QueryEditorPanel extends JPanel {
         }
         TokenInputModel.Suggestion previous = suggestionList.getSelectedValue();
         suggestionList.setListData(suggestions.toArray(TokenInputModel.Suggestion[]::new));
-        int keep = previous == null ? -1 : suggestions.indexOf(previous);
+        // while the run-action row is offered it IS the default pick - keeping an earlier selection
+        // would leave a field highlighted after the input was emptied again (Enter would add it)
+        boolean runActionOnTop = suggestions.get(0) instanceof TokenInputModel.Suggestion.RunActionSuggestion;
+        int keep = previous == null || runActionOnTop ? -1 : suggestions.indexOf(previous);
         suggestionList.setSelectedIndex(Math.max(keep, 0));
         suggestionList.ensureIndexIsVisible(suggestionList.getSelectedIndex());
         suggestionList.setVisibleRowCount(Math.min(suggestions.size(), MAX_LIST_ROWS));
@@ -813,13 +876,53 @@ public class QueryEditorPanel extends JPanel {
     }
 
     /**
-     * Picks the highlighted suggestion; false when there is nothing to pick, so the caller can fall
-     * back to its own handling.
+     * Adds the current token to the query: the highlighted suggestion, or the typed text where the
+     * stage can take it. False when there is nothing to add at all - the caller (Enter) then runs
+     * the search instead.
+     *
+     * @param skipRunAction Tab's contract: never run the action, use the first real row below it
      */
-    private boolean chooseSelectedSuggestion() {
+    private boolean acceptCurrentToken(boolean skipRunAction) {
+        if (chooseSelectedSuggestion(skipRunAction))
+            return true;
+        if (!tokenModel.canAccept(input.getText()))
+            return false;
+        tokenModel.submitTyped(input.getText()).ifPresent(QueryEditorPanel.this::applyEvent);
+        input.setText("");
+        rebuild();
+        return true;
+    }
+
+    /** Runs the query: the search for the floating overlay, Apply for the embedded dialog. */
+    private void runOrCommit() {
+        if (embedded)
+            host.editorCommitRequested();
+        else
+            runSearch();
+    }
+
+    /** Whether the highlighted row is the run-action row (Enter on it runs the search / applies). */
+    private boolean isRunActionSelected() {
+        return suggestionScroll.isVisible()
+                && suggestionList.getSelectedValue() instanceof TokenInputModel.Suggestion.RunActionSuggestion;
+    }
+
+    /**
+     * Picks the highlighted suggestion; false when there is nothing to pick, so the caller can fall
+     * back to its own handling. The run-action row is never "picked" here: Enter handles it before
+     * calling (it runs the search), and Tab - which must not run anything - either steps over it to
+     * the first real row below ({@code skipRunAction}) or reports nothing to pick.
+     */
+    private boolean chooseSelectedSuggestion(boolean skipRunAction) {
         if (!suggestionScroll.isVisible())
             return false;
         TokenInputModel.Suggestion selected = suggestionList.getSelectedValue();
+        if (selected instanceof TokenInputModel.Suggestion.RunActionSuggestion) {
+            int next = suggestionList.getSelectedIndex() + 1;
+            if (!skipRunAction || next >= suggestionList.getModel().getSize())
+                return false;
+            selected = suggestionList.getModel().getElementAt(next);
+        }
         if (selected == null)
             return false;
         applySuggestion(selected);
@@ -838,11 +941,31 @@ public class QueryEditorPanel extends JPanel {
         input.setToolTipText(problem == null ? null : GuiUtils.formatToolTip(problem));
     }
 
+    /**
+     * The trailing key hint: what Enter/Tab do with what is currently typed. An empty input shows
+     * nothing here - there the highlighted run-action row is the hint (and the field's placeholder,
+     * {@link TokenInputModel#stagePrompt()}, invites typing).
+     */
+    private void updateKeyHint() {
+        keyHint.setText(keyHintText());
+    }
+
+    private String keyHintText() {
+        if (input.getText().isEmpty())
+            return "";
+        boolean addable = (suggestionScroll.isVisible() && suggestionList.getSelectedValue() != null
+                && !isRunActionSelected()) || tokenModel.canAccept(input.getText());
+        if (addable)
+            return "Tab or Enter to add";
+        return "Enter to apply";
+    }
+
     // --- compile & commit ---
 
     /**
      * The input text only counts as a free-text search segment at an entry stage; at a mid-token
-     * stage it is a value/operator fragment that Enter discards (Tab commits it into a clause).
+     * stage it is a value/operator fragment that running the query discards (the accept key would
+     * have committed it into a clause first).
      */
     private String freeTextForCommit() {
         return tokenModel.atEntryStage() ? input.getText().trim() : "";
@@ -856,8 +979,8 @@ public class QueryEditorPanel extends JPanel {
     }
 
     /**
-     * Accepts a terminal token as a chip, then runs the search. Shared by Enter and the Search
-     * button so both behave the same.
+     * Accepts a terminal token as a chip, then runs the search. Shared by the Apply button and by
+     * Enter (once there is nothing left to add) so both behave the same.
      */
     private void runSearch() {
         if (tokenModel.isTerminal(input.getText())) {
@@ -980,12 +1103,14 @@ public class QueryEditorPanel extends JPanel {
         // --- lower zone: the term currently being built, on its own line ---
         buildTypingRow();
 
-        input.setPlaceholder(tokenModel.stagePrompt());
+        // refresh first: it re-syncs the token stage with the (possibly changed) sibling context,
+        // which the stage prompt below reads
         refreshSuggestions();
+        input.setPlaceholder(tokenModel.stagePrompt());
         chipsRow.revalidate();
         chipsRow.repaint();
-        typingRow.revalidate();
-        typingRow.repaint();
+        typingLine.revalidate();
+        typingLine.repaint();
         if (isShowing())
             host.editorContentChanged();
         // when the chips zone overflows (e.g. while building a group), keep the newest / in-progress
@@ -1013,13 +1138,24 @@ public class QueryEditorPanel extends JPanel {
         typingRow.removeAll();
         for (int depth = 0; depth < openPath.length; depth++)
             typingRow.add(openGroupMarker());
-        for (String fragment : tokenModel.pendingFragments())
-            typingRow.add(new ChipComponent(fragment, "Being built - Backspace removes it",
-                    ChipComponent.Style.USER, null, null));
-        typingRow.add(input);
-        // a clickable ) right where the user types, to close the innermost open group and continue
+        for (TokenInputModel.Fragment fragment : tokenModel.pendingFragments()) {
+            // a field fragment follows the display mode like every committed chip; its tooltip keeps
+            // the fully-qualified name that will actually be submitted
+            boolean isField = fragment.fieldName() != null;
+            String text = isField
+                    ? QueryNodeRenderer.displayField(fragment.fieldName(), renderState.mode(), renderState.suffixLengthResolver())
+                    : fragment.text();
+            String tooltip = isField
+                    ? GuiUtils.formatToolTip(fragment.fieldName(), "Being built - Backspace removes it")
+                    : "Being built - Backspace removes it";
+            typingRow.add(new ChipComponent(text, tooltip, ChipComponent.Style.USER, null, null));
+        }
+        // the input sits between these two (BorderLayout.CENTER), so it fills the rest of the line
+        typingTrailing.removeAll();
+        // a clickable ) at the end of the line being typed, to close the innermost open group and continue
         if (openPath.length > 0)
-            typingRow.add(closeGroupControl());
+            typingTrailing.add(closeGroupControl());
+        typingTrailing.add(keyHint);
     }
 
     /**
@@ -1295,7 +1431,17 @@ public class QueryEditorPanel extends JPanel {
                     : "<html><b>" + escape(display) + "</b>&nbsp;&nbsp;<span style='color:gray'>"
                       + escape(truncate(description)) + "</span></html>";
             Component component = super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
-            ((JComponent) component).setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
+            // the run-action row is not a query part - set it apart by the accent tint and a rule
+            // below it, so the rows underneath read as "and these add to the query"
+            if (suggestion instanceof TokenInputModel.Suggestion.RunActionSuggestion) {
+                ((JComponent) component).setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createMatteBorder(0, 0, 1, 0, Colors.Menu.FILTER_BUTTON),
+                        BorderFactory.createEmptyBorder(3, 8, 3, 8)));
+                if (!isSelected)
+                    component.setForeground(Colors.Menu.FILTER_BUTTON);
+            } else {
+                ((JComponent) component).setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
+            }
             return component;
         }
 

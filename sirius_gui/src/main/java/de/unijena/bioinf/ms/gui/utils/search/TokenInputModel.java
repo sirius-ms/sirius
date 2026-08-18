@@ -39,6 +39,10 @@ import java.util.Optional;
  * bound meaning open-ended. Backspace on empty input pops one stage; with nothing pending it asks
  * the owner to remove the last committed chip.
  * <p>
+ * An untouched token additionally offers the owner's {@link RunAction} as the top suggestion, so the
+ * default pick of an empty input is "run the search" rather than the first field; typing anything
+ * drops that row again.
+ * <p>
  * Pure model: the UI renders {@link #suggestions}, {@link #pendingFragments} and {@link #stagePrompt}
  * and applies the returned {@link Event}s to the query tree. Free text is not consumed here - typed
  * text that resolves to nothing stays the free-text search segment of the owner.
@@ -162,6 +166,31 @@ public class TokenInputModel {
                 return "parse as query";
             }
         }
+
+        /**
+         * Run the owner's action (search / apply) instead of adding anything to the query. Offered on
+         * top of an untouched input so it is the default pick, and gone as soon as anything is typed -
+         * the owner intercepts it, the model itself has nothing to do with it (see {@link #choose}).
+         */
+        record RunActionSuggestion(@NotNull String display, @NotNull String description) implements Suggestion {
+        }
+    }
+
+    /**
+     * The owner's "this is finished, run it" action, surfaced as the top suggestion of an untouched
+     * input: {@code label}/{@code description} render that row, {@code emptyPrompt} replaces the stage
+     * prompt while the row is offered. Null (unset) hides the row - a host without such a key.
+     */
+    public record RunAction(@NotNull String label, @NotNull String description, @NotNull String emptyPrompt) {
+    }
+
+    /**
+     * One staged token fragment: {@code text} as the model has it, and the fully-qualified
+     * {@code fieldName} it stands for - set only on the field fragment, so the owner knows which
+     * fragment may be shortened for display (the connector, {@code NOT} and the operator are display
+     * text already).
+     */
+    public record Fragment(@NotNull String text, @Nullable String fieldName) {
     }
 
     /**
@@ -195,6 +224,8 @@ public class TokenInputModel {
     private List<SearchableField> fields = List.of();
     private boolean hasSibling;
     private boolean groupOpen;
+    @Nullable
+    private RunAction runAction;
 
     // --- staged token state ---
     private Stage stage = Stage.FIELD;
@@ -216,6 +247,13 @@ public class TokenInputModel {
         // nothing has been staged yet for this token
         if (atEntryStage() && pendingLogic == null && !pendingNegated && pendingField == null)
             stage = hasSibling ? Stage.CONNECTOR : Stage.FIELD;
+    }
+
+    /**
+     * Sets (or clears) the owner's run action - the top row of an untouched input.
+     */
+    public void setRunAction(@Nullable RunAction runAction) {
+        this.runAction = runAction;
     }
 
     public Stage stage() {
@@ -242,6 +280,14 @@ public class TokenInputModel {
             case OPERATOR -> operatorSuggestions(prefix);
             case VALUE, VALUE2 -> valueSuggestions(prefix);
         };
+        // an untouched input offers the owner's action FIRST, so it is the default pick and Enter runs
+        // the search straight away; typing anything drops it and the best match becomes the default again
+        if (offersRunAction(trimmed)) {
+            List<Suggestion> withRunAction = new ArrayList<>(suggestions.size() + 1);
+            withRunAction.add(new Suggestion.RunActionSuggestion(runAction.label(), runAction.description()));
+            withRunAction.addAll(suggestions);
+            suggestions = withRunAction;
+        }
         // at an entry stage, typed text can always become a keyless full-text clause; offered last
         // so a matching field stays the default pick
         if (atEntryStage() && !trimmed.isEmpty()) {
@@ -253,6 +299,14 @@ public class TokenInputModel {
                 suggestions.add(new Suggestion.ParseQuerySuggestion(trimmed));
         }
         return suggestions;
+    }
+
+    /**
+     * The run-action row shows on a fresh token only: nothing typed and nothing staged (a pending
+     * connector/NOT/field means the user is mid-token, where running the search would drop it).
+     */
+    private boolean offersRunAction(String trimmed) {
+        return runAction != null && trimmed.isEmpty() && atEntryStage() && pendingFragments().isEmpty();
     }
 
     /** True when {@code text} parses to a query richer than a single free-text clause (which the
@@ -275,7 +329,7 @@ public class TokenInputModel {
         if (matches(SpecialToken.OR, prefix))
             suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.OR));
         // inside an open group, ) closes it - offered here too so the group can be finished from the
-        // keyboard (select + Tab, or type ")") right after a committed clause, without adding another
+        // keyboard (select + Enter, or type ")") right after a committed clause, without adding another
         if (groupOpen && matches(SpecialToken.CLOSE_GROUP, prefix))
             suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.CLOSE_GROUP));
         return suggestions;
@@ -321,6 +375,9 @@ public class TokenInputModel {
      * Applies a chosen suggestion, advancing the stage.
      */
     public Optional<Event> choose(@NotNull Suggestion suggestion) {
+        // not ours: the owner runs its action and leaves the (empty) token untouched
+        if (suggestion instanceof Suggestion.RunActionSuggestion)
+            return Optional.empty();
         if (suggestion instanceof Suggestion.FieldSuggestion field) {
             pendingField = field.field();
             stage = NUMERIC_TYPES.contains(field.field().getFieldType()) ? Stage.OPERATOR : Stage.VALUE;
@@ -374,7 +431,7 @@ public class TokenInputModel {
     }
 
     /**
-     * Tab (or Enter on a terminal token) with raw typed text: value stages take it as the value; the
+     * The accept key (Enter, or Tab) with raw typed text: value stages take it as the value; the
      * operator stage matches it against the operators; at IDLE multi-token grammar input
      * ({@code or not ion}) is applied in one go, anything else is the owner's free-text segment (no
      * state change, empty result).
@@ -396,6 +453,23 @@ public class TokenInputModel {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Whether {@link #submitTyped} would actually consume {@code typed} - i.e. whether the accept key
+     * has anything to add at this stage. False lets the owner's Enter fall through to running the
+     * search. Plain free text at an entry stage is NOT accepted here (the free-text suggestion row
+     * covers it), so it stays false there.
+     */
+    public boolean canAccept(@NotNull String typed) {
+        String trimmed = typed.trim();
+        return switch (stage) {
+            // a range bound may be empty (open end); a single value may not
+            case VALUE -> (pendingOp != null && pendingOp.isRange()) || !trimmed.isEmpty();
+            case VALUE2 -> true;
+            case OPERATOR -> operatorSuggestions(trimmed.toLowerCase(Locale.ROOT)).size() == 1;
+            case CONNECTOR, FIELD -> CompletionParser.parse(trimmed, fields, hasSibling, groupOpen).isPresent();
+        };
     }
 
     private Optional<Event> applyGrammar(String text) {
@@ -495,18 +569,19 @@ public class TokenInputModel {
 
     /**
      * The staged (not yet committed) token fragments rendered as chips before the input,
-     * e.g. {@code [OR, NOT, ionMass, >=]}.
+     * e.g. {@code [OR, NOT, ionMass, >=]}. Only the field fragment names a field - the owner shortens
+     * that one per its display mode and keeps the fully-qualified name for the chip's tooltip.
      */
-    public List<String> pendingFragments() {
-        List<String> fragments = new ArrayList<>(4);
+    public List<Fragment> pendingFragments() {
+        List<Fragment> fragments = new ArrayList<>(4);
         if (pendingLogic != null)
-            fragments.add(pendingLogic.toString());
+            fragments.add(new Fragment(pendingLogic.toString(), null));
         if (pendingNegated)
-            fragments.add("NOT");
+            fragments.add(new Fragment("NOT", null));
         if (pendingField != null)
-            fragments.add(pendingField.getName());
+            fragments.add(new Fragment(pendingField.getName(), pendingField.getName()));
         if (pendingOp != null)
-            fragments.add(pendingOp.getSymbol());
+            fragments.add(new Fragment(pendingOp.getSymbol(), null));
         return fragments;
     }
 
@@ -514,30 +589,33 @@ public class TokenInputModel {
      * Placeholder/guidance text for the current stage.
      */
     public String stagePrompt() {
-        // Tab is the key that accepts/adds the current token (Enter runs the search); every prompt
-        // ends in ", then Tab" so users learn the accept key. Range bounds open with an empty Tab.
+        // Enter is the key that accepts/adds the current token (Tab still does the same); every prompt
+        // ends in ", then Enter" so users learn the accept key. Range bounds open with an empty Enter.
+        // On an untouched token Enter runs the owner's action instead - the prompt says so.
+        if (offersRunAction(""))
+            return runAction.emptyPrompt();
         return switch (stage) {
-            case CONNECTOR -> "Combine with AND / OR, then Tab";
-            case FIELD -> "Search, or pick a field, then Tab";
-            case OPERATOR -> "Choose how to compare, then Tab ([ ] includes the bounds, { } excludes them)";
+            case CONNECTOR -> "Combine with AND / OR, then Enter";
+            case FIELD -> "Search, or pick a field, then Enter";
+            case OPERATOR -> "Choose how to compare, then Enter ([ ] includes the bounds, { } excludes them)";
             case VALUE -> {
                 if (pendingOp != null && pendingOp.isRange())
-                    yield "Lower bound, then Tab (empty = open end)";
+                    yield "Lower bound, then Enter (empty = open end)";
                 if (pendingField != null && !CompletionParser.valueSuggestions(pendingField).isEmpty())
-                    yield "Select or type a value, then Tab";
-                yield "Type a value, then Tab" + (pendingField != null && pendingField.getFieldType() == SearchableFieldType.TEXT
+                    yield "Select or type a value, then Enter";
+                yield "Type a value, then Enter" + (pendingField != null && pendingField.getFieldType() == SearchableFieldType.TEXT
                         ? " (*, ?, ~ wildcards)" : "");
             }
-            case VALUE2 -> "Upper bound, then Tab (empty = open end)";
+            case VALUE2 -> "Upper bound, then Enter (empty = open end)";
         };
     }
 
     /**
-     * Whether the token currently being built is a "terminal" clause that Enter should accept as a
-     * chip before running the search: a value has been specified (single-valued value stage, or the
+     * Whether the token currently being built is a "terminal" clause that running the query should
+     * accept as a chip first: a value has been specified (single-valued value stage, or the
      * upper bound of a range) or a default-field full-text term is typed at an entry stage. An
      * incomplete token (only a field, operator, connector or the lower bound of a range chosen) is
-     * not terminal - Enter discards it.
+     * not terminal - running the query discards it.
      */
     public boolean isTerminal(@NotNull String typed) {
         String trimmed = typed.trim();
@@ -551,7 +629,8 @@ public class TokenInputModel {
 
     /**
      * Completes the current entry-stage token into a keyless full-text clause from the typed text
-     * (carrying any pending negation/connector). Use for the terminal free-text search on Enter.
+     * (carrying any pending negation/connector). Use for the terminal free-text search when the query
+     * is run.
      */
     public Event completeFreeText(@NotNull String text) {
         Event event = new Event.ClauseCompleted(QueryClause.freeText(text.trim(), pendingNegated), effectiveLogic());
