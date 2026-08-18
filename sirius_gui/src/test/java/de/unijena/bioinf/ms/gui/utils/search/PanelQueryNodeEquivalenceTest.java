@@ -180,14 +180,14 @@ public class PanelQueryNodeEquivalenceTest {
     @Test
     public void testLipidAny() {
         FeatureFilterModel model = cleanSlate();
-        model.setLipidFilter(FeatureFilterModel.LipidFilter.ANY_LIPID_CLASS_DETECTED);
+        model.setLipidClassDetected(true);
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testLipidNo() {
         FeatureFilterModel model = cleanSlate();
-        model.setLipidFilter(FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED);
+        model.setLipidClassDetected(false);
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
@@ -253,7 +253,7 @@ public class PanelQueryNodeEquivalenceTest {
         model.setCurrentMinMz(300);
         model.setCurrentMinRt(10);
         model.setAdducts(java.util.Set.of(de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType.fromString("[M+H]+")));
-        model.setLipidFilter(FeatureFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED);
+        model.setLipidClassDetected(false);
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 

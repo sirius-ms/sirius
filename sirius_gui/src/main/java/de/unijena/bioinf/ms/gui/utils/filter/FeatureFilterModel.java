@@ -104,8 +104,10 @@ public class FeatureFilterModel implements SiriusPCS {
     @Setter
     private Set<PrecursorIonType> adducts = new HashSet<>();
 
+    /** null = no lipid filter, TRUE = a lipid class must be detected, FALSE = none may be. */
     @Getter
-    private LipidFilter lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
+    private @Nullable Boolean lipidClassDetected = null;
+
 
     @NotNull
     private ElementFilter elementFilter = ElementFilter.disabled();
@@ -180,13 +182,13 @@ public class FeatureFilterModel implements SiriusPCS {
 
 
     public boolean isLipidFilterEnabled() {
-        return lipidFilter != LipidFilter.KEEP_ALL_COMPOUNDS;
+        return lipidClassDetected != null;
     }
 
-    public void setLipidFilter(LipidFilter value) {
-        LipidFilter oldValue = lipidFilter;
-        lipidFilter = value;
-        pcs.firePropertyChange("setLipidFilter", oldValue, value);
+    public void setLipidClassDetected(@Nullable Boolean value) {
+        Boolean oldValue = lipidClassDetected;
+        lipidClassDetected = value;
+        pcs.firePropertyChange("setLipidClassDetected", oldValue, value);
     }
 
     public void setDbFilter(@Nullable DbFilter dbFilter) {
@@ -430,7 +432,7 @@ public class FeatureFilterModel implements SiriusPCS {
         setCurrentMinConfidence(minConfidence);
         getFeatureQualityFilter().reset();
         getPeakShapeQualityFilter().reset();
-        setLipidFilter(LipidFilter.KEEP_ALL_COMPOUNDS);
+        setLipidClassDetected(null);
         setDbFilter(null);
         setElementFilter(ElementFilter.disabled());
         adducts = Set.of();
@@ -464,11 +466,6 @@ public class FeatureFilterModel implements SiriusPCS {
     }
 
 
-    public enum LipidFilter {
-        KEEP_ALL_COMPOUNDS, ANY_LIPID_CLASS_DETECTED, NO_LIPID_CLASS_DETECTED
-    }
-
-
     private static final String FAKE_FIELD = "__FAKE_FIELD__";
     private final QueryParser textFieldParser;
 
@@ -490,8 +487,8 @@ public class FeatureFilterModel implements SiriusPCS {
 
     /**
      * The active structured facets (as query nodes) AND the free-text segment, compiled to lucene as it
-     * is EXECUTED - facets that are pure negations (e.g. no lipid class) get the match-all anchor they
-     * need to match anything at all, see {@link LuceneQueryCompiler#compileExecutable}.
+     * is EXECUTED - facets that are pure negations (no lipid class, no pfas tag) get the match-all anchor
+     * they need to match anything at all, see {@link LuceneQueryCompiler#compileExecutable}.
      */
     private String compileCore(@NotNull ConfidenceDisplayMode confidenceMode) {
         List<QueryNode> nodes = PanelQueryNodeFactory.nodesFor(this, confidenceMode);
