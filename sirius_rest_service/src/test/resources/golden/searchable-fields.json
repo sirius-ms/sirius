@@ -1,0 +1,580 @@
+{
+  "AlignedFeature" : [ {
+    "name" : "alignedFeatureId",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "compoundId",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "name",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : true,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "externalFeatureId",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : "Externally provided FeatureId (e.g. by some preprocessing tool). This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source."
+  }, {
+    "name" : "ionMass",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "charge",
+    "fieldType" : "INTEGER",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : "Ion mode (charge) this feature has been measured in."
+  }, {
+    "name" : "detectedAdducts",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "[M + ?]+", "[M + ?]-", "[M + H]+", "[M + Na]+", "[M - H]-" ],
+    "description" : "Adducts of this feature that have been detected during preprocessing. Never empty: if no adduct could be detected, the unknown ion type matching the feature's charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct."
+  }, {
+    "name" : "rtStartSeconds",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "rtEndSeconds",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "rtApexSeconds",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "quality",
+    "fieldType" : "ENUM",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "NOT_APPLICABLE", "LOWEST", "BAD", "DECENT", "GOOD" ],
+    "description" : "Overall Quality of this feature. If no Quality data are available for this feature the value is NOT_APPLICABLE"
+  }, {
+    "name" : "hasMs1",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "true", "false" ],
+    "description" : "If true, the feature has at least one MS1 spectrum"
+  }, {
+    "name" : "hasMsMs",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "true", "false" ],
+    "description" : "If true, the feature has at least one MS/MS spectrum"
+  }, {
+    "name" : "topAnnotations.formulaAnnotation.molecularFormula",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "topAnnotations.formulaAnnotation.molecularFormula.C",
+    "fieldType" : "INTEGER",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "topAnnotations.formulaAnnotation.molecularFormula.H",
+    "fieldType" : "INTEGER",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "topAnnotations.formulaAnnotation.molecularFormula.N",
+    "fieldType" : "INTEGER",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "topAnnotations.formulaAnnotation.molecularFormula.O",
+    "fieldType" : "INTEGER",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "topAnnotations.formulaAnnotation.lipidAnnotation.lipid",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "topAnnotations.formulaAnnotation.lipidAnnotation.lipidClassName",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : false,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "topAnnotations.formulaAnnotation.lipidAnnotation.lipidMapsId",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "topAnnotations.formulaAnnotation.lipidAnnotation.lipidSpecies",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "topAnnotations.structureAnnotation.inchiKey",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "topAnnotations.structureAnnotation.structureName",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : false,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "topAnnotations.compoundClassAnnotation.cfClass",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : false,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : "4825 values sha256:7158112af90280e127ca953e39d0c90f3d179f90010fb097142fc9493e85a20f",
+    "description" : null
+  }, {
+    "name" : "topAnnotations.compoundClassAnnotation.npcClass",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : false,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : "653 values sha256:95d33d0b41a87114f77e7807d050b83b807dcf773f3d2fcfad332e449d10ecd5",
+    "description" : null
+  }, {
+    "name" : "topAnnotations.compoundClassAnnotation.npcPathway",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : false,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "Alkaloids", "Amino acids and Peptides", "Carbohydrates", "Fatty acids", "Polyketides", "Shikimates and Phenylpropanoids", "Terpenoids" ],
+    "description" : null
+  }, {
+    "name" : "topAnnotations.compoundClassAnnotation.npcSuperclass",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : false,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : "70 values sha256:dfb0ba1334e85b2a35cc06e56a290536041f6b93eea70bd32eaae4ce0e84ff5a",
+    "description" : null
+  }, {
+    "name" : "topAnnotations.confidenceExactMatch",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : "Confidence Score that represents the confidence whether the top hit is correct."
+  }, {
+    "name" : "topAnnotations.confidenceApproxMatch",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : "Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct."
+  }, {
+    "name" : "topAnnotations.matchedDatabases.GNPS",
+    "fieldType" : "INTEGER",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "A mapping of structural database names (keys) to the rank (value) of the highest-ranked match found in each database. NOTE: This field is mainly for search index building and therefore hidden from the api"
+  }, {
+    "name" : "topAnnotations.matchedDatabases.PubChem",
+    "fieldType" : "INTEGER",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "A mapping of structural database names (keys) to the rank (value) of the highest-ranked match found in each database. NOTE: This field is mainly for search index building and therefore hidden from the api"
+  }, {
+    "name" : "computedTools.librarySearch",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "true", "false" ],
+    "description" : null
+  }, {
+    "name" : "computedTools.formulaSearch",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "true", "false" ],
+    "description" : null
+  }, {
+    "name" : "computedTools.zodiac",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "true", "false" ],
+    "description" : null
+  }, {
+    "name" : "computedTools.fingerprint",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "true", "false" ],
+    "description" : null
+  }, {
+    "name" : "computedTools.canopus",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "true", "false" ],
+    "description" : null
+  }, {
+    "name" : "computedTools.structureSearch",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "true", "false" ],
+    "description" : null
+  }, {
+    "name" : "computedTools.deNovoSearch",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : [ "true", "false" ],
+    "description" : null
+  }, {
+    "name" : "qualities.isotopePattern",
+    "fieldType" : "ENUM",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "NOT_APPLICABLE", "LOWEST", "BAD", "DECENT", "GOOD" ],
+    "description" : "Qualities per top level quality category."
+  }, {
+    "name" : "qualities.peakShape",
+    "fieldType" : "ENUM",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "NOT_APPLICABLE", "LOWEST", "BAD", "DECENT", "GOOD" ],
+    "description" : "Qualities per top level quality category."
+  }, {
+    "name" : "tags.comment",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "Project tag 'comment'"
+  }, {
+    "name" : "tags.concentration",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "Project tag 'concentration'"
+  }, {
+    "name" : "tags.injectedAt",
+    "fieldType" : "TIME",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "Project tag 'injectedAt'"
+  }, {
+    "name" : "tags.isBlank",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "true", "false" ],
+    "description" : "Project tag 'isBlank'"
+  }, {
+    "name" : "tags.measured",
+    "fieldType" : "DATE",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "1970-01-01" ],
+    "description" : "Project tag 'measured'"
+  }, {
+    "name" : "tags.pfas",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "true", "false" ],
+    "description" : "Project tag 'pfas'; presence flag, search for value 'true'"
+  }, {
+    "name" : "tags.replicate",
+    "fieldType" : "INTEGER",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "1", "2", "3" ],
+    "description" : "Project tag 'replicate'"
+  }, {
+    "name" : "tags.sampleType",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "Sample", "Blank", "Standard" ],
+    "description" : "Project tag 'sampleType'"
+  } ],
+  "Run" : [ {
+    "name" : "runId",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : "Identifier"
+  }, {
+    "name" : "name",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : true,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : "Informative, human-readable name of this run"
+  }, {
+    "name" : "source",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : false,
+    "defaultSearchField" : true,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : "Source location"
+  }, {
+    "name" : "chromatography",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "ionization",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "fragmentation",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "massAnalyzers",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : null
+  }, {
+    "name" : "tags.comment",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "Project tag 'comment'"
+  }, {
+    "name" : "tags.concentration",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "Project tag 'concentration'"
+  }, {
+    "name" : "tags.injectedAt",
+    "fieldType" : "TIME",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "Project tag 'injectedAt'"
+  }, {
+    "name" : "tags.isBlank",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "true", "false" ],
+    "description" : "Project tag 'isBlank'"
+  }, {
+    "name" : "tags.measured",
+    "fieldType" : "DATE",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "1970-01-01" ],
+    "description" : "Project tag 'measured'"
+  }, {
+    "name" : "tags.pfas",
+    "fieldType" : "BOOLEAN",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "true", "false" ],
+    "description" : "Project tag 'pfas'; presence flag, search for value 'true'"
+  }, {
+    "name" : "tags.replicate",
+    "fieldType" : "INTEGER",
+    "fullTextSearch" : false,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "1", "2", "3" ],
+    "description" : "Project tag 'replicate'"
+  }, {
+    "name" : "tags.sampleType",
+    "fieldType" : "TEXT",
+    "fullTextSearch" : true,
+    "sortable" : false,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : [ "Sample", "Blank", "Standard" ],
+    "description" : "Project tag 'sampleType'"
+  } ]
+}
