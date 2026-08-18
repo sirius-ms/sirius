@@ -24,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * What Tab would do with the text currently typed into the free-text box of the search bar.
+ * What the accept key (Enter, or Tab) would do with the text currently typed into the free-text box
+ * of the search bar.
  */
 public sealed interface Completion {
 
