@@ -23,8 +23,6 @@ package de.unijena.bioinf.ms.middleware.service.search.description;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FieldFacts;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
-import de.unijena.bioinf.projectspace.IndexField;
-import de.unijena.bioinf.projectspace.PossibleValueProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,10 +46,10 @@ import java.util.function.Function;
 public class SearchableFieldDescriber {
 
     /**
-     * Vocabulary providers are stateless (see {@link PossibleValueProvider}), so one instance per class serves
-     * every field that declares it. The cache is owned by the describer and dies with it.
+     * Vocabularies are stateless (see {@link FieldVocabulary}), so one instance per class serves every field
+     * that declares it. The cache is owned by the describer and dies with it.
      */
-    private final Map<Class<? extends PossibleValueProvider>, PossibleValueProvider> vocabularies = new ConcurrentHashMap<>();
+    private final Map<Class<? extends FieldVocabulary>, FieldVocabulary> vocabularies = new ConcurrentHashMap<>();
 
     /**
      * Human-readable descriptions of a java field, e.g. from its OpenAPI annotations or javadoc. Injected so
@@ -106,7 +104,7 @@ public class SearchableFieldDescriber {
     /**
      * The values a field can take, if they are known.
      * <p>
-     * A java field may declare them via {@link IndexField#possibleValueProvider()}; that is the more specific
+     * A java field may declare them via {@link SearchableFieldDoc#possibleValues()}; that is the more specific
      * statement and therefore wins. Otherwise they follow from the java type: enums report their constants and
      * booleans report true/false, both exactly as they are indexed, so that a client can offer them for
      * completion instead of leaving the user to guess. Booleans are keyword indexed from
@@ -115,8 +113,9 @@ public class SearchableFieldDescriber {
      */
     @Nullable
     private List<String> possibleValuesOf(@NotNull FieldFacts facts) {
-        if (facts.mapper() != null)
-            return facts.mapper().getPossibleValues(facts.name());
+        // a mapper is the only thing that knows what it writes, but only some of them have anything to say
+        if (facts.mapper() instanceof FieldVocabulary vocabulary)
+            return vocabulary.getPossibleValues(facts.name());
 
         List<String> declared = declaredPossibleValuesOf(facts);
         if (declared != null)
@@ -141,18 +140,18 @@ public class SearchableFieldDescriber {
         Field javaField = facts.javaField();
         if (javaField == null)
             return null;
-        IndexField indexField = javaField.getAnnotation(IndexField.class);
-        if (indexField == null)
+        SearchableFieldDoc doc = javaField.getAnnotation(SearchableFieldDoc.class);
+        if (doc == null)
             return null;
 
-        Class<? extends PossibleValueProvider> providerClass = indexField.possibleValueProvider();
-        if (providerClass == PossibleValueProvider.None.class)
+        Class<? extends FieldVocabulary> vocabularyClass = doc.possibleValues();
+        if (vocabularyClass == FieldVocabulary.None.class)
             return null;
-        return vocabularies.computeIfAbsent(providerClass, clz -> {
+        return vocabularies.computeIfAbsent(vocabularyClass, clz -> {
             try {
                 return clz.getDeclaredConstructor().newInstance();
             } catch (ReflectiveOperationException e) {
-                throw new IllegalStateException("Could not instantiate PossibleValueProvider '" + clz.getName()
+                throw new IllegalStateException("Could not instantiate FieldVocabulary '" + clz.getName()
                         + "' declared on indexed field '" + facts.name() + "'. It needs a public no-arg constructor.", e);
             }
         }).getPossibleValues(facts.name());

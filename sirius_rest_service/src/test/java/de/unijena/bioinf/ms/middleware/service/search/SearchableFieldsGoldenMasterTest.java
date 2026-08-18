@@ -33,7 +33,7 @@ import de.unijena.bioinf.ms.middleware.service.search.dynamic.TagDefinitionPossi
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
-import de.unijena.bioinf.projectspace.PossibleValueProvider;
+import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -101,7 +101,7 @@ public class SearchableFieldsGoldenMasterTest {
         Set<String> detectedAdducts = Set.of("[M + H]+", "[M + Na]+", "[M - H]-");
 
         return new PerPojoSearchContext(null, tagValueTypes, ApiDocFieldDescriptions.PROVIDER,
-                PossibleValueProvider.firstOf(
+                FieldVocabulary.firstOf(
                         new TagDefinitionPossibleValues(name -> Optional.ofNullable(definitions.get(name))),
                         new DetectedAdductPossibleValues(() -> detectedAdducts)));
     }
