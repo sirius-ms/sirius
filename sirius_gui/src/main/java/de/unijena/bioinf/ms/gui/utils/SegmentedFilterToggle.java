@@ -47,7 +47,8 @@ import java.util.function.Supplier;
  */
 public class SegmentedFilterToggle extends JPanel {
 
-    private static final Insets SEGMENT_MARGIN = new Insets(3, 12, 3, 12);
+    /** Extra room left and right of a segment label; the vertical margin stays the look and feel's. */
+    private static final int SEGMENT_PADDING = 12;
 
     private final JToggleButton noSegment, anySegment, yesSegment;
 
@@ -246,7 +247,10 @@ public class SegmentedFilterToggle extends JPanel {
         segment.setFocusPainted(false);
         segment.setOpaque(false);
         segment.setRolloverEnabled(true);
-        segment.setMargin(SEGMENT_MARGIN);
+        // widen the segment horizontally but keep the look-and-feel's vertical margin, so the capsule is
+        // exactly as high as a normal button or text field next to it
+        Insets margin = segment.getMargin();
+        segment.setMargin(new Insets(margin.top, SEGMENT_PADDING, margin.bottom, SEGMENT_PADDING));
         ToolTipManager.sharedInstance().registerComponent(segment); // see the constructor
         return segment;
     }

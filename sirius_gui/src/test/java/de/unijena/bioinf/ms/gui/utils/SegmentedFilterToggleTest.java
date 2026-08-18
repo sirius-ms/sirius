@@ -146,6 +146,13 @@ public class SegmentedFilterToggleTest {
     }
 
     @Test
+    public void testTheCapsuleIsAsHighAsAnOrdinaryButton() {
+        // it sits in rows with text fields, spinners and buttons - a taller control looks out of place
+        assertEquals(new javax.swing.JToggleButton("no").getPreferredSize().height,
+                toggle().getPreferredSize().height);
+    }
+
+    @Test
     public void testTheCapsuleIsNotStretchedByTheSurroundingLayout() {
         // a segmented control with empty space inside it looks broken, so it never grows past its content
         SegmentedFilterToggle toggle = toggle();

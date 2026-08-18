@@ -192,18 +192,16 @@ public class PanelQueryNodeEquivalenceTest {
     }
 
     @Test
-    public void testPfasEvidenceLevelsOnly() {
+    public void testPfasTagged() {
         FeatureFilterModel model = cleanSlate();
-        model.getPfasFilter().setLevelSelected(
-                de.unijena.bioinf.ms.gui.utils.filter.PfasFilter.PfasEvidence.NO_PFAS, false);
+        model.setPfasDetected(true);
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
-    public void testPfasIncludingUntaggedFeatures() {
+    public void testNoPfasTag() {
         FeatureFilterModel model = cleanSlate();
-        model.getPfasFilter().setLevelSelected(
-                de.unijena.bioinf.ms.gui.utils.filter.PfasFilter.PfasEvidence.MOLECULAR_STRUCTURE, false);
+        model.setPfasDetected(false);
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
