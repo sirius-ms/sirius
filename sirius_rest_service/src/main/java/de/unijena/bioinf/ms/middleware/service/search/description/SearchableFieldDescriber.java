@@ -97,26 +97,24 @@ public class SearchableFieldDescriber {
                 .sortable(facts.sortable())
                 .defaultSearchField(facts.defaultSearchField())
                 .possibleValues(possibleValuesOf(facts))
-                .description(facts.javaField() != null ? descriptions.apply(facts.javaField()) : null)
+                .description(facts.javaType() != null ? descriptions.apply(facts.declaredBy()) : null)
                 .build();
     }
 
     /**
      * The values a field can take, if they are known.
      * <p>
-     * A java field may declare them via {@link SearchableFieldDoc#possibleValues()}; that is the more specific
-     * statement and therefore wins. Otherwise they follow from the java type: enums report their constants and
-     * booleans report true/false, both exactly as they are indexed, so that a client can offer them for
-     * completion instead of leaving the user to guess. Booleans are keyword indexed from
-     * {@link Boolean#toString()}, hence the lower case literals. A field a mapper contributed is asked of the
-     * mapper, which is the only thing that knows what it writes.
+     * Declared via {@link SearchableFieldDoc#possibleValues()} - on the field itself, or on the field that
+     * carries the mapper which contributed it; either way it is said in one place and read in one way. That is
+     * the more specific statement and therefore wins.
+     * <p>
+     * Otherwise they follow from the java type: enums report their constants and booleans report true/false,
+     * both exactly as they are indexed, so that a client can offer them for completion instead of leaving the
+     * user to guess. Booleans are keyword indexed from {@link Boolean#toString()}, hence the lower case
+     * literals.
      */
     @Nullable
     private List<String> possibleValuesOf(@NotNull FieldFacts facts) {
-        // a mapper is the only thing that knows what it writes, but only some of them have anything to say
-        if (facts.mapper() instanceof FieldVocabulary vocabulary)
-            return vocabulary.getPossibleValues(facts.name());
-
         List<String> declared = declaredPossibleValuesOf(facts);
         if (declared != null)
             return declared;
@@ -137,10 +135,7 @@ public class SearchableFieldDescriber {
      */
     @Nullable
     private List<String> declaredPossibleValuesOf(@NotNull FieldFacts facts) {
-        Field javaField = facts.javaField();
-        if (javaField == null)
-            return null;
-        SearchableFieldDoc doc = javaField.getAnnotation(SearchableFieldDoc.class);
+        SearchableFieldDoc doc = facts.declaredBy().getAnnotation(SearchableFieldDoc.class);
         if (doc == null)
             return null;
 

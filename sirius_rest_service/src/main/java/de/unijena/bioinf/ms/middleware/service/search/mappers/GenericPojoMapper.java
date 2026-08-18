@@ -198,7 +198,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                         }
                     }
 
-                    facts.add(factsOf(fieldName, elementType, field, null, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes));
+                    facts.add(factsOf(fieldName, elementType, field, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes));
                 }
             } else if (field.isAnnotationPresent(IndexFieldWithMapper.class)) {
                 IndexFieldWithMapper mapperAnno = field.getAnnotation(IndexFieldWithMapper.class);
@@ -212,7 +212,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 configuredFieldNames(pointsConfigMap, analyzerMap).stream()
                         .filter(name -> !before.contains(name))
                         .sorted()
-                        .forEach(name -> facts.add(factsOf(name, null, null, mapper,
+                        .forEach(name -> facts.add(factsOf(name, null, field,
                                 pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes)));
             }
         }
@@ -237,8 +237,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
      */
     private static FieldFacts factsOf(@NotNull String fieldName,
                                       @Nullable Class<?> javaType,
-                                      @Nullable Field javaField,
-                                      @Nullable FieldMapper<?> mapper,
+                                      @NotNull Field declaredBy,
                                       @NotNull Map<String, PointsConfig> pointsConfigMap,
                                       @NotNull Map<String, Analyzer> analyzerMap,
                                       @NotNull List<CharSequence> defaultSearchFields,
@@ -254,8 +253,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 sortTypes.containsKey(fieldName),
                 defaultSearchFields.stream().anyMatch(f -> f.toString().equals(fieldName)),
                 javaType,
-                javaField,
-                mapper);
+                declaredBy);
     }
 
     private static LuceneKind kindOf(@Nullable PointsConfig pointsConfig, boolean analyzed) {

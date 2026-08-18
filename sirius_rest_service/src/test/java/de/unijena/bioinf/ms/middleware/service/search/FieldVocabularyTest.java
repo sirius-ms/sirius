@@ -208,7 +208,12 @@ public class FieldVocabularyTest {
         public TestNested nested;
 
         @IndexFieldWithMapper(mapper = VocabularyAwareMapper.class)
+        @SearchableFieldDoc(possibleValues = VocabularyAwareMapper.class)
         public String compoundClasses;
+
+        // the same mapper, registered only as a mapper: its vocabulary must not apply behind our back
+        @IndexFieldWithMapper(mapper = VocabularyAwareMapper.class)
+        public String undeclaredClasses;
 
         @IndexFieldWithMapper(mapper = TestClassMapper.class)
         public String plainClasses;
@@ -341,14 +346,29 @@ public class FieldVocabularyTest {
     }
 
     /**
-     * The mapper vocabulary must survive the way a pojo attaches mappers, not just a direct mapper call.
+     * A class may be both a mapper and a vocabulary, but it has to be registered as both: mapping a field and
+     * explaining its values are two statements, and the second one is not implied by the first. Registering it
+     * per declaration also means the same mapper can be paired with different vocabularies elsewhere.
      */
     @Test
-    public void testMapperValuesArePartOfThePojoDescription() {
+    public void testAMapperVocabularyAppliesWhereItIsDeclared() {
         Map<String, SearchableField> fields = describeAsMap(TestPojo.class);
 
         assertEquals(List.of("PATHWAY", "SUPERCLASS", "CLASS"),
                 fields.get("compoundClasses.level").getPossibleValues());
-        assertNull(fields.get("compoundClasses.name").getPossibleValues());
+        assertNull(fields.get("compoundClasses.name").getPossibleValues(),
+                "the vocabulary answers per field, and has nothing to say about this one");
+    }
+
+    /**
+     * The same mapper on a field that does not declare it says nothing - being a vocabulary is not something a
+     * mapper can smuggle in through the annotation that registers it for indexing.
+     */
+    @Test
+    public void testAMapperVocabularyDoesNotApplyWhereItIsNotDeclared() {
+        Map<String, SearchableField> fields = describeAsMap(TestPojo.class);
+
+        assertNull(fields.get("undeclaredClasses.level").getPossibleValues());
+        assertNull(fields.get("undeclaredClasses.name").getPossibleValues());
     }
 }
