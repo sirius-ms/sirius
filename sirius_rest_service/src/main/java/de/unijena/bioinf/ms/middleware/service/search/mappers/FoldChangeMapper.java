@@ -7,6 +7,7 @@ import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.Statistics;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexableField;
@@ -125,7 +126,8 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
     }
 
     @Override
-    public void applyAnalyzersAndPointConfigs(@NotNull String rootFieldName, @NotNull Map<String, PointsConfig> pointsConfigMap, @NotNull Map<String, Analyzer> analyzerMap, @NotNull List<CharSequence> defaultSearchFields, @NotNull Map<String, SortField.Type> sortTypes) {
+    public void applyAnalyzersAndPointConfigs(@NotNull String rootFieldName, @NotNull Map<String, PointsConfig> pointsConfigMap, @NotNull Map<String, Analyzer> analyzerMap, @NotNull List<CharSequence> defaultSearchFields, @NotNull Map<String, SortField.Type> sortTypes,
+            @NotNull Map<String, QueryRewriter> queryRewriters) {
         // add pointsconfig for foldchange
         pointsConfigMap.put(rootFieldName + ".foldChange.*", LuceneMappingUtils.getPointsConfigForType(Double.class));
         sortTypes.put(rootFieldName + ".foldChange.*", SortField.Type.DOUBLE);

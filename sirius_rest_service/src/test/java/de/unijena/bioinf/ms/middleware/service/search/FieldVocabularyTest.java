@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapp
 import de.unijena.bioinf.projectspace.IndexField;
 import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDoc;
+import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.index.IndexableField;
@@ -147,7 +148,8 @@ public class FieldVocabularyTest {
                                                   @NotNull Map<String, PointsConfig> pointsConfigMap,
                                                   @NotNull Map<String, Analyzer> analyzerMap,
                                                   @NotNull List<CharSequence> defaultSearchFields,
-                                                  @NotNull Map<String, SortField.Type> sortTypes) {
+                                                  @NotNull Map<String, SortField.Type> sortTypes,
+            @NotNull Map<String, QueryRewriter> queryRewriters) {
             analyzerMap.put(rootFieldName + ".level", new KeywordAnalyzer());
             analyzerMap.put(rootFieldName + ".name", new KeywordAnalyzer());
         }

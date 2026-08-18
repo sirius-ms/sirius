@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.middleware.service.search.mappers;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueFormatter;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexableField;
@@ -79,7 +80,8 @@ public class TagMapper implements FieldMapper<Map<String, Tag>> {
             @NotNull Map<String, PointsConfig> pointsConfigMap,
             @NotNull Map<String, Analyzer> analyzerMap,
             @NotNull List<CharSequence> defaultSearchFields,
-            @NotNull Map<String, SortField.Type> sortTypes
+            @NotNull Map<String, SortField.Type> sortTypes,
+            @NotNull Map<String, QueryRewriter> queryRewriters
     ) {
        // this is handled but TagValueManagement
         // we could move the handling to here though

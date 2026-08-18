@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import lombok.extern.slf4j.Slf4j;
+import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.index.IndexableField;
@@ -56,7 +57,8 @@ public class FormulaElementMapper implements FieldMapper<String> {
             @NotNull Map<String, PointsConfig> pointsConfigMap,
             @NotNull Map<String, Analyzer> analyzerMap,
             @NotNull List<CharSequence> defaultSearchFields,
-            @NotNull Map<String, SortField.Type> sortTypes
+            @NotNull Map<String, SortField.Type> sortTypes,
+            @NotNull Map<String, QueryRewriter> queryRewriters
     ) {
         analyzerMap.put(rootFieldName, new KeywordAnalyzer());
         pointsConfigMap.put(rootFieldName + ".*", getPointsConfigForType(Integer.class));

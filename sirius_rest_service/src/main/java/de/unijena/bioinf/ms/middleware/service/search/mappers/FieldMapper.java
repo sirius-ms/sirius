@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
+import de.unijena.bioinf.projectspace.QueryRewriter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
@@ -29,11 +30,16 @@ public interface FieldMapper<T> {
     @Nullable
     T toPojo(@NotNull String rootFieldName, @NotNull Iterable<IndexableField> document);
 
+    /**
+     * Configures how the fields this mapper writes are parsed and matched. A mapper names its own fields, so it
+     * is also the only place that can say how a query for one of them should be read - see {@code queryRewriters}.
+     */
     void applyAnalyzersAndPointConfigs(
             @NotNull String rootFieldName,
             @NotNull final Map<String, PointsConfig> pointsConfigMap,
             @NotNull final Map<String, Analyzer> analyzerMap,
             @NotNull final List<CharSequence> defaultSearchFields,
-            @NotNull final Map<String, SortField.Type> sortTypes
+            @NotNull final Map<String, SortField.Type> sortTypes,
+            @NotNull final Map<String, QueryRewriter> queryRewriters
     );
 }

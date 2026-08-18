@@ -208,7 +208,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 // A mapper names its own fields, so which ones it added is only visible as the difference it
                 // made to the configuration. Recorded in name order, the only order a mapper implies.
                 Set<String> before = configuredFieldNames(pointsConfigMap, analyzerMap);
-                mapper.applyAnalyzersAndPointConfigs(fieldName, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+                mapper.applyAnalyzersAndPointConfigs(fieldName, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters);
                 configuredFieldNames(pointsConfigMap, analyzerMap).stream()
                         .filter(name -> !before.contains(name))
                         .sorted()
