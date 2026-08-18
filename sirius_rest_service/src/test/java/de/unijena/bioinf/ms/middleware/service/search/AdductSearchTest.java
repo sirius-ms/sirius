@@ -201,6 +201,44 @@ public class AdductSearchTest {
     }
 
     /**
+     * Same rule as for a query, for the same reason: describing what a project holds only asks a question. The
+     * adducts come off disk, so a record this build cannot make sense of must not quietly become a new common
+     * ion mode for everything parsed afterwards.
+     */
+    @Test
+    public void testOfferingTheProjectsAdductsDoesNotWidenTheKnownIonModes() {
+        List<String> before = knownPositiveIonModes();
+
+        offeredAdducts("[M + Xe]+"); // adduct-shaped, and no Xe ion mode is known
+
+        assertEquals(before, knownPositiveIonModes());
+    }
+
+    /**
+     * One unreadable record must not cost the whole answer, and must not invent one either.
+     * <p>
+     * The parser almost never refuses: text it recognizes nothing in comes back as the intrinsically charged
+     * [M]+, so a corrupt record would silently offer an adduct this project does not have - a completion
+     * value that matches nothing. Dropping it is the only honest answer.
+     */
+    @Test
+    public void testAnUnreadableRecordedAdductIsDroppedRatherThanGuessed() {
+        List<String> offered = assertDoesNotThrow(() -> offeredAdducts("[M + H]+", "not an adduct at all"));
+
+        assertTrue(offered.contains("[M + H]+"), "the readable adducts are still offered: " + offered);
+        assertFalse(offered.contains("[M]+"), "unreadable text must not be offered as [M]+: " + offered);
+    }
+
+    /**
+     * The counterpart: [M]+ is a real adduct, so a project that detected it must still be able to offer it.
+     * Only text that merely collapses onto it is dropped.
+     */
+    @Test
+    public void testAGenuinelyDetectedIntrinsicallyChargedAdductIsStillOffered() {
+        assertTrue(offeredAdducts("[M]+").contains("[M]+"));
+    }
+
+    /**
      * Searchable fields are described per project, so the vocabulary is the adducts this project actually
      * detected - not the open domain of everything that could be an adduct.
      */
