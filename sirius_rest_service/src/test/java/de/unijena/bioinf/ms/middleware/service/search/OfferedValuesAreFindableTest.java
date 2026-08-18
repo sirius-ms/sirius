@@ -108,6 +108,7 @@ public class OfferedValuesAreFindableTest {
         put("topAnnotations.compoundClassAnnotation.npcPathway", "Alkaloids");
         put("topAnnotations.compoundClassAnnotation.npcSuperclass", "Alkylresorsinols");
         put("topAnnotations.compoundClassAnnotation.npcClass", "2-arylbenzofurans");
+        put("topAnnotations.formulaAnnotation.lipidAnnotation.lipid", "true");
         put("topAnnotations.formulaAnnotation.lipidAnnotation.lipidClassName", "Hexose Ceramide");
         put("topAnnotations.formulaAnnotation.lipidAnnotation.lipidMapsId", "LMGL01010000");
         put("tags.sampleType", "Sample");

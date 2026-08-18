@@ -45,12 +45,22 @@ public class LipidClassVocabulary implements FieldVocabulary {
 
     @Override
     public @Nullable List<String> getPossibleValues(@NotNull String fieldName) {
+        if (fieldName.endsWith(LipidAnnotationMapper.LIPID))
+            return PRESENT;
         if (fieldName.endsWith(LipidAnnotationMapper.LIPID_CLASS_NAME))
             return LONG_NAMES;
         if (fieldName.endsWith(LipidAnnotationMapper.LIPID_MAPS_ID))
             return LIPID_MAPS_IDS;
         return null;
     }
+
+    /**
+     * {@code lipid} marks a feature that was annotated as one at all. It is written only when there is a lipid
+     * annotation and always as true, so true is the only value it can take - and saying so is what stops it
+     * looking like a text field that accepts anything. A feature without a lipid annotation is matched by
+     * negating this, which needs a second clause to negate against.
+     */
+    private static final List<String> PRESENT = List.of("true");
 
     private static final List<String> LONG_NAMES = Arrays.stream(LipidClass.values())
             .map(LipidClass::longName)

@@ -121,16 +121,21 @@ public final class SearchableFields {
 
     /**
      * Same precedence as for annotated fields: a declared vocabulary is the more specific statement and wins,
-     * otherwise the values follow from the type. Boolean tags cannot declare values (the tag definition rejects
-     * that) but are queried as true/false, and so are value-less tags, which are indexed as a presence flag.
+     * otherwise the values follow from the type. Neither a boolean nor a value-less tag can declare values (the
+     * tag definition rejects that), and the two differ in what they hold: a boolean tag is written as true or
+     * false, while a value-less tag is a presence flag written only as true - offering it false would offer a
+     * value that matches nothing, whatever the tag. Absence is matched by negating, which needs a second clause
+     * to negate against.
      */
     @Nullable
     private static List<String> tagPossibleValues(@NotNull ValueType valueType, @Nullable List<String> declared) {
         if (declared != null && !declared.isEmpty())
             return declared;
-        return fieldTypeOf(valueType) == SearchableField.FieldType.BOOLEAN
-                ? List.of("true", "false")
-                : null;
+        return switch (valueType) {
+            case BOOLEAN -> List.of("true", "false");
+            case NONE -> List.of("true");
+            default -> null;
+        };
     }
 
     /**

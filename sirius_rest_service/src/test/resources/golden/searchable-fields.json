@@ -168,7 +168,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
-    "possibleValues" : null,
+    "possibleValues" : [ "true" ],
     "description" : null
   }, {
     "name" : "topAnnotations.formulaAnnotation.lipidAnnotation.lipidClassName",
@@ -420,7 +420,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 2,
-    "possibleValues" : [ "true", "false" ],
+    "possibleValues" : [ "true" ],
     "description" : "Project tag 'pfas'; presence flag, search for value 'true'"
   }, {
     "name" : "tags.replicate",
@@ -556,7 +556,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 2,
-    "possibleValues" : [ "true", "false" ],
+    "possibleValues" : [ "true" ],
     "description" : "Project tag 'pfas'; presence flag, search for value 'true'"
   }, {
     "name" : "tags.replicate",
