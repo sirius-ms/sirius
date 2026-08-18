@@ -237,9 +237,16 @@ public final class CompletionParser {
      * nothing and its presence carries everything - "no lipid class" is the negation of it. Completing such a
      * field to its value at once hides that from the user, who should not have to know how it is stored.
      * <p>
-     * Both halves are needed. A real boolean holds either value and has to be asked about; a field that offers
-     * one value today - a tag whose definition currently allows one - is not a flag either, since the
-     * definition can be extended while the project is open. Only a boolean with a single value is one.
+     * Both halves are needed, and neither is arbitrary. Offering one value is not enough: a tag restricted to
+     * a single value today can be extended while the project is open, and completing it on sight would answer
+     * a question the user was about to be asked. Being a boolean is not enough either: a real boolean holds
+     * both values and has to be asked about.
+     * <p>
+     * That leaves exactly the flags, because no tag can be both - a boolean or value-less tag is not allowed
+     * to restrict its values at all, which the persistence model enforces when the definition is built and
+     * {@code TagPossibleValuesTest.testAFlagTagCannotBeRestrictedToValues} pins from the server side. It is
+     * worth knowing that this rests on an invariant held two modules away: the API describes a presence flag
+     * and a boolean with the same field type, so this is all there is to tell them apart by.
      */
     public static boolean isSingleValued(@NotNull SearchableField field) {
         return field.getFieldType() == SearchableFieldType.BOOLEAN
