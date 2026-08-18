@@ -488,13 +488,17 @@ public class FeatureFilterModel implements SiriusPCS {
         return Optional.of(isInverted() ? "*:* AND NOT (" + core + ")" : core);
     }
 
-    /** The active structured facets (as query nodes) AND the free-text segment, compiled to lucene. */
+    /**
+     * The active structured facets (as query nodes) AND the free-text segment, compiled to lucene as it
+     * is EXECUTED - facets that are pure negations (e.g. no lipid class) get the match-all anchor they
+     * need to match anything at all, see {@link LuceneQueryCompiler#compileExecutable}.
+     */
     private String compileCore(@NotNull ConfidenceDisplayMode confidenceMode) {
         List<QueryNode> nodes = PanelQueryNodeFactory.nodesFor(this, confidenceMode);
         List<LogicOp> ands = new ArrayList<>(Math.max(0, nodes.size() - 1));
         for (int i = 1; i < nodes.size(); i++)
             ands.add(LogicOp.AND);
-        return LuceneQueryCompiler.compile(new QueryContainer(nodes, ands), freeTextQuery());
+        return LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), freeTextQuery());
     }
 
     /**
