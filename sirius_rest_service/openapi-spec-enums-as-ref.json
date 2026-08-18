@@ -16039,7 +16039,7 @@
           },
           "possibleValues": {
             "type": "array",
-            "description": "The values this field can take, exactly as they are indexed, or null if the field accepts free text.\n \u003cp\u003e\n Reported for ENUM and BOOLEAN fields, and for TEXT fields that hold a closed vocabulary. Note that for\n those the indexed value is not necessarily the name you would expect: the chromatography of a run, for\n example, is indexed as \u0027Liquid Chromatography\u0027, not as \u0027LC\u0027. Use these values as offered rather than\n constructing them.",
+            "description": "The values this field can take, exactly as they are indexed, or null if the field accepts free text.\n \u003cp\u003e\n Reported for ENUM and BOOLEAN fields, for TEXT fields that hold a closed vocabulary (the compound class\n ontologies), and for fields whose values are project state: a tag restricted by its definition, or the\n adducts detected in this project. Searchable fields are described per project, so the latter are the\n values actually present in it rather than everything that could ever occur.\n \u003cp\u003e\n Note that the indexed value is not always the notation you would expect: an adduct is indexed as\n \u0027[M + H]+\u0027, with spaces. Use the values as offered rather than constructing them.",
             "nullable": true,
             "items": {
               "type": "string",
