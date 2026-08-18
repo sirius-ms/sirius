@@ -185,6 +185,15 @@ public class TokenInputModel {
     }
 
     /**
+     * One staged token fragment: {@code text} as the model has it, and the fully-qualified
+     * {@code fieldName} it stands for - set only on the field fragment, so the owner knows which
+     * fragment may be shortened for display (the connector, {@code NOT} and the operator are display
+     * text already).
+     */
+    public record Fragment(@NotNull String text, @Nullable String fieldName) {
+    }
+
+    /**
      * A change the owner has to apply to the query tree.
      */
     public sealed interface Event {
@@ -560,18 +569,19 @@ public class TokenInputModel {
 
     /**
      * The staged (not yet committed) token fragments rendered as chips before the input,
-     * e.g. {@code [OR, NOT, ionMass, >=]}.
+     * e.g. {@code [OR, NOT, ionMass, >=]}. Only the field fragment names a field - the owner shortens
+     * that one per its display mode and keeps the fully-qualified name for the chip's tooltip.
      */
-    public List<String> pendingFragments() {
-        List<String> fragments = new ArrayList<>(4);
+    public List<Fragment> pendingFragments() {
+        List<Fragment> fragments = new ArrayList<>(4);
         if (pendingLogic != null)
-            fragments.add(pendingLogic.toString());
+            fragments.add(new Fragment(pendingLogic.toString(), null));
         if (pendingNegated)
-            fragments.add("NOT");
+            fragments.add(new Fragment("NOT", null));
         if (pendingField != null)
-            fragments.add(pendingField.getName());
+            fragments.add(new Fragment(pendingField.getName(), pendingField.getName()));
         if (pendingOp != null)
-            fragments.add(pendingOp.getSymbol());
+            fragments.add(new Fragment(pendingOp.getSymbol(), null));
         return fragments;
     }
 
