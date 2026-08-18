@@ -20,12 +20,15 @@
 
 package de.unijena.bioinf.ms.middleware.service.search.description;
 
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -41,6 +44,7 @@ import java.util.stream.Stream;
  * Read on demand rather than cached: an import adds to the project's adducts, and a stale copy would omit the
  * adducts of everything imported since the project was opened.
  */
+@Slf4j
 @RequiredArgsConstructor
 public class DetectedAdductPossibleValues implements FieldVocabulary {
 
@@ -67,9 +71,40 @@ public class DetectedAdductPossibleValues implements FieldVocabulary {
                         Stream.of(PrecursorIonType.unknownPositive().toString(),
                                 PrecursorIonType.unknownNegative().toString()))
                 .distinct()
-                .map(PrecursorIonType::fromString)
+                .map(DetectedAdductPossibleValues::parseOrNull)
+                .filter(Objects::nonNull)
                 .sorted(PrecursorIonType.ionTypeComparator)
                 .map(PrecursorIonType::toString)
                 .toList();
+    }
+
+    /**
+     * Parses a recorded adduct without letting it change the periodic table, and without letting one bad
+     * record cost the whole answer.
+     * <p>
+     * Describing the searchable fields only asks what a project holds, so it must not register an ion mode the
+     * table does not know yet - the same rule a search query follows. And these strings come off disk: one that
+     * cannot be read drops out of the vocabulary rather than failing every field of the response with it.
+     * <p>
+     * "Cannot be read" needs saying explicitly, because the parser rarely refuses. Text it recognizes nothing
+     * in yields no ionization, no adduct and no in-source fragment, which it reports as the intrinsically
+     * charged {@code [M]+} - so a corrupt record would not throw, it would quietly offer an adduct this
+     * project does not have. A project that really detected {@code [M]+} spells it that way, which is what
+     * {@link PeriodicTable#hasIon} recognizes and a corrupt record does not.
+     */
+    @Nullable
+    private static PrecursorIonType parseOrNull(@NotNull String recorded) {
+        final PrecursorIonType parsed;
+        try {
+            parsed = PeriodicTable.getInstance().ionByName(recorded, true);
+        } catch (Exception e) {
+            log.warn("Ignoring unreadable detected adduct '{}' while describing the searchable fields.", recorded);
+            return null;
+        }
+        if (parsed == null || (parsed.isIntrinsicalCharged() && !PeriodicTable.getInstance().hasIon(recorded))) {
+            log.warn("Ignoring unreadable detected adduct '{}' while describing the searchable fields.", recorded);
+            return null;
+        }
+        return parsed;
     }
 }
