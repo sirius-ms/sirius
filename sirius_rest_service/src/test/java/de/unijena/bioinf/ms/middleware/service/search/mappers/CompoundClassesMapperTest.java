@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClass;
 import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClasses;
+import de.unijena.bioinf.ms.middleware.service.search.description.CompoundClassVocabulary;
 import org.apache.lucene.index.IndexableField;
 import org.junit.jupiter.api.Test;
 
@@ -37,15 +38,19 @@ import static org.junit.jupiter.api.Assertions.*;
  * The predicted compound classes come from two fixed ontologies (ClassyFire/ChemOnt and NPC). Their names are
  * searchable but not guessable - nobody types "Carboxylic acids and derivatives" from memory - so each level
  * offers its ontology as possible values.
+ * <p>
+ * Two classes meet here on purpose: the mapper decides what is written, the vocabulary what is offered, and
+ * this is where they are checked to agree.
  */
 public class CompoundClassesMapperTest {
 
     private static final String ROOT = "topAnnotations.compoundClassAnnotation";
 
     private static final CompoundClassesMapper MAPPER = new CompoundClassesMapper();
+    private static final CompoundClassVocabulary VOCABULARY = new CompoundClassVocabulary();
 
     private static List<String> valuesOf(String field) {
-        return MAPPER.getPossibleValues(ROOT + "." + field);
+        return VOCABULARY.getPossibleValues(ROOT + "." + field);
     }
 
     @Test
@@ -107,7 +112,7 @@ public class CompoundClassesMapperTest {
 
         assertFalse(indexed.isEmpty(), "test feature must produce indexed terms");
         indexed.forEach(field -> {
-            List<String> offered = MAPPER.getPossibleValues(field.name());
+            List<String> offered = VOCABULARY.getPossibleValues(field.name());
             assertNotNull(offered, field.name() + " must offer possible values");
             assertTrue(offered.contains(field.stringValue()),
                     "indexed term '" + field.stringValue() + "' is not offered for " + field.name());

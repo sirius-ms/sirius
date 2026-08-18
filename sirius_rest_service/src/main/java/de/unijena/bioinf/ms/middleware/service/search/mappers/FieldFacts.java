@@ -38,13 +38,14 @@ import java.lang.reflect.Field;
  * @param analyzed           whether the field is split into words (false for keyword and numeric fields)
  * @param sortable           whether the index carries doc values to sort by this field
  * @param defaultSearchField whether a query term without a field name searches this field
- * @param javaType           the type the value is read from, for a field mapped from a java field; null for a
- *                           field a {@link FieldMapper} contributes. The index only needs the kind, but the java
- *                           type is what tells an enum from any other keyword, so it is kept for whoever asks.
- * @param javaField          the java field this was mapped from, or null for a mapper-contributed field. Carries
- *                           the annotations and javadoc a describer needs, so that describing the index takes no
+ * @param javaType           the type the value is read from, for a field mapped straight from a java field;
+ *                           null for a field a {@link FieldMapper} contributes on its own terms. The index only
+ *                           needs the kind, but the java type is what tells an enum from any other keyword, so
+ *                           it is kept for whoever asks.
+ * @param declaredBy         the java field whose annotation put this field in the index - the field itself when
+ *                           it is mapped directly, and the field carrying the mapper when a mapper contributed
+ *                           it. Carries the annotations a describer reads, so describing the index takes no
  *                           second walk over the model that could drift from this one.
- * @param mapper             the mapper that contributed this field, or null if it was mapped from a java field
  */
 public record FieldFacts(
         @NotNull String name,
@@ -53,7 +54,6 @@ public record FieldFacts(
         boolean sortable,
         boolean defaultSearchField,
         @Nullable Class<?> javaType,
-        @Nullable Field javaField,
-        @Nullable FieldMapper<?> mapper
+        @NotNull Field declaredBy
 ) {
 }
