@@ -29,7 +29,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for the Tab-completion grammar of the search bar: {@code [and|or] [not] <field-prefix>}
+ * Tests for the completion grammar of the search bar: {@code [and|or] [not] <field-prefix>}
  * starts a clause, {@code [and|or] [not] (} opens a group, {@code )} closes one. Ported from
  * parseCompletion/parseClauseTail of LuceneChemicalSearchBar.tsx, extended by dot-segment matching
  * for nested field names.
