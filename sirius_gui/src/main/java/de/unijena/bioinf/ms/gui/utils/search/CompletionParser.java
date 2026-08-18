@@ -233,27 +233,41 @@ public final class CompletionParser {
     /**
      * The offered values matching the typed prefix, best match first.
      * <p>
-     * A vocabulary can be a whole ontology, where matching only the start of a value would hide
-     * "Carboxylic acids and derivatives" from someone typing "acids" - so every word of a value starts a match,
-     * with values matching from the start ranked first (same rule as for field names, see
-     * {@link #fieldMatches}). Within a rank the given order is kept: it carries meaning, e.g. the declaration
-     * order of an ordered enum or the curated order of a tag definition.
+     * Values are not typed the way they are written. A vocabulary can be a whole ontology, where matching only
+     * the start of a value would hide "Carboxylic acids and derivatives" from someone typing "acids" - so every
+     * word of a value starts a match, words being separated by the punctuation the value happens to use. And a
+     * value can be punctuation itself: an adduct is indexed as "[M + H]+" but typed as "[M+H]+" or "M+H", which
+     * no prefix of a word covers - so the value with its whitespace removed is matched anywhere as well.
+     * <p>
+     * Ranked from the most literal match to the loosest, and within a rank the given order is kept: it carries
+     * meaning, e.g. the declaration order of an ordered enum or the curated order of a tag definition.
      */
     public static List<String> valueMatches(@NotNull String prefix, @NotNull List<String> values) {
         String lowerPrefix = prefix.toLowerCase();
         return values.stream()
-                .filter(value -> valueMatchRank(value, lowerPrefix) < 2)
+                .filter(value -> valueMatchRank(value, lowerPrefix) < NO_MATCH)
                 .sorted(Comparator.comparingInt((String value) -> valueMatchRank(value, lowerPrefix)))
                 .toList();
     }
+
+    private static final int NO_MATCH = 3;
+
+    /** Words of a value: what is left between the punctuation it is written with. */
+    private static final Pattern NON_WORD = Pattern.compile("\\W+");
 
     private static int valueMatchRank(String value, String lowerPrefix) {
         String lower = value.toLowerCase();
         if (lower.startsWith(lowerPrefix))
             return 0;
-        for (String word : lower.split("\\s+"))
-            if (word.startsWith(lowerPrefix))
+        for (String word : NON_WORD.split(lower))
+            if (!word.isEmpty() && word.startsWith(lowerPrefix))
                 return 1;
-        return 2;
+        if (withoutWhitespace(lower).contains(withoutWhitespace(lowerPrefix)))
+            return 2;
+        return NO_MATCH;
+    }
+
+    private static String withoutWhitespace(String text) {
+        return text.replaceAll("\\s+", "");
     }
 }
