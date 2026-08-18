@@ -54,18 +54,14 @@ public class SearchEngineBoundaryTest {
             "de/unijena/bioinf/ms/middleware/service/search/mappers",
             "de/unijena/bioinf/ms/middleware/service/search/dynamic");
 
-    /** What the engine must not know about. */
+    /**
+     * What the engine must not know about: the API model it is described in, and the package that describes it.
+     * There is no exception - a mapper names the fields it writes, and what those values mean is said on the
+     * other side of the boundary.
+     */
     private static final List<String> FORBIDDEN = List.of(
             "de/unijena/bioinf/ms/middleware/model/search/SearchableField",
-            "de/unijena/bioinf/ms/middleware/service/search/description/SearchableFieldDescriber",
-            "de/unijena/bioinf/ms/middleware/service/search/description/SearchableFieldService",
-            "de/unijena/bioinf/ms/middleware/service/search/description/ApiDocFieldDescriptions");
-
-    /**
-     * A mapper may opt into declaring the vocabulary of the fields it writes, which is the one description
-     * concept the engine is allowed to name. Everything else in the description package stays out.
-     */
-    private static final List<String> ALLOWED_TO_NAME_A_VOCABULARY = List.of("CompoundClassesMapper.class");
+            "de/unijena/bioinf/ms/middleware/service/search/description/");
 
     @Test
     public void testTheSearchEngineDoesNotKnowHowItIsDescribed() throws IOException {
@@ -85,23 +81,6 @@ public class SearchEngineBoundaryTest {
         assertTrue(checked > 10, "expected to check the whole engine, only found " + checked + " classes");
         assertTrue(offenders.isEmpty(),
                 "the search engine must not know about the API it is described in:\n  " + String.join("\n  ", offenders));
-    }
-
-    /**
-     * The one allowed direction, stated positively so that removing it is a deliberate act rather than an
-     * accident: a mapper says which values it writes, and nothing else about how it is presented.
-     */
-    @Test
-    public void testAMapperMayStillDeclareItsVocabulary() throws IOException {
-        List<String> declaring = new ArrayList<>();
-        for (Path classFile : classFilesOf(ENGINE_PACKAGES.get(0))) {
-            String constants = new String(Files.readAllBytes(classFile), StandardCharsets.ISO_8859_1);
-            if (constants.contains("de/unijena/bioinf/ms/middleware/service/search/description/FieldVocabulary"))
-                declaring.add(classFile.getFileName().toString());
-        }
-
-        assertTrue(ALLOWED_TO_NAME_A_VOCABULARY.containsAll(declaring),
-                "unexpected mapper declaring a vocabulary: " + declaring);
     }
 
     /**
