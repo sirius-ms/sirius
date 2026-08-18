@@ -177,7 +177,7 @@
     "sortable" : false,
     "defaultSearchField" : true,
     "significantSuffixLength" : 1,
-    "possibleValues" : null,
+    "possibleValues" : "24 values sha256:8b986e0ff4473279e721738bc08ceac26848d3db99fa8d4df897b862c6661896",
     "description" : null
   }, {
     "name" : "topAnnotations.formulaAnnotation.lipidAnnotation.lipidMapsId",
@@ -186,7 +186,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
-    "possibleValues" : null,
+    "possibleValues" : "17 values sha256:23a59af5ba006c5934df6a8f15488d8ddb27733289308b8a2699ca98603602b3",
     "description" : null
   }, {
     "name" : "topAnnotations.formulaAnnotation.lipidAnnotation.lipidSpecies",
