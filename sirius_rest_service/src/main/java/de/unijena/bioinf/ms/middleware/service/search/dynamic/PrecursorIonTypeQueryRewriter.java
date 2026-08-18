@@ -42,10 +42,8 @@ import java.util.regex.Pattern;
  * A phrase is rewritten to a term like everything else: the values are single keyword terms, a phrase over them
  * would match nothing anyway.
  * <p>
- * Note that parsing an adduct whose ion mode is unknown to the periodic table registers that ion mode globally
- * (see {@code PeriodicTable#parseIonType}), so a query can extend the known ion modes. That is pre-existing
- * behaviour of the parser rather than something introduced here, but it is worth knowing: a side-effect free
- * parse variant would be the cleaner basis for a query path.
+ * Parsed without storing: an ion mode the periodic table does not know yet is used for this query and not
+ * registered, so a mistyped adduct in a search box cannot widen what SIRIUS treats as a common ion mode.
  */
 public class PrecursorIonTypeQueryRewriter implements QueryRewriter {
 
@@ -54,10 +52,9 @@ public class PrecursorIonTypeQueryRewriter implements QueryRewriter {
      * multimer count and an opening bracket) followed by the start of a modification, a charge or the closing
      * bracket - {@code [M+H]+}, {@code M-H}, {@code 2M+Na}, {@code [M]+}.
      * <p>
-     * The parser this guards is lenient and has side effects: it reads unrecognized text as a molecular formula
-     * and registers a single unknown element as a new global ion mode. A search term must not be able to do
-     * that, and "Xx" happens to be a real element symbol - so anything not shaped like an adduct never reaches
-     * the parser.
+     * The parser this guards is lenient: it reads unrecognized text as a molecular formula, and "Xx" happens to
+     * be a real element symbol - so "Xxx" would come back as the adduct [M + Xx]+. Anything not shaped like an
+     * adduct therefore never reaches the parser.
      */
     private static final Pattern ADDUCT_SHAPE = Pattern.compile("^\\[?\\s*\\d*\\s*M\\s*[\\]+\\-]");
 
@@ -72,7 +69,7 @@ public class PrecursorIonTypeQueryRewriter implements QueryRewriter {
 
         final PrecursorIonType ionType;
         try {
-            ionType = PeriodicTable.getInstance().ionByName(queryText);
+            ionType = PeriodicTable.getInstance().ionByName(queryText, true); // a query must not change the table
         } catch (Exception e) {
             return null; // not an adduct - leave the query as the user wrote it
         }

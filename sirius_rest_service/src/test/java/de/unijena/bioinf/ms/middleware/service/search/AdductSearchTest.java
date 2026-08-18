@@ -46,6 +46,7 @@ import org.mockito.Mockito;
 import org.springframework.data.domain.PageRequest;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -156,6 +157,26 @@ public class AdductSearchTest {
         // ... while the intrinsically charged adduct itself stays searchable in the notations users write
         assertEquals(termQuery("[M]+"), rewrite("M+"));
         assertEquals(termQuery("[M]-"), rewrite("M-"));
+    }
+
+    /**
+     * A search box must not be able to change what SIRIUS considers a common ion mode. Parsing an adduct whose
+     * ion mode is unknown normally registers it, which is right for data being imported and wrong here: one
+     * typo would change how every adduct parsed afterwards is read.
+     */
+    @Test
+    public void testAQueryDoesNotWidenTheKnownIonModes() {
+        List<String> before = knownPositiveIonModes();
+
+        rewrite("[M+Xe]+"); // adduct-shaped, and no Xe ion mode is known
+
+        assertEquals(before, knownPositiveIonModes());
+    }
+
+    private static List<String> knownPositiveIonModes() {
+        List<String> names = new ArrayList<>();
+        PeriodicTable.getInstance().getKnownIonModes(1).forEach(ion -> names.add(ion.toString()));
+        return names;
     }
 
     // ---- searching with a sloppily written adduct ---------------------------------------------------------
