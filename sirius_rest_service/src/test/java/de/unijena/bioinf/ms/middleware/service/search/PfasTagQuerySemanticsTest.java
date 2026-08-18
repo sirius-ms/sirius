@@ -45,13 +45,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Pins the query shapes the GUI's PFAS filter emits ({@code PanelQueryNodeFactory}) against the real
- * search stack: the {@code pfas} tag is an analyzed TEXT tag with a closed vocabulary, so
+ * search stack:
  * <ul>
- *     <li>one evidence level is a phrase on the tag value, which must not match the other values,</li>
  *     <li>"has a pfas tag" is the open range {@code [* TO *]} - a bare {@code *} is rejected by the
  *     parser (leading wildcards are not allowed),</li>
  *     <li>"no pfas tag" needs the {@code *:*} anchor, since a query of only negations matches nothing.</li>
  * </ul>
+ * The corpus deliberately uses all three tag values, so presence must not depend on which one it is.
  */
 public class PfasTagQuerySemanticsTest {
 
@@ -123,23 +123,6 @@ public class PfasTagQuerySemanticsTest {
         return searchService.search(projectId, query, PageRequest.of(0, 20), TaggedFeature.class).getTotalElements();
     }
 
-    private static String value(String tagValue) {
-        return PFAS + ":\"" + tagValue + "\"";
-    }
-
-    @Test
-    public void testOneEvidenceLevelMatchesOnlyItsOwnTagValue() {
-        assertEquals(3, count(value(TagDefinitions.PFAS_TYPE_0)));
-        assertEquals(2, count(value(TagDefinitions.PFAS_TYPE_1)));
-        assertEquals(1, count(value(TagDefinitions.PFAS_TYPE_2)));
-    }
-
-    @Test
-    public void testSeveralEvidenceLevelsAreTheUnionOfTheirTagValues() {
-        assertEquals(5, count("(" + value(TagDefinitions.PFAS_TYPE_0) + " OR " + value(TagDefinitions.PFAS_TYPE_1) + ")"));
-        assertEquals(6, count("(" + value(TagDefinitions.PFAS_TYPE_0) + " OR " + value(TagDefinitions.PFAS_TYPE_1)
-                + " OR " + value(TagDefinitions.PFAS_TYPE_2) + ")"));
-    }
 
     @Test
     public void testTagPresenceIsAnOpenRange() {
@@ -154,29 +137,15 @@ public class PfasTagQuerySemanticsTest {
     }
 
     @Test
-    public void testASelectionIncludingNoPfasExcludesTheUnselectedTagValues() {
-        // slider range [None .. Potential]: untagged features and 'Potential PFAS' pass
-        assertEquals(5, count("*:* AND NOT (" + value(TagDefinitions.PFAS_TYPE_1) + " OR "
-                + value(TagDefinitions.PFAS_TYPE_2) + ")"));
-        // slider range [None .. Formula]
-        assertEquals(7, count("*:* AND NOT " + value(TagDefinitions.PFAS_TYPE_2)));
-        // only [None]
-        assertEquals(2, count("*:* AND NOT (" + value(TagDefinitions.PFAS_TYPE_0) + " OR "
-                + value(TagDefinitions.PFAS_TYPE_1) + " OR " + value(TagDefinitions.PFAS_TYPE_2) + ")"));
+    public void testAnchoredAbsenceStillNarrowsWithAFreeTextSegment() {
+        assertEquals(2, count("(*:* AND NOT " + PFAS + ":[* TO *]) AND (name:caffeine)"));
+        assertEquals(0, count("(*:* AND NOT " + PFAS + ":[* TO *]) AND (name:aspirin)"));
     }
 
     @Test
-    public void testAnchoredNegationStillNarrowsWithAFreeTextSegment() {
-        assertEquals(5, count("(*:* AND NOT (" + value(TagDefinitions.PFAS_TYPE_1) + " OR "
-                + value(TagDefinitions.PFAS_TYPE_2) + ")) AND (name:caffeine)"));
-        assertEquals(0, count("(*:* AND NOT (" + value(TagDefinitions.PFAS_TYPE_1) + " OR "
-                + value(TagDefinitions.PFAS_TYPE_2) + ")) AND (name:aspirin)"));
-    }
-
-    @Test
-    public void testInvertingAnAnchoredNegationIsItsComplement() {
-        String core = "*:* AND NOT (" + value(TagDefinitions.PFAS_TYPE_1) + " OR " + value(TagDefinitions.PFAS_TYPE_2) + ")";
-        assertEquals(5, count(core));
-        assertEquals(3, count("*:* AND NOT (" + core + ")"), "the features the filter hides");
+    public void testInvertingTheAnchoredAbsenceIsThePresence() {
+        String absent = "*:* AND NOT " + PFAS + ":[* TO *]";
+        assertEquals(2, count(absent));
+        assertEquals(6, count("*:* AND NOT (" + absent + ")"), "the features the filter hides");
     }
 }

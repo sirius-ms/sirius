@@ -24,7 +24,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
-import de.unijena.bioinf.ms.gui.utils.filter.PfasFilter;
 import org.junit.jupiter.api.Test;
 
 import javax.swing.text.BadLocationException;
@@ -89,11 +88,8 @@ public class PanelQueryApiEquivalenceTest {
                 new State("blank", m -> m.getSampleBlankFoldChange().setEnabled(true)),
                 new State("lipid-any", m -> m.setLipidClassDetected(true)),
                 new State("lipid-no", m -> m.setLipidClassDetected(false)),
-                // pfas: the evidence-only range, and one that keeps untagged features (rendered as a complement)
-                new State("pfas-tagged", m -> m.getPfasFilter()
-                        .setLevelSelected(PfasFilter.PfasEvidence.NO_PFAS, false)),
-                new State("pfas-no-structure", m -> m.getPfasFilter()
-                        .setLevelSelected(PfasFilter.PfasEvidence.MOLECULAR_STRUCTURE, false)),
+                new State("pfas-tagged", m -> m.setPfasDetected(true)),
+                new State("pfas-none", m -> m.setPfasDetected(false)),
                 new State("mz+hasMsMs", m -> { m.setCurrentMinMz(300); m.setHasMsMs(true); }),
                 new State("inverted-mz", m -> { m.setCurrentMinMz(300); m.setInverted(true); }),
                 new State("freetext-only", m -> setSearchText(m, "name:caffeine")),

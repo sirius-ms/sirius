@@ -18,17 +18,15 @@
 
 package de.unijena.bioinf.ms.gui.utils.filter;
 
-import de.unijena.bioinf.ms.gui.utils.filter.PfasFilter.PfasEvidence;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * The GUI mirrors the pfas tag name and its values as literals ({@link PfasFilter}) because it must keep
- * working against a REMOTE middleware and therefore cannot depend on the server-side tag definitions.
+ * The GUI mirrors the pfas tag field name as a literal ({@link FeatureFilterModel#FIELD_PFAS}) because it
+ * must keep working against a REMOTE middleware and therefore cannot depend on the server-side tag
+ * definitions.
  * <p>
  * This test is the safety net for that copy: it is the ONLY place where both sides meet, and it exists
  * so a change to the tag definitions fails the build here instead of silently turning the PFAS filter
@@ -38,21 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class PfasTagContractTest {
 
     @Test
-    public void testGuiLiteralsMatchTheTagDefinition() {
-        assertEquals(TagDefinitions.PFAS_TYPE.getTagName(), PfasFilter.TAG_NAME);
+    public void testTheQueriedFieldMatchesTheTagDefinition() {
+        // the filter asks whether this field is present, so a renamed tag would silently match nothing
         assertEquals("tags." + TagDefinitions.PFAS_TYPE.getTagName(), FeatureFilterModel.FIELD_PFAS);
-
-        assertEquals(TagDefinitions.PFAS_TYPE_0, PfasEvidence.POTENTIAL.getTagValue());
-        assertEquals(TagDefinitions.PFAS_TYPE_1, PfasEvidence.MOLECULAR_FORMULA.getTagValue());
-        assertEquals(TagDefinitions.PFAS_TYPE_2, PfasEvidence.MOLECULAR_STRUCTURE.getTagValue());
-    }
-
-    @Test
-    public void testTheScaleCoversEveryDefinedTagValueInOrder() {
-        // a value added to the definition without a matching evidence level would be unfilterable
-        // the definition keeps its values in an ordered set, the scale in ordinal order
-        assertEquals(List.copyOf(TagDefinitions.PFAS_TYPE.getValueDefinition().getPossibleValues()),
-                List.of(PfasEvidence.POTENTIAL.getTagValue(), PfasEvidence.MOLECULAR_FORMULA.getTagValue(),
-                        PfasEvidence.MOLECULAR_STRUCTURE.getTagValue()));
     }
 }
