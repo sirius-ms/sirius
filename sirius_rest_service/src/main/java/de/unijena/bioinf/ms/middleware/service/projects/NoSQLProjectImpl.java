@@ -299,6 +299,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             .toList();
                     searchService.addDocuments(projectId, runsToUpdate);
                 }
+
+                // What was just imported is about to be announced, and a client told about an import asks for
+                // the data straight away. Index writes are only visible to a query once the searcher has been
+                // refreshed, and the read path refreshes best-effort - so publish them here, or the reload
+                // prompted by the import event can run on the searcher as it was before it. A rebuild gets this
+                // from marking the index complete; adding to an existing index has no such step.
+                if (Utils.notNullOrEmpty(alignedFeaturesToUpdate))
+                    searchService.makeWritesSearchable(projectId, AlignedFeature.class);
+                if (Utils.notNullOrEmpty(runIds))
+                    searchService.makeWritesSearchable(projectId, Run.class);
             }
         }
 
