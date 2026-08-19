@@ -13989,13 +13989,15 @@
         "type": "object",
         "properties": {
           "inchiKey": {
-            "type": "string"
+            "type": "string",
+            "description": "InChIKey of the structure candidate.\n Searching with a full 27 character key matches its 2D (skeleton) part, so stereoisomers of the\n searched structure are found alike."
           },
           "smiles": {
             "type": "string"
           },
           "structureName": {
             "type": "string",
+            "description": "Name of the structure candidate.\n Searching also resolves the searched term as a PubChem synonym, so a structure is found by any\n of its common names.",
             "nullable": true
           },
           "structureSvg": {
@@ -14005,7 +14007,7 @@
           },
           "dbLinks": {
             "type": "array",
-            "description": "List of structure database links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "description": "List of structure database links belonging to the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/DBLink"
@@ -14013,7 +14015,7 @@
           },
           "spectralLibraryMatches": {
             "type": "array",
-            "description": "List of spectral library matches belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "description": "List of spectral library matches belonging to the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/SpectralLibraryMatch"
@@ -15205,13 +15207,16 @@
         "type": "object",
         "properties": {
           "alignedFeatureId": {
-            "type": "string"
+            "type": "string",
+            "description": "Unique identifier of the aligned feature within the project."
           },
           "compoundId": {
-            "type": "string"
+            "type": "string",
+            "description": "Identifier of the compound the feature belongs to.\n Features that are different adducts or isotopologues of the same molecule share it."
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Informative, human-readable name of the feature."
           },
           "externalFeatureId": {
             "type": "string",
@@ -15219,39 +15224,43 @@
           },
           "ionMass": {
             "type": "number",
+            "description": "Mass-to-charge ratio (m/z) of the precursor ion of the feature.",
             "format": "double"
           },
           "charge": {
             "type": "integer",
-            "description": "Ion mode (charge) this feature has been measured in.",
+            "description": "Ion mode (charge) the feature has been measured in.",
             "format": "int32"
           },
           "detectedAdducts": {
             "uniqueItems": true,
             "type": "array",
-            "description": "Adducts of this feature that have been detected during preprocessing.\n Never empty: if no adduct could be detected, the unknown ion type matching the feature\u0027s\n charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.",
+            "description": "Adducts that have been detected for the feature during preprocessing.\n Never empty: if no adduct could be detected, the unknown ion type matching the feature\u0027s\n charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.",
             "items": {
               "type": "string"
             }
           },
           "rtStartSeconds": {
             "type": "number",
+            "description": "Start of the retention time range the feature was detected in, in seconds.",
             "format": "double",
             "nullable": true
           },
           "rtEndSeconds": {
             "type": "number",
+            "description": "End of the retention time range the feature was detected in, in seconds.",
             "format": "double",
             "nullable": true
           },
           "rtApexSeconds": {
             "type": "number",
+            "description": "Retention time of the intensity apex of the feature, in seconds.",
             "format": "double",
             "nullable": true
           },
           "quality": {
             "type": "string",
-            "description": "Overall Quality of this feature.\n If no Quality data are available for this feature the value is NOT_APPLICABLE",
+            "description": "Overall quality of the feature. NOT_APPLICABLE if no quality data is available",
             "nullable": true,
             "enum": [
               "NOT_APPLICABLE",
@@ -15280,7 +15289,7 @@
           },
           "computing": {
             "type": "boolean",
-            "description": "Write lock for this feature. If the feature is locked no write operations are possible.\n True if any computation is modifying this feature or its results"
+            "description": "Write lock for the feature. If the feature is locked no write operations are possible.\n True if any computation is modifying the feature or its results."
           },
           "computedTools": {
             "$ref": "#/components/schemas/ComputedSubtools"
@@ -15449,7 +15458,7 @@
         "properties": {
           "compoundId": {
             "type": "string",
-            "description": "Unique id of this compound entity."
+            "description": "Unique id of the compound entity."
           },
           "name": {
             "type": "string",
@@ -15458,25 +15467,25 @@
           },
           "rtStartSeconds": {
             "type": "number",
-            "description": "The merged/consensus retention time start (earliest rt) of this compound",
+            "description": "The merged/consensus retention time start (earliest rt) of the compound",
             "format": "double",
             "nullable": true
           },
           "rtEndSeconds": {
             "type": "number",
-            "description": "The merged/consensus retention time end (latest rt) of this compound",
+            "description": "The merged/consensus retention time end (latest rt) of the compound",
             "format": "double",
             "nullable": true
           },
           "neutralMass": {
             "type": "number",
-            "description": "Neutral mass of this compound. Ion mass minus the mass of the assigned adduct of each feature of\n this compound should result in the same neutral mass",
+            "description": "Neutral mass of the compound. Ion mass minus the mass of the assigned adduct of each feature of\n the compound should result in the same neutral mass",
             "format": "double",
             "nullable": true
           },
           "features": {
             "type": "array",
-            "description": "List of aligned features (adducts) that belong to the same (this) compound",
+            "description": "List of aligned features (adducts) that belong to the compound",
             "items": {
               "$ref": "#/components/schemas/AlignedFeature"
             }
@@ -15621,7 +15630,7 @@
             "type": "boolean"
           }
         },
-        "description": "Specifies which tools have been executed for this feature. Can be used to estimate which results can be expected. Null if it was not requested and non-null otherwise.",
+        "description": "Specifies which tools have been executed for the feature. Can be used to estimate which results can be expected. Null if it was not requested and non-null otherwise.",
         "nullable": true
       },
       "ConsensusAnnotationsCSI": {
@@ -16209,13 +16218,15 @@
         "type": "object",
         "properties": {
           "inchiKey": {
-            "type": "string"
+            "type": "string",
+            "description": "InChIKey of the structure candidate.\n Searching with a full 27 character key matches its 2D (skeleton) part, so stereoisomers of the\n searched structure are found alike."
           },
           "smiles": {
             "type": "string"
           },
           "structureName": {
             "type": "string",
+            "description": "Name of the structure candidate.\n Searching also resolves the searched term as a PubChem synonym, so a structure is found by any\n of its common names.",
             "nullable": true
           },
           "structureSvg": {
@@ -16225,7 +16236,7 @@
           },
           "dbLinks": {
             "type": "array",
-            "description": "List of structure database links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "description": "List of structure database links belonging to the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/DBLink"
@@ -16233,7 +16244,7 @@
           },
           "spectralLibraryMatches": {
             "type": "array",
-            "description": "List of spectral library matches belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "description": "List of spectral library matches belonging to the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/SpectralLibraryMatch"
@@ -16251,13 +16262,15 @@
         "type": "object",
         "properties": {
           "inchiKey": {
-            "type": "string"
+            "type": "string",
+            "description": "InChIKey of the structure candidate.\n Searching with a full 27 character key matches its 2D (skeleton) part, so stereoisomers of the\n searched structure are found alike."
           },
           "smiles": {
             "type": "string"
           },
           "structureName": {
             "type": "string",
+            "description": "Name of the structure candidate.\n Searching also resolves the searched term as a PubChem synonym, so a structure is found by any\n of its common names.",
             "nullable": true
           },
           "structureSvg": {
@@ -16267,7 +16280,7 @@
           },
           "dbLinks": {
             "type": "array",
-            "description": "List of structure database links belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "description": "List of structure database links belonging to the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/DBLink"
@@ -16275,7 +16288,7 @@
           },
           "spectralLibraryMatches": {
             "type": "array",
-            "description": "List of spectral library matches belonging to this structure candidate\n OPTIONAL: needs to be added by parameter",
+            "description": "List of spectral library matches belonging to the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/SpectralLibraryMatch"
@@ -16435,7 +16448,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Informative, human-readable name of this run"
+            "description": "Informative, human-readable name of the run"
           },
           "source": {
             "type": "string",
@@ -16443,18 +16456,22 @@
           },
           "chromatography": {
             "type": "string",
+            "description": "Chromatography the run was measured with, e.g. \u0027Liquid Chromatography\u0027.",
             "nullable": true
           },
           "ionization": {
             "type": "string",
+            "description": "Ionization the run was measured with, named as in the HUPO PSI-MS controlled vocabulary,\n e.g. \u0027electrospray ionization\u0027.",
             "nullable": true
           },
           "fragmentation": {
             "type": "string",
+            "description": "Fragmentation the run was measured with, named as in the HUPO PSI-MS controlled vocabulary,\n e.g. \u0027beam-type collision-induced dissociation\u0027.",
             "nullable": true
           },
           "massAnalyzers": {
             "type": "array",
+            "description": "Mass analyzers of the instrument the run was measured on, named as in the HUPO PSI-MS\n controlled vocabulary, e.g. \u0027orbitrap\u0027.",
             "nullable": true,
             "items": {
               "type": "string",
