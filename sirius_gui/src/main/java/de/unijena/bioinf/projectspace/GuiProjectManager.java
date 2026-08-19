@@ -211,19 +211,25 @@ public class GuiProjectManager implements Closeable {
 
                             if (!idsToComputeState.isEmpty()) {
                                 // Target the affected beans directly via the present-features snapshot (O(affected))
-                                // instead of scanning the whole list per event. Compute state has no influence on
-                                // sorting or filtering, so we only repaint; result changes are handled below.
+                                // instead of scanning the whole list per event. A bean that really changed state
+                                // announces it itself, which is what lets the toolbar actions re-decide whether
+                                // anything is still computing; the repaint below covers the row rendering.
+                                // The server repeats the state of a job on every progress event, so most of these
+                                // change nothing - only a real change counts as affecting anything.
                                 Map<String, InstanceBean> present = presentFeatures;
                                 boolean anyAffected = false;
                                 for (Map.Entry<String, Boolean> e : idsToComputeState.entrySet()) {
                                     InstanceBean inst = present.get(e.getKey());
-                                    if (inst != null) {
-                                        inst.changeComputeStateOfCache(e.getValue());
+                                    if (inst != null && inst.changeComputeStateOfCache(e.getValue()))
                                         anyAffected = true;
-                                    }
                                 }
                                 if (anyAffected)
-                                    Jobs.runEDTLater(() -> siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint());
+                                    Jobs.runEDTLater(() -> {
+                                        siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint();
+                                        // one signal for the whole batch: what may run while something computes
+                                        // is decided from this, and deciding it per feature would be quadratic
+                                        siriusGui.getMainFrame().getCompoundList().notifyComputeStateChange();
+                                    });
                             }
                         }
                     } else if (event instanceof ProjectChangeEvent projectEvent) {
@@ -487,14 +493,20 @@ public class GuiProjectManager implements Closeable {
                     tmpInst.forEach(InstanceBean::unregisterProjectSpaceListener);
                     return;
                 }
-                // Drop the selection before touching the list: the whole page is replaced, so the selection
-                // cannot survive anyway, and an empty selection keeps the selection model from re-indexing (and
-                // re-firing) across the swap - which is where half-updated list/selection state was observed.
-                clearCompoundListSelection();
-                // Discard the outgoing beans: unregister their listeners (fixes a pre-existing pcs leak and stops
-                // ghost beans refetching on later result events), then swap in the fresh page. The swap holds the
-                // list write lock, so it cannot interleave with an element change dispatched from another thread.
+                // Everything that touches the pipeline happens under its write lock, including dropping the
+                // selection: the selection model is part of the same pipeline, so it dispatches into the same
+                // publisher, and a publisher two threads dispatch into at once ends up unusable (see
+                // EventLists). The library mutates under that lock too - an element that fires a property
+                // change from a background thread reaches ObservableElementList - so this is what serializes
+                // the reload against it.
                 EventLists.writeLocked(INSTANCE_LIST, () -> {
+                    // Drop the selection before touching the list: the whole page is replaced, so the selection
+                    // cannot survive anyway, and an empty selection keeps the selection model from re-indexing
+                    // (and re-firing) across the swap - which is where half-updated list/selection state was
+                    // observed.
+                    clearCompoundListSelection();
+                    // Discard the outgoing beans: unregister their listeners (fixes a pre-existing pcs leak and
+                    // stops ghost beans refetching on later result events), then swap in the fresh page.
                     INSTANCE_LIST.forEach(InstanceBean::unregisterProjectSpaceListener);
                     INSTANCE_LIST.clear();
                     INSTANCE_LIST.addAll(tmpInst);

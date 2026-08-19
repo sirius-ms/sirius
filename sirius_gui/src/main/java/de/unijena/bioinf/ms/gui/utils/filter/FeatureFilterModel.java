@@ -139,7 +139,10 @@ public class FeatureFilterModel implements SiriusPCS {
 
 
     public FeatureFilterModel() {
-        this(0, 5000d, 0, 10000d, 0, 1d);
+        // m/z and retention time have no upper end: whatever number were put here would be a cap, and a cap
+        // silently drops the features beyond it - a three-hour gradient runs past any plausible guess at one.
+        // Confidence really does stop at 1.
+        this(0, Double.POSITIVE_INFINITY, 0, Double.POSITIVE_INFINITY, 0, 1d);
     }
 
 

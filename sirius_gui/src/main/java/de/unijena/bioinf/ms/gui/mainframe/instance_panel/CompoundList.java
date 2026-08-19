@@ -178,6 +178,19 @@ public class CompoundList {
             l.listSelectionChanged(compoundListSelectionModel, selected, deselected, total);
     }
 
+    /**
+     * Tells the listeners that features started or stopped computing, once for the whole batch.
+     * <p>
+     * Not a list change: nothing about the list itself changed, and raising one per affected feature is what a
+     * job over a whole project must not do. Called from the event dispatch thread, like the repaint it
+     * accompanies.
+     */
+    public void notifyComputeStateChange() {
+        long total = projectManager.getTotalInstances();
+        for (ExperimentListChangeListener l : listeners)
+            l.computeStateChanged(compoundListSelectionModel, total);
+    }
+
     //API methods
     public void addChangeListener(ExperimentListChangeListener l) {
         listeners.add(l);

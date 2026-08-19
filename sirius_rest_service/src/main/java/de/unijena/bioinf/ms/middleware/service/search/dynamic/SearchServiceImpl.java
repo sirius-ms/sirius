@@ -215,6 +215,11 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
+    public <T> void makeWritesSearchable(String projectId, Class<T> clazz) {
+        consumeProjectContext(projectId, ps -> ps.makeWritesSearchable(clazz));
+    }
+
+    @Override
     public <T> Page<T> search(String projectId, @Nullable String query, Pageable pageable, Class<T> pojoClass) {
         return withProjectContext(projectId, ps -> ps.search(query, pageable, pojoClass));
     }

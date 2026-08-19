@@ -656,12 +656,25 @@ public class InstanceBean implements SiriusPCS {
         throw new UnsupportedOperationException("Implement modification features in nightsky api");
     }
 
+    /**
+     * Applies a compute-state change from the server.
+     * <p>
+     * Deliberately silent: a job usually covers every feature of the project, so starting or finishing one
+     * flips thousands of these at once. Firing a property change per feature would turn each flip into a list
+     * change, and every list change makes each toolbar action scan the whole list again - quadratic in the
+     * number of features, on the event dispatch thread. The list is repainted once for the whole batch
+     * instead, and the actions are told once, see {@code ExperimentListChangeListener.computeStateChanged}.
+     *
+     * @return whether this actually changed anything, so a batch can tell whether it has something to report.
+     * The server repeats the state of a job on every progress event, so most calls change nothing.
+     */
     synchronized boolean changeComputeStateOfCache(boolean computeState) {
-        if (sourceFeature != null) {
-            sourceFeature.setComputing(computeState);
-            return true;
-        }
-        return false;
+        if (sourceFeature == null)
+            return false;
+        if (Boolean.valueOf(computeState).equals(sourceFeature.isComputing()))
+            return false;
+        sourceFeature.setComputing(computeState);
+        return true;
     }
 
     public class Setter {
