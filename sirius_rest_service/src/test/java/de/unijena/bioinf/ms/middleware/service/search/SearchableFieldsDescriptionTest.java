@@ -208,7 +208,7 @@ public class SearchableFieldsDescriptionTest {
      */
     @Test
     public void testRealModelDescriptionsMatchApiDoc() {
-        assertEquals("Informative, human-readable name of this run",
+        assertEquals("Informative, human-readable name of the run",
                 describeWithApiDocs(Run.class).get("name").getDescription());
     }
 

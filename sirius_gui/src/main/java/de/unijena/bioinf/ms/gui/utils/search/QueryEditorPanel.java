@@ -427,7 +427,21 @@ public class QueryEditorPanel extends JPanel {
         }
 
         // --- embedded suggestion list (no separate window) ---
-        suggestionList = new JList<>();
+        // JList does not consult the cell renderer for tooltips, so the hovered row resolves its own
+        // (which carries the fully-qualified field name and the description in full)
+        suggestionList = new JList<TokenInputModel.Suggestion>() {
+            @Override
+            public String getToolTipText(MouseEvent event) {
+                int index = locationToIndex(event.getPoint());
+                if (index < 0 || index >= getModel().getSize())
+                    return null;
+                Rectangle cell = getCellBounds(index, index);
+                if (cell == null || !cell.contains(event.getPoint()))
+                    return null; // the empty space below the last row is not a row
+                return SuggestionDisplay.of(getModel().getElementAt(index), renderState.mode()).tooltip();
+            }
+        };
+        ToolTipManager.sharedInstance().registerComponent(suggestionList);
         suggestionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         suggestionList.setFocusable(false);
         suggestionList.setCellRenderer(new SuggestionRenderer());
@@ -1402,36 +1416,21 @@ public class QueryEditorPanel extends JPanel {
     }
 
     /**
-     * Renders a suggestion row: display text with the (dimmed, truncated) description behind it. In
-     * compact mode, ONLY field-name rows are shortened (per the field's significantSuffixLength) - the
-     * fully-qualified name is moved into the dimmed text so it stays discoverable; operator, value and
-     * connector rows are shown verbatim (compacting a value like {@code 195.08} would corrupt it).
+     * Renders a suggestion row: the name with the dimmed text behind it, both composed by
+     * {@link SuggestionDisplay} (the description wins that spot; the fully-qualified name lives in the
+     * row's tooltip). Only the dimmed text is truncated here, so the row stays one line.
      */
     private class SuggestionRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                       boolean isSelected, boolean cellHasFocus) {
             TokenInputModel.Suggestion suggestion = (TokenInputModel.Suggestion) value;
-            String display = suggestion.display();
-            String description = suggestion.description();
+            SuggestionDisplay.Row row = SuggestionDisplay.of(suggestion, renderState.mode());
 
-            if (suggestion instanceof TokenInputModel.Suggestion.FieldSuggestion fieldSuggestion
-                    && renderState.mode() == FieldDisplay.Mode.COMPACT) {
-                var field = fieldSuggestion.field();
-                int suffix = field.getSignificantSuffixLength() != null ? field.getSignificantSuffixLength() : 1;
-                String compact = FieldDisplay.compact(field.getName(), suffix);
-                if (!compact.equals(field.getName())) {
-                    display = compact;
-                    // keep the fully-qualified name visible (and searchable) in the dimmed text
-                    description = field.getName()
-                            + (description == null || description.isBlank() ? "" : "  ·  " + description);
-                }
-            }
-
-            String text = description == null || description.isBlank()
-                    ? escape(display)
-                    : "<html><b>" + escape(display) + "</b>&nbsp;&nbsp;<span style='color:gray'>"
-                      + escape(truncate(description)) + "</span></html>";
+            String text = row.dimmed() == null
+                    ? escape(row.display())
+                    : "<html><b>" + escape(row.display()) + "</b>&nbsp;&nbsp;<span style='color:gray'>"
+                      + escape(truncate(row.dimmed())) + "</span></html>";
             Component component = super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
             // the run-action row is not a query part - set it apart by the accent tint and a rule
             // below it, so the rows underneath read as "and these add to the query"
