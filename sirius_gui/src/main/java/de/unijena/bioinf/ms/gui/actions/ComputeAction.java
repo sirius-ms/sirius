@@ -52,6 +52,12 @@ public class ComputeAction extends AbstractGuiAction {
             }
 
             @Override
+            public void computeStateChanged(AdvancedListSelectionModel<InstanceBean> selection, long totalElements) {
+                // one signal for a whole batch of features, so re-ask the same question the selection asks
+                setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
+            }
+
+            @Override
             public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, long totalElements) {
                 setEnabled(SiriusActions.notComputingOrEmpty(selected));
             }

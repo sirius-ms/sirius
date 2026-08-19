@@ -31,4 +31,18 @@ import java.util.List;
 public interface ExperimentListChangeListener{
     void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, long totalElements);
     void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, long totalElements);
+
+    /**
+     * Some features started or stopped computing.
+     * <p>
+     * Reported once for a whole batch rather than per feature, and not as a list change at all: a job usually
+     * covers every feature of the project, so a per-feature event would have each listener rescan the whole
+     * list thousands of times. Which features changed is not said, because whoever cares asks the list or the
+     * selection anyway.
+     * <p>
+     * Implemented by whatever may not run while something is computing - the compute, delete, summary and
+     * export actions - and ignored by everyone else, hence the default.
+     */
+    default void computeStateChanged(AdvancedListSelectionModel<InstanceBean> selection, long totalElements) {
+    }
 }
