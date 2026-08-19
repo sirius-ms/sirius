@@ -493,14 +493,20 @@ public class GuiProjectManager implements Closeable {
                     tmpInst.forEach(InstanceBean::unregisterProjectSpaceListener);
                     return;
                 }
-                // Drop the selection before touching the list: the whole page is replaced, so the selection
-                // cannot survive anyway, and an empty selection keeps the selection model from re-indexing (and
-                // re-firing) across the swap - which is where half-updated list/selection state was observed.
-                clearCompoundListSelection();
-                // Discard the outgoing beans: unregister their listeners (fixes a pre-existing pcs leak and stops
-                // ghost beans refetching on later result events), then swap in the fresh page. The swap holds the
-                // list write lock, so it cannot interleave with an element change dispatched from another thread.
+                // Everything that touches the pipeline happens under its write lock, including dropping the
+                // selection: the selection model is part of the same pipeline, so it dispatches into the same
+                // publisher, and a publisher two threads dispatch into at once ends up unusable (see
+                // EventLists). The library mutates under that lock too - an element that fires a property
+                // change from a background thread reaches ObservableElementList - so this is what serializes
+                // the reload against it.
                 EventLists.writeLocked(INSTANCE_LIST, () -> {
+                    // Drop the selection before touching the list: the whole page is replaced, so the selection
+                    // cannot survive anyway, and an empty selection keeps the selection model from re-indexing
+                    // (and re-firing) across the swap - which is where half-updated list/selection state was
+                    // observed.
+                    clearCompoundListSelection();
+                    // Discard the outgoing beans: unregister their listeners (fixes a pre-existing pcs leak and
+                    // stops ghost beans refetching on later result events), then swap in the fresh page.
                     INSTANCE_LIST.forEach(InstanceBean::unregisterProjectSpaceListener);
                     INSTANCE_LIST.clear();
                     INSTANCE_LIST.addAll(tmpInst);
