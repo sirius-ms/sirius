@@ -65,7 +65,12 @@ public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectr
 	protected SimpleSpectrum(double[] masses, double[] intensities, boolean NoCopyAndOrder) {
 		super(masses, intensities, NoCopyAndOrder);
 		if (!NoCopyAndOrder) {
-			Spectrums.sortSpectrumByMass(new ArrayWrapperSpectrum(masses, intensities));
+			// this.masses and this.intensities, not the arguments: super has just copied them, so sorting the
+			// arguments would leave this spectrum holding the unsorted copy while still declaring itself an
+			// OrderedSpectrum - and every lookup in Spectrums reaches an ordered spectrum by binary search, which
+			// then misses peaks that are there without any error to show for it. It also stops reordering the
+			// caller's arrays, which was never this constructor's business.
+			Spectrums.sortSpectrumByMass(new ArrayWrapperSpectrum(this.masses, this.intensities));
 		}
 	}
 
