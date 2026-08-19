@@ -38,11 +38,21 @@ import java.util.List;
 @JsonIgnoreProperties(value = { "molecularFormula", "adduct", "csiScore", "tanimotoSimilarity", "confidenceExactMatch", "confidenceApproxMatch", "fingerprint"}, ignoreUnknown = true)
 public class StructureCandidate {
 
+    /**
+     * InChIKey of the structure candidate.
+     * Searching with a full 27 character key matches its 2D (skeleton) part, so stereoisomers of the
+     * searched structure are found alike.
+     */
     @IndexField(defaultSearchField = true, queryRewriter = InchiKey2DQueryRewriter.class)
     protected String inchiKey;
 
     protected String smiles;
 
+    /**
+     * Name of the structure candidate.
+     * Searching also resolves the searched term as a PubChem synonym, so a structure is found by any
+     * of its common names.
+     */
     @IndexField(defaultSearchField = true, fullTextSearch = true, queryRewriter = PubChemSynonymQueryRewriter.class)
     @Schema(nullable = true)
     protected String structureName;
@@ -55,13 +65,13 @@ public class StructureCandidate {
     protected String structureSvg;
 
     /**
-     * List of structure database links belonging to this structure candidate
+     * List of structure database links belonging to the structure candidate
      * OPTIONAL: needs to be added by parameter
      */
     @Schema(nullable = true)
     List<DBLink> dbLinks;
     /**
-     * List of spectral library matches belonging to this structure candidate
+     * List of spectral library matches belonging to the structure candidate
      * OPTIONAL: needs to be added by parameter
      */
     @Schema(nullable = true)

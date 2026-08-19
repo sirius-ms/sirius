@@ -47,7 +47,7 @@ public class Compound implements Taggable {
     public enum OptField {none, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations, tags}
 
     /**
-     * Unique id of this compound entity.
+     * Unique id of the compound entity.
      */
     @NotNull
     protected String compoundId;
@@ -59,38 +59,38 @@ public class Compound implements Taggable {
     protected String name;
 
     /**
-     * The merged/consensus retention time start (earliest rt) of this compound
+     * The merged/consensus retention time start (earliest rt) of the compound
      */
     @Schema(nullable = true)
     protected Double rtStartSeconds;
 
     /**
-     * The merged/consensus retention time end (latest rt) of this compound
+     * The merged/consensus retention time end (latest rt) of the compound
      */
     @Schema(nullable = true)
     protected Double rtEndSeconds;
 
     /**
-     * Neutral mass of this compound. Ion mass minus the mass of the assigned adduct of each feature of
-     * this compound should result in the same neutral mass
+     * Neutral mass of the compound. Ion mass minus the mass of the assigned adduct of each feature of
+     * the compound should result in the same neutral mass
      */
     @Schema(nullable = true)
     protected Double neutralMass;
 
     /**
-     * List of aligned features (adducts) that belong to the same (this) compound
+     * List of aligned features (adducts) that belong to the compound
      */
     protected List<AlignedFeature> features;
 
     /**
-     * The consensus of the top annotations from all the features of this compound.
+     * The consensus of the top annotations from all the features of the compound.
      * Null if it was not requested and non-null otherwise. Might contain empty fields if results are not available
      */
     @Schema(nullable = true)
     ConsensusAnnotationsCSI consensusAnnotations;
 
     /**
-     * The consensus of the top de novo annotations from all the features of this compound.
+     * The consensus of the top de novo annotations from all the features of the compound.
      * Null if it was not requested and non-null otherwise. Might contain empty fields if results are not available
      */
     @Schema(nullable = true)
@@ -110,10 +110,10 @@ public class Compound implements Taggable {
     protected Map<String, Tag> tags;
 
     /**
-     * Aggregated fold change of sample runs vs blank runs for this aligned feature
-     * NULL if not a sample run or no fold change exists
-     * NOTE: This field is mainly for search index building and therefore hidden from the api
+     * Aggregated fold change of sample runs vs blank runs for the compound
+     * NULL if no fold change has been computed for the compound
      */
+    //NOTE: This field is mainly for search index building and therefore hidden from the api
     @IndexFieldWithMapper(mapper = FoldChangeMapper.CompoundFoldChange.class)
     @Schema(nullable = true, hidden = true)
     protected List<Statistics> stats;

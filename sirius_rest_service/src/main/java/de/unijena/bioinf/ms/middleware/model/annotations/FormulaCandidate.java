@@ -121,9 +121,11 @@ public class FormulaCandidate {
     protected IsotopePatternAnnotation isotopePatternAnnotation;
 
     /**
-     * ElGordo lipid annotation of this candidate.
-     * NULL if annotation was not requested. lipidAnnotation.lipidSpecies == NULL if candidate has not been classified as a lipid
+     * ElGordo lipid annotation of this candidate: the lipid class and species it was classified as.
+     * Empty if the candidate has not been classified as a lipid.
      */
+    //NOTE: the whole annotation is null if it was not requested; its lipidSpecies is null if ElGordo
+    //did not classify the candidate as a lipid
     @IndexFieldWithMapper(mapper = LipidAnnotationMapper.class, queryRewriter = LipidClassQueryRewriter.class)
     @SearchableFieldDoc(possibleValues = LipidClassVocabulary.class, fieldTypes = LipidFieldTypes.class)
     @Schema(nullable = true)
