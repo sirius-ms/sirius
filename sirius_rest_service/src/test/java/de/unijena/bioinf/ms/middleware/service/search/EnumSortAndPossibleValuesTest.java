@@ -12,6 +12,8 @@ import org.apache.lucene.index.IndexableField;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -50,8 +52,13 @@ public class EnumSortAndPossibleValuesTest {
         searchService.closeProjectIndex(mockProject, true);
     }
 
+    /** Describing is done outside the search engine, over the facts it reports. */
+    private SearchableFieldService searchableFields() {
+        return new SearchableFieldService(IndexFacts.of(searchService, projectId), null);
+    }
+
     private Map<String, SearchableField> fields(Class<?> pojo) {
-        return searchService.getSearchableFields(projectId, pojo).stream()
+        return searchableFields().describe(pojo).stream()
                 .collect(Collectors.toMap(SearchableField::getName, Function.identity()));
     }
 

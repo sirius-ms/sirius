@@ -58,7 +58,13 @@ import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsType;
 import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
+import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
+import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionDocs;
+import de.unijena.bioinf.ms.middleware.service.search.description.DetectedAdductPossibleValues;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -141,6 +147,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private final SearchService searchService;
 
     /**
+     * Describes this project's searchable fields. Built here because the vocabularies it reports are project
+     * state: the tag definitions stored in this project and the adducts its imports detected. Both are read
+     * when the fields are described, so a definition extended or an import run later shows up right away.
+     * <p>
+     * Not exposed: callers ask this project what is searchable, not how it works that out.
+     */
+    private final SearchableFieldService searchableFieldService;
+
+    /**
      * Per-project lock serializing this project's search-index build/update/remove operations against each
      * other (they do check-then-act on the same index). It is intentionally NOT the shared searchService
      * monitor: different projects have independent indices and must be able to (re)build concurrently.
@@ -149,12 +164,22 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private final @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
 
+    @Override
+    public List<SearchableField> getSearchableFields(@NotNull Class<?> modelClass) {
+        return searchableFieldService == null ? List.of() : searchableFieldService.describe(modelClass);
+    }
+
     @SneakyThrows
     public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager, SearchService searchService, @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider) {
         this.projectId = projectId;
         this.projectSpaceManager = projectSpaceManager;
         this.computeStateProvider = computeStateProvider;
         this.searchService = searchService;
+        this.searchableFieldService = searchService == null ? null : new SearchableFieldService(
+                IndexFacts.of(searchService, projectId),
+                new DetectedAdductPossibleValues(() -> project().findDetectedAdducts()
+                        .map(ProjectDetectedAdducts::getDetectedAdducts).orElse(null)),
+                new TagDefinitionDocs(tagName -> project().findTagDefinitionByName(tagName)));
 
         if (this.searchService != null) {
             synchronized (searchIndexLock) {

@@ -47,7 +47,10 @@ public class CompletionParserTest {
             field("hasMs1", SearchableFieldType.BOOLEAN),
             field("hasMsMs", SearchableFieldType.BOOLEAN),
             field("topAnnotations.structureAnnotation.inchiKey", SearchableFieldType.TEXT),
-            field("tags.city", SearchableFieldType.TEXT));
+            field("tags.city", SearchableFieldType.TEXT),
+            // a text field with a closed vocabulary, e.g. a compound class ontology or a restricted tag
+            field("topAnnotations.compoundClassAnnotation.npcPathway", SearchableFieldType.TEXT)
+                    .possibleValues(List.of("Alkaloids", "Amino acids and Peptides", "Terpenoids")));
 
     private static Optional<Completion> parse(String text, boolean hasSibling, boolean groupOpen) {
         return CompletionParser.parse(text, FIELDS, hasSibling, groupOpen);
@@ -264,5 +267,65 @@ public class CompletionParserTest {
         assertEquals(List.of("true", "false"),
                 CompletionParser.valueSuggestions(FIELDS.get(3)));
         assertTrue(CompletionParser.valueSuggestions(FIELDS.get(1)).isEmpty());
+    }
+
+    /**
+     * Not only enums have a closed vocabulary: text fields do too (compound class ontologies, tags
+     * restricted by their definition). Whether values can be offered follows from the field having
+     * them, not from its type.
+     */
+    @Test
+    public void testTextFieldWithAClosedVocabularyOffersItsValues() {
+        assertEquals(List.of("Alkaloids", "Amino acids and Peptides", "Terpenoids"),
+                CompletionParser.valueSuggestions(FIELDS.get(7)));
+    }
+
+    /**
+     * A value the user cannot pick must not be offered, whatever the field type - the enum case is
+     * NOT_APPLICABLE, which does not mean bad quality but that there was nothing to judge.
+     */
+    @Test
+    public void testNotApplicableIsNeverOffered() {
+        SearchableField quality = field("quality", SearchableFieldType.ENUM)
+                .possibleValues(List.of("GOOD", "BAD", "NOT_APPLICABLE"));
+
+        assertEquals(List.of("GOOD", "BAD"), CompletionParser.valueSuggestions(quality));
+    }
+
+    @Test
+    public void testFieldWithoutVocabularyOffersNothingToSelect() {
+        assertTrue(CompletionParser.valueSuggestions(FIELDS.get(0)).isEmpty(), "numeric field");
+        assertTrue(CompletionParser.valueSuggestions(FIELDS.get(6)).isEmpty(), "free-text tag field");
+    }
+
+    /**
+     * The values a client gets may be a whole ontology, so matching only against the start of the
+     * value would hide "Carboxylic acids and derivatives" from someone typing "acids". Every word
+     * starts a match, values matching from the start come first, and the order the values were given
+     * in is kept within each rank - it carries meaning (an ordered enum, a curated tag definition).
+     */
+    @Test
+    public void testValuesMatchOnAnyWordButFullPrefixMatchesRankFirst() {
+        List<String> classes = List.of("Alkaloids", "Carboxylic acids and derivatives", "Amino acids and Peptides");
+
+        assertEquals(List.of("Carboxylic acids and derivatives", "Amino acids and Peptides"),
+                CompletionParser.valueMatches("acids", classes));
+        assertEquals(List.of("Alkaloids"), CompletionParser.valueMatches("alka", classes));
+        assertEquals(classes, CompletionParser.valueMatches("", classes));
+        assertTrue(CompletionParser.valueMatches("xyz", classes).isEmpty());
+    }
+
+    /**
+     * Adducts are indexed bracketed and spaced ([M + H]+), which is not how anyone types them into a value
+     * box: they type the adduct itself. Neither the leading bracket nor the spacing may hide a value.
+     */
+    @Test
+    public void testAdductValuesAreFoundTheWayTheyAreTyped() {
+        List<String> adducts = List.of("[M + ?]+", "[M + H]+", "[M + Na]+", "[M - H2O + H]+");
+
+        assertEquals(List.of("[M + H]+"), CompletionParser.valueMatches("[M+H]+", adducts));
+        assertEquals(List.of("[M + H]+"), CompletionParser.valueMatches("M+H", adducts));
+        assertEquals(List.of("[M + Na]+"), CompletionParser.valueMatches("Na", adducts));
+        assertEquals(adducts, CompletionParser.valueMatches("", adducts));
     }
 }

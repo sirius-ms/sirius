@@ -228,7 +228,7 @@ public class SearchableField {
   }
 
   /**
-   * The values this field can take, exactly as they are indexed, or null if the field accepts free text.  &lt;p&gt;  Reported for ENUM and BOOLEAN fields, and for TEXT fields that hold a closed vocabulary. Note that for  those the indexed value is not necessarily the name you would expect: the chromatography of a run, for  example, is indexed as &#39;Liquid Chromatography&#39;, not as &#39;LC&#39;. Use these values as offered rather than  constructing them.
+   * The values this field can take, exactly as they are indexed, or null if the field accepts free text.  &lt;p&gt;  Reported for ENUM and BOOLEAN fields, for TEXT fields that hold a closed vocabulary (the compound class  ontologies), and for fields whose values are project state: a tag restricted by its definition, or the  adducts detected in this project. Searchable fields are described per project, so the latter are the  values actually present in it rather than everything that could ever occur.  &lt;p&gt;  Note that the indexed value is not always the notation you would expect: an adduct is indexed as  &#39;[M + H]+&#39;, with spaces. Use the values as offered rather than constructing them.
    * @return possibleValues
    */
   @jakarta.annotation.Nullable

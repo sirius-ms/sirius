@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
-import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.projectspace.IndexField;
 import de.unijena.bioinf.projectspace.QueryRewriter;
 import lombok.Getter;
@@ -10,6 +9,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.queryparser.flexible.standard.config.NumberDateFormat;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.SortField;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils.*;
 
@@ -42,22 +41,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
     @Getter
     private final boolean nonStoredFields;
 
-    /**
-     * Provides human-readable descriptions for indexed fields (see {@link #describeSearchableFields()}).
-     * Injected so this mapper stays free of presentation-layer concerns (e.g. OpenAPI annotations);
-     * defaults to no descriptions.
-     */
-    private final @NotNull Function<Field, String> fieldDescriptionProvider;
-
-
     public GenericPojoMapper(@NotNull Class<T> pojoClass, ConcurrentHashMap<Class<? extends FieldMapper>, FieldMapper> fieldMappers) {
-        this(pojoClass, null, fieldMappers);
-    }
-
-    public GenericPojoMapper(@NotNull Class<T> pojoClass,
-                             @Nullable Function<Field, String> fieldDescriptionProvider,
-                             ConcurrentHashMap<Class<? extends FieldMapper>, FieldMapper> fieldMappers) {
-        this.fieldDescriptionProvider = fieldDescriptionProvider != null ? fieldDescriptionProvider : field -> null;
         this.fieldMappers = fieldMappers;
         this.pojoClass = pojoClass;
 
@@ -106,13 +90,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
     }
 
     public GenericPojoMapper(@NotNull Class<T> pojoClass, FieldMapper... fieldMappers) {
-        this(pojoClass, (Function<Field, String>) null, fieldMappers);
-    }
-
-    public GenericPojoMapper(@NotNull Class<T> pojoClass,
-                             @Nullable Function<Field, String> fieldDescriptionProvider,
-                             FieldMapper... fieldMappers) {
-        this(pojoClass, fieldDescriptionProvider, new ConcurrentHashMap<>());
+        this(pojoClass, new ConcurrentHashMap<>());
         for (FieldMapper fieldMapper : fieldMappers) {
             this.fieldMappers.put(fieldMapper.getClass(), fieldMapper);
         }
@@ -137,24 +115,32 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
     }
 
 
-    public void detectAnalyzersAndPointConfigs(
+    /**
+     * Configures the query parser for this pojo type and reports, as {@link IndexSchema}, what the index now
+     * holds. One walk produces both: the configuration the index runs on and the facts about it, so the two
+     * cannot drift apart.
+     */
+    public IndexSchema detectAnalyzersAndPointConfigs(
             @NotNull final Map<String, PointsConfig> pointsConfigMap,
             @NotNull final Map<String, Analyzer> analyzerMap,
             @NotNull final List<CharSequence> defaultSearchFields,
             @NotNull final Map<String, SortField.Type> sortTypes,
             @NotNull final Map<String, QueryRewriter> queryRewriters
     ){
-        detectAnalyzersAndPointConfigs("", pojoClass, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters);
+        List<FieldFacts> facts = new ArrayList<>();
+        detectAnalyzersAndPointConfigs("", pojoClass, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters, facts);
+        return new IndexSchema(facts);
     }
 
-    public void detectAnalyzersAndPointConfigs(
+    private void detectAnalyzersAndPointConfigs(
             @NotNull final String fieldPrefix,
             @NotNull final Class<?> pojoClass,
             @NotNull final Map<String, PointsConfig> pointsConfigMap,
             @NotNull final Map<String, Analyzer> analyzerMap,
             @NotNull final List<CharSequence> defaultSearchFields,
             @NotNull final Map<String, SortField.Type> sortTypes,
-            @NotNull final Map<String, QueryRewriter> queryRewriters
+            @NotNull final Map<String, QueryRewriter> queryRewriters,
+            @NotNull final List<FieldFacts> facts
     ) {
         for (Field field : FieldUtils.getAllFields(pojoClass)) {
             if (field.isAnnotationPresent(IndexField.class)) {
@@ -177,7 +163,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 }
 
                 if (!isSimpleType(elementType)) {
-                    detectAnalyzersAndPointConfigs(fieldName + ".", elementType, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters);
+                    detectAnalyzersAndPointConfigs(fieldName + ".", elementType, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters, facts);
                 } else {
                     PointsConfig pointsConfig = getPointsConfigForType(elementType);
                     if (pointsConfig != null) {
@@ -204,19 +190,33 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                             sortTypes.put(fieldName, sortType);
                     }
 
-                    if (indexField.queryRewriter() != QueryRewriter.NoOp.class) {
-                        try {
-                            queryRewriters.put(fieldName, indexField.queryRewriter().getDeclaredConstructor().newInstance());
-                        } catch (Exception e) {
-                            throw new RuntimeException("Could not instantiate QueryRewriter: " + indexField.queryRewriter().getName(), e);
-                        }
-                    }
+                    if (indexField.queryRewriter() != QueryRewriter.NoOp.class)
+                        queryRewriters.put(fieldName, newQueryRewriter(indexField.queryRewriter()));
+
+                    facts.add(factsOf(fieldName, elementType, field, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes));
                 }
             } else if (field.isAnnotationPresent(IndexFieldWithMapper.class)) {
                 IndexFieldWithMapper mapperAnno = field.getAnnotation(IndexFieldWithMapper.class);
                 String fieldName = fieldPrefix + (mapperAnno.name().isEmpty() ? field.getName() : mapperAnno.name());
-                getOrComputeMapper(mapperAnno).applyAnalyzersAndPointConfigs(fieldName, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+                FieldMapper<?> mapper = getOrComputeMapper(mapperAnno);
 
+                // A mapper names its own fields, so which ones it added is only visible as the difference it
+                // made to the configuration. Recorded in name order, the only order a mapper implies.
+                Set<String> before = configuredFieldNames(pointsConfigMap, analyzerMap);
+                mapper.applyAnalyzersAndPointConfigs(fieldName, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+                List<String> contributed = configuredFieldNames(pointsConfigMap, analyzerMap).stream()
+                        .filter(name -> !before.contains(name))
+                        .sorted()
+                        .toList();
+                contributed.forEach(name -> facts.add(factsOf(name, null, field,
+                        pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes)));
+
+                // the field declares how a query for what this mapper writes is read; the mapper is what knows
+                // the names, so the two meet here
+                if (mapperAnno.queryRewriter() != QueryRewriter.NoOp.class) {
+                    QueryRewriter rewriter = newQueryRewriter(mapperAnno.queryRewriter());
+                    contributed.forEach(name -> queryRewriters.put(name, rewriter));
+                }
             }
         }
     }
@@ -235,57 +235,63 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
     }
 
     /**
-     * Describes all searchable fields of the pojo class as exposed to API users. Mirrors the field walk of
-     * {@link #detectAnalyzersAndPointConfigs} but keeps the accurate java types (numbers, booleans, enums, dates)
-     * instead of the lucene query parser configuration. Dynamic fields (e.g. tags) are not included here; they
-     * are contributed by the index manager that knows the project's tag definitions.
+     * The facts about one configured field, read back from the configuration that was just written for it, so
+     * that what is reported cannot disagree with what the index does.
      */
-    public List<SearchableField> describeSearchableFields() {
-        List<SearchableField> fields = new ArrayList<>();
-        describeSearchableFields("", pojoClass, fields);
-        return fields;
+    private static FieldFacts factsOf(@NotNull String fieldName,
+                                      @Nullable Class<?> javaType,
+                                      @NotNull Field declaredBy,
+                                      @NotNull Map<String, PointsConfig> pointsConfigMap,
+                                      @NotNull Map<String, Analyzer> analyzerMap,
+                                      @NotNull List<CharSequence> defaultSearchFields,
+                                      @NotNull Map<String, SortField.Type> sortTypes) {
+        PointsConfig pointsConfig = pointsConfigMap.get(fieldName);
+        Analyzer analyzer = analyzerMap.get(fieldName);
+        // a field with a points config is numeric even when it also carries an analyzer (dynamic tag fields do)
+        boolean analyzed = pointsConfig == null && analyzer != null && !(analyzer instanceof KeywordAnalyzer);
+        return new FieldFacts(
+                fieldName,
+                kindOf(pointsConfig, analyzed),
+                analyzed,
+                sortTypes.containsKey(fieldName),
+                defaultSearchFields.stream().anyMatch(f -> f.toString().equals(fieldName)),
+                javaType,
+                declaredBy);
     }
 
-    private void describeSearchableFields(@NotNull String fieldPrefix, @NotNull Class<?> pojoClass, @NotNull List<SearchableField> fields) {
-        for (Field field : FieldUtils.getAllFields(pojoClass)) {
-            if (field.isAnnotationPresent(IndexField.class)) {
-                IndexField indexField = field.getAnnotation(IndexField.class);
-                String fieldName = fieldPrefix + (indexField.name().isEmpty() ? field.getName() : indexField.name());
+    private static LuceneKind kindOf(@Nullable PointsConfig pointsConfig, boolean analyzed) {
+        if (pointsConfig == null)
+            return analyzed ? LuceneKind.TEXT : LuceneKind.KEYWORD;
+        if (pointsConfig.getNumberFormat() instanceof NumberDateFormat)
+            return pointsConfig.getType().equals(Integer.class) ? LuceneKind.TIME : LuceneKind.DATE;
+        if (pointsConfig.getType().equals(Integer.class))
+            return LuceneKind.INTEGER;
+        if (pointsConfig.getType().equals(Long.class))
+            return LuceneKind.LONG;
+        if (pointsConfig.getType().equals(Double.class))
+            return LuceneKind.DOUBLE;
+        if (pointsConfig.getType().equals(Float.class))
+            return LuceneKind.FLOAT;
+        // unreachable today: PointsConfig itself only accepts Integer/Long/Double/Float. Fail fast anyway in
+        // case a future lucene version widens that set.
+        throw new IllegalStateException("Points config has unsupported number type '"
+                + pointsConfig.getType().getName() + "'. Cannot report the kind of this field.");
+    }
 
-                Class<?> elementType = field.getType();
-                if (isCollection(elementType)) {
-                    elementType = getCollectionElementType(field);
-                } else if (isMap(elementType)) {
-                    elementType = getMapValueType(field);
-                    fieldName = fieldName + ".*";
-                }
-
-                if (!isSimpleType(elementType)) {
-                    describeSearchableFields(fieldName + ".", elementType, fields);
-                } else {
-                    SearchableField.FieldType fieldType = getSearchableFieldType(elementType);
-                    if (fieldType == null)
-                        continue; // unsupported simple types are rejected by detectAnalyzersAndPointConfigs at index creation
-                    boolean textLike = elementType.equals(String.class) || elementType.isEnum();
-                    fields.add(SearchableField.builder()
-                            .name(fieldName)
-                            .fieldType(fieldType)
-                            .fullTextSearch(textLike && indexField.fullTextSearch())
-                            .sortable(indexField.sortable() && getSortTypeForType(elementType) != null)
-                            .defaultSearchField(indexField.defaultSearchField())
-                            .possibleValues(possibleValuesOf(elementType))
-                            .description(fieldDescriptionProvider.apply(field))
-                            .build());
-                }
-            } else if (field.isAnnotationPresent(IndexFieldWithMapper.class)) {
-                IndexFieldWithMapper mapperAnno = field.getAnnotation(IndexFieldWithMapper.class);
-                String fieldName = fieldPrefix + (mapperAnno.name().isEmpty() ? field.getName() : mapperAnno.name());
-                fields.addAll(getOrComputeMapper(mapperAnno).describeSearchableFields(fieldName));
-            }
+    private static QueryRewriter newQueryRewriter(@NotNull Class<? extends QueryRewriter> rewriterClass) {
+        try {
+            return rewriterClass.getDeclaredConstructor().newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Could not instantiate QueryRewriter: " + rewriterClass.getName(), e);
         }
     }
 
-
+    private static Set<String> configuredFieldNames(@NotNull Map<String, PointsConfig> pointsConfigMap,
+                                                    @NotNull Map<String, Analyzer> analyzerMap) {
+        Set<String> names = new HashSet<>(pointsConfigMap.keySet());
+        names.addAll(analyzerMap.keySet());
+        return names;
+    }
 
     /**
      * Creates one or more Lucene fields for a given pojo field value.
@@ -515,20 +521,5 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 throw new IndexMapperNotFoundException(clz, e);
             }
         });
-    }
-
-    /**
-     * The values a field can take, if they are known.
-     * <p>
-     * Enums report their constants and booleans report true/false, both exactly as they are indexed, so that a
-     * client can offer them for completion instead of leaving the user to guess. Booleans are keyword indexed
-     * from {@link Boolean#toString()}, hence the lower case literals.
-     */
-    private static List<String> possibleValuesOf(Class<?> elementType) {
-        if (elementType.isEnum())
-            return Arrays.stream(elementType.getEnumConstants()).map(e -> ((Enum<?>) e).name()).toList();
-        if (elementType.equals(Boolean.class) || elementType.equals(boolean.class))
-            return List.of("true", "false");
-        return null;
     }
 }
