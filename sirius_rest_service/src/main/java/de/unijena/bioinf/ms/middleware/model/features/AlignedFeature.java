@@ -61,14 +61,24 @@ public class AlignedFeature implements Taggable {
             OptField.tags, OptField.computedTools, OptField.topAnnotationsSummary, OptField.qualities);
 
     // identifier
+    /**
+     * Unique identifier of the aligned feature within the project.
+     */
     @IndexField(documentId = true, sortable = true, defaultSearchField = true)
     @NotNull
     protected String alignedFeatureId;
 
+    /**
+     * Identifier of the compound the feature belongs to.
+     * Features that are different adducts or isotopologues of the same molecule share it.
+     */
     @IndexField
     protected String compoundId;
 
     // identifier source
+    /**
+     * Informative, human-readable name of the feature.
+     */
     @IndexField(fullTextSearch = true, defaultSearchField = true, sortable = true)
     protected String name;
 
@@ -80,18 +90,21 @@ public class AlignedFeature implements Taggable {
     protected String externalFeatureId;
 
     // additional attributes
+    /**
+     * Mass-to-charge ratio (m/z) of the precursor ion of the feature.
+     */
     @IndexField(sortable = true)
     protected Double ionMass;
 
     /**
-     * Ion mode (charge) this feature has been measured in.
+     * Ion mode (charge) the feature has been measured in.
      */
     @IndexField
     @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
     protected int charge;
 
     /**
-     * Adducts of this feature that have been detected during preprocessing.
+     * Adducts that have been detected for the feature during preprocessing.
      * Never empty: if no adduct could be detected, the unknown ion type matching the feature's
      * charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.
      */
@@ -99,19 +112,27 @@ public class AlignedFeature implements Taggable {
     @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
     protected Set<String> detectedAdducts;
 
+    /**
+     * Start of the retention time range the feature was detected in, in seconds.
+     */
     @IndexField
     @Schema(nullable = true)
     protected Double rtStartSeconds;
+    /**
+     * End of the retention time range the feature was detected in, in seconds.
+     */
     @IndexField
     @Schema(nullable = true)
     protected Double rtEndSeconds;
+    /**
+     * Retention time of the intensity apex of the feature, in seconds.
+     */
     @IndexField(sortable = true)
     @Schema(nullable = true)
     protected Double rtApexSeconds;
 
     /**
-     * Overall Quality of this feature.
-     * If no Quality data are available for this feature the value is NOT_APPLICABLE
+     * Overall quality of the feature. NOT_APPLICABLE if no quality data is available
      */
     @IndexField(sortable = true)
     @Schema
@@ -130,13 +151,13 @@ public class AlignedFeature implements Taggable {
     protected boolean hasMsMs;
 
     /**
-     * Mass Spec data of this feature (input data)
+     * Mass Spec data of the feature (input data)
      */
     @Schema(nullable = true)
     protected MsData msData;
 
     /**
-     * Top annotations of this feature.
+     * Top annotations of the feature.
      * If a CSI:FingerID structureAnnotation is available, the FormulaCandidate that corresponds to the
      * structureAnnotation is returned. Otherwise, it's the FormulaCandidate with the highest SiriusScore is returned.
      * CANOPUS Compound classes correspond to the FormulaCandidate no matter how it was selected
@@ -148,7 +169,7 @@ public class AlignedFeature implements Taggable {
     protected FeatureAnnotations topAnnotations;
 
     /**
-     * Top de novo annotations of this feature.
+     * Top de novo annotations of the feature.
      * The FormulaCandidate with the highest SiriusScore is returned. MSNovelist structureAnnotation and
      * CANOPUS compoundClasses correspond to the FormulaCandidate.
      *
@@ -159,14 +180,14 @@ public class AlignedFeature implements Taggable {
 
 
     /**
-     * Write lock for this feature. If the feature is locked no write operations are possible.
-     * True if any computation is modifying this feature or its results
+     * Write lock for the feature. If the feature is locked no write operations are possible.
+     * True if any computation is modifying the feature or its results.
      */
     protected boolean computing;
 
     @IndexField
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, description =
-                    "Specifies which tools have been executed for this feature. " +
+                    "Specifies which tools have been executed for the feature. " +
                     "Can be used to estimate which results can be expected. " +
                             "Null if it was not requested and non-null otherwise.")
     @JsonIgnoreProperties(value = { "alignedFeatureId" })
@@ -189,10 +210,10 @@ public class AlignedFeature implements Taggable {
 
 
     /**
-     * Aggregated fold change of sample runs vs blank runs for this aligned feature
-     * NULL of not a sample run or no fold change exists
-     * NOTE: This field is mainly for search index building and therefore hidden from the api
+     * Aggregated fold change of sample runs vs blank runs for the aligned feature
+     * NULL if not a sample run or no fold change exists
      */
+    //NOTE: This field is mainly for search index building and therefore hidden from the api
     @IndexFieldWithMapper(mapper = FoldChangeMapper.AlignedFeatureFoldChange.class)
     @Schema(nullable = true, hidden = true)
     protected List<Statistics> stats;
