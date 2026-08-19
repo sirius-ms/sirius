@@ -69,13 +69,13 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testMzRendersAsRealFieldRange() {
         FeatureFilterModel model = cleanSlate();
-        model.setCurrentMinMz(300); // interior lower; upper stays at absolute max (5000) -> open
+        model.setCurrentMinMz(300); // interior lower; the upper end stays unbounded
 
         QueryClause mz = onlyClause(nodes(model));
         assertEquals("ionMass", mz.field());
         assertEquals(NumberOp.RANGE_INCLUSIVE, mz.op());
         assertEquals("300", mz.value1());
-        assertEquals("5000", mz.value2(), "faithful to the model: the concrete (absolute-max) upper bound");
+        assertEquals("", mz.value2(), "an unbounded upper end is no bound at all, and renders as *");
         assertFalse(mz.negated());
     }
 
