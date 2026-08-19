@@ -53,6 +53,12 @@ public class SummarizeAllAction extends AbstractGuiAction {
             }
 
             @Override
+            public void computeStateChanged(AdvancedListSelectionModel<InstanceBean> selection, long totalElements) {
+                // one signal for a whole batch of features, so re-ask the same question the list change asks
+                setEnabled(SiriusActions.notComputingOrEmpty(mainFrame.getCompoundList().getCompoundList()));
+            }
+
+            @Override
             public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, long totalElements) {}
         });
 

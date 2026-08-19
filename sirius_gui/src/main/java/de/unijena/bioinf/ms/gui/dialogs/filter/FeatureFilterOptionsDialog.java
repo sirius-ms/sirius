@@ -75,6 +75,11 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
      */
     QueryEditorPanel queryEditor;
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner;
+
+    // Where the max m/z and max RT spinners land when stepped down from "Infinite" - above anything these
+    // measure in practice, so arriving here excludes nothing that was not already excluded by leaving it.
+    private static final double MZ_BELOW_INFINITE = 5000d;
+    private static final double RT_BELOW_INFINITE = 10000d;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply;
     final JCheckBox deleteSelection, hasMs1, hasMsMs;
@@ -169,14 +174,16 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 box.add(max);
 
                 minMzSpinner = makeSpinner(filterModel.getCurrentMinMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
-                maxMzSpinner = makeSpinner(filterModel.getCurrentMaxMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
+                maxMzSpinner = makeSpinner(filterModel.getCurrentMaxMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10,
+                        MZ_BELOW_INFINITE);
                 ((JSpinner.DefaultEditor) maxMzSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxMzSpinner.getModel(), filterModel.getMaxMz()));
                 min.addNamed("Min m/z", minMzSpinner);
                 max.addNamed("Max m/z", maxMzSpinner);
                 ensureCompatibleBounds(minMzSpinner, maxMzSpinner);
 
                 minRtSpinner = makeSpinner(filterModel.getCurrentMinRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
-                maxRtSpinner = makeSpinner(filterModel.getCurrentMaxRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
+                maxRtSpinner = makeSpinner(filterModel.getCurrentMaxRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10,
+                        RT_BELOW_INFINITE);
                 ((JSpinner.DefaultEditor) maxRtSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxRtSpinner.getModel(), filterModel.getMaxRt()));
 
                 min.addNamed("Min RT (in sec)", minRtSpinner);
@@ -907,7 +914,25 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     }
 
     public JSpinner makeSpinner(double value, double minimum, double maximum, double stepSize) {
-        SpinnerNumberModel model = new SpinnerNumberModel(value, minimum, maximum, stepSize);
+        return makeSpinner(value, minimum, maximum, stepSize, Double.NaN);
+    }
+
+    /**
+     * @param belowInfinite where the down arrow lands when the value is unbounded. Stepping down from infinity
+     *                      arrives at infinity, so a spinner whose maximum means "no bound" needs somewhere to
+     *                      go - high enough that nobody's data is cut off by picking it, low enough to be a
+     *                      sensible place to start dialling a bound in from. {@code NaN} for a spinner whose
+     *                      maximum is a real number and which therefore never faces the question.
+     */
+    public JSpinner makeSpinner(double value, double minimum, double maximum, double stepSize, double belowInfinite) {
+        SpinnerNumberModel model = Double.isNaN(belowInfinite)
+                ? new SpinnerNumberModel(value, minimum, maximum, stepSize)
+                : new SpinnerNumberModel(value, minimum, maximum, stepSize) {
+            @Override
+            public Object getPreviousValue() {
+                return Double.isInfinite(getNumber().doubleValue()) ? belowInfinite : super.getPreviousValue();
+            }
+        };
         JSpinner spinner = new JSpinner(model);
         spinner.setMinimumSize(new Dimension(200, 26));
         spinner.setPreferredSize(new Dimension(200, 26));

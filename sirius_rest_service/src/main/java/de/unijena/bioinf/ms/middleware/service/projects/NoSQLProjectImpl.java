@@ -119,6 +119,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -275,19 +276,34 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         );
     }
 
+    /**
+     * Reads the given features as the documents the index is defined to hold and hands them over batch by batch.
+     * <p>
+     * Which fields that is, is deliberately not the caller's to choose. A document written with fewer fields
+     * than {@link AlignedFeature#INDEXED_OPT_FIELDS} is missing them until something rewrites it, and
+     * {@link #findAlignedFeatures(String, Pageable, boolean, EnumSet)} serves a request for exactly those
+     * fields straight from the index - so a field that was never written comes back absent instead of being
+     * re-read from the database. Every path that feeds features to the index therefore goes through here, and
+     * there is no opt-field parameter to disagree about.
+     *
+     * @param batchConsumer what to do with each batch: add the documents, or replace the existing ones
+     */
+    private void feedFeaturesToIndex(@Nullable Collection<Long> featureIds,
+                                     @NotNull Consumer<List<AlignedFeature>> batchConsumer) throws IOException {
+        if (!Utils.notNullOrEmpty(featureIds))
+            return;
+        Partition<Long> partition = Partition.ofSize(featureIds.stream().sorted().toList(), LARGE_BATCH_SIZE);
+        for (List<Long> ids : partition)
+            batchConsumer.accept(findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS));
+    }
+
     @SneakyThrows
     public void addToSearchIndexLongIds(@Nullable Collection<Long> alignedFeaturesToUpdate, @Nullable Collection<Long> runIds) {
 
         if (searchService != null) {
             synchronized (searchIndexLock) {
                 //Handle FEATURES
-                if (Utils.notNullOrEmpty(alignedFeaturesToUpdate)) {
-                    Partition<Long> partition = Partition.ofSize(alignedFeaturesToUpdate.stream().sorted().toList(), LARGE_BATCH_SIZE);
-                    for (List<Long> ids : partition) {
-                        List<AlignedFeature> alfs = findAlignedFeaturesByIds(ids, false, EnumSet.of(AlignedFeature.OptField.qualities));
-                        searchService.addDocuments(projectId, alfs);
-                    }
-                }
+                feedFeaturesToIndex(alignedFeaturesToUpdate, alfs -> searchService.addDocuments(projectId, alfs));
 
                 //Handle COMPOUNDS
                 //todo IMPLEMENT!
@@ -299,6 +315,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             .toList();
                     searchService.addDocuments(projectId, runsToUpdate);
                 }
+
+                // What was just imported is about to be announced, and a client told about an import asks for
+                // the data straight away. Index writes are only visible to a query once the searcher has been
+                // refreshed, and the read path refreshes best-effort - so publish them here, or the reload
+                // prompted by the import event can run on the searcher as it was before it. A rebuild gets this
+                // from marking the index complete; adding to an existing index has no such step.
+                if (Utils.notNullOrEmpty(alignedFeaturesToUpdate))
+                    searchService.makeWritesSearchable(projectId, AlignedFeature.class);
+                if (Utils.notNullOrEmpty(runIds))
+                    searchService.makeWritesSearchable(projectId, Run.class);
             }
         }
 
@@ -321,16 +347,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public void updateSearchIndexLongIds(Collection<Long> alignedFeaturesToUpdate) {
         if (searchService != null) {
             synchronized (searchIndexLock) {
-                LongList idsToUpdate = alignedFeaturesToUpdate.stream().sorted().collect(Collectors.toCollection(LongArrayList::new));
-
                 // request results from db.
-                if (!idsToUpdate.isEmpty()) {
-                    Partition<Long> partition = Partition.ofSize(idsToUpdate, LARGE_BATCH_SIZE);
-                    for (List<Long> ids : partition) {
-                        List<AlignedFeature> alfs = findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS);
-                        searchService.updateDocuments(projectId, alfs);
-                    }
-                }
+                feedFeaturesToIndex(alignedFeaturesToUpdate, alfs -> searchService.updateDocuments(projectId, alfs));
             }
         }
 

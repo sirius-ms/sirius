@@ -80,12 +80,29 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
      */
     public void setComplete(boolean complete) {
         this.complete = complete;
-        if (complete) {
-            try {
-                searcherManager.maybeRefreshBlocking();
-            } catch (IOException e) {
-                log.warn("Could not refresh searcher after completing index build for '{}'.", pojoMapper.getPojoClass().getSimpleName(), e);
-            }
+        if (complete)
+            makeWritesSearchable();
+    }
+
+    /**
+     * Makes every write issued so far visible to queries, and waits until it is.
+     * <p>
+     * Writes are NRT: they land in the writer but not in the searcher, and the read path only tries
+     * ({@code maybeRefresh()}) rather than waits - it returns at once when another thread already holds the
+     * refresh lock, leaving that query on the searcher as it was. That is the right trade for a query, which
+     * would rather be slightly stale than slow, and the wrong one for whoever just wrote: a writer that
+     * announces its work (an import that fires its finished event) must know the work can be found.
+     * <p>
+     * So a writer that is about to announce something calls this. Ordinary bulk ingest does not - refreshing
+     * per batch is what makes a rebuild slow - which is why this is a separate step rather than part of
+     * {@link #addDocuments}.
+     */
+    public void makeWritesSearchable() {
+        try {
+            searcherManager.maybeRefreshBlocking();
+        } catch (IOException e) {
+            log.warn("Could not refresh searcher of '{}'; recent writes may not be found yet.",
+                    pojoMapper.getPojoClass().getSimpleName(), e);
         }
     }
 

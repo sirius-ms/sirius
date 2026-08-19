@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.gui.properties.MolecularStructuresDisplayColors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
+import io.sirius.ms.gui.webView.jxbrowser.JxBrowserPanelProvider;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,9 @@ public class GeneralSettingsPanel extends TwoColumnPanel implements SettingsPane
     final String theme;
 
     final JComboBox<String> themeBox;
+
+    private final boolean hardwareAcceleratedWebViews;
+    private final JCheckBox hardwareAcceleratedWebViewsBox;
 
     final FileChooserPanel db;
     final JCheckBox showSpectraMatchPanel;
@@ -109,6 +113,15 @@ public class GeneralSettingsPanel extends TwoColumnPanel implements SettingsPane
 
         addNamed("Enable custom scaling", scalingEnableBox);
         addNamed("Scaling Factor", scalingSpinner);
+
+        hardwareAcceleratedWebViews = Boolean.parseBoolean(
+                props.getProperty(JxBrowserPanelProvider.HARDWARE_ACCELERATION_KEY, "false"));
+        hardwareAcceleratedWebViewsBox = new JCheckBox();
+        hardwareAcceleratedWebViewsBox.setSelected(hardwareAcceleratedWebViews);
+        hardwareAcceleratedWebViewsBox.setToolTipText(GuiUtils.formatToolTip(
+                "Draw the built-in web views (e.g. LC/MS, Substructure Annotations, Homologue Series) on the graphics card.",
+                "Faster with large plots, but on some systems such a view can flash black for a moment when it is opened."));
+        addNamed("Hardware-accelerated web views", hardwareAcceleratedWebViewsBox);
 
         add(new JXTitledSeparator("Display settings"));
         // confidenceDisplayMode shows the settings used at program start.
@@ -222,6 +235,13 @@ public class GeneralSettingsPanel extends TwoColumnPanel implements SettingsPane
         String selectedTheme = (String) themeBox.getSelectedItem();
         if (!theme.equals(selectedTheme)) {
             props.setProperty("de.unijena.bioinf.sirius.ui.theme", selectedTheme);
+            restartRequired = true;
+        }
+
+        if (hardwareAcceleratedWebViews != hardwareAcceleratedWebViewsBox.isSelected()) {
+            // the browser engine is built once with one rendering mode and keeps it for its lifetime
+            props.setProperty(JxBrowserPanelProvider.HARDWARE_ACCELERATION_KEY,
+                    String.valueOf(hardwareAcceleratedWebViewsBox.isSelected()));
             restartRequired = true;
         }
 

@@ -87,6 +87,12 @@ public interface SearchService extends AutoCloseable {
      */
     <T> void setIndexComplete(String projectId, Class<T> clazz, boolean complete);
 
+    /**
+     * Makes the documents written for the given type findable, waiting until they are. See
+     * {@code SearchContext.makeWritesSearchable}.
+     */
+    <T> void makeWritesSearchable(String projectId, Class<T> clazz);
+
     <T> Page<T> search(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
     <T> Page<String> searchIds(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
 
