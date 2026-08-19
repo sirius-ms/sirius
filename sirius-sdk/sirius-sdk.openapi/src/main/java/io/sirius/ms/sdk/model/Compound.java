@@ -110,7 +110,7 @@ public class Compound {
   }
 
   /**
-   * Unique id of this compound entity.
+   * Unique id of the compound entity.
    * @return compoundId
    */
   @jakarta.annotation.Nullable
@@ -160,7 +160,7 @@ public class Compound {
   }
 
   /**
-   * The merged/consensus retention time start (earliest rt) of this compound
+   * The merged/consensus retention time start (earliest rt) of the compound
    * @return rtStartSeconds
    */
   @jakarta.annotation.Nullable
@@ -185,7 +185,7 @@ public class Compound {
   }
 
   /**
-   * The merged/consensus retention time end (latest rt) of this compound
+   * The merged/consensus retention time end (latest rt) of the compound
    * @return rtEndSeconds
    */
   @jakarta.annotation.Nullable
@@ -210,7 +210,7 @@ public class Compound {
   }
 
   /**
-   * Neutral mass of this compound. Ion mass minus the mass of the assigned adduct of each feature of  this compound should result in the same neutral mass
+   * Neutral mass of the compound. Ion mass minus the mass of the assigned adduct of each feature of  the compound should result in the same neutral mass
    * @return neutralMass
    */
   @jakarta.annotation.Nullable
@@ -243,7 +243,7 @@ public class Compound {
   }
 
   /**
-   * List of aligned features (adducts) that belong to the same (this) compound
+   * List of aligned features (adducts) that belong to the compound
    * @return features
    */
   @jakarta.annotation.Nullable

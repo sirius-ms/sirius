@@ -22,18 +22,19 @@ import lombok.Getter;
 
 /**
  * Comparison operator of a numeric (or date/time) query clause. Declaration order is the order
- * offered in the operator dropdown, the inclusive range being the default like in the javascript
- * search bar.
+ * offered in the operator dropdown, cheapest and most common first: equality, then the comparisons
+ * with the inclusive bound ahead of the strict one, then the two-valued ranges. The first entry is
+ * also the default, since the suggestion list pre-selects its first row.
  */
 @Getter
 public enum NumberOp {
-    RANGE_INCLUSIVE("[a TO b] (inclusive)", "[ TO ]", "between (bounds included)"),
-    RANGE_EXCLUSIVE("{a TO b} (exclusive)", "{ TO }", "between (bounds excluded)"),
+    EQ("=", "=", "equals"),
     GTE(">=", ">=", "greater than or equal"),
-    GT(">", ">", "greater than"),
     LTE("<=", "<=", "less than or equal"),
+    GT(">", ">", "greater than"),
     LT("<", "<", "less than"),
-    EQ("=", "=", "equals");
+    RANGE_INCLUSIVE("[a TO b] (inclusive)", "[ TO ]", "between (bounds included)"),
+    RANGE_EXCLUSIVE("{a TO b} (exclusive)", "{ TO }", "between (bounds excluded)");
 
     /**
      * Explanatory text for the operator dropdown.
