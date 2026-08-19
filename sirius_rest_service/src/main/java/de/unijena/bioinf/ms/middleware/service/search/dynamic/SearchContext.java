@@ -57,6 +57,13 @@ public interface SearchContext extends Closeable {
      */
     <T> void setIndexComplete(Class<T> clazz, boolean complete);
 
+    /**
+     * Makes the documents written for the given type findable, waiting until they are. Call it after writing
+     * something whose arrival is about to be announced - the read path refreshes only best-effort, so without
+     * this a query prompted by that announcement can still run on the pre-write searcher.
+     */
+    <T> void makeWritesSearchable(Class<T> clazz);
+
     <T> Page<T> search(@Nullable String query, Pageable pageable, Class<T> beanClass);
 
     <T> Page<String> searchIds(@Nullable String query, Pageable pageable, Class<T> beanClass);
