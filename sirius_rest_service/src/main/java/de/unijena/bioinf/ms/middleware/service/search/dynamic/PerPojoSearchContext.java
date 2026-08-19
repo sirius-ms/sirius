@@ -148,6 +148,14 @@ public class PerPojoSearchContext implements SearchContext {
     }
 
     @Override
+    public <T> void makeWritesSearchable(Class<T> clazz) {
+        // Nothing was written for a type that has no index, and asking for one would create it.
+        if (!GenericPojoMapper.isIndexable(clazz))
+            return;
+        getIndexManager(clazz).makeWritesSearchable();
+    }
+
+    @Override
     public <T> Page<T> search(@Nullable String query, Pageable pageable, Class<T> beanClass) {
         return getIndexManager(beanClass).search(query, pageable);
     }
