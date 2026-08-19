@@ -222,6 +222,22 @@ public class TokenInputModelTest {
         assertEquals("300", completed.clause().value1());
     }
 
+    /**
+     * The operator rows are offered in {@link NumberOp} declaration order, and that order is a UX
+     * decision: equality first because it is the most common numeric filter, then the comparisons
+     * with the inclusive bound ahead of the strict one, and the two-valued ranges last because they
+     * are the most laborious to fill in. The first row is also what Enter picks (the suggestion list
+     * pre-selects index 0), so this pins the default operator too.
+     */
+    @Test
+    public void testOperatorSuggestionsAreOrderedEqualsFirstRangesLast() {
+        model.choose(suggestion("ionMass", ""));
+        assertEquals(TokenInputModel.Stage.OPERATOR, model.stage());
+
+        assertEquals(List.of("=", ">=", "<=", ">", "<", "[ TO ]", "{ TO }"),
+                model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList());
+    }
+
     @Test
     public void testRangeTakesTwoStagedValuesWithOpenBounds() {
         model.choose(suggestion("ionMass", ""));
