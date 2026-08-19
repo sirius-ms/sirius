@@ -208,20 +208,104 @@ public final class CompletionParser {
     }
 
     /**
-     * The values the draft editor can offer for a field: enum constants for ENUM fields,
+     * The values the draft editor can offer for a field: whatever closed vocabulary the field reports,
      * true/false for BOOLEAN fields, nothing otherwise.
+     * <p>
+     * Having a vocabulary is a property of the field, not of its type: a text field holds one when its values
+     * come from a fixed domain (a compound class ontology, a tag restricted by its definition), and those are
+     * exactly the fields a user cannot type from memory. The vocabulary stays an offer - the field can still be
+     * queried with anything, e.g. a wildcard.
      * <p>
      * NOT_APPLICABLE is never offered. It does not mean bad quality but that there was nothing to judge, so it
      * is not a choice a user makes: features in that state always pass a quality filter, which the query builder
      * ensures by adding the term itself. Typing it by hand still works.
      */
     public static List<String> valueSuggestions(@NotNull SearchableField field) {
-        if (field.getFieldType() == SearchableFieldType.ENUM && field.getPossibleValues() != null)
+        if (field.getPossibleValues() != null)
             return field.getPossibleValues().stream()
                     .filter(value -> !DataQuality.NOT_APPLICABLE.toString().equals(value))
                     .toList();
         if (field.getFieldType() == SearchableFieldType.BOOLEAN)
             return List.of("true", "false");
         return List.of();
+    }
+
+    /**
+     * Whether naming this field says everything there is to say: it holds a flag, and the flag has one value.
+     * <p>
+     * A field like {@code lipid} is written into the index only when the property holds, so the value carries
+     * nothing and its presence carries everything - "no lipid class" is the negation of it. Completing such a
+     * field to its value at once hides that from the user, who should not have to know how it is stored.
+     * <p>
+     * Both halves are needed, and neither is arbitrary. Offering one value is not enough: a tag restricted to
+     * a single value today can be extended while the project is open, and completing it on sight would answer
+     * a question the user was about to be asked. Being a boolean is not enough either: a real boolean holds
+     * both values and has to be asked about.
+     * <p>
+     * That leaves exactly the flags, because no tag can be both - a boolean or value-less tag is not allowed
+     * to restrict its values at all, which the persistence model enforces when the definition is built and
+     * {@code TagPossibleValuesTest.testAFlagTagCannotBeRestrictedToValues} pins from the server side. It is
+     * worth knowing that this rests on an invariant held two modules away: the API describes a presence flag
+     * and a boolean with the same field type, so this is all there is to tell them apart by.
+     */
+    public static boolean isSingleValued(@NotNull SearchableField field) {
+        return field.getFieldType() == SearchableFieldType.BOOLEAN
+                && field.getPossibleValues() != null
+                && field.getPossibleValues().size() == 1;
+    }
+
+    /**
+     * The offered values matching the typed prefix, best match first.
+     * <p>
+     * Values are not typed the way they are written. A vocabulary can be a whole ontology, where matching only
+     * the start of a value would hide "Carboxylic acids and derivatives" from someone typing "acids" - so every
+     * word of a value starts a match, words being separated by the punctuation the value happens to use. And a
+     * value can be punctuation itself: an adduct is indexed as "[M + H]+" but typed as "[M+H]+" or "M+H", which
+     * no prefix of a word covers - so the value with its whitespace removed is matched anywhere as well.
+     * <p>
+     * Ranked from the most literal match to the loosest, and within a rank the given order is kept: it carries
+     * meaning, e.g. the declaration order of an ordered enum or the curated order of a tag definition.
+     * <p>
+     * Each value is ranked once and sorted by the result, rather than ranked again on every comparison: this
+     * runs on the event thread for every keystroke, and a vocabulary can be a whole ontology - which turns
+     * "once per value" and "once per comparison" into thousands of regex splits apart.
+     */
+    public static List<String> valueMatches(@NotNull String prefix, @NotNull List<String> values) {
+        String lowerPrefix = prefix.toLowerCase();
+        return values.stream()
+                .map(value -> new RankedValue(value, valueMatchRank(value, lowerPrefix)))
+                .filter(ranked -> ranked.rank() < NO_MATCH)
+                .sorted(Comparator.comparingInt(RankedValue::rank))
+                .map(RankedValue::value)
+                .toList();
+    }
+
+    /** A value with how well it matches, so that the sort does not have to work that out again. */
+    private record RankedValue(String value, int rank) {
+    }
+
+    /**
+     * Words of a value: what is left between the punctuation it is written with.
+     * <p>
+     * Not {@link #words}, which splits an identifier - dots, underscores, camel case - and would leave an
+     * adduct as {@code [m} and {@code h]}. A value is arbitrary text and every punctuation mark in it
+     * separates.
+     */
+    private static final Pattern NON_WORD = Pattern.compile("\\W+");
+
+    private static int valueMatchRank(String value, String lowerPrefix) {
+        String lower = value.toLowerCase();
+        if (lower.startsWith(lowerPrefix))
+            return 0;
+        for (String word : NON_WORD.split(lower))
+            if (!word.isEmpty() && word.startsWith(lowerPrefix))
+                return 1;
+        if (withoutWhitespace(lower).contains(withoutWhitespace(lowerPrefix)))
+            return 2;
+        return NO_MATCH;
+    }
+
+    private static String withoutWhitespace(String text) {
+        return text.replaceAll("\\s+", "");
     }
 }

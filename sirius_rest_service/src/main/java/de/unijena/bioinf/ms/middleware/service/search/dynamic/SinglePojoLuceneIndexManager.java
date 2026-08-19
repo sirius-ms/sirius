@@ -1,9 +1,9 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
-import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.projectspace.QueryRewriter;
@@ -38,7 +38,6 @@ import de.unijena.bioinf.ms.middleware.service.search.IndexedFields;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -58,6 +57,8 @@ import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappi
 @Slf4j
 class SinglePojoLuceneIndexManager<T> implements Closeable {
     private final Directory directory;
+    /** What the index holds, recorded while the query parser was configured for it. */
+    private final IndexSchema indexSchema;
     private final IndexWriter writer;
     private final SearcherManager searcherManager;
     private final SnapshotDeletionPolicy snapshotDeletionPolicy;
@@ -113,23 +114,9 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                                         @Nullable Map<String, ValueType> initialValueTypes,
                                         @NotNull Function<String, ValueType> tagValueTypeProvider
     ) {
-        this(directory, pojoClass, initialValueTypes, tagValueTypeProvider, null);
-    }
-
-    /**
-     * @param fieldDescriptionProvider provides human-readable descriptions for indexed fields, e.g. from
-     *                                 OpenAPI annotations. Injected by the caller so the lucene machinery
-     *                                 stays free of presentation-layer concerns; null for no descriptions.
-     */
-    public SinglePojoLuceneIndexManager(@NotNull Directory directory,
-                                        @NotNull Class<T> pojoClass,
-                                        @Nullable Map<String, ValueType> initialValueTypes,
-                                        @NotNull Function<String, ValueType> tagValueTypeProvider,
-                                        @Nullable Function<Field, String> fieldDescriptionProvider
-    ) {
         try {
             this.directory = directory;
-            this.pojoMapper = new GenericPojoMapper<>(pojoClass, fieldDescriptionProvider, new TagMapper(tagValueTypeProvider));
+            this.pojoMapper = new GenericPojoMapper<>(pojoClass, new TagMapper(tagValueTypeProvider));
             IndexWriterConfig writerConfig = new IndexWriterConfig(dynamicAnalyzer);
             // Protect commit files from background-merge deletion while we serialize a snapshot (see getIndexData).
             this.snapshotDeletionPolicy = new SnapshotDeletionPolicy(new KeepOnlyLastCommitDeletionPolicy());
@@ -144,7 +131,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             // Scans the bean class’s @IndexField annotations to set PointConfigs and Analyzers.
             // Adds PointsConfig entries to the query parser.
             // Adds default search fields to query parser
-            pojoMapper.detectAnalyzersAndPointConfigs(pointsConfigMap, fieldAnalyzers, defaultSearchFields, sortTypes, queryRewriters);
+            this.indexSchema = pojoMapper.detectAnalyzersAndPointConfigs(pointsConfigMap, fieldAnalyzers, defaultSearchFields, sortTypes, queryRewriters);
             // Initialize the query with  points config map and default search fields.
             queryParser.setMultiFields(defaultSearchFields.toArray(CharSequence[]::new));
             queryParser.setPointsConfigMap(pointsConfigMap);
@@ -158,12 +145,11 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     }
 
     /**
-     * Describes the static searchable fields of the indexed object type - a stateless, on-demand walk over
-     * its index annotations. Dynamic tag fields are project-level knowledge and are contributed by the
-     * {@link PerPojoSearchContext} from its tag definition registry.
+     * What this index holds, as recorded while it was configured. Says nothing about how it is presented -
+     * that is for whoever describes the index (see the {@code search.description} package).
      */
-    public List<SearchableField> getStaticSearchableFields() {
-        return pojoMapper.describeSearchableFields();
+    public IndexSchema getIndexSchema() {
+        return indexSchema;
     }
 
     /**

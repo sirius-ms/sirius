@@ -1,11 +1,11 @@
 package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
-import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.persistence.model.core.PersistentSearchIndex;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -231,8 +231,18 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    public <T> List<SearchableField> getSearchableFields(String projectId, Class<T> pojoClass) {
-        return withProjectContext(projectId, ps -> ps.getSearchableFields(pojoClass));
+    public <T> IndexSchema getIndexSchema(String projectId, Class<T> pojoClass) {
+        return withProjectContext(projectId, ps -> ps.getIndexSchema(pojoClass));
+    }
+
+    @Override
+    public <T> Set<String> getMaterializedFieldNames(String projectId, Class<T> pojoClass) {
+        return withProjectContext(projectId, ps -> ps.getMaterializedFieldNames(pojoClass));
+    }
+
+    @Override
+    public Map<String, ValueType> getTagValueTypes(String projectId) {
+        return withProjectContext(projectId, SearchContext::getTagValueTypes);
     }
 
     @Override
