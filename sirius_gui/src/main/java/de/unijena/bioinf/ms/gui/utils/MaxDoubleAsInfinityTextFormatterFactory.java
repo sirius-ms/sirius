@@ -20,6 +20,7 @@ package de.unijena.bioinf.ms.gui.utils;/*
 
 import javax.swing.*;
 import javax.swing.text.NumberFormatter;
+import java.text.ParsePosition;
 import java.text.ParseException;
 import java.util.Objects;
 
@@ -55,22 +56,28 @@ public class MaxDoubleAsInfinityTextFormatterFactory extends JFormattedTextField
         }
 
 
+        /**
+         * Reads back what {@link #valueToString} wrote, which means reading it with the same format.
+         * <p>
+         * It used to be {@code Double.valueOf}, which is not that format and disagrees with it as soon as a
+         * number is long enough to be grouped: this field displays 4990 as "4,990" (or "4.990"), and
+         * {@code Double.valueOf} either refuses it - and a spinner whose text will not parse silently declines
+         * to step, which is what made the arrows look broken above 1000 - or, where the grouping separator is a
+         * dot, reads it as 4.99 without complaining at all.
+         */
         @Override
         public Object stringToValue(final String text) throws ParseException {
-            try {
-                if (Objects.equals(text, INFINITE_TEXT))
-                    return infinityValue;
-                Object value = Double.valueOf(text);
-                if (value instanceof Number){
-                    if (((Number)value).doubleValue()>infinityValue){
-                        return infinityValue;
-                    }
-                }
-                return value;
-//                        Double.valueOf(text);
-            } catch (final NumberFormatException nfx) {
-                throw new ParseException("Failed to parse input \"" + text + "\".", 0);
-            }
+            if (Objects.equals(text, INFINITE_TEXT))
+                return infinityValue;
+
+            ParsePosition position = new ParsePosition(0);
+            Object parsed = getFormat().parseObject(text, position);
+            // all of it has to be a number, or "12abc" would quietly become 12
+            if (!(parsed instanceof Number number) || position.getIndex() != text.length())
+                throw new ParseException("Failed to parse input \"" + text + "\".", Math.max(position.getErrorIndex(), 0));
+
+            // asking for more than the maximum is how one asks for no upper bound at all
+            return Math.min(number.doubleValue(), infinityValue);
         }
 
         @Override
