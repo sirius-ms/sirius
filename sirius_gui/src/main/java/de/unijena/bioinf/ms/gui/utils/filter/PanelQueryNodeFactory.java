@@ -218,12 +218,17 @@ public final class PanelQueryNodeFactory {
     }
 
     /**
-     * A faithful inclusive range clause on the concrete current bounds - matching the model's
-     * {@code DoublePoint.newRangeQuery(field, currentMin, currentMax)} (no wildcard substitution;
-     * an untouched bound already equals the absolute bound, exactly as the model queries it).
+     * A range clause, left open at whichever end is unbounded: an infinite bound is written as no bound at all
+     * ({@code [200 TO *]}), since "Infinity" is not a number lucene parses.
      */
     private static QueryClause range(String field, double currentMin, double currentMax) {
-        return QueryClause.numeric(field, NumberOp.RANGE_INCLUSIVE, number(currentMin), number(currentMax), false);
+        return QueryClause.numeric(field, NumberOp.RANGE_INCLUSIVE,
+                openIfInfinite(currentMin), openIfInfinite(currentMax), false);
+    }
+
+    /** The bound as query text, or the empty string for an unbounded one - which renders as {@code *}. */
+    private static String openIfInfinite(double bound) {
+        return Double.isInfinite(bound) ? "" : number(bound);
     }
 
     /** A parenthesized group joining the items with the given operator; a single item stays a clause. */
