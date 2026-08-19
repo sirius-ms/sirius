@@ -7,7 +7,7 @@
     "defaultSearchField" : true,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "Unique identifier of the aligned feature within the project."
   }, {
     "name" : "compoundId",
     "fieldType" : "TEXT",
@@ -16,7 +16,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "Identifier of the compound the feature belongs to. Features that are different adducts or isotopologues of the same molecule share it."
   }, {
     "name" : "name",
     "fieldType" : "TEXT",
@@ -25,7 +25,7 @@
     "defaultSearchField" : true,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "Informative, human-readable name of the feature."
   }, {
     "name" : "externalFeatureId",
     "fieldType" : "TEXT",
@@ -43,7 +43,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "Mass-to-charge ratio (m/z) of the precursor ion of the feature."
   }, {
     "name" : "charge",
     "fieldType" : "INTEGER",
@@ -52,7 +52,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : "Ion mode (charge) this feature has been measured in."
+    "description" : "Ion mode (charge) the feature has been measured in."
   }, {
     "name" : "detectedAdducts",
     "fieldType" : "TEXT",
@@ -61,7 +61,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : [ "[M + ?]+", "[M + ?]-", "[M + H]+", "[M + Na]+", "[M - H]-" ],
-    "description" : "Adducts of this feature that have been detected during preprocessing. Never empty: if no adduct could be detected, the unknown ion type matching the feature's charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct."
+    "description" : "Adducts that have been detected for the feature during preprocessing. Never empty: if no adduct could be detected, the unknown ion type matching the feature's charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct."
   }, {
     "name" : "rtStartSeconds",
     "fieldType" : "DOUBLE",
@@ -70,7 +70,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "Start of the retention time range the feature was detected in, in seconds."
   }, {
     "name" : "rtEndSeconds",
     "fieldType" : "DOUBLE",
@@ -79,7 +79,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "End of the retention time range the feature was detected in, in seconds."
   }, {
     "name" : "rtApexSeconds",
     "fieldType" : "DOUBLE",
@@ -88,7 +88,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "Retention time of the intensity apex of the feature, in seconds."
   }, {
     "name" : "quality",
     "fieldType" : "ENUM",
@@ -97,7 +97,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : [ "NOT_APPLICABLE", "LOWEST", "BAD", "DECENT", "GOOD" ],
-    "description" : "Overall Quality of this feature. If no Quality data are available for this feature the value is NOT_APPLICABLE"
+    "description" : "Overall quality of the feature. NOT_APPLICABLE if no quality data is available"
   }, {
     "name" : "hasMs1",
     "fieldType" : "BOOLEAN",
@@ -205,7 +205,7 @@
     "defaultSearchField" : true,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "InChIKey of the structure candidate. Searching with a full 27 character key matches its 2D (skeleton) part, so stereoisomers of the searched structure are found alike."
   }, {
     "name" : "topAnnotations.structureAnnotation.structureName",
     "fieldType" : "TEXT",
@@ -214,7 +214,7 @@
     "defaultSearchField" : true,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "Name of the structure candidate. Searching also resolves the searched term as a PubChem synonym, so a structure is found by any of its common names."
   }, {
     "name" : "topAnnotations.compoundClassAnnotation.cfClass",
     "fieldType" : "TEXT",
@@ -277,7 +277,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 2,
     "possibleValues" : null,
-    "description" : "A mapping of structural database names (keys) to the rank (value) of the highest-ranked match found in each database. NOTE: This field is mainly for search index building and therefore hidden from the api"
+    "description" : "Rank (value) of the highest-ranked match found in a structure database (key)."
   }, {
     "name" : "topAnnotations.matchedDatabases.PubChem",
     "fieldType" : "INTEGER",
@@ -286,7 +286,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 2,
     "possibleValues" : null,
-    "description" : "A mapping of structural database names (keys) to the rank (value) of the highest-ranked match found in each database. NOTE: This field is mainly for search index building and therefore hidden from the api"
+    "description" : "Rank (value) of the highest-ranked match found in a structure database (key)."
   }, {
     "name" : "computedTools.librarySearch",
     "fieldType" : "BOOLEAN",
@@ -458,7 +458,7 @@
     "defaultSearchField" : true,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : "Informative, human-readable name of this run"
+    "description" : "Informative, human-readable name of the run"
   }, {
     "name" : "source",
     "fieldType" : "TEXT",
@@ -476,7 +476,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "Chromatography the run was measured with, e.g. 'Liquid Chromatography'."
   }, {
     "name" : "ionization",
     "fieldType" : "TEXT",
@@ -485,7 +485,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "Ionization the run was measured with, named as in the HUPO PSI-MS controlled vocabulary, e.g. 'electrospray ionization'."
   }, {
     "name" : "fragmentation",
     "fieldType" : "TEXT",
@@ -494,7 +494,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "Fragmentation the run was measured with, named as in the HUPO PSI-MS controlled vocabulary, e.g. 'beam-type collision-induced dissociation'."
   }, {
     "name" : "massAnalyzers",
     "fieldType" : "TEXT",
@@ -503,7 +503,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : null
+    "description" : "Mass analyzers of the instrument the run was measured on, named as in the HUPO PSI-MS controlled vocabulary, e.g. 'orbitrap'."
   }, {
     "name" : "tags.comment",
     "fieldType" : "TEXT",

@@ -162,7 +162,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get alignedFeatureId
+   * Unique identifier of the aligned feature within the project.
    * @return alignedFeatureId
    */
   @jakarta.annotation.Nullable
@@ -187,7 +187,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get compoundId
+   * Identifier of the compound the feature belongs to.  Features that are different adducts or isotopologues of the same molecule share it.
    * @return compoundId
    */
   @jakarta.annotation.Nullable
@@ -212,7 +212,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get name
+   * Informative, human-readable name of the feature.
    * @return name
    */
   @jakarta.annotation.Nullable
@@ -262,7 +262,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get ionMass
+   * Mass-to-charge ratio (m/z) of the precursor ion of the feature.
    * @return ionMass
    */
   @jakarta.annotation.Nullable
@@ -287,7 +287,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Ion mode (charge) this feature has been measured in.
+   * Ion mode (charge) the feature has been measured in.
    * @return charge
    */
   @jakarta.annotation.Nonnull
@@ -320,7 +320,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Adducts of this feature that have been detected during preprocessing.  Never empty: if no adduct could be detected, the unknown ion type matching the feature&#39;s  charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.
+   * Adducts that have been detected for the feature during preprocessing.  Never empty: if no adduct could be detected, the unknown ion type matching the feature&#39;s  charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.
    * @return detectedAdducts
    */
   @jakarta.annotation.Nonnull
@@ -346,7 +346,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get rtStartSeconds
+   * Start of the retention time range the feature was detected in, in seconds.
    * @return rtStartSeconds
    */
   @jakarta.annotation.Nullable
@@ -371,7 +371,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get rtEndSeconds
+   * End of the retention time range the feature was detected in, in seconds.
    * @return rtEndSeconds
    */
   @jakarta.annotation.Nullable
@@ -396,7 +396,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get rtApexSeconds
+   * Retention time of the intensity apex of the feature, in seconds.
    * @return rtApexSeconds
    */
   @jakarta.annotation.Nullable
@@ -571,7 +571,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Write lock for this feature. If the feature is locked no write operations are possible.  True if any computation is modifying this feature or its results
+   * Write lock for the feature. If the feature is locked no write operations are possible.  True if any computation is modifying the feature or its results.
    * @return computing
    */
   @jakarta.annotation.Nullable

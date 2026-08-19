@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Specifies which tools have been executed for this feature. Can be used to estimate which results can be expected. Null if it was not requested and non-null otherwise.
+ * Specifies which tools have been executed for the feature. Can be used to estimate which results can be expected. Null if it was not requested and non-null otherwise.
  */
 @JsonPropertyOrder({
   ComputedSubtools.JSON_PROPERTY_LIBRARY_SEARCH,

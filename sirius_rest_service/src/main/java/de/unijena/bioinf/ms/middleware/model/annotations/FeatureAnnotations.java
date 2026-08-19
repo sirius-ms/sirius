@@ -101,10 +101,11 @@ public class FeatureAnnotations {
     @Schema(nullable = true)
     protected List<String> expandedDatabases;
 
+
     /**
-     * A mapping of structural database names (keys) to the rank (value) of the highest-ranked match found in each database.
-     * NOTE: This field is mainly for search index building and therefore hidden from the api
+     * Rank (value) of the highest-ranked match found in a structure database (key).
      */
+    //NOTE: This field is mainly for search index building and therefore hidden from the api
     @IndexField(sortable = true)
     @Schema(nullable = true, hidden = true)
     private Map<String, Integer> matchedDatabases;
