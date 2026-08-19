@@ -211,19 +211,25 @@ public class GuiProjectManager implements Closeable {
 
                             if (!idsToComputeState.isEmpty()) {
                                 // Target the affected beans directly via the present-features snapshot (O(affected))
-                                // instead of scanning the whole list per event. Compute state has no influence on
-                                // sorting or filtering, so we only repaint; result changes are handled below.
+                                // instead of scanning the whole list per event. A bean that really changed state
+                                // announces it itself, which is what lets the toolbar actions re-decide whether
+                                // anything is still computing; the repaint below covers the row rendering.
+                                // The server repeats the state of a job on every progress event, so most of these
+                                // change nothing - only a real change counts as affecting anything.
                                 Map<String, InstanceBean> present = presentFeatures;
                                 boolean anyAffected = false;
                                 for (Map.Entry<String, Boolean> e : idsToComputeState.entrySet()) {
                                     InstanceBean inst = present.get(e.getKey());
-                                    if (inst != null) {
-                                        inst.changeComputeStateOfCache(e.getValue());
+                                    if (inst != null && inst.changeComputeStateOfCache(e.getValue()))
                                         anyAffected = true;
-                                    }
                                 }
                                 if (anyAffected)
-                                    Jobs.runEDTLater(() -> siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint());
+                                    Jobs.runEDTLater(() -> {
+                                        siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint();
+                                        // one signal for the whole batch: what may run while something computes
+                                        // is decided from this, and deciding it per feature would be quadratic
+                                        siriusGui.getMainFrame().getCompoundList().notifyComputeStateChange();
+                                    });
                             }
                         }
                     } else if (event instanceof ProjectChangeEvent projectEvent) {
