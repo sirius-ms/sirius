@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.gui.dialogs.filter;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.SiriusGui;
-import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
+import de.unijena.bioinf.ms.gui.compute.DBSelectionListPanel;
 import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.utils.*;
@@ -39,7 +39,6 @@ import de.unijena.bioinf.ms.gui.utils.search.PanelFilterTerms;
 import de.unijena.bioinf.ms.gui.utils.search.QueryEditorPanel;
 import de.unijena.bioinf.ms.gui.utils.search.SearchRenderState;
 import de.unijena.bioinf.ms.gui.utils.search.SearchableFieldsProvider;
-import io.sirius.ms.sdk.model.SearchableDatabase;
 import io.sirius.ms.sdk.model.SearchableField;
 import lombok.extern.slf4j.Slf4j;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -93,11 +92,14 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     /** While true, live chip refreshes are skipped so a bulk widget update rebuilds the chips only once. */
     private boolean suppressChipRefresh = false;
 
+    /** Set while a coalesced chip refresh is already queued for the end of this event turn. */
+    private boolean chipRefreshPending = false;
+
 
     final SegmentedFilterToggle lipidFilter, pfasFilter;
     final PlaceholderTextField elementsField;
 
-    final JCheckboxListPanel<SearchableDatabase> searchDBList;
+    final DBSelectionListPanel searchDBList;
 
     private final QualityFilterPanel overallQualityPanel;
     private final List<QualityFilterPanel> qualityPanels;
@@ -356,13 +358,22 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         // db filter
         {
             resultParameters.add(Box.createVerticalStrut(10));
-            searchDBList = new JCheckboxListPanel<>(DBSelectionList.fromSearchableDatabases(gui.getSiriusClient()), "Hit in structure DB");
+            // The same list the compute panel offers, and for the same reason: "Bio Database" is a name for a
+            // set of databases rather than one a feature can be a hit in, so it is not in the list and its
+            // button ticks the databases it stands for instead. Nothing else here is preselected - a filter
+            // starts off filtering nothing.
+            searchDBList = DBSelectionListPanel.newInstance("Hit in structure DB", gui.getSiriusClient(),
+                    Collections::emptyList);
             searchDBList.checkBoxList.setVisibleRowCount(5);
-            searchDBList.remove(searchDBList.buttons);
             searchDBList.checkBoxList.uncheckAll();
 
             candidateSpinner = makeSpinner(1, 1, 100, 1);
-            searchDBList.addFooter(new TwoColumnPanel("Candidates to check", candidateSpinner));
+            // all / none / bio and the candidate count both belong below the list, and a border layout keeps
+            // only the last thing put there - so they go down together as one footer.
+            Box dbFooter = Box.createVerticalBox();
+            dbFooter.add(searchDBList.buttons);
+            dbFooter.add(new TwoColumnPanel("Candidates to check", candidateSpinner));
+            searchDBList.addFooter(dbFooter);
 
             resultParameters.add(searchDBList);
             resultParameters.add(Box.createVerticalBox());
@@ -644,6 +655,11 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         // adduct "single" preset checks many boxes at once) sets suppressChipRefresh and rebuilds ONCE at
         // the end instead of once per box, so the preset does not lag.
         Runnable refresh = () -> { if (!suppressChipRefresh) queryEditor.rebuild(); };
+        // The database buttons (all / none / bio) tick their boxes one at a time, so a click arrives as a
+        // burst of events - and rebuilding per event would recompile the throwaway model a dozen times over.
+        // Collapsing the burst into one rebuild at the end of the turn handles every such button, including
+        // any added later, which suppressing around a particular one would not.
+        Runnable coalescedRefresh = this::requestChipRefresh;
         for (JSpinner s : new JSpinner[]{minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner,
                 minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, blankSpinner})
             s.addChangeListener(e -> refresh.run());
@@ -652,13 +668,27 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         lipidFilter.onChange(refresh);
         pfasFilter.onChange(refresh);
         adductOptions.checkBoxList.addCheckBoxListener(e -> refresh.run());
-        searchDBList.checkBoxList.addCheckBoxListener(e -> refresh.run());
+        searchDBList.checkBoxList.addCheckBoxListener(e -> coalescedRefresh.run());
         overallQualityPanel.onChange(refresh);
         qualityPanels.forEach(p -> p.onChange(refresh));
         elementsField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) { refresh.run(); }
             public void removeUpdate(javax.swing.event.DocumentEvent e) { refresh.run(); }
             public void changedUpdate(javax.swing.event.DocumentEvent e) { refresh.run(); }
+        });
+    }
+
+    /**
+     * Asks for a chip rebuild once this event turn is done, however many times it is asked in the meantime.
+     */
+    private void requestChipRefresh() {
+        if (suppressChipRefresh || chipRefreshPending)
+            return;
+        chipRefreshPending = true;
+        SwingUtilities.invokeLater(() -> {
+            chipRefreshPending = false;
+            if (!suppressChipRefresh)
+                queryEditor.rebuild();
         });
     }
 
