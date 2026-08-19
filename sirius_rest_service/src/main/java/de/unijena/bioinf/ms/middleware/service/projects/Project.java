@@ -71,13 +71,14 @@ public interface Project<PSM extends ProjectSpaceManager> {
     /**
      * Describes the fields that can be used in lucene search queries (searchQuery parameter) for the given
      * API model type (e.g. AlignedFeature, Run), including this project's dynamic tag fields.
-     * Empty if no searchable fields exist for the given type.
+     * Empty if no searchable fields exist for the given type - which is what a project without a search index
+     * answers.
+     * <p>
+     * How the answer is put together - what is indexed, what is materialized, which vocabularies apply - is
+     * the project's business and stays inside it.
      */
     default List<SearchableField> getSearchableFields(@NotNull Class<?> modelClass) {
-        SearchService searchService = getSearchService();
-        if (searchService == null)
-            return List.of();
-        return searchService.getSearchableFields(getProjectId(), modelClass);
+        return List.of();
     }
 
     /**

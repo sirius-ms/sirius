@@ -46,7 +46,15 @@ public class TokenInputModelTest {
             field("name", SearchableFieldType.TEXT),
             field("quality", SearchableFieldType.ENUM).possibleValues(List.of("GOOD", "DECENT", "BAD")),
             field("hasMsMs", SearchableFieldType.BOOLEAN),
-            field("tags.city", SearchableFieldType.TEXT));
+            field("tags.city", SearchableFieldType.TEXT),
+            field("npcPathway", SearchableFieldType.TEXT)
+                    .possibleValues(List.of("Alkaloids", "Amino acids and Peptides", "Terpenoids")),
+            // a presence flag: written only when the property holds, so true is the only value it can take
+            field("lipid", SearchableFieldType.BOOLEAN).possibleValues(List.of("true")),
+            // a tag its definition currently restricts to one value is NOT a flag - it holds a value, and
+            // the definition can be extended while the project is open
+            field("tags.batch", SearchableFieldType.TEXT).possibleValues(List.of("B1")),
+            field("tags.measured", SearchableFieldType.DATE).possibleValues(List.of("1970-01-01")));
 
     private TokenInputModel model;
 
@@ -153,6 +161,40 @@ public class TokenInputModelTest {
                 model.choose(suggestion("GOOD", "")).orElseThrow();
         assertEquals("quality", completed.clause().field());
         assertEquals("GOOD", completed.clause().value1());
+    }
+
+    /**
+     * A text field with a closed vocabulary (a compound class ontology, a restricted tag) behaves like
+     * an enum at the value stage: its values are offered, and picking one completes the clause.
+     */
+    @Test
+    public void testTextFieldWithVocabularySuggestsItsValues() {
+        model.choose(suggestion("npcPathway", ""));
+        assertEquals(TokenInputModel.Stage.VALUE, model.stage());
+        assertEquals(List.of("Alkaloids", "Amino acids and Peptides", "Terpenoids"),
+                model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList());
+
+        // a word inside the value narrows too - nobody recalls where "acids" sits in the name
+        assertEquals(List.of("Amino acids and Peptides"),
+                model.suggestions("acids").stream().map(TokenInputModel.Suggestion::display).toList());
+
+        TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
+                model.choose(suggestion("Amino acids and Peptides", "")).orElseThrow();
+        assertEquals("npcPathway", completed.clause().field());
+        assertEquals("Amino acids and Peptides", completed.clause().value1());
+    }
+
+    /**
+     * The vocabulary is an offer, not a restriction: the field stays queryable with anything, e.g. a
+     * wildcard over the ontology.
+     */
+    @Test
+    public void testTypedValueIsAcceptedBesideTheVocabulary() {
+        model.choose(suggestion("npcPathway", ""));
+
+        TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
+                model.submitTyped("Alka*").orElseThrow();
+        assertEquals("Alka*", completed.clause().value1());
     }
 
     @Test
@@ -601,5 +643,92 @@ public class TokenInputModelTest {
 
     private static boolean isRunAction(TokenInputModel.Suggestion suggestion) {
         return suggestion instanceof TokenInputModel.Suggestion.RunActionSuggestion;
+    }
+
+    // --- fields that can only hold one value ---
+
+    /**
+     * A field whose only possible value is true says everything by being mentioned. Picking its name finishes
+     * the clause, so the user never has to learn that a presence flag is matched by searching for true.
+     */
+    @Test
+    public void testPickingAFlagFieldCompletesTheClause() {
+        TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
+                model.choose(suggestion("lipid", "")).orElseThrow();
+
+        assertEquals("lipid", completed.clause().field());
+        assertEquals("true", completed.clause().value1());
+        assertFalse(completed.clause().negated());
+        assertEquals(LogicOp.AND, completed.logic());
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage(), "nothing is left pending");
+    }
+
+    @Test
+    public void testTypingAFlagFieldCompletesTheClause() {
+        TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
+                model.submitTyped("lipid").orElseThrow();
+
+        assertEquals("lipid", completed.clause().field());
+        assertEquals("true", completed.clause().value1());
+    }
+
+    /**
+     * "no lipid class" is the negation, and it has to compose the same way.
+     */
+    @Test
+    public void testAFlagFieldKeepsAPendingNegation() {
+        TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
+                model.submitTyped("not lipid").orElseThrow();
+
+        assertEquals("lipid", completed.clause().field());
+        assertEquals("true", completed.clause().value1());
+        assertTrue(completed.clause().negated());
+    }
+
+    /**
+     * Only a flag completes itself. A field that offers one value today but could hold others - a tag its
+     * definition currently restricts to a single date - still asks which value is meant.
+     */
+    @Test
+    public void testAFieldWithOneOfferedValueThatIsNoFlagStillAsksForIt() {
+        assertTrue(model.choose(suggestion("tags.batch", "")).isEmpty(),
+                "one offered value is not the same as one possible value");
+        assertEquals(TokenInputModel.Stage.VALUE, model.stage());
+        assertEquals(List.of("B1"), model.suggestions("").stream()
+                .map(TokenInputModel.Suggestion::display).toList());
+
+        model.reset();
+        assertTrue(model.choose(suggestion("tags.measured", "")).isEmpty());
+        assertEquals(TokenInputModel.Stage.OPERATOR, model.stage(), "a date is still compared");
+    }
+
+    @Test
+    public void testFieldsWithSeveralValuesStillAskForOne() {
+        assertTrue(model.choose(suggestion("quality", "")).isEmpty());
+        assertEquals(TokenInputModel.Stage.VALUE, model.stage());
+
+        model.reset();
+        assertTrue(model.choose(suggestion("hasMsMs", "")).isEmpty(), "a real boolean holds either value");
+        assertEquals(TokenInputModel.Stage.VALUE, model.stage());
+    }
+
+    @Test
+    public void testNumericFieldsStillGoToTheOperatorStage() {
+        assertTrue(model.choose(suggestion("ionMass", "")).isEmpty());
+        assertEquals(TokenInputModel.Stage.OPERATOR, model.stage());
+    }
+
+    /**
+     * Completing the field for the user takes nothing away: a query written out by hand still parses, which is
+     * how false stays reachable for anyone who wants the flag the other way round.
+     */
+    @Test
+    public void testWritingTheClauseOutStillWorks() {
+        TokenInputModel.Event.QueryParsed parsed = (TokenInputModel.Event.QueryParsed)
+                model.choose(suggestion("lipid:false", "lipid:false")).orElseThrow();
+
+        QueryClause clause = (QueryClause) parsed.container().items().get(0);
+        assertEquals("lipid", clause.field());
+        assertEquals("false", clause.value1());
     }
 }
