@@ -26,13 +26,30 @@ import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
 
 /**
- * A half-filled circle - the classic "invert" glyph: the outline is drawn and the left semicircle is
- * filled, reading as tone inversion. Colourable; authored in a 16-unit box scaled to the icon size.
+ * A half-filled circle - the classic "invert" glyph: the outline is drawn and one semicircle is filled,
+ * reading as tone inversion. Which half is filled says which way round things currently are, so the glyph
+ * itself inverts when what it stands for does. Colourable; authored in a 16-unit box scaled to the icon size.
  */
 public class InvertIcon extends FlatAbstractIcon {
 
+    private boolean inverted;
+
     public InvertIcon(int size, @NotNull Color color) {
+        this(size, color, false);
+    }
+
+    public InvertIcon(int size, @NotNull Color color, boolean inverted) {
         super(size, size, color); // FlatAbstractIcon applies `color` to the graphics before paintIcon
+        this.inverted = inverted;
+    }
+
+    /** {@code true} fills the right half, {@code false} the left one. */
+    public void setInverted(boolean inverted) {
+        this.inverted = inverted;
+    }
+
+    public boolean isInverted() {
+        return inverted;
     }
 
     public void setColor(@NotNull Color color) {
@@ -47,8 +64,9 @@ public class InvertIcon extends FlatAbstractIcon {
         double cx = 8, cy = 8, r = 5.6;
         g.setStroke(new BasicStroke(1.5f));
         g.draw(new Ellipse2D.Double(cx - r, cy - r, 2 * r, 2 * r));
-        // fill the left half: an arc from 12 o'clock, 180 deg counter-clockwise (through 9 o'clock),
-        // closed by the vertical diameter (CHORD)
-        g.fill(new Arc2D.Double(cx - r, cy - r, 2 * r, 2 * r, 90, 180, Arc2D.CHORD));
+        // Half of the circle, closed by the vertical diameter (CHORD), starting at 12 o'clock. Arc angles run
+        // counter-clockwise, so 180 degrees of them sweeps through 9 o'clock and fills the left half, while
+        // -180 sweeps through 3 o'clock and fills the right one.
+        g.fill(new Arc2D.Double(cx - r, cy - r, 2 * r, 2 * r, 90, inverted ? -180 : 180, Arc2D.CHORD));
     }
 }

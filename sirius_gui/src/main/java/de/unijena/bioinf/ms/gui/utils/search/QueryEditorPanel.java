@@ -614,6 +614,8 @@ public class QueryEditorPanel extends JPanel {
     /** Tints the invert toggle exactly like the funnel: idle grey when no filter is active, the accent
      *  (blue) when active and not inverted, the inverted accent (red) when inverted. */
     private void styleInvertToggle() {
+        // the filled half follows the state: left while the query reads as written, right once it is inverted
+        invertIcon.setInverted(inverted);
         invertIcon.setColor(hasWorkingQuery()
                 ? (inverted ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON)
                 : Colors.searchFieldIconColor());
