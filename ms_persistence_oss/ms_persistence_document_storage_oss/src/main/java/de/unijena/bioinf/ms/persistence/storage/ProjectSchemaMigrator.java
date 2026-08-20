@@ -27,6 +27,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureMatch;
@@ -117,9 +118,6 @@ public class ProjectSchemaMigrator {
     /** How many candidates the on-demand cache remembers by default. */
     public static final int DEFAULT_CANDIDATE_CACHE_LIMIT = 100_000;
 
-    /** How often a pass says where it is, so a slow project is not a silent one. */
-    private static final int PROGRESS_EVERY = 10_000;
-
     private static final String[] EMPTY_DATABASES = new String[0];
 
     private ProjectSchemaMigrator() {
@@ -155,10 +153,34 @@ public class ProjectSchemaMigrator {
     public static boolean migrateIfNeeded(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
                                           @NotNull CandidateCache candidateCache,
                                           int candidateCacheLimit) throws IOException {
+        return migrateIfNeeded(project, candidateCache, candidateCacheLimit, null);
+    }
+
+    /**
+     * Upgrades the given project, reporting how far it has come to {@code onProgress}.
+     * <p>
+     * Converting a large project takes minutes, so whoever asked for it has to be able to say so rather than
+     * appear to have stopped responding. The listener is attached before the conversion starts, so nothing that
+     * happens is missed.
+     */
+    public static boolean migrateIfNeeded(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
+                                          @NotNull CandidateCache candidateCache, int candidateCacheLimit,
+                                          @Nullable JobProgressEventListener onProgress) throws IOException {
         if (!isOutdated(project, project.getStorage()))
             return false;
-        convert(project, EnumSet.allOf(ConversionJob.Pass.class), candidateCache, candidateCacheLimit);
+        convert(project, EnumSet.allOf(ConversionJob.Pass.class), candidateCache, candidateCacheLimit, onProgress);
         return true;
+    }
+
+    /**
+     * Whether converting the given project would do anything, without doing it.
+     * <p>
+     * Costs one property read on a healthy project, so it can be asked before opening one in order to warn that
+     * it is about to take a while.
+     */
+    public static boolean isConversionNeeded(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project)
+            throws IOException {
+        return isOutdated(project, project.getStorage());
     }
 
     /**
@@ -174,7 +196,16 @@ public class ProjectSchemaMigrator {
                                  @NotNull EnumSet<ConversionJob.Pass> passes,
                                  @NotNull CandidateCache candidateCache,
                                  int candidateCacheLimit) throws IOException {
+        return convert(project, passes, candidateCache, candidateCacheLimit, null);
+    }
+
+    static ConversionJob convert(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
+                                 @NotNull EnumSet<ConversionJob.Pass> passes,
+                                 @NotNull CandidateCache candidateCache, int candidateCacheLimit,
+                                 @Nullable JobProgressEventListener onProgress) throws IOException {
         ConversionJob job = new ConversionJob(project, passes, candidateCache, candidateCacheLimit);
+        if (onProgress != null)
+            job.addJobProgressListener(onProgress);
         try {
             SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
             return job;
@@ -237,6 +268,17 @@ public class ProjectSchemaMigrator {
         /** How many workers a pass uses. Overridable so a benchmark can ask what the right number is. */
         static int workerCount = 0;
 
+        /** How many keys between two progress reports, so a slow project is not a silent one. Overridable for tests. */
+        static int progressEvery = 500;
+
+        /**
+         * How much time may pass between two progress reports, whatever the count cadence says. The work behind
+         * a key varies enormously - one feature can carry thousands of structure matches - so a count between
+         * reports bounds nothing a watcher can see; the clock is what keeps the bar moving through the
+         * expensive stretches. Overridable for tests.
+         */
+        static long reportAtLeastEveryMillis = 5_000;
+
         private static int workers() {
             return workerCount > 0 ? workerCount : SiriusJobs.getGlobalJobManager().getCPUThreads();
         }
@@ -253,7 +295,46 @@ public class ProjectSchemaMigrator {
         @Getter
         private final AtomicInteger formulaCandidatesFilled = new AtomicInteger();
 
+        /**
+         * Progress is one count over the whole conversion - a unit of work is one primary key handled, and the
+         * total spans every pass - so whoever watches sees one bar filling once rather than one per pass
+         * restarting. Reported on this job, the one the listeners are attached to: progress fired on the worker
+         * subjobs reaches nobody, because a master does not forward what its subjobs say.
+         */
+        private long totalWork;
+        private final AtomicInteger workDone = new AtomicInteger();
+        /** The last count reported, so workers finishing out of order never move the bar backwards. */
+        private long reportedWork = -1;
+        /** When the last report went out, read by every worker to see whether the clock says it is time again. */
+        private volatile long lastReportNanos;
 
+        private synchronized void report(long done, String message) {
+            if (done < reportedWork)
+                return;
+            reportedWork = done;
+            lastReportNanos = System.nanoTime();
+            updateProgress(0, totalWork, done, message);
+        }
+
+        private void oneKeyDone(String message) {
+            int done = workDone.incrementAndGet();
+            if (done % progressEvery == 0 || done == totalWork
+                    || System.nanoTime() - lastReportNanos >= TimeUnit.MILLISECONDS.toNanos(reportAtLeastEveryMillis))
+                report(done, message);
+        }
+
+        /** How many keys the enabled passes will walk, counted off the collections before anything starts. */
+        private long plannedWork() throws IOException {
+            long work = 0;
+            if (passes.contains(Pass.FEATURES)) {
+                if (candidateCache == CandidateCache.PREFETCH)
+                    work += storage.countAll(FingerprintCandidate.class);
+                work += storage.countAll(AlignedFeatures.class);
+            }
+            if (passes.contains(Pass.FORMULA_CANDIDATES))
+                work += storage.countAll(FormulaCandidate.class);
+            return work;
+        }
 
         ConversionJob(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
                       @NotNull EnumSet<Pass> passes, @NotNull CandidateCache candidateCache,
@@ -286,13 +367,17 @@ public class ProjectSchemaMigrator {
             log.info("Converting project '{}' to schema version {} with {} workers, candidate cache {}...",
                     storage.location(), MIGRATES_TO_SCHEMA_VERSION, workers(), candidateCache);
 
+            // At least 1, so an empty but outdated project still reports a range a bar can be drawn over.
+            totalWork = Math.max(1, plannedWork());
+            report(0, "Updating project schema...");
+
             if (passes.contains(Pass.FEATURES)) {
                 // Nothing is written here, so nothing has its indices dropped.
                 if (candidateCache == CandidateCache.PREFETCH)
-                    overPrimaryKeysOf(FingerprintCandidate.class, "fingerprint candidates",
+                    overPrimaryKeysOf(FingerprintCandidate.class, "Migration: Reading structure candidates...",
                             List.of(), this::addCandidateAndCache);
 
-                overPrimaryKeysOf(AlignedFeatures.class, "features",
+                overPrimaryKeysOf(AlignedFeatures.class, "Updating features...",
                         List.of(AlignedFeatures.class, CsiStructureSearchResult.class), this::convertFeature);
                 // Once, at the end of the pass that collected them, rather than per feature: this is a single
                 // project-level record that every feature would otherwise rewrite.
@@ -302,12 +387,14 @@ public class ProjectSchemaMigrator {
             }
 
             if (passes.contains(Pass.FORMULA_CANDIDATES))
-                overPrimaryKeysOf(FormulaCandidate.class, "formula candidates",
+                overPrimaryKeysOf(FormulaCandidate.class, "Updating formula candidates",
                         List.of(FormulaCandidate.class), this::convertFormulaCandidate);
 
             // Stamped last: a pass that threw leaves the version behind, so the next open converts again.
             if (passes.size() == Pass.values().length)
                 project.upsertProjectSchemaVersion(MIGRATES_TO_SCHEMA_VERSION);
+
+            report(totalWork, "Project schema updated!");
 
             log.info("Converted project '{}' to schema version {} in {} ms ({} features, {} structure-search "
                             + "results, {} formula candidates).",
@@ -387,10 +474,15 @@ public class ProjectSchemaMigrator {
          * feature in a real project has 17,434 structure matches against a median of 94 - and handing out equal
          * shares up front would leave most workers finished while one carried the tail.
          *
+         * @param message   what this pass is doing, worded for the progress bar it ends up on - so short
          * @param rewritten the collections the pass writes to, whose indices are dropped around it
          */
-        private void overPrimaryKeysOf(Class<?> keyOwner, String what, List<Class<?>> rewritten, KeyTask task)
+        private void overPrimaryKeysOf(Class<?> keyOwner, String message, List<Class<?>> rewritten, KeyTask task)
                 throws Exception {
+            // Announced before the keys are read: on millions of records that read alone takes seconds, and
+            // until it is done the bar would still be naming whatever came before it.
+            report(workDone.get(), message);
+
             List<Object> keys = storage.primaryKeys(keyOwner);
             int length = keys.size();
             if (length == 0)
@@ -412,8 +504,7 @@ public class ProjectSchemaMigrator {
                             while ((at = cursor.getAndIncrement()) < length) {
                                 checkForInterruption();
                                 task.accept(keys.get(at), buffer);
-                                if (at % PROGRESS_EVERY == 0)
-                                    updateProgress(0, length, at, "Converting " + what + "...");
+                                oneKeyDone(message);
                             }
                             return Boolean.TRUE;
                         }
