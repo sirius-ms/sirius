@@ -21,6 +21,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -137,9 +138,37 @@ public class MergeTracesWithoutGapFilling {
             r.minRt = Float.intBitsToFloat(Float.floatToIntBits(r.minRt)-1);
             r.maxRt = Float.intBitsToFloat(Float.floatToIntBits(r.maxRt)+1);
 
-            for (Rect other : rectangleMap.overlappingRectangle(r)) {
-                r.upgrade(other);
-                rectangleMap.removeRect(other);
+            // Absorb every rectangle that overlaps this one, and keep absorbing: growing the bounds can
+            // bring further rectangles into range. A single pass measured the overlap against the
+            // original bounds only, so rectangles that overlapped the grown one were left behind and
+            // whether two of them ended up together depended on which mass of interest came first.
+            final List<Rect> absorbed = new ArrayList<>();
+            final IntOpenHashSet absorbedIds = new IntOpenHashSet();
+            final ArrayDeque<Rect> pending = new ArrayDeque<>(rectangleMap.overlappingRectangle(r));
+            while (!pending.isEmpty()) {
+                final Rect other = pending.poll();
+                // a rectangle can be queued twice before it is absorbed, and counting it twice would
+                // bias the mean below
+                if (!absorbedIds.add(other.id)) continue;
+                absorbed.add(other);
+                rectangleMap.removeRect(other);   // so it cannot come back from the next query
+                if (r.expandTo(other)) {
+                    for (Rect next : rectangleMap.overlappingRectangle(r)) {
+                        if (!absorbedIds.contains(next.id)) pending.add(next);
+                    }
+                }
+            }
+            // One mean over the whole group, not a running one - see Rect#expandTo. Sorted first
+            // because float addition is not associative, so even a correct mean would otherwise depend
+            // on the order the spatial index returned the rectangles in.
+            if (!absorbed.isEmpty()) {
+                final double[] masses = new double[absorbed.size() + 1];
+                masses[0] = r.avgMz;
+                for (int i = 0; i < absorbed.size(); ++i) masses[i + 1] = absorbed.get(i).avgMz;
+                Arrays.sort(masses);
+                double sum = 0d;
+                for (double mass : masses) sum += mass;
+                r.avgMz = sum / masses.length;
             }
             rectangleMap.addRect(r);
             tracker.createRect(merged, r);

@@ -39,12 +39,24 @@ public class Rect implements Comparable<Rect>, Serializable {
         this.id = id;
     }
 
-    public void upgrade(Rect other) {
-        minMz = Math.min(minMz, other.minMz);
-        maxMz = Math.max(maxMz, other.maxMz);
-        minRt = Math.min(minRt, other.minRt);
-        maxRt = Math.max(maxRt, other.maxRt);
-        avgMz = (avgMz+other.avgMz)/2;
+    /**
+     * Grows this rectangle to cover another one. Bounds only - the representative mass is left alone.
+     * <p>
+     * This used to also do {@code avgMz = (avgMz + other.avgMz)/2}, which is not a mean: absorbing n
+     * rectangles one after another leaves the last one carrying half the weight and the first one
+     * 2^-n of it, so the answer depended on the order the spatial index happened to return them in.
+     * A mean needs to see the whole group at once, which a pairwise method cannot, and giving a
+     * rectangle a weight to carry would mean serialising it in {@code MoI.DataType} as well for a
+     * number that means nothing on a mass of interest's own rectangle. So the caller computes it.
+     *
+     * @return whether the bounds actually changed
+     */
+    public boolean expandTo(Rect other) {
+        final float mnMz = Math.min(minMz, other.minMz), mxMz = Math.max(maxMz, other.maxMz);
+        final float mnRt = Math.min(minRt, other.minRt), mxRt = Math.max(maxRt, other.maxRt);
+        final boolean changed = mnMz != minMz || mxMz != maxMz || mnRt != minRt || mxRt != maxRt;
+        minMz = mnMz; maxMz = mxMz; minRt = mnRt; maxRt = mxRt;
+        return changed;
     }
 
     public boolean contains(Rect other) {
