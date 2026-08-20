@@ -375,6 +375,8 @@ class MzXMLSaxParser extends DefaultHandler {
                         surpressEmptySpectraScanNumbers.add(scanNumber);
                     } else {
 
+                        // see SpectrumDatatype#roundIntensitiesToStoredPrecision
+                        de.unijena.bioinf.lcms.datatypes.SpectrumDatatype.roundIntensitiesToStoredPrecision(intensityArray);
                         final SimpleSpectrum peaks = Spectrums.getBaselined(Spectrums.wrap(mzArray, intensityArray), 0);
 
                         if (peaks.isEmpty()) {
