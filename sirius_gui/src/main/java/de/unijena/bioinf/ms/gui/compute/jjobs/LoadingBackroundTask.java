@@ -167,7 +167,7 @@ public class LoadingBackroundTask<T> extends JDialog implements ActionListener {
 
         setModalityType(ModalityType.APPLICATION_MODAL);
 
-        GuiUtils.setUndecorated(this);
+        GuiUtils.hideTitleBarClose(this);
         pack();
         setLocationRelativeTo(getOwner());
         setResizable(false);
