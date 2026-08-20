@@ -255,6 +255,22 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     <T> long count(Filter filter, Class<T> clazz, long offset, int pageSize) throws IOException;
 
+    /**
+     * Every primary key of a collection, read from the collection's own primary-key index rather than from its
+     * documents.
+     * <p>
+     * There is no cheap way to a document's key alone: the store decodes every value on a page when it loads
+     * the page, so walking a collection to collect its keys costs a full read of all of it. The primary-key
+     * index is a separate structure holding only key-to-id pairs, and reading that is several times cheaper per
+     * key. Use it to drive work over a collection that is then fetched by key in parallel, which is what turns a
+     * single-threaded walk into one.
+     * <p>
+     * The keys come back in key order rather than in insertion order.
+     *
+     * @throws IllegalArgumentException if the collection has no single-field index on its primary key
+     */
+    <T> List<Object> primaryKeys(Class<T> clazz) throws IOException;
+
     <T> long countAll(Class<T> clazz) throws IOException;
 
     /**

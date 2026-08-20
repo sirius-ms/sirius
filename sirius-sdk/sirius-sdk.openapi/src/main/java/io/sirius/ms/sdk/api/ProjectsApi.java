@@ -806,6 +806,99 @@ public class ProjectsApi {
     }
 
     /**
+     * The job that is opening, or has opened, the given project
+     * The job that is opening, or has opened, the given project.  &lt;p&gt;  For polling clients and for anyone that missed the last event: the job is remembered after it finishes,  so how it ended can still be asked for.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project the job is opening
+     * @param optFields set of optional fields to be included in the returned job
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getOpenJobRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getOpenJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+
+        final String[] localVarAccepts = { 
+            "application/json", "application/problem+json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/open-job", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * The job that is opening, or has opened, the given project
+     * The job that is opening, or has opened, the given project.  &lt;p&gt;  For polling clients and for anyone that missed the last event: the job is remembered after it finishes,  so how it ended can still be asked for.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project the job is opening
+     * @param optFields set of optional fields to be included in the returned job
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public Job getOpenJob(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return getOpenJobRequestCreation(projectId, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * The job that is opening, or has opened, the given project
+     * The job that is opening, or has opened, the given project.  &lt;p&gt;  For polling clients and for anyone that missed the last event: the job is remembered after it finishes,  so how it ended can still be asked for.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project the job is opening
+     * @param optFields set of optional fields to be included in the returned job
+     * @return ResponseEntity&lt;Job&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Job> getOpenJobWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return getOpenJobRequestCreation(projectId, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * The job that is opening, or has opened, the given project
+     * The job that is opening, or has opened, the given project.  &lt;p&gt;  For polling clients and for anyone that missed the last event: the job is remembered after it finishes,  so how it ended can still be asked for.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId project the job is opening
+     * @param optFields set of optional fields to be included in the returned job
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getOpenJobWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        return getOpenJobRequestCreation(projectId, optFields);
+    }
+
+    /**
      * Get project space info by its projectId.
      * Get project space info by its projectId.
      * <p><b>200</b> - OK
@@ -1978,5 +2071,103 @@ public class ProjectsApi {
      */
     public ResponseSpec openProjectWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         return openProjectRequestCreation(projectId, pathToProject, optFields);
+    }
+
+    /**
+     * Open an existing project-space in the background and return the job that is doing it
+     * Open an existing project-space in the background and return the job that is doing it.  &lt;p&gt;  Opening a project written by an older SIRIUS converts it first, which on a large project takes minutes.  This endpoint returns as soon as the project id is reserved, so a client can show what is happening and  stay responsive; the project becomes usable when the job reaches DONE, announced by a PROJECT_OPENED  event as well. The synchronous variant is unchanged and still available.  &lt;p&gt;  Cancelling the job is safe: a conversion fills in only what a record is missing and records the schema  version last, so an interrupted one leaves the project as it was and simply runs again next time.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * <p><b>200</b> - the job opening the project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier that shall be used to access this project-space.
+     * @param pathToProject local file path to open the project from. If omitted the project will be loaded from the default project space location.
+     * @param optFields set of optional fields to be included in the returned job
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec openProjectAsJobRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling openProjectAsJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "pathToProject", pathToProject));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+
+        final String[] localVarAccepts = { 
+            "application/json", "application/problem+json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/open-job", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Open an existing project-space in the background and return the job that is doing it
+     * Open an existing project-space in the background and return the job that is doing it.  &lt;p&gt;  Opening a project written by an older SIRIUS converts it first, which on a large project takes minutes.  This endpoint returns as soon as the project id is reserved, so a client can show what is happening and  stay responsive; the project becomes usable when the job reaches DONE, announced by a PROJECT_OPENED  event as well. The synchronous variant is unchanged and still available.  &lt;p&gt;  Cancelling the job is safe: a conversion fills in only what a record is missing and records the schema  version last, so an interrupted one leaves the project as it was and simply runs again next time.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * <p><b>200</b> - the job opening the project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier that shall be used to access this project-space.
+     * @param pathToProject local file path to open the project from. If omitted the project will be loaded from the default project space location.
+     * @param optFields set of optional fields to be included in the returned job
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public Job openProjectAsJob(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return openProjectAsJobRequestCreation(projectId, pathToProject, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Open an existing project-space in the background and return the job that is doing it
+     * Open an existing project-space in the background and return the job that is doing it.  &lt;p&gt;  Opening a project written by an older SIRIUS converts it first, which on a large project takes minutes.  This endpoint returns as soon as the project id is reserved, so a client can show what is happening and  stay responsive; the project becomes usable when the job reaches DONE, announced by a PROJECT_OPENED  event as well. The synchronous variant is unchanged and still available.  &lt;p&gt;  Cancelling the job is safe: a conversion fills in only what a record is missing and records the schema  version last, so an interrupted one leaves the project as it was and simply runs again next time.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * <p><b>200</b> - the job opening the project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier that shall be used to access this project-space.
+     * @param pathToProject local file path to open the project from. If omitted the project will be loaded from the default project space location.
+     * @param optFields set of optional fields to be included in the returned job
+     * @return ResponseEntity&lt;Job&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Job> openProjectAsJobWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return openProjectAsJobRequestCreation(projectId, pathToProject, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Open an existing project-space in the background and return the job that is doing it
+     * Open an existing project-space in the background and return the job that is doing it.  &lt;p&gt;  Opening a project written by an older SIRIUS converts it first, which on a large project takes minutes.  This endpoint returns as soon as the project id is reserved, so a client can show what is happening and  stay responsive; the project becomes usable when the job reaches DONE, announced by a PROJECT_OPENED  event as well. The synchronous variant is unchanged and still available.  &lt;p&gt;  Cancelling the job is safe: a conversion fills in only what a record is missing and records the schema  version last, so an interrupted one leaves the project as it was and simply runs again next time.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * <p><b>200</b> - the job opening the project
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
+     * @param projectId unique name/identifier that shall be used to access this project-space.
+     * @param pathToProject local file path to open the project from. If omitted the project will be loaded from the default project space location.
+     * @param optFields set of optional fields to be included in the returned job
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec openProjectAsJobWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable String pathToProject, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        return openProjectAsJobRequestCreation(projectId, pathToProject, optFields);
     }
 }
