@@ -547,4 +547,16 @@ public class GuiUtils {
         dialog.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
         dialog.getRootPane().putClientProperty(FlatClientProperties.USE_WINDOW_DECORATIONS, false);
     }
+
+    public static void hideTitleBarClose(@NotNull JDialog dialog){
+        configure(dialog, FlatClientProperties.TITLE_BAR_SHOW_CLOSE, false);
+    }
+
+    public static void showTitleBarClose(@NotNull JDialog dialog){
+        configure(dialog, FlatClientProperties.TITLE_BAR_SHOW_CLOSE, true);
+    }
+
+    public static void configure(@NotNull JDialog dialog, @NotNull String flatlafClientProperties, boolean enabled){
+        dialog.getRootPane().putClientProperty(flatlafClientProperties, enabled);
+    }
 }
