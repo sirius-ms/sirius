@@ -401,4 +401,84 @@ public class ProjectSchemaMigratorTest {
                     db.findProjectSchemaVersion().orElseThrow(), "stamped once everything returned");
         });
     }
+
+    // ---- progress reporting --------------------------------------------------
+
+    /**
+     * The listener handed to the conversion is who a waiting user sees the conversion through, so it has to be
+     * told how far the whole conversion has come: determinate events counting towards the total of all passes,
+     * never moving backwards, ending on done - with a message short enough for a progress bar.
+     */
+    @Test
+    public void testProgressReachesTheListenerAsAMovingFraction() {
+        withOldProject(db -> {
+            int before = ProjectSchemaMigrator.ConversionJob.progressEvery;
+            ProjectSchemaMigrator.ConversionJob.progressEvery = 1;
+            try {
+                java.util.List<de.unijena.bioinf.jjobs.JobProgressEvent> events =
+                        java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+                ProjectSchemaMigrator.migrateIfNeeded(db, ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE,
+                        ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE_LIMIT, events::add);
+
+                long total = db.getStorage().countAll(AlignedFeatures.class)
+                        + db.getStorage().countAll(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
+                java.util.List<de.unijena.bioinf.jjobs.JobProgressEvent> determined = events.stream()
+                        .filter(de.unijena.bioinf.jjobs.JobProgressEvent::isDetermined).toList();
+
+                assertTrue(determined.size() >= 2, "a conversion that counts must be seen counting");
+                determined.forEach(e -> assertEquals(total, e.getMaxValue(),
+                        "every report ranges over the whole conversion, so the bar never restarts"));
+                for (int i = 1; i < determined.size(); i++)
+                    assertTrue(determined.get(i).getProgress() >= determined.get(i - 1).getProgress(),
+                            "progress never moves backwards");
+                assertTrue(determined.get(determined.size() - 1).isDone(), "and it ends on done");
+
+                assertTrue(events.stream().anyMatch(de.unijena.bioinf.jjobs.JobProgressEvent::hasMessage),
+                        "the conversion says what it is doing");
+                events.stream().filter(de.unijena.bioinf.jjobs.JobProgressEvent::hasMessage).forEach(e ->
+                        assertTrue(e.getMessage().length() <= 40,
+                                "a progress-bar message has to be short: '" + e.getMessage() + "'"));
+            } finally {
+                ProjectSchemaMigrator.ConversionJob.progressEvery = before;
+            }
+        });
+    }
+
+    /**
+     * The count between two reports says nothing about the time between them: one key can carry thousands of
+     * structure matches, so a count-only cadence freezes the bar for however long the expensive keys take.
+     * Progress must therefore also be reported on elapsed time - here the time trigger is made always due and
+     * the count trigger unreachable, so every reported step can only have come from the clock.
+     */
+    @Test
+    public void testProgressIsAlsoReportedOnTimeNotOnlyOnCount() {
+        withOldProject(db -> {
+            int beforeEvery = ProjectSchemaMigrator.ConversionJob.progressEvery;
+            long beforeMillis = ProjectSchemaMigrator.ConversionJob.reportAtLeastEveryMillis;
+            int beforeWorkers = ProjectSchemaMigrator.ConversionJob.workerCount;
+            ProjectSchemaMigrator.ConversionJob.progressEvery = Integer.MAX_VALUE;
+            ProjectSchemaMigrator.ConversionJob.reportAtLeastEveryMillis = 0;
+            ProjectSchemaMigrator.ConversionJob.workerCount = 1; // in-order counts, so none are guard-dropped
+            try {
+                java.util.List<de.unijena.bioinf.jjobs.JobProgressEvent> events =
+                        java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+                ProjectSchemaMigrator.migrateIfNeeded(db, ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE,
+                        ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE_LIMIT, events::add);
+
+                long total = db.getStorage().countAll(AlignedFeatures.class)
+                        + db.getStorage().countAll(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
+                long distinctCounts = events.stream()
+                        .filter(de.unijena.bioinf.jjobs.JobProgressEvent::isDetermined)
+                        .map(de.unijena.bioinf.jjobs.JobProgressEvent::getProgress)
+                        .distinct().count();
+                assertTrue(distinctCounts > total,
+                        "an always-due time trigger must report every step (" + distinctCounts
+                                + " distinct counts for " + total + " keys), whatever the count cadence says");
+            } finally {
+                ProjectSchemaMigrator.ConversionJob.progressEvery = beforeEvery;
+                ProjectSchemaMigrator.ConversionJob.reportAtLeastEveryMillis = beforeMillis;
+                ProjectSchemaMigrator.ConversionJob.workerCount = beforeWorkers;
+            }
+        });
+    }
 }
