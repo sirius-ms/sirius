@@ -27,7 +27,7 @@ public class Quickselect {
     }
 
     private static double quickselectInplace1(double[] a, int l, int r, int k) {
-        long randomState = System.nanoTime()*Double.doubleToLongBits(a[0]+a[a.length-1]);
+        long randomState = seed(a[0]+a[a.length-1]);
         while (true) {
             if (l==r) return a[l];
             randomState = randomLong(randomState);
@@ -61,6 +61,25 @@ public class Quickselect {
         return s;
     }
 
+    /**
+     * Seed for the pivot choice, derived from the data alone.
+     * <p>
+     * This used to be multiplied by {@code System.nanoTime()}. The rank that is returned does not depend on the
+     * pivots as long as every element is comparable, so that looked free - but it is not: as soon as the array
+     * holds a NaN, {@code a[i] < v} is false in both directions, the partition no longer separates anything, and
+     * which value comes back depends on which pivots were drawn. Measured on an array of 200 intensities with a
+     * single NaN in it, the same call returned two different values over 5000 repetitions. A wall clock in a
+     * numeric kernel makes a whole pipeline irreproducible for no gain, so the seed comes from the data instead.
+     * <p>
+     * The xorshift below has zero as a fixed point, which would pin every pivot to the leftmost element and turn
+     * the search into a quadratic scan, so a seed of zero - an array whose ends sum to zero, which all-zero
+     * intensity arrays do - is replaced by an arbitrary odd constant.
+     */
+    private static long seed(double x) {
+        final long bits = Double.doubleToLongBits(x);
+        return bits == 0 ? 0x9E3779B97F4A7C15L : bits;
+    }
+
     private static long randomLong(long x) {
         x ^= (x << 21);
         x ^= (x >>> 35);
@@ -73,7 +92,7 @@ public class Quickselect {
     }
 
     private static double quickselectInplace1(float[] a, int l, int r, int k) {
-        long randomState = System.nanoTime()*Double.doubleToLongBits(a[0]+a[a.length-1]);
+        long randomState = seed(a[0]+a[a.length-1]);
         while (true) {
             if (l==r) return a[l];
             randomState = randomLong(randomState);

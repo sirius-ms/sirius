@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.ScanPointMapping;
+import de.unijena.bioinf.lcms.datatypes.SpectrumDatatype;
 import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.LCMSStorage;
@@ -315,6 +316,9 @@ public class MzMLParser implements LCMSParser {
                     continue;
                 }
 
+                // intensities are stored as floats, so they are rounded here and nowhere else - see
+                // SpectrumDatatype#roundIntensitiesToStoredPrecision
+                SpectrumDatatype.roundIntensitiesToStoredPrecision(intArray);
                 SimpleSpectrum peaks = Spectrums.getBaselined(Spectrums.wrap(mzArray, intArray), 0);
                 if (samplePolarity == 0)  {
                     samplePolarity = polarity.charge;
