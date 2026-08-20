@@ -231,6 +231,7 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**getCanopusClassyFireData**](docs/ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes
 *ProjectsApi* | [**getCanopusNpcData**](docs/ProjectsApi.md#getCanopusNpcData) | **GET** /api/projects/{projectId}/npc-data | Get CANOPUS prediction vector definition for NPC classes
 *ProjectsApi* | [**getFingerIdData**](docs/ProjectsApi.md#getFingerIdData) | **GET** /api/projects/{projectId}/fingerid-data | Get CSI:FingerID fingerprint (prediction vector) definition
+*ProjectsApi* | [**getOpenJob**](docs/ProjectsApi.md#getOpenJob) | **GET** /api/projects/{projectId}/open-job | The job that is opening, or has opened, the given project
 *ProjectsApi* | [**getProject**](docs/ProjectsApi.md#getProject) | **GET** /api/projects/{projectId} | Get project space info by its projectId.
 *ProjectsApi* | [**getProjects**](docs/ProjectsApi.md#getProjects) | **GET** /api/projects | List opened project spaces.
 *ProjectsApi* | [**importMsRunData**](docs/ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML.
@@ -242,6 +243,7 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
 *ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp
 *ProjectsApi* | [**openProject**](docs/ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
+*ProjectsApi* | [**openProjectAsJob**](docs/ProjectsApi.md#openProjectAsJob) | **PUT** /api/projects/{projectId}/open-job | Open an existing project-space in the background and return the job that is doing it
 *ReactionsApi* | [**addReaction**](docs/ReactionsApi.md#addReaction) | **POST** /api/reactions/library | [EXPERIMENTAL] Add a new reaction to the library.
 *ReactionsApi* | [**addSequence**](docs/ReactionsApi.md#addSequence) | **POST** /api/reactions/sequences/library | [EXPERIMENTAL] Add a new reaction sequence to the library.
 *ReactionsApi* | [**applyReactions**](docs/ReactionsApi.md#applyReactions) | **POST** /api/reactions | [EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.

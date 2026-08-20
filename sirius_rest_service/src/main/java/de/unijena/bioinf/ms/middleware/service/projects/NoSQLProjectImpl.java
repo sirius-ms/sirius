@@ -83,6 +83,8 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.*;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.persistence.storage.ProjectSchemaMigrator;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
@@ -172,6 +174,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager, SearchService searchService, @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider) {
+        this(projectId, projectSpaceManager, searchService, computeStateProvider, null);
+    }
+
+    /**
+     * @param preparingProgress told how far the conversion of an old project has come, if one is needed. Opening
+     *                          such a project takes minutes, and this is what lets whoever asked say so instead
+     *                          of appearing to have stopped responding.
+     */
+    public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager, SearchService searchService, @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider, @Nullable JobProgressEventListener preparingProgress) {
         this.projectId = projectId;
         this.projectSpaceManager = projectSpaceManager;
         this.computeStateProvider = computeStateProvider;
@@ -187,13 +198,24 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 try {
                     //todo fix event actions so that new tags are added to features
                     //todo think whether we want store tags on the tagged object because we have lucene index..
+                    // Indeterminate like the storage open before it: real time, no count to report.
+                    if (preparingProgress != null)
+                        preparingProgress.progressChanged(new JobProgressEvent(this, "Opening search index"));
                     searchService.openOrCreateProjectIndex(this);
                     // Upgrade legacy ("pre-index") projects in-place before building the index. Old projects may
                     // lack fields the index relies on (e.g. hasMs1/hasMsMs, project detected adducts); without
                     // this backfill the default feature filter would hide everything until a manual filter reset.
                     // If the migration rewrote index-relevant feature data, force a rebuild so a possibly stale
                     // index (built by an earlier version from the missing/default values) is regenerated.
-                    createSearchIndex(ProjectSchemaMigrator.migrateIfNeeded(project()));
+                    boolean rewritten = ProjectSchemaMigrator.migrateIfNeeded(project(),
+                            ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE,
+                            ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE_LIMIT, preparingProgress);
+                    // The build cannot count, so it says what it is doing instead of pretending to be at zero -
+                    // it can be the longest part of opening a large migrated project.
+                    if (preparingProgress != null)
+                        preparingProgress.progressChanged(
+                                new JobProgressEvent(this, "Building search index"));
+                    createSearchIndex(rewritten);
 
                     //handle tag valuetype cache
                     storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
@@ -225,7 +247,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 if (force)
                     searchService.clearIndex(this);
 
-                //todo finde good page size.
                 //load feature index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, AlignedFeature.class)) {
                     // Mark incomplete for the duration of the (re)build so an interrupted build is not
