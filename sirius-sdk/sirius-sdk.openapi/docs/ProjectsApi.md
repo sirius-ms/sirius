@@ -12,6 +12,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getCanopusClassyFireData**](ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes |
 | [**getCanopusNpcData**](ProjectsApi.md#getCanopusNpcData) | **GET** /api/projects/{projectId}/npc-data | Get CANOPUS prediction vector definition for NPC classes |
 | [**getFingerIdData**](ProjectsApi.md#getFingerIdData) | **GET** /api/projects/{projectId}/fingerid-data | Get CSI:FingerID fingerprint (prediction vector) definition |
+| [**getOpenJob**](ProjectsApi.md#getOpenJob) | **GET** /api/projects/{projectId}/open-job | The job that is opening, or has opened, the given project |
 | [**getProject**](ProjectsApi.md#getProject) | **GET** /api/projects/{projectId} | Get project space info by its projectId. |
 | [**getProjects**](ProjectsApi.md#getProjects) | **GET** /api/projects | List opened project spaces. |
 | [**importMsRunData**](ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and align full MS runs from various formats into the specified project  Possible formats: mzML, mzXML. |
@@ -23,6 +24,7 @@ All URIs are relative to *http://localhost:8888*
 | [**importPreprocessedDataAsJobLocally**](ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job |
 | [**importPreprocessedDataLocally**](ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats: ms, mgf, cef, msp |
 | [**openProject**](ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId. |
+| [**openProjectAsJob**](ProjectsApi.md#openProjectAsJob) | **PUT** /api/projects/{projectId}/open-job | Open an existing project-space in the background and return the job that is doing it |
 
 
 
@@ -578,6 +580,77 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: application/csv, application/CSV, application/problem+json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
+
+
+## getOpenJob
+
+> Job getOpenJob(projectId, optFields)
+
+The job that is opening, or has opened, the given project
+
+The job that is opening, or has opened, the given project.  &lt;p&gt;  For polling clients and for anyone that missed the last event: the job is remembered after it finishes,  so how it ended can still be asked for.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project the job is opening
+        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included in the returned job
+        try {
+            Job result = apiInstance.getOpenJob(projectId, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#getOpenJob");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project the job is opening | |
+| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included in the returned job | [optional] |
+
+### Return type
+
+[**Job**](Job.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
@@ -1391,6 +1464,79 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
+
+
+## openProjectAsJob
+
+> Job openProjectAsJob(projectId, pathToProject, optFields)
+
+Open an existing project-space in the background and return the job that is doing it
+
+Open an existing project-space in the background and return the job that is doing it.  &lt;p&gt;  Opening a project written by an older SIRIUS converts it first, which on a large project takes minutes.  This endpoint returns as soon as the project id is reserved, so a client can show what is happening and  stay responsive; the project becomes usable when the job reaches DONE, announced by a PROJECT_OPENED  event as well. The synchronous variant is unchanged and still available.  &lt;p&gt;  Cancelling the job is safe: a conversion fills in only what a record is missing and records the schema  version last, so an interrupted one leaves the project as it was and simply runs again next time.  &lt;p&gt;  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | unique name/identifier that shall be used to access this project-space.
+        String pathToProject = "pathToProject_example"; // String | local file path to open the project from. If omitted the project will be loaded from the default project space location.
+        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included in the returned job
+        try {
+            Job result = apiInstance.openProjectAsJob(projectId, pathToProject, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#openProjectAsJob");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| unique name/identifier that shall be used to access this project-space. | |
+| **pathToProject** | **String**| local file path to open the project from. If omitted the project will be loaded from the default project space location. | [optional] |
+| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included in the returned job | [optional] |
+
+### Return type
+
+[**Job**](Job.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json, application/problem+json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the job opening the project |  -  |
 | **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 | **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
 | **400** | The request body or a parameter is malformed or violates a constraint. |  -  |

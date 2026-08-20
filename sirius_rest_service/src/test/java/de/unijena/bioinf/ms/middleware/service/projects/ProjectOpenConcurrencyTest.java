@@ -1,5 +1,10 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.ms.middleware.model.compute.JobProgress;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
@@ -39,6 +44,15 @@ public class ProjectOpenConcurrencyTest {
         TestProvider(ProjectSpaceManagerFactory<ProjectSpaceManager> factory, EventService<?> es, ComputeService cs) {
             super(factory, es, cs);
         }
+
+        @Override
+        protected Project<ProjectSpaceManager> createProject(String projectId, ProjectSpaceManager managerToWrap,
+                                                             JobProgressEventListener onProgress) {
+            reportedProgress = onProgress;
+            return createProject(projectId, managerToWrap);
+        }
+
+        volatile JobProgressEventListener reportedProgress;
 
         @Override
         protected Project<ProjectSpaceManager> createProject(String projectId, ProjectSpaceManager managerToWrap) {
@@ -180,5 +194,233 @@ public class ProjectOpenConcurrencyTest {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    /**
+     * Opening in the background returns before the opening has happened.
+     * <p>
+     * That is the whole point: converting an old project takes minutes, and a request that only answers once it
+     * is finished is one a client cannot show anything for.
+     */
+    @Test
+    public void testOpeningAsAJobReturnsBeforeTheProjectIsOpen() throws Exception {
+        TestProvider provider = newProvider();
+        CountDownLatch buildReached = new CountDownLatch(1);
+        CountDownLatch letBuildFinish = new CountDownLatch(1);
+        provider.onBuild = id -> {
+            buildReached.countDown();
+            try {
+                assertTrue(letBuildFinish.await(20, TimeUnit.SECONDS), "build was not released");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        };
+
+        Job job = provider.openProjectAsJob("slow",
+                freshPath("slow.sirius"), EnumSet.of(Job.OptField.progress));
+
+        assertTrue(buildReached.await(20, TimeUnit.SECONDS), "the opening never started");
+        assertEquals("slow", job.getId(), "the job is named for the project it is opening");
+        assertTrue(provider.getProject("slow").isEmpty(),
+                "the project must not be usable while it is still being opened");
+        assertTrue(provider.findOpenJob("slow", EnumSet.of(
+                Job.OptField.progress)).isPresent(),
+                "and the job doing it must be findable while it runs");
+
+        letBuildFinish.countDown();
+        awaitOpen(provider, "slow");
+        assertTrue(provider.getProject("slow").isPresent(), "the project is usable once the job is done");
+    }
+
+    /** A second open of the same project is refused while the first is still running. */
+    @Test
+    public void testTheIdIsReservedBeforeTheJobReturns() throws Exception {
+        TestProvider provider = newProvider();
+        CountDownLatch letBuildFinish = new CountDownLatch(1);
+        provider.onBuild = id -> {
+            try {
+                assertTrue(letBuildFinish.await(20, TimeUnit.SECONDS), "build was not released");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        };
+
+        provider.openProjectAsJob("taken", freshPath("taken.sirius"),
+                EnumSet.of(Job.OptField.progress));
+        Job second = provider.openProjectAsJob("taken",
+                freshPath("taken2.sirius"), EnumSet.of(Job.OptField.progress));
+
+        assertNotEquals("taken", second.getId(),
+                "the id was already reserved by the job still opening, so the second gets its own");
+
+        letBuildFinish.countDown();
+        awaitOpen(provider, "taken");
+    }
+
+    /** How the opening ended is still answerable after it ended, for whoever missed the event. */
+    @Test
+    public void testTheJobIsStillFindableAfterTheProjectIsOpen() throws Exception {
+        TestProvider provider = newProvider();
+        provider.openProjectAsJob("done", freshPath("done.sirius"),
+                EnumSet.of(Job.OptField.progress));
+        awaitOpen(provider, "done");
+
+        Job finished = provider.findOpenJob("done",
+                EnumSet.of(Job.OptField.progress)).orElseThrow();
+        assertEquals(JJob.JobState.DONE, finished.getProgress().getState());
+    }
+
+    /**
+     * The progress a conversion reports has to come out of the job as a moving fraction.
+     * <p>
+     * What a client draws is (progress - min) / (max - min), so a report that carries the counts but leaves the
+     * range wrong renders as a bar that never moves while the message underneath it changes - which looks
+     * exactly like a conversion that has hung.
+     */
+    @Test
+    public void testConversionProgressIsReportedAsAMovingFraction() throws Exception {
+        TestProvider provider = newProvider();
+        CountDownLatch letBuildFinish = new CountDownLatch(1);
+        CountDownLatch progressForwarded = new CountDownLatch(1);
+        provider.onBuild = id -> {
+            try {
+                // what the conversion of an old project reports on its way through
+                provider.reportedProgress.progressChanged(
+                        new JobProgressEvent(this, 0, 14312, 8412, "Updating project to the current SIRIUS format (features)"));
+                progressForwarded.countDown();
+                assertTrue(letBuildFinish.await(20, TimeUnit.SECONDS), "build was not released");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        };
+
+        provider.openProjectAsJob("progressing", freshPath("progressing.sirius"),
+                EnumSet.of(Job.OptField.progress));
+        assertTrue(progressForwarded.await(20, TimeUnit.SECONDS), "the conversion never reported anything");
+
+        JobProgress reported = provider.findOpenJob("progressing", EnumSet.of(Job.OptField.progress))
+                .orElseThrow().getProgress();
+        assertEquals(8412L, reported.getCurrentProgress(), "how far the conversion has come");
+        assertEquals(14312L, reported.getMaxProgress(), "and how far there is to go");
+        assertFalse(reported.isIndeterminate(), "a counted conversion is not an indeterminate one");
+        assertTrue(reported.getMessage().contains("Updating project"),
+                "and it says a conversion is what is taking the time: " + reported.getMessage());
+
+        letBuildFinish.countDown();
+        awaitOpen(provider, "progressing");
+    }
+
+    /**
+     * A preparation step that cannot count (the index build) reports itself as an indeterminate event with a
+     * message, and it has to come out of the job that way: forwarding it as "0 of 100" would draw an empty bar
+     * that looks like a conversion that just lost all its progress.
+     */
+    @Test
+    public void testAnIndeterminateStepStaysIndeterminateAndKeepsItsMessage() throws Exception {
+        TestProvider provider = newProvider();
+        CountDownLatch letBuildFinish = new CountDownLatch(1);
+        CountDownLatch progressForwarded = new CountDownLatch(1);
+        provider.onBuild = id -> {
+            try {
+                provider.reportedProgress.progressChanged(new JobProgressEvent(this, "Building search index"));
+                progressForwarded.countDown();
+                assertTrue(letBuildFinish.await(20, TimeUnit.SECONDS), "build was not released");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        };
+
+        provider.openProjectAsJob("indet", freshPath("indet.sirius"), EnumSet.of(Job.OptField.progress));
+        assertTrue(progressForwarded.await(20, TimeUnit.SECONDS), "the build never reported anything");
+
+        JobProgress reported = provider.findOpenJob("indet", EnumSet.of(Job.OptField.progress))
+                .orElseThrow().getProgress();
+        assertTrue(reported.isIndeterminate(), "a step that cannot count must not pretend to");
+        assertEquals("Building search index", reported.getMessage(), "but it still says what it is doing");
+
+        letBuildFinish.countDown();
+        awaitOpen(provider, "indet");
+    }
+
+    /**
+     * Before the conversion starts counting, the opening is doing things that cannot be counted - resolving the
+     * location, opening the storage, opening the search index. Reporting those as "0 of 1" draws a bar frozen at
+     * zero for however long they take; they have to be reported as indeterminate, so the bar shows activity
+     * until the first real count arrives.
+     */
+    @Test
+    public void testTheStepsBeforeTheConversionAreIndeterminateNotZeroPercent() throws Exception {
+        TestProvider provider = newProvider();
+        CountDownLatch buildReached = new CountDownLatch(1);
+        CountDownLatch letBuildFinish = new CountDownLatch(1);
+        provider.onBuild = id -> {
+            buildReached.countDown();
+            try {
+                assertTrue(letBuildFinish.await(20, TimeUnit.SECONDS), "build was not released");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        };
+
+        provider.openProjectAsJob("early", freshPath("early.sirius"), EnumSet.of(Job.OptField.progress));
+        assertTrue(buildReached.await(20, TimeUnit.SECONDS), "the opening never started");
+
+        JobProgress reported = provider.findOpenJob("early", EnumSet.of(Job.OptField.progress))
+                .orElseThrow().getProgress();
+        assertTrue(reported.isIndeterminate(),
+                "steps that cannot be counted must not be drawn as a bar frozen at zero");
+        assertNotNull(reported.getMessage(), "but they still say what is happening");
+
+        letBuildFinish.countDown();
+        awaitOpen(provider, "early");
+    }
+
+    /**
+     * A failed open has to end as a failure a poller can read - and it must not be announced as an opened
+     * project. PROJECT_OPENED on a project that never opened sends every listening client looking for a
+     * project that is not there.
+     */
+    @Test
+    public void testAFailedOpenSaysSoAndDoesNotAnnounceAnOpenedProject() throws Exception {
+        ProjectSpaceManager psm = Mockito.mock(ProjectSpaceManager.class);
+        Mockito.when(psm.getLocation()).thenReturn("loc");
+        Mockito.when(psm.getType()).thenReturn(Optional.empty());
+        EventService<?> events = Mockito.mock(EventService.class);
+        TestProvider provider = new TestProvider(loc -> psm, events, Mockito.mock(ComputeService.class));
+        provider.onBuild = id -> {
+            throw new RuntimeException("simulated build failure");
+        };
+
+        provider.openProjectAsJob("broken", freshPath("broken.sirius"), EnumSet.of(Job.OptField.progress));
+
+        JobProgress reported = awaitTerminal(provider, "broken");
+        assertEquals(JJob.JobState.FAILED, reported.getState(), "a failed open must say it failed");
+        assertNotNull(reported.getErrorMessage(), "and why");
+
+        Mockito.verify(events, Mockito.never()).sendEvent(Mockito.argThat(evt ->
+                evt.getEventType() == de.unijena.bioinf.ms.middleware.model.events.ServerEvent.Type.PROJECT));
+    }
+
+    private static JobProgress awaitTerminal(TestProvider provider, String projectId) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+        while (System.nanoTime() < deadline) {
+            JobProgress progress = provider.findOpenJob(projectId, EnumSet.of(Job.OptField.progress))
+                    .orElseThrow().getProgress();
+            if (progress.getState().ordinal() > JJob.JobState.RUNNING.ordinal())
+                return progress;
+            Thread.sleep(20);
+        }
+        fail("the open job for '" + projectId + "' never finished");
+        return null;
+    }
+
+    private static void awaitOpen(TestProvider provider, String projectId) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+        while (System.nanoTime() < deadline) {
+            if (provider.getProject(projectId).isPresent())
+                return;
+            Thread.sleep(20);
+        }
+        fail("project '" + projectId + "' was never opened");
     }
 }

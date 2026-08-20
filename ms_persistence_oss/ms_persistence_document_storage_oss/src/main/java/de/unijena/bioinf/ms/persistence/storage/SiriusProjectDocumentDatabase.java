@@ -170,6 +170,15 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
      */
     String PROJECT_SCHEMA_VERSION_KEY = "projectSchemaVersion";
 
+    /**
+     * The project-data schema version a project written by this build conforms to.
+     * <p>
+     * Raise it when a field is added that older projects cannot derive on the fly, and teach
+     * {@code ProjectSchemaMigrator} to produce it in the same change - the two are asserted to agree, because a
+     * conversion left behind would quietly hand back projects a version older than newly created ones.
+     */
+    int CURRENT_PROJECT_SCHEMA_VERSION = 2;
+
     default Optional<Integer> findProjectSchemaVersion() {
         return findProjectPropertyAsInt(PROJECT_SCHEMA_VERSION_KEY);
     }

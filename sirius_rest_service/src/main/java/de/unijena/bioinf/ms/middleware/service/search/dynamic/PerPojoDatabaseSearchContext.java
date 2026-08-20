@@ -3,13 +3,13 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 import de.unijena.bioinf.ms.persistence.model.core.PersistentSearchIndex;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.storage.db.nosql.Database;
-import de.unijena.bioinf.storage.db.nosql.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.store.Directory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.List;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -115,9 +115,20 @@ public class PerPojoDatabaseSearchContext<DB extends Database<?>> extends PerPoj
         super.close(delete);
     }
 
+    /**
+     * Drops every stored index of this project, so the next open rebuilds from the data.
+     * <p>
+     * Deliberately not restricted to the indices this context happens to have instantiated: those are created
+     * lazily, on first use, so a context that is cleared before anything asked it for an index has none - and
+     * leaving the stored records behind would mean a forced rebuild that quietly rebuilt nothing. It was also
+     * an outright failure, since a filter over no values is rejected ("not enough values"). Each project has
+     * its own database, so everything stored here is this project's.
+     */
     private void removeIndicesFromDb() throws IOException {
-        String[] indexIds = indices.keySet().stream().map(Class::getSimpleName).toArray(String[]::new);
-        database.removeAll(Filter.where("indexKey").in(indexIds), PersistentSearchIndex.class);
+        List<PersistentSearchIndex> stored = database.findAllStr(PersistentSearchIndex.class).toList();
+        if (stored.isEmpty())
+            return;
+        database.removeAll(stored);
     }
 
     private static void clearDirectory(Directory directory) throws IOException {

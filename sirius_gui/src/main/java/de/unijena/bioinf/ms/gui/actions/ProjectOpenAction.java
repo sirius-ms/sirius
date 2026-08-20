@@ -29,8 +29,12 @@ import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.NoSQLProjectFileFilter;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import io.sirius.ms.sdk.model.Job;
+import io.sirius.ms.sdk.model.JobOptField;
+import io.sirius.ms.sdk.model.JobProgress;
 import io.sirius.ms.sdk.model.ProjectInfo;
-import io.sirius.ms.sdk.model.ProjectInfoOptField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -50,6 +54,9 @@ import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentData
  * @author Markus Fleischauer
  */
 public class ProjectOpenAction extends AbstractGuiAction {
+
+    /** How often the server is asked how far the opening has come. Often enough to look live, rarely enough to be free. */
+    private static final long POLL_MILLIS = 300;
     public static final String DONT_ASK_NEW_WINDOW_OPEN_KEY = "de.unijena.bioinf.sirius.dragdrop.newWindowOpen.dontAskAgain";
 
     //todo: should be a singelton action
@@ -113,16 +120,69 @@ public class ProjectOpenAction extends AbstractGuiAction {
             String pidInput = FileUtils.sanitizeFilename(projectId);
             if (!pidInput.equals(projectId))
                 LoggerFactory.getLogger(getClass()).warn("Changed pid from '{}' to '{};, to respect name restrictions", projectId, pidInput);
-            String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Opening Project...", () -> {
-                        ProjectInfo project = gui.getSiriusClient().projects().getProjects().stream()
-                                .filter(p -> p.getLocation() != null && projectPath.equals(Path.of(p.getLocation()))).findFirst().orElse(null);
+            String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Opening '" + projectPath.getFileName() + "'...",
+                    new TinyBackgroundJJob<String>() {
+                        @Override
+                        protected String compute() throws Exception {
+                            ProjectInfo project = gui.getSiriusClient().projects().getProjects().stream()
+                                    .filter(p -> p.getLocation() != null && projectPath.equals(Path.of(p.getLocation())))
+                                    .findFirst().orElse(null);
+                            if (project != null)
+                                return project.getProjectId();
 
-                        if (project == null)
-                            project = gui.getSiriusClient().projects().openProject(pidInput, projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE));
+                            return openAndFollow(pidInput, projectPath);
+                        }
 
-                        return project.getProjectId();
+                        /**
+                         * Opens the project as a background job on the server and follows it until it is done.
+                         * <p>
+                         * A project written by an older SIRIUS is converted while it opens, which on a large one
+                         * takes minutes. Asking for it synchronously would leave this dialog saying "Opening
+                         * Project..." for all of it, with no way to tell a slow conversion from a hang - so the
+                         * server's own progress is shown instead, message and all.
+                         */
+                        private String openAndFollow(String projectId, Path path) throws InterruptedException {
+                            Job opening = gui.getSiriusClient().projects().openProjectAsJob(projectId,
+                                    path.toAbsolutePath().toString(), List.of(JobOptField.PROGRESS));
+                            String openedId = opening.getId();
+
+                            while (true) {
+                                checkForInterruption();
+                                JobProgress progress = opening.getProgress();
+                                if (progress != null) {
+                                    String message = Objects.requireNonNullElse(progress.getMessage(),
+                                            "Opening project ...");
+                                    if (Boolean.TRUE.equals(progress.isIndeterminate())) {
+                                        // A step that cannot count (e.g. the index build) must not be drawn
+                                        // as a bar stuck at zero.
+                                        updateProgress(new JobProgressEvent(this, message));
+                                    } else {
+                                        // The bar shows (progress - min) / (max - min), so min has to stay at
+                                        // the bottom of the range rather than follow the progress - the server
+                                        // counts from zero. Reported whether or not the phase named itself,
+                                        // since a bar that only moves when there is a message looks stuck.
+                                        long done = orZero(progress.getCurrentProgress());
+                                        long total = Math.max(1, orZero(progress.getMaxProgress()));
+                                        updateProgress(0, total, Math.min(done, total), message);
+                                    }
+                                    if (progress.getState() == io.sirius.ms.sdk.model.JobState.DONE)
+                                        return openedId;
+                                    if (progress.getState() == io.sirius.ms.sdk.model.JobState.FAILED
+                                            || progress.getState() == io.sirius.ms.sdk.model.JobState.CANCELED)
+                                        throw new IllegalStateException("Could not open project '" + openedId
+                                                + "': " + Objects.requireNonNullElse(progress.getErrorMessage(),
+                                                String.valueOf(progress.getState())));
+                                }
+                                Thread.sleep(POLL_MILLIS);
+                                opening = gui.getSiriusClient().projects()
+                                        .getOpenJob(openedId, List.of(JobOptField.PROGRESS));
+                            }
+                        }
+
+                        private long orZero(Long value) {
+                            return value == null ? 0L : value;
+                        }
                     }
-
             ).awaitResult();
 
             openProjectByID(pid, closeCurrent);

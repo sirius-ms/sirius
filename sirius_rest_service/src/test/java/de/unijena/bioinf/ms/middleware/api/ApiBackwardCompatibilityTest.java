@@ -67,6 +67,13 @@ public class ApiBackwardCompatibilityTest {
             "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quant-table-row",
             "/api/projects/{projectId}/compounds/{compoundId}/quant-table-row");
 
+    /**
+     * Opening a project as a job is a stopgap: a project-independent job system is coming in the next
+     * API-breaking release, and this must not become something clients depend on in the meantime.
+     */
+    private static final List<String> INTERNAL_OPEN_JOB_PATHS = List.of(
+            "/api/projects/{projectId}/open-job");
+
     private static JsonNode enumsAsRef;
     private static JsonNode enumsAsString;
 
@@ -136,6 +143,22 @@ public class ApiBackwardCompatibilityTest {
                 assertEquals(operationId, op.path("operationId").asText());
                 assertFalse(isExperimental(op), () -> path + " must not be marked experimental");
             });
+        }
+    }
+
+    @Test
+    @DisplayName("asynchronous project opening stays internal")
+    void openJobEndpointsAreInternal() {
+        for (JsonNode spec : specs()) {
+            for (String path : INTERNAL_OPEN_JOB_PATHS) {
+                for (String method : List.of("put", "get")) {
+                    JsonNode op = operation(spec, path, method);
+                    String text = op.path("summary").asText("") + op.path("description").asText("");
+                    assertTrue(text.contains("[INTERNAL]"),
+                            () -> method + " " + path + " must stay internal until the project-independent job "
+                                    + "system replaces it");
+                }
+            }
         }
     }
 
