@@ -46,6 +46,9 @@ public class CentroidIndividualSpectraStrategy implements CentroidingStrategy
             }
         }
         scan.setCentroided(true);
+        // centroiding computes intensities of its own, so they are rounded here as well - see
+        // SpectrumDatatype#roundIntensitiesToStoredPrecision
+        de.unijena.bioinf.lcms.datatypes.SpectrumDatatype.roundIntensitiesToStoredPrecision(buffer);
         scan.setPeaks(new SimpleSpectrum(buffer));
     }
 
@@ -85,6 +88,9 @@ public class CentroidIndividualSpectraStrategy implements CentroidingStrategy
             }
         }
         scan.setCentroided(true);
+        // centroiding computes intensities of its own, so they are rounded here as well - see
+        // SpectrumDatatype#roundIntensitiesToStoredPrecision
+        de.unijena.bioinf.lcms.datatypes.SpectrumDatatype.roundIntensitiesToStoredPrecision(buffer);
         scan.setPeaks(new SimpleSpectrum(buffer));
     }
 

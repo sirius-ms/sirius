@@ -315,6 +315,9 @@ public class MzMLParser implements LCMSParser {
                     continue;
                 }
 
+                // intensities are stored as floats, so they are rounded here and nowhere else - see
+                // SpectrumDatatype#roundIntensitiesToStoredPrecision
+                de.unijena.bioinf.lcms.datatypes.SpectrumDatatype.roundIntensitiesToStoredPrecision(intArray);
                 SimpleSpectrum peaks = Spectrums.getBaselined(Spectrums.wrap(mzArray, intArray), 0);
                 if (samplePolarity == 0)  {
                     samplePolarity = polarity.charge;
