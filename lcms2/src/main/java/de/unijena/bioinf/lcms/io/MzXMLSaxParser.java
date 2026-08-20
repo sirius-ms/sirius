@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.ScanPointMapping;
+import de.unijena.bioinf.lcms.datatypes.SpectrumDatatype;
 import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.LCMSStorage;
@@ -376,7 +377,7 @@ class MzXMLSaxParser extends DefaultHandler {
                     } else {
 
                         // see SpectrumDatatype#roundIntensitiesToStoredPrecision
-                        de.unijena.bioinf.lcms.datatypes.SpectrumDatatype.roundIntensitiesToStoredPrecision(intensityArray);
+                        SpectrumDatatype.roundIntensitiesToStoredPrecision(intensityArray);
                         final SimpleSpectrum peaks = Spectrums.getBaselined(Spectrums.wrap(mzArray, intensityArray), 0);
 
                         if (peaks.isEmpty()) {
