@@ -99,6 +99,52 @@ public class ProjectController {
     }
 
     /**
+     * Open an existing project-space in the background and return the job that is doing it.
+     * <p>
+     * Opening a project written by an older SIRIUS converts it first, which on a large project takes minutes.
+     * This endpoint returns as soon as the project id is reserved, so a client can show what is happening and
+     * stay responsive; the project becomes usable when the job reaches DONE, announced by a PROJECT_OPENED
+     * event as well. The synchronous variant is unchanged and still available.
+     * <p>
+     * Cancelling the job is safe: a conversion fills in only what a record is missing and records the schema
+     * version last, so an interrupted one leaves the project as it was and simply runs again next time.
+     * <p>
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     *
+     * @param projectId     unique name/identifier that shall be used to access this project-space.
+     * @param pathToProject local file path to open the project from. If omitted the project will be loaded from the default project space location.
+     * @param optFields     set of optional fields to be included in the returned job
+     * @return the job opening the project
+     */
+    @PutMapping(value = "/{projectId}/open-job", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Job openProjectAsJob(@PathVariable String projectId,
+                                @RequestParam(required = false) String pathToProject,
+                                @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+        return projectsProvider.openProjectAsJob(projectId, pathToProject, removeNone(optFields));
+    }
+
+    /**
+     * The job that is opening, or has opened, the given project.
+     * <p>
+     * For polling clients and for anyone that missed the last event: the job is remembered after it finishes,
+     * so how it ended can still be asked for.
+     * <p>
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     *
+     * @param projectId project the job is opening
+     * @param optFields set of optional fields to be included in the returned job
+     */
+    @GetMapping(value = "/{projectId}/open-job", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Job getOpenJob(@PathVariable String projectId,
+                          @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+        return projectsProvider.findOpenJob(projectId, removeNone(optFields))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No opening job known for project '" + projectId + "'."));
+    }
+
+    /**
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      *
      * @param projectId     unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].

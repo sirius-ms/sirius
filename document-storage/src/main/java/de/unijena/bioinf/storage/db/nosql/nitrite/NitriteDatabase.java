@@ -37,6 +37,10 @@ import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.dizitart.no2.common.DBValue;
+import org.dizitart.no2.common.util.IndexUtils;
+import org.dizitart.no2.store.NitriteMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.*;
 import org.dizitart.no2.collection.events.CollectionEventListener;
@@ -980,6 +984,48 @@ public class NitriteDatabase implements Database<Document> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             NitriteFilter f = getFilter(filter);
             return repo.find(f, FindOptions.skipBy(offset).limit(pageSize)).size();
+        });
+    }
+
+    /**
+     * Every primary key of a collection, read from that collection's own index rather than from its documents.
+     * <p>
+     * A document cannot be reached cheaply for its key alone: MVStore decodes every value on a leaf page when it
+     * loads the page, so walking a collection to collect its keys costs the same as reading all of it - measured
+     * at about 50 us per record on a real project. The unique index on the primary key is a separate map holding
+     * only (key -> id) pairs, so its pages carry hundreds of small entries instead of a handful of documents,
+     * and walking that is what this does.
+     * <p>
+     * The keys come back in index order, which for the primary key is ascending key order rather than insertion
+     * order.
+     *
+     * @throws IllegalArgumentException if the collection has no index on its primary key, which is the case
+     *                                  while the indices are dropped
+     */
+    @Override
+    public <T> List<Object> primaryKeys(Class<T> clazz) throws IOException {
+        return this.read(() -> {
+            Field pkField = this.primaryKeyFields.get(clazz);
+            if (pkField == null)
+                throw new IllegalArgumentException("No primary key is declared for " + clazz.getName() + ".");
+
+            NitriteCollection collection = getRepository(clazz).getDocumentCollection();
+            IndexDescriptor primaryKeyIndex = collection.listIndices().stream()
+                    .filter(descriptor -> !descriptor.isCompoundIndex())
+                    .filter(descriptor -> descriptor.getFields().getFieldNames().equals(List.of(pkField.getName())))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("There is no index on the primary key '"
+                            + pkField.getName() + "' of " + clazz.getName() + ", so its keys cannot be read "
+                            + "without reading every document. Are the indices dropped?"));
+
+            NitriteMap<DBValue, ?> indexMap = this.db.getStore().openMap(
+                    IndexUtils.deriveIndexMapName(primaryKeyIndex), DBValue.class, CopyOnWriteArrayList.class);
+
+            List<Object> keys = new ArrayList<>();
+            for (org.dizitart.no2.common.tuples.Pair<DBValue, ?> entry : indexMap.entries())
+                if (entry.getFirst() != null && entry.getFirst().getValue() != null)
+                    keys.add(entry.getFirst().getValue());
+            return keys;
         });
     }
 

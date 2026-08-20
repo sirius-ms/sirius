@@ -38,6 +38,7 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.http.HttpStatus;
@@ -116,7 +117,13 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
 
     @Override
     protected NoSQLProjectImpl createProject(String projectId, NoSQLProjectSpaceManager psm) {
-        return new NoSQLProjectImpl(projectId, psm, searchService, computeService::isInstanceComputing);
+        return createProject(projectId, psm, null);
+    }
+
+    @Override
+    protected NoSQLProjectImpl createProject(String projectId, NoSQLProjectSpaceManager psm,
+                                             @Nullable JobProgressEventListener onProgress) {
+        return new NoSQLProjectImpl(projectId, psm, searchService, computeService::isInstanceComputing, onProgress);
     }
 
     private ServerEventImpl<ProjectChangeEvent> createEvent(
