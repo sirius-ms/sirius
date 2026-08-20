@@ -3,7 +3,6 @@ package de.unijena.bioinf.lcms.merge;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.align.*;
@@ -15,15 +14,10 @@ import de.unijena.bioinf.lcms.traceextractor.MassOfInterestConfidenceEstimatorSt
 import de.unijena.bioinf.lcms.utils.Tracker;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * The MergeTraceWithGapFillingStrategy is iterating over all aligned MoIs takes their
@@ -137,9 +131,37 @@ public class MergeTracesWithoutGapFilling {
             r.minRt = Float.intBitsToFloat(Float.floatToIntBits(r.minRt)-1);
             r.maxRt = Float.intBitsToFloat(Float.floatToIntBits(r.maxRt)+1);
 
-            for (Rect other : rectangleMap.overlappingRectangle(r)) {
-                r.upgrade(other);
-                rectangleMap.removeRect(other);
+            // Absorb every rectangle that overlaps this one, and keep absorbing: growing the bounds can
+            // bring further rectangles into range. A single pass measured the overlap against the
+            // original bounds only, so rectangles that overlapped the grown one were left behind and
+            // whether two of them ended up together depended on which mass of interest came first.
+            final List<Rect> absorbed = new ArrayList<>();
+            final IntOpenHashSet absorbedIds = new IntOpenHashSet();
+            final ArrayDeque<Rect> pending = new ArrayDeque<>(rectangleMap.overlappingRectangle(r));
+            while (!pending.isEmpty()) {
+                final Rect other = pending.poll();
+                // a rectangle can be queued twice before it is absorbed, and counting it twice would
+                // bias the mean below
+                if (!absorbedIds.add(other.id)) continue;
+                absorbed.add(other);
+                rectangleMap.removeRect(other);   // so it cannot come back from the next query
+                if (r.expandTo(other)) {
+                    for (Rect next : rectangleMap.overlappingRectangle(r)) {
+                        if (!absorbedIds.contains(next.id)) pending.add(next);
+                    }
+                }
+            }
+            // One mean over the whole group, not a running one - see Rect#expandTo. Sorted first
+            // because float addition is not associative, so even a correct mean would otherwise depend
+            // on the order the spatial index returned the rectangles in.
+            if (!absorbed.isEmpty()) {
+                final double[] masses = new double[absorbed.size() + 1];
+                masses[0] = r.avgMz;
+                for (int i = 0; i < absorbed.size(); ++i) masses[i + 1] = absorbed.get(i).avgMz;
+                Arrays.sort(masses);
+                double sum = 0d;
+                for (double mass : masses) sum += mass;
+                r.avgMz = sum / masses.length;
             }
             rectangleMap.addRect(r);
             tracker.createRect(merged, r);
@@ -345,13 +367,37 @@ public class MergeTracesWithoutGapFilling {
                         break;
                     }
 
+                    // Average mass of the isotope trace, weighted by intensity, exactly as the
+                    // monoisotopic merge above computes it.
+                    double isotopeAvgMz = 0d, isotopeSumInt = 0d;
+                    for (int k = 0; k < mz.length; ++k) {
+                        if (intensities[k] > 0) {
+                            isotopeAvgMz += mz[k];
+                            isotopeSumInt += intensities[k];
+                        }
+                    }
+                    if (!(isotopeSumInt > 0)) {
+                        LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).error("Isotope trace disappearded during merging.");
+                        break;
+                    }
+                    isotopeAvgMz /= isotopeSumInt;
+
                     double[] mzShortened = new double[shortenedEndId-shortenedStartId+1];
                     float[] intensityShortened = new float[mzShortened.length];
                     for (int k=shortenedStartId; k <= shortenedEndId; ++k) {
-                        intensityShortened[k-shortenedStartId] = intensities[k-startId];
-                        mzShortened[k-shortenedStartId] = mz[k-startId]/intensities[k-startId];
-                        if (!Double.isFinite(mz[k-shortenedStartId])) {
-                            throw new RuntimeException("should not happen!");
+                        final int i = k - startId;
+                        intensityShortened[k-shortenedStartId] = intensities[i];
+                        // A scan inside the trace that no isotope trace covered has no mass of its own,
+                        // and dividing its zero by zero wrote a NaN into the m/z array - on this test
+                        // data for 489628 of 701699 points, because the isotopes are followed across far
+                        // fewer scans than the monoisotopic peak whose range this array spans. The
+                        // monoisotopic merge fills such a gap with the trace average; this one did not,
+                        // and the check below could not catch it: it read the accumulated weighted sum
+                        // rather than the quotient just computed, at the wrong offset, and the sum is a
+                        // finite zero exactly where the quotient is NaN.
+                        mzShortened[k-shortenedStartId] = intensities[i] > 0 ? mz[i]/intensities[i] : isotopeAvgMz;
+                        if (!Double.isFinite(mzShortened[k-shortenedStartId])) {
+                            throw new RuntimeException("non-finite m/z in isotope trace at scan " + k);
                         }
                     }
 

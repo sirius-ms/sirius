@@ -4,12 +4,10 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Quickselect;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.lcms.noise.NoiseStatistics;
+import de.unijena.bioinf.lcms.datatypes.SpectrumDatatype;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -46,6 +44,9 @@ public class CentroidIndividualSpectraStrategy implements CentroidingStrategy
             }
         }
         scan.setCentroided(true);
+        // centroiding computes intensities of its own, so they are rounded here as well - see
+        // SpectrumDatatype#roundIntensitiesToStoredPrecision
+        SpectrumDatatype.roundIntensitiesToStoredPrecision(buffer);
         scan.setPeaks(new SimpleSpectrum(buffer));
     }
 
@@ -85,6 +86,9 @@ public class CentroidIndividualSpectraStrategy implements CentroidingStrategy
             }
         }
         scan.setCentroided(true);
+        // centroiding computes intensities of its own, so they are rounded here as well - see
+        // SpectrumDatatype#roundIntensitiesToStoredPrecision
+        SpectrumDatatype.roundIntensitiesToStoredPrecision(buffer);
         scan.setPeaks(new SimpleSpectrum(buffer));
     }
 
