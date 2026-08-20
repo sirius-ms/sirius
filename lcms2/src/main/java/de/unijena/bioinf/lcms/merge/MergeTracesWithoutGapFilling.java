@@ -345,13 +345,37 @@ public class MergeTracesWithoutGapFilling {
                         break;
                     }
 
+                    // Average mass of the isotope trace, weighted by intensity, exactly as the
+                    // monoisotopic merge above computes it.
+                    double isotopeAvgMz = 0d, isotopeSumInt = 0d;
+                    for (int k = 0; k < mz.length; ++k) {
+                        if (intensities[k] > 0) {
+                            isotopeAvgMz += mz[k];
+                            isotopeSumInt += intensities[k];
+                        }
+                    }
+                    if (!(isotopeSumInt > 0)) {
+                        LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).error("Isotope trace disappearded during merging.");
+                        break;
+                    }
+                    isotopeAvgMz /= isotopeSumInt;
+
                     double[] mzShortened = new double[shortenedEndId-shortenedStartId+1];
                     float[] intensityShortened = new float[mzShortened.length];
                     for (int k=shortenedStartId; k <= shortenedEndId; ++k) {
-                        intensityShortened[k-shortenedStartId] = intensities[k-startId];
-                        mzShortened[k-shortenedStartId] = mz[k-startId]/intensities[k-startId];
-                        if (!Double.isFinite(mz[k-shortenedStartId])) {
-                            throw new RuntimeException("should not happen!");
+                        final int i = k - startId;
+                        intensityShortened[k-shortenedStartId] = intensities[i];
+                        // A scan inside the trace that no isotope trace covered has no mass of its own,
+                        // and dividing its zero by zero wrote a NaN into the m/z array - on this test
+                        // data for 489628 of 701699 points, because the isotopes are followed across far
+                        // fewer scans than the monoisotopic peak whose range this array spans. The
+                        // monoisotopic merge fills such a gap with the trace average; this one did not,
+                        // and the check below could not catch it: it read the accumulated weighted sum
+                        // rather than the quotient just computed, at the wrong offset, and the sum is a
+                        // finite zero exactly where the quotient is NaN.
+                        mzShortened[k-shortenedStartId] = intensities[i] > 0 ? mz[i]/intensities[i] : isotopeAvgMz;
+                        if (!Double.isFinite(mzShortened[k-shortenedStartId])) {
+                            throw new RuntimeException("non-finite m/z in isotope trace at scan " + k);
                         }
                     }
 
