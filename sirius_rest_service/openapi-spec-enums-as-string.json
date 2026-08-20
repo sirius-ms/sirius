@@ -685,6 +685,183 @@
         }
       }
     },
+    "/api/projects/{projectId}/open-job": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "The job that is opening, or has opened, the given project",
+        "description": "The job that is opening, or has opened, the given project.\n \u003cp\u003e\n For polling clients and for anyone that missed the last event: the job is remembered after it finishes,\n so how it ended can still be asked for.\n \u003cp\u003e\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
+        "operationId": "getOpenJob",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project the job is opening",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included in the returned job",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Open an existing project-space in the background and return the job that is doing it",
+        "description": "Open an existing project-space in the background and return the job that is doing it.\n \u003cp\u003e\n Opening a project written by an older SIRIUS converts it first, which on a large project takes minutes.\n This endpoint returns as soon as the project id is reserved, so a client can show what is happening and\n stay responsive; the project becomes usable when the job reaches DONE, announced by a PROJECT_OPENED\n event as well. The synchronous variant is unchanged and still available.\n \u003cp\u003e\n Cancelling the job is safe: a conversion fills in only what a record is missing and records the schema\n version last, so an interrupted one leaves the project as it was and simply runs again next time.\n \u003cp\u003e\n [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.",
+        "operationId": "openProjectAsJob",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "unique name/identifier that shall be used to access this project-space.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pathToProject",
+            "in": "query",
+            "description": "local file path to open the project from. If omitted the project will be loaded from the default project space location.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included in the returned job",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the job opening the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server-side error. The problem detail carries the reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The referenced object does not exist in this SIRIUS instance or project.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body or a parameter is malformed or violates a constraint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/npc-classes/statistics/foldchange/compute": {
       "put": {
         "tags": [
@@ -13611,38 +13788,6 @@
           }
         }
       },
-      "FoldChangeJobSubmission": {
-        "type": "object",
-        "properties": {
-          "leftRunGroup": {
-            "type": "string"
-          },
-          "rightRunGroup": {
-            "type": "string"
-          },
-          "aggregationTypes": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "AVG",
-                "MIN",
-                "MAX"
-              ]
-            }
-          },
-          "quantificationMeasures": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "APEX_INTENSITY",
-                "AREA_UNDER_CURVE"
-              ]
-            }
-          }
-        }
-      },
       "Job": {
         "type": "object",
         "properties": {
@@ -13736,6 +13881,38 @@
         },
         "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n If currentProgress \u003d\u003d maxProgress, the job is finished and should change to state DONE soon.\n If a job is DONE, all results can be accessed via the project-space API.",
         "nullable": true
+      },
+      "FoldChangeJobSubmission": {
+        "type": "object",
+        "properties": {
+          "leftRunGroup": {
+            "type": "string"
+          },
+          "rightRunGroup": {
+            "type": "string"
+          },
+          "aggregationTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX"
+              ]
+            }
+          },
+          "quantificationMeasures": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE"
+              ]
+            }
+          }
+        }
       },
       "BasicSpectrum": {
         "required": [

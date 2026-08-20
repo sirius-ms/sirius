@@ -30,6 +30,13 @@ import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
+import de.unijena.bioinf.ms.middleware.model.compute.JobProgress;
+import lombok.Getter;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
@@ -43,12 +50,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -70,6 +73,9 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
      * its build finishes and it moves from here into {@link #projectSpaces}.
      */
     private final Set<String> openingProjects = new HashSet<>();
+
+    /** The jobs opening projects, by the id of the project each is opening. */
+    private final Map<String, OpenProjectJob> openJobs = new ConcurrentHashMap<>();
 
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
 
@@ -186,8 +192,14 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
      */
     private ProjectInfo reserveBuildPublish(@NotNull String idSuggestion, @NotNull EnumSet<ProjectInfo.OptField> optFields,
                                             boolean tempProject, @NotNull LocationResolver locationResolver) throws IOException {
-        // Phase 1: reserve a concrete, unique id under the lock.
-        final String projectId;
+        return buildAndPublish(reserveId(idSuggestion), optFields, tempProject, locationResolver, null);
+    }
+
+    /**
+     * Reserves a concrete, unique id, so that whoever asked knows which project is being opened before the
+     * opening itself has happened. Cheap and under the lock; everything slow comes after it.
+     */
+    private String reserveId(@NotNull String idSuggestion) {
         projectSpaceLock.writeLock().lock();
         try {
             String id = idSuggestion;
@@ -199,23 +211,34 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
                 } while (isReserved(id));
             }
             openingProjects.add(id);
-            projectId = id;
+            return id;
         } finally {
             projectSpaceLock.writeLock().unlock();
         }
+    }
 
-        // Phase 2: heavy work OUTSIDE the lock (resolve location, open storage, build the project + index).
+    /**
+     * Opens the storage, builds the project and publishes it - everything that takes time, and none of it under
+     * the lock. On an old project this is where the conversion happens, which is minutes rather than moments,
+     * so {@code onProgress} is how a caller running this in the background says how far it has come.
+     */
+    private ProjectInfo buildAndPublish(@NotNull String projectId, @NotNull EnumSet<ProjectInfo.OptField> optFields,
+                                        boolean tempProject, @NotNull LocationResolver locationResolver,
+                                        @Nullable JobProgressEventListener onProgress) throws IOException {
         try {
             Path location = locationResolver.resolve(projectId);
             final PSM psm;
             try {
+                // Indeterminate: opening a large storage file takes time no one can count.
+                if (onProgress != null)
+                    onProgress.progressChanged(new JobProgressEvent(this, "Opening project storage"));
                 psm = projectSpaceManagerFactory.createOrOpen(location);
             } catch (NitriteIOException e) {
                 throw new ResponseStatusException(HttpStatus.LOCKED, String.format("Project with ID '%s' could not be opened. Cause: %s", projectId, e.getMessage()), e);
             }
             psm.setTempProject(tempProject);
             registerEventListeners(projectId, psm);
-            P project = createProject(projectId, psm);
+            P project = createProject(projectId, psm, onProgress);
 
             // Phase 3: publish under the lock (only the map mutation needs it).
             projectSpaceLock.writeLock().lock();
@@ -237,6 +260,105 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     }
 
     /**
+     * Opens a project in the background and hands back the job doing it.
+     * <p>
+     * Opening an old project converts it first, which on a large one is minutes of work; done synchronously
+     * that is a request that appears to have stopped responding, and a user with nothing to look at. The id is
+     * reserved before returning, so the caller knows which project it is waiting for and a second open of the
+     * same one is refused straight away, and everything slow happens on the job.
+     *
+     * @return the job doing the opening; the project is usable once it is done
+     */
+    public Job openProjectAsJob(@NotNull String projectIdSuggestion, @Nullable String pathToProject,
+                                @NotNull EnumSet<Job.OptField> optFields) {
+        String projectId = reserveId(validateId(projectIdSuggestion));
+        OpenProjectJob job = new OpenProjectJob(projectId, id -> {
+            Path location = notNullOrBlank(pathToProject) ? Path.of(pathToProject)
+                    : defaultProjectDir().resolve(id);
+            if (!isZipProjectSpace(location) && !isExistingProjectspaceDirectory(location))
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "'" + id + "' is no valid SIRIUS project space.");
+            return location;
+        });
+
+        openJobs.put(projectId, job);
+        // No state listener announcing PROJECT_OPENED here: buildAndPublish sends it when the project actually
+        // is open, and a job that failed or was cancelled never opened anything to announce.
+        job.addJobProgressListener(evt -> eventService.sendEvent(
+                ServerEvents.newJobEvent(describe(job, EnumSet.of(Job.OptField.progress)), projectId)));
+
+        SiriusJobs.getGlobalJobManager().submitJob(job);
+        return describe(job, optFields);
+    }
+
+    /**
+     * The job that opened, or is opening, the given project, if this service still remembers one. Kept until
+     * asked for after it finished, so a caller that missed the last event can still find out how it ended.
+     */
+    public Optional<Job> findOpenJob(@NotNull String projectId, @NotNull EnumSet<Job.OptField> optFields) {
+        return Optional.ofNullable(openJobs.get(projectId)).map(job -> describe(job, optFields));
+    }
+
+    private Job describe(OpenProjectJob job, @NotNull EnumSet<Job.OptField> optFields) {
+        Job described = new Job();
+        described.setId(job.getProjectId());
+        if (optFields.contains(Job.OptField.progress)) {
+            JobProgress progress = new JobProgress();
+            progress.setState(job.getState());
+
+            JobProgressEvent evt = job.currentProgress();
+            if (evt == null)
+                evt = new JobProgressEvent(job);
+            progress.setIndeterminate(!evt.isDetermined());
+            progress.setCurrentProgress(evt.getProgress());
+            progress.setMaxProgress(evt.getMaxValue());
+            progress.setMessage(evt.getMessage());
+            if (job.isUnSuccessfulFinished() && job.getException() != null)
+                progress.setErrorMessage(job.getException().getMessage());
+            described.setProgress(progress);
+        }
+        return described;
+    }
+
+    /**
+     * What the caller of {@link #openProjectAsJob} is waiting on. It is also the progress listener of whatever
+     * prepares the project (the conversion of an old one, the index build): each event is re-fired as this
+     * job's own, unchanged - a determinate count stays a moving fraction, an indeterminate step stays
+     * indeterminate rather than becoming a bar stuck at zero - so what a caller sees is how far the project it
+     * asked for has come.
+     */
+    protected class OpenProjectJob extends BasicJJob<Void> implements JobProgressEventListener {
+        @Getter
+        private final String projectId;
+        private final LocationResolver locationResolver;
+
+        private OpenProjectJob(String projectId, LocationResolver locationResolver) {
+            super(JobType.SCHEDULER);
+            this.projectId = projectId;
+            this.locationResolver = locationResolver;
+        }
+
+        @Override
+        protected Void compute() throws Exception {
+            // Indeterminate, not "0 of something": everything up to the first counted step - resolving the
+            // location, opening the storage, opening the search index - takes real time on a large project and
+            // none of it can be counted. A determinate zero here is a bar frozen at 0% for all of it.
+            updateProgress(new JobProgressEvent(this, "Opening project..."));
+            buildAndPublish(projectId, EnumSet.noneOf(ProjectInfo.OptField.class), false, locationResolver, this);
+            updateProgress(0, 1, 1, "Project ready!");
+            return null;
+        }
+
+        @Override
+        public void progressChanged(JobProgressEvent evt) {
+            if (evt.isDetermined())
+                updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress(), evt.getMessage());
+            else if (evt.hasMessage())
+                updateProgress(new JobProgressEvent(this, evt.getMessage()));
+        }
+    }
+
+    /**
      * Whether an id is already open or currently being opened. Must be called while holding the write lock.
      */
     private boolean isReserved(String id) {
@@ -244,6 +366,14 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     }
 
     protected abstract P createProject(String projectId, PSM managerToWrap);
+
+    /**
+     * Builds the project, telling {@code onProgress} how far the conversion of an old project has come.
+     * Overridden where that can actually be reported; ignoring it only costs the progress, not the opening.
+     */
+    protected P createProject(String projectId, PSM managerToWrap, @Nullable JobProgressEventListener onProgress) {
+        return createProject(projectId, managerToWrap);
+    }
 
     @Override
     public Optional<P> getProject(String projectId) {
