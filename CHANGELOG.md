@@ -1,12 +1,15 @@
 # Changelog
 
 ## SIRIUS 6
-### 6.5.4 (2026-08-16)
+### 6.5.4 (2026-08-20)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,
   which is the basis for the new query and filter capabilities:
   - a chip based query bar above the feature list. Fields, operators and values are suggested while
     typing, panel filters and the typed query are combined into a single query, and the filter
     dialog stays reachable from the funnel icon in the bar (GUI)
+  - suggestions explain what each field means and offer its known values, e.g. adducts in any
+    spelling, lipid classes by their common abbreviations, compound class ontologies and tags;
+    partial field names are completed, and Enter adds the typed term to the query (GUI)
   - all features that do not match the current filter can be deleted from the project in one step
     (GUI)
   - the index is built while data is imported and can be rebuilt from the project settings if it
@@ -54,6 +57,13 @@
 - improvement: the API documentation now describes the errors an endpoint can return (API)
 - improvement: name lookup against PubChem during search is cached and bounded by a timeout, so a
   slow or unreachable service no longer stalls the search (GUI and API)
+- improvement: opening a project created by an older SIRIUS shows the progress of the one-time
+  conversion - which can take a while on large projects - instead of appearing frozen, and the
+  conversion itself is much faster since it now uses all cores (GUI and API)
+- improvement: PFAS detections can be filtered in the feature filter dialog, and the lipid filter
+  became a clearer three-state control (GUI)
+- improvement: feature quality is filtered with a range slider instead of check boxes, and results
+  can be sorted by quality (GUI and API)
 
 - change: the reaction editor and the structure sketcher belong to the licensed feature set and are
   only shown if your subscription includes them (GUI)
@@ -70,6 +80,21 @@
 - fixed: quantifying features that do not belong to an LC/MS run failed with an error (API)
 - fixed: projects created by older SIRIUS versions are now migrated to the current schema before the
   search index is built (GUI and API)
+- fixed: LC-MS preprocessing could produce slightly different results on repeated runs of the same
+  input, and isotope traces could carry invalid masses; preprocessing results are now reproducible
+  (GUI, CLI and API)
+- fixed: the m/z and retention time filters silently capped at 5000 m/z and 10000 s - features
+  beyond that were dropped by a bound the user never set - and their spinners stopped stepping above
+  1000; both filters can now be left open ended (GUI)
+- fixed: filter queries consisting only of exclusions (e.g. a lone NOT term) matched nothing (GUI)
+- fixed: embedded web views (e.g. the LC-MS view) flashed black while opening; they are now drawn in
+  software by default, which also avoids problems with faulty graphics drivers (GUI)
+- fixed: the search index could miss information for features added by an import until it was
+  rebuilt (GUI and API)
+- fixed: occasional errors in the feature list while data was being imported or computed (GUI)
+- fixed: noisy error logging when a spectral library match references a custom database that is not
+  installed (GUI)
+- fixed: various typos and unclear wording in the GUI, the CLI help texts and the API documentation
 
 #### 6.3.7 (2026-05-23)
 - fixed: CEF file parser end parsing too early when certain features are skipped.
