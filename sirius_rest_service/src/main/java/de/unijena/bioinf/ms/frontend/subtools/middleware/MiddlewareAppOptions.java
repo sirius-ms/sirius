@@ -96,7 +96,8 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             "/api/projects/*/import/ms-local-data-files",
             "/api/projects/*/import/preprocessed-local-data-files",
             "/api/projects/*/import/preprocessed-local-data-files-job",
-            "/api/projects/*/jobs/run-command"
+            "/api/projects/*/jobs/run-command",
+            "/api/projects/*/open-job"
     );
 
     private final static List<String> DEPRECATED_EXCLUSIONS = List.of(
