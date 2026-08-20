@@ -69,10 +69,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ProjectSchemaMigrator {
 
     /**
-     * Current project-data schema version. Bump when a new derivable field/backfill is added here; projects with a
-     * lower (or absent) {@link SiriusProjectDocumentDatabase#PROJECT_SCHEMA_VERSION_KEY} are migrated on open.
+     * The project-data schema version this migrator brings a project up to.
+     * <p>
+     * Declared here rather than taken from
+     * {@link SiriusProjectDocumentDatabase#CURRENT_PROJECT_SCHEMA_VERSION} on purpose: the schema says what a
+     * project written now looks like, this says what an older one can be converted into, and they are only the
+     * same number while someone keeps them so. Taking the schema's number would make a forgotten conversion
+     * invisible - every project would claim to be current whether or not anything had filled it in.
      */
-    public static final int CURRENT_SCHEMA_VERSION = 2;
+    public static final int MIGRATES_TO_SCHEMA_VERSION = 2;
 
     /** How many records gather before they are written, which is what bounds what a conversion holds. */
     private static final int BUFFER = 10_000;
@@ -130,7 +135,7 @@ public class ProjectSchemaMigrator {
     }
 
     /**
-     * Upgrades the given project to {@link #CURRENT_SCHEMA_VERSION} if needed. Safe to call on every open.
+     * Upgrades the given project to {@link #MIGRATES_TO_SCHEMA_VERSION} if needed. Safe to call on every open.
      *
      * @return {@code true} if anything the search index is built from was rewritten, so the caller should
      * (re)build the index from scratch; {@code false} if nothing index-relevant changed.
@@ -192,7 +197,17 @@ public class ProjectSchemaMigrator {
      */
     private static boolean isOutdated(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
                                       @NotNull Database<?> storage) throws IOException {
-        if (project.findProjectSchemaVersion().orElse(0) < CURRENT_SCHEMA_VERSION)
+        int recorded = project.findProjectSchemaVersion().orElse(0);
+        if (recorded > MIGRATES_TO_SCHEMA_VERSION) {
+            // Either the project comes from a newer SIRIUS, or the schema was raised here without the conversion
+            // being adapted to it. Converting would mean writing what this build believes the newer schema is,
+            // which is exactly what it does not know - so say so and change nothing.
+            log.warn("Project '{}' records schema version {}, which is newer than the {} this version converts "
+                            + "to. It is left as it is; parts of it may not be understood.",
+                    storage.location(), recorded, MIGRATES_TO_SCHEMA_VERSION);
+            return false;
+        }
+        if (recorded < MIGRATES_TO_SCHEMA_VERSION)
             return true;
         return !storage.isFieldPresent("hasMsMs", AlignedFeatures.class);
     }
@@ -269,7 +284,7 @@ public class ProjectSchemaMigrator {
         protected Boolean compute() throws Exception {
             long start = System.nanoTime();
             log.info("Converting project '{}' to schema version {} with {} workers, candidate cache {}...",
-                    storage.location(), CURRENT_SCHEMA_VERSION, workers(), candidateCache);
+                    storage.location(), MIGRATES_TO_SCHEMA_VERSION, workers(), candidateCache);
 
             if (passes.contains(Pass.FEATURES)) {
                 // Nothing is written here, so nothing has its indices dropped.
@@ -292,11 +307,11 @@ public class ProjectSchemaMigrator {
 
             // Stamped last: a pass that threw leaves the version behind, so the next open converts again.
             if (passes.size() == Pass.values().length)
-                project.upsertProjectSchemaVersion(CURRENT_SCHEMA_VERSION);
+                project.upsertProjectSchemaVersion(MIGRATES_TO_SCHEMA_VERSION);
 
             log.info("Converted project '{}' to schema version {} in {} ms ({} features, {} structure-search "
                             + "results, {} formula candidates).",
-                    storage.location(), CURRENT_SCHEMA_VERSION, millisSince(start), featuresFilled.get(),
+                    storage.location(), MIGRATES_TO_SCHEMA_VERSION, millisSince(start), featuresFilled.get(),
                     structureResultsFilled.get(), formulaCandidatesFilled.get());
             return Boolean.TRUE;
         }

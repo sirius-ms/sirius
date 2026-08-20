@@ -140,7 +140,7 @@ public class ProjectSchemaMigratorTest {
             }
 
             // version stamped
-            assertEquals(ProjectSchemaMigrator.CURRENT_SCHEMA_VERSION, db.findProjectSchemaVersion().orElseThrow());
+            assertEquals(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION, db.findProjectSchemaVersion().orElseThrow());
 
             // this fixture has no detected adducts on any feature -> nothing to backfill, project property stays absent
             assertTrue(db.findDetectedAdducts().isEmpty(), "no real adducts to backfill for this fixture");
@@ -176,7 +176,7 @@ public class ProjectSchemaMigratorTest {
 
             AlignedFeatures reloaded = db.getStorage().getByPrimaryKey(imported.getAlignedFeatureId(), AlignedFeatures.class).orElseThrow();
             assertTrue(reloaded.isHasMsMs(), "existing correct flag must be preserved");
-            assertEquals(ProjectSchemaMigrator.CURRENT_SCHEMA_VERSION, db.findProjectSchemaVersion().orElseThrow());
+            assertEquals(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION, db.findProjectSchemaVersion().orElseThrow());
         });
     }
 
@@ -236,7 +236,7 @@ public class ProjectSchemaMigratorTest {
 
             // an empty project still records that it is current, so the next open is the fast path
             ProjectSchemaMigrator.migrateIfNeeded(db);
-            assertEquals(ProjectSchemaMigrator.CURRENT_SCHEMA_VERSION, db.findProjectSchemaVersion().orElseThrow());
+            assertEquals(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION, db.findProjectSchemaVersion().orElseThrow());
         });
     }
 
@@ -283,6 +283,37 @@ public class ProjectSchemaMigratorTest {
             assertEquals(Set.of("PubChem", "GNPS"), matched.keySet(), "every database the matches link to");
             assertEquals(1, matched.get("PubChem"), "the best rank it was hit at, not the last one seen");
             assertEquals(3, matched.get("GNPS"), "the only rank it was hit at");
+        });
+    }
+
+    /**
+     * The schema and the thing that migrates to it have to agree.
+     * <p>
+     * The data schema says what a project written now looks like; the migrator says what it can bring an older
+     * project up to. Raising the first without teaching the second is the mistake this catches - it would leave
+     * converted projects a version behind newly created ones, silently missing whatever the new version added,
+     * and nothing at runtime would look wrong.
+     */
+    @Test
+    public void testTheMigratorMigratesToTheSchemaTheProjectIsWrittenWith() {
+        assertEquals(SiriusProjectDocumentDatabase.CURRENT_PROJECT_SCHEMA_VERSION,
+                ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION,
+                "the data schema was raised without adapting the conversion to it");
+    }
+
+    /**
+     * A project from a newer SIRIUS is left alone rather than half-converted by a migrator that does not know
+     * what it would be converting to.
+     */
+    @Test
+    public void testAProjectNewerThanTheMigratorIsLeftAlone() {
+        withFreshDb(db -> {
+            db.upsertProjectSchemaVersion(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION + 1);
+
+            assertFalse(ProjectSchemaMigrator.migrateIfNeeded(db), "nothing this migrator can do");
+            assertEquals(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION + 1,
+                    db.findProjectSchemaVersion().orElseThrow(),
+                    "and it must not be stamped back down to what this build knows");
         });
     }
 
@@ -344,7 +375,7 @@ public class ProjectSchemaMigratorTest {
         withFreshDb(db -> {
             db.getStorage().insert(CsiStructureSearchResult.builder().alignedFeatureId(3L)
                     .matchedDatabases(java.util.Map.of("PubChem", 1)).build());
-            db.upsertProjectSchemaVersion(ProjectSchemaMigrator.CURRENT_SCHEMA_VERSION);
+            db.upsertProjectSchemaVersion(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION);
 
             assertFalse(ProjectSchemaMigrator.migrateIfNeeded(db), "nothing to do, so no index rebuild");
 
@@ -361,12 +392,12 @@ public class ProjectSchemaMigratorTest {
     @Test
     public void testAProjectWithoutAVersionIsMigratedAndStamped() {
         withOldProject(db -> {
-            assertTrue(db.findProjectSchemaVersion().orElse(0) < ProjectSchemaMigrator.CURRENT_SCHEMA_VERSION,
+            assertTrue(db.findProjectSchemaVersion().orElse(0) < ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION,
                     "the fixture is an old project");
 
             ProjectSchemaMigrator.migrateIfNeeded(db);
 
-            assertEquals(ProjectSchemaMigrator.CURRENT_SCHEMA_VERSION,
+            assertEquals(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION,
                     db.findProjectSchemaVersion().orElseThrow(), "stamped once everything returned");
         });
     }

@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
+import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.ms.properties.ConfigType;
@@ -81,6 +82,14 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
         Optional<ProjectType> typeOpt = exists
                 ? projectSpaceManager.getProject().findProjectType()
                 : projectSpaceManager.getProject().upsertProjectType(ProjectType.UNIMPORTED);
+
+        if (!exists)
+            // A project written by this version is at the current schema, and recording that is what keeps it
+            // from being converted on a later open: the conversion is gated on the recorded version, so a
+            // project that records nothing is indistinguishable from one written before these fields existed
+            // and gets reread in full for no reason. An existing project keeps whatever it recorded.
+            projectSpaceManager.getProject()
+                    .upsertProjectSchemaVersion(SiriusProjectDocumentDatabase.CURRENT_PROJECT_SCHEMA_VERSION);
 
 
         updateProjectType(projectSpaceManager.getProject(), typeOpt);
