@@ -1783,6 +1783,11 @@ public class QueryEditorPanel extends JPanel {
             } else {
                 ((JComponent) component).setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
             }
+            // the negation is the one row that does not add something to look for but turns the search around,
+            // and it sits high in the list (see TokenInputModel#withNegationUpFront) where that has to be
+            // unmistakable - so it is drawn in the colour this UI uses for "the opposite of what you asked"
+            if (TokenInputModel.isNegation(suggestion) && !isSelected)
+                component.setForeground(Colors.TEXT_ERROR);
             return component;
         }
 
