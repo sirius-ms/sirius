@@ -226,6 +226,62 @@ public class FieldVocabularyTest {
         public String broken;
     }
 
+    /** A nested object whose flags are all asked about in the positive, declared once on the container. */
+    public static class Flags {
+        @IndexField
+        private boolean zodiac = false;
+        @IndexField
+        private boolean canopus = false;
+        @IndexField
+        private String note = "";
+    }
+
+    public static class FlagPojo {
+        @IndexField(documentId = true)
+        private String id = "1";
+        @IndexField
+        @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
+        private boolean hasMsMs = false;
+        @IndexField
+        private boolean hasMs1 = false;
+        @IndexField
+        @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
+        private Flags computedTools = new Flags();
+        @IndexField
+        private Flags otherTools = new Flags();
+    }
+
+    /**
+     * A boolean asked about in the positive offers {@code true} alone - the other case is its negation - while
+     * a boolean that declares nothing still reports both values from its java type.
+     */
+    @Test
+    public void testAPresenceFlagOffersTrueOnly() {
+        Map<String, SearchableField> fields = describeAsMap(FlagPojo.class);
+
+        assertEquals(List.of("true"), fields.get("hasMsMs").getPossibleValues());
+        assertEquals(List.of("true", "false"), fields.get("hasMs1").getPossibleValues(),
+                "undeclared booleans keep reporting what the java type can hold");
+    }
+
+    /**
+     * Declaring it on the field that holds a nested object covers the fields inside it - said once, and the only
+     * place it can be said for a nested class in a module that cannot see these annotations.
+     */
+    @Test
+    public void testAVocabularyOnAContainerServesTheFieldsInsideIt() {
+        Map<String, SearchableField> fields = describeAsMap(FlagPojo.class);
+
+        assertEquals(List.of("true"), fields.get("computedTools.zodiac").getPossibleValues());
+        assertEquals(List.of("true"), fields.get("computedTools.canopus").getPossibleValues());
+        // it applies to whatever it is declared on, so a container that mixes types is not a place to declare it
+        assertEquals(List.of("true"), fields.get("computedTools.note").getPossibleValues());
+
+        // and a container that declares nothing passes nothing down
+        assertEquals(List.of("true", "false"), fields.get("otherTools.zodiac").getPossibleValues());
+        assertNull(fields.get("otherTools.note").getPossibleValues());
+    }
+
     private static Map<String, SearchableField> describeAsMap(Class<?> pojoClass) {
         return DescribedFields.asMap(pojoClass);
     }

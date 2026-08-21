@@ -231,22 +231,23 @@ public final class CompletionParser {
     }
 
     /**
-     * Whether naming this field says everything there is to say: it holds a flag, and the flag has one value.
+     * Whether naming this field says everything there is to say: it is a boolean, and it offers one value.
      * <p>
-     * A field like {@code lipid} is written into the index only when the property holds, so the value carries
-     * nothing and its presence carries everything - "no lipid class" is the negation of it. Completing such a
-     * field to its value at once hides that from the user, who should not have to know how it is stored.
+     * Such a field is asked about in the positive - {@code lipid} is written into the index only when the
+     * property holds, and {@code hasMsMs} or {@code computedTools.zodiac} name a property a feature has or
+     * lacks - so naming it is the whole query and the other case is the negation of it. Completing it to its
+     * value at once spares the user a question whose answer is already known.
      * <p>
-     * Both halves are needed, and neither is arbitrary. Offering one value is not enough: a tag restricted to
-     * a single value today can be extended while the project is open, and completing it on sight would answer
-     * a question the user was about to be asked. Being a boolean is not enough either: a real boolean holds
-     * both values and has to be asked about.
+     * Both halves are needed, and neither is arbitrary. Offering one value is not enough: a text tag restricted
+     * to a single value today can be extended while the project is open, and completing it on sight would
+     * answer a question the user was about to be asked. Being a boolean is not enough either: a boolean whose
+     * {@code false} is a state of its own (a tag deliberately set to false, which is not the same as an
+     * untagged feature) offers both values and has to be asked about.
      * <p>
-     * That leaves exactly the flags, because no tag can be both - a boolean or value-less tag is not allowed
-     * to restrict its values at all, which the persistence model enforces when the definition is built and
-     * {@code TagPossibleValuesTest.testAFlagTagCannotBeRestrictedToValues} pins from the server side. It is
-     * worth knowing that this rests on an invariant held two modules away: the API describes a presence flag
-     * and a boolean with the same field type, so this is all there is to tell them apart by.
+     * Which of the two a boolean is, is a statement about the field rather than about its java type, and the
+     * server makes it: {@code FieldVocabulary.PresenceFlag} declares the fields that are asked about in the
+     * positive, and everything else reports what it can hold. So this reads a declaration rather than guessing
+     * from one - which it used to do, on an invariant held two modules away.
      */
     public static boolean isSingleValued(@NotNull SearchableField field) {
         return field.getFieldType() == SearchableFieldType.BOOLEAN
