@@ -64,7 +64,8 @@ public class LuceneSearchBar extends JPanel {
 
     private final JPanel chipStrip;
     /** In-field funnel button that opens the full filter dialog; tinted to the accent when a filter is active. */
-    private final FilterButton filterButton = Buttons.getFilterButton(24, "Open the filter panel", true);
+    private final FilterButton filterButton = Buttons.getFilterButton(24,
+            "Open the filter panel (" + GuiUtils.shortcut("Shift+F") + ")", true);
     private final JButton clearButton = Buttons.getBackspaceButton(24, "Clear all filters and the search query", true);
     /** The full s  ummary cells in order; {@link #relayoutCells} decides how many fit. */
     private final List<JComponent> cells = new ArrayList<>();
@@ -168,8 +169,9 @@ public class LuceneSearchBar extends JPanel {
         });
 
         // Ctrl+F (Cmd+F on macOS) opens the search from anywhere in the main window - the standard
-        // "find" shortcut. WHEN_IN_FOCUSED_WINDOW so it fires regardless of which component is
-        // focused (as long as the main frame is the active window).
+        // "find" shortcut - and Ctrl+Shift+F the full filter panel beside it, the two halves of the same
+        // filter. WHEN_IN_FOCUSED_WINDOW so they fire regardless of which component is focused (as long
+        // as the main frame is the active window).
         int shortcutMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
         getInputMap(WHEN_IN_FOCUSED_WINDOW)
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_F, shortcutMask), "openFeatureSearch");
@@ -177,6 +179,14 @@ public class LuceneSearchBar extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 openOverlay();
+            }
+        });
+        getInputMap(WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_F, shortcutMask | KeyEvent.SHIFT_DOWN_MASK), "openFilterPanel");
+        getActionMap().put("openFilterPanel", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openFilterPanel.run();
             }
         });
 
@@ -281,7 +291,7 @@ public class LuceneSearchBar extends JPanel {
 
         setToolTipText(docText.isEmpty()
                 ? GuiUtils.formatToolTip("Search the feature list - click to open the query builder "
-                + "with suggestions for all searchable fields.")
+                + "with suggestions for all searchable fields (" + GuiUtils.shortcut("F") + ").")
                 : GuiUtils.formatToolTip("Current search query:", docText));
 
         // tint the funnel to the accent while a structured filter is active (orange when inverted)
