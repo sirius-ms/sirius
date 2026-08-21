@@ -222,26 +222,38 @@ public class LuceneSearchBar extends JPanel {
         Runnable open = this::openOverlay;
         cells.clear();
 
+        // parse the shared document into chips - the same hydration the editor does, so the collapsed
+        // summary is consistent regardless of where the query was committed (overlay, filter dialog,
+        // reset). Free text folds into the parsed tree as "..." clauses, rendered by QueryNodeRenderer
+        // exactly like the editor renders them. Parsed up front, because whether the two blocks need
+        // bracketing depends on both of them.
+        String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
+        Optional<QueryContainer> parsed = QueryStringParser.parse(docText, fieldsProvider.getCached());
         List<FilterTerm> terms = termSupplier.get();
+        List<QueryNode> userItems = parsed.map(QueryContainer::items).orElse(List.of());
+        // the two blocks and their joint exactly as the editor shows them - braced, so an OR joint reads
+        // as the alternative it is rather than as one more term in a flat list
+        boolean bothBlocks = !terms.isEmpty() && !userItems.isEmpty();
+
+        if (bothBlocks)
+            cells.add(parenLabel("("));
         for (int i = 0; i < terms.size(); i++) {
             if (i > 0)
                 cells.add(andLabel());
             cells.add(QueryNodeRenderer.chip(terms.get(i).toQueryNode(), ChipComponent.Style.MODEL, open,
                     renderState.mode(), renderState.suffixLengthResolver()));
         }
+        if (bothBlocks) {
+            cells.add(parenLabel(")"));
+            cells.add(joinLabel(filterModel.getQueryJoin()));
+            cells.add(parenLabel("("));
+        }
 
-        // parse the shared document into chips - the same hydration the editor does, so the collapsed
-        // summary is consistent regardless of where the query was committed (overlay, filter dialog,
-        // reset). Free text folds into the parsed tree as "..." clauses, rendered by QueryNodeRenderer
-        // exactly like the editor renders them.
-        String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
-        Optional<QueryContainer> parsed = QueryStringParser.parse(docText, fieldsProvider.getCached());
         if (parsed.isPresent()) {
-            List<QueryNode> items = parsed.get().items();
-            if (!terms.isEmpty() && !items.isEmpty())
-                cells.add(andLabel());
-            for (QueryNode node : items)
+            for (QueryNode node : userItems)
                 cells.add(userChip(node, open));
+            if (bothBlocks)
+                cells.add(parenLabel(")"));
         } else if (!docText.isEmpty()) {
             // an unsupported lucene construct we cannot chip - show the raw query text
             cells.add(plainLabel(docText));
@@ -346,7 +358,31 @@ public class LuceneSearchBar extends JPanel {
      * the overlay like the rest of the bar (a plain label would swallow the click otherwise).
      */
     private JLabel andLabel() {
+        return joinLabel(LogicOp.AND);
+    }
+
+    /** The same dimmed connector for the joint between the panel block and the user's query. */
+    private JLabel joinLabel(@NotNull LogicOp join) {
         JLabel label = ChipComponent.implicitAndLabel();
+        if (join != LogicOp.AND) {
+            label.setText(join.toString());
+            label.setToolTipText(GuiUtils.formatToolTip("Your query is an alternative to the"
+                    + " filter-panel filters (OR): features they exclude can still match."));
+        }
+        label.addMouseListener(opener);
+        return label;
+    }
+
+    /**
+     * The brace around one of the two blocks, in the accent the chips use. Enlarged just enough to read
+     * as a brace: the collapsed bar is one row inside a text-field-sized component, so the big braces of
+     * the expanded editor would grow the bar itself.
+     */
+    private JLabel parenLabel(String paren) {
+        JLabel label = new JLabel(paren);
+        label.setFont(label.getFont().deriveFont(Font.BOLD, label.getFont().getSize2D() + 2));
+        label.setForeground(filterModel.isInverted()
+                ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON);
         label.addMouseListener(opener);
         return label;
     }

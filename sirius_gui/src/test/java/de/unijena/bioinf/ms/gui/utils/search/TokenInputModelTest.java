@@ -61,7 +61,7 @@ public class TokenInputModelTest {
     @BeforeEach
     public void setup() {
         model = new TokenInputModel();
-        model.updateContext(FIELDS, false, false);
+        model.updateContext(FIELDS, TokenInputModel.Join.NOTHING, false);
     }
 
     private TokenInputModel.Suggestion suggestion(String display, String typed) {
@@ -84,7 +84,7 @@ public class TokenInputModelTest {
 
     @Test
     public void testFieldStageListsAllFieldsAndApplicableTokens() {
-        // no sibling -> entry stage is FIELD
+        // nothing to join -> the rows carry no connector
         assertEquals(TokenInputModel.Stage.FIELD, model.stage());
         List<String> displays = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
         assertTrue(displays.containsAll(List.of("ionMass", "name", "quality", "hasMsMs", "tags.city")));
@@ -97,28 +97,43 @@ public class TokenInputModelTest {
     }
 
     @Test
-    public void testWithSiblingTheEntryStageIsConnector() {
-        model.updateContext(FIELDS, true, false);
-        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage());
-        List<String> displays = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
-        assertEquals(List.of("AND", "OR"), displays, "the connector stage offers only AND/OR");
+    public void testWithASiblingEveryRowCarriesItsConnector() {
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage(), "there is no connector stage");
+        // simple mode: the top-level terms are ANDed, so that is the only connector offered
+        List<String> displays = displays(model.suggestions(""));
+        assertTrue(displays.containsAll(List.of("AND ionMass", "AND NOT", "AND (")));
+        assertTrue(displays.stream().noneMatch(d -> d.startsWith("OR ")));
+        assertTrue(displays.stream().noneMatch(d -> d.equals("ionMass")),
+                "an unjoined row would hide which connector it is added with");
 
-        // choosing a connector advances to the field stage, where fields and ')' appear
-        model.updateContext(FIELDS, true, true);
-        model.choose(suggestion("OR", ""));
-        assertEquals(TokenInputModel.Stage.FIELD, model.stage());
-        List<String> fieldStage = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
-        assertTrue(fieldStage.containsAll(List.of("ionMass", "NOT", "(", ")")));
-        assertFalse(fieldStage.contains("AND"));
+        // advanced mode offers both, the variants of a candidate adjacent and AND first
+        model.setMode(QueryMode.ADVANCED);
+        List<String> advanced = displays(model.suggestions("ionmass"));
+        assertEquals(List.of("AND ionMass", "OR ionMass"), advanced.subList(0, 2));
     }
 
     @Test
-    public void testTypingNarrowsConnectors() {
-        model.updateContext(FIELDS, true, false);
-        List<String> connectors = model.suggestions("o").stream()
-                .filter(s -> s instanceof TokenInputModel.Suggestion.TokenSuggestion)
-                .map(TokenInputModel.Suggestion::display).toList();
-        assertEquals(List.of("OR"), connectors);
+    public void testTheFirstTermOfAContainerCarriesNoConnector() {
+        // nothing to join yet -> the rows stay bare (the empty top level, or a freshly opened group)
+        assertTrue(displays(model.suggestions("")).contains("ionMass"));
+        model.updateContext(FIELDS, TokenInputModel.Join.NOTHING, true);
+        assertTrue(displays(model.suggestions("")).contains("ionMass"));
+    }
+
+    @Test
+    public void testATypedConnectorNarrowsTheRowsToIt() {
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        // the whole input so far is the connector -> everything, joined by it
+        List<String> or = displays(model.suggestions("or"));
+        assertTrue(or.stream().allMatch(d -> d.startsWith("OR ")), or.toString());
+        assertTrue(or.contains("OR ionMass"));
+        // ... and with a prefix after it, only what that prefix matches
+        assertEquals(List.of("OR ionMass", "OR \"ion\""), displays(model.suggestions("or ion")));
+        // whitespace is required, so a field prefix that merely starts like a connector still matches
+        // fields (there is none here, so only the free-text row survives)
+        assertEquals(List.of("AND \"orma\"", "OR \"orma\""), displays(model.suggestions("orma")));
     }
 
     @Test
@@ -262,22 +277,22 @@ public class TokenInputModelTest {
 
     @Test
     public void testNotAndConnectorFlowIntoTheCompletedClause() {
-        model.updateContext(FIELDS, true, false);
-        model.choose(suggestion("OR", ""));
-        model.choose(suggestion("NOT", ""));
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        model.choose(suggestion("OR NOT", "")); // the connector and the negation in one pick
         assertEquals(List.of("OR", "NOT"), fragmentTexts());
 
+        // the connector is staged, so what follows is offered unjoined
         model.choose(suggestion("quality", ""));
         TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
                 model.choose(suggestion("BAD", "")).orElseThrow();
         assertTrue(completed.clause().negated());
         assertEquals(LogicOp.OR, completed.logic());
 
-        // pending state must not leak into the next clause: the next token starts at the connector
-        // stage again with no negation carried over
-        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage());
-        model.choose(suggestion("AND", ""));
-        model.choose(suggestion("name", ""));
+        // pending state must not leak into the next clause: the next token starts fresh, with the
+        // connector to be chosen again and no negation carried over
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage());
+        model.choose(suggestion("AND name", ""));
         TokenInputModel.Event.ClauseCompleted second = (TokenInputModel.Event.ClauseCompleted)
                 model.submitTyped("x").orElseThrow();
         assertFalse(second.clause().negated());
@@ -286,27 +301,27 @@ public class TokenInputModelTest {
 
     @Test
     public void testFieldStageHidesAlreadyChosenNot() {
-        // no sibling -> FIELD stage, NOT selectable then gone once pending
+        // nothing to join -> NOT selectable directly, then gone once pending
         model.choose(suggestion("NOT", ""));
         assertFalse(model.suggestions("").stream().anyMatch(s -> s.display().equals("NOT")),
                 "NOT is already pending");
     }
 
     @Test
-    public void testConnectorsLeaveTheListOnceChosen() {
-        model.updateContext(FIELDS, true, false);
-        model.choose(suggestion("AND", ""));
-        // choosing a connector advances to the field stage, which no longer offers connectors
-        List<String> displays = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
-        assertFalse(displays.contains("AND"));
-        assertFalse(displays.contains("OR"));
+    public void testAStagedConnectorLeavesTheRowsBare() {
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        model.choose(suggestion("OR NOT", "")); // stages the connector without completing the token
+        List<String> displays = displays(model.suggestions(""));
+        assertTrue(displays.contains("ionMass"), "the connector is decided - do not ask again");
+        assertTrue(displays.stream().noneMatch(d -> d.startsWith("AND ") || d.startsWith("OR ")));
     }
 
     @Test
     public void testOpenGroupConsumesPendingNegationAndLogic() {
-        model.updateContext(FIELDS, true, false);
-        model.choose(suggestion("OR", ""));
-        model.choose(suggestion("NOT", ""));
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        model.choose(suggestion("OR NOT", ""));
 
         TokenInputModel.Event.OpenGroup event = (TokenInputModel.Event.OpenGroup)
                 model.choose(suggestion("(", "")).orElseThrow();
@@ -317,90 +332,190 @@ public class TokenInputModelTest {
 
     @Test
     public void testCloseGroupEvent() {
-        model.updateContext(FIELDS, false, true);
+        model.updateContext(FIELDS, TokenInputModel.Join.NOTHING, true);
         assertInstanceOf(TokenInputModel.Event.CloseGroup.class,
                 model.choose(suggestion(")", "")).orElseThrow());
     }
 
     @Test
-    public void testConnectorStageInsideOpenGroupOffersCloseGroup() {
-        // sibling + a group open -> connector stage; ) is offered here too so the group can be closed
-        // from the keyboard (select + Enter) right after a committed clause, without adding another
-        model.updateContext(FIELDS, true, true);
-        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage());
-        List<String> displays = model.suggestions("").stream().map(TokenInputModel.Suggestion::display).toList();
-        assertEquals(List.of("AND", "OR", ")"), displays);
+    public void testCloseGroupIsOfferedWithoutAConnector() {
+        // inside a group with a sibling: every row is joined by OR (simple mode), except ) - closing
+        // the group joins nothing, it ends the term before it
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, true);
+        List<String> displays = displays(model.suggestions(""));
+        assertTrue(displays.contains("OR ionMass"));
+        assertTrue(displays.contains(")"));
+        assertFalse(displays.contains("OR )"));
         assertInstanceOf(TokenInputModel.Event.CloseGroup.class,
                 model.choose(suggestion(")", "")).orElseThrow());
     }
 
-    // --- the connector stage takes operators only (no free text) ---
+    // --- query modes: which connectors and nestings the builder offers ---
 
     @Test
-    public void testConnectorStageOffersNoFreeTextOrParseRow() {
-        model.updateContext(FIELDS, true, false);
-        // a word after a committed filter is a typo, not a search term - it must not be offerable
-        assertTrue(model.suggestions("caffeine").stream()
-                        .noneMatch(s -> s instanceof TokenInputModel.Suggestion.FreeTextSuggestion),
-                "free text must not be offered where only a connector may follow");
-        assertTrue(model.suggestions("quality:GOOD OR name:x").stream()
-                        .noneMatch(s -> s instanceof TokenInputModel.Suggestion.ParseQuerySuggestion),
-                "a whole query cannot be spliced in at the connector stage either");
+    public void testSimpleModeImpliesAndAtTheTopLevelAndOrInsideAGroup() {
+        // top level: AND, and it is what a clause typed without a connector is joined by
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        assertEquals(List.of(LogicOp.AND), model.allowedConnectors());
+        assertTrue(model.submitTyped("name").isEmpty(), "the field is staged, the value is still to come");
+        assertEquals(LogicOp.AND, ((TokenInputModel.Event.ClauseCompleted)
+                model.submitTyped("caffeine").orElseThrow()).logic());
+
+        // inside a group the alternatives are ORed - including the implied connector of a clause
+        // typed without one, which must not fall back to AND
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, true);
+        assertEquals(List.of(LogicOp.OR), model.allowedConnectors());
+        assertEquals(List.of("OR name"), displays(model.suggestions("name")).subList(0, 1));
+        assertTrue(model.submitTyped("name").isEmpty());
+        assertEquals(LogicOp.OR, ((TokenInputModel.Event.ClauseCompleted)
+                model.submitTyped("caffeine").orElseThrow()).logic());
     }
 
     @Test
-    public void testUnmatchedConnectorTextReoffersAllConnectors() {
-        model.updateContext(FIELDS, true, false);
-        // narrowing works as long as something matches ...
-        assertEquals(List.of("OR"), displays(model.suggestions("o")));
-        // ... and once nothing does, the full set comes back so the user can see what IS possible
-        assertEquals(List.of("AND", "OR"), displays(model.suggestions("caffeine")));
+    public void testTheFirstUserTermPicksTheJointToTheFilterPanelBlock() {
+        // an empty user query with panel filters showing: the first term is joined to those, and that
+        // connector is the joint between the two blocks - which the row shows by opening the brace
+        model.updateContext(FIELDS, TokenInputModel.Join.PANEL_TERMS, false);
+        assertEquals(List.of("AND ( ionMass"), displays(model.suggestions("ionmass")).subList(0, 1));
+        assertTrue(model.suggestions("ionmass").get(0) instanceof TokenInputModel.Suggestion.Joined joined
+                && joined.blockJoin(), "the row has to say it is the big joint, not one inside the query");
 
-        model.updateContext(FIELDS, true, true); // inside an open group ) belongs to that set
-        assertEquals(List.of("AND", "OR", ")"), displays(model.suggestions("caffeine")));
+        // simple mode ANDs the blocks, as it ANDs everything at the top level ...
+        assertEquals(List.of(LogicOp.AND), model.allowedConnectors());
+        assertTrue(model.inputProblem("or ionmass").isPresent());
+
+        // ... advanced mode offers the OR that makes the query an alternative to the panel filters
+        model.setMode(QueryMode.ADVANCED);
+        assertEquals(List.of("AND ( ionMass", "OR ( ionMass"), displays(model.suggestions("ionmass")).subList(0, 2));
+        assertTrue(model.inputProblem("or ionmass").isEmpty());
+        assertTrue(model.canAccept("or ionmass"));
     }
 
     @Test
-    public void testConnectorStageRejectsAnythingButAConnector() {
-        model.updateContext(FIELDS, true, true);
-        assertTrue(model.inputProblem("").isEmpty(), "an empty input is not an error");
-        assertTrue(model.inputProblem("  ").isEmpty());
-        assertTrue(model.inputProblem("an").isEmpty(), "a connector prefix is on its way to AND");
-        assertTrue(model.inputProblem("OR").isEmpty());
-        assertTrue(model.inputProblem("or not ion").isEmpty(), "a connector-led phrase applies in one go");
-        assertTrue(model.inputProblem("(").isEmpty(), "the parens are structure, not text");
-        assertTrue(model.inputProblem(")").isEmpty());
+    public void testTheBlockJointRidesOnTheEventTheOwnerApplies() {
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.PANEL_TERMS, false);
+        // the owner reads the connector off the event and applies it to the joint (a container drops the
+        // logic of its first item, so this is the only place it can be read from)
+        model.choose(suggestion("OR ( name", ""));
+        TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
+                model.submitTyped("caffeine").orElseThrow();
+        assertEquals(LogicOp.OR, completed.logic());
 
-        assertTrue(model.inputProblem("caffeine").isPresent());
-        assertTrue(model.inputProblem("ionm").isPresent(), "not even a field prefix - a connector must come first");
+        // an opened group carries it the same way
+        model.updateContext(FIELDS, TokenInputModel.Join.PANEL_TERMS, false);
+        TokenInputModel.Event.OpenGroup group = (TokenInputModel.Event.OpenGroup)
+                model.choose(suggestion("OR ( (", "")).orElseThrow();
+        assertEquals(LogicOp.OR, group.logic());
     }
 
     @Test
-    public void testOnlyTheFieldStageTakesFreeText() {
-        assertTrue(model.acceptsFreeText(), "no sibling -> FIELD stage, where a word is a full-text term");
-        assertTrue(model.inputProblem("caffeine").isEmpty(), "and is therefore not an error there");
-
-        model.updateContext(FIELDS, true, false);
-        assertFalse(model.acceptsFreeText());
-
-        model.choose(suggestion("AND", "")); // connector chosen -> FIELD stage again
-        assertTrue(model.acceptsFreeText());
-        assertTrue(model.inputProblem("caffeine").isEmpty());
-
-        model.choose(suggestion("ionMass", "")); // operator stage: text is an operator fragment
-        assertFalse(model.acceptsFreeText());
+    public void testNothingToJoinMeansNoConnectorRows() {
+        // no user terms and no panel filters: the term is the whole query, there is nothing to join it to
+        model.updateContext(FIELDS, TokenInputModel.Join.NOTHING, false);
+        assertTrue(displays(model.suggestions("")).contains("ionMass"));
+        assertTrue(model.inputProblem("or ionmass").isEmpty(), "a leading connector is merely meaningless here");
     }
 
     @Test
-    public void testConnectorStageNeitherAcceptsNorCommitsPlainText() {
-        model.updateContext(FIELDS, true, false);
-        assertFalse(model.canAccept("caffeine"), "the accept key has nothing to add");
-        assertFalse(model.canAccept("ionm"));
-        assertTrue(model.canAccept("or not ion"), "a connector-led phrase is still consumed");
-        assertTrue(model.submitTyped("caffeine").isEmpty());
-        assertTrue(model.pendingFragments().isEmpty(), "rejected text must not consume a stage");
-        // and running the query must not bake it into a clause behind the user's back
-        assertFalse(model.isTerminal("caffeine"));
+    public void testAdvancedModeOffersBothConnectorsEverywhere() {
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        assertEquals(List.of(LogicOp.AND, LogicOp.OR), model.allowedConnectors());
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, true);
+        assertEquals(List.of(LogicOp.AND, LogicOp.OR), model.allowedConnectors());
+        assertTrue(displays(model.suggestions("")).containsAll(List.of("AND ionMass", "OR ionMass")));
+    }
+
+    @Test
+    public void testSimpleModeRefusesAConnectorItDoesNotOffer() {
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        // a typed OR must not be quietly applied as the AND the mode allows - that would change the
+        // meaning of the query, so it is refused and named
+        assertTrue(model.inputProblem("or ionmass").isPresent());
+        assertTrue(model.inputProblem("or").isPresent());
+        assertFalse(model.canAccept("or ionmass"));
+        assertTrue(model.submitTyped("or ionmass").isEmpty());
+        assertTrue(model.pendingFragments().isEmpty(), "a refused input must not consume a stage");
+        assertFalse(model.isTerminal("or ionmass"), "and running the query must not bake it in either");
+        // the allowed rows stay on offer, so the way forward is visible
+        assertTrue(displays(model.suggestions("or ionmass")).contains("AND ionMass"));
+
+        // inside a group it is the other way round: AND is the one that does not fit
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, true);
+        assertTrue(model.inputProblem("and ionmass").isPresent());
+        assertTrue(model.inputProblem("or ionmass").isEmpty());
+
+        // and advanced mode allows both
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        assertTrue(model.inputProblem("or ionmass").isEmpty());
+        assertTrue(model.canAccept("or ionmass"));
+    }
+
+    @Test
+    public void testAConnectorIsOnlyRefusedWhereOneIsAskedFor() {
+        // nothing to join: a leading connector is meaningless rather than wrong (CompletionParser
+        // consumes it and builds the clause without one)
+        assertTrue(model.inputProblem("or ionmass").isEmpty());
+        assertTrue(model.inputProblem("").isEmpty());
+        assertTrue(model.inputProblem("caffeine").isEmpty(), "a word is a full-text term, not a problem");
+
+        // already staged: the connector is settled, so text is not read as one any more
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        model.choose(suggestion("AND NOT", ""));
+        assertTrue(model.inputProblem("or ionmass").isEmpty());
+    }
+
+    @Test
+    public void testSimpleModeDoesNotNestGroups() {
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        assertTrue(model.nestingAllowed(), "a group at the top level is what simple mode is built on");
+        assertTrue(displays(model.suggestions("")).contains("AND ("));
+
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, true); // inside a group
+        assertFalse(model.nestingAllowed());
+        assertFalse(displays(model.suggestions("")).contains("OR ("));
+        assertTrue(model.inputProblem("(").isPresent(), "nor typed");
+        assertTrue(model.suggestions("(").isEmpty(),
+                "and not as a full-text term either - nobody searches for a literal paren");
+        assertTrue(model.inputProblem("(ionmass").isPresent());
+        assertFalse(model.canAccept("("));
+        assertTrue(model.submitTyped("(").isEmpty());
+
+        model.setMode(QueryMode.ADVANCED);
+        assertTrue(model.nestingAllowed());
+        assertTrue(displays(model.suggestions("")).contains("AND ("));
+        assertTrue(model.inputProblem("(").isEmpty());
+    }
+
+    @Test
+    public void testFreeTextAndParseRowsCarryTheConnectorToo() {
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        List<String> displays = displays(model.suggestions("caffeine"));
+        assertEquals(List.of("AND \"caffeine\"", "OR \"caffeine\""), displays,
+                "a word after a term is a full-text search - joined by a connector the user picks");
+
+        // and choosing one builds exactly that clause
+        TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
+                model.choose(suggestion("OR \"caffeine\"", "caffeine")).orElseThrow();
+        assertTrue(completed.clause().isFreeText());
+        assertEquals("caffeine", completed.clause().value1());
+        assertEquals(LogicOp.OR, completed.logic());
+    }
+
+    @Test
+    public void testJoinedRowsBuildTheSameClauseAsTheTwoStepPickDid() {
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        model.choose(suggestion("OR quality", ""));
+        assertEquals(List.of("OR", "quality"), fragmentTexts());
+        TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
+                model.choose(suggestion("GOOD", "")).orElseThrow();
+        assertEquals("quality", completed.clause().field());
+        assertEquals("GOOD", completed.clause().value1());
+        assertEquals(LogicOp.OR, completed.logic());
     }
 
     // --- keyless full-text clause ---
@@ -464,20 +579,21 @@ public class TokenInputModelTest {
 
     @Test
     public void testCompleteFreeTextMakesAKeylessClause() {
-        model.updateContext(FIELDS, true, false); // sibling -> connector defaults to AND
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false); // sibling -> connector defaults to AND
         TokenInputModel.Event.ClauseCompleted completed =
                 (TokenInputModel.Event.ClauseCompleted) model.completeFreeText("caffeine metabolite");
         assertTrue(completed.clause().isFreeText());
         assertEquals("caffeine metabolite", completed.clause().value1());
         assertEquals(LogicOp.AND, completed.logic());
-        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage(), "token is reset after completion");
+        assertEquals(TokenInputModel.Stage.FIELD, model.stage(), "token is reset after completion");
     }
 
     // --- typed-through multi-token input (grammar shortcut) ---
 
     @Test
     public void testTypedMultiTokenTextAppliesInOneSubmit() {
-        model.updateContext(FIELDS, true, false);
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
         assertTrue(model.submitTyped("or not ion").isEmpty());
         assertEquals(TokenInputModel.Stage.OPERATOR, model.stage());
         assertEquals(List.of("OR", "NOT", "ionMass"), fragmentTexts());
@@ -494,7 +610,7 @@ public class TokenInputModelTest {
 
     @Test
     public void testBackspacePopsStages() {
-        // no sibling -> NOT is choosable directly at the field stage
+        // nothing to join -> NOT is choosable directly
         model.choose(suggestion("NOT", ""));
         model.choose(suggestion("ionMass", ""));
         model.choose(model.suggestions(">=").get(0));
@@ -515,15 +631,18 @@ public class TokenInputModelTest {
     }
 
     @Test
-    public void testBackspaceFromFieldStageClearsTheConnectorBackToConnectorStage() {
-        model.updateContext(FIELDS, true, false);
-        model.choose(suggestion("OR", "")); // CONNECTOR -> FIELD, pending OR
-        assertEquals(TokenInputModel.Stage.FIELD, model.stage());
+    public void testBackspaceClearsAStagedConnectorBeforeTheLastChip() {
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        model.choose(suggestion("OR NOT", "")); // stages OR + NOT
+        assertEquals(List.of("OR", "NOT"), fragmentTexts());
 
-        assertTrue(model.backspaceOnEmpty().isEmpty()); // clears the pending connector
-        model.updateContext(FIELDS, true, false);       // owner re-syncs the context
-        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage());
+        assertTrue(model.backspaceOnEmpty().isEmpty(), "pops the negation");
+        assertTrue(model.backspaceOnEmpty().isEmpty(), "pops the connector");
         assertTrue(model.pendingFragments().isEmpty());
+        assertTrue(displays(model.suggestions("")).contains("OR ionMass"), "the connector is asked again");
+        // and only with nothing staged does Backspace reach the committed chips
+        assertInstanceOf(TokenInputModel.Event.RemoveLastNode.class, model.backspaceOnEmpty().orElseThrow());
     }
 
     @Test
@@ -621,10 +740,9 @@ public class TokenInputModelTest {
     }
 
     @Test
-    public void testRunActionRowIsOfferedAtTheConnectorStage() {
+    public void testRunActionRowIsOfferedWithASiblingToo() {
         model.setRunAction(RUN_SEARCH);
-        model.updateContext(FIELDS, true, false); // sibling -> connector stage
-        assertEquals(TokenInputModel.Stage.CONNECTOR, model.stage());
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
         assertInstanceOf(TokenInputModel.Suggestion.RunActionSuggestion.class, model.suggestions("").get(0));
     }
 
@@ -718,9 +836,9 @@ public class TokenInputModelTest {
 
     @Test
     public void testConnectorAndNegationFragmentsNameNoField() {
-        model.updateContext(FIELDS, true, false);
-        model.choose(suggestion("OR", ""));
-        model.choose(suggestion("NOT", ""));
+        model.setMode(QueryMode.ADVANCED);
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        model.choose(suggestion("OR NOT", ""));
         model.choose(suggestion("tags.city", ""));
 
         List<TokenInputModel.Fragment> fragments = model.pendingFragments();

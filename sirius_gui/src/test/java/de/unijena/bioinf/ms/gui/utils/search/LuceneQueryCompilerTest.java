@@ -209,6 +209,32 @@ public class LuceneQueryCompilerTest {
         assertEquals("", LuceneQueryCompiler.compile(QueryContainer.empty(), "   "));
     }
 
+    // --- the joint between the two blocks (filter-panel facets vs. the user's own query) ---
+
+    @Test
+    public void testTheTwoBlocksAreAndedByDefault() {
+        assertEquals("(hasMsMs:true) AND (name:caffeine)",
+                LuceneQueryCompiler.compile(container(QueryClause.text("hasMsMs", "true", false)), "name:caffeine"));
+    }
+
+    @Test
+    public void testTheBlocksCanBeOredInstead() {
+        QueryContainer facets = container(QueryClause.text("hasMsMs", "true", false));
+        // both sides stay parenthesised: a flat "a AND b OR c" is not read left-to-right by lucene
+        assertEquals("(hasMsMs:true) OR (name:caffeine)",
+                LuceneQueryCompiler.compile(facets, "name:caffeine", LogicOp.OR));
+        assertEquals("(*:* AND NOT topAnnotations.formulaAnnotation.lipidAnnotation.lipid:true) OR (name:caffeine)",
+                LuceneQueryCompiler.compileExecutable(container(lipidAbsent()), "name:caffeine", LogicOp.OR));
+    }
+
+    @Test
+    public void testWithOnlyOneBlockTheJointIsMoot() {
+        QueryContainer facets = container(QueryClause.text("hasMsMs", "true", false));
+        assertEquals("hasMsMs:true", LuceneQueryCompiler.compile(facets, "", LogicOp.OR),
+                "an OR with nothing is not an alternative - the block stands alone");
+        assertEquals("name:caffeine", LuceneQueryCompiler.compile(QueryContainer.empty(), "name:caffeine", LogicOp.OR));
+    }
+
     // --- compileExecutable: negation-only queries need a match-all anchor ---
 
     private static QueryClause lipidAbsent() {
