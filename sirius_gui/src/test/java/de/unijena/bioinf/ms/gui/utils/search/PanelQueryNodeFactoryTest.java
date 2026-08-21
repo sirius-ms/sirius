@@ -225,6 +225,42 @@ public class PanelQueryNodeFactoryTest {
         assertTrue(nodes(model).isEmpty());
     }
 
+    // --- adducts: the unknown ion types are part of the offer ---
+
+    @Test
+    public void testTheUnknownAdductOfEveryDetectedPolarityIsOfferedAndPreselected() {
+        FeatureFilterModel model = cleanSlate();
+        model.updateAdducts(List.of(PrecursorIonType.fromString("[M+H]+"), PrecursorIonType.fromString("[M+Na]+")));
+
+        // a feature whose adduct could not be determined is indexed as [M+?]+, so leaving it out of the
+        // list would drop those features from every default-filtered view
+        assertTrue(model.getPossibleAdducts().contains(PrecursorIonType.unknownPositive()));
+        assertTrue(model.getSelectedAdducts().contains(PrecursorIonType.unknownPositive()),
+                "and it has to be selected by default, or the default filter still drops them");
+        // the polarity follows the project - nothing negative was detected here
+        assertFalse(model.getPossibleAdducts().contains(PrecursorIonType.unknownNegative()));
+    }
+
+    @Test
+    public void testWithNothingDetectedBothUnknownAdductsAreOffered() {
+        FeatureFilterModel model = cleanSlate();
+        model.updateAdducts(List.of());
+        // nothing to infer the polarity from (a project that was never preprocessed for adducts), and the
+        // one that does not occur matches nothing anyway
+        assertTrue(model.getSelectedAdducts().containsAll(
+                Set.of(PrecursorIonType.unknownPositive(), PrecursorIonType.unknownNegative())));
+    }
+
+    @Test
+    public void testTheUnknownAdductReachesTheCompiledQuery() {
+        FeatureFilterModel model = cleanSlate();
+        model.updateAdducts(List.of(PrecursorIonType.fromString("[M+H]+")));
+        String compiled = model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow();
+        assertTrue(compiled.contains(FeatureFilterModel.FIELD_ADDUCTS), compiled);
+        // the value the index holds for such a feature, escaped the way a bare term has to be
+        assertTrue(compiled.contains("?"), "the unknown adduct is missing from the query: " + compiled);
+    }
+
     // --- the joint between the panel facets and the user's own query ---
 
     private static void searchText(FeatureFilterModel model, String text) throws Exception {
