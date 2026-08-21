@@ -67,7 +67,7 @@ public class CompoundClassesMapperTest {
     @Test
     public void testEveryNpcPropertyIsOfferedOnItsLevel() {
         List<String> pathways = valuesOf("npcPathway");
-        List<String> superclasses = valuesOf("npcSuperclass");
+        List<String> superclasses = valuesOf("npcSuperClass");
         List<String> classes = valuesOf("npcClass");
 
         assertTrue(superclasses.contains("Alkylresorsinols"), "superclasses: " + superclasses.size());
@@ -80,7 +80,7 @@ public class CompoundClassesMapperTest {
 
     @Test
     public void testClassyFireOntologyIsOffered() {
-        List<String> cfClasses = valuesOf("cfClass");
+        List<String> cfClasses = valuesOf("classyFireClass");
 
         assertEquals(ClassyFireFingerprintVersion.getDefault().size(), cfClasses.size());
         assertTrue(cfClasses.contains("Organic compounds"), "must contain the ChemOnt root");
