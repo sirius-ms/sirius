@@ -295,7 +295,7 @@ public class QueryEditorPanel extends JPanel {
 
         // the top row of an untouched input: Enter runs the search (overlay) / applies the dialog
         tokenModel.setRunAction(new TokenInputModel.RunAction("Search",
-                "Apply the filter and close (Enter)",
+                "Apply the filter and close",
                 "Type to add query terms"));
 
         setBackground(UIManager.getColor("TextField.background"));
