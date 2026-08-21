@@ -18,7 +18,7 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.service.search.description;
+package de.unijena.bioinf.projectspace;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,11 +26,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * What to tell API users about an indexed field, beyond what the index itself knows.
+ * What to tell clients about an indexed field, beyond what the index itself knows.
  * <p>
  * Separate from the annotations that configure the index on purpose: how a field is stored, analyzed and parsed
  * decides what a query matches, while everything here only decides how the field is explained. Removing this
  * annotation from a field changes no search result.
+ * <p>
+ * It sits next to {@link IndexField} because the two are declared together, on the same field, by whoever
+ * defines the model - and a model class may live in a module that has never heard of the service that describes
+ * the index. What a field's values ARE is such a statement; what API type a mapper-contributed field should be
+ * reported as is not, and stays with the describing side (see {@code SearchableFieldTypeDoc}).
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
@@ -46,14 +51,4 @@ public @interface SearchableFieldDoc {
      * not declared here at all - it is handed to the description by whoever owns the project state.
      */
     Class<? extends FieldVocabulary> possibleValues() default FieldVocabulary.None.class;
-
-    /**
-     * What kind of value this field holds, for a field the index can only report as the keyword it stores -
-     * see {@link FieldTypes}. Names a class for the same reason {@link #possibleValues()} does: one statement
-     * covers every field a mapper contributes, and which of them it applies to is decided by the field name.
-     * <p>
-     * A field mapped straight from a java field needs none; its java type is more precise than anything that
-     * could be declared here.
-     */
-    Class<? extends FieldTypes> fieldTypes() default FieldTypes.None.class;
 }

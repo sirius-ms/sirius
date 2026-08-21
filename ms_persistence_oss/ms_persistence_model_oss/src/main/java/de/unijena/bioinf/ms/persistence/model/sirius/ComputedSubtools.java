@@ -23,7 +23,9 @@ package de.unijena.bioinf.ms.persistence.model.sirius;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.projectspace.FieldVocabulary;
 import de.unijena.bioinf.projectspace.IndexField;
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -38,19 +40,28 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ComputedSubtools extends AlignedFeatureAnnotation {
+    // each flag says whether a tool has run, so each is asked about in the positive: a client completes
+    // "computedTools.zodiac" the moment it is picked, and "has NOT run" is the negation of it
     @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     private boolean librarySearch = false;
     @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     private boolean formulaSearch = false;
     @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     private boolean zodiac = false;
     @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     private boolean fingerprint = false;
     @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     private boolean canopus = false;
     @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     private boolean structureSearch = false;
     @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     private boolean deNovoSearch = false;
 
     @JsonIgnore

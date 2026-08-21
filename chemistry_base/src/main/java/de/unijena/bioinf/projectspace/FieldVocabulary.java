@@ -18,7 +18,7 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.service.search.description;
+package de.unijena.bioinf.projectspace;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +37,9 @@ import java.util.List;
  * a query matches. Implementations must be stateless and have a public no-arg constructor when they are named by
  * {@link SearchableFieldDoc}; a vocabulary that needs project state is constructed by whoever owns that state and
  * handed to the description instead.
+ * <p>
+ * Lives next to {@link IndexField} rather than with the code that reads it, because it is the indexed model that
+ * declares it - including model classes in modules that know nothing about how the index is described.
  */
 public interface FieldVocabulary {
 
