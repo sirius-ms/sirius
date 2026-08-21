@@ -20,14 +20,14 @@
 
 package de.unijena.bioinf.ms.middleware.service.search;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FieldMapper;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.projectspace.IndexField;
-import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
-import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDoc;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.index.IndexableField;
@@ -226,14 +226,13 @@ public class FieldVocabularyTest {
         public String broken;
     }
 
-    /** A nested object whose flags are all asked about in the positive, declared once on the container. */
+    /** A nested object whose flags each declare that they are asked about in the positive. */
     public static class Flags {
         @IndexField
+        @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
         private boolean zodiac = false;
         @IndexField
         private boolean canopus = false;
-        @IndexField
-        private String note = "";
     }
 
     public static class FlagPojo {
@@ -245,15 +244,12 @@ public class FieldVocabularyTest {
         @IndexField
         private boolean hasMs1 = false;
         @IndexField
-        @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
         private Flags computedTools = new Flags();
-        @IndexField
-        private Flags otherTools = new Flags();
     }
 
     /**
-     * A boolean asked about in the positive offers {@code true} alone - the other case is its negation - while
-     * a boolean that declares nothing still reports both values from its java type.
+     * A boolean asked about in the positive offers {@code true} alone - the other case is the negation of it -
+     * while a boolean that declares nothing still reports both values from its java type.
      */
     @Test
     public void testAPresenceFlagOffersTrueOnly() {
@@ -265,21 +261,16 @@ public class FieldVocabularyTest {
     }
 
     /**
-     * Declaring it on the field that holds a nested object covers the fields inside it - said once, and the only
-     * place it can be said for a nested class in a module that cannot see these annotations.
+     * Declared on a field of a nested object, it is read there - the annotation travels with the field it is
+     * written on, whichever class that is.
      */
     @Test
-    public void testAVocabularyOnAContainerServesTheFieldsInsideIt() {
+    public void testAFlagInsideANestedObjectIsRead() {
         Map<String, SearchableField> fields = describeAsMap(FlagPojo.class);
 
         assertEquals(List.of("true"), fields.get("computedTools.zodiac").getPossibleValues());
-        assertEquals(List.of("true"), fields.get("computedTools.canopus").getPossibleValues());
-        // it applies to whatever it is declared on, so a container that mixes types is not a place to declare it
-        assertEquals(List.of("true"), fields.get("computedTools.note").getPossibleValues());
-
-        // and a container that declares nothing passes nothing down
-        assertEquals(List.of("true", "false"), fields.get("otherTools.zodiac").getPossibleValues());
-        assertNull(fields.get("otherTools.note").getPossibleValues());
+        assertEquals(List.of("true", "false"), fields.get("computedTools.canopus").getPossibleValues(),
+                "and its neighbour says nothing about itself, so nothing is claimed for it");
     }
 
     private static Map<String, SearchableField> describeAsMap(Class<?> pojoClass) {

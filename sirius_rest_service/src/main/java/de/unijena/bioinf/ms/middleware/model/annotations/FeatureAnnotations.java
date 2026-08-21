@@ -19,10 +19,10 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.middleware.service.search.description.CompoundClassVocabulary;
-import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDoc;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.CompoundClassesMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.projectspace.IndexField;

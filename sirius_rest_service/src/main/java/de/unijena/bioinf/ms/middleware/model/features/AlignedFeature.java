@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
@@ -28,8 +30,6 @@ import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PrecursorIonTypeQueryRewriter;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FoldChangeMapper;
-import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
-import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDoc;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.sirius.ComputedSubtools;
@@ -190,9 +190,6 @@ public class AlignedFeature implements Taggable {
     protected boolean computing;
 
     @IndexField
-    // every flag inside says whether a tool has run, so they are all asked about in the positive; declared
-    // here because ComputedSubtools lives in a module that cannot see these annotations
-    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, description =
                     "Specifies which tools have been executed for the feature. " +
                     "Can be used to estimate which results can be expected. " +
