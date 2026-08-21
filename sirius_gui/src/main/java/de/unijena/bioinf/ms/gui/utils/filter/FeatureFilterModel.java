@@ -42,6 +42,7 @@ import javax.swing.text.PlainDocument;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.function.UnaryOperator;
 import de.unijena.bioinf.ms.gui.utils.query.LogicOp;
 import de.unijena.bioinf.ms.gui.utils.query.LuceneQueryCompiler;
 import de.unijena.bioinf.ms.gui.utils.query.QueryContainer;
@@ -71,6 +72,18 @@ public class FeatureFilterModel implements SiriusPCS {
 
     @Getter
     private final Document searchTextDoc;
+
+    /**
+     * How the user's own query text is turned into the form that is EXECUTED - the match-all anchor a lucene
+     * query needs when it only excludes ({@code NOT lipid:true} matches nothing as written). The rule lives
+     * where queries are compiled and needs the query as a tree, so it is handed in rather than reached for:
+     * the search package supplies it (see {@code QueryStringParser#executableForm}), and until it does the
+     * query runs exactly as written.
+     */
+    @Getter
+    @Setter
+    @NotNull
+    private UnaryOperator<String> executableQueryForm = UnaryOperator.identity();
 
     @Getter
     private double currentMinMz;
@@ -551,9 +564,9 @@ public class FeatureFilterModel implements SiriusPCS {
     }
 
     /**
-     * The full-text segment: the user's search text used as-is when it parses as a lucene query,
-     * otherwise quoted as a phrase so malformed input still runs (against the default search fields)
-     * instead of failing the whole query.
+     * The full-text segment: the user's search text in its executable form when it parses as a lucene query
+     * (see {@link #getExecutableQueryForm()}), otherwise quoted as a phrase so malformed input still runs
+     * (against the default search fields) instead of failing the whole query.
      */
     private String freeTextQuery() {
         if (!isSearchTextFilterActive())
@@ -561,7 +574,8 @@ public class FeatureFilterModel implements SiriusPCS {
         String text = getSearchText();
         try {
             textFieldParser.parse(text);
-            return text;
+            // it is a query - so run the form that a query with only negations needs to match anything
+            return executableQueryForm.apply(text);
         } catch (ParseException e) {
             return "\"" + text.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
         }

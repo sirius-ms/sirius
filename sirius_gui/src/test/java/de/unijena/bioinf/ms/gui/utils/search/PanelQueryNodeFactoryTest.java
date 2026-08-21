@@ -225,6 +225,33 @@ public class PanelQueryNodeFactoryTest {
         assertTrue(nodes(model).isEmpty());
     }
 
+    // --- the user query runs in its executable form ---
+
+    @Test
+    public void testTheUserQueryIsAnchoredWhereLuceneNeedsIt() throws Exception {
+        FeatureFilterModel model = cleanSlate();
+        model.setExecutableQueryForm(QueryStringParser::executableForm);
+        searchText(model, "NOT computedTools.zodiac:true");
+        assertEquals("*:* AND NOT computedTools.zodiac:true",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow(),
+                "a query that only excludes matches nothing without the anchor");
+
+        // with facets, the anchor has to stay INSIDE the user block: (facets) AND (NOT x) matches nothing
+        model.setPfasDetected(true);
+        assertEquals("(tags.pfas:[* TO *]) AND (*:* AND NOT computedTools.zodiac:true)",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    @Test
+    public void testWithoutTheStrategyTheQueryRunsAsWritten() throws Exception {
+        // the rule lives in the search package and is handed in (GuiProjectManager does it); a model that was
+        // never given it must not silently rewrite anything
+        FeatureFilterModel model = cleanSlate();
+        searchText(model, "NOT computedTools.zodiac:true");
+        assertEquals("NOT computedTools.zodiac:true",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
     // --- adducts: the unknown ion types are part of the offer ---
 
     @Test
