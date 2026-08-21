@@ -63,6 +63,35 @@ public final class QueryStringParser {
      * do not model. An empty/blank query maps to an empty container. {@code fields} disambiguates a
      * {@code field:value} term as a numeric equality vs. a text match.
      */
+    /**
+     * The form of a committed query string that has to be EXECUTED rather than shown.
+     * <p>
+     * A lucene boolean query built only from negations matches nothing: {@code NOT lipid:true} returns zero
+     * features instead of "everything that is not a lipid", and an OR of negations needs the match-all anchor
+     * inside each alternative rather than around the whole query. Both rules live in
+     * {@link LuceneQueryCompiler#compileExecutable}, which needs the query as a tree - so the string is
+     * hydrated, anchored and compiled again.
+     * <p>
+     * Only when the tree accounts for the whole query, which is checked by compiling it back and comparing:
+     * re-rendering a query we did not fully understand (an unsupported construct, a numeric field we were not
+     * told about) could change what it matches, and running it as written is the safer answer. Unchanged, too,
+     * for a query that needs no anchor - {@code compileExecutable} then compiles to the same string.
+     */
+    public static String executableForm(@NotNull String query) {
+        return executableForm(query, List.of());
+    }
+
+    /** {@link #executableForm(String)} with the fields known, which is what tells a numeric clause from a text
+     *  one - without them a query using one is left as written rather than misread. */
+    public static String executableForm(@NotNull String query, @NotNull List<SearchableField> fields) {
+        String trimmed = query.trim();
+        return parse(trimmed, fields)
+                .filter(tree -> !tree.isEmpty())
+                .filter(tree -> LuceneQueryCompiler.compile(tree, "").equals(trimmed))
+                .map(tree -> LuceneQueryCompiler.compileExecutable(tree, ""))
+                .orElse(query);
+    }
+
     public static Optional<QueryContainer> parse(@NotNull String query, @NotNull List<SearchableField> fields) {
         String trimmed = query.trim();
         if (trimmed.isEmpty())
