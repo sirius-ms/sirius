@@ -128,13 +128,14 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
             @NotNull final Map<String, QueryRewriter> queryRewriters
     ){
         List<FieldFacts> facts = new ArrayList<>();
-        detectAnalyzersAndPointConfigs("", pojoClass, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters, facts);
+        detectAnalyzersAndPointConfigs("", pojoClass, null, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters, facts);
         return new IndexSchema(facts);
     }
 
     private void detectAnalyzersAndPointConfigs(
             @NotNull final String fieldPrefix,
             @NotNull final Class<?> pojoClass,
+            @Nullable final Field declaredWithin,
             @NotNull final Map<String, PointsConfig> pointsConfigMap,
             @NotNull final Map<String, Analyzer> analyzerMap,
             @NotNull final List<CharSequence> defaultSearchFields,
@@ -163,7 +164,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 }
 
                 if (!isSimpleType(elementType)) {
-                    detectAnalyzersAndPointConfigs(fieldName + ".", elementType, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters, facts);
+                    detectAnalyzersAndPointConfigs(fieldName + ".", elementType, field, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes, queryRewriters, facts);
                 } else {
                     PointsConfig pointsConfig = getPointsConfigForType(elementType);
                     if (pointsConfig != null) {
@@ -193,7 +194,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                     if (indexField.queryRewriter() != QueryRewriter.NoOp.class)
                         queryRewriters.put(fieldName, newQueryRewriter(indexField.queryRewriter()));
 
-                    facts.add(factsOf(fieldName, elementType, field, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes));
+                    facts.add(factsOf(fieldName, elementType, field, declaredWithin, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes));
                 }
             } else if (field.isAnnotationPresent(IndexFieldWithMapper.class)) {
                 IndexFieldWithMapper mapperAnno = field.getAnnotation(IndexFieldWithMapper.class);
@@ -208,7 +209,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                         .filter(name -> !before.contains(name))
                         .sorted()
                         .toList();
-                contributed.forEach(name -> facts.add(factsOf(name, null, field,
+                contributed.forEach(name -> facts.add(factsOf(name, null, field, declaredWithin,
                         pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes)));
 
                 // the field declares how a query for what this mapper writes is read; the mapper is what knows
@@ -241,6 +242,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
     private static FieldFacts factsOf(@NotNull String fieldName,
                                       @Nullable Class<?> javaType,
                                       @NotNull Field declaredBy,
+                                      @Nullable Field declaredWithin,
                                       @NotNull Map<String, PointsConfig> pointsConfigMap,
                                       @NotNull Map<String, Analyzer> analyzerMap,
                                       @NotNull List<CharSequence> defaultSearchFields,
@@ -256,7 +258,8 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                 sortTypes.containsKey(fieldName),
                 defaultSearchFields.stream().anyMatch(f -> f.toString().equals(fieldName)),
                 javaType,
-                declaredBy);
+                declaredBy,
+                declaredWithin);
     }
 
     private static LuceneKind kindOf(@Nullable PointsConfig pointsConfig, boolean analyzed) {
