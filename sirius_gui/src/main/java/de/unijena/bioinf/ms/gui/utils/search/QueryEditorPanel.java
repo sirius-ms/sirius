@@ -370,7 +370,8 @@ public class QueryEditorPanel extends JPanel {
         if (openFilterPanel != null) {
 
             // hands off via the host so the overlay steps aside before the (modal) dialog opens
-            filterButton = Buttons.getFilterButton(ICON_SIZE, "Open the filter panel", true);
+            filterButton = Buttons.getFilterButton(ICON_SIZE,
+                    "Open the filter panel (" + GuiUtils.shortcut("Shift+F") + ")", true);
             filterButton.setFocusable(false);
             filterButton.addActionListener(e -> host.editorHandoff(openFilterPanel));
             filterButton.setMargin(new Insets(0, 0, 0, 0));
