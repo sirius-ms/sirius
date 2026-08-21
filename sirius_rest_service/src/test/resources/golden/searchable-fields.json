@@ -216,7 +216,7 @@
     "possibleValues" : null,
     "description" : "Name of the structure candidate. Searching also resolves the searched term as a PubChem synonym, so a structure is found by any of its common names."
   }, {
-    "name" : "topAnnotations.compoundClassAnnotation.cfClass",
+    "name" : "topAnnotations.compoundClassAnnotation.classyFireClass",
     "fieldType" : "TEXT",
     "fullTextSearch" : true,
     "sortable" : false,
@@ -243,7 +243,7 @@
     "possibleValues" : [ "Alkaloids", "Amino acids and Peptides", "Carbohydrates", "Fatty acids", "Polyketides", "Shikimates and Phenylpropanoids", "Terpenoids" ],
     "description" : null
   }, {
-    "name" : "topAnnotations.compoundClassAnnotation.npcSuperclass",
+    "name" : "topAnnotations.compoundClassAnnotation.npcSuperClass",
     "fieldType" : "TEXT",
     "fullTextSearch" : true,
     "sortable" : false,
