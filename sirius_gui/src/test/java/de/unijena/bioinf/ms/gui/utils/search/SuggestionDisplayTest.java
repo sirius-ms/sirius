@@ -114,6 +114,19 @@ public class SuggestionDisplayTest {
     }
 
     @Test
+    public void testTheFullPathIsAlwaysOneHoverAway() {
+        // the display toggle is gone from the UI (no two fields share a terminal name), so the tooltip is
+        // the only place the fully-qualified name can be read - it has to be there whatever the row shows
+        for (String description : new String[]{DESCRIPTION, null, "   "})
+            for (FieldDisplay.Mode mode : FieldDisplay.Mode.values()) {
+                SuggestionDisplay.Row row = SuggestionDisplay.of(
+                        suggestion(field(INCHI, description, 1)), mode);
+                assertNotNull(row.tooltip(), "a field row without a tooltip would hide its path");
+                assertTrue(row.tooltip().contains(INCHI), "path missing for mode " + mode);
+            }
+    }
+
+    @Test
     public void testBlankDescriptionCountsAsNone() {
         SuggestionDisplay.Row row = SuggestionDisplay.of(
                 suggestion(field(INCHI, "   ", 1)), FieldDisplay.Mode.COMPACT);
