@@ -20,8 +20,8 @@
 
 package de.unijena.bioinf.ms.middleware.service.search;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
-import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;

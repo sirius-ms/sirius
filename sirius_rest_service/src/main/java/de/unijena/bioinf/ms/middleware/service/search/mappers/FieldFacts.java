@@ -46,10 +46,6 @@ import java.lang.reflect.Field;
  *                           it is mapped directly, and the field carrying the mapper when a mapper contributed
  *                           it. Carries the annotations a describer reads, so describing the index takes no
  *                           second walk over the model that could drift from this one.
- * @param declaredWithin     the field holding the nested object this one lives in, or null at the top level.
- *                           What is said about a container can hold for the fields inside it, and for a nested
- *                           class in a module that cannot see the describing annotations it is the only place
- *                           it can be said at all.
  */
 public record FieldFacts(
         @NotNull String name,
@@ -58,7 +54,6 @@ public record FieldFacts(
         boolean sortable,
         boolean defaultSearchField,
         @Nullable Class<?> javaType,
-        @NotNull Field declaredBy,
-        @Nullable Field declaredWithin
+        @NotNull Field declaredBy
 ) {
 }

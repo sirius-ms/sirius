@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.search.description;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
 import de.unijena.bioinf.ChemistryBase.fp.ClassyFireFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.CompoundClassesMapper;

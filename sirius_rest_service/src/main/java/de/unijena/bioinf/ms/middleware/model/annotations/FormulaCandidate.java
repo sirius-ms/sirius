@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -28,8 +29,8 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FormulaElementMapper;
 import de.unijena.bioinf.ms.middleware.service.search.description.LipidClassVocabulary;
 import de.unijena.bioinf.ms.middleware.service.search.description.LipidFieldTypes;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldTypeDoc;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.LipidClassQueryRewriter;
-import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDoc;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.LipidAnnotationMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -127,7 +128,8 @@ public class FormulaCandidate {
     //NOTE: the whole annotation is null if it was not requested; its lipidSpecies is null if ElGordo
     //did not classify the candidate as a lipid
     @IndexFieldWithMapper(mapper = LipidAnnotationMapper.class, queryRewriter = LipidClassQueryRewriter.class)
-    @SearchableFieldDoc(possibleValues = LipidClassVocabulary.class, fieldTypes = LipidFieldTypes.class)
+    @SearchableFieldDoc(possibleValues = LipidClassVocabulary.class)
+    @SearchableFieldTypeDoc(LipidFieldTypes.class)
     @Schema(nullable = true)
     protected LipidAnnotation lipidAnnotation;
 

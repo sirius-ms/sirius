@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.search.description;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;

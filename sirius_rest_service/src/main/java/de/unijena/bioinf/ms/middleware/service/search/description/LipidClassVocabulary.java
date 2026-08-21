@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.search.description;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
 import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.LipidAnnotationMapper;
 import org.jetbrains.annotations.NotNull;
