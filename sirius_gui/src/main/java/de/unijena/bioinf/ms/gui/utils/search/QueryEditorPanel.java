@@ -376,9 +376,12 @@ public class QueryEditorPanel extends JPanel {
             filterButton.setMargin(new Insets(0, 0, 0, 0));
         }
 
-        // field-name display toggle (compact terminal names <-> fully-qualified): a borderless icon
-        // button whose expand/collapse arrows show the ACTION a click performs (expand arrows while
-        // names are compact, collapse arrows while fully-qualified), matching the other in-field icons
+        // Field-name display toggle (compact terminal names <-> fully-qualified), built but NOT put on
+        // the controls row: no two searchable fields currently share a terminal name, so the compact name
+        // identifies a field on its own and switching to the full path only makes the chips longer. The
+        // full path is one hover away everywhere it is shortened (every such chip and suggestion row
+        // carries it in its tooltip), which is what the toggle was really for. Kept assembled so it can
+        // be put back by adding it to `controls` the day fields do collide.
         modeIcon = new CompactToggleIcon(ICON_SIZE, Colors.searchFieldIconColor(), renderState.mode() == FieldDisplay.Mode.COMPACT);
         ToolbarButton modeToggle = new ToolbarButton(modeIcon, null, true);
         modeToggle.setFocusable(false);
@@ -415,13 +418,12 @@ public class QueryEditorPanel extends JPanel {
         invertToggle.addActionListener(e -> setInverted(!inverted));
 
         // order left-to-right: query-state actions (clear, restore, invert) then meta controls (query
-        // mode, display mode, funnel)
+        // mode, funnel)
         controls.add(clear);
         if (restore != null)
             controls.add(restore);
         controls.add(invertToggle);
         controls.add(queryModeToggle);
-        controls.add(modeToggle);
         if (filterButton != null)
             controls.add(filterButton);
 
