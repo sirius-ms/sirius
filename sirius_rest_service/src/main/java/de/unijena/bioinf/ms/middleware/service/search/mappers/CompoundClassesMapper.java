@@ -25,9 +25,9 @@ public class CompoundClassesMapper implements FieldMapper<CompoundClasses> {
      * The fields this mapper writes, below the root it is given. Public because what the values of these fields
      * are is explained elsewhere (see the {@code description} package) and both sides have to agree on the name.
      */
-    public static final String CLASSY_FIRE = ".cfClass";
+    public static final String CLASSY_FIRE = ".classyFireClass";
     public static final String NPC_PATHWAY = ".npcPathway";
-    public static final String NPC_SUPERCLASS = ".npcSuperclass";
+    public static final String NPC_SUPERCLASS = ".npcSuperClass";
     public static final String NPC_CLASS = ".npcClass";
 
 
