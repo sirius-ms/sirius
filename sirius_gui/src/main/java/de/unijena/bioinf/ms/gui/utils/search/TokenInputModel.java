@@ -401,7 +401,7 @@ public class TokenInputModel {
             withRunAction.addAll(suggestions);
             suggestions = withRunAction;
         }
-        return suggestions;
+        return trimmed.isEmpty() ? withNegationUpFront(suggestions) : suggestions;
     }
 
     /**
@@ -463,6 +463,42 @@ public class TokenInputModel {
                 joined.add(new Suggestion.Joined(logic, candidate, blockJoin));
         }
         return joined;
+    }
+
+    /**
+     * The NOT row moved to the top of an untouched list, right below the run action.
+     * <p>
+     * It is the only row that is not a thing to search for but a change to the search, and half the fields
+     * exist to be asked about in the negative - which features has a tool NOT run on, which have no MS/MS.
+     * Down among sixty field names it reads as an afterthought; below the run action it is the second thing
+     * seen. It stays out of the way while something is typed: there the best match has to be the default pick,
+     * and NOT is one of the matches like any other ({@code no} finds it).
+     */
+    private static List<Suggestion> withNegationUpFront(List<Suggestion> suggestions) {
+        int negation = indexOfNegation(suggestions);
+        if (negation < 0)
+            return suggestions;
+        // right below the run action when there is one, first otherwise
+        int target = !suggestions.isEmpty() && suggestions.get(0) instanceof Suggestion.RunActionSuggestion ? 1 : 0;
+        if (negation == target)
+            return suggestions;
+        List<Suggestion> reordered = new ArrayList<>(suggestions);
+        reordered.add(target, reordered.remove(negation));
+        return reordered;
+    }
+
+    /** Where the NOT row is, joined by a connector or not; -1 when it is not offered. */
+    private static int indexOfNegation(List<Suggestion> suggestions) {
+        for (int i = 0; i < suggestions.size(); i++)
+            if (isNegation(suggestions.get(i)))
+                return i;
+        return -1;
+    }
+
+    /** Whether this row stages the negation - the row itself, or the row with its connector in front. */
+    public static boolean isNegation(@NotNull Suggestion suggestion) {
+        Suggestion row = suggestion instanceof Suggestion.Joined joined ? joined.target() : suggestion;
+        return row instanceof Suggestion.TokenSuggestion token && token.token() == SpecialToken.NOT;
     }
 
     /**

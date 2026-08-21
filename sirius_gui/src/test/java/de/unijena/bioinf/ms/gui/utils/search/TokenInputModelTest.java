@@ -350,6 +350,41 @@ public class TokenInputModelTest {
                 model.choose(suggestion(")", "")).orElseThrow());
     }
 
+    // --- the negation sits where it can be found ---
+
+    @Test
+    public void testTheNegationIsTheSecondRowOfAnUntouchedList() {
+        model.setRunAction(RUN_SEARCH);
+        List<String> displays = displays(model.suggestions(""));
+        assertEquals("Search", displays.get(0), "the run action stays the default pick");
+        assertEquals("NOT", displays.get(1), "half the fields are asked about in the negative - do not bury it");
+
+        // with something to join it carries the connector like every other row, and still sits there
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false);
+        assertEquals("AND NOT", displays(model.suggestions("")).get(1));
+    }
+
+    @Test
+    public void testWithoutARunActionTheNegationIsFirst() {
+        assertEquals("NOT", displays(model.suggestions("")).get(0));
+    }
+
+    @Test
+    public void testTypingKeepsTheBestMatchFirst() {
+        model.setRunAction(RUN_SEARCH);
+        // the hoist is for the untouched list only: while typing, the default pick has to be what was typed
+        assertEquals("ionMass", displays(model.suggestions("ion")).get(0));
+        assertEquals("NOT", displays(model.suggestions("no")).get(0), "and NOT is a match like any other");
+    }
+
+    @Test
+    public void testAStagedNegationLeavesTheList() {
+        model.setRunAction(RUN_SEARCH);
+        model.choose(suggestion("NOT", ""));
+        assertTrue(displays(model.suggestions("")).stream().noneMatch(d -> d.endsWith("NOT")),
+                "it is already staged - offering it again would say it twice");
+    }
+
     // --- query modes: which connectors and nestings the builder offers ---
 
     @Test
