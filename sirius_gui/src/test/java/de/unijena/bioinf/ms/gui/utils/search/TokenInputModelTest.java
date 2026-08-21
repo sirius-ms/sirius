@@ -72,6 +72,10 @@ public class TokenInputModelTest {
                                 .map(TokenInputModel.Suggestion::display).toList()));
     }
 
+    private static List<String> displays(List<TokenInputModel.Suggestion> suggestions) {
+        return suggestions.stream().map(TokenInputModel.Suggestion::display).toList();
+    }
+
     private List<String> fragmentTexts() {
         return model.pendingFragments().stream().map(TokenInputModel.Fragment::text).toList();
     }
@@ -328,6 +332,75 @@ public class TokenInputModelTest {
         assertEquals(List.of("AND", "OR", ")"), displays);
         assertInstanceOf(TokenInputModel.Event.CloseGroup.class,
                 model.choose(suggestion(")", "")).orElseThrow());
+    }
+
+    // --- the connector stage takes operators only (no free text) ---
+
+    @Test
+    public void testConnectorStageOffersNoFreeTextOrParseRow() {
+        model.updateContext(FIELDS, true, false);
+        // a word after a committed filter is a typo, not a search term - it must not be offerable
+        assertTrue(model.suggestions("caffeine").stream()
+                        .noneMatch(s -> s instanceof TokenInputModel.Suggestion.FreeTextSuggestion),
+                "free text must not be offered where only a connector may follow");
+        assertTrue(model.suggestions("quality:GOOD OR name:x").stream()
+                        .noneMatch(s -> s instanceof TokenInputModel.Suggestion.ParseQuerySuggestion),
+                "a whole query cannot be spliced in at the connector stage either");
+    }
+
+    @Test
+    public void testUnmatchedConnectorTextReoffersAllConnectors() {
+        model.updateContext(FIELDS, true, false);
+        // narrowing works as long as something matches ...
+        assertEquals(List.of("OR"), displays(model.suggestions("o")));
+        // ... and once nothing does, the full set comes back so the user can see what IS possible
+        assertEquals(List.of("AND", "OR"), displays(model.suggestions("caffeine")));
+
+        model.updateContext(FIELDS, true, true); // inside an open group ) belongs to that set
+        assertEquals(List.of("AND", "OR", ")"), displays(model.suggestions("caffeine")));
+    }
+
+    @Test
+    public void testConnectorStageRejectsAnythingButAConnector() {
+        model.updateContext(FIELDS, true, true);
+        assertTrue(model.inputProblem("").isEmpty(), "an empty input is not an error");
+        assertTrue(model.inputProblem("  ").isEmpty());
+        assertTrue(model.inputProblem("an").isEmpty(), "a connector prefix is on its way to AND");
+        assertTrue(model.inputProblem("OR").isEmpty());
+        assertTrue(model.inputProblem("or not ion").isEmpty(), "a connector-led phrase applies in one go");
+        assertTrue(model.inputProblem("(").isEmpty(), "the parens are structure, not text");
+        assertTrue(model.inputProblem(")").isEmpty());
+
+        assertTrue(model.inputProblem("caffeine").isPresent());
+        assertTrue(model.inputProblem("ionm").isPresent(), "not even a field prefix - a connector must come first");
+    }
+
+    @Test
+    public void testOnlyTheFieldStageTakesFreeText() {
+        assertTrue(model.acceptsFreeText(), "no sibling -> FIELD stage, where a word is a full-text term");
+        assertTrue(model.inputProblem("caffeine").isEmpty(), "and is therefore not an error there");
+
+        model.updateContext(FIELDS, true, false);
+        assertFalse(model.acceptsFreeText());
+
+        model.choose(suggestion("AND", "")); // connector chosen -> FIELD stage again
+        assertTrue(model.acceptsFreeText());
+        assertTrue(model.inputProblem("caffeine").isEmpty());
+
+        model.choose(suggestion("ionMass", "")); // operator stage: text is an operator fragment
+        assertFalse(model.acceptsFreeText());
+    }
+
+    @Test
+    public void testConnectorStageNeitherAcceptsNorCommitsPlainText() {
+        model.updateContext(FIELDS, true, false);
+        assertFalse(model.canAccept("caffeine"), "the accept key has nothing to add");
+        assertFalse(model.canAccept("ionm"));
+        assertTrue(model.canAccept("or not ion"), "a connector-led phrase is still consumed");
+        assertTrue(model.submitTyped("caffeine").isEmpty());
+        assertTrue(model.pendingFragments().isEmpty(), "rejected text must not consume a stage");
+        // and running the query must not bake it into a clause behind the user's back
+        assertFalse(model.isTerminal("caffeine"));
     }
 
     // --- keyless full-text clause ---

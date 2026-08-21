@@ -45,7 +45,9 @@ import java.util.Optional;
  * <p>
  * Pure model: the UI renders {@link #suggestions}, {@link #pendingFragments} and {@link #stagePrompt}
  * and applies the returned {@link Event}s to the query tree. Free text is not consumed here - typed
- * text that resolves to nothing stays the free-text search segment of the owner.
+ * text that resolves to nothing stays the free-text search segment of the owner, but only at the
+ * stages that may hold one: at the CONNECTOR stage such text is rejected instead
+ * ({@link #inputProblem}), because a word cannot follow a finished filter.
  */
 public class TokenInputModel {
 
@@ -269,13 +271,57 @@ public class TokenInputModel {
     }
 
     /**
+     * Whether typed text may become the owner's free-text search term at this stage: the FIELD stage
+     * only. The connector stage joins two filters and nothing else - a bare word cannot follow a
+     * finished filter, so text there is a typo rather than a search term (see {@link #inputProblem}).
+     * The value stages take text too, but as a clause value, not as free text.
+     */
+    public boolean acceptsFreeText() {
+        return stage == Stage.FIELD;
+    }
+
+    /**
+     * Why the typed text cannot stand at this stage, for the owner to show on the input; empty when it
+     * is fine. Only the connector stage rejects anything: it takes a connector (or the parens, which
+     * carry one implicitly), and typing past that is a dead end the user has to see.
+     */
+    public Optional<String> inputProblem(@NotNull String typed) {
+        if (stage != Stage.CONNECTOR || continuesWithConnector(typed.trim()))
+            return Optional.empty();
+        return Optional.of("Only " + (groupOpen ? "AND, OR or )" : "AND or OR")
+                + " can follow a filter - pick one, or delete the text");
+    }
+
+    /**
+     * Whether text typed at the connector stage still reads as a connector: one being typed
+     * ({@code an}), a connector-led phrase that applies in one go ({@code or not ion}), or a paren -
+     * structure rather than text, and an implicit AND. Empty text is nothing yet, so not a problem.
+     */
+    private boolean continuesWithConnector(String trimmed) {
+        if (trimmed.isEmpty() || !connectorSuggestions(trimmed.toLowerCase(Locale.ROOT)).isEmpty())
+            return true;
+        Optional<Completion> completion = CompletionParser.parse(trimmed, fields, hasSibling, groupOpen);
+        if (completion.isEmpty())
+            return false;
+        Completion parsed = completion.get();
+        // a clause typed without a connector ("ionm") would join by an implicit AND the user never
+        // chose - at this stage that decision is the one being asked for, so it is not accepted
+        return !(parsed instanceof Completion.ClauseStart clause) || clause.logic() != null;
+    }
+
+    /**
      * The suggestions for the current stage, narrowed by the typed prefix (empty prefix = all).
      */
     public List<Suggestion> suggestions(@NotNull String typed) {
         String trimmed = typed.trim();
         String prefix = trimmed.toLowerCase(Locale.ROOT);
         List<Suggestion> suggestions = switch (stage) {
-            case CONNECTOR -> connectorSuggestions(prefix);
+            // nothing matching what is typed means the input has left the grammar; show what IS
+            // possible here instead of an empty list the owner would hide (see inputProblem)
+            case CONNECTOR -> {
+                List<Suggestion> matching = connectorSuggestions(prefix);
+                yield matching.isEmpty() ? connectorSuggestions("") : matching;
+            }
             case FIELD -> fieldStageSuggestions(prefix);
             case OPERATOR -> operatorSuggestions(prefix);
             case VALUE, VALUE2 -> valueSuggestions(prefix);
@@ -288,9 +334,9 @@ public class TokenInputModel {
             withRunAction.addAll(suggestions);
             suggestions = withRunAction;
         }
-        // at an entry stage, typed text can always become a keyless full-text clause; offered last
-        // so a matching field stays the default pick
-        if (atEntryStage() && !trimmed.isEmpty()) {
+        // where free text is allowed, typed text can always become a keyless full-text clause; offered
+        // last so a matching field stays the default pick
+        if (acceptsFreeText() && !trimmed.isEmpty()) {
             suggestions = new ArrayList<>(suggestions);
             suggestions.add(new Suggestion.FreeTextSuggestion(trimmed));
             // ... and, when it reads as more than plain words (a field, operator, group or boolean),
@@ -445,7 +491,11 @@ public class TokenInputModel {
                     return choose(matching.get(0));
                 return Optional.empty();
             }
-            case CONNECTOR, FIELD -> {
+            case CONNECTOR -> {
+                // only a connector (or a phrase led by one) may be applied here
+                return continuesWithConnector(trimmed) ? applyGrammar(trimmed) : Optional.empty();
+            }
+            case FIELD -> {
                 return applyGrammar(trimmed);
             }
         }
@@ -465,7 +515,9 @@ public class TokenInputModel {
             case VALUE -> (pendingOp != null && pendingOp.isRange()) || !trimmed.isEmpty();
             case VALUE2 -> true;
             case OPERATOR -> operatorSuggestions(trimmed.toLowerCase(Locale.ROOT)).size() == 1;
-            case CONNECTOR, FIELD -> CompletionParser.parse(trimmed, fields, hasSibling, groupOpen).isPresent();
+            case CONNECTOR -> continuesWithConnector(trimmed)
+                    && CompletionParser.parse(trimmed, fields, hasSibling, groupOpen).isPresent();
+            case FIELD -> CompletionParser.parse(trimmed, fields, hasSibling, groupOpen).isPresent();
         };
     }
 
@@ -647,7 +699,8 @@ public class TokenInputModel {
     public boolean isTerminal(@NotNull String typed) {
         String trimmed = typed.trim();
         return switch (stage) {
-            case CONNECTOR, FIELD -> !trimmed.isEmpty();
+            case CONNECTOR -> false; // text here is a typo, not a term - running the query drops it
+            case FIELD -> !trimmed.isEmpty();
             case OPERATOR -> false;
             case VALUE -> pendingOp != null && pendingOp.isRange() ? false : !trimmed.isEmpty();
             case VALUE2 -> true;
