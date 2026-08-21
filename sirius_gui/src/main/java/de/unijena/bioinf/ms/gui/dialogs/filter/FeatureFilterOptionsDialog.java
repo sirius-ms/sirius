@@ -505,6 +505,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
     private void applyToModel(@NotNull FeatureFilterModel filterModel) {
         filterModel.setInverted(queryEditor.isInverted());
+        filterModel.setQueryJoin(queryEditor.getQueryJoin());
 
         filterModel.setCurrentMinMz(getMinMz());
         filterModel.setCurrentMaxMz(getMaxMz());

@@ -225,6 +225,54 @@ public class PanelQueryNodeFactoryTest {
         assertTrue(nodes(model).isEmpty());
     }
 
+    // --- the joint between the panel facets and the user's own query ---
+
+    private static void searchText(FeatureFilterModel model, String text) throws Exception {
+        model.getSearchTextDoc().insertString(0, text, null);
+    }
+
+    @Test
+    public void testTheFacetsNarrowTheUserQueryByDefault() throws Exception {
+        FeatureFilterModel model = cleanSlate();
+        model.setPfasDetected(true);
+        searchText(model, "name:caffeine");
+        assertEquals("(tags.pfas:[* TO *]) AND (name:caffeine)",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    @Test
+    public void testTheUserQueryCanBeAnAlternativeToTheFacets() throws Exception {
+        FeatureFilterModel model = cleanSlate();
+        model.setPfasDetected(true);
+        searchText(model, "name:caffeine");
+        model.setQueryJoin(LogicOp.OR);
+        // the panel facets stop narrowing: a feature matching the query alone passes too
+        assertEquals("(tags.pfas:[* TO *]) OR (name:caffeine)",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+
+        // inversion still wraps the whole thing, joint included
+        model.setInverted(true);
+        assertEquals("*:* AND NOT ((tags.pfas:[* TO *]) OR (name:caffeine))",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    @Test
+    public void testTheJointIsMootWithoutAUserQuery() {
+        FeatureFilterModel model = cleanSlate();
+        model.setPfasDetected(true);
+        model.setQueryJoin(LogicOp.OR);
+        assertEquals("tags.pfas:[* TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow(),
+                "an OR with nothing on the other side is not an alternative");
+    }
+
+    @Test
+    public void testResetRestoresTheDefaultJoint() {
+        FeatureFilterModel model = cleanSlate();
+        model.setQueryJoin(LogicOp.OR);
+        model.resetFilter();
+        assertEquals(LogicOp.AND, model.getQueryJoin());
+    }
+
     @Test
     public void testUsedFieldNamesOccurInTheModelsCompiledQuery() {
         // activate a broad set of facets together (feature quality stays enabled by default)

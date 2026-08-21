@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.utils.search;
 
+import de.unijena.bioinf.ms.gui.utils.query.LogicOp;
 import de.unijena.bioinf.ms.gui.utils.query.NumberOp;
 import io.sirius.ms.sdk.model.SearchableField;
 import io.sirius.ms.sdk.model.SearchableFieldType;
@@ -45,6 +46,47 @@ public class SuggestionDisplayTest {
 
     private static TokenInputModel.Suggestion.FieldSuggestion suggestion(SearchableField field) {
         return new TokenInputModel.Suggestion.FieldSuggestion(field);
+    }
+
+    // --- joined rows: the connector in front of whatever it joins ---
+
+    @Test
+    public void testAJoinedRowIsItsTargetWithTheConnectorInFront() {
+        SuggestionDisplay.Row target = SuggestionDisplay.of(
+                suggestion(field(INCHI, DESCRIPTION, 1)), FieldDisplay.Mode.COMPACT);
+        SuggestionDisplay.Row joined = SuggestionDisplay.of(
+                new TokenInputModel.Suggestion.Joined(LogicOp.OR,
+                        suggestion(field(INCHI, DESCRIPTION, 1)), false), FieldDisplay.Mode.COMPACT);
+
+        assertEquals("OR", joined.connector(), "the connector is its own part of the row, not the name");
+        assertEquals(target.display(), joined.display(), "... so the name is untouched");
+        assertNull(target.connector());
+        // everything else about the row is the target's: the connector says nothing about the field
+        assertEquals(target.dimmed(), joined.dimmed());
+        assertEquals(target.tooltip(), joined.tooltip());
+        assertTrue(joined.tooltip().contains(INCHI));
+    }
+
+    @Test
+    public void testAJoinedTokenRowKeepsItsOwnDescription() {
+        SuggestionDisplay.Row joined = SuggestionDisplay.of(
+                new TokenInputModel.Suggestion.Joined(LogicOp.AND,
+                        new TokenInputModel.Suggestion.TokenSuggestion(TokenInputModel.SpecialToken.OPEN_GROUP), false),
+                FieldDisplay.Mode.COMPACT);
+        assertEquals("AND", joined.connector());
+        assertEquals("(", joined.display());
+        assertNotNull(joined.dimmed(), "the token's own description still explains what it does");
+    }
+
+    @Test
+    public void testTheBlockJointRowOpensItsBrace() {
+        // the joint between the filter-panel block and the user's query starts that block - the brace in
+        // the connector is what tells it apart from a connector inside the query
+        SuggestionDisplay.Row row = SuggestionDisplay.of(
+                new TokenInputModel.Suggestion.Joined(LogicOp.OR,
+                        suggestion(field(INCHI, DESCRIPTION, 1)), true), FieldDisplay.Mode.COMPACT);
+        assertEquals("OR (", row.connector());
+        assertEquals("inchiKey", row.display(), "the brace belongs to the connector, not to the name");
     }
 
     // --- field rows ---

@@ -35,6 +35,221 @@ public class QueryTreeOpsTest {
         return QueryClause.text(field, value, false);
     }
 
+    /** A flat container of text clauses joined by {@code logics}. */
+    private static QueryContainer flat(List<LogicOp> logics, String... fields) {
+        List<QueryNode> items = new java.util.ArrayList<>(fields.length);
+        for (String field : fields)
+            items.add(clause(field, "1"));
+        return new QueryContainer(items, logics);
+    }
+
+    private static List<String> fieldsOf(List<QueryNode> items) {
+        return items.stream().map(node -> node instanceof QueryClause clause
+                ? clause.field() : "(" + String.join("|", fieldsOf(((QueryGroup) node).items())) + ")").toList();
+    }
+
+    // --- setLogic: flipping a connector keeps every level AND-only or OR-only ---
+
+    @Test
+    public void testFlippingTheOnlyConnectorJustSetsIt() {
+        QueryContainer root = flat(List.of(LogicOp.AND), "a", "b");
+        QueryTreeOps.PathResult result = QueryTreeOps.setLogic(
+                root, new int[0], new int[0], 0, LogicOp.OR, false).orElseThrow();
+        assertEquals(List.of(LogicOp.OR), result.root().logics(), "two items cannot be a mixed level");
+        assertEquals(List.of("a", "b"), fieldsOf(result.root().items()), "and nothing needs grouping");
+    }
+
+    @Test
+    public void testFlippingOneOfSeveralConnectorsGroupsThePair() {
+        // a AND b AND c, flip the second connector -> a AND (b OR c): the level stays AND-only, and the
+        // OR sits in a group where it means what it reads
+        QueryContainer root = flat(List.of(LogicOp.AND, LogicOp.AND), "a", "b", "c");
+        QueryContainer flipped = QueryTreeOps.setLogic(root, new int[0], new int[0], 1, LogicOp.OR, false)
+                .orElseThrow().root();
+        assertEquals(List.of("a", "(b|c)"), fieldsOf(flipped.items()));
+        assertEquals(List.of(LogicOp.AND), flipped.logics());
+        QueryGroup group = (QueryGroup) flipped.items().get(1);
+        assertEquals(List.of(LogicOp.OR), group.logics());
+        assertFalse(group.negated());
+    }
+
+    @Test
+    public void testFlippingTheFirstConnectorGroupsTheFirstPair() {
+        QueryContainer root = flat(List.of(LogicOp.AND, LogicOp.AND), "a", "b", "c");
+        QueryContainer flipped = QueryTreeOps.setLogic(root, new int[0], new int[0], 0, LogicOp.OR, false)
+                .orElseThrow().root();
+        assertEquals(List.of("(a|b)", "c"), fieldsOf(flipped.items()));
+        assertEquals(List.of(LogicOp.AND), flipped.logics());
+    }
+
+    @Test
+    public void testFlippingIntoAnAdjacentGroupExtendsItInsteadOfNesting() {
+        // a AND (b OR c), flip the connector before the group -> (a OR b OR c) needs no second group
+        QueryGroup group = new QueryGroup("g1", false,
+                List.of(clause("b", "1"), clause("c", "1")), List.of(LogicOp.OR));
+        QueryContainer root = new QueryContainer(List.of(clause("a", "1"), group), List.of(LogicOp.AND));
+        QueryContainer flipped = QueryTreeOps.setLogic(root, new int[0], new int[0], 0, LogicOp.OR, false)
+                .orElseThrow().root();
+        // the group became the container's only item, so its parentheses are redundant and it dissolves
+        assertEquals(List.of("a", "b", "c"), fieldsOf(flipped.items()));
+        assertEquals(List.of(LogicOp.OR, LogicOp.OR), flipped.logics());
+    }
+
+    @Test
+    public void testFlippingAfterAGroupExtendsItToo() {
+        // (a OR b) AND c, flip the connector after the group -> (a OR b OR c)
+        QueryGroup group = new QueryGroup("g1", false,
+                List.of(clause("a", "1"), clause("b", "1")), List.of(LogicOp.OR));
+        QueryContainer root = new QueryContainer(List.of(group, clause("c", "1")), List.of(LogicOp.AND));
+        QueryContainer flipped = QueryTreeOps.setLogic(root, new int[0], new int[0], 0, LogicOp.OR, false)
+                .orElseThrow().root();
+        assertEquals(List.of("a", "b", "c"), fieldsOf(flipped.items()));
+        assertEquals(List.of(LogicOp.OR, LogicOp.OR), flipped.logics());
+    }
+
+    @Test
+    public void testANegatedGroupIsNeverExtended() {
+        // NOT (b OR c) means something else with a inside it - wrap instead
+        QueryGroup negated = new QueryGroup("g1", true,
+                List.of(clause("b", "1"), clause("c", "1")), List.of(LogicOp.OR));
+        QueryContainer root = new QueryContainer(List.of(clause("a", "1"), negated, clause("d", "1")),
+                List.of(LogicOp.AND, LogicOp.AND));
+        QueryContainer flipped = QueryTreeOps.setLogic(root, new int[0], new int[0], 0, LogicOp.OR, true)
+                .orElseThrow().root();
+        assertEquals(List.of("(a|(b|c))", "d"), fieldsOf(flipped.items()));
+        assertTrue(((QueryGroup) ((QueryGroup) flipped.items().get(0)).items().get(1)).negated(),
+                "the negation stays on the group it belonged to");
+    }
+
+    @Test
+    public void testFlippingBackDissolvesTheGroupItCreated() {
+        // the inverse of testFlippingOneOfSeveralConnectorsGroupsThePair, so a flip is undoable
+        QueryContainer root = flat(List.of(LogicOp.AND, LogicOp.AND), "a", "b", "c");
+        QueryContainer grouped = QueryTreeOps.setLogic(root, new int[0], new int[0], 1, LogicOp.OR, false)
+                .orElseThrow().root();
+        QueryContainer back = QueryTreeOps.setLogic(grouped, new int[0], new int[]{1}, 0, LogicOp.AND, false)
+                .orElseThrow().root();
+        assertEquals(List.of("a", "b", "c"), fieldsOf(back.items()), "a group that agrees with its parent goes");
+        assertEquals(List.of(LogicOp.AND, LogicOp.AND), back.logics());
+    }
+
+    @Test
+    public void testAGroupThatStillDiffersFromItsParentStays() {
+        // (b OR c OR d) inside an AND parent: flipping one of its connectors to AND would need a nested
+        // group, which is refused without nesting ...
+        QueryGroup group = new QueryGroup("g1", false,
+                List.of(clause("b", "1"), clause("c", "1"), clause("d", "1")), List.of(LogicOp.OR, LogicOp.OR));
+        QueryContainer root = new QueryContainer(List.of(clause("a", "1"), group), List.of(LogicOp.AND));
+        assertTrue(QueryTreeOps.setLogic(root, new int[0], new int[]{1}, 0, LogicOp.AND, false).isEmpty());
+        // ... and nests when it is allowed
+        QueryContainer nested = QueryTreeOps.setLogic(root, new int[0], new int[]{1}, 0, LogicOp.AND, true)
+                .orElseThrow().root();
+        assertEquals(List.of("a", "((b|c)|d)"), fieldsOf(nested.items()));
+    }
+
+    @Test
+    public void testANegatedGroupIsNeverDissolved() {
+        // NOT (b AND c) is not the same as NOT b AND NOT c
+        QueryGroup negated = new QueryGroup("g1", true,
+                List.of(clause("b", "1"), clause("c", "1")), List.of(LogicOp.OR));
+        QueryContainer root = new QueryContainer(List.of(clause("a", "1"), negated), List.of(LogicOp.AND));
+        QueryContainer flipped = QueryTreeOps.setLogic(root, new int[0], new int[]{1}, 0, LogicOp.AND, false)
+                .orElseThrow().root();
+        assertEquals(List.of("a", "(b|c)"), fieldsOf(flipped.items()), "the group stays");
+        assertEquals(List.of(LogicOp.AND), ((QueryGroup) flipped.items().get(1)).logics());
+    }
+
+    @Test
+    public void testTheOpenGroupIsNotDissolvedUnderTheCursor() {
+        QueryGroup group = new QueryGroup("g1", false,
+                List.of(clause("b", "1"), clause("c", "1")), List.of(LogicOp.OR));
+        QueryContainer root = new QueryContainer(List.of(clause("a", "1"), group), List.of(LogicOp.AND));
+        QueryTreeOps.PathResult result = QueryTreeOps.setLogic(root, new int[]{1}, new int[]{1}, 0,
+                LogicOp.AND, false).orElseThrow();
+        assertEquals(List.of("a", "(b|c)"), fieldsOf(result.root().items()),
+                "it is still being edited - dissolving it would move the cursor out from under the user");
+        assertArrayEquals(new int[]{1}, result.path());
+    }
+
+    @Test
+    public void testTheCursorSurvivesAFlipThatShiftsIndices() {
+        // a AND b AND (open group): grouping a and b shifts the open group from index 2 to index 1
+        QueryContainer root = flat(List.of(LogicOp.AND, LogicOp.AND), "a", "b", "c");
+        QueryTreeOps.PathResult opened = QueryTreeOps.openGroup(root, new int[0], false, LogicOp.AND);
+        assertArrayEquals(new int[]{3}, opened.path());
+
+        QueryTreeOps.PathResult flipped = QueryTreeOps.setLogic(opened.root(), opened.path(), new int[0], 0,
+                LogicOp.OR, false).orElseThrow();
+        assertArrayEquals(new int[]{2}, flipped.path(), "the cursor follows the group it points at");
+        assertEquals(List.of("(a|b)", "c", "()"), fieldsOf(flipped.root().items()));
+    }
+
+    @Test
+    public void testAnAlreadyMixedLevelIsLeftAsItIs() {
+        // a mix can only come from outside the builder (a pasted or hand-edited query); normalising it
+        // would rewrite what the user wrote, so the flip is just applied
+        QueryContainer root = flat(List.of(LogicOp.AND, LogicOp.OR), "a", "b", "c");
+        QueryContainer flipped = QueryTreeOps.setLogic(root, new int[0], new int[0], 0, LogicOp.OR, false)
+                .orElseThrow().root();
+        assertEquals(List.of("a", "b", "c"), fieldsOf(flipped.items()));
+        assertEquals(List.of(LogicOp.OR, LogicOp.OR), flipped.logics());
+    }
+
+    @Test
+    public void testFlippingToWhatItAlreadyIsChangesNothing() {
+        QueryContainer root = flat(List.of(LogicOp.AND, LogicOp.AND), "a", "b", "c");
+        QueryContainer flipped = QueryTreeOps.setLogic(root, new int[0], new int[0], 1, LogicOp.AND, false)
+                .orElseThrow().root();
+        assertEquals(List.of("a", "b", "c"), fieldsOf(flipped.items()));
+        assertEquals(List.of(LogicOp.AND, LogicOp.AND), flipped.logics());
+    }
+
+    @Test
+    public void testAnOutOfRangeConnectorIsRefused() {
+        QueryContainer root = flat(List.of(LogicOp.AND), "a", "b");
+        assertTrue(QueryTreeOps.setLogic(root, new int[0], new int[0], 1, LogicOp.OR, false).isEmpty());
+        assertTrue(QueryTreeOps.setLogic(root, new int[0], new int[0], -1, LogicOp.OR, false).isEmpty());
+    }
+
+    // --- appendJoined / openGroupJoined: the autocomplete takes the same route as a flip ---
+
+    @Test
+    public void testAppendingWithTheOtherConnectorGroupsItWithItsNeighbour() {
+        // a AND b, then "OR c" from the suggestion list -> a AND (b OR c), exactly what flipping the
+        // second connector would have produced: one rule, whichever way the user gets there
+        QueryContainer root = flat(List.of(LogicOp.AND), "a", "b");
+        QueryTreeOps.PathResult result = QueryTreeOps.appendJoined(root, new int[0], clause("c", "1"),
+                LogicOp.OR, false);
+        assertEquals(List.of("a", "(b|c)"), fieldsOf(result.root().items()));
+        assertEquals(List.of(LogicOp.AND), result.root().logics());
+    }
+
+    @Test
+    public void testAppendingWithTheLevelsOwnConnectorJustAppends() {
+        QueryContainer root = flat(List.of(LogicOp.AND), "a", "b");
+        QueryContainer appended = QueryTreeOps.appendJoined(root, new int[0], clause("c", "1"),
+                LogicOp.AND, false).root();
+        assertEquals(List.of("a", "b", "c"), fieldsOf(appended.items()));
+        assertEquals(List.of(LogicOp.AND, LogicOp.AND), appended.logics());
+
+        // ... and the very first item has no connector to disagree with
+        QueryContainer first = QueryTreeOps.appendJoined(QueryContainer.empty(), new int[0], clause("a", "1"),
+                LogicOp.OR, false).root();
+        assertEquals(List.of("a"), fieldsOf(first.items()));
+        assertTrue(first.logics().isEmpty());
+    }
+
+    @Test
+    public void testOpeningAGroupWithTheOtherConnectorWrapsItAndKeepsTheCursorInside() {
+        QueryContainer root = flat(List.of(LogicOp.AND), "a", "b");
+        QueryTreeOps.PathResult opened = QueryTreeOps.openGroupJoined(root, new int[0], false, LogicOp.OR, true);
+        // a AND (b OR ( )) - the new group is where typing continues
+        assertEquals(List.of("a", "(b|())"), fieldsOf(opened.root().items()));
+        assertArrayEquals(new int[]{1, 1}, opened.path());
+        QueryContainer typed = QueryTreeOps.append(opened.root(), opened.path(), clause("c", "1"), LogicOp.AND);
+        assertEquals(List.of("a", "(b|(c))"), fieldsOf(typed.items()));
+    }
+
     // --- append & cursor path ---
 
     @Test

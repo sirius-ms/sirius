@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.gui.configs.CompactToggleIcon;
 import de.unijena.bioinf.ms.gui.configs.FilterButton;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.configs.InvertIcon;
+import de.unijena.bioinf.ms.gui.configs.QueryModeIcon;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
@@ -60,9 +61,15 @@ import java.util.function.Supplier;
  * a {@link Host}. {@link SearchBarOverlay} hosts it in a floating dialog; the feature filter dialog
  * embeds it directly.
  * <p>
- * Between two terms only a connector may be typed: a word entered there is not a search term (it
- * would silently widen the query) but a typo, so it is painted in the error colour while the list
- * re-offers AND/OR - and picking one keeps the text, which the next stage takes as a term again.
+ * Every suggestion carries the connector that would join it to the terms already there ({@code AND
+ * ionMass}), so choosing a term chooses how it is combined - there is no separate connector step. The
+ * {@link QueryMode} toggle in the controls row decides which connectors are offered: simple mode ANDs
+ * the top-level terms, ORs the alternatives inside a group and does not nest groups; advanced mode
+ * offers both everywhere. The joint between the filter-panel block and the user's own query is the one
+ * the query is built around: the chips zone braces both blocks and puts it between them as a chip that
+ * flips AND/OR on click, and the connector picked for the very first user term is that joint (its row
+ * shows the brace it opens). Typing a connector that is not on offer is refused rather than
+ * reinterpreted - the input turns red and says why (see {@link #styleInput()}).
  * <p>
  * Up/Down navigate the suggestion list; Enter and Tab both ADD the highlighted suggestion (or the
  * typed value) to the query. An untouched input highlights the run-action row ("Search") on top
@@ -87,6 +94,12 @@ public class QueryEditorPanel extends JPanel {
      * Vertical gap between chip rows; shared by the chips-zone {@link WrapLayout} and the height cap.
      */
     private static final int CHIP_VGAP = 4;
+    /** Font enlargement of a brace around a group inside the user's query. */
+    private static final float GROUP_PAREN_FONT_DELTA = 2f;
+    /** ... and of the braces around the two fixed blocks, which are a level above those groups. */
+    private static final float BLOCK_PAREN_FONT_DELTA = 8f;
+    /** Enlargement of the block joint, which belongs to the big braces rather than to the chips. */
+    private static final float BLOCK_JOIN_FONT_DELTA = 3f;
 
     /**
      * What a commit produced - the collapsed bar renders its chips from this snapshot (never by
@@ -172,6 +185,9 @@ public class QueryEditorPanel extends JPanel {
     /** The invert toggle's glyph, kept so it can be re-tinted when the inversion state flips. */
     private InvertIcon invertIcon;
     private JButton invertToggle;
+    /** The query-mode toggle's glyph, kept so it can flip between the flat and the nested structure. */
+    private QueryModeIcon queryModeIcon;
+    private JButton queryModeToggle;
 
     // --- builder state ---
     private QueryContainer root = QueryContainer.empty();
@@ -181,12 +197,20 @@ public class QueryEditorPanel extends JPanel {
      *  edited here (see the invert toggle), applied to the model at the host's commit point. */
     private boolean inverted;
     /**
+     * How the filter-panel block and the user's own query are joined - the "big" connector of
+     * {@code (facets) AND (query)}. A model-level flag like {@link #inverted}: surfaced here as the
+     * clickable chip between the two braced blocks, applied to the model on commit. AND by default,
+     * which is what it stays for everyone who never touches it.
+     */
+    private LogicOp queryJoin = LogicOp.AND;
+    /**
      * The applied query the working state reverts to on Cancel: captured when the session opens and
      * whenever a search is committed. Uncommitted edits made while open are discarded back to this.
      */
     private QueryContainer baselineRoot = QueryContainer.empty();
     private String baselineFreeText = "";
     private boolean baselineInverted;
+    private LogicOp baselineQueryJoin = LogicOp.AND;
     /**
      * The query string this editor last wrote into the shared search document. If the document
      * differs on open, it was edited elsewhere (filter dialog) - the builder then degrades the
@@ -367,6 +391,21 @@ public class QueryEditorPanel extends JPanel {
         });
         styleModeToggle(modeToggle);
 
+        // query-mode toggle: simple (AND at the top level, OR inside a group, no nesting) vs. advanced
+        // (both connectors everywhere, groups nest). Sits with the other meta controls rather than in
+        // the overlay's footer, because the embedded editor (filter dialog) has no footer.
+        queryModeIcon = new QueryModeIcon(ICON_SIZE, Colors.searchFieldIconColor(),
+                renderState.queryMode() == QueryMode.ADVANCED);
+        queryModeToggle = new ToolbarButton(queryModeIcon, null, true);
+        queryModeToggle.setFocusable(false);
+        queryModeToggle.setMargin(new Insets(0, 0, 0, 0));
+        queryModeToggle.addActionListener(e -> {
+            renderState.toggleQueryMode();
+            rebuild(); // re-reads the mode into the token model and re-offers the suggestions
+            input.requestFocusInWindow();
+        });
+        styleQueryModeToggle();
+
         // invert toggle: flips the whole query to its complement (a model-level flag surfaced here),
         // tinted like the funnel (grey / blue / red). A borderless in-field icon like the others.
         invertIcon = new InvertIcon(ICON_SIZE, Colors.searchFieldIconColor());
@@ -375,11 +414,13 @@ public class QueryEditorPanel extends JPanel {
         invertToggle.setMargin(new Insets(0, 0, 0, 0));
         invertToggle.addActionListener(e -> setInverted(!inverted));
 
-        // order left-to-right: query-state actions (clear, restore, invert) then meta controls (display mode, funnel)
+        // order left-to-right: query-state actions (clear, restore, invert) then meta controls (query
+        // mode, display mode, funnel)
         controls.add(clear);
         if (restore != null)
             controls.add(restore);
         controls.add(invertToggle);
+        controls.add(queryModeToggle);
         controls.add(modeToggle);
         if (filterButton != null)
             controls.add(filterButton);
@@ -577,16 +618,18 @@ public class QueryEditorPanel extends JPanel {
         input.setText("");
         pendingModelRemovals.clear();
         inverted = false;
+        queryJoin = LogicOp.AND;
         baselineRoot = root;
         baselineFreeText = "";
         baselineInverted = false;
+        baselineQueryJoin = LogicOp.AND;
         lastCompiled = Optional.ofNullable(filterModel.getSearchText()).orElse("");
         rebuild();
     }
 
     /**
-     * Copies the whole query as currently shown - the panel facets (minus any staged removals) AND the
-     * user's own query, wrapped for inversion - to the system clipboard. Mirrors the executed-query
+     * Copies the whole query as currently shown - the panel facets (minus any staged removals) joined to
+     * the user's own query by the block joint, wrapped for inversion - to the system clipboard. Mirrors the executed-query
      * composition in {@link FeatureFilterModel} (facets AND free-text segment, {@code *:* AND NOT (...)}
      * when inverted), but from the live editor state rather than the committed model, so it reflects
      * unsaved edits.
@@ -603,9 +646,15 @@ public class QueryEditorPanel extends JPanel {
         // The facets are compiled as executed (incl. the match-all anchor for negation-only facets such
         // as "no lipid class"), so the copied query runs as-is; the user query stays verbatim.
         String userQuery = LuceneQueryCompiler.compile(root, freeTextForCommit());
-        String core = LuceneQueryCompiler.compileExecutable(new QueryContainer(facets, ands), userQuery);
+        String core = LuceneQueryCompiler.compileExecutable(new QueryContainer(facets, ands), userQuery, queryJoin);
         String whole = inverted && !core.isBlank() ? "*:* AND NOT (" + core + ")" : core;
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(whole), null);
+    }
+
+    /** The working joint between the panel block and the user's query (applied to the model on commit). */
+    @NotNull
+    public LogicOp getQueryJoin() {
+        return queryJoin;
     }
 
     /** Whether the working query is inverted (applied to the model at the host's commit point). */
@@ -635,6 +684,23 @@ public class QueryEditorPanel extends JPanel {
         button.repaint();
     }
 
+    /**
+     * Labels the query-mode toggle and draws the structure the current mode allows: flat while simple,
+     * nested while advanced. Tinted like the other meta controls, and in the accent colour while
+     * advanced - a non-default mode should be visible without hovering it.
+     */
+    private void styleQueryModeToggle() {
+        boolean advanced = renderState.queryMode() == QueryMode.ADVANCED;
+        queryModeIcon.setAdvanced(advanced);
+        queryModeIcon.setColor(advanced ? Colors.Menu.FILTER_BUTTON : Colors.searchFieldIconColor());
+        queryModeToggle.setToolTipText(GuiUtils.formatToolTip(advanced
+                ? "Advanced query mode: AND or OR for every term, groups can be nested."
+                + " Click for simple mode."
+                : "Simple query mode: top-level terms are combined with AND, the alternatives inside a"
+                + " group with OR, and groups are not nested. Click for advanced mode."));
+        queryModeToggle.repaint();
+    }
+
     /** Tints the invert toggle exactly like the funnel: idle grey when no filter is active, the accent
      *  (blue) when active and not inverted, the inverted accent (red) when inverted. */
     private void styleInvertToggle() {
@@ -658,9 +724,7 @@ public class QueryEditorPanel extends JPanel {
     /** Whether the working query has anything to filter/invert: a user clause, free text, or a
      *  (not-staged-for-removal) panel facet. Drives the live funnel / invert-toggle tint. */
     private boolean hasWorkingQuery() {
-        return !root.items().isEmpty()
-                || !freeTextForCommit().isEmpty()
-                || termSupplier.get().stream().anyMatch(t -> !pendingModelRemovals.containsKey(t.id()));
+        return !root.items().isEmpty() || !freeTextForCommit().isEmpty() || hasPanelTerms();
     }
 
     // --- session lifecycle (driven by the host) ---
@@ -689,12 +753,14 @@ public class QueryEditorPanel extends JPanel {
             }
             lastCompiled = docText;
         }
-        // seed the working inversion from the applied model state each open
+        // seed the working inversion and block joint from the applied model state each open
         inverted = filterModel.isInverted();
+        queryJoin = filterModel.getQueryJoin();
         // the applied query is the baseline Cancel reverts to (before any type-ahead edit)
         baselineRoot = root;
         baselineFreeText = input.getText();
         baselineInverted = inverted;
+        baselineQueryJoin = queryJoin;
         if (typeAhead != null)
             input.setText(input.getText() + typeAhead);
 
@@ -739,6 +805,7 @@ public class QueryEditorPanel extends JPanel {
     public void revertToBaseline() {
         root = baselineRoot;
         inverted = baselineInverted;
+        queryJoin = baselineQueryJoin;
         openPath = new int[0];
         tokenModel.reset();
         input.setText(baselineFreeText);
@@ -778,8 +845,10 @@ public class QueryEditorPanel extends JPanel {
                     case KeyEvent.VK_TAB -> {
                         // Tab only ever ADDS to the query: it picks the highlighted suggestion (the
                         // run-action row is skipped - Tab never runs the search) or commits the
-                        // typed value / advances the token.
-                        acceptCurrentToken(true);
+                        // typed value / advances the token. Text the mode rejects adds nothing: a
+                        // typed OR must not turn into the AND the row offers.
+                        if (!inputRejected())
+                            acceptCurrentToken(true);
                         e.consume();
                     }
                     case KeyEvent.VK_ENTER -> {
@@ -788,7 +857,9 @@ public class QueryEditorPanel extends JPanel {
                         // nothing left to add, Enter runs the search too - so typing a term and
                         // pressing Enter twice is the quick full-text search. Embedded, "run" is
                         // the dialog's Apply (which bakes a terminal token via commitToDocument).
-                        if (isRunActionSelected() || !acceptCurrentToken(false))
+                        // ... except while the typed text is rejected (see inputRejected): there is
+                        // nothing to add, and running the query would drop the text silently
+                        if (!inputRejected() && (isRunActionSelected() || !acceptCurrentToken(false)))
                             runOrCommit();
                         e.consume();
                     }
@@ -812,31 +883,44 @@ public class QueryEditorPanel extends JPanel {
         refreshSuggestions();
     }
 
+    /**
+     * Whether what is typed asks for something the current query mode does not offer (an OR between
+     * top-level terms, a nested group). Such text is never applied - not by the accept keys, not by
+     * running the query - so the user has to see and fix it; {@link #styleInput()} says how.
+     */
+    private boolean inputRejected() {
+        return tokenModel.inputProblem(input.getText()).isPresent();
+    }
+
     private void applySuggestion(TokenInputModel.Suggestion suggestion) {
-        // Text the stage rejects (a word typed where only AND/OR may follow) survives the pick: the
-        // chosen connector advances the token to the field stage, where that text is a legal term
-        // again - so the dead end costs one keystroke instead of retyping. Text the suggestion itself
-        // consumed (the "an" that picked AND) is cleared as always.
-        String rejected = tokenModel.inputProblem(input.getText()).isPresent() ? input.getText() : "";
         tokenModel.choose(suggestion).ifPresent(this::applyEvent);
-        input.setText(rejected);
+        input.setText("");
         rebuild(); // restores input focus (see rebuild)
     }
 
     private void applyEvent(TokenInputModel.Event event) {
+        // A connector picked while the user's query is still empty joins it to the panel block - the
+        // "big" joint, which lives on the model rather than in the tree (a container drops the logic of
+        // its first item). Read before the event is applied, while the container is still empty.
+        boolean picksBlockJoin = joinContext() == TokenInputModel.Join.PANEL_TERMS;
+        if (picksBlockJoin)
+            blockJoinPicked(event);
+        boolean nesting = renderState.queryMode() == QueryMode.ADVANCED;
         if (event instanceof TokenInputModel.Event.ClauseCompleted completed) {
-            root = QueryTreeOps.append(root, openPath, completed.clause(), completed.logic());
+            applyPathResult(QueryTreeOps.appendJoined(root, openPath, completed.clause(), completed.logic(), nesting));
         } else if (event instanceof TokenInputModel.Event.QueryParsed parsed) {
-            // splice the parsed query into the open container: first item joins the existing chips by
-            // the connector logic, the rest by the parsed query's own connectors
+            // splice the parsed query into the open container: the first item joins the existing chips by
+            // the connector logic - the joint we own, so it is normalised - and the rest by the parsed
+            // query's own connectors, which are left exactly as they were written
             List<QueryNode> items = parsed.container().items();
             List<LogicOp> logics = parsed.container().logics();
             for (int i = 0; i < items.size(); i++)
-                root = QueryTreeOps.append(root, openPath, items.get(i), i == 0 ? parsed.logic() : logics.get(i - 1));
+                if (i == 0)
+                    applyPathResult(QueryTreeOps.appendJoined(root, openPath, items.get(0), parsed.logic(), nesting));
+                else
+                    root = QueryTreeOps.append(root, openPath, items.get(i), logics.get(i - 1));
         } else if (event instanceof TokenInputModel.Event.OpenGroup group) {
-            QueryTreeOps.PathResult result = QueryTreeOps.openGroup(root, openPath, group.negated(), group.logic());
-            root = result.root();
-            openPath = result.path();
+            applyPathResult(QueryTreeOps.openGroupJoined(root, openPath, group.negated(), group.logic(), nesting));
         } else if (event instanceof TokenInputModel.Event.CloseGroup) {
             QueryTreeOps.PathResult result = QueryTreeOps.closeGroup(root, openPath);
             root = result.root();
@@ -844,6 +928,21 @@ public class QueryEditorPanel extends JPanel {
         } else if (event instanceof TokenInputModel.Event.RemoveLastNode) {
             removeLastNode();
         }
+    }
+
+    private void applyPathResult(QueryTreeOps.PathResult result) {
+        root = result.root();
+        openPath = result.path();
+    }
+
+    /** The connector the event carries, applied to the block joint (see {@link #applyEvent}). */
+    private void blockJoinPicked(TokenInputModel.Event event) {
+        if (event instanceof TokenInputModel.Event.ClauseCompleted completed)
+            queryJoin = completed.logic();
+        else if (event instanceof TokenInputModel.Event.QueryParsed parsed)
+            queryJoin = parsed.logic();
+        else if (event instanceof TokenInputModel.Event.OpenGroup group)
+            queryJoin = group.logic();
     }
 
     /**
@@ -868,12 +967,28 @@ public class QueryEditorPanel extends JPanel {
     // --- embedded suggestion list handling ---
 
     private void refreshSuggestions() {
-        tokenModel.updateContext(fieldsProvider.getCached(),
-                !QueryTreeOps.containerAt(root, openPath).isEmpty(), openPath.length > 0);
+        tokenModel.updateContext(fieldsProvider.getCached(), joinContext(), openPath.length > 0);
         if (isShowing())
             showSuggestions(tokenModel.suggestions(input.getText()));
         styleInput();
         updateKeyHint();
+    }
+
+    /**
+     * What the term being built would be joined to: the terms already in the open container, else - at
+     * the top level - the filter-panel block, which the user's query is ANDed onto. Only with neither
+     * is a term the first thing in the query and joined to nothing.
+     */
+    private TokenInputModel.Join joinContext() {
+        if (!QueryTreeOps.containerAt(root, openPath).isEmpty())
+            return TokenInputModel.Join.USER_TERMS;
+        return openPath.length == 0 && hasPanelTerms()
+                ? TokenInputModel.Join.PANEL_TERMS : TokenInputModel.Join.NOTHING;
+    }
+
+    /** Whether any panel facet is showing, i.e. not staged for removal. */
+    private boolean hasPanelTerms() {
+        return termSupplier.get().stream().anyMatch(t -> !pendingModelRemovals.containsKey(t.id()));
     }
 
     private void showSuggestions(List<TokenInputModel.Suggestion> suggestions) {
@@ -990,8 +1105,8 @@ public class QueryEditorPanel extends JPanel {
     private String keyHintText() {
         if (input.getText().isEmpty())
             return "";
-        if (tokenModel.inputProblem(input.getText()).isPresent())
-            return "AND or OR expected"; // Enter would stage one and keep the text (see applySuggestion)
+        if (inputRejected())
+            return "not available in simple mode";
         boolean addable = (suggestionScroll.isVisible() && suggestionList.getSelectedValue() != null
                 && !isRunActionSelected()) || tokenModel.canAccept(input.getText());
         if (addable)
@@ -1008,7 +1123,7 @@ public class QueryEditorPanel extends JPanel {
      * committed it into a clause first).
      */
     private String freeTextForCommit() {
-        return tokenModel.acceptsFreeText() ? input.getText().trim() : "";
+        return tokenModel.acceptsFreeText() && !inputRejected() ? input.getText().trim() : "";
     }
 
     /** The compiled user query (committed chips + any trailing free text) as it stands, WITHOUT
@@ -1042,12 +1157,15 @@ public class QueryEditorPanel extends JPanel {
         pendingModelRemovals.clear();
         String compiled = LuceneQueryCompiler.compile(root, freeText);
         writeDocument(compiled);
-        filterModel.setInverted(inverted); // the overlay applies inversion here (dialog does it in applyToModel)
+        // the overlay applies the model-level flags here (the dialog does it in applyToModel)
+        filterModel.setInverted(inverted);
+        filterModel.setQueryJoin(queryJoin);
         lastCompiled = compiled;
         // the applied query becomes the new baseline, so the close below keeps it (no revert)
         baselineRoot = root;
         baselineFreeText = freeText;
         baselineInverted = inverted;
+        baselineQueryJoin = queryJoin;
         filterModel.fireUpdateCompleted();
         Commit commit = new Commit(root, freeText, compiled);
         host.editorCloseRequested();
@@ -1075,7 +1193,9 @@ public class QueryEditorPanel extends JPanel {
         lastCompiled = compiled;
         baselineRoot = root;
         baselineFreeText = freeText;
-        baselineInverted = inverted; // the dialog's applyToModel reads isInverted() to apply it
+        // the dialog's applyToModel reads isInverted()/getQueryJoin() to apply them
+        baselineInverted = inverted;
+        baselineQueryJoin = queryJoin;
     }
 
     private void writeDocument(String text) {
@@ -1091,11 +1211,15 @@ public class QueryEditorPanel extends JPanel {
     // --- rendering ---
 
     public void rebuild() {
+        // the query mode lives in the shared render state; push it into the token model before
+        // anything below asks the model a question whose answer depends on it
+        tokenModel.setMode(renderState.queryMode());
         // keep the funnel and invert toggle in sync with the WORKING filter state (grey / blue / red),
         // so they recolour live as the query is built/inverted - not only after the change is committed
         if (filterButton != null)
             filterButton.setFilterActive(hasWorkingQuery(), inverted);
         styleInvertToggle();
+        styleQueryModeToggle();
 
         // removeAll() detaches the (focused) input, which drops the keyboard focus; restore it
         // after the re-layout so typing continues seamlessly after choosing a suggestion
@@ -1108,6 +1232,13 @@ public class QueryEditorPanel extends JPanel {
         List<FilterTerm> terms = termSupplier.get().stream()
                 .filter(t -> !pendingModelRemovals.containsKey(t.id()))
                 .toList();
+        // both blocks present -> show the structure the executed query has: (facets) <join> (query),
+        // with the joint the one thing about it the user can change. Braced only then: a single block
+        // has no joint, and bracketing it alone would suggest one
+        List<QueryNode> items = root.items();
+        boolean bothBlocks = !terms.isEmpty() && !items.isEmpty();
+        if (bothBlocks)
+            chipsRow.add(parenLabel("(", BLOCK_PAREN_FONT_DELTA));
         for (int i = 0; i < terms.size(); i++) {
             if (i > 0)
                 chipsRow.add(ChipComponent.implicitAndLabel()); // dialog filters always AND together
@@ -1130,15 +1261,18 @@ public class QueryEditorPanel extends JPanel {
                     }).withAccent(queryAccent()));
         }
 
-        List<QueryNode> items = root.items();
-        // the dialog filters and the user's own query are combined with AND - make that visible
-        if (!terms.isEmpty() && !items.isEmpty())
-            chipsRow.add(ChipComponent.implicitAndLabel());
+        if (bothBlocks) {
+            chipsRow.add(parenLabel(")", BLOCK_PAREN_FONT_DELTA));
+            chipsRow.add(blockJoinChip());
+            chipsRow.add(parenLabel("(", BLOCK_PAREN_FONT_DELTA));
+        }
         for (int i = 0; i < items.size(); i++) {
             if (i > 0)
                 chipsRow.add(buildLogicComponent(root.logics().get(i - 1), new int[]{i}));
             chipsRow.add(buildNode(items.get(i), new int[]{i}));
         }
+        if (bothBlocks)
+            chipsRow.add(parenLabel(")", BLOCK_PAREN_FONT_DELTA));
 
         // --- lower zone: the term currently being built, on its own line ---
         buildTypingRow();
@@ -1233,26 +1367,39 @@ public class QueryEditorPanel extends JPanel {
         input.requestFocusInWindow();
     }
 
+    /**
+     * One connector of the user's query, flipped by a click - so a query can be rearranged after the fact
+     * instead of rebuilt.
+     * <p>
+     * The flip never leaves a level mixing AND with OR, because such a level is not read by lucene the
+     * way the chips show it ({@code a AND b OR c} is {@code +a +b c}, a required pair with an optional
+     * extra). {@link QueryTreeOps#setLogic} groups what the flipped connector joins instead:
+     * {@code a AND b AND c} becomes {@code a AND (b OR c)}, and the brace appearing is what tells the
+     * user what their alternative binds to. Flipping back dissolves the group again.
+     * <p>
+     * Inert only where that restructuring has nowhere to go: in simple mode a flip that could only be
+     * resolved by nesting one group in another is refused, which the tooltip says.
+     */
     private JComponent buildLogicComponent(LogicOp logic, int[] pathOfFollowingNode) {
-        // the operator joining the open group is still unsettled and stays editable;
-        // everything committed is inert
-        if (Arrays.equals(pathOfFollowingNode, openPath)) {
-            JComboBox<LogicOp> combo = new JComboBox<>(LogicOp.values());
-            combo.setSelectedItem(logic);
-            combo.addActionListener(e -> setLogicBefore(pathOfFollowingNode, (LogicOp) combo.getSelectedItem()));
-            return combo;
-        }
-        return new ChipComponent(logic.toString(), null, ChipComponent.Style.USER, null, null).withAccent(queryAccent());
+        int[] containerPath = Arrays.copyOf(pathOfFollowingNode, pathOfFollowingNode.length - 1);
+        int index = pathOfFollowingNode[pathOfFollowingNode.length - 1] - 1;
+        LogicOp other = logic == LogicOp.AND ? LogicOp.OR : LogicOp.AND;
+        boolean nesting = renderState.queryMode() == QueryMode.ADVANCED;
+        boolean flippable = QueryTreeOps.canSetLogic(root, containerPath, index, other, nesting);
+        return new JoinChip(logic.toString(), queryAccent(), true, 0f,
+                GuiUtils.formatToolTip(flippable
+                        ? "Click to combine with " + other + " instead."
+                        : "Switching this to " + other + " would need a group inside a group."
+                          + " Switch to advanced mode to nest groups."),
+                flippable ? () -> setLogicBefore(containerPath, index, other) : null);
     }
 
-    private void setLogicBefore(int[] childPath, LogicOp logic) {
-        int index = childPath[childPath.length - 1];
-        if (index == 0)
-            return;
-        root = QueryTreeOps.updateContainer(root, Arrays.copyOf(childPath, childPath.length - 1), container -> {
-            List<LogicOp> logics = new ArrayList<>(container.logics());
-            logics.set(index - 1, logic);
-            return new QueryContainer(container.items(), logics);
+    private void setLogicBefore(int[] containerPath, int index, LogicOp logic) {
+        QueryTreeOps.setLogic(root, openPath, containerPath, index, logic,
+                renderState.queryMode() == QueryMode.ADVANCED).ifPresent(result -> {
+            applyPathResult(result);
+            rebuild();
+            input.requestFocusInWindow();
         });
     }
 
@@ -1324,9 +1471,40 @@ public class QueryEditorPanel extends JPanel {
         return groupPanel;
     }
 
+    /**
+     * The joint between the filter-panel block and the user's query: a chip that flips AND to OR and
+     * back on click. AND narrows (the panel filters restrict the query); OR widens (the query becomes an
+     * alternative to them, so features the panel filters exclude can come back), which is why the chip
+     * spells out both what it means and what a click does.
+     */
+    private JComponent blockJoinChip() {
+        boolean and = queryJoin == LogicOp.AND;
+        return new JoinChip(queryJoin.toString(), queryAccent(), false, BLOCK_JOIN_FONT_DELTA,
+                GuiUtils.formatToolTip(
+                        and ? "The filter-panel filters narrow your query (AND)."
+                                : "Your query is an alternative to the filter-panel filters (OR):"
+                                  + " features they exclude can still match.",
+                        "Click to switch to " + (and ? "OR" : "AND") + "."),
+                () -> {
+                    queryJoin = and ? LogicOp.OR : LogicOp.AND;
+                    rebuild();
+                    input.requestFocusInWindow();
+                });
+    }
+
+    /** The brace of a group inside the user's query. */
     private JLabel parenLabel(String paren) {
+        return parenLabel(paren, GROUP_PAREN_FONT_DELTA);
+    }
+
+    /**
+     * A brace, sized by {@code fontDelta}: the two fixed blocks (panel filters, user query) get a
+     * distinctly bigger pair than the groups inside the query, so the outer structure reads as the
+     * level it is and not as one more group.
+     */
+    private JLabel parenLabel(String paren, float fontDelta) {
         JLabel label = new JLabel(paren);
-        label.setFont(label.getFont().deriveFont(Font.BOLD, label.getFont().getSize2D() + 2));
+        label.setFont(label.getFont().deriveFont(Font.BOLD, label.getFont().getSize2D() + fontDelta));
         label.setForeground(queryAccent());
         return label;
     }
@@ -1338,8 +1516,13 @@ public class QueryEditorPanel extends JPanel {
      * not clipped either.
      */
     private static int chipRowHeight() {
-        return new ChipComponent("Ag", null, ChipComponent.Style.MODEL, null, () -> {
-        }).getPreferredSize().height + 4;
+        int chip = new ChipComponent("Ag", null, ChipComponent.Style.MODEL, null, () -> {
+        }).getPreferredSize().height;
+        // the block braces are the tallest thing in the zone - measure against them, or the cap would
+        // promise MAX_CHIP_ROWS rows and show a fraction less
+        JLabel brace = new JLabel("(");
+        brace.setFont(brace.getFont().deriveFont(Font.BOLD, brace.getFont().getSize2D() + BLOCK_PAREN_FONT_DELTA));
+        return Math.max(chip, brace.getPreferredSize().height) + 4;
     }
 
     /**
@@ -1409,6 +1592,127 @@ public class QueryEditorPanel extends JPanel {
         };
     }
 
+    /**
+     * A connector between chips that a click flips: {@code AND} to {@code OR} and back.
+     * <p>
+     * Two looks from one component, because the two connectors are not the same thing. The joint
+     * between the filter-panel block and the user's query is drawn unfilled and brace-sized - it sits
+     * between the two big braces and belongs to that structure, not to either block. A connector inside
+     * the user's query is a filled chip like the terms it joins.
+     * <p>
+     * Both light up on hover - the wash fades in over {@link #HOVER_MILLIS} rather than snapping, which
+     * is what makes a chip feel clickable before it is clicked.
+     */
+    private static final class JoinChip extends JPanel {
+        private static final int ARC = 14;
+        private static final int HOVER_MILLIS = 120;
+        private static final int HOVER_STEPS = 8;
+        /** Alpha the wash of an unfilled chip reaches on hover; a filled one brightens instead. */
+        private static final int HOVER_WASH_ALPHA = 52;
+
+        private final Color accent;
+        private final boolean filled;
+        /** 0 = at rest, 1 = fully hovered; animated between the two. */
+        private float hover;
+        @Nullable
+        private javax.swing.Timer animation;
+
+        JoinChip(@NotNull String text, @NotNull Color accent, boolean filled, float fontDelta,
+                 @Nullable String tooltip, @Nullable Runnable onFlip) {
+            super(new FlowLayout(FlowLayout.LEFT, 4, 2));
+            this.accent = accent;
+            this.filled = filled;
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder(1, 7, 1, 7));
+
+            JLabel label = new JLabel(text);
+            // the filled variant keeps the plain weight of the term chips it sits between; the unfilled
+            // one is bold, because it has no fill to carry it and belongs to the braces around it
+            label.setFont(label.getFont().deriveFont(filled ? Font.PLAIN : Font.BOLD,
+                    label.getFont().getSize2D() + fontDelta));
+            label.setForeground(filled ? Colors.Menu.FILTER_BUTTON_TEXT : accent);
+            add(label);
+            if (tooltip != null) {
+                setToolTipText(tooltip);
+                label.setToolTipText(tooltip);
+            }
+            if (onFlip == null)
+                return;
+
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            MouseAdapter mouse = new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    onFlip.run();
+                }
+
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    animateHover(1f);
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    animateHover(0f);
+                }
+            };
+            addMouseListener(mouse);
+            label.addMouseListener(mouse);
+        }
+
+        /** Steps {@link #hover} towards {@code target}; a running animation is replaced, not queued. */
+        private void animateHover(float target) {
+            if (animation != null)
+                animation.stop();
+            float step = (target - hover) / HOVER_STEPS;
+            animation = new javax.swing.Timer(HOVER_MILLIS / HOVER_STEPS, null);
+            animation.addActionListener(e -> {
+                hover += step;
+                if ((step > 0 && hover >= target) || (step <= 0 && hover <= target)) {
+                    hover = target;
+                    animation.stop();
+                }
+                repaint();
+            });
+            animation.start();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth() - 1;
+                int h = getHeight() - 1;
+                if (filled) {
+                    // a filled chip cannot gain a wash - it brightens towards white instead
+                    g2.setColor(blend(accent, Color.WHITE, hover * 0.25f));
+                    g2.fillRoundRect(0, 0, w, h, ARC, ARC);
+                } else {
+                    if (hover > 0) {
+                        g2.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(),
+                                Math.round(HOVER_WASH_ALPHA * hover)));
+                        g2.fillRoundRect(0, 0, w, h, ARC, ARC);
+                    }
+                    g2.setStroke(new BasicStroke(1.4f));
+                    g2.setColor(accent);
+                    g2.drawRoundRect(0, 0, w, h, ARC, ARC);
+                }
+            } finally {
+                g2.dispose();
+            }
+            super.paintComponent(g);
+        }
+
+        private static Color blend(Color from, Color to, float amount) {
+            float a = Math.max(0, Math.min(1, amount));
+            return new Color(
+                    Math.round(from.getRed() + (to.getRed() - from.getRed()) * a),
+                    Math.round(from.getGreen() + (to.getGreen() - from.getGreen()) * a),
+                    Math.round(from.getBlue() + (to.getBlue() - from.getBlue()) * a));
+        }
+    }
+
     private static class GroupPanel extends JPanel {
         private final boolean open;
         private final Color accent;
@@ -1440,9 +1744,13 @@ public class QueryEditorPanel extends JPanel {
     }
 
     /**
-     * Renders a suggestion row: the name with the dimmed text behind it, both composed by
+     * Renders a suggestion row: the connector, the name, and the dimmed text behind it, all composed by
      * {@link SuggestionDisplay} (the description wins that spot; the fully-qualified name lives in the
      * row's tooltip). Only the dimmed text is truncated here, so the row stays one line.
+     * <p>
+     * The connector is drawn like the implicit-AND label of the chips zone - a size smaller, italic and
+     * dimmed ({@link ChipComponent#implicitAndLabel()}) - so it reads as the joint between the terms
+     * rather than as the start of the field name.
      */
     private class SuggestionRenderer extends DefaultListCellRenderer {
         @Override
@@ -1451,10 +1759,15 @@ public class QueryEditorPanel extends JPanel {
             TokenInputModel.Suggestion suggestion = (TokenInputModel.Suggestion) value;
             SuggestionDisplay.Row row = SuggestionDisplay.of(suggestion, renderState.mode());
 
-            String text = row.dimmed() == null
+            // the name carries the weight; the connector before it and the description behind it are
+            // dimmed, so the eye lands on what the row actually adds
+            String name = row.dimmed() == null ? escape(row.display()) : "<b>" + escape(row.display()) + "</b>";
+            String text = row.connector() == null && row.dimmed() == null
                     ? escape(row.display())
-                    : "<html><b>" + escape(row.display()) + "</b>&nbsp;&nbsp;<span style='color:gray'>"
-                      + escape(truncate(row.dimmed())) + "</span></html>";
+                    : "<html>" + connectorMarkup(row.connector()) + name
+                      + (row.dimmed() == null ? ""
+                      : "&nbsp;&nbsp;<span style='color:" + dimmedHex() + "'>" + escape(truncate(row.dimmed())) + "</span>")
+                      + "</html>";
             Component component = super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
             // the run-action row is not a query part - set it apart by the accent tint and a rule
             // below it, so the rows underneath read as "and these add to the query"
@@ -1468,6 +1781,18 @@ public class QueryEditorPanel extends JPanel {
                 ((JComponent) component).setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
             }
             return component;
+        }
+
+        /** The connector as the chips zone draws it: dimmed italic, a little smaller, with room after it. */
+        private static String connectorMarkup(@Nullable String connector) {
+            if (connector == null)
+                return "";
+            return "<span style='color:" + dimmedHex() + "'><i>" + escape(connector) + "</i></span>&nbsp;&nbsp;";
+        }
+
+        private static String dimmedHex() {
+            Color dimmed = UIManager.getColor("Label.disabledForeground");
+            return Colors.asHex(dimmed != null ? dimmed : Color.GRAY);
         }
 
         private static String truncate(String text) {
