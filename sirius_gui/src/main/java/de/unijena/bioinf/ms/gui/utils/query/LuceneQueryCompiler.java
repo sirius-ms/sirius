@@ -50,14 +50,26 @@ public final class LuceneQueryCompiler {
     }
 
     /**
-     * The full query of the user segment: the structured clauses plus the free text, both optional.
-     * Empty string if there is nothing to search.
+     * The full query of the user segment: the structured clauses plus the free text, both optional,
+     * ANDed. Empty string if there is nothing to search.
      */
     public static String compile(@NotNull QueryContainer root, @NotNull String freeText) {
+        return compile(root, freeText, LogicOp.AND);
+    }
+
+    /**
+     * The two blocks joined by {@code join}: the structured clauses and the free-text segment, each
+     * parenthesised so the joint means what it reads as - lucene's classic syntax gives a flat
+     * {@code a AND b OR c} a precedence nobody expects, which parentheses on both sides rule out.
+     * <p>
+     * The joint is only visible when both blocks are there; with one of them empty there is nothing to
+     * join and the other stands alone, whatever {@code join} says.
+     */
+    public static String compile(@NotNull QueryContainer root, @NotNull String freeText, @NotNull LogicOp join) {
         String compiled = renderContainer(root.items(), root.logics());
         String text = freeText.trim();
         if (!compiled.isEmpty() && !text.isEmpty())
-            return "(" + compiled + ") AND (" + text + ")";
+            return "(" + compiled + ") " + join + " (" + text + ")";
         return compiled.isEmpty() ? text : compiled;
     }
 
@@ -76,7 +88,13 @@ public final class LuceneQueryCompiler {
      * for the query-string codec.
      */
     public static String compileExecutable(@NotNull QueryContainer root, @NotNull String freeText) {
-        return compile(anchorNegations(root), freeText);
+        return compileExecutable(root, freeText, LogicOp.AND);
+    }
+
+    /** {@link #compileExecutable(QueryContainer, String)} with an explicit joint between the blocks. */
+    public static String compileExecutable(@NotNull QueryContainer root, @NotNull String freeText,
+                                           @NotNull LogicOp join) {
+        return compile(anchorNegations(root), freeText, join);
     }
 
     /**

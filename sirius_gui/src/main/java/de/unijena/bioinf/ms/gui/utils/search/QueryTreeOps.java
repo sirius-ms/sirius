@@ -165,6 +165,252 @@ public final class QueryTreeOps {
     }
 
     /**
+     * Appends a node joined by {@code logic}, keeping the level homogeneous: when the level already joins
+     * by the other connector, the new node is grouped with its neighbour rather than left in a mixed
+     * level - the same restructuring {@link #setLogic} does for a flip, so building a query with the
+     * autocomplete and rearranging it by clicking end in the same shapes.
+     */
+    public static PathResult appendJoined(@NotNull QueryContainer root, int[] path, @NotNull QueryNode node,
+                                          @NotNull LogicOp logic, boolean allowNesting) {
+        QueryContainer container = containerAt(root, path);
+        LogicOp prevailing = uniformLogic(container);
+        int index = container.items().size();
+        if (index == 0 || prevailing == null || prevailing == logic)
+            return new PathResult(append(root, path, node, logic), path);
+        // append with the level's own connector first, then let the flip decide how to fit the other one
+        return normalized(append(root, path, node, prevailing), path, path, index - 1, logic, allowNesting);
+    }
+
+    /** {@link #openGroup} with the same treatment of the connector that joins the new group. */
+    public static PathResult openGroupJoined(@NotNull QueryContainer root, int[] path, boolean negated,
+                                             @NotNull LogicOp logic, boolean allowNesting) {
+        QueryContainer container = containerAt(root, path);
+        LogicOp prevailing = uniformLogic(container);
+        int index = container.items().size();
+        if (index == 0 || prevailing == null || prevailing == logic)
+            return openGroup(root, path, negated, logic);
+        PathResult opened = openGroup(root, path, negated, prevailing);
+        return normalized(opened.root(), opened.path(), path, index - 1, logic, allowNesting);
+    }
+
+    /** The homogeneity-keeping flip with a cursor carried through it. */
+    private static PathResult normalized(QueryContainer root, int[] cursor, int[] containerPath, int index,
+                                         LogicOp logic, boolean allowNesting) {
+        return setLogic(root, cursor, containerPath, index, logic, allowNesting)
+                // a group inside a group is the lesser evil: a level mixing AND and OR does not mean what
+                // it reads, while a nesting is merely one brace more than the mode would have offered
+                .or(() -> setLogic(root, cursor, containerPath, index, logic, true))
+                .orElse(new PathResult(root, cursor));
+    }
+
+    /**
+     * Sets the connector at {@code index} of the container at {@code containerPath} - and restructures
+     * the tree so that no level ends up mixing AND with OR.
+     * <p>
+     * That restructuring is the point. A level mixing the two is not read by lucene the way the chips
+     * show it: {@code a AND b OR c} becomes {@code +a +b c}, i.e. a required pair with an optional
+     * extra, not the alternative it looks like. So a flip that would mix instead groups what it joins:
+     * {@code a AND b AND c} with its second connector flipped becomes {@code a AND (b OR c)}, where the
+     * OR sits in its own boolean query and means what it reads. An adjacent group already using that
+     * connector is extended rather than nested into, and a group whose connector ends up agreeing with
+     * its parent is redundant and dissolves - which is what makes a flip undoable by flipping back.
+     * <p>
+     * A negated group is neither extended nor dissolved: {@code NOT (b OR c)} is not {@code NOT b OR
+     * NOT c}, and pulling a sibling inside the NOT would change what it negates.
+     * <p>
+     * {@code openPath} is re-resolved by id like in {@link #removeNode}, so the cursor keeps pointing at
+     * the same open group even when the restructuring shifts sibling indices. The open group itself is
+     * never dissolved while it is being edited.
+     *
+     * @param allowNesting whether a group may be created inside another group ({@code QueryMode.ADVANCED});
+     *                     without it a flip that could only be resolved by nesting is refused
+     * @return the new tree with the re-resolved cursor, or empty when the connector does not exist or the
+     * flip would need a nesting that is not allowed - the caller then offers no flip at all
+     */
+    public static Optional<PathResult> setLogic(@NotNull QueryContainer root, int[] openPath,
+                                                int[] containerPath, int index, @NotNull LogicOp logic,
+                                                boolean allowNesting) {
+        QueryContainer container = containerAt(root, containerPath);
+        if (index < 0 || index >= container.logics().size())
+            return Optional.empty();
+        // a group directly inside the addressed container is one level deeper than that container
+        boolean mayGroup = containerPath.length == 0 || allowNesting;
+        Optional<QueryContainer> updated = withLogicKeptHomogeneous(container, index, logic, mayGroup);
+        if (updated.isEmpty())
+            return Optional.empty();
+
+        String openGroupId = groupIdAt(root, openPath);
+        QueryContainer newRoot = updateContainer(root, containerPath, ignored -> updated.get());
+        // the new connector can make parentheses redundant on either side of the change: a child group
+        // that now joins by the same connector as this container, and this container's own group inside
+        // its parent
+        newRoot = updateContainer(newRoot, containerPath, c -> simplified(c, openGroupId));
+        if (containerPath.length > 0)
+            newRoot = updateContainer(newRoot, Arrays.copyOf(containerPath, containerPath.length - 1),
+                    c -> simplified(c, openGroupId));
+        int[] newPath = openGroupId == null
+                ? new int[0] : pathOfId(newRoot, openGroupId).orElseGet(() -> new int[0]);
+        return Optional.of(new PathResult(newRoot, newPath));
+    }
+
+    /**
+     * Whether {@link #setLogic} would do something - what the UI asks before offering a flip.
+     */
+    public static boolean canSetLogic(@NotNull QueryContainer root, int[] containerPath, int index,
+                                      @NotNull LogicOp logic, boolean allowNesting) {
+        QueryContainer container = containerAt(root, containerPath);
+        if (index < 0 || index >= container.logics().size())
+            return false;
+        return withLogicKeptHomogeneous(container, index, logic,
+                containerPath.length == 0 || allowNesting).isPresent();
+    }
+
+    /**
+     * The container with its connector at {@code index} set to {@code logic}, grouping what that
+     * connector joins when the level would otherwise mix connectors. Empty when only a new group could
+     * express it and {@code mayGroup} forbids one.
+     */
+    private static Optional<QueryContainer> withLogicKeptHomogeneous(QueryContainer container, int index,
+                                                                     LogicOp logic, boolean mayGroup) {
+        List<LogicOp> logics = container.logics();
+        // one connector cannot disagree with itself, an already-uniform level stays uniform, and a level
+        // that is ALREADY mixed (only possible for a query pasted or hand-edited elsewhere) is not ours
+        // to rewrite - in all three cases the connector is simply set
+        if (logics.size() == 1 || logics.stream().allMatch(op -> op == logic) || isMixed(logics))
+            return Optional.of(withLogicAt(container, index, logic));
+
+        List<QueryNode> items = new ArrayList<>(container.items());
+        QueryNode left = items.get(index);
+        QueryNode right = items.get(index + 1);
+
+        // an adjacent group that already joins by this connector takes the sibling in - one group for
+        // "b OR c OR d" rather than a nest of pairs
+        if (right instanceof QueryGroup group && !group.negated() && joinsBy(group, logic))
+            return Optional.of(merged(container, index, group, index + 1, left, true));
+        if (left instanceof QueryGroup group && !group.negated() && joinsBy(group, logic))
+            return Optional.of(merged(container, index, group, index, right, false));
+
+        if (!mayGroup)
+            return Optional.empty();
+        QueryGroup wrapped = new QueryGroup(QueryNode.nextId("group"), false, List.of(left, right), List.of(logic));
+        return Optional.of(replacePair(container, index, wrapped));
+    }
+
+    /** Whether every connector of {@code group} is {@code logic} (a group of one joins by nothing). */
+    private static boolean joinsBy(QueryGroup group, LogicOp logic) {
+        return uniformLogic(group.items().size(), group.logics()) == logic;
+    }
+
+    private static boolean isMixed(List<LogicOp> logics) {
+        return logics.stream().distinct().count() > 1;
+    }
+
+    private static QueryContainer withLogicAt(QueryContainer container, int index, LogicOp logic) {
+        List<LogicOp> logics = new ArrayList<>(container.logics());
+        logics.set(index, logic);
+        return new QueryContainer(container.items(), logics);
+    }
+
+    /**
+     * The container with {@code sibling} moved into {@code group}, dropping the connector at
+     * {@code index} that used to join the two.
+     *
+     * @param atFront whether the sibling goes before the group's items (it sat to the group's left)
+     */
+    private static QueryContainer merged(QueryContainer container, int index, QueryGroup group, int groupIndex,
+                                         QueryNode sibling, boolean atFront) {
+        List<QueryNode> inner = new ArrayList<>(group.items());
+        List<LogicOp> innerLogics = new ArrayList<>(group.logics());
+        LogicOp joint = group.logics().get(0);
+        inner.add(atFront ? 0 : inner.size(), sibling);
+        innerLogics.add(joint);
+
+        List<QueryNode> items = new ArrayList<>(container.items());
+        List<LogicOp> logics = new ArrayList<>(container.logics());
+        items.set(groupIndex, group.withContent(inner, innerLogics));
+        items.remove(atFront ? index : index + 1); // the sibling now lives inside the group
+        logics.remove(index);
+        return new QueryContainer(items, logics);
+    }
+
+    /** The container with the two items at {@code index} replaced by the group wrapping them. */
+    private static QueryContainer replacePair(QueryContainer container, int index, QueryGroup wrapped) {
+        List<QueryNode> items = new ArrayList<>(container.items());
+        List<LogicOp> logics = new ArrayList<>(container.logics());
+        items.set(index, wrapped);
+        items.remove(index + 1);
+        logics.remove(index);
+        return new QueryContainer(items, logics);
+    }
+
+    /**
+     * The container with the parentheses that no longer say anything removed: a child group that joins by
+     * the very connector this container uses anyway, or a lone child group - {@code (a OR b) OR c} is
+     * {@code a OR b OR c}, and a group that IS the whole query needs no braces.
+     * <p>
+     * Left alone: a negated group (its NOT would have nowhere to go), the group being edited (the cursor
+     * sits in it), a group that is itself mixed inside, and every group in a container that is already
+     * mixed - a mix can only come from outside the builder, and rewriting it would rewrite what someone
+     * else wrote.
+     */
+    private static QueryContainer simplified(QueryContainer container, @Nullable String openGroupId) {
+        if (container.items().size() == 1) {
+            QueryGroup sole = dissolvable(container.items().get(0), null, openGroupId);
+            return sole == null ? container : new QueryContainer(sole.items(), sole.logics());
+        }
+        LogicOp uniform = uniformLogic(container);
+        if (uniform == null)
+            return container;
+
+        List<QueryNode> items = new ArrayList<>(container.items().size());
+        List<LogicOp> logics = new ArrayList<>(container.logics().size());
+        for (int i = 0; i < container.items().size(); i++) {
+            if (i > 0)
+                logics.add(container.logics().get(i - 1));
+            QueryGroup redundant = dissolvable(container.items().get(i), uniform, openGroupId);
+            if (redundant == null) {
+                items.add(container.items().get(i));
+                continue;
+            }
+            items.addAll(redundant.items());
+            // the group's own connectors, all `uniform` by now, take over the span it occupied
+            for (int k = 1; k < redundant.items().size(); k++)
+                logics.add(uniform);
+        }
+        return new QueryContainer(items, logics);
+    }
+
+    /**
+     * {@code node} as the group whose parentheses can go, or null when they cannot.
+     *
+     * @param joining the connector the surrounding container uses, or null to accept any uniform group
+     *                (a lone child, whose braces say nothing whatever it joins by)
+     */
+    @Nullable
+    private static QueryGroup dissolvable(QueryNode node, @Nullable LogicOp joining, @Nullable String openGroupId) {
+        if (!(node instanceof QueryGroup group) || group.negated() || group.items().size() < 2
+                || group.id().equals(openGroupId))
+            return null;
+        LogicOp inner = uniformLogic(group.items().size(), group.logics());
+        if (inner == null || (joining != null && inner != joining))
+            return null;
+        return group;
+    }
+
+    /** The one connector a container joins everything by, or null when it mixes them (or has none). */
+    @Nullable
+    private static LogicOp uniformLogic(QueryContainer container) {
+        return uniformLogic(container.items().size(), container.logics());
+    }
+
+    @Nullable
+    private static LogicOp uniformLogic(int itemCount, List<LogicOp> logics) {
+        if (logics.isEmpty() || logics.size() != itemCount - 1 || isMixed(logics))
+            return null;
+        return logics.get(0);
+    }
+
+    /**
      * Removes the node {@code nodeId} and re-resolves {@code openPath} so it still points at the SAME
      * open group afterwards - located by id, not by position, so a removal that shifts sibling indices
      * (e.g. deleting a chip that sits before the open group) cannot silently close or mis-target it.

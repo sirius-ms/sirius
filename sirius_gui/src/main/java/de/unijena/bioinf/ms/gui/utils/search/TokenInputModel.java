@@ -29,15 +29,18 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * The staged token input of the search bar, modeled after GitLab's filtered search. When the current
- * container already holds a sibling the input starts at the {@link Stage#CONNECTOR} stage
- * ({@code AND}/{@code OR}); otherwise, and after the connector is chosen, the {@link Stage#FIELD}
- * stage lists all fields plus {@code NOT} and the parens. Choosing a field advances to the operator
- * stage (numeric fields only) and then the value stage(s) - ranges take two staged values, an empty
- * bound meaning open-ended. Backspace on empty input pops one stage; with nothing pending it asks
- * the owner to remove the last committed chip.
+ * The staged token input of the search bar, modeled after GitLab's filtered search. The {@link
+ * Stage#FIELD} stage lists all fields plus {@code NOT} and the parens; when there is something to
+ * join to ({@link Join}) every one of those rows carries the connector that would join it
+ * ({@link Suggestion.Joined}), so the connector and what it joins are a single pick rather than a
+ * stage of their own. Which connectors are offered follows the {@link QueryMode}. Choosing a field
+ * advances to the operator stage (numeric fields only) and then the value stage(s) - ranges take two
+ * staged values, an empty bound meaning open-ended. Backspace on empty input pops one stage; with
+ * nothing pending it asks the owner to remove the last committed chip.
  * <p>
  * An untouched token additionally offers the owner's {@link RunAction} as the top suggestion, so the
  * default pick of an empty input is "run the search" rather than the first field; typing anything
@@ -45,9 +48,9 @@ import java.util.Optional;
  * <p>
  * Pure model: the UI renders {@link #suggestions}, {@link #pendingFragments} and {@link #stagePrompt}
  * and applies the returned {@link Event}s to the query tree. Free text is not consumed here - typed
- * text that resolves to nothing stays the free-text search segment of the owner, but only at the
- * stages that may hold one: at the CONNECTOR stage such text is rejected instead
- * ({@link #inputProblem}), because a word cannot follow a finished filter.
+ * text that resolves to nothing stays the free-text search segment of the owner (offered joined by a
+ * connector like everything else). What the current mode does not allow is rejected instead of
+ * silently reinterpreted - see {@link #inputProblem}.
  */
 public class TokenInputModel {
 
@@ -59,16 +62,25 @@ public class TokenInputModel {
             SearchableFieldType.FLOAT, SearchableFieldType.DATE, SearchableFieldType.TIME);
 
     /**
-     * CONNECTOR and FIELD are the two "entry" stages a fresh token starts in: CONNECTOR when the
-     * current container has a sibling to join (offers AND/OR), FIELD otherwise (offers fields, NOT,
-     * parens). The remaining stages build one clause.
+     * What a new term would be joined to - which decides whether a connector is asked for at all, and
+     * which ones may be chosen.
+     * <p>
+     * {@link #PANEL_TERMS} is the filter-panel block sitting to the left of an otherwise empty user
+     * query. The connector chosen there is the joint between the two blocks of the executed query
+     * ({@code (facets) AND (query)}) rather than one inside the user's query - a different thing to
+     * pick, which is why such a row shows the opening brace of the block it starts
+     * ({@link Suggestion.Joined#blockJoin()}).
      */
-    public enum Stage {CONNECTOR, FIELD, OPERATOR, VALUE, VALUE2}
+    public enum Join {NOTHING, USER_TERMS, PANEL_TERMS}
+
+    /**
+     * FIELD is the "entry" stage a fresh token starts in (fields, NOT, parens - each joined by a
+     * connector where one applies). The remaining stages build one clause.
+     */
+    public enum Stage {FIELD, OPERATOR, VALUE, VALUE2}
 
     public enum SpecialToken {
         NOT("NOT", "Negate the next filter or group"),
-        AND("AND", "Both conditions must match"),
-        OR("OR", "Either condition may match"),
         OPEN_GROUP("(", "Group filters, e.g. a AND (b OR c)"),
         CLOSE_GROUP(")", "Close the open group");
 
@@ -170,6 +182,27 @@ public class TokenInputModel {
         }
 
         /**
+         * A suggestion together with the connector that joins it to the terms already in the container:
+         * what used to be two picks (the connector, then the field) is one row. Wrapping is what makes
+         * the connector visible in the list - the query it builds is the same either way.
+         *
+         * @param blockJoin whether that connector is the joint between the filter-panel block and the
+         *                  user's query rather than one inside the query (see {@link Join#PANEL_TERMS});
+         *                  such a row opens the user's block, which is what its brace shows
+         */
+        record Joined(@NotNull LogicOp logic, @NotNull Suggestion target, boolean blockJoin) implements Suggestion {
+            @Override
+            public String display() {
+                return logic + (blockJoin ? " (" : "") + " " + target.display();
+            }
+
+            @Override
+            public String description() {
+                return target.description();
+            }
+        }
+
+        /**
          * Run the owner's action (search / apply) instead of adding anything to the query. Offered on
          * top of an untouched input so it is the default pick, and gone as soon as anything is typed -
          * the owner intercepts it, the model itself has nothing to do with it (see {@link #choose}).
@@ -224,8 +257,9 @@ public class TokenInputModel {
 
     // --- context (owned by the overlay, changes as the query tree changes) ---
     private List<SearchableField> fields = List.of();
-    private boolean hasSibling;
+    private Join join = Join.NOTHING;
     private boolean groupOpen;
+    private QueryMode mode = QueryMode.SIMPLE;
     @Nullable
     private RunAction runAction;
 
@@ -241,14 +275,41 @@ public class TokenInputModel {
     @Nullable
     private String pendingValue1;
 
-    public void updateContext(@NotNull List<SearchableField> fields, boolean hasSibling, boolean groupOpen) {
+    public void updateContext(@NotNull List<SearchableField> fields, @NotNull Join join, boolean groupOpen) {
         this.fields = fields;
-        this.hasSibling = hasSibling;
+        this.join = join;
         this.groupOpen = groupOpen;
-        // keep the entry stage in sync with the (possibly changed) sibling context, as long as
-        // nothing has been staged yet for this token
-        if (atEntryStage() && pendingLogic == null && !pendingNegated && pendingField == null)
-            stage = hasSibling ? Stage.CONNECTOR : Stage.FIELD;
+    }
+
+    /** Whether there is anything for a new term to be joined to. */
+    private boolean joins() {
+        return join != Join.NOTHING;
+    }
+
+    /**
+     * Sets how much of the grammar to offer; {@link QueryMode#SIMPLE} by default.
+     */
+    public void setMode(@NotNull QueryMode mode) {
+        this.mode = mode;
+    }
+
+    /**
+     * The connectors a new term may be joined by here, best first: in SIMPLE mode the single one the
+     * query shape implies (AND between top-level terms, OR between the alternatives inside a group), in
+     * ADVANCED mode both, AND first so it stays the default pick.
+     */
+    public List<LogicOp> allowedConnectors() {
+        if (mode == QueryMode.ADVANCED)
+            return List.of(LogicOp.AND, LogicOp.OR);
+        return List.of(groupOpen ? LogicOp.OR : LogicOp.AND);
+    }
+
+    /**
+     * Whether a group may be opened here: always at the top level, inside another group only in
+     * ADVANCED mode (SIMPLE keeps the query one level deep, which is what makes its shape readable).
+     */
+    public boolean nestingAllowed() {
+        return mode == QueryMode.ADVANCED || !groupOpen;
     }
 
     /**
@@ -263,50 +324,62 @@ public class TokenInputModel {
     }
 
     /**
-     * True at the two stages that start a fresh token (CONNECTOR/FIELD) - where typed text that
-     * resolves to nothing is the owner's free-text search rather than a clause value.
-     */
-    public boolean atEntryStage() {
-        return stage == Stage.CONNECTOR || stage == Stage.FIELD;
-    }
-
-    /**
-     * Whether typed text may become the owner's free-text search term at this stage: the FIELD stage
-     * only. The connector stage joins two filters and nothing else - a bare word cannot follow a
-     * finished filter, so text there is a typo rather than a search term (see {@link #inputProblem}).
-     * The value stages take text too, but as a clause value, not as free text.
+     * Whether typed text may become the owner's free-text search term at this stage: the entry (FIELD)
+     * stage. The value stages take text too, but as a clause value, not as free text.
      */
     public boolean acceptsFreeText() {
         return stage == Stage.FIELD;
     }
 
     /**
-     * Why the typed text cannot stand at this stage, for the owner to show on the input; empty when it
-     * is fine. Only the connector stage rejects anything: it takes a connector (or the parens, which
-     * carry one implicitly), and typing past that is a dead end the user has to see.
+     * Why the typed text cannot be applied here, for the owner to show on the input; empty when it is
+     * fine. What is rejected is a connector or a nesting the current mode does not offer: reinterpreting
+     * a typed OR as the AND the mode allows would change the query's meaning behind the user's back, so
+     * it is refused and named instead (the list keeps showing what IS possible).
      */
     public Optional<String> inputProblem(@NotNull String typed) {
-        if (stage != Stage.CONNECTOR || continuesWithConnector(typed.trim()))
+        String trimmed = typed.trim();
+        if (!acceptsFreeText() || trimmed.isEmpty())
             return Optional.empty();
-        return Optional.of("Only " + (groupOpen ? "AND, OR or )" : "AND or OR")
-                + " can follow a filter - pick one, or delete the text");
+        TypedConnector connector = typedConnector(trimmed);
+        if (connector.logic() != null && joins() && pendingLogic == null
+                && !allowedConnectors().contains(connector.logic()))
+            return Optional.of(refusedConnector(connector.logic()));
+        if (!nestingAllowed() && connector.rest().startsWith("("))
+            return Optional.of("Groups cannot be nested in simple mode"
+                    + " - close this group first, or switch to advanced mode");
+        return Optional.empty();
+    }
+
+    private String refusedConnector(LogicOp logic) {
+        if (join == Join.PANEL_TERMS)
+            return logic + " cannot join the filter-panel filters and your query in simple mode -"
+                    + " they are combined with AND, so the panel filters always narrow the search;"
+                    + " switch to advanced mode to make your query an alternative to them instead";
+        return logic + " cannot join "
+                + (groupOpen ? "the alternatives inside a group (they are combined with OR)"
+                : "the top-level terms (they are combined with AND)")
+                + " in simple mode - switch to advanced mode to mix connectors freely";
+    }
+
+    /** A typed connector and the text after it: {@code or ion} is {@code (OR, "ion")}. */
+    private record TypedConnector(@Nullable LogicOp logic, @NotNull String rest) {
     }
 
     /**
-     * Whether text typed at the connector stage still reads as a connector: one being typed
-     * ({@code an}), a connector-led phrase that applies in one go ({@code or not ion}), or a paren -
-     * structure rather than text, and an implicit AND. Empty text is nothing yet, so not a problem.
+     * A leading connector, whether it is finished ({@code or ion}) or the whole input so far
+     * ({@code or}) - it narrows the list to that connector's rows. Whitespace (or the end of the input)
+     * has to follow, so {@code orma} stays a field prefix, as in the typed grammar
+     * ({@link CompletionParser}).
      */
-    private boolean continuesWithConnector(String trimmed) {
-        if (trimmed.isEmpty() || !connectorSuggestions(trimmed.toLowerCase(Locale.ROOT)).isEmpty())
-            return true;
-        Optional<Completion> completion = CompletionParser.parse(trimmed, fields, hasSibling, groupOpen);
-        if (completion.isEmpty())
-            return false;
-        Completion parsed = completion.get();
-        // a clause typed without a connector ("ionm") would join by an implicit AND the user never
-        // chose - at this stage that decision is the one being asked for, so it is not accepted
-        return !(parsed instanceof Completion.ClauseStart clause) || clause.logic() != null;
+    private static final Pattern TYPED_CONNECTOR = Pattern.compile("^(and|or)(?:\\s+|$)", Pattern.CASE_INSENSITIVE);
+
+    private static TypedConnector typedConnector(String trimmed) {
+        Matcher matcher = TYPED_CONNECTOR.matcher(trimmed);
+        if (!matcher.find())
+            return new TypedConnector(null, trimmed);
+        return new TypedConnector(LogicOp.valueOf(matcher.group(1).toUpperCase(Locale.ROOT)),
+                trimmed.substring(matcher.end()));
     }
 
     /**
@@ -316,13 +389,7 @@ public class TokenInputModel {
         String trimmed = typed.trim();
         String prefix = trimmed.toLowerCase(Locale.ROOT);
         List<Suggestion> suggestions = switch (stage) {
-            // nothing matching what is typed means the input has left the grammar; show what IS
-            // possible here instead of an empty list the owner would hide (see inputProblem)
-            case CONNECTOR -> {
-                List<Suggestion> matching = connectorSuggestions(prefix);
-                yield matching.isEmpty() ? connectorSuggestions("") : matching;
-            }
-            case FIELD -> fieldStageSuggestions(prefix);
+            case FIELD -> entrySuggestions(trimmed);
             case OPERATOR -> operatorSuggestions(prefix);
             case VALUE, VALUE2 -> valueSuggestions(prefix);
         };
@@ -334,17 +401,68 @@ public class TokenInputModel {
             withRunAction.addAll(suggestions);
             suggestions = withRunAction;
         }
-        // where free text is allowed, typed text can always become a keyless full-text clause; offered
-        // last so a matching field stays the default pick
-        if (acceptsFreeText() && !trimmed.isEmpty()) {
-            suggestions = new ArrayList<>(suggestions);
-            suggestions.add(new Suggestion.FreeTextSuggestion(trimmed));
+        return suggestions;
+    }
+
+    /**
+     * The entry stage: every field and applicable token, then the free-text rows, each joined by the
+     * connector that would attach it to what is already there (see {@link #connectorsOffered}) - so the
+     * connector is visible in the row and chosen with it, never asked for separately.
+     * <p>
+     * A leading connector in the typed text narrows the rows to that one ({@code or ion} offers only the
+     * OR row of {@code ionMass}); a connector the mode does not allow is refused instead, which
+     * {@link #inputProblem} explains while the allowed rows stay on offer.
+     */
+    private List<Suggestion> entrySuggestions(String trimmed) {
+        TypedConnector typed = typedConnector(trimmed);
+        String rest = typed.rest();
+        List<Suggestion> candidates = fieldStageSuggestions(rest.toLowerCase(Locale.ROOT));
+        // typed text can always become a keyless full-text clause; offered last so a matching field
+        // stays the default pick. A paren the mode will not open is the exception: nobody searches for
+        // a literal "(", so offering it as a term would be a nonsense row where inputProblem already
+        // says what the problem is
+        if (!rest.isEmpty() && !(rest.startsWith("(") && !nestingAllowed())) {
+            candidates.add(new Suggestion.FreeTextSuggestion(rest));
             // ... and, when it reads as more than plain words (a field, operator, group or boolean),
             // it can be parsed as a whole query and turned into chips
-            if (parsesToStructuredQuery(trimmed))
-                suggestions.add(new Suggestion.ParseQuerySuggestion(trimmed));
+            if (parsesToStructuredQuery(rest))
+                candidates.add(new Suggestion.ParseQuerySuggestion(rest));
         }
-        return suggestions;
+        return join(candidates, connectorsOffered(typed.logic()));
+    }
+
+    /**
+     * The connectors to offer for each row: none when there is nothing to join to (the first term of a
+     * container, with no panel filters either) or one is already staged, the typed one when it is
+     * allowed, the allowed set otherwise.
+     */
+    private List<LogicOp> connectorsOffered(@Nullable LogicOp typedLogic) {
+        if (!joins() || pendingLogic != null)
+            return List.of();
+        List<LogicOp> allowed = allowedConnectors();
+        return typedLogic != null && allowed.contains(typedLogic) ? List.of(typedLogic) : allowed;
+    }
+
+    /**
+     * One row per connector and candidate, the variants of a candidate adjacent: the best match's first
+     * connector (AND, or the one the simple shape implies) stays the default pick, and its OR variant is
+     * one step away rather than a whole list further down.
+     */
+    private List<Suggestion> join(List<Suggestion> candidates, List<LogicOp> connectors) {
+        if (connectors.isEmpty())
+            return candidates;
+        boolean blockJoin = join == Join.PANEL_TERMS;
+        List<Suggestion> joined = new ArrayList<>(candidates.size() * connectors.size());
+        for (Suggestion candidate : candidates) {
+            // closing a group joins nothing - it ends the term before it
+            if (candidate instanceof Suggestion.TokenSuggestion token && token.token() == SpecialToken.CLOSE_GROUP) {
+                joined.add(candidate);
+                continue;
+            }
+            for (LogicOp logic : connectors)
+                joined.add(new Suggestion.Joined(logic, candidate, blockJoin));
+        }
+        return joined;
     }
 
     /**
@@ -352,7 +470,7 @@ public class TokenInputModel {
      * connector/NOT/field means the user is mid-token, where running the search would drop it).
      */
     private boolean offersRunAction(String trimmed) {
-        return runAction != null && trimmed.isEmpty() && atEntryStage() && pendingFragments().isEmpty();
+        return runAction != null && trimmed.isEmpty() && acceptsFreeText() && pendingFragments().isEmpty();
     }
 
     /** True when {@code text} parses to a query richer than a single free-text clause (which the
@@ -368,26 +486,13 @@ public class TokenInputModel {
                 && container.items().get(0) instanceof QueryClause clause && clause.isFreeText();
     }
 
-    private List<Suggestion> connectorSuggestions(String prefix) {
-        List<Suggestion> suggestions = new ArrayList<>(3);
-        if (matches(SpecialToken.AND, prefix))
-            suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.AND));
-        if (matches(SpecialToken.OR, prefix))
-            suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.OR));
-        // inside an open group, ) closes it - offered here too so the group can be finished from the
-        // keyboard (select + Enter, or type ")") right after a committed clause, without adding another
-        if (groupOpen && matches(SpecialToken.CLOSE_GROUP, prefix))
-            suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.CLOSE_GROUP));
-        return suggestions;
-    }
-
     private List<Suggestion> fieldStageSuggestions(String prefix) {
         List<Suggestion> suggestions = new ArrayList<>(
                 CompletionParser.fieldMatches(prefix, fields).stream()
                         .map(f -> (Suggestion) new Suggestion.FieldSuggestion(f)).toList());
         if (!pendingNegated && matches(SpecialToken.NOT, prefix))
             suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.NOT));
-        if (matches(SpecialToken.OPEN_GROUP, prefix))
+        if (nestingAllowed() && matches(SpecialToken.OPEN_GROUP, prefix))
             suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.OPEN_GROUP));
         if (groupOpen && matches(SpecialToken.CLOSE_GROUP, prefix))
             suggestions.add(new Suggestion.TokenSuggestion(SpecialToken.CLOSE_GROUP));
@@ -423,6 +528,10 @@ public class TokenInputModel {
         // not ours: the owner runs its action and leaves the (empty) token untouched
         if (suggestion instanceof Suggestion.RunActionSuggestion)
             return Optional.empty();
+        if (suggestion instanceof Suggestion.Joined joined) {
+            pendingLogic = joined.logic();
+            return choose(joined.target());
+        }
         if (suggestion instanceof Suggestion.FieldSuggestion field) {
             return stageField(field.field());
         }
@@ -430,16 +539,6 @@ public class TokenInputModel {
             return switch (token.token()) {
                 case NOT -> {
                     pendingNegated = true;
-                    yield Optional.empty();
-                }
-                case AND -> {
-                    pendingLogic = LogicOp.AND;
-                    stage = Stage.FIELD; // connector chosen -> pick the field/token to join
-                    yield Optional.empty();
-                }
-                case OR -> {
-                    pendingLogic = LogicOp.OR;
-                    stage = Stage.FIELD;
                     yield Optional.empty();
                 }
                 case OPEN_GROUP -> {
@@ -491,12 +590,9 @@ public class TokenInputModel {
                     return choose(matching.get(0));
                 return Optional.empty();
             }
-            case CONNECTOR -> {
-                // only a connector (or a phrase led by one) may be applied here
-                return continuesWithConnector(trimmed) ? applyGrammar(trimmed) : Optional.empty();
-            }
             case FIELD -> {
-                return applyGrammar(trimmed);
+                // a connector or nesting the mode does not offer is refused, not reinterpreted
+                return inputProblem(trimmed).isEmpty() ? applyGrammar(trimmed) : Optional.empty();
             }
         }
         return Optional.empty();
@@ -515,14 +611,13 @@ public class TokenInputModel {
             case VALUE -> (pendingOp != null && pendingOp.isRange()) || !trimmed.isEmpty();
             case VALUE2 -> true;
             case OPERATOR -> operatorSuggestions(trimmed.toLowerCase(Locale.ROOT)).size() == 1;
-            case CONNECTOR -> continuesWithConnector(trimmed)
-                    && CompletionParser.parse(trimmed, fields, hasSibling, groupOpen).isPresent();
-            case FIELD -> CompletionParser.parse(trimmed, fields, hasSibling, groupOpen).isPresent();
+            case FIELD -> inputProblem(trimmed).isEmpty()
+                    && CompletionParser.parse(trimmed, fields, joins(), groupOpen).isPresent();
         };
     }
 
     private Optional<Event> applyGrammar(String text) {
-        Optional<Completion> parsed = CompletionParser.parse(text, fields, hasSibling, groupOpen);
+        Optional<Completion> parsed = CompletionParser.parse(text, fields, joins(), groupOpen);
         if (parsed.isEmpty())
             return Optional.empty(); // free text - stays in the input, owned by the overlay
 
@@ -630,17 +725,14 @@ public class TokenInputModel {
                 stage = Stage.FIELD;
             }
             case FIELD -> {
-                // pop the field-stage decorations in reverse; clearing the connector drops back to
-                // the connector stage (via updateContext), then Backspace removes the last chip
+                // pop the staged decorations in reverse: NOT, then the connector, and only with
+                // nothing left does Backspace reach the last committed chip
                 if (pendingNegated)
                     pendingNegated = false;
                 else if (pendingLogic != null)
                     pendingLogic = null;
                 else
                     return Optional.of(new Event.RemoveLastNode());
-            }
-            case CONNECTOR -> {
-                return Optional.of(new Event.RemoveLastNode());
             }
         }
         return Optional.empty();
@@ -674,7 +766,6 @@ public class TokenInputModel {
         if (offersRunAction(""))
             return runAction.emptyPrompt();
         return switch (stage) {
-            case CONNECTOR -> "Combine with AND / OR, then Enter";
             case FIELD -> "Search, or pick a field, then Enter";
             case OPERATOR -> "Choose how to compare, then Enter ([ ] includes the bounds, { } excludes them)";
             case VALUE -> {
@@ -699,8 +790,8 @@ public class TokenInputModel {
     public boolean isTerminal(@NotNull String typed) {
         String trimmed = typed.trim();
         return switch (stage) {
-            case CONNECTOR -> false; // text here is a typo, not a term - running the query drops it
-            case FIELD -> !trimmed.isEmpty();
+            // text the mode rejects must not be baked into a clause by running the query either
+            case FIELD -> !trimmed.isEmpty() && inputProblem(trimmed).isEmpty();
             case OPERATOR -> false;
             case VALUE -> pendingOp != null && pendingOp.isRange() ? false : !trimmed.isEmpty();
             case VALUE2 -> true;
@@ -719,10 +810,11 @@ public class TokenInputModel {
     }
 
     /**
-     * The connector for the token being built: the explicitly chosen one, AND otherwise.
+     * The connector for the token being built: the chosen one, else the one this position implies -
+     * AND, or OR between the alternatives of a group in simple mode (see {@link #allowedConnectors}).
      */
     private LogicOp effectiveLogic() {
-        return pendingLogic != null ? pendingLogic : LogicOp.AND;
+        return pendingLogic != null ? pendingLogic : allowedConnectors().get(0);
     }
 
     public void reset() {
@@ -730,8 +822,7 @@ public class TokenInputModel {
     }
 
     private void resetPending() {
-        // FIELD by default; updateContext bumps to CONNECTOR when the container has a sibling
-        stage = hasSibling ? Stage.CONNECTOR : Stage.FIELD;
+        stage = Stage.FIELD;
         pendingLogic = null;
         pendingNegated = false;
         pendingField = null;

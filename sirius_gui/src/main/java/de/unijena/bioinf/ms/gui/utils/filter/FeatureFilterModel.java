@@ -61,6 +61,14 @@ public class FeatureFilterModel implements SiriusPCS {
     @Getter
     private boolean inverted;
 
+    /**
+     * How the filter-panel facets and the user's own query are combined: AND (the facets narrow the
+     * search, the default) or OR (the query is an alternative to them). A property of the whole filter
+     * like {@link #inverted}, surfaced and edited in the search bar's query builder.
+     */
+    @Getter
+    private LogicOp queryJoin = LogicOp.AND;
+
     @Getter
     private final Document searchTextDoc;
 
@@ -253,6 +261,12 @@ public class FeatureFilterModel implements SiriusPCS {
         pcs.firePropertyChange("setInverted", old, inverted);
     }
 
+    public void setQueryJoin(@NotNull LogicOp queryJoin) {
+        LogicOp old = this.queryJoin;
+        this.queryJoin = queryJoin;
+        pcs.firePropertyChange("setQueryJoin", old, queryJoin);
+    }
+
     public void setCurrentMinMz(double currentMinMz) {
         if (currentMinMz < minMz) throw new IllegalArgumentException("current value out of range: " + currentMinMz);
         double oldValue = this.currentMinMz;
@@ -436,6 +450,7 @@ public class FeatureFilterModel implements SiriusPCS {
 
     public void resetFilter() {
         setInverted(false);
+        setQueryJoin(LogicOp.AND);
 
         clearSearchText();
 
@@ -503,7 +518,8 @@ public class FeatureFilterModel implements SiriusPCS {
     }
 
     /**
-     * The active structured facets (as query nodes) AND the free-text segment, compiled to lucene as it
+     * The active structured facets (as query nodes) joined with the free-text segment - by AND, or by OR
+     * when {@link #getQueryJoin()} says so - compiled to lucene as it
      * is EXECUTED - facets that are pure negations (no lipid class, no pfas tag) get the match-all anchor
      * they need to match anything at all, see {@link LuceneQueryCompiler#compileExecutable}.
      */
@@ -512,7 +528,7 @@ public class FeatureFilterModel implements SiriusPCS {
         List<LogicOp> ands = new ArrayList<>(Math.max(0, nodes.size() - 1));
         for (int i = 1; i < nodes.size(); i++)
             ands.add(LogicOp.AND);
-        return LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), freeTextQuery());
+        return LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), freeTextQuery(), queryJoin);
     }
 
     /**
