@@ -60,6 +60,10 @@ import java.util.function.Supplier;
  * a {@link Host}. {@link SearchBarOverlay} hosts it in a floating dialog; the feature filter dialog
  * embeds it directly.
  * <p>
+ * Between two terms only a connector may be typed: a word entered there is not a search term (it
+ * would silently widen the query) but a typo, so it is painted in the error colour while the list
+ * re-offers AND/OR - and picking one keeps the text, which the next stage takes as a term again.
+ * <p>
  * Up/Down navigate the suggestion list; Enter and Tab both ADD the highlighted suggestion (or the
  * typed value) to the query. An untouched input highlights the run-action row ("Search") on top
  * instead, so Enter on an empty input runs the search - typing a term and pressing Enter twice is the
@@ -224,6 +228,11 @@ public class QueryEditorPanel extends JPanel {
      * something is typed - on an empty input the highlighted run-action row says it instead.
      */
     private final JLabel keyHint = new JLabel();
+    /**
+     * The input's normal text colour, captured before anything can tint it: rejected text is painted
+     * {@link Colors#TEXT_ERROR} and has to return to exactly this, whatever the theme provides.
+     */
+    private final Color inputForeground;
     private final JList<TokenInputModel.Suggestion> suggestionList;
     private final JScrollPane suggestionScroll;
     /**
@@ -287,6 +296,7 @@ public class QueryEditorPanel extends JPanel {
         chipsScroll.setBorder(BorderFactory.createEmptyBorder());
 
         input = new PlaceholderTextField(18);
+        inputForeground = input.getForeground();
         input.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
         input.setOpaque(false);
         wireInput();
@@ -803,8 +813,13 @@ public class QueryEditorPanel extends JPanel {
     }
 
     private void applySuggestion(TokenInputModel.Suggestion suggestion) {
+        // Text the stage rejects (a word typed where only AND/OR may follow) survives the pick: the
+        // chosen connector advances the token to the field stage, where that text is a legal term
+        // again - so the dead end costs one keystroke instead of retyping. Text the suggestion itself
+        // consumed (the "an" that picked AND) is cleared as always.
+        String rejected = tokenModel.inputProblem(input.getText()).isPresent() ? input.getText() : "";
         tokenModel.choose(suggestion).ifPresent(this::applyEvent);
-        input.setText("");
+        input.setText(rejected);
         rebuild(); // restores input focus (see rebuild)
     }
 
@@ -857,7 +872,7 @@ public class QueryEditorPanel extends JPanel {
                 !QueryTreeOps.containerAt(root, openPath).isEmpty(), openPath.length > 0);
         if (isShowing())
             showSuggestions(tokenModel.suggestions(input.getText()));
-        validateInput();
+        styleInput();
         updateKeyHint();
     }
 
@@ -946,14 +961,20 @@ public class QueryEditorPanel extends JPanel {
     }
 
     /**
-     * Advisory live validation of the free-text segment: syntax problems and unknown fields show as
-     * a warning outline with the explanation as tooltip. Suppressed while the list offers something.
+     * Styles the input for what is typed: text the stage cannot take at all (a word where only a
+     * connector may follow) is painted in the error colour with a matching outline, so the user sees
+     * the input has left the grammar while the list re-offers what is allowed. Otherwise the advisory
+     * validation of the free-text segment applies - syntax problems and unknown fields as a warning
+     * outline, suppressed while the list offers something. Both explain themselves via the tooltip.
      */
-    private void validateInput() {
-        String problem = tokenModel.atEntryStage() && !suggestionScroll.isVisible()
+    private void styleInput() {
+        Optional<String> rejected = tokenModel.inputProblem(input.getText());
+        String problem = rejected.orElseGet(() -> tokenModel.acceptsFreeText() && !suggestionScroll.isVisible()
                 ? QueryValidator.validate(input.getText(), fieldsProvider.getCached()).orElse(null)
-                : null;
-        input.putClientProperty("JComponent.outline", problem == null ? null : "warning");
+                : null);
+        input.setForeground(rejected.isPresent() ? Colors.TEXT_ERROR : inputForeground);
+        input.putClientProperty("JComponent.outline",
+                problem == null ? null : rejected.isPresent() ? "error" : "warning");
         input.setToolTipText(problem == null ? null : GuiUtils.formatToolTip(problem));
     }
 
@@ -969,6 +990,8 @@ public class QueryEditorPanel extends JPanel {
     private String keyHintText() {
         if (input.getText().isEmpty())
             return "";
+        if (tokenModel.inputProblem(input.getText()).isPresent())
+            return "AND or OR expected"; // Enter would stage one and keep the text (see applySuggestion)
         boolean addable = (suggestionScroll.isVisible() && suggestionList.getSelectedValue() != null
                 && !isRunActionSelected()) || tokenModel.canAccept(input.getText());
         if (addable)
@@ -979,12 +1002,13 @@ public class QueryEditorPanel extends JPanel {
     // --- compile & commit ---
 
     /**
-     * The input text only counts as a free-text search segment at an entry stage; at a mid-token
-     * stage it is a value/operator fragment that running the query discards (the accept key would
-     * have committed it into a clause first).
+     * The input text only counts as a free-text search segment where the stage allows one (the field
+     * stage); at a mid-token stage it is a value/operator fragment, and at the connector stage text is
+     * rejected outright - either way running the query discards it (the accept key would have
+     * committed it into a clause first).
      */
     private String freeTextForCommit() {
-        return tokenModel.atEntryStage() ? input.getText().trim() : "";
+        return tokenModel.acceptsFreeText() ? input.getText().trim() : "";
     }
 
     /** The compiled user query (committed chips + any trailing free text) as it stands, WITHOUT
@@ -1000,7 +1024,7 @@ public class QueryEditorPanel extends JPanel {
      */
     private void runSearch() {
         if (tokenModel.isTerminal(input.getText())) {
-            if (tokenModel.atEntryStage())
+            if (tokenModel.acceptsFreeText())
                 applyEvent(tokenModel.completeFreeText(input.getText()));
             else
                 tokenModel.submitTyped(input.getText()).ifPresent(this::applyEvent);
@@ -1038,7 +1062,7 @@ public class QueryEditorPanel extends JPanel {
      */
     public void commitToDocument() {
         if (tokenModel.isTerminal(input.getText())) {
-            if (tokenModel.atEntryStage())
+            if (tokenModel.acceptsFreeText())
                 applyEvent(tokenModel.completeFreeText(input.getText()));
             else
                 tokenModel.submitTyped(input.getText()).ifPresent(this::applyEvent);
