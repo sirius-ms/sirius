@@ -69,7 +69,7 @@ scribejava = "8.3.3"
 # opened and modified by released SIRIUS versions; and the index dirty marker is persisted durably (sirius2), so a
 # completed index build clears it on disk instead of leaving the index permanently dirty and forcing a full index
 # rebuild on the first write after every open.
-nitrite = "4.3.3-sirius2"
+nitrite = { strictly = "4.3.3-sirius3" }
 # nitrite-jackson-mapper switched to Jackson 3 (tools.jackson) in 4.3.3, 4.3.2 is the last Jackson 2 release. Not
 # forked, so it stays on the upstream version until the storage serializers are ported.
 nitriteJacksonMapper = "4.3.2"
@@ -88,9 +88,10 @@ lucene = "10.4.0" #10.3.2
 [libraries]
 # BOMs
 springBootDependencies = { group = "org.springframework.boot", name = "spring-boot-dependencies", version.ref = "springBoot" }
-# strictly, so that an upgrade pulled in by anything else fails the build instead of silently replacing the fork
-nitrite = { group = "org.dizitart", name = "nitrite", version = { strictly = "4.3.3-sirius2" } }
-nitriteMvstoreAdapter = { group = "org.dizitart", name = "nitrite-mvstore-adapter", version = { strictly = "4.3.3-sirius2" } }
+# the version ref carries "strictly", so an upgrade pulled in by anything else fails the build instead of
+# silently replacing the fork. Bump the fork in [versions] only - these entries must never pin a version themselves.
+nitrite = { group = "org.dizitart", name = "nitrite", version.ref = "nitrite" }
+nitriteMvstoreAdapter = { group = "org.dizitart", name = "nitrite-mvstore-adapter", version.ref = "nitrite" }
 nitriteJacksonMapper = { group = "org.dizitart", name = "nitrite-jackson-mapper", version = { strictly = "4.3.2" } }
 
 # Buildscript Dependencies
