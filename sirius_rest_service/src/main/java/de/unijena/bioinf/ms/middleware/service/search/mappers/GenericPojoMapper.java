@@ -89,6 +89,16 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
         this(pojoClass, new ConcurrentHashMap<>());
     }
 
+    /**
+     * The schema this class would be indexed under, without building an index for it - for comparing the shape
+     * the current code produces against the one a persisted index was built with.
+     */
+    public static IndexSchema schemaOf(@NotNull Class<?> pojoClass, FieldMapper<?>... fieldMappers) {
+        return new GenericPojoMapper<>(pojoClass, fieldMappers).detectAnalyzersAndPointConfigs(
+                new java.util.HashMap<>(), new java.util.HashMap<>(), new java.util.ArrayList<>(),
+                new java.util.HashMap<>(), new java.util.HashMap<>());
+    }
+
     public GenericPojoMapper(@NotNull Class<T> pojoClass, FieldMapper... fieldMappers) {
         this(pojoClass, new ConcurrentHashMap<>());
         for (FieldMapper fieldMapper : fieldMappers) {
