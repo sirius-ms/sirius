@@ -59,4 +59,26 @@ public interface FieldVocabulary {
             return null;
         }
     }
+
+    /**
+     * A boolean that is asked about in the positive: the only value offered is {@code true}, and the other
+     * case is the negation of it.
+     * <p>
+     * Both values are stored and both can be queried - {@code hasMsMs:false} matches what
+     * {@code NOT hasMsMs:true} matches, since the field is written for every feature. Which of the two forms a
+     * client offers is not a detail of the data but a statement about the field: {@code hasMsMs} and
+     * {@code computedTools.zodiac} name a property a feature has or lacks, so a client should complete them the
+     * moment they are picked and let a negation ask for the rest, rather than stopping to ask "true or false?".
+     * That is a per-field judgement about meaning, which is why it is declared here and not derived from the
+     * java type: a boolean whose {@code false} is a state of its own (a tag deliberately set to false, which is
+     * not the same as an untagged feature) declares both values instead.
+     */
+    class PresenceFlag implements FieldVocabulary {
+        private static final List<String> TRUE = List.of("true");
+
+        @Override
+        public @NotNull List<String> getPossibleValues(@NotNull String fieldName) {
+            return TRUE;
+        }
+    }
 }

@@ -28,6 +28,8 @@ import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PrecursorIonTypeQueryRewriter;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FoldChangeMapper;
+import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDoc;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.sirius.ComputedSubtools;
@@ -143,11 +145,13 @@ public class AlignedFeature implements Taggable {
      * If true, the feature has at least one MS1 spectrum
      */
     @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     protected boolean hasMs1;
     /**
      * If true, the feature has at least one MS/MS spectrum
      */
     @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     protected boolean hasMsMs;
 
     /**
@@ -186,6 +190,9 @@ public class AlignedFeature implements Taggable {
     protected boolean computing;
 
     @IndexField
+    // every flag inside says whether a tool has run, so they are all asked about in the positive; declared
+    // here because ComputedSubtools lives in a module that cannot see these annotations
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, description =
                     "Specifies which tools have been executed for the feature. " +
                     "Can be used to estimate which results can be expected. " +

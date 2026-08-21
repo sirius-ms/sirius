@@ -109,9 +109,9 @@ public class SearchableFieldDescriber {
     /**
      * The values a field can take, if they are known.
      * <p>
-     * Declared via {@link SearchableFieldDoc#possibleValues()} - on the field itself, or on the field that
-     * carries the mapper which contributed it; either way it is said in one place and read in one way. That is
-     * the more specific statement and therefore wins.
+     * Declared via {@link SearchableFieldDoc#possibleValues()} - on the field itself, on the field that carries
+     * the mapper which contributed it, or on the field holding the nested object it lives in; either way it is
+     * said in one place and read in one way. That is the more specific statement and therefore wins.
      * <p>
      * Otherwise they follow from the java type: enums report their constants and booleans report true/false,
      * both exactly as they are indexed, so that a client can offer them for completion instead of leaving the
@@ -157,19 +157,29 @@ public class SearchableFieldDescriber {
     }
 
     /**
-     * @return the vocabulary declared on the java field, or null if none is declared or the provider has no
-     * vocabulary for this field
+     * @return the vocabulary declared for this field, or null if none is declared or the vocabulary has none for
+     * it. Declared on the field itself, or on the field holding the nested object it lives in - one statement
+     * then covers every field inside that object, which is also the only way to make it for a nested class in a
+     * module that cannot see these annotations.
      */
     @Nullable
     private List<String> declaredPossibleValuesOf(@NotNull FieldFacts facts) {
-        SearchableFieldDoc doc = facts.declaredBy().getAnnotation(SearchableFieldDoc.class);
+        List<String> own = declaredOn(facts.declaredBy(), facts.name());
+        if (own != null)
+            return own;
+        return facts.declaredWithin() == null ? null : declaredOn(facts.declaredWithin(), facts.name());
+    }
+
+    @Nullable
+    private List<String> declaredOn(@NotNull java.lang.reflect.Field declaringField, @NotNull String fieldName) {
+        SearchableFieldDoc doc = declaringField.getAnnotation(SearchableFieldDoc.class);
         if (doc == null)
             return null;
 
         Class<? extends FieldVocabulary> vocabularyClass = doc.possibleValues();
         if (vocabularyClass == FieldVocabulary.None.class)
             return null;
-        return vocabularies.computeIfAbsent(vocabularyClass, clz -> instantiate(clz, facts.name()))
-                .getPossibleValues(facts.name());
+        return vocabularies.computeIfAbsent(vocabularyClass, clz -> instantiate(clz, fieldName))
+                .getPossibleValues(fieldName);
     }
 }
