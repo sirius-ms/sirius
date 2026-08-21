@@ -377,8 +377,8 @@ public class FeatureFilterModel implements SiriusPCS {
     public void updateAdducts(Collection<PrecursorIonType> detectedAdductsInProject) {
         Set<PrecursorIonType> oldAdducts = new HashSet<>(this.adducts);
 
-        Set<PrecursorIonType> listAdducts = new HashSet<>();
-        listAdducts.addAll(detectedAdductsInProject);
+        Set<PrecursorIonType> listAdducts = new HashSet<>(detectedAdductsInProject);
+        listAdducts.addAll(unknownAdductsOf(detectedAdductsInProject));
 
         Set<PrecursorIonType> newAdducts = new HashSet<>(listAdducts);
         newAdducts.removeAll(possibleAdducts);
@@ -392,6 +392,25 @@ public class FeatureFilterModel implements SiriusPCS {
         }else {
             pcs.firePropertyChange("possibleAdductsUpdated", null, this); // just notify gui components that the available adductes have changed.
         }
+    }
+
+    /**
+     * The unknown ion types the filter has to offer beside the detected ones: a feature whose adduct could
+     * not be determined is indexed as {@code [M+?]+} / {@code [M+?]-} (never with an empty adduct field),
+     * so without them in the list the default selection of all detected adducts silently drops every such
+     * feature - which is most of them in a project that was never preprocessed for adducts.
+     * <p>
+     * The polarity follows the project: the unknown type of every charge that occurs among the detected
+     * adducts, and both when nothing has been detected at all (there is nothing to infer from, and the one
+     * that does not occur simply matches nothing).
+     */
+    private static Set<PrecursorIonType> unknownAdductsOf(Collection<PrecursorIonType> detected) {
+        Set<PrecursorIonType> unknown = detected.stream()
+                .map(adduct -> PrecursorIonType.unknown(adduct.getCharge()))
+                .collect(Collectors.toSet());
+        return unknown.isEmpty()
+                ? Set.of(PrecursorIonType.unknownPositive(), PrecursorIonType.unknownNegative())
+                : unknown;
     }
 
     @Synchronized
