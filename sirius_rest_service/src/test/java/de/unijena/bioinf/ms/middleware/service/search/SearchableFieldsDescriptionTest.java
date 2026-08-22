@@ -253,7 +253,7 @@ public class SearchableFieldsDescriptionTest {
         // nested annotation fields
         assertNotNull(features.get("topAnnotations.structureAnnotation.inchiKey"));
         // mapper-derived fields (CompoundClassesMapper) must show up as well
-        SearchableField cfClass = features.get("topAnnotations.compoundClassAnnotation.cfClass");
+        SearchableField cfClass = features.get("topAnnotations.compoundClassAnnotation.classyFireClass");
         assertNotNull(cfClass);
         assertEquals(SearchableField.FieldType.TEXT, cfClass.getFieldType());
         assertTrue(cfClass.isFullTextSearch());
