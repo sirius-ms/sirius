@@ -505,6 +505,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
     private void applyToModel(@NotNull FeatureFilterModel filterModel) {
         filterModel.setInverted(queryEditor.isInverted());
+        filterModel.setQueryJoin(queryEditor.getQueryJoin());
 
         filterModel.setCurrentMinMz(getMinMz());
         filterModel.setCurrentMaxMz(getMaxMz());
@@ -704,6 +705,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         // Build the query for the features to DELETE: everything that does NOT match the current filter.
         // Flipping the filter's inversion turns the "keep" (visible) query into its complement.
         FeatureFilterModel deleteMatcher = new FeatureFilterModel();
+        deleteMatcher.setExecutableQueryForm(filterModel.getExecutableQueryForm()); // same query, same anchoring
         applyToModel(deleteMatcher);
         // applyToModel copies only the widget facets + inversion; the search-bar (user) query lives in
         // the editor and must be included, or the delete complement would not match the visible list

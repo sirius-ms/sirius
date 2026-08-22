@@ -225,6 +225,117 @@ public class PanelQueryNodeFactoryTest {
         assertTrue(nodes(model).isEmpty());
     }
 
+    // --- the user query runs in its executable form ---
+
+    @Test
+    public void testTheUserQueryIsAnchoredWhereLuceneNeedsIt() throws Exception {
+        FeatureFilterModel model = cleanSlate();
+        model.setExecutableQueryForm(QueryStringParser::executableForm);
+        searchText(model, "NOT computedTools.zodiac:true");
+        assertEquals("*:* AND NOT computedTools.zodiac:true",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow(),
+                "a query that only excludes matches nothing without the anchor");
+
+        // with facets, the anchor has to stay INSIDE the user block: (facets) AND (NOT x) matches nothing
+        model.setPfasDetected(true);
+        assertEquals("(tags.pfas:[* TO *]) AND (*:* AND NOT computedTools.zodiac:true)",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    @Test
+    public void testWithoutTheStrategyTheQueryRunsAsWritten() throws Exception {
+        // the rule lives in the search package and is handed in (GuiProjectManager does it); a model that was
+        // never given it must not silently rewrite anything
+        FeatureFilterModel model = cleanSlate();
+        searchText(model, "NOT computedTools.zodiac:true");
+        assertEquals("NOT computedTools.zodiac:true",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    // --- adducts: the unknown ion types are part of the offer ---
+
+    @Test
+    public void testTheUnknownAdductOfEveryDetectedPolarityIsOfferedAndPreselected() {
+        FeatureFilterModel model = cleanSlate();
+        model.updateAdducts(List.of(PrecursorIonType.fromString("[M+H]+"), PrecursorIonType.fromString("[M+Na]+")));
+
+        // a feature whose adduct could not be determined is indexed as [M+?]+, so leaving it out of the
+        // list would drop those features from every default-filtered view
+        assertTrue(model.getPossibleAdducts().contains(PrecursorIonType.unknownPositive()));
+        assertTrue(model.getSelectedAdducts().contains(PrecursorIonType.unknownPositive()),
+                "and it has to be selected by default, or the default filter still drops them");
+        // the polarity follows the project - nothing negative was detected here
+        assertFalse(model.getPossibleAdducts().contains(PrecursorIonType.unknownNegative()));
+    }
+
+    @Test
+    public void testWithNothingDetectedBothUnknownAdductsAreOffered() {
+        FeatureFilterModel model = cleanSlate();
+        model.updateAdducts(List.of());
+        // nothing to infer the polarity from (a project that was never preprocessed for adducts), and the
+        // one that does not occur matches nothing anyway
+        assertTrue(model.getSelectedAdducts().containsAll(
+                Set.of(PrecursorIonType.unknownPositive(), PrecursorIonType.unknownNegative())));
+    }
+
+    @Test
+    public void testTheUnknownAdductReachesTheCompiledQuery() {
+        FeatureFilterModel model = cleanSlate();
+        model.updateAdducts(List.of(PrecursorIonType.fromString("[M+H]+")));
+        String compiled = model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow();
+        assertTrue(compiled.contains(FeatureFilterModel.FIELD_ADDUCTS), compiled);
+        // the value the index holds for such a feature, escaped the way a bare term has to be
+        assertTrue(compiled.contains("?"), "the unknown adduct is missing from the query: " + compiled);
+    }
+
+    // --- the joint between the panel facets and the user's own query ---
+
+    private static void searchText(FeatureFilterModel model, String text) throws Exception {
+        model.getSearchTextDoc().insertString(0, text, null);
+    }
+
+    @Test
+    public void testTheFacetsNarrowTheUserQueryByDefault() throws Exception {
+        FeatureFilterModel model = cleanSlate();
+        model.setPfasDetected(true);
+        searchText(model, "name:caffeine");
+        assertEquals("(tags.pfas:[* TO *]) AND (name:caffeine)",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    @Test
+    public void testTheUserQueryCanBeAnAlternativeToTheFacets() throws Exception {
+        FeatureFilterModel model = cleanSlate();
+        model.setPfasDetected(true);
+        searchText(model, "name:caffeine");
+        model.setQueryJoin(LogicOp.OR);
+        // the panel facets stop narrowing: a feature matching the query alone passes too
+        assertEquals("(tags.pfas:[* TO *]) OR (name:caffeine)",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+
+        // inversion still wraps the whole thing, joint included
+        model.setInverted(true);
+        assertEquals("*:* AND NOT ((tags.pfas:[* TO *]) OR (name:caffeine))",
+                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    @Test
+    public void testTheJointIsMootWithoutAUserQuery() {
+        FeatureFilterModel model = cleanSlate();
+        model.setPfasDetected(true);
+        model.setQueryJoin(LogicOp.OR);
+        assertEquals("tags.pfas:[* TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow(),
+                "an OR with nothing on the other side is not an alternative");
+    }
+
+    @Test
+    public void testResetRestoresTheDefaultJoint() {
+        FeatureFilterModel model = cleanSlate();
+        model.setQueryJoin(LogicOp.OR);
+        model.resetFilter();
+        assertEquals(LogicOp.AND, model.getQueryJoin());
+    }
+
     @Test
     public void testUsedFieldNamesOccurInTheModelsCompiledQuery() {
         // activate a broad set of facets together (feature quality stays enabled by default)

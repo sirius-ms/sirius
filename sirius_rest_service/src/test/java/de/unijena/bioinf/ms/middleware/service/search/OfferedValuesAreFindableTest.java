@@ -104,9 +104,9 @@ public class OfferedValuesAreFindableTest {
         put("computedTools.canopus", "true");
         put("computedTools.structureSearch", "true");
         put("computedTools.deNovoSearch", "true");
-        put("topAnnotations.compoundClassAnnotation.cfClass", "Carboxylic acids and derivatives");
+        put("topAnnotations.compoundClassAnnotation.classyFireClass", "Carboxylic acids and derivatives");
         put("topAnnotations.compoundClassAnnotation.npcPathway", "Alkaloids");
-        put("topAnnotations.compoundClassAnnotation.npcSuperclass", "Alkylresorsinols");
+        put("topAnnotations.compoundClassAnnotation.npcSuperClass", "Alkylresorsinols");
         put("topAnnotations.compoundClassAnnotation.npcClass", "2-arylbenzofurans");
         put("topAnnotations.formulaAnnotation.lipidAnnotation.lipid", "true");
         put("topAnnotations.formulaAnnotation.lipidAnnotation.lipidClassName", "Hexose Ceramide");

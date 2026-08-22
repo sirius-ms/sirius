@@ -20,14 +20,14 @@
 
 package de.unijena.bioinf.ms.middleware.service.search;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FieldMapper;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.projectspace.IndexField;
-import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
-import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDoc;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.index.IndexableField;
@@ -224,6 +224,53 @@ public class FieldVocabularyTest {
         @IndexField
         @SearchableFieldDoc(possibleValues = UninstantiableValues.class)
         public String broken;
+    }
+
+    /** A nested object whose flags each declare that they are asked about in the positive. */
+    public static class Flags {
+        @IndexField
+        @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
+        private boolean zodiac = false;
+        @IndexField
+        private boolean canopus = false;
+    }
+
+    public static class FlagPojo {
+        @IndexField(documentId = true)
+        private String id = "1";
+        @IndexField
+        @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
+        private boolean hasMsMs = false;
+        @IndexField
+        private boolean hasMs1 = false;
+        @IndexField
+        private Flags computedTools = new Flags();
+    }
+
+    /**
+     * A boolean asked about in the positive offers {@code true} alone - the other case is the negation of it -
+     * while a boolean that declares nothing still reports both values from its java type.
+     */
+    @Test
+    public void testAPresenceFlagOffersTrueOnly() {
+        Map<String, SearchableField> fields = describeAsMap(FlagPojo.class);
+
+        assertEquals(List.of("true"), fields.get("hasMsMs").getPossibleValues());
+        assertEquals(List.of("true", "false"), fields.get("hasMs1").getPossibleValues(),
+                "undeclared booleans keep reporting what the java type can hold");
+    }
+
+    /**
+     * Declared on a field of a nested object, it is read there - the annotation travels with the field it is
+     * written on, whichever class that is.
+     */
+    @Test
+    public void testAFlagInsideANestedObjectIsRead() {
+        Map<String, SearchableField> fields = describeAsMap(FlagPojo.class);
+
+        assertEquals(List.of("true"), fields.get("computedTools.zodiac").getPossibleValues());
+        assertEquals(List.of("true", "false"), fields.get("computedTools.canopus").getPossibleValues(),
+                "and its neighbour says nothing about itself, so nothing is claimed for it");
     }
 
     private static Map<String, SearchableField> describeAsMap(Class<?> pojoClass) {

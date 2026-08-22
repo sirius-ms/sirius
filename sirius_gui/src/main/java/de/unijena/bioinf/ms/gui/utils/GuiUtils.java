@@ -103,6 +103,15 @@ public class GuiUtils {
         window.setSize(shrinkToUsableScreen(window.getSize()));
     }
 
+    /**
+     * A keyboard shortcut as it is written for the user, with the platform's menu modifier in front:
+     * {@code shortcut("Shift+F")} is {@code Ctrl+Shift+F}, and {@code Cmd+Shift+F} on macOS - the same
+     * modifier {@link java.awt.Toolkit#getMenuShortcutKeyMaskEx()} binds the stroke to.
+     */
+    public static String shortcut(@NotNull String keys) {
+        return (SystemUtils.IS_OS_MAC ? "Cmd+" : "Ctrl+") + keys;
+    }
+
     public static synchronized void initUI() {
         // 1. Enable custom window decorations
         JFrame.setDefaultLookAndFeelDecorated(true);

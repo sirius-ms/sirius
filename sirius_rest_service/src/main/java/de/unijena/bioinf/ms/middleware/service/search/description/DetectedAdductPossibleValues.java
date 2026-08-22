@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.search.description;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import lombok.RequiredArgsConstructor;

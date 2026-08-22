@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.search.description;
 
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

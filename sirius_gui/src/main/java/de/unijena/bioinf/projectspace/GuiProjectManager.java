@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListP
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.EventLists;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.search.QueryStringParser;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -147,6 +148,9 @@ public class GuiProjectManager implements Closeable {
         this.siriusGui = siriusGui;
 
         this.featureFilterModel = new FeatureFilterModel();
+        // the model holds the query as the user wrote it; how it has to be written to RUN (the match-all
+        // anchor a query with only negations needs) is the search package's rule, handed in here
+        this.featureFilterModel.setExecutableQueryForm(QueryStringParser::executableForm);
 
         this.INSTANCE_LIST = new BasicEventList<>();
 

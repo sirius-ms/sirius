@@ -26,14 +26,20 @@ import java.util.function.Function;
 
 /**
  * The shared, mutable rendering state of the search bar and its overlay: the field-name display
- * {@link FieldDisplay.Mode} (toggled together on both surfaces) and a resolver from a field name to
- * its {@code significantSuffixLength} (from the searchable-fields metadata). One instance is shared
- * so the collapsed bar and the overlay always render field names the same way.
+ * {@link FieldDisplay.Mode} (toggled together on both surfaces), the {@link QueryMode} the builder
+ * offers, and a resolver from a field name to its {@code significantSuffixLength} (from the
+ * searchable-fields metadata). One instance is shared so the collapsed bar and the overlay always
+ * render field names the same way, and so the query mode holds for the whole search bar.
+ * <p>
+ * Scoped to the surface that owns it: the search bar has one, the filter dialog builds its own, so
+ * both settings are chosen where they are used (as the display mode already was). Session state, not
+ * a persisted setting - both start at their default every run.
  */
 public final class SearchRenderState {
 
     private final SearchableFieldsProvider fieldsProvider;
     private FieldDisplay.Mode mode = FieldDisplay.Mode.COMPACT; // compact by default
+    private QueryMode queryMode = QueryMode.SIMPLE; // the shape most filters have; advanced on request
 
     public SearchRenderState(@NotNull SearchableFieldsProvider fieldsProvider) {
         this.fieldsProvider = fieldsProvider;
@@ -47,6 +53,16 @@ public final class SearchRenderState {
     /** Flips compact &lt;-&gt; extensive. */
     public void toggleMode() {
         mode = mode == FieldDisplay.Mode.COMPACT ? FieldDisplay.Mode.EXTENSIVE : FieldDisplay.Mode.COMPACT;
+    }
+
+    @NotNull
+    public QueryMode queryMode() {
+        return queryMode;
+    }
+
+    /** Flips simple &lt;-&gt; advanced. */
+    public void toggleQueryMode() {
+        queryMode = queryMode == QueryMode.SIMPLE ? QueryMode.ADVANCED : QueryMode.SIMPLE;
     }
 
     /** field name -> significant suffix length from the searchable-fields metadata (null if unknown). */

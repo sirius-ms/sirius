@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.middleware.service.search.description;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FieldFacts;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
@@ -140,10 +142,10 @@ public class SearchableFieldDescriber {
      */
     @Nullable
     private SearchableField.FieldType declaredTypeOf(@NotNull FieldFacts facts) {
-        SearchableFieldDoc doc = facts.declaredBy().getAnnotation(SearchableFieldDoc.class);
-        if (doc == null || doc.fieldTypes() == FieldTypes.None.class)
+        SearchableFieldTypeDoc doc = facts.declaredBy().getAnnotation(SearchableFieldTypeDoc.class);
+        if (doc == null || doc.value() == FieldTypes.None.class)
             return null;
-        return fieldTypes.computeIfAbsent(doc.fieldTypes(), clz -> instantiate(clz, facts.name()))
+        return fieldTypes.computeIfAbsent(doc.value(), clz -> instantiate(clz, facts.name()))
                 .typeOf(facts.name());
     }
 
@@ -157,8 +159,8 @@ public class SearchableFieldDescriber {
     }
 
     /**
-     * @return the vocabulary declared on the java field, or null if none is declared or the provider has no
-     * vocabulary for this field
+     * @return the vocabulary declared on the java field, or null if none is declared or the vocabulary has none
+     * for this field
      */
     @Nullable
     private List<String> declaredPossibleValuesOf(@NotNull FieldFacts facts) {

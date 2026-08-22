@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
@@ -143,11 +145,13 @@ public class AlignedFeature implements Taggable {
      * If true, the feature has at least one MS1 spectrum
      */
     @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     protected boolean hasMs1;
     /**
      * If true, the feature has at least one MS/MS spectrum
      */
     @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     protected boolean hasMsMs;
 
     /**
