@@ -5,7 +5,7 @@
   <title>SiriusJavaIntegrated</title>
   <base href="/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <script th:inline="javascript">
     /*
@@ -16,6 +16,27 @@
     window.APP_CONFIG = {
       apiBaseUrl: /*[[${apiBaseUrl}]]*/ null
     };
+
+    /*
+    Resolve the theme before anything else loads.
+
+    The React bundle is what normally applies the `dark` class, but it is large and only
+    runs once it has been parsed. Until then the document has no background of its own and
+    the window paints white, which shows as a flash on every view the desktop app opens.
+    The stylesheet cannot help either: its `.dark` rule needs the class that does not exist
+    yet.
+
+    Doing it here, in a classic script that runs while the head is parsed, closes that gap.
+    The background is also set inline so it does not wait for the stylesheet, and
+    color-scheme keeps native scrollbars and form controls from flashing light too.
+    */
+    (function () {
+      var isDark = new URLSearchParams(window.location.search).get('theme') === 'dark';
+      var root = document.documentElement;
+      if (isDark) root.classList.add('dark');
+      root.style.backgroundColor = isDark ? '#3C3F41' : '#ffffff';
+      root.style.colorScheme = isDark ? 'dark' : 'light';
+    })();
 
     /*
     Define a new console, which serializes all objects to JSON.
@@ -31,10 +52,10 @@
     }(window.console));
     window.console = console;
   </script>
-  <script type="module" crossorigin src="/assets/index-BYF0iqVy.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Mr92Aav9.css">
+  <script type="module" crossorigin src="/assets/index-DusSDg3i.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-D4bXzIGS.css">
 </head>
 <body>
-<div id="root"></div>
+<div id="root"></div>
 </body>
 </html>
