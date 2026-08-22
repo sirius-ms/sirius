@@ -1428,6 +1428,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         } else {
             feature.setTags(null);
         }
+
+        // The fold changes are restored by the index mapper on every read because the update path needs them to
+        // merge into (FoldChangeWorkflow), but no client can use them - the field is hidden from the api and is
+        // not in the generated clients, so it is dropped again on arrival after being the largest part of the
+        // response. Whoever asks for them keeps what the index carried; nothing is loaded for them here.
+        if (!optFields.contains(AlignedFeature.OptField.statistics))
+            feature.setStats(null);
+
         return feature;
     }
 
@@ -1987,6 +1995,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (!AlignedFeature.INDEXED_OPT_FIELDS.equals(optFields)) {
             features.stream().parallel().forEach(f ->
                     annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, msDataSearchPrepared, optFields));
+        } else if (!optFields.contains(AlignedFeature.OptField.statistics)) {
+            // everything asked for came out of the index, so the assembly pass is skipped - but the fold changes
+            // came out of it too, and nobody asked for those
+            features.forEach(f -> f.setStats(null));
         }
 
         return features;
@@ -2079,7 +2091,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
 
         TinyBackgroundJJob<Long2ObjectOpenHashMap<List<Statistics>>> statJob = null;
-        if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary)) {
+        if (optFields.contains(AlignedFeature.OptField.statistics)) {
             statJob = SiriusJobs.runInBackground(() -> {
                 final Long2ObjectOpenHashMap<List<Statistics>> statsMap = new Long2ObjectOpenHashMap<>();
                 storage().findAllByIndexedFieldStr("alignedFeatureId", Arrays.asList(ids), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class)
