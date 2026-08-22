@@ -63,11 +63,15 @@ public class EnumSortAndPossibleValuesTest {
     }
 
     @Test
-    public void booleanFieldsReportTheValuesTheyAccept() {
+    public void booleanFieldsReportTheValuesTheyOffer() {
         SearchableField hasMsMs = fields(AlignedFeature.class).get("hasMsMs");
         assertEquals(SearchableField.FieldType.BOOLEAN, hasMsMs.getFieldType());
-        // exactly as indexed: booleans are keyword indexed from Boolean.toString()
-        assertEquals(List.of("true", "false"), hasMsMs.getPossibleValues());
+        // exactly as indexed (booleans are keyword indexed from Boolean.toString()), and only the value this
+        // field is asked about: it names a property a feature has or lacks, so it declares itself a presence
+        // flag and the other case is the negation of it. A boolean that declares nothing still reports both -
+        // see FieldVocabularyTest, which pins that rule on a pojo of its own rather than on whichever real
+        // field happens to be undeclared today.
+        assertEquals(List.of("true"), hasMsMs.getPossibleValues());
     }
 
     @Test

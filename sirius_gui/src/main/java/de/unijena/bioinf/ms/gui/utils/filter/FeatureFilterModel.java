@@ -42,6 +42,7 @@ import javax.swing.text.PlainDocument;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.function.UnaryOperator;
 import de.unijena.bioinf.ms.gui.utils.query.LogicOp;
 import de.unijena.bioinf.ms.gui.utils.query.LuceneQueryCompiler;
 import de.unijena.bioinf.ms.gui.utils.query.QueryContainer;
@@ -61,8 +62,28 @@ public class FeatureFilterModel implements SiriusPCS {
     @Getter
     private boolean inverted;
 
+    /**
+     * How the filter-panel facets and the user's own query are combined: AND (the facets narrow the
+     * search, the default) or OR (the query is an alternative to them). A property of the whole filter
+     * like {@link #inverted}, surfaced and edited in the search bar's query builder.
+     */
+    @Getter
+    private LogicOp queryJoin = LogicOp.AND;
+
     @Getter
     private final Document searchTextDoc;
+
+    /**
+     * How the user's own query text is turned into the form that is EXECUTED - the match-all anchor a lucene
+     * query needs when it only excludes ({@code NOT lipid:true} matches nothing as written). The rule lives
+     * where queries are compiled and needs the query as a tree, so it is handed in rather than reached for:
+     * the search package supplies it (see {@code QueryStringParser#executableForm}), and until it does the
+     * query runs exactly as written.
+     */
+    @Getter
+    @Setter
+    @NotNull
+    private UnaryOperator<String> executableQueryForm = UnaryOperator.identity();
 
     @Getter
     private double currentMinMz;
@@ -253,6 +274,12 @@ public class FeatureFilterModel implements SiriusPCS {
         pcs.firePropertyChange("setInverted", old, inverted);
     }
 
+    public void setQueryJoin(@NotNull LogicOp queryJoin) {
+        LogicOp old = this.queryJoin;
+        this.queryJoin = queryJoin;
+        pcs.firePropertyChange("setQueryJoin", old, queryJoin);
+    }
+
     public void setCurrentMinMz(double currentMinMz) {
         if (currentMinMz < minMz) throw new IllegalArgumentException("current value out of range: " + currentMinMz);
         double oldValue = this.currentMinMz;
@@ -363,8 +390,8 @@ public class FeatureFilterModel implements SiriusPCS {
     public void updateAdducts(Collection<PrecursorIonType> detectedAdductsInProject) {
         Set<PrecursorIonType> oldAdducts = new HashSet<>(this.adducts);
 
-        Set<PrecursorIonType> listAdducts = new HashSet<>();
-        listAdducts.addAll(detectedAdductsInProject);
+        Set<PrecursorIonType> listAdducts = new HashSet<>(detectedAdductsInProject);
+        listAdducts.addAll(unknownAdductsOf(detectedAdductsInProject));
 
         Set<PrecursorIonType> newAdducts = new HashSet<>(listAdducts);
         newAdducts.removeAll(possibleAdducts);
@@ -378,6 +405,25 @@ public class FeatureFilterModel implements SiriusPCS {
         }else {
             pcs.firePropertyChange("possibleAdductsUpdated", null, this); // just notify gui components that the available adductes have changed.
         }
+    }
+
+    /**
+     * The unknown ion types the filter has to offer beside the detected ones: a feature whose adduct could
+     * not be determined is indexed as {@code [M+?]+} / {@code [M+?]-} (never with an empty adduct field),
+     * so without them in the list the default selection of all detected adducts silently drops every such
+     * feature - which is most of them in a project that was never preprocessed for adducts.
+     * <p>
+     * The polarity follows the project: the unknown type of every charge that occurs among the detected
+     * adducts, and both when nothing has been detected at all (there is nothing to infer from, and the one
+     * that does not occur simply matches nothing).
+     */
+    private static Set<PrecursorIonType> unknownAdductsOf(Collection<PrecursorIonType> detected) {
+        Set<PrecursorIonType> unknown = detected.stream()
+                .map(adduct -> PrecursorIonType.unknown(adduct.getCharge()))
+                .collect(Collectors.toSet());
+        return unknown.isEmpty()
+                ? Set.of(PrecursorIonType.unknownPositive(), PrecursorIonType.unknownNegative())
+                : unknown;
     }
 
     @Synchronized
@@ -436,6 +482,7 @@ public class FeatureFilterModel implements SiriusPCS {
 
     public void resetFilter() {
         setInverted(false);
+        setQueryJoin(LogicOp.AND);
 
         clearSearchText();
 
@@ -503,7 +550,8 @@ public class FeatureFilterModel implements SiriusPCS {
     }
 
     /**
-     * The active structured facets (as query nodes) AND the free-text segment, compiled to lucene as it
+     * The active structured facets (as query nodes) joined with the free-text segment - by AND, or by OR
+     * when {@link #getQueryJoin()} says so - compiled to lucene as it
      * is EXECUTED - facets that are pure negations (no lipid class, no pfas tag) get the match-all anchor
      * they need to match anything at all, see {@link LuceneQueryCompiler#compileExecutable}.
      */
@@ -512,13 +560,13 @@ public class FeatureFilterModel implements SiriusPCS {
         List<LogicOp> ands = new ArrayList<>(Math.max(0, nodes.size() - 1));
         for (int i = 1; i < nodes.size(); i++)
             ands.add(LogicOp.AND);
-        return LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), freeTextQuery());
+        return LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), freeTextQuery(), queryJoin);
     }
 
     /**
-     * The full-text segment: the user's search text used as-is when it parses as a lucene query,
-     * otherwise quoted as a phrase so malformed input still runs (against the default search fields)
-     * instead of failing the whole query.
+     * The full-text segment: the user's search text in its executable form when it parses as a lucene query
+     * (see {@link #getExecutableQueryForm()}), otherwise quoted as a phrase so malformed input still runs
+     * (against the default search fields) instead of failing the whole query.
      */
     private String freeTextQuery() {
         if (!isSearchTextFilterActive())
@@ -526,7 +574,8 @@ public class FeatureFilterModel implements SiriusPCS {
         String text = getSearchText();
         try {
             textFieldParser.parse(text);
-            return text;
+            // it is a query - so run the form that a query with only negations needs to match anything
+            return executableQueryForm.apply(text);
         } catch (ParseException e) {
             return "\"" + text.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
         }

@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.search;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
@@ -34,7 +35,6 @@ import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.middleware.service.search.description.ApiDocFieldDescriptions;
-import de.unijena.bioinf.ms.middleware.service.search.description.FieldVocabulary;
 import de.unijena.bioinf.ms.middleware.service.search.description.TagFieldDocs;
 import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldDescriber;

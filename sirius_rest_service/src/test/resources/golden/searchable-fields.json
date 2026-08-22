@@ -105,7 +105,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
-    "possibleValues" : [ "true", "false" ],
+    "possibleValues" : [ "true" ],
     "description" : "If true, the feature has at least one MS1 spectrum"
   }, {
     "name" : "hasMsMs",
@@ -114,7 +114,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
-    "possibleValues" : [ "true", "false" ],
+    "possibleValues" : [ "true" ],
     "description" : "If true, the feature has at least one MS/MS spectrum"
   }, {
     "name" : "topAnnotations.formulaAnnotation.molecularFormula",
@@ -216,7 +216,7 @@
     "possibleValues" : null,
     "description" : "Name of the structure candidate. Searching also resolves the searched term as a PubChem synonym, so a structure is found by any of its common names."
   }, {
-    "name" : "topAnnotations.compoundClassAnnotation.cfClass",
+    "name" : "topAnnotations.compoundClassAnnotation.classyFireClass",
     "fieldType" : "TEXT",
     "fullTextSearch" : true,
     "sortable" : false,
@@ -243,7 +243,7 @@
     "possibleValues" : [ "Alkaloids", "Amino acids and Peptides", "Carbohydrates", "Fatty acids", "Polyketides", "Shikimates and Phenylpropanoids", "Terpenoids" ],
     "description" : null
   }, {
-    "name" : "topAnnotations.compoundClassAnnotation.npcSuperclass",
+    "name" : "topAnnotations.compoundClassAnnotation.npcSuperClass",
     "fieldType" : "TEXT",
     "fullTextSearch" : true,
     "sortable" : false,
@@ -294,7 +294,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
-    "possibleValues" : [ "true", "false" ],
+    "possibleValues" : [ "true" ],
     "description" : null
   }, {
     "name" : "computedTools.formulaSearch",
@@ -303,7 +303,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
-    "possibleValues" : [ "true", "false" ],
+    "possibleValues" : [ "true" ],
     "description" : null
   }, {
     "name" : "computedTools.zodiac",
@@ -312,7 +312,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
-    "possibleValues" : [ "true", "false" ],
+    "possibleValues" : [ "true" ],
     "description" : null
   }, {
     "name" : "computedTools.fingerprint",
@@ -321,7 +321,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
-    "possibleValues" : [ "true", "false" ],
+    "possibleValues" : [ "true" ],
     "description" : null
   }, {
     "name" : "computedTools.canopus",
@@ -330,7 +330,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
-    "possibleValues" : [ "true", "false" ],
+    "possibleValues" : [ "true" ],
     "description" : null
   }, {
     "name" : "computedTools.structureSearch",
@@ -339,7 +339,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
-    "possibleValues" : [ "true", "false" ],
+    "possibleValues" : [ "true" ],
     "description" : null
   }, {
     "name" : "computedTools.deNovoSearch",
@@ -348,7 +348,7 @@
     "sortable" : false,
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
-    "possibleValues" : [ "true", "false" ],
+    "possibleValues" : [ "true" ],
     "description" : null
   }, {
     "name" : "qualities.isotopePattern",
