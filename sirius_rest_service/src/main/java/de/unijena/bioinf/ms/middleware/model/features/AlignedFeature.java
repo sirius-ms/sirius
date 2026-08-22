@@ -57,7 +57,7 @@ import java.util.Set;
 public class AlignedFeature implements Taggable {
     // topAnnotationsSummary are the indext summary field that can be retrieved very fast and are needed for quick gui loading.
     @Schema(name = "AlignedFeatureOptField", nullable = true)
-    public enum OptField {none, msData, topAnnotationsSummary, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags}
+    public enum OptField {none, msData, topAnnotationsSummary, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags, statistics}
 
     public static final EnumSet<OptField> INDEXED_OPT_FIELDS =  EnumSet.of(
             OptField.tags, OptField.computedTools, OptField.topAnnotationsSummary, OptField.qualities);
@@ -217,7 +217,9 @@ public class AlignedFeature implements Taggable {
      * Aggregated fold change of sample runs vs blank runs for the aligned feature
      * NULL if not a sample run or no fold change exists
      */
-    //NOTE: This field is mainly for search index building and therefore hidden from the api
+    //NOTE: This field is mainly for search index building and therefore hidden from the api. It is only filled
+    // when OptField.statistics is requested: it is not part of the documented api, so nothing reads it, while it
+    // is by far the largest part of a feature - one entry per group pair, quantification and aggregation.
     @IndexFieldWithMapper(mapper = FoldChangeMapper.AlignedFeatureFoldChange.class)
     @Schema(nullable = true, hidden = true)
     protected List<Statistics> stats;
