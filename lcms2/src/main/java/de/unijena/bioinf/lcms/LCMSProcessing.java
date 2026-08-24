@@ -36,6 +36,8 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
 import de.unijena.bioinf.lcms.utils.Tracker;
+import de.unijena.bioinf.lcms.spectrum.SpectrumStorage;
+import de.unijena.bioinf.lcms.msms.ChimericPollution;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
@@ -333,14 +335,13 @@ public class LCMSProcessing {
         cleanupSample(sample);
         extractTraces(sample);
         learnTraceCorrelations(sample);
-        // A sample the deconvolution took is a data independent measurement, and the scans its channels could not
-        // use are not ordinary MS2: their isolation window holds everything co-eluting in it, so assigning one to the
-        // most intense trace of that window attaches other compounds' fragments - the failure deconvolution exists to
-        // avoid. Those are dropped, as before. Only a sample the deconvolution declined goes to the data dependent
-        // path in full, and that is the case a wide window used to break.
-        if (!deconvolutionDecision.performDeconvolution(sample) || deconvoluteDia(sample).isEmpty()) {
-            assignMs2Trace(sample);
-        }
+        // An acquisition need not be all one thing: a sample may hold both wide windows, whose scans only the
+        // deconvolution can use, and ordinary narrow ones. So every scan the deconvolution did not claim is still
+        // offered to the data dependent path, under the condition that it looks like the measurement of a single
+        // compound - see ChimericPollution#isTargetedMeasurement. A sample the deconvolution declined has claimed
+        // nothing and goes down that path in full, exactly as before.
+        assignMs2Trace(sample, deconvolutionDecision.performDeconvolution(sample)
+                ? deconvoluteDia(sample) : IntSets.EMPTY_SET);
         sample.setNormalizer(normalizationStrategy.computeNormalization(sample));
         extractMoIsForAlignment(sample);
         collectStatisticsBeforeAlignment(sample);
@@ -681,8 +682,26 @@ public class LCMSProcessing {
         }
     }
 
-    private void assignMs2Trace(ProcessedSample sample) {
-        for (Ms2SpectrumHeader ms2SpectrumHeader : sample.getStorage().getSpectrumStorage().ms2SpectraHeader()) {
+    /**
+     * @param claimedByDia the MS2 scans the deconvolution took, which are already assigned and must not be assigned
+     *                     again. Empty for a sample that was not deconvoluted, and then every scan is offered as it
+     *                     always was; non-empty means this is a data independent sample, where a scan the
+     *                     deconvolution left over is only usable if its window isolated one compound.
+     */
+    private void assignMs2Trace(ProcessedSample sample, IntSet claimedByDia) {
+        final SpectrumStorage spectra = sample.getStorage().getSpectrumStorage();
+        final boolean deconvoluted = !claimedByDia.isEmpty();
+        int besideDeconvolution = 0, notTargeted = 0;
+        for (Ms2SpectrumHeader ms2SpectrumHeader : spectra.ms2SpectraHeader()) {
+            if (claimedByDia.contains(ms2SpectrumHeader.getUid())) continue;
+            if (deconvoluted) {
+                if (!ChimericPollution.isTargetedMeasurement(ms2SpectrumHeader,
+                        spectra.getSpectrum(ms2SpectrumHeader.getParentId()))) {
+                    ++notTargeted;
+                    continue;
+                }
+                ++besideDeconvolution;
+            }
             Optional<MsMsTraceReference> traceId = ms2TraceStrategy.getTraceFor(sample, ms2SpectrumHeader);
             if (traceId.isPresent()) {
 
@@ -699,6 +718,11 @@ public class LCMSProcessing {
             } else {
                 LoggerFactory.getLogger(LCMSProcessing.class).debug("No suitable trace found for MSMS " + ms2SpectrumHeader);
             }
+        }
+        if (deconvoluted) {
+            LoggerFactory.getLogger(LCMSProcessing.class).info("{}: {} MS2 scans beside the deconvolution were "
+                    + "isolated narrowly and cleanly enough to assign, {} were not.",
+                    sample.getRun().getName(), besideDeconvolution, notTargeted);
         }
         sample.getStorage().commit();
     }
