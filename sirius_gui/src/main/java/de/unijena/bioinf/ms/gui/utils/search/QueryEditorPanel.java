@@ -94,6 +94,11 @@ public class QueryEditorPanel extends JPanel {
      * Vertical gap between chip rows; shared by the chips-zone {@link WrapLayout} and the height cap.
      */
     private static final int CHIP_VGAP = 4;
+    /**
+     * Horizontal gap between chips; also the breathing room kept between the last chip of the first
+     * row and the controls overlaid on that row's right end.
+     */
+    private static final int CHIP_HGAP = 4;
     /** Font enlargement of a brace around a group inside the user's query. */
     private static final float GROUP_PAREN_FONT_DELTA = 2f;
     /** ... and of the braces around the two fixed blocks, which are a level above those groups. */
@@ -235,6 +240,11 @@ public class QueryEditorPanel extends JPanel {
      */
     private JScrollPane chipsScroll;
     /**
+     * The chips zone with the controls overlaid on its top-right corner; kept so a rebuild can
+     * re-place that overlay when the chips zone gains or loses its scrollbar.
+     */
+    private JPanel chipsHeader;
+    /**
      * Lower zone, left part: the open-group markers and staged fragments of the term being built.
      * The input itself takes the rest of that line (see {@link #typingLine}).
      */
@@ -306,7 +316,8 @@ public class QueryEditorPanel extends JPanel {
         // --- two zones: finished terms as chips (upper) over the term being built (lower) ---
         // the chips zone wraps across rows in a height-capped, vertically-scrollable area so the
         // typing row and its instructions stay visible no matter how many finished chips there are
-        chipsRow = new WrapScrollPanel(new WrapLayout(FlowLayout.LEFT, 4, CHIP_VGAP));
+        WrapLayout chipsLayout = new WrapLayout(FlowLayout.LEFT, CHIP_HGAP, CHIP_VGAP);
+        chipsRow = new WrapScrollPanel(chipsLayout);
         chipsScroll = new JScrollPane(chipsRow,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
             @Override
@@ -429,14 +440,21 @@ public class QueryEditorPanel extends JPanel {
             controls.add(filterButton);
 
         // chips zone with the trailing controls (clear / invert / mode / funnel) at its top-right,
-        // and the typing zone stacked directly beneath it
-        JPanel chipsHeader = new JPanel(new BorderLayout());
-        chipsHeader.setOpaque(false);
-        chipsHeader.add(chipsScroll, BorderLayout.CENTER);
+        // and the typing zone stacked directly beneath it. The controls float above the chips zone
+        // rather than owning a full-height column of their own, and the chips layout keeps that
+        // corner free - so they narrow only the line they actually sit on, not every chip row.
         JPanel controlsAligned = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 2));
-        controlsAligned.setOpaque(false);
+        // opaque: chips scrolled up behind the controls have to be hidden by them, not shine through
+        controlsAligned.setOpaque(true);
+        controlsAligned.setBackground(getBackground());
         controlsAligned.add(controls);
-        chipsHeader.add(controlsAligned, BorderLayout.EAST);
+        chipsLayout.setReservedTopRight(() -> {
+            if (!controlsAligned.isVisible())
+                return null;
+            Dimension d = controlsAligned.getPreferredSize();
+            return new Dimension(d.width + CHIP_HGAP, d.height);
+        });
+        chipsHeader = new CornerOverlayPanel(chipsScroll, controlsAligned);
 
         Box northStack = Box.createVerticalBox();
         northStack.setOpaque(false);
@@ -1286,6 +1304,7 @@ public class QueryEditorPanel extends JPanel {
         input.setPlaceholder(tokenModel.stagePrompt());
         chipsRow.revalidate();
         chipsRow.repaint();
+        chipsHeader.revalidate(); // the scroll pane is a validate root: re-place the overlay ourselves
         typingLine.revalidate();
         typingLine.repaint();
         if (isShowing())
@@ -1571,6 +1590,72 @@ public class QueryEditorPanel extends JPanel {
         @Override
         public boolean getScrollableTracksViewportHeight() {
             return false;
+        }
+    }
+
+    /**
+     * Stacks a corner component on top of a filling one instead of giving it a column of its own:
+     * the corner keeps its preferred size at the top-right of the fill component's visible area and
+     * paints over whatever is beneath it. When the fill component is a {@link JScrollPane} the
+     * corner is aligned to its viewport, so a vertical scrollbar stays clear of it.
+     * <p>
+     * Used for the chips zone: with the controls in a {@link BorderLayout#EAST} column they would
+     * narrow every chip row; overlaid (and with the chip {@link WrapLayout} reserving that corner)
+     * they narrow only the row they cover.
+     */
+    private static final class CornerOverlayPanel extends JPanel {
+        private final JComponent fill;
+        private final JComponent corner;
+
+        CornerOverlayPanel(JComponent fill, JComponent corner) {
+            super(null);
+            setOpaque(false);
+            this.fill = fill;
+            this.corner = corner;
+            add(corner); // index 0 is painted last, i.e. on top of the fill component
+            add(fill);
+        }
+
+        @Override
+        public void doLayout() {
+            fill.setBounds(0, 0, getWidth(), getHeight());
+            // lay the fill component out now so a scroll pane's viewport bounds - which decide where
+            // the corner goes - already reflect the size it was just given
+            fill.doLayout();
+            Dimension pref = corner.getPreferredSize();
+            int rightEdge = getWidth();
+            if (fill instanceof JScrollPane scroll) {
+                Rectangle viewport = scroll.getViewport().getBounds();
+                rightEdge = fill.getX() + viewport.x + viewport.width;
+            }
+            int width = Math.min(pref.width, getWidth());
+            corner.setBounds(Math.max(0, rightEdge - width), 0, width, Math.min(pref.height, getHeight()));
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            if (isPreferredSizeSet())
+                return super.getPreferredSize();
+            return union(fill.getPreferredSize(), corner.getPreferredSize());
+        }
+
+        @Override
+        public Dimension getMinimumSize() {
+            if (isMinimumSizeSet())
+                return super.getMinimumSize();
+            return union(fill.getMinimumSize(), corner.getMinimumSize());
+        }
+
+        @Override
+        public Dimension getMaximumSize() {
+            if (isMaximumSizeSet())
+                return super.getMaximumSize();
+            // as the replaced BorderLayout did: free to be stretched by the enclosing Box
+            return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        }
+
+        private static Dimension union(Dimension a, Dimension b) {
+            return new Dimension(Math.max(a.width, b.width), Math.max(a.height, b.height));
         }
     }
 
