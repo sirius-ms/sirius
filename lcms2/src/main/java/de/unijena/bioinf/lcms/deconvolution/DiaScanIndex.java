@@ -4,6 +4,9 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+
 import java.util.List;
 import java.util.Locale;
 
@@ -48,6 +51,22 @@ public class DiaScanIndex {
         this.numberOfDroppedScans = numberOfDroppedScans;
         this.numberOfRepairedParentReferences = numberOfRepairedParentReferences;
         this.numberOfDeconvolutedScans = numberOfDeconvolutedScans;
+    }
+
+    /**
+     * The MS2 scans its channels took, so that everything else can go to the data dependent path.
+     * <p>
+     * A sample is not DIA or DDA as a whole: whether a window's scans can be deconvoluted depends on how densely it
+     * was revisited, and an acquisition may hold windows of both kinds. The scans this index did not claim are
+     * ordinary MS2 measurements of a single precursor and have to be assigned as such, or they are lost - which is
+     * what happened to eighty five per cent of the scans of a data dependent run whose windows were merely wide.
+     */
+    public IntSet claimedMs2Uids() {
+        final IntSet claimed = new IntOpenHashSet();
+        for (DiaChannel channel : channels) {
+            for (int k = 0; k < channel.numberOfScans(); ++k) claimed.add(channel.ms2UidAt(k));
+        }
+        return claimed;
     }
 
     public int numberOfChannels() {
