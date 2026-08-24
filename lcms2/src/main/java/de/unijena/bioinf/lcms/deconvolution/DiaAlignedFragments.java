@@ -74,6 +74,14 @@ public final class DiaAlignedFragments {
             this.instances = instances;
         }
 
+        public double getMz() {
+            return mz;
+        }
+
+        public double getApexRetentionTime() {
+            return apexRetentionTime;
+        }
+
         /** @return the trace of this fragment in the given sample, or null if that sample did not measure it */
         public ContiguousTrace traceIn(int sampleIndex) {
             for (Instance instance : instances) {

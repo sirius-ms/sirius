@@ -128,6 +128,27 @@ public class DiaConsensusGraph {
      * @return the feature as seen from this channel in every sample, null where that sample did not measure it or
      * measured it too narrowly, or null altogether if no sample did
      */
+    /**
+     * The per sample views of a whole precursor list, as {@link #build} computes them internally.
+     * <p>
+     * Exposed because a caller that wants to decide something about the precursors themselves - which of them are
+     * indistinguishable, for instance - needs their elution profiles before the graph exists, and recomputing them
+     * by hand would be a second definition of what a sample's view of a final feature is.
+     *
+     * @return one array per precursor, null where no sample measured it, and null entries for the samples that did not
+     */
+    public static PrecursorFeature[][] viewsOf(List<DiaFinalPrecursors.Aligned> precursors,
+                                               List<DiaAlignedFragments.SampleFragments> perSample, boolean decoy) {
+        final Int2IntOpenHashMap sampleIndex = new Int2IntOpenHashMap();
+        sampleIndex.defaultReturnValue(-1);
+        for (int s = 0; s < perSample.size(); ++s) sampleIndex.put(perSample.get(s).sample().getUid(), s);
+        final PrecursorFeature[][] views = new PrecursorFeature[precursors.size()][];
+        for (int p = 0; p < precursors.size(); ++p) {
+            views[p] = viewsOf(precursors.get(p), perSample, sampleIndex, decoy);
+        }
+        return views;
+    }
+
     private static PrecursorFeature[] viewsOf(DiaFinalPrecursors.Aligned precursor,
                                               List<DiaAlignedFragments.SampleFragments> perSample,
                                               Int2IntOpenHashMap sampleIndex, boolean decoy) {
