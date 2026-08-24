@@ -599,16 +599,14 @@ public class NoSQLProjectTest {
     }
 
     /**
-     * Recomputing a group pair has to replace its fold changes, in the project and in the search index that
-     * the gui filters on. Both halves failed silently. The cleanup filter named fields the stored record does
-     * not have, so nothing was deleted and the recompute left a second set behind; and the index merge kept
-     * whichever entry was already there, because fold changes compare by group pair and quantification while
-     * their abundances are excluded from equality. Together a recompute produced duplicate rows and a search
-     * index still answering with the superseded numbers.
+     * A project holding one sample run, one blank run and one feature found in both - tagged and grouped the
+     * way the blank removal fold change job expects, and with the feature already indexed, which the workflow's
+     * index merge needs.
+     *
+     * @return the feature as it is in the sample run, so a caller can change its intensity and recompute
      */
-    @Test
     @SneakyThrows
-    public void testRecomputingFoldChangesReplacesTheOldOnes() {
+    private Feature sampleAndBlankWithOneFeature(double sampleApexIntensity, double blankApexIntensity) {
         project.createTags(List.of(
                 TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT)
                         .possibleValues(List.of("sample", "blank")).build()
@@ -639,17 +637,32 @@ public class NoSQLProjectTest {
         AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name("af").build();
         ps.getStorage().insert(af);
         Feature inSample = Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
-                .apexIntensity(2.0).runId(runs.get(0).getRunId()).build();
+                .apexIntensity(sampleApexIntensity).runId(runs.get(0).getRunId()).build();
         Feature inBlank = Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
-                .apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
+                .apexIntensity(blankApexIntensity).runId(runs.get(1).getRunId()).build();
         ps.getStorage().insertAll(List.of(inSample, inBlank));
 
         // the workflow merges the fold changes into the indexed feature, so it has to be indexed first
         project.getSearchService().addDocument(project.getProjectId(), project.convertToApiFeature(af, false));
+        return inSample;
+    }
+
+    /**
+     * Recomputing a group pair has to replace its fold changes, in the project and in the search index that
+     * the gui filters on. Both halves failed silently. The cleanup filter named fields the stored record does
+     * not have, so nothing was deleted and the recompute left a second set behind; and the index merge kept
+     * whichever entry was already there, because fold changes compare by group pair and quantification while
+     * their abundances are excluded from equality. Together a recompute produced duplicate rows and a search
+     * index still answering with the superseded numbers.
+     */
+    @Test
+    @SneakyThrows
+    public void testRecomputingFoldChangesReplacesTheOldOnes() {
+        Feature inSample = sampleAndBlankWithOneFeature(2.0, 1.0);
 
         runSampleOverBlankFoldChange();
 
-        String afId = Long.toString(af.getAlignedFeatureId());
+        String afId = Long.toString(inSample.getAlignedFeatureId());
         assertEquals(1, project.getFoldChanges(QuantRowType.FEATURES, afId).size());
         assertEquals(2.0, project.getFoldChanges(QuantRowType.FEATURES, afId).getFirst().getFoldChange(),
                 Double.MIN_VALUE);
@@ -670,6 +683,27 @@ public class NoSQLProjectTest {
                 "the search index must carry the recomputed fold change");
         assertEquals(0, featuresWithFoldChangeBetween(1.5, 2.5),
                 "and must not still answer with the superseded one");
+    }
+
+    /**
+     * The index is also written from scratch, and that path has to carry the fold changes too. It is not a
+     * corner: it runs after every lc-ms data import, and on opening a project whose persisted index was
+     * discarded. Rebuilding without them leaves a project whose fold changes are all in place and whose blank
+     * filter matches nothing - which is what the import path did, even though it computes them in the
+     * orientation the filter reads.
+     */
+    @Test
+    @SneakyThrows
+    public void testRebuildingTheIndexKeepsTheFoldChanges() {
+        sampleAndBlankWithOneFeature(4.0, 1.0);
+
+        runSampleOverBlankFoldChange();
+        assertEquals(1, featuresWithFoldChangeBetween(3.5, 4.5), "indexed by the fold change run");
+
+        project.createSearchIndex(true);
+
+        assertEquals(1, featuresWithFoldChangeBetween(3.5, 4.5),
+                "a rebuilt index must still answer for the fold change the project holds");
     }
 
     @Test
