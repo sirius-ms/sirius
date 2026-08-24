@@ -5,11 +5,12 @@ import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.segmentation.NoSegmentation;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Picks the fragment chromatograms of one DIA channel.
@@ -24,6 +25,7 @@ import java.util.List;
  * follow across three scan points, but seeding from noise would still cost most of the runtime.
  */
 public final class DiaChannelFragments {
+
 
     /**
      * @param traces        the fragment chromatograms of the channel
@@ -66,28 +68,44 @@ public final class DiaChannelFragments {
 
     public static Result pickAll(ProcessedSample sample, DiaChannel channel, float noiseLevel,
                                  TraceSegmentationStrategy segmenter, int minScanPoints) {
+        return pickAll(sample, channel, noiseLevel, segmenter, minScanPoints, new Tracker.NOOP());
+    }
+
+    public static Result pickAll(ProcessedSample sample, DiaChannel channel, float noiseLevel,
+                                 TraceSegmentationStrategy segmenter, int minScanPoints, Tracker tracker) {
+        final boolean tracked = tracker.tracksDia();
         final Ms2ChannelTraceCache cache = new Ms2ChannelTraceCache(sample, channel);
         final Ms2ChannelTracePicker picker = new Ms2ChannelTracePicker(sample, channel, noiseLevel, cache, segmenter);
         picker.setMinScanPoints(minScanPoints);
-        final IntOpenHashSet seen = new IntOpenHashSet();
-        final List<ContiguousTrace> traces = new ArrayList<>();
         int seedsTried = 0, seedsBelowNoise = 0;
+
 
         for (int scan = 0; scan < channel.numberOfScans(); ++scan) {
             final SimpleSpectrum spectrum = picker.getSpectrum(scan);
             if (spectrum == null) continue;
             for (int peak = 0; peak < spectrum.size(); ++peak) {
+                final int index = scan;
+                if (tracked) {
+                    tracker.ms2ScanPeak(sample, channel.describe(), channel.getAxis().getRetentionTimeAt(index),
+                            spectrum.getMzAt(peak), (float) spectrum.getIntensityAt(peak), noiseLevel);
+                }
                 if (spectrum.getIntensityAt(peak) <= noiseLevel) {
                     ++seedsBelowNoise;
                     continue;
                 }
                 ++seedsTried;
-                final int index = scan;
-                picker.detectTrace(index, spectrum.getMzAt(peak)).ifPresent(trace -> {
-                    if (seen.add(trace.getUid())) traces.add(trace);
-                });
+                final Optional<ContiguousTrace> picked = picker.detectTrace(index, spectrum.getMzAt(peak));
+                if (tracked) {
+                    tracker.ms2TracePicked(sample, channel.describe(), spectrum.getMzAt(peak),
+                            channel.getAxis().getRetentionTimeAt(index), picked.orElse(null));
+                }
             }
         }
-        return new Result(traces, seedsTried, seedsBelowNoise);
+        // The traces come from the storage rather than from what the lookups above handed back. A peak already
+        // covered by a trace makes the picker return that trace instead of picking a new one, and where two traces
+        // cover the same peak - about one lookup in a hundred - which one comes back depends on the order the
+        // rectangle index returns them in. Collecting the answers therefore both omitted traces that were picked but
+        // never handed back, and did so differently between two runs on the same data.
+        return new Result(cache.all(), seedsTried, seedsBelowNoise);
     }
 }
