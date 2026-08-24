@@ -185,12 +185,55 @@ public abstract class AbstractTracePicker {
 
         return i==leftIdx && j==rightIdx;
     }
+    /**
+     * Whether to check a fruitless peak lookup against a linear scan of the same spectrum.
+     * <p>
+     * Every lookup here goes through a binary search, because a {@code SimpleSpectrum} declares itself ordered and
+     * nothing verifies the claim. If the search ever disagrees with a plain scan over the same object, the spectrum was
+     * not what it said it was and every trace built from it is wrong - but nothing about that is visible in the result:
+     * a trace simply stops a scan or two early. This turns that into a loud message with the spectrum attached.
+     * <p>
+     * Off by default, and the constant is final so the branch costs nothing when it is.
+     */
+    private static final boolean VERIFY_PEAK_LOOKUPS =
+            Boolean.getBoolean("de.unijena.bioinf.sirius.verifyPeakLookups");
+
+    /** @return the index a linear scan finds, or -1; only for {@link #VERIFY_PEAK_LOOKUPS} */
+    private static boolean isOrdered(SimpleSpectrum spectrum) {
+        for (int k = 1; k < spectrum.size(); ++k) if (spectrum.getMzAt(k - 1) > spectrum.getMzAt(k)) return false;
+        return true;
+    }
+
+    private int linearMostIntensiveWithin(SimpleSpectrum spectrum, double mz, Deviation dev) {
+        final double allowed = dev.absoluteFor(mz);
+        int best = -1;
+        double intensity = Double.NEGATIVE_INFINITY;
+        for (int k = 0; k < spectrum.size(); ++k) {
+            if (Math.abs(spectrum.getMzAt(k) - mz) <= allowed && spectrum.getIntensityAt(k) > intensity) {
+                intensity = spectrum.getIntensityAt(k);
+                best = k;
+            }
+        }
+        return best;
+    }
+
     private int getConnected(SimpleSpectrum left, SimpleSpectrum right, int leftIdx) {
         Deviation smallerDev = allowedMassDeviation.divide(3d);
         final double leftMz = left.getMzAt(leftIdx);
 
         int j = Spectrums.mostIntensivePeakWithin(right, leftMz, smallerDev);
         if (j<0) j = Spectrums.mostIntensivePeakWithin(right, leftMz, allowedMassDeviation);
+        if (j<0 && VERIFY_PEAK_LOOKUPS) {
+            final int linear = linearMostIntensiveWithin(right, leftMz, allowedMassDeviation);
+            if (linear >= 0) {
+                org.slf4j.LoggerFactory.getLogger(AbstractTracePicker.class).error(String.format(java.util.Locale.US,
+                        "binary search found no peak within %s of %.9f but a scan of the same spectrum found index %d "
+                                + "at %.9f (delta %.9f, intensity %.1f); spectrum size %d, ordered=%b",
+                        allowedMassDeviation, leftMz, linear, right.getMzAt(linear),
+                        Math.abs(right.getMzAt(linear) - leftMz), right.getIntensityAt(linear), right.size(),
+                        isOrdered(right)));
+            }
+        }
         if (j<0) return -1;
         final double rightMz = right.getMzAt(j);
 
