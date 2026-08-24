@@ -706,6 +706,57 @@ public class NoSQLProjectTest {
                 "a rebuilt index must still answer for the fold change the project holds");
     }
 
+    /**
+     * A feature the bulk queries found nothing for comes back with the empty value, not with null.
+     * <p>
+     * The distinction is what keeps the listing from asking again. Null is what the per-feature pass reads as
+     * "not fetched yet", so writing it for a feature that simply has no tags makes that pass issue a lookup per
+     * feature - over exactly the features the bulk query has just established have none, which on an index
+     * rebuild is most of them. The empty value says "asked, nothing there" instead, and it is what the
+     * per-feature lookup would have arrived at, so no response changes shape.
+     */
+    @Test
+    @SneakyThrows
+    public void testTheBulkListingReportsNothingFoundAsEmptyRatherThanNull() {
+        for (int i = 0; i < 3; i++)
+            ps.getStorage().insert(AlignedFeatures.builder().charge((byte) 1).name("af" + i).build());
+        ps.getStorage().flush();
+
+        List<AlignedFeature> features = project.findAlignedFeatures(Pageable.unpaged(), false,
+                        EnumSet.of(AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools,
+                                AlignedFeature.OptField.statistics))
+                .getContent();
+
+        assertEquals(3, features.size());
+        for (AlignedFeature feature : features) {
+            assertNotNull(feature.getTags(), "an untagged feature is tagged with nothing, not unknown");
+            assertTrue(feature.getTags().isEmpty());
+            assertNotNull(feature.getComputedTools(), "nothing computed is not the same as not looked up");
+            assertNotNull(feature.getStats(), "no fold change is not the same as not looked up");
+            assertTrue(feature.getStats().isEmpty());
+        }
+    }
+
+    /**
+     * ... and the same from the index, which is the other way a feature is assembled. The fold changes are the
+     * field where the two used to disagree: the tag mapper answers a document with no tags with an empty map,
+     * the fold change mapper answered a document with no fold change with null.
+     */
+    @Test
+    @SneakyThrows
+    public void testTheIndexAlsoReportsNoFoldChangeAsEmptyRatherThanNull() {
+        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name("af").build();
+        ps.getStorage().insert(af);
+        ps.getStorage().flush();
+        project.getSearchService().addDocument(project.getProjectId(), project.convertToApiFeature(af, false));
+
+        project.getSearchService().updateDocumentsFields(project.getProjectId(),
+                List.of(Long.toString(af.getAlignedFeatureId())),
+                (AlignedFeature indexed) -> assertNotNull(indexed.getStats(),
+                        "a document without fold changes has none, which is not the same as unknown"),
+                AlignedFeature.class);
+    }
+
     @Test
     @SneakyThrows
     public void testTags() {
