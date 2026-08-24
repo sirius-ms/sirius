@@ -41,6 +41,8 @@ final class PipelineRun {
     final List<DiaReport> diaReports;
     /** what stage two reported, or null if it did not run */
     final String refinement;
+    /** the MS2 noise level the quality checks use, so a diagnostic can compute exactly what they will */
+    double ms2NoiseLevel = Double.NaN;
 
     private PipelineRun(String name, List<AlignedFeatures> features, double processingSeconds,
                         double alignmentSeconds, List<DiaReport> diaReports, String refinement) {
@@ -86,8 +88,12 @@ final class PipelineRun {
             }
             final List<DiaReport> reports = new ArrayList<>(samples.size());
             for (ProcessedSample sample : samples) reports.add(processing.getDiaReport(sample).orElse(null));
-            return new PipelineRun(name, adapter.features, (afterSample - started) / 1000d,
+            final PipelineRun result = new PipelineRun(name, adapter.features, (afterSample - started) / 1000d,
                     (finished - afterSample) / 1000d, reports, processing.getDiaRefinementReport());
+            if (adapter.mergedRun != null && adapter.mergedRun.getSampleStats() != null) {
+                result.ms2NoiseLevel = adapter.mergedRun.getSampleStats().getMs2NoiseLevel();
+            }
+            return result;
         } finally {
             processing.closeStorages();
         }
@@ -120,9 +126,12 @@ final class PipelineRun {
         public void updateRun(LCMSRun run) {
         }
 
+        MergedLCMSRun mergedRun;
+
         @Override
         public void importMergedRun(MergedLCMSRun mergedRun) {
             mergedRun.setRunId(ids.getAndIncrement());
+            this.mergedRun = mergedRun;
         }
 
         @Override
