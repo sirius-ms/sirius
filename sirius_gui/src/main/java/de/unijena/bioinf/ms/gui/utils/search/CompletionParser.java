@@ -120,10 +120,13 @@ public final class CompletionParser {
 
     /**
      * All fields matching the prefix, deterministically ordered: full-name prefix matches first, then
-     * dot-segment (leaf name) matches, then matches on a word INSIDE a segment, alphabetical within each.
+     * dot-segment (leaf name) matches, then matches on a word INSIDE a segment, then several of those words
+     * typed as one, alphabetical within each.
      * <p>
      * The word tier is what lets the user search the way they think about a field: {@code mass} finds
-     * {@code ionMass}, {@code adducts} finds {@code detectedAdducts}. It also decides typed input, so
+     * {@code ionMass}, {@code adducts} finds {@code detectedAdducts}. The joined tier catches what the word tier
+     * cannot, because a user types a name without its case changes: {@code msms} is {@code hasMsMs} and
+     * {@code inchikey} is {@code ...inchiKey}, neither of which is a single word. It also decides typed input, so
      * {@code mass} + Tab starts a clause on {@code ionMass} - the suggestion list and Tab always agree.
      */
     public static List<SearchableField> fieldMatches(@NotNull String prefix, @NotNull List<SearchableField> fields) {
@@ -145,7 +148,7 @@ public final class CompletionParser {
     }
 
     /** Rank of a non-matching field; anything below it is offered, lower is a better match. */
-    private static final int NO_MATCH = 3;
+    private static final int NO_MATCH = 4;
 
     private static int matchRank(SearchableField field, String lowerPrefix) {
         String name = field.getName().toLowerCase(Locale.ROOT);
@@ -154,10 +157,35 @@ public final class CompletionParser {
         for (String segment : name.split("\\."))
             if (segment.startsWith(lowerPrefix))
                 return 1;
-        for (String word : words(field.getName()))
+        List<String> words = words(field.getName());
+        for (String word : words)
             if (word.startsWith(lowerPrefix))
                 return 2;
-        return NO_MATCH;
+        return matchesJoinedWords(words, lowerPrefix) ? 3 : NO_MATCH;
+    }
+
+    /**
+     * Whether the prefix is several of the name's words typed as one - {@code msms} for {@code hasMsMs},
+     * {@code inchikey} for {@code ...structureAnnotation.inchiKey}, {@code apexseconds} for
+     * {@code rtApexSeconds}.
+     * <p>
+     * Words are how the user thinks about a field, but not how they type it: nobody puts the case change back in,
+     * and a name whose every word is short ({@code has|ms|ms}) has no single word long enough to be worth typing.
+     * Without this, such a field is found by {@code ms} and lost again at {@code msm} - the more the user types,
+     * the fewer matches, which reads as "not there".
+     * <p>
+     * Only the runs that reach the END of the name are built. A prefix match on those covers every shorter run
+     * inside them: {@code msm} is a prefix of the run {@code msms}, so a run per starting word is enough and the
+     * quadratic set of all runs is not needed.
+     */
+    private static boolean matchesJoinedWords(List<String> words, String lowerPrefix) {
+        String run = "";
+        for (int i = words.size() - 1; i >= 0; i--) {
+            run = words.get(i) + run;
+            if (run.startsWith(lowerPrefix))
+                return true;
+        }
+        return false;
     }
 
     /**
