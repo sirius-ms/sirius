@@ -124,6 +124,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -2047,6 +2048,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 optFields);
     }
 
+    /**
+     * What a bulk retrieval found for one feature, or what "it found nothing" looks like as a value.
+     * <p>
+     * The empty value is built only when it is needed rather than handed in ready-made: this runs per feature
+     * of every listing, and the map answers for most of them.
+     */
+    private static <T> T orIfAbsent(@NotNull Long2ObjectOpenHashMap<T> found, long id,
+                                    @NotNull Supplier<T> nothingFound) {
+        T value = found.get(id);
+        return value != null ? value : nothingFound.get();
+    }
+
     private List<AlignedFeature> annotateApiFeatures(@NotNull Stream<AlignedFeatures> apifeatures, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         //third
         Long2ObjectOpenHashMap<AlignedFeatures> dbalf = apifeatures.collect(Collectors.toMap(AlignedFeatures::getAlignedFeatureId, Function.identity(),
@@ -2140,10 +2153,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(alf -> {
                     long fid = alf.getAlignedFeatureId();
                     AlignedFeature apiFeture = convertToApiFeature(alf, msDataAsCosineQuery, EnumSet.noneOf(AlignedFeature.OptField.class));
+                    // Empty rather than null for whatever the bulk query did not find, because null is what
+                    // annotateApiFeature below reads as "not fetched yet" and answers with a query per feature -
+                    // over exactly the features the bulk query has just established have nothing. These are the
+                    // values that per-feature load would arrive at anyway, so nothing about the response changes.
+                    // convertToQualityMap already returns an empty map for a missing report, which is why
+                    // qualities never had the problem. Mutable, because a fetched collection is something the
+                    // index update path edits in place (see deleteFoldChange).
                     apiFeture.setQualities(convertToQualityMap(quality.get(fid)));
-                    apiFeture.setComputedTools(computed.get(fid));
-                    apiFeture.setTags(tags.get(fid));
-                    apiFeture.setStats(stats.get(fid));
+                    apiFeture.setComputedTools(orIfAbsent(computed, fid, () -> ComputedSubtools.builder().build()));
+                    apiFeture.setTags(orIfAbsent(tags, fid, HashMap::new));
+                    apiFeture.setStats(orIfAbsent(stats, fid, ArrayList::new));
                     if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
                         apiFeture.setTopAnnotations(extractSearchIndexTopAnnotations(fid, csires.get(fid)));
                     //add additional anotations that are not yes covered by bulk retrieval.
