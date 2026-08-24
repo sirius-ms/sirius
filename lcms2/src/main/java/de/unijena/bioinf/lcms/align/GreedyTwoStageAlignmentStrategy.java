@@ -124,7 +124,11 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         List<BasicJJob<Object>> todo = new ArrayList<>();
         // sort samples by number of confident annotations
         final AlignmentStatistics stats = collectStatistics(samples);
-        samples.sort(Comparator.comparingInt((ProcessedSample x)->x.getTraceStats().getNumberOfHighQualityTraces()).reversed());
+        // the name breaks ties, so which sample seeds the backbone does not depend on the order the caller happens to
+        // hand them over in - a stable sort would otherwise let an equal count preserve that order
+        samples.sort(Comparator.comparingInt((ProcessedSample x)->x.getTraceStats().getNumberOfHighQualityTraces())
+                .reversed()
+                .thenComparing(x -> x.getRun().getName(), Comparator.nullsFirst(Comparator.naturalOrder())));
 
         makeSingleApexPreAlignment(storage, samples, algorithm, scorer, thresholds, stats);
         storage.clearMoIs();
@@ -341,7 +345,11 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         List<BasicJJob<Object>> todo = new ArrayList<>();
         // sort samples by number of confident annotations
         final AlignmentStatistics stats = backbone.getStatistics();
-        samples.sort(Comparator.comparingInt((ProcessedSample x)->x.getTraceStats().getNumberOfHighQualityTraces()).reversed());
+        // the name breaks ties, so which sample seeds the backbone does not depend on the order the caller happens to
+        // hand them over in - a stable sort would otherwise let an equal count preserve that order
+        samples.sort(Comparator.comparingInt((ProcessedSample x)->x.getTraceStats().getNumberOfHighQualityTraces())
+                .reversed()
+                .thenComparing(x -> x.getRun().getName(), Comparator.nullsFirst(Comparator.naturalOrder())));
         JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
         final double[] bins = makeBins(stats.minMz, stats.maxMz);
         {
