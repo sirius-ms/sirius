@@ -175,11 +175,22 @@ public class LandingPage extends JPanel {
     }
 
     private ToolbarButton button(FlatSVGIcon icon) {
-        ToolbarButton button = new ToolbarButton(icon.derive(64, 64));
+        ToolbarButton button = new ToolbarButton(fitHeight(icon, 64));
         button.setBorderPainted(false);
         button.setHideActionText(true);
         button.setBackground(Colors.BACKGROUND);
         return button;
+    }
+
+    /**
+     * Scales an icon to a target height, keeping its aspect ratio. {@link FlatSVGIcon#derive(int, int)}
+     * scales the two axes independently, so a fixed square box squashes every icon that is not square
+     * (the Matrix logo is 27.9x32). Deriving with a single axis is no help - FlatLaf scales the
+     * omitted one by 1 - so the matching width is computed here.
+     */
+    private static FlatSVGIcon fitHeight(FlatSVGIcon icon, int height) {
+        int width = Math.round(height * (float) icon.getIconWidth() / icon.getIconHeight());
+        return icon.derive(width, height);
     }
 
     private UpdatePanel updatePanel(SiriusGui gui) {
