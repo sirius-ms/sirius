@@ -81,4 +81,22 @@ public class SearchableFieldsProvider {
         }
         return cached;
     }
+
+    /**
+     * Whether the index has told us its fields and this is not one of them - so a query naming it would match
+     * nothing, whatever it asked for.
+     * <p>
+     * Only the positive answer is reported: false while nothing has been fetched yet, and false when a fetch
+     * failed and left us with nothing, because "we have not been told" is not "it is not there". A caller that
+     * greys a control out on this therefore leaves it alone until it knows, rather than switching it off on a
+     * slow or unreachable index and switching it back on a moment later.
+     * <p>
+     * A dynamic-key field like a fold change is reported by the index only once a document carries it (the
+     * names are read from the segment metadata), which is what makes this answerable at all: the field exists
+     * exactly when something has been computed into it.
+     */
+    public boolean knownToLackField(@NotNull String fieldName) {
+        List<SearchableField> fields = cached;
+        return !fields.isEmpty() && fields.stream().noneMatch(field -> fieldName.equals(field.getName()));
+    }
 }
