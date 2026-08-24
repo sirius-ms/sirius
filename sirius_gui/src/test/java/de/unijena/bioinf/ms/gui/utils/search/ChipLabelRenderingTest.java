@@ -6,7 +6,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -18,13 +17,15 @@ public class ChipLabelRenderingTest {
     private static final double SCALE = 1.5;
     private static final String TEXT = "(quality : DECENT OR quality : GOOD OR quality : BAD OR quality : LOWEST)";
     private static final int FADE_WIDTH = 22;
+    /** The offset render() draws the component at, in user-space px (x is deliberately fractional at 1.5x). */
+    private static final int OFFSET_X = 5;
 
     private static BufferedImage render(JComponent c, int w, int h) {
         BufferedImage img = new BufferedImage((int) Math.ceil((w + 6) * SCALE), (int) Math.ceil((h + 6) * SCALE),
                 BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         g.scale(SCALE, SCALE);
-        g.translate(5, 3); // a fractional device offset (5 * 1.5 = 7.5), as real layouts produce
+        g.translate(OFFSET_X, 3); // a fractional device offset (5 * 1.5 = 7.5), as real layouts produce
         c.setSize(w, h);
         c.paint(g);
         g.dispose();
@@ -91,6 +92,19 @@ public class ChipLabelRenderingTest {
                         + current + ", buffer=" + userSpaceBuffer + ")");
     }
 
+    /** Device column of a user-space x inside the painted component (render() offsets by OFFSET_X). */
+    private static int devX(int x) {
+        return (int) Math.round((x + OFFSET_X) * SCALE);
+    }
+
+    private static int maxAlpha(BufferedImage img, int fromX, int toX, int hDev) {
+        int max = 0;
+        for (int y = 0; y < Math.min(hDev, img.getHeight()); y++)
+            for (int x = Math.max(0, fromX); x < Math.min(toX, img.getWidth()); x++)
+                max = Math.max(max, img.getRGB(x, y) >>> 24);
+        return max;
+    }
+
     /** Sum of the alpha of all pixels in a column range - "how much ink is there". */
     private static long ink(BufferedImage img, int fromX, int toX, int hDev) {
         long sum = 0;
@@ -109,13 +123,19 @@ public class ChipLabelRenderingTest {
         BufferedImage img = render(chipLabel, size.width, size.height);
 
         int hDev = (int) (size.height * SCALE);
-        int rightDev = (int) (size.width * SCALE);
-        int fadeDev = (int) (FADE_WIDTH * SCALE);
+        int stripStart = devX(size.width - FADE_WIDTH); // where the alpha gradient begins
+        int stripMid = devX(size.width - FADE_WIDTH / 2);
+        int rightEdge = devX(size.width);
 
-        assertTrue(ink(img, 0, rightDev - fadeDev, hDev) > 0, "the label should have drawn some text");
-        assertTrue(ink(img, rightDev - fadeDev, rightDev - fadeDev / 2, hDev)
-                        > ink(img, rightDev - fadeDev / 2, rightDev, hDev),
+        assertTrue(ink(img, 0, stripStart, hDev) > 0, "the label should have drawn some text");
+        assertTrue(ink(img, stripStart, stripMid, hDev) > ink(img, stripMid, rightEdge, hDev),
                 "the strip has to get lighter towards the right edge");
-        assertEquals(0, ink(img, rightDev - 2, rightDev, hDev), "the right edge has to be erased completely");
+        // not "fully erased": the gradient only reaches full strength at the very edge, so the last
+        // columns keep a few percent of whatever glyph happens to land there - which font is used
+        // decides whether that is anything at all. Losing the fade would leave them at full opacity.
+        int edge = maxAlpha(img, rightEdge - 2, rightEdge, hDev);
+        System.out.printf("strongest pixel left in the last two device columns: %d/255%n", edge);
+        assertTrue(edge < 64, "the right edge has to be nearly erased, but its strongest pixel is "
+                + edge + "/255");
     }
 }
