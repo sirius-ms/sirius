@@ -252,10 +252,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     // Mark incomplete for the duration of the (re)build so an interrupted build is not
                     // persisted and gets rebuilt on the next open (M5).
                     searchService.setIndexComplete(projectId, AlignedFeature.class, false);
-                    Pages.forEach(
-                            pageable -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS),
-                            page -> searchService.addDocuments(projectId, page.getContent())
-                    );
+                    feedAllFeaturesToIndex(alfs -> searchService.addDocuments(projectId, alfs));
                     searchService.setIndexComplete(projectId, AlignedFeature.class, true);
                 }
 
@@ -304,8 +301,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * than {@link AlignedFeature#INDEXED_OPT_FIELDS} is missing them until something rewrites it, and
      * {@link #findAlignedFeatures(String, Pageable, boolean, EnumSet)} serves a request for exactly those
      * fields straight from the index - so a field that was never written comes back absent instead of being
-     * re-read from the database. Every path that feeds features to the index therefore goes through here, and
-     * there is no opt-field parameter to disagree about.
+     * re-read from the database. Every path that feeds features to the index therefore goes through here or
+     * through {@link #feedAllFeaturesToIndex(Consumer)}, and neither has an opt-field parameter to disagree
+     * about.
      *
      * @param batchConsumer what to do with each batch: add the documents, or replace the existing ones
      */
@@ -316,6 +314,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Partition<Long> partition = Partition.ofSize(featureIds.stream().sorted().toList(), LARGE_BATCH_SIZE);
         for (List<Long> ids : partition)
             batchConsumer.accept(findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS));
+    }
+
+    /**
+     * The same for every feature in the project, for building the index from scratch rather than adding to it.
+     * <p>
+     * Pages rather than taking a list of ids: a rebuild spans the whole project, and what bounds what it holds
+     * is one page of assembled features at a time. It is a sibling of {@link #feedFeaturesToIndex} rather than a
+     * caller of it for that reason alone - what matters is that the two agree on the fields, which they do by
+     * both naming {@link AlignedFeature#INDEXED_OPT_FIELDS} and neither taking it as a parameter.
+     */
+    private void feedAllFeaturesToIndex(@NotNull Consumer<List<AlignedFeature>> batchConsumer) {
+        Pages.forEach(
+                pageable -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS),
+                page -> batchConsumer.accept(page.getContent())
+        );
     }
 
     @SneakyThrows
