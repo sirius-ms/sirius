@@ -30,11 +30,14 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureMatch;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.FTreeResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.Getter;
@@ -57,10 +60,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * from these fields, an old project must be upgraded <b>before</b> the index is (re)built or the default filter
  * hides everything until a manual filter reset.
  * <p>
- * Either a project is up to date and nothing happens, or it is converted completely - there is no partial
- * conversion to reason about. Which of the two it is, is answered by {@link #isOutdated}: normally by comparing
+ * Either a project is up to date and nothing happens, or every conversion it is missing runs - there is no
+ * half-converted state to reason about. Which conversions those are, is answered by {@code neededPasses} from
  * the recorded version, which costs one property read, so opening a healthy project is unaffected however large
- * it is.
+ * it is. The version says which conversions have run rather than merely that some have, so a project that is
+ * only missing the newest one is not walked feature by feature for it.
  * <p>
  * Converting twice is harmless: every record is filled in only where it is actually missing something, and the
  * version is stamped once every pass has returned, so an interrupted conversion is simply redone on the next
@@ -78,7 +82,7 @@ public class ProjectSchemaMigrator {
      * same number while someone keeps them so. Taking the schema's number would make a forgotten conversion
      * invisible - every project would claim to be current whether or not anything had filled it in.
      */
-    public static final int MIGRATES_TO_SCHEMA_VERSION = 2;
+    public static final int MIGRATES_TO_SCHEMA_VERSION = 3;
 
     /** How many records gather before they are written, which is what bounds what a conversion holds. */
     private static final int BUFFER = 10_000;
@@ -166,9 +170,10 @@ public class ProjectSchemaMigrator {
     public static boolean migrateIfNeeded(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
                                           @NotNull CandidateCache candidateCache, int candidateCacheLimit,
                                           @Nullable JobProgressEventListener onProgress) throws IOException {
-        if (!isOutdated(project, project.getStorage()))
+        EnumSet<ConversionJob.Pass> needed = neededPasses(project, project.getStorage());
+        if (needed.isEmpty())
             return false;
-        convert(project, EnumSet.allOf(ConversionJob.Pass.class), candidateCache, candidateCacheLimit, onProgress);
+        convert(project, needed, candidateCache, candidateCacheLimit, onProgress, true);
         return true;
     }
 
@@ -180,7 +185,7 @@ public class ProjectSchemaMigrator {
      */
     public static boolean isConversionNeeded(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project)
             throws IOException {
-        return isOutdated(project, project.getStorage());
+        return !neededPasses(project, project.getStorage()).isEmpty();
     }
 
     /**
@@ -196,14 +201,20 @@ public class ProjectSchemaMigrator {
                                  @NotNull EnumSet<ConversionJob.Pass> passes,
                                  @NotNull CandidateCache candidateCache,
                                  int candidateCacheLimit) throws IOException {
-        return convert(project, passes, candidateCache, candidateCacheLimit, null);
+        return convert(project, passes, candidateCache, candidateCacheLimit, null, false);
     }
 
+    /**
+     * @param stampVersion whether to record the schema version once every pass has returned. Only a conversion
+     *                     that ran the passes the project needed may - one asked for a subset of them on purpose
+     *                     would otherwise stamp a project it did not finish converting.
+     */
     static ConversionJob convert(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
                                  @NotNull EnumSet<ConversionJob.Pass> passes,
                                  @NotNull CandidateCache candidateCache, int candidateCacheLimit,
-                                 @Nullable JobProgressEventListener onProgress) throws IOException {
-        ConversionJob job = new ConversionJob(project, passes, candidateCache, candidateCacheLimit);
+                                 @Nullable JobProgressEventListener onProgress,
+                                 boolean stampVersion) throws IOException {
+        ConversionJob job = new ConversionJob(project, passes, candidateCache, candidateCacheLimit, stampVersion);
         if (onProgress != null)
             job.addJobProgressListener(onProgress);
         try {
@@ -218,16 +229,21 @@ public class ProjectSchemaMigrator {
     }
 
     /**
-     * Whether the project has to be converted.
+     * The passes that would do anything to the given project - empty if it is up to date.
      * <p>
-     * The recorded version answers it, in the time it takes to read one property. The check beside it is a
-     * convenience for projects that a development build stamped with a version whose conversion it did not
-     * fully perform: it asks a single document whether it carries a field that any current build writes, so it
-     * costs the same on a project of ten features and one of ten thousand, and an empty repository has nothing
-     * missing. It failing means the same as an old version - convert.
+     * Answered from the recorded version, in the time it takes to read one property. Which passes that is
+     * matters: a project already at the schema the flag backfill produced does not have to be walked feature by
+     * feature again to be brought to a schema that only changes something else, and every pass here is
+     * proportional to a collection. So a version says which conversions have run, not merely that some have.
+     * <p>
+     * The field probe beside it is a convenience for projects that a development build stamped with a version
+     * whose conversion it did not fully perform: it asks a single document whether it carries a field that any
+     * current build writes, so it costs the same on a project of ten features and one of ten thousand, and an
+     * empty repository has nothing missing. It failing means the same as a version older than the backfill.
      */
-    private static boolean isOutdated(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
-                                      @NotNull Database<?> storage) throws IOException {
+    static EnumSet<ConversionJob.Pass> neededPasses(
+            @NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
+            @NotNull Database<?> storage) throws IOException {
         int recorded = project.findProjectSchemaVersion().orElse(0);
         if (recorded > MIGRATES_TO_SCHEMA_VERSION) {
             // Either the project comes from a newer SIRIUS, or the schema was raised here without the conversion
@@ -236,11 +252,21 @@ public class ProjectSchemaMigrator {
             log.warn("Project '{}' records schema version {}, which is newer than the {} this version converts "
                             + "to. It is left as it is; parts of it may not be understood.",
                     storage.location(), recorded, MIGRATES_TO_SCHEMA_VERSION);
-            return false;
+            return EnumSet.noneOf(ConversionJob.Pass.class);
         }
-        if (recorded < MIGRATES_TO_SCHEMA_VERSION)
-            return true;
-        return !storage.isFieldPresent("hasMsMs", AlignedFeatures.class);
+
+        EnumSet<ConversionJob.Pass> needed = EnumSet.noneOf(ConversionJob.Pass.class);
+        // Everything the pre-index schema (version 2) filled in. The probe stands in for the version, so a
+        // project stamped 2 without having been filled in is treated as one that was never stamped.
+        if (recorded < 2 || !storage.isFieldPresent("hasMsMs", AlignedFeatures.class)) {
+            needed.add(ConversionJob.Pass.FEATURES);
+            needed.add(ConversionJob.Pass.FORMULA_CANDIDATES);
+        }
+        // Version 3 turned the blank removal fold changes the right way round. Nothing to probe for: a project
+        // with no fold changes needs no conversion either, and the pass over an empty collection is free.
+        if (recorded < 3)
+            needed.add(ConversionJob.Pass.BLANK_REMOVAL_ORIENTATION);
+        return needed;
     }
 
     /**
@@ -262,7 +288,9 @@ public class ProjectSchemaMigrator {
             /** Over the feature keys: MS flags, detected adducts, and structure-search database links. */
             FEATURES,
             /** Over the formula-candidate keys: lipid annotations, off each candidate's fragmentation tree. */
-            FORMULA_CANDIDATES
+            FORMULA_CANDIDATES,
+            /** Over the feature fold-change keys: blank removal turned from blank/sample to sample/blank. */
+            BLANK_REMOVAL_ORIENTATION
         }
 
         /** How many workers a pass uses. Overridable so a benchmark can ask what the right number is. */
@@ -294,6 +322,10 @@ public class ProjectSchemaMigrator {
         private final AtomicInteger structureResultsFilled = new AtomicInteger();
         @Getter
         private final AtomicInteger formulaCandidatesFilled = new AtomicInteger();
+        @Getter
+        private final AtomicInteger foldChangesTurned = new AtomicInteger();
+        @Getter
+        private final AtomicInteger foldChangesDropped = new AtomicInteger();
 
         /**
          * Progress is one count over the whole conversion - a unit of work is one primary key handled, and the
@@ -333,19 +365,25 @@ public class ProjectSchemaMigrator {
             }
             if (passes.contains(Pass.FORMULA_CANDIDATES))
                 work += storage.countAll(FormulaCandidate.class);
+            if (passes.contains(Pass.BLANK_REMOVAL_ORIENTATION))
+                work += storage.countAll(FoldChange.AlignedFeaturesFoldChange.class);
             return work;
         }
 
         ConversionJob(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
                       @NotNull EnumSet<Pass> passes, @NotNull CandidateCache candidateCache,
-                      int candidateCacheLimit) {
+                      int candidateCacheLimit, boolean stampVersion) {
             super(JobType.CPU);
             this.project = project;
             this.storage = project.getStorage();
             this.passes = passes;
+            this.stampVersion = stampVersion;
             this.candidateCache = candidateCache;
             this.inchi2Candidate = newCandidateCache(candidateCache, candidateCacheLimit);
         }
+
+        /** Whether this conversion is the one that brings the project up to date, and may record that. */
+        private final boolean stampVersion;
 
         private static Map<String, String[]> newCandidateCache(CandidateCache candidateCache, int limit) {
             // NONE never reads or writes it, but it is still cleared with the others when the pass is done.
@@ -390,16 +428,27 @@ public class ProjectSchemaMigrator {
                 overPrimaryKeysOf(FormulaCandidate.class, "Updating formula candidates",
                         List.of(FormulaCandidate.class), this::convertFormulaCandidate);
 
+            if (passes.contains(Pass.BLANK_REMOVAL_ORIENTATION)) {
+                // Not declared as rewritten, unlike the passes above: this one looks a record's siblings up
+                // through the alignedFeatureId index while it writes, so the index has to stay in place. It
+                // rewrites at most one record per key of a collection that is small next to the features.
+                overPrimaryKeysOf(FoldChange.AlignedFeaturesFoldChange.class,
+                        "Updating blank removal fold changes...", List.of(), this::turnBlankRemovalFoldChange);
+                dropSupersededFoldChanges();
+            }
+
             // Stamped last: a pass that threw leaves the version behind, so the next open converts again.
-            if (passes.size() == Pass.values().length)
+            if (stampVersion)
                 project.upsertProjectSchemaVersion(MIGRATES_TO_SCHEMA_VERSION);
 
             report(totalWork, "Project schema updated!");
 
             log.info("Converted project '{}' to schema version {} in {} ms ({} features, {} structure-search "
-                            + "results, {} formula candidates).",
+                            + "results, {} formula candidates, {} fold changes turned, {} superseded fold "
+                            + "changes dropped).",
                     storage.location(), MIGRATES_TO_SCHEMA_VERSION, millisSince(start), featuresFilled.get(),
-                    structureResultsFilled.get(), formulaCandidatesFilled.get());
+                    structureResultsFilled.get(), formulaCandidatesFilled.get(), foldChangesTurned.get(),
+                    foldChangesDropped.get());
             return Boolean.TRUE;
         }
 
@@ -570,6 +619,88 @@ public class ProjectSchemaMigrator {
             searchResult.setMatchedDatabases(dbToBestRank);
             structureResultsFilled.incrementAndGet();
             buffer.add(searchResult);
+        }
+
+        /** The reversed records this pass replaced with an already correct one, deleted once at its end. */
+        private final List<Object> supersededFoldChanges = Collections.synchronizedList(new ArrayList<>());
+
+        /**
+         * Turns one blank removal fold change the way round the gui reads it.
+         * <p>
+         * The run type dialog used to submit its job with the blank runs as the left group, so a project holds
+         * the comparison of blank over sample where every reader wants sample over blank: the search index names
+         * its field after the group pair, so the blank filter queries a field that was never written, and the
+         * value is the reciprocal of the one it asks about.
+         * <p>
+         * A fold change is {@code leftAbundance / rightAbundance} and both abundances are stored, so swapping
+         * the groups and the abundances together produces exactly what a recompute would - nothing is derived
+         * from an assumption and nothing is lost. Scoped to the default blank and sample groups: those are the
+         * only pair the dialog ever submitted, and no other reader expects a particular orientation.
+         */
+        private void turnBlankRemovalFoldChange(Object foldChangeId, WriteBuffer buffer) throws Exception {
+            FoldChange.AlignedFeaturesFoldChange reversed = storage
+                    .getByPrimaryKey(foldChangeId, FoldChange.AlignedFeaturesFoldChange.class).orElse(null);
+            if (reversed == null || !TagDefinitions.SAMPLE_TYPE_BLANK.equals(reversed.getLeftGroup())
+                    || !TagDefinitions.SAMPLE_TYPE_SAMPLE.equals(reversed.getRightGroup()))
+                return;
+
+            // A record from a schema that stored only the ratio cannot be turned by swapping abundances it does
+            // not have. Those predate blank removal in the gui, so they are not what this pass is here for.
+            if (reversed.getLeftAbundance() == 0 && reversed.getRightAbundance() == 0
+                    && reversed.getFoldChange() != 1.0) {
+                log.warn("Fold change {} of feature {} compares blank over sample but carries no abundances; "
+                                + "leaving it as it is. Recompute the blank removal to replace it.",
+                        foldChangeId, reversed.getAlignedFeatureId());
+                return;
+            }
+
+            // The feature's other fold changes, by point lookup on the only index the collection has. Whether
+            // this record can be turned depends on them: the same comparison must not end up stored twice.
+            for (FoldChange.AlignedFeaturesFoldChange sibling : storage.find(
+                    Filter.where("alignedFeatureId").eq(reversed.getAlignedFeatureId()),
+                    FoldChange.AlignedFeaturesFoldChange.class)) {
+                if (sibling.getId() == reversed.getId() || !sameSlot(sibling, reversed))
+                    continue;
+                boolean alreadyCorrect = TagDefinitions.SAMPLE_TYPE_SAMPLE.equals(sibling.getLeftGroup())
+                        && TagDefinitions.SAMPLE_TYPE_BLANK.equals(sibling.getRightGroup());
+                // Two reversed records for one comparison are what the old cleanup left behind when a recompute
+                // piled up instead of replacing. Whichever has the lower id is turned and the rest go, so every
+                // worker reaches the same verdict without having to agree with the others.
+                boolean turnedByAnother = TagDefinitions.SAMPLE_TYPE_BLANK.equals(sibling.getLeftGroup())
+                        && TagDefinitions.SAMPLE_TYPE_SAMPLE.equals(sibling.getRightGroup())
+                        && sibling.getId() < reversed.getId();
+                if (alreadyCorrect || turnedByAnother) {
+                    supersededFoldChanges.add(reversed.getId());
+                    foldChangesDropped.incrementAndGet();
+                    return;
+                }
+            }
+
+            double blankAbundance = reversed.getLeftAbundance();
+            reversed.setLeftGroup(TagDefinitions.SAMPLE_TYPE_SAMPLE);
+            reversed.setRightGroup(TagDefinitions.SAMPLE_TYPE_BLANK);
+            reversed.setLeftAbundance(reversed.getRightAbundance());
+            reversed.setRightAbundance(blankAbundance);
+            foldChangesTurned.incrementAndGet();
+            buffer.add(reversed);
+        }
+
+        /** Whether two fold changes describe the same comparison, disregarding which way round it is stated. */
+        private static boolean sameSlot(@NotNull FoldChange left, @NotNull FoldChange right) {
+            return left.getAggregation() == right.getAggregation()
+                    && left.getQuantification() == right.getQuantification();
+        }
+
+        /**
+         * Removes the reversed records that were superseded rather than turned, once, by primary key - a filter
+         * over their ids would scan the collection instead of using the id map.
+         */
+        private void dropSupersededFoldChanges() throws IOException {
+            if (supersededFoldChanges.isEmpty())
+                return;
+            storage.write(() -> storage.removeAllByPrimaryKey(supersededFoldChanges,
+                    FoldChange.AlignedFeaturesFoldChange.class));
+            supersededFoldChanges.clear();
         }
 
         /**
