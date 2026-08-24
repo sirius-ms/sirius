@@ -26,7 +26,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.util.Map;
 
 /**
  * A rounded tag/chip: label text, optional close button, optional click action. Filled chips are
@@ -147,10 +149,14 @@ public class ChipComponent extends JPanel {
 
     /**
      * A single-line text label capped at {@link #MAX_TEXT_WIDTH}: instead of hard-clipping or an
-     * {@code ...} ellipsis, an over-long label is drawn in full into an off-screen image whose right
-     * edge is then erased with a horizontal alpha gradient, so the text fades softly into the chip
-     * fill (background-independent, since we erase the text's own alpha rather than paint over it).
-     * The full text stays available as the chip's hover tooltip.
+     * {@code ...} ellipsis, the right edge of an over-long label is erased with a horizontal alpha
+     * gradient, so the text fades softly into the chip fill (background-independent, since we erase
+     * the text's own alpha rather than paint over it). The full text stays available as the chip's
+     * hover tooltip.
+     * <p>
+     * Erasing alpha needs an off-screen buffer, and an off-screen buffer costs sharpness on a scaled
+     * desktop (see {@link #paintFadedStrip}). So only the {@link #FADE_WIDTH} wide strip that
+     * actually fades goes through one; the rest of the text is drawn straight onto the surface.
      */
     private static final class FadingLabel extends JLabel {
         private static final Color FADE_FROM = new Color(0, 0, 0, 0);   // erase nothing
@@ -188,25 +194,113 @@ public class ChipComponent extends JPanel {
             }
             int w = Math.max(1, getWidth());
             int h = Math.max(1, getHeight());
-            BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D ig = img.createGraphics();
-            try {
-                ig.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                ig.setFont(getFont());
-                ig.setColor(getForeground());
-                FontMetrics fm = ig.getFontMetrics();
-                Insets in = getInsets();
-                int baseline = in.top + (h - in.top - in.bottom - fm.getHeight()) / 2 + fm.getAscent();
-                ig.drawString(getText(), in.left, baseline);
+            int fade = Math.min(FADE_WIDTH, w);
+            int solid = Math.max(0, w - fade); // everything left of this is drawn at full opacity
 
-                int fade = Math.min(FADE_WIDTH, w);
-                ig.setComposite(AlphaComposite.DstOut);
-                ig.setPaint(new GradientPaint(w - fade, 0, FADE_FROM, w, 0, FADE_TO));
-                ig.fillRect(w - fade, 0, fade, h);
-            } finally {
-                ig.dispose();
+            Insets in = getInsets();
+            FontMetrics fm = getFontMetrics(getFont());
+            int baseline = in.top + (h - in.top - in.bottom - fm.getHeight()) / 2 + fm.getAscent();
+            // cut on a character boundary: both halves draw the same glyphs at the same baseline, and
+            // a glyph split across the cut could disagree about its sub-pixel position and show a seam
+            int cut = charsFitting(fm, solid - in.left);
+            if (cut > 0)
+                paintSolidPart(g, getText().substring(0, cut), solid, h, in.left, baseline);
+            paintFadedStrip(g, solid, fade, h, in.left, baseline);
+        }
+
+        /** Number of leading characters that fit fully into {@code limit} px. */
+        private int charsFitting(FontMetrics fm, int limit) {
+            String text = getText();
+            int width = 0;
+            for (int i = 0; i < text.length(); i++) {
+                width += fm.charWidth(text.charAt(i));
+                if (width > limit)
+                    return i;
             }
-            g.drawImage(img, 0, 0, null);
+            return text.length();
+        }
+
+        /**
+         * The part of the text that is not faded, painted straight onto the given surface - so it
+         * is rasterised at the device resolution and reads exactly like every other label.
+         */
+        private void paintSolidPart(Graphics g, String text, int solid, int h, int x, int baseline) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                applyTextHints(g2);
+                g2.setFont(getFont());
+                g2.setColor(getForeground());
+                g2.clipRect(0, 0, solid, h); // safety net: nothing may bleed into the faded strip
+                g2.drawString(text, x, baseline);
+            } finally {
+                g2.dispose();
+            }
+        }
+
+        /**
+         * The faded strip: the text is drawn into an off-screen buffer whose right edge is then
+         * erased with an alpha gradient (which is why it cannot be painted directly - erasing on the
+         * surface would take the chip fill with it).
+         * <p>
+         * The buffer is allocated at <em>device</em> resolution and blitted back one image pixel per
+         * device pixel. A buffer in user-space pixels would be stretched by the desktop scale factor
+         * on the way back (Windows 125% / 150%), which is what made these labels look blurry.
+         */
+        private void paintFadedStrip(Graphics g, int solid, int fade, int h, int x, int baseline) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                AffineTransform tx = g2.getTransform();
+                // a rotated/sheared surface has no meaningful device grid to align to: fall back to
+                // a plain user-space buffer there (it is only ever the identity or a scale in Swing)
+                boolean scaleOnly = tx.getShearX() == 0 && tx.getShearY() == 0
+                        && tx.getScaleX() > 0 && tx.getScaleY() > 0;
+                double sx = scaleOnly ? tx.getScaleX() : 1;
+                double sy = scaleOnly ? tx.getScaleY() : 1;
+
+                BufferedImage img = new BufferedImage(
+                        Math.max(1, (int) Math.ceil(fade * sx)),
+                        Math.max(1, (int) Math.ceil(h * sy)),
+                        BufferedImage.TYPE_INT_ARGB);
+                Graphics2D ig = img.createGraphics();
+                try {
+                    ig.scale(sx, sy); // everything below stays in user-space coordinates
+                    applyTextHints(ig);
+                    ig.setFont(getFont());
+                    ig.setColor(getForeground());
+                    ig.drawString(getText(), x - solid, baseline);
+                    // erase the text's own alpha towards the right edge, so it fades into whatever
+                    // the chip is filled with rather than into a colour we would have to know
+                    ig.setComposite(AlphaComposite.DstOut);
+                    ig.setPaint(new GradientPaint(0, 0, FADE_FROM, fade, 0, FADE_TO));
+                    ig.fillRect(0, 0, fade, h);
+                } finally {
+                    ig.dispose();
+                }
+
+                if (scaleOnly) {
+                    // drop to device coordinates for the blit: at a fractional device offset Java2D
+                    // would resample the strip instead of copying it
+                    g2.setTransform(new AffineTransform(1, 0, 0, 1,
+                            Math.round(tx.getTranslateX() + solid * sx), Math.round(tx.getTranslateY())));
+                    g2.drawImage(img, 0, 0, null);
+                } else {
+                    g2.drawImage(img, solid, 0, fade, h, null);
+                }
+            } finally {
+                g2.dispose();
+            }
+        }
+
+        /**
+         * Renders text the way the desktop asks for it (LCD sub-pixel antialiasing where available)
+         * instead of the plain grey antialiasing a bare {@code Graphics2D} would use.
+         */
+        private static void applyTextHints(Graphics2D g) {
+            Map<?, ?> hints = (Map<?, ?>) Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
+            if (hints != null)
+                g.addRenderingHints(hints);
+            else
+                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         }
     }
 
