@@ -169,6 +169,14 @@ public class Ms2TraceStorage {
          * @param channelIndex index into this channel's axis, i.e. the scan point the peak was seen at
          * @param mz           m/z of the peak
          */
+        /**
+         * Whether this peak already belongs to a trace of this channel, and if so to which.
+         * <p>
+         * Only the presence of an answer is meaningful. About one lookup in a hundred has more than one trace that
+         * covers the peak, and which of them comes back depends on the order the rectangle index happens to return
+         * them in, so a caller that treats the identity as significant is not reproducible. See
+         * {@link #all()} for the complete set.
+         */
         public Optional<ContiguousTrace> find(int channelIndex, double mz, Deviation allowedMassDeviation) {
             if (channelIndex < 0 || channelIndex >= axis.length()) return Optional.empty();
             final double retentionTime = axis.getRetentionTimeAt(channelIndex);
@@ -187,10 +195,11 @@ public class Ms2TraceStorage {
         }
 
         /**
-         * Every trace of this channel, bound to its axis. Used where the whole channel is revisited rather than
-         * looked up peak by peak, i.e. when the assignment is redone over the final feature boundaries.
-         *
-         * @return the traces, in no particular order
+         * Every trace of this channel, bound to its axis, in an order that depends only on the traces themselves.
+         * <p>
+         * The rectangle index returns them in an order of its own that follows its page layout, which is not stable
+         * between two runs on the same data. Anything built from this list - a graph's node indices, the columns of a
+         * factorisation - would inherit that, so the order is fixed here by mass and position instead.
          */
         public List<ContiguousTrace> all() {
             final List<ContiguousTrace> traces = new ArrayList<>(size());
@@ -198,6 +207,9 @@ public class Ms2TraceStorage {
                 final ContiguousTrace trace = get(rect.id);
                 if (trace != null) traces.add(trace);
             }
+            traces.sort(java.util.Comparator.comparingDouble(ContiguousTrace::averagedMz)
+                    .thenComparingInt(ContiguousTrace::startId)
+                    .thenComparingInt(ContiguousTrace::endId));
             return traces;
         }
 
