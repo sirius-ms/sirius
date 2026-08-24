@@ -228,6 +228,34 @@ public class CompletionParserTest {
     }
 
     @Test
+    public void testWordsTypedAsOneAreMatched() {
+        // nobody types the case change back in, and a name of short words has none worth typing on its own:
+        // hasMsMs was found by "ms" and lost again at "msm", which reads as "the field is not there"
+        assertEquals(List.of("hasMsMs"), matches("msms"));
+        assertEquals(List.of("hasMsMs"), matches("msm"));
+        assertEquals(List.of("rtApexSeconds"), matches("apexseconds"));
+        assertEquals(List.of("topAnnotations.structureAnnotation.structureName"), matches("structurename"));
+        // across a dot, too - the separator is not something a user remembers either
+        assertEquals(List.of("qualities.PEAK_QUALITY"), matches("qualitiespeak"));
+    }
+
+    @Test
+    public void testJoiningStartsAtAWordAndStaysContiguous() {
+        // only whole words joined from a word start: still no arbitrary substrings
+        assertTrue(matches("smsm").isEmpty(), "a run has to start at a word");
+        assertTrue(matches("hasms1ms").isEmpty(), "and stay contiguous");
+        assertTrue(matches("apexsecond5").isEmpty());
+    }
+
+    @Test
+    public void testJoinedMatchesRankBehindWordMatches() {
+        // "ms" is a whole word of both, so both are word matches; the joined tier only adds what the word
+        // tier misses and must never push a better match down
+        assertEquals(List.of("hasMs1", "hasMsMs"), matches("ms"));
+        assertEquals(List.of("hasMs1"), matches("ms1"));
+    }
+
+    @Test
     public void testBetterMatchesComeFirst() {
         // full-name prefix beats dot-segment beats word inside a segment
         assertEquals(List.of("name", "topAnnotations.structureAnnotation.structureName"), matches("name"));
