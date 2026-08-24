@@ -414,6 +414,42 @@ public class ProjectSchemaMigratorTest {
     }
 
     /**
+     * A project the newest conversion has nothing to correct is brought up to date without its index being
+     * thrown away.
+     * <p>
+     * Rebuilding an index from scratch is the most expensive thing opening a project can do, and what asks for
+     * it is this return value. A conversion that ran and rewrote nothing has left every document the index was
+     * built from exactly as it was, so it must not ask.
+     */
+    @Test
+    public void testAConversionThatCorrectsNothingDoesNotAskForAnIndexRebuild() {
+        withFreshDb(db -> {
+            importFirst(db, "/peaklists/laudanosine.mgf");
+            ProjectSchemaMigrator.migrateIfNeeded(db); // -> up to date, flags present
+            atTheSchemaBeforeTheFoldChangesWereTurned(db);
+            db.getStorage().insert(sampleOverBlank(42L, 100.0, 1.0)); // already the right way round
+
+            assertFalse(ProjectSchemaMigrator.migrateIfNeeded(db),
+                    "nothing was corrected, so the index is still right and must not be rebuilt");
+            assertEquals(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION,
+                    db.findProjectSchemaVersion().orElseThrow(),
+                    "and the project is up to date all the same");
+        });
+    }
+
+    /** ... while one that did correct something says so, because those documents are now stale in the index. */
+    @Test
+    public void testTurningAFoldChangeAsksForAnIndexRebuild() {
+        withFreshDb(db -> {
+            atTheSchemaBeforeTheFoldChangesWereTurned(db);
+            db.getStorage().insert(blankOverSample(42L, 1.0, 100.0));
+
+            assertTrue(ProjectSchemaMigrator.migrateIfNeeded(db),
+                    "a turned fold change is indexed under a different field name than before");
+        });
+    }
+
+    /**
      * The conversion a project is missing is the only one that runs. The passes here are proportional to the
      * collections they walk, so bringing a project up to a schema that only turned its fold changes must not
      * read every feature and every formula candidate again to do it.
