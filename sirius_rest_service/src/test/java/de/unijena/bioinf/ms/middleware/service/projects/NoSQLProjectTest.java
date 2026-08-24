@@ -584,6 +584,94 @@ public class NoSQLProjectTest {
         assertEquals(0, fc.size());
     }
 
+    @SneakyThrows
+    private void runSampleOverBlankFoldChange() {
+        new BackgroundRuns(project, null).runFoldChange(
+                FoldChangeJobSubmission.of("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY),
+                QuantRowType.FEATURES
+        ).awaitResult();
+    }
+
+    private long featuresWithFoldChangeBetween(double min, double max) {
+        return project.getSearchService().search(project.getProjectId(),
+                "stats.foldChange.sample.blank.APEX_INTENSITY.AVG:[" + min + " TO " + max + "]",
+                Pageable.ofSize(10), AlignedFeature.class).getTotalElements();
+    }
+
+    /**
+     * Recomputing a group pair has to replace its fold changes, in the project and in the search index that
+     * the gui filters on. Both halves failed silently. The cleanup filter named fields the stored record does
+     * not have, so nothing was deleted and the recompute left a second set behind; and the index merge kept
+     * whichever entry was already there, because fold changes compare by group pair and quantification while
+     * their abundances are excluded from equality. Together a recompute produced duplicate rows and a search
+     * index still answering with the superseded numbers.
+     */
+    @Test
+    @SneakyThrows
+    public void testRecomputingFoldChangesReplacesTheOldOnes() {
+        project.createTags(List.of(
+                TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT)
+                        .possibleValues(List.of("sample", "blank")).build()
+        ), true);
+
+        List<LCMSRun> runs = List.of(
+                LCMSRun.builder().name("sampleRun")
+                        .chromatography(Chromatography.LC)
+                        .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                        .ionization(Ionization.byValue("ESI").orElseThrow())
+                        .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                        .build(),
+                LCMSRun.builder().name("blankRun")
+                        .chromatography(Chromatography.LC)
+                        .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                        .ionization(Ionization.byValue("ESI").orElseThrow())
+                        .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                        .build()
+        );
+        insertRunsAndIndex(runs, project);
+        project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()),
+                List.of(Tag.builder().tagName("sample").value("sample").build()));
+        project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()),
+                List.of(Tag.builder().tagName("sample").value("blank").build()));
+        project.addTagGroup("sample", "tags.sample:sample", "type1");
+        project.addTagGroup("blank", "tags.sample:blank", "type1");
+
+        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name("af").build();
+        ps.getStorage().insert(af);
+        Feature inSample = Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
+                .apexIntensity(2.0).runId(runs.get(0).getRunId()).build();
+        Feature inBlank = Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
+                .apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
+        ps.getStorage().insertAll(List.of(inSample, inBlank));
+
+        // the workflow merges the fold changes into the indexed feature, so it has to be indexed first
+        project.getSearchService().addDocument(project.getProjectId(), project.convertToApiFeature(af, false));
+
+        runSampleOverBlankFoldChange();
+
+        String afId = Long.toString(af.getAlignedFeatureId());
+        assertEquals(1, project.getFoldChanges(QuantRowType.FEATURES, afId).size());
+        assertEquals(2.0, project.getFoldChanges(QuantRowType.FEATURES, afId).getFirst().getFoldChange(),
+                Double.MIN_VALUE);
+        assertEquals(1, featuresWithFoldChangeBetween(1.5, 2.5), "indexed after the first run");
+
+        // twice as abundant in the sample as before: same group pair, new value
+        inSample.setApexIntensity(4.0);
+        ps.getStorage().upsert(inSample);
+        ps.getStorage().flush();
+
+        runSampleOverBlankFoldChange();
+
+        List<FoldChange> recomputed = project.getFoldChanges(QuantRowType.FEATURES, afId);
+        assertEquals(1, recomputed.size(), "the recompute must replace the fold change, not add a second one");
+        assertEquals(4.0, recomputed.getFirst().getFoldChange(), Double.MIN_VALUE);
+
+        assertEquals(1, featuresWithFoldChangeBetween(3.5, 4.5),
+                "the search index must carry the recomputed fold change");
+        assertEquals(0, featuresWithFoldChangeBetween(1.5, 2.5),
+                "and must not still answer with the superseded one");
+    }
+
     @Test
     @SneakyThrows
     public void testTags() {
