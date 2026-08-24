@@ -173,8 +173,10 @@ public class ProjectSchemaMigrator {
         EnumSet<ConversionJob.Pass> needed = neededPasses(project, project.getStorage());
         if (needed.isEmpty())
             return false;
-        convert(project, needed, candidateCache, candidateCacheLimit, onProgress, true);
-        return true;
+        // What the caller does with this is rebuild the index from scratch, so it answers what was rewritten
+        // rather than what was run: a project brought up to date by a conversion that corrected nothing keeps
+        // the index it already had.
+        return convert(project, needed, candidateCache, candidateCacheLimit, onProgress, true).rewroteAnything();
     }
 
     /**
@@ -449,7 +451,21 @@ public class ProjectSchemaMigrator {
                     storage.location(), MIGRATES_TO_SCHEMA_VERSION, millisSince(start), featuresFilled.get(),
                     structureResultsFilled.get(), formulaCandidatesFilled.get(), foldChangesTurned.get(),
                     foldChangesDropped.get());
-            return Boolean.TRUE;
+            return rewroteAnything();
+        }
+
+        /**
+         * Whether this conversion actually changed a record the search index is built from.
+         * <p>
+         * Not the same as having run: a pass whose collection holds nothing to correct walks it and rewrites
+         * nothing, and a project that is only missing that conversion has an index that is still right. Saying
+         * otherwise would rebuild every project's index from scratch on the open that brings it up to date -
+         * the most expensive thing an open can do - for a conversion that touched nothing.
+         */
+        boolean rewroteAnything() {
+            return featuresFilled.get() > 0 || structureResultsFilled.get() > 0
+                    || formulaCandidatesFilled.get() > 0
+                    || foldChangesTurned.get() > 0 || foldChangesDropped.get() > 0;
         }
 
 
