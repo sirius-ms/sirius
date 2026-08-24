@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -136,6 +137,27 @@ public class BlankRemovalIndexFieldNameTest {
         assertEquals(0, search(BLANK_REMOVAL_FIELD + ":[2.0 TO *]"), "fold change is 1");
         assertTrue(search(BLANK_REMOVAL_FIELD + ":[* TO *]") > 0,
                 "and it is absent because of its value, not because the field is missing");
+    }
+
+    /**
+     * The index names the blank removal field only once a feature carries a fold change for it, which is what
+     * lets the gui grey the blank filter out for a project that has none: the field list is read from the
+     * index's segment metadata, so asking costs no document reads, and a field that is not there is a filter
+     * that would match nothing.
+     */
+    @Test
+    public void testTheFieldIsOnlyReportedOnceAFoldChangeExists() {
+        assertFalse(materializedFieldNames().contains(BLANK_REMOVAL_FIELD),
+                "nothing has been computed, so there is nothing to filter on");
+
+        searchService.addDocument(projectId, featureWith(sampleOverBlank(100_000d, 1_000d)));
+
+        assertTrue(materializedFieldNames().contains(BLANK_REMOVAL_FIELD),
+                "a feature carries the fold change, so the filter has something to search");
+    }
+
+    private Set<String> materializedFieldNames() {
+        return searchService.getMaterializedFieldNames(projectId, AlignedFeature.class);
     }
 
     private long search(String query) {

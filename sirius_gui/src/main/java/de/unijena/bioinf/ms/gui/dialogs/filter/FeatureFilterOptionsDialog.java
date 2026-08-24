@@ -251,10 +251,10 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
             blankFilter = new JCheckBox("Filter Blanks");
             blankFilter.setSelected(filterModel.getSampleBlankFoldChange().isEnabled());
-            blankFilter.setToolTipText("<html>Aligned feature must have at least this fold change<br> of sample feature intensity divided by blank feature intensity</html>");
+            blankFilter.setToolTipText(BLANK_FILTER_TOOLTIP);
             blankSpinner.setEnabled(filterModel.getSampleBlankFoldChange().isEnabled());
 
-            blankFilter.addChangeListener((e) -> blankSpinner.setEnabled(blankFilter.isSelected()));
+            blankFilter.addChangeListener((e) -> blankSpinner.setEnabled(blankFilter.isSelected() && blankFilter.isEnabled()));
 
             foldParameters.add(blankFilter, blankSpinner);
             foldParameters.addVerticalGlue();
@@ -436,11 +436,64 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         setMaximumSize(GuiUtils.getEffectiveScreenSize());
         wireLiveChipRefresh();          // widget edits -> live re-render of the panel chips
         queryEditor.openSession(null);  // seed the user query from the shared doc + refresh autocomplete fields
+        refreshBlankFilterAvailability(); // whatever is known now; the fetch below settles it
+        Jobs.runInBackground(() -> {
+            fieldsProvider.refreshIfStale(); // shared with the editor's own refresh: cached, so at most one call
+            SwingUtilities.invokeLater(this::refreshBlankFilterAvailability);
+        });
         configureActions();
         selectTabForFacet(selectFacetId); // jump to the clicked chip's control, if any
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
+    }
+
+    static final String BLANK_FILTER_TOOLTIP =
+            "<html>Aligned feature must have at least this fold change<br> of sample feature intensity divided by blank feature intensity</html>";
+
+    static final String NO_BLANK_FOLD_CHANGES_TOOLTIP =
+            "<html>No blank removal fold changes have been computed for this project.<br>"
+                    + "Assign the run types (sample / blank) of your LC-MS runs to compute them.</html>";
+
+    /**
+     * Greys the blank filter out while the project has no blank removal fold changes to filter on.
+     * <p>
+     * Without them the filter matches no feature at all - it searches one index field, and that field only
+     * exists once something has written it - so enabling it would empty the feature list and say nothing about
+     * why. The tooltip says what to do instead.
+     * <p>
+     * Free to ask: the searchable fields this dialog already fetches for its autocompletion and descriptions
+     * name the fold change fields that actually occur, read from the index's segment metadata rather than by
+     * looking through documents. So the question "is there anything to filter on" is answered by the field
+     * list already in hand, and asked again when a fetch brings a newer one.
+     */
+    private void refreshBlankFilterAvailability() {
+        boolean available = !fieldsProvider.knownToLackField(FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME);
+        if (available == blankFilter.isEnabled())
+            return;
+
+        blankFilter.setEnabled(available);
+        blankFilter.setToolTipText(available ? BLANK_FILTER_TOOLTIP : NO_BLANK_FOLD_CHANGES_TOOLTIP);
+        // Unticked as well as disabled: a filter that cannot match anything is not one to keep switched on,
+        // and this is the state Apply would write. Staged like every other edit here - Discard reverts it.
+        if (!available)
+            blankFilter.setSelected(false);
+        blankSpinner.setEnabled(available && blankFilter.isSelected());
+        blankSpinner.setToolTipText(available ? null : NO_BLANK_FOLD_CHANGES_TOOLTIP);
+
+        int foldChangeTab = tabIndexOf("Fold Change");
+        if (foldChangeTab >= 0)
+            centerTab.setToolTipTextAt(foldChangeTab, available ? null : NO_BLANK_FOLD_CHANGES_TOOLTIP);
+
+        queryEditor.rebuild(); // unticking programmatically does not fire the live-refresh listeners
+    }
+
+    /** The index of the tab with the given title, or -1 when there is none. */
+    private int tabIndexOf(@NotNull String title) {
+        for (int i = 0; i < centerTab.getTabCount(); i++)
+            if (title.equals(centerTab.getTitleAt(i)))
+                return i;
+        return -1;
     }
 
     /** The tab title that owns a given filter facet id (see PanelQueryNodeFactory facet ids); null if unknown. */

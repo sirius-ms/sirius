@@ -46,6 +46,36 @@ public class SearchableFieldsProviderTest {
         assertEquals(1, calls.get());
     }
 
+    /**
+     * A control that greys itself out when the index cannot answer a query must not grey itself out merely
+     * because nobody has asked the index yet - or it would blink off and back on every time a dialog opens.
+     */
+    @Test
+    public void testAFieldIsNotKnownToBeMissingBeforeAnythingWasFetched() {
+        SearchableFieldsProvider provider = new SearchableFieldsProvider(
+                () -> FIELDS, 30_000, () -> 0L);
+
+        assertFalse(provider.knownToLackField("stats.foldChange.Sample.Blank.APEX_INTENSITY.AVG"),
+                "nothing has been fetched, so nothing is known to be absent");
+
+        provider.refreshIfStale();
+
+        assertTrue(provider.knownToLackField("stats.foldChange.Sample.Blank.APEX_INTENSITY.AVG"),
+                "the index has now listed its fields and this is not one of them");
+        assertFalse(provider.knownToLackField("ionMass"), "this one is");
+    }
+
+    /** A failed fetch leaves us knowing nothing, which is not the same as knowing the field is gone. */
+    @Test
+    public void testAFailedFetchDoesNotDeclareFieldsMissing() {
+        SearchableFieldsProvider provider = new SearchableFieldsProvider(
+                () -> { throw new IllegalStateException("index unreachable"); }, 30_000, () -> 0L);
+
+        provider.refreshIfStale();
+
+        assertFalse(provider.knownToLackField("ionMass"));
+    }
+
     @Test
     public void testRefetchesWhenStale() {
         AtomicInteger calls = new AtomicInteger();
