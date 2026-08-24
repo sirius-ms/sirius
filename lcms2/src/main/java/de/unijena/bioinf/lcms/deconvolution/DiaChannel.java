@@ -161,6 +161,15 @@ public class DiaChannel {
         return max;
     }
 
+    /**
+     * A short name for this channel, as the reports and the tracker use it: the m/z range it covers and its collision
+     * energy, which is what identifies a channel to a reader.
+     */
+    public String describe() {
+        return String.format(java.util.Locale.US, "%.1f-%.1f@%s", lowestMz(), highestMz(),
+                collisionEnergy == null ? "?" : collisionEnergy.toString());
+    }
+
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder("DiaChannel ").append(channelId).append(" [");
