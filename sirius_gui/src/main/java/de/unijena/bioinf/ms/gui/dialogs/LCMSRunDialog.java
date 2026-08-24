@@ -169,6 +169,23 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
         setVisible(true);
     }
 
+    /**
+     * The blank-removal fold change job this dialog submits after assigning run types.
+     * <p>
+     * The group order is load bearing. {@code FoldChangeMapper} names the search index field
+     * {@code stats.foldChange.<leftGroup>.<rightGroup>.<quantification>.<aggregation>}, and the blank filter
+     * queries {@link de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel#BLANK_REMOVAL_SEARCH_FIELD_NAME},
+     * which names the sample group first. Left also has to be the sample group for the value to mean what the
+     * filter's minimum asks for: a fold change is {@code leftAbundance / rightAbundance}, so sample over blank.
+     */
+    static FoldChangeJobSubmission blankRemovalJobSubmission() {
+        return new FoldChangeJobSubmission()
+                .aggregationTypes(List.of(/*AggregationType.MIN,*/ AggregationType.AVG, AggregationType.MAX))
+                .quantificationMeasures(List.of(QuantMeasure.APEX_INTENSITY, QuantMeasure.AREA_UNDER_CURVE))
+                .leftRunGroup(Groups.SAMPLE_RUNS.getGroupName())
+                .rightRunGroup(Groups.BLANK_RUNS.getGroupName());
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         // compute fold-changes and add tags to runs
@@ -186,11 +203,7 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((client, pid) -> {
                     client.runs().addTagsToRunsExperimental(pid, tags);
 
-                    FoldChangeJobSubmission request = new FoldChangeJobSubmission()
-                            .aggregationTypes(List.of(/*AggregationType.MIN,*/ AggregationType.AVG, AggregationType.MAX))
-                            .quantificationMeasures(List.of(QuantMeasure.APEX_INTENSITY, QuantMeasure.AREA_UNDER_CURVE))
-                            .rightRunGroup(Groups.SAMPLE_RUNS.getGroupName())
-                            .leftRunGroup(Groups.BLANK_RUNS.getGroupName());
+                    FoldChangeJobSubmission request = blankRemovalJobSubmission();
 
                     Job job = client.featureStatistics().computeAlignedFeatureFoldChangesExperimental(pid, request, List.of(JobOptField.PROGRESS));
                     return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Computing blank removal fold changes...", new io.sirius.ms.sdk.jjobs.SseProgressJJob(gui.getSiriusClient(), pid, job));
