@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.deconvolution;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
@@ -64,7 +65,9 @@ public class DiaRefinement {
 
     private final double unassignedWeight;
 
-    private final double minProbability;
+    /** as {@link DiaDeconvolution#getMinProbability()}, and a threshold on the same kind of number */
+    @Getter @Setter
+    private double minProbability;
 
     private final int maxDecoyPrecursors;
 
@@ -83,13 +86,13 @@ public class DiaRefinement {
     @Getter @Setter
     private boolean keepUnrefinedSpectra = false;
 
+    /** see {@link DiaPseudoSpectra#write}; zero keeps every candidate that cleared the measured floor */
+    @Getter @Setter
+    private double minRelativeProbabilityForSpectrum = 0d;
+
     /** how likely a fragment has to be to appear in a spectrum, as in {@link DiaPseudoSpectra} */
     @Getter @Setter
     private double minProbabilityForSpectrum = DiaPseudoSpectra.DEFAULT_MIN_PROBABILITY;
-
-    /** see {@link FragmentIntensityShares}; only useful to turn off in order to measure what it does */
-    @Getter @Setter
-    private boolean intensityShares = true;
 
     /** see {@link #DEFAULT_DECOY_QUANTILE}; set to zero to use the fixed floor of stage one instead */
     @Getter @Setter
@@ -243,6 +246,11 @@ public class DiaRefinement {
      */
     public Result refine(List<DiaAssignmentStrategy.SampleIndex> samples, List<DiaFinalPrecursors.Aligned> features,
                          Deviation massDeviation, double rtTolerance) {
+        return refine(samples, features, massDeviation, rtTolerance, new Tracker.NOOP());
+    }
+
+    public Result refine(List<DiaAssignmentStrategy.SampleIndex> samples, List<DiaFinalPrecursors.Aligned> features,
+                         Deviation massDeviation, double rtTolerance, Tracker tracker) {
         final Map<DiaChannelKey, List<DiaAlignedFragments.SampleFragments>> channels = channelsAcrossSamples(samples);
         this.massDeviation = fragmentMassDeviation(samples, massDeviation);
         this.rtTolerance = rtTolerance;
@@ -270,7 +278,7 @@ public class DiaRefinement {
         final List<ChannelResult> results = new ArrayList<>(channels.size());
         for (Map.Entry<DiaChannelKey, List<DiaAlignedFragments.SampleFragments>> entry : channels.entrySet()) {
             results.add(refineChannel(entry.getKey(), entry.getValue(), features, alignedFragments.get(entry.getKey()),
-                    decoyGraphs.get(entry.getKey()), pooled));
+                    decoyGraphs.get(entry.getKey()), pooled, tracker));
         }
         final double reportedRt = channels.isEmpty() ? rtTolerance
                 : fragmentRtTolerance(channels.values().iterator().next().get(0).channel(), rtTolerance);
@@ -278,13 +286,50 @@ public class DiaRefinement {
                 "%.1f ppm / %.4f Da and %.1f s", massDeviation.getPpm(), massDeviation.getAbsolute(), reportedRt));
     }
 
+    /**
+     * One precursor that shares another's spectrum, together with the views it is written back through.
+     *
+     * @param views per sample, null where that sample did not measure it
+     */
+    protected record Member(DiaFinalPrecursors.Aligned precursor, PrecursorFeature[] views) {
+    }
+
+    /** the precursors that compete for a channel's fragments, and who else each of them speaks for */
+    protected record Nodes(List<DiaFinalPrecursors.Aligned> precursors, List<List<Member>> coReported) {
+        static Nodes of(List<DiaFinalPrecursors.Aligned> precursors) {
+            final List<List<Member>> none = new ArrayList<>(precursors.size());
+            for (int k = 0; k < precursors.size(); ++k) none.add(List.of());
+            return new Nodes(precursors, none);
+        }
+    }
+
+    /**
+     * Which of a channel's final precursors compete for its fragments, and which of them merely share a competitor's
+     * answer.
+     * <p>
+     * Every precursor competes for itself here, which is the assignment as it was first built. A subclass may reduce
+     * the set - see {@code GroupedRefinement} - and the rest of the refinement is written so that it does not have to
+     * know whether it did.
+     *
+     * @param views       per precursor, from {@link DiaConsensusGraph#viewsOf}
+     * @param intensities per precursor, its apex intensity across the samples
+     */
+    protected Nodes precursorNodesOf(List<DiaFinalPrecursors.Aligned> precursors, PrecursorFeature[][] views,
+                                     List<DiaAlignedFragments.SampleFragments> samples, double[] intensities) {
+        return Nodes.of(precursors);
+    }
+
     private ChannelResult refineChannel(DiaChannelKey key, List<DiaAlignedFragments.SampleFragments> perSample,
                                         List<DiaFinalPrecursors.Aligned> features,
                                         List<DiaAlignedFragments.Aligned> fragments, DiaConsensusGraph decoyGraph,
-                                        Nulls pooled) {
+                                        Nulls pooled, Tracker tracker) {
         final DiaChannel channel = perSample.get(0).channel();
-        final DiaConsensusGraph graph = DiaConsensusGraph.build(perSample, select(features, channel, false),
-                fragments, false);
+        final List<DiaFinalPrecursors.Aligned> selected = select(features, channel, false);
+        final PrecursorFeature[][] views = DiaConsensusGraph.viewsOf(selected, perSample, false);
+        final double[] intensities = new double[selected.size()];
+        for (int p = 0; p < selected.size(); ++p) intensities[p] = apexIntensityOf(selected.get(p));
+        final Nodes nodes = precursorNodesOf(selected, views, perSample, intensities);
+        final DiaConsensusGraph graph = DiaConsensusGraph.build(perSample, nodes.precursors(), fragments, false);
 
         final int decoyEdges = decoyGraph.getEdges().size();
         final boolean ownNull = decoyEdges >= DiaDeconvolution.MIN_DECOY_EDGES;
@@ -310,10 +355,74 @@ public class DiaRefinement {
                 intensityPrior ? index -> apexIntensityOf(precursors.get(index)) : DiaFragmentResolver.UNIFORM_CAPACITY,
                 unassignedWeight, minProbability);
 
-        final int[] written = writeBack(perSample, graph, resolution);
+        if (tracker.tracksDia()) report(channel, graph, nulls, floor, resolution, tracker);
+        final int[] written = writeBack(perSample, graph, resolution, tracker, nodes.coReported(),
+                tracker.tracksDia() ? evidenceOf(graph, resolution, nulls) : null);
         return new ChannelResult(key, precursors.size(), fragments.size(), graph.getEdges().size(), decoyEdges,
                 resolution.assignedFragments(), resolution.ambiguousFragments(), written[0], written[1], written[2],
                 ownNull, floor, samplesPerFragment(fragments, perSample.size()));
+    }
+
+    /**
+     * Hands every candidate edge of a refined channel to the tracker, in the same form the per sample stage uses.
+     * <p>
+     * The probability is recomputed rather than read from the assignment for the same reason as there: only what
+     * cleared the cut is kept, and the question is usually about what did not.
+     */
+    private void report(DiaChannel channel, DiaConsensusGraph graph, Nulls nulls, double floor,
+                        DiaFragmentResolver.Result resolution, Tracker tracker) {
+        final List<DiaFinalPrecursors.Aligned> precursors = graph.getPrecursors();
+        final String name = channel.describe();
+        final Map<Integer, List<DiaConsensusGraph.ConsensusEdge>> byFragment = new LinkedHashMap<>();
+        for (DiaConsensusGraph.ConsensusEdge edge : graph.getEdges()) {
+            byFragment.computeIfAbsent(edge.fragmentIndex(), key -> new ArrayList<>()).add(edge);
+        }
+        for (Map.Entry<Integer, List<DiaConsensusGraph.ConsensusEdge>> entry : byFragment.entrySet()) {
+            final List<DiaConsensusGraph.ConsensusEdge> edges = entry.getValue();
+            final FragmentAssignment assignment = resolution.getAssignments()[entry.getKey()];
+            double total = Math.max(0d, unassignedWeight), largestCapacity = 0d;
+            final double[] weights = new double[edges.size()];
+            for (DiaConsensusGraph.ConsensusEdge edge : edges) {
+                if (DiaFragmentResolver.weightFromLogPValue(nulls.logPvalue(edge), floor) <= 0) continue;
+                largestCapacity = Math.max(largestCapacity, intensityPrior
+                        ? apexIntensityOf(precursors.get(edge.precursorIndex())) : 1d);
+            }
+            for (int k = 0; k < edges.size(); ++k) {
+                final DiaConsensusGraph.ConsensusEdge edge = edges.get(k);
+                final double capacity = intensityPrior
+                        ? apexIntensityOf(precursors.get(edge.precursorIndex())) : 1d;
+                weights[k] = DiaFragmentResolver.weightFromLogPValue(nulls.logPvalue(edge), floor)
+                        * (largestCapacity > 0 ? Math.max(0d, capacity) / largestCapacity : 1d);
+                total += weights[k];
+            }
+            for (int k = 0; k < edges.size(); ++k) {
+                final DiaConsensusGraph.ConsensusEdge edge = edges.get(k);
+                final DiaFinalPrecursors.Aligned precursor = precursors.get(edge.precursorIndex());
+                final double probability = total > 0 ? weights[k] / total : 0d;
+                double stored = 0d;
+                for (int rank = 0; rank < assignment.size(); ++rank) {
+                    if (assignment.precursorIndexAt(rank) == edge.precursorIndex()) {
+                        stored = assignment.probabilityAt(rank);
+                    }
+                }
+                final String outcome;
+                if (weights[k] <= 0) {
+                    outcome = String.format(Locale.US, "no weight: below the measured floor of %.1f", floor);
+                } else if (stored <= 0) {
+                    outcome = String.format(Locale.US, "dropped, %.4f is below the minimum probability of %.2f "
+                            + "(%d competitors, unassigned weight %.1f)", probability, minProbability,
+                            edges.size() - 1, unassignedWeight);
+                } else {
+                    outcome = "assigned";
+                }
+                final DiaAlignedFragments.Aligned fragment = graph.getFragments().get(edge.fragmentIndex());
+                tracker.diaFragmentJudged(null, name, new Tracker.DiaFragmentJudgement("after merging",
+                        precursor.getMz(), precursor.getRetentionTime(), apexIntensityOf(precursor),
+                        fragment.getMz(), fragment.getApexRetentionTime(), Double.NaN, edge.shape().datapoints(),
+                        edge.shape().correlation(), nulls.logPvalue(edge), edge.specificity(), weights[k], stored,
+                        Double.NaN, edges.size(), outcome));
+            }
+        }
     }
 
     /**
@@ -406,8 +515,84 @@ public class DiaRefinement {
      *
      * @return the number of spectra rewritten and the number left as stage one wrote them
      */
+    /** what this refinement did beyond what any of them does, for the report; empty unless a subclass says more */
+    public String describeStrategy() {
+        return "";
+    }
+
+    /**
+     * Replaces the peaks of every spectrum this sample holds for the given precursor.
+     *
+     * @return how many were rewritten, left alone and refused for a precursor mass that does not match
+     */
+    private int[] rewrite(DiaFinalPrecursors.Aligned precursor, PrecursorFeature view, ProcessedSample sample,
+                          int channelId, Int2IntOpenHashMap channelOfScan, SimpleMutableSpectrum buffer) {
+        int rewritten = 0, leftAlone = 0, misattributed = 0;
+        for (int uid : spectraOfChannel(precursor, sample, channelId, channelOfScan)) {
+            if (!precursorMatches(sample, uid, view.getMz())) {
+                ++misattributed;
+                continue;
+            }
+            if (buffer.isEmpty() && keepUnrefinedSpectra) {
+                ++leftAlone;
+                continue;
+            }
+            sample.getStorage().getSpectrumStorage().updateMs2Spectrum(uid, new SimpleSpectrum(buffer));
+            ++rewritten;
+        }
+        return new int[]{rewritten, leftAlone, misattributed};
+    }
+
+    /** whether a candidate of a fragment is intense enough an explanation of it to appear in its spectrum */
+    private boolean keptForSpectrum(FragmentAssignment assignment, int rank) {
+        return assignment.probabilityAt(rank) >= minProbabilityForSpectrum
+                && assignment.probabilityAt(rank) >= minRelativeProbabilityForSpectrum
+                * assignment.probabilityOfMostLikely();
+    }
+
+    /**
+     * Per precursor, the two summaries of the evidence behind the fragments it was assigned that stage one also
+     * computes: the mean log p-value, and the sum over the {@link DiaDeconvolution#EVIDENCE_SLOTS} most significant.
+     *
+     * @return {@code {mean, bestSum}}, each indexed by precursor
+     */
+    private static double[][] evidenceOf(DiaConsensusGraph graph, DiaFragmentResolver.Result resolution,
+                                         Nulls nulls) {
+        final int n = graph.getPrecursors().size();
+        final double[] sum = new double[n];
+        final int[] counts = new int[n];
+        final double[][] best = new double[n][];
+        for (DiaConsensusGraph.ConsensusEdge edge : graph.getEdges()) {
+            final FragmentAssignment assignment = resolution.getAssignments()[edge.fragmentIndex()];
+            for (int rank = 0; rank < assignment.size(); ++rank) {
+                if (assignment.precursorIndexAt(rank) != edge.precursorIndex()) continue;
+                final int p = edge.precursorIndex();
+                final double logP = nulls.logPvalue(edge);
+                sum[p] += logP;
+                ++counts[p];
+                if (best[p] == null) best[p] = new double[DiaDeconvolution.EVIDENCE_SLOTS];
+                DiaDeconvolution.keepBest(best[p], logP);
+                break;
+            }
+        }
+        final double[] bestSum = new double[n];
+        for (int p = 0; p < n; ++p) {
+            sum[p] = counts[p] == 0 ? Double.NaN : sum[p] / counts[p];
+            if (best[p] == null) {
+                bestSum[p] = Double.NaN;
+                continue;
+            }
+            double total = 0d;
+            for (double value : best[p]) total += value;
+            bestSum[p] = total;
+        }
+        return new double[][]{sum, bestSum};
+    }
+
     private int[] writeBack(List<DiaAlignedFragments.SampleFragments> perSample, DiaConsensusGraph graph,
-                            DiaFragmentResolver.Result resolution) {
+                            DiaFragmentResolver.Result resolution, Tracker tracker, List<List<Member>> coReported,
+                            double[][] evidence) {
+        final boolean tracked = tracker.tracksDia();
         final List<DiaAlignedFragments.Aligned> fragments = graph.getFragments();
         // fragments per feature, exactly as the pseudo spectra of stage one are collected
         final List<IntArrayList> byPrecursor = new ArrayList<>(graph.getPrecursors().size());
@@ -415,7 +600,7 @@ public class DiaRefinement {
         for (int f = 0; f < fragments.size(); ++f) {
             final FragmentAssignment assignment = resolution.getAssignments()[f];
             for (int rank = 0; rank < assignment.size(); ++rank) {
-                if (assignment.probabilityAt(rank) < minProbabilityForSpectrum) continue;
+                if (!keptForSpectrum(assignment, rank)) continue;
                 byPrecursor.get(assignment.precursorIndexAt(rank)).add(f);
             }
         }
@@ -423,8 +608,13 @@ public class DiaRefinement {
         // which channel a pseudo spectrum came from, per sample. Its scan id is the id of an acquired scan of that
         // channel, which is the one thing that identifies the channel without comparing isolation windows.
         final List<Int2IntOpenHashMap> channelOfScan = new ArrayList<>(perSample.size());
-        for (DiaAlignedFragments.SampleFragments sample : perSample) {
-            channelOfScan.add(scanToChannel(sample));
+        final float[] noiseLevels = new float[perSample.size()];
+        for (int s = 0; s < perSample.size(); ++s) {
+            channelOfScan.add(scanToChannel(perSample.get(s)));
+            // the same estimate stage one made, recomputed rather than carried: it is a few dozen per experiment and
+            // a number that travels tends to drift from the one that is used
+            noiseLevels[s] = tracked
+                    ? DiaChannelNoise.estimate(perSample.get(s).sample(), perSample.get(s).channel()) : 0f;
         }
 
         // the share of each fragment that belongs to each precursor, per sample. A fragment several co-eluting
@@ -440,15 +630,14 @@ public class DiaRefinement {
                 final IntArrayList assignedTo = new IntArrayList(assignment.size());
                 final List<PrecursorFeature> candidates = new ArrayList<>(assignment.size());
                 for (int rank = 0; rank < assignment.size(); ++rank) {
-                    if (assignment.probabilityAt(rank) < minProbabilityForSpectrum) continue;
+                    if (!keptForSpectrum(assignment, rank)) continue;
                     final PrecursorFeature view = graph.viewOf(assignment.precursorIndexAt(rank), s);
                     if (view == null) continue;
                     assignedTo.add(assignment.precursorIndexAt(rank));
                     candidates.add(view);
                 }
                 if (assignedTo.isEmpty()) continue;
-                final double[] split = FragmentIntensityShares.of(perSample.get(s).channel(), candidates, trace,
-                        intensityShares);
+                final double[] split = FragmentIntensityShares.of(perSample.get(s).channel(), candidates, trace);
                 for (int k = 0; k < assignedTo.size(); ++k) {
                     if (split[k] > 0) shares.put(key(assignedTo.getInt(k), f), split[k]);
                 }
@@ -467,21 +656,49 @@ public class DiaRefinement {
                 final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(assigned.size());
                 for (int fragmentIndex : assigned) {
                     final ContiguousTrace trace = fragments.get(fragmentIndex).traceIn(s);
-                    if (trace == null) continue;
-                    final double intensity = sharesPerSample.get(s).get(key(p, fragmentIndex));
-                    if (intensity > 0) buffer.addPeak(trace.averagedMz(), intensity);
+                    final double intensity = trace == null ? 0d : sharesPerSample.get(s).get(key(p, fragmentIndex));
+                    if (trace != null && intensity > 0) buffer.addPeak(trace.averagedMz(), intensity);
+                    if (tracked) {
+                        tracker.diaPeakWritten(sample, perSample.get(s).channel().describe(), view.getMz(),
+                                fragments.get(fragmentIndex).getMz(), intensity, Double.NaN,
+                                trace != null && intensity > 0, trace == null
+                                        ? "this sample has no trace of the fragment"
+                                        : "the intensity factorisation gave this precursor no share of it");
+                    }
                 }
-                for (int uid : spectraOfChannel(graph.getPrecursors().get(p), sample, channelId, channelOfScan.get(s))) {
-                    if (!precursorMatches(sample, uid, view.getMz())) {
-                        ++misattributed;
-                        continue;
+                if (tracked && !buffer.isEmpty()) {
+                    double attributed = 0d, measured = 0d, base = 0d;
+                    for (int k = 0; k < buffer.size(); ++k) {
+                        attributed += buffer.getIntensityAt(k);
+                        base = Math.max(base, buffer.getIntensityAt(k));
                     }
-                    if (buffer.isEmpty() && keepUnrefinedSpectra) {
-                        ++leftAlone;
-                        continue;
+                    for (int fragmentIndex : assigned) {
+                        final ContiguousTrace trace = fragments.get(fragmentIndex).traceIn(s);
+                        if (trace != null) measured += view.getWindow().apexIntensityIn(trace);
                     }
-                    sample.getStorage().getSpectrumStorage().updateMs2Spectrum(uid, new SimpleSpectrum(buffer));
-                    ++rewritten;
+                    tracker.diaSpectrumQuality(sample, perSample.get(s).channel().describe(),
+                            new Tracker.DiaSpectrumQuality("after merging", view.getMz(), view.getRetentionTime(),
+                                    buffer.size(), attributed, measured, base, noiseLevels[s],
+                                    view.getApexIntensity(), Double.NaN,
+                                    evidence == null ? Double.NaN : evidence[0][p],
+                                    evidence == null ? Double.NaN : evidence[1][p], Double.NaN, Double.NaN,
+                                    graph.getPrecursors().get(p).getInstances().size()));
+                }
+                final int[] counts = rewrite(graph.getPrecursors().get(p), view, sample, channelId,
+                        channelOfScan.get(s), buffer);
+                rewritten += counts[0];
+                leftAlone += counts[1];
+                misattributed += counts[2];
+                // the other members of this precursor's group receive the same answer, because the channel cannot
+                // say which of them produced it
+                for (Member member : coReported.get(p)) {
+                    final PrecursorFeature memberView = member.views() == null ? null : member.views()[s];
+                    if (memberView == null) continue;
+                    final int[] more = rewrite(member.precursor(), memberView, sample, channelId,
+                            channelOfScan.get(s), buffer);
+                    rewritten += more[0];
+                    leftAlone += more[1];
+                    misattributed += more[2];
                 }
             }
         }

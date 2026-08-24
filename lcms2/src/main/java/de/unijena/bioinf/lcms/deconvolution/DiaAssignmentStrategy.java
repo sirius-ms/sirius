@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.deconvolution;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
+import de.unijena.bioinf.lcms.utils.Tracker;
 
 import java.util.List;
 
@@ -35,9 +36,10 @@ public interface DiaAssignmentStrategy {
      * Assigns the fragments of one sample and registers the spectra on it. Called before the masses of interest are
      * extracted, so that a precursor whose deconvolution found co-eluting fragments is treated as confident.
      *
+     * @param tracker follows a peak of interest through the stages, see {@link Tracker#tracksDia()}
      * @return what was done, for inspection and for the log
      */
-    DiaReport assign(ProcessedSample sample, DiaScanIndex index);
+    DiaReport assign(ProcessedSample sample, DiaScanIndex index, Tracker tracker);
 
     /**
      * Revises the spectra of {@link #assign} now that the final feature boundaries are known and all samples are
@@ -49,7 +51,7 @@ public interface DiaAssignmentStrategy {
      * @return an account of what was done, ending in a newline, or null if the strategy does not use this phase
      */
     default String refine(List<SampleIndex> samples, List<DiaFinalPrecursors.Aligned> features,
-                          Deviation massDeviation, double rtTolerance) {
+                          Deviation massDeviation, double rtTolerance, Tracker tracker) {
         return null;
     }
 }

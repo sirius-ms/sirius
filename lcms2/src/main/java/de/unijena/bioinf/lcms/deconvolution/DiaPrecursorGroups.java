@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.deconvolution;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import de.unijena.bioinf.lcms.statistics.TraceCorrelationStatistics;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -18,13 +19,19 @@ import java.util.Locale;
  * spectrum to the most intense peak of its isolation window, and how much of the window's signal the other members
  * account for is reported as {@link Group#getPollutionRatio() chimeric pollution} rather than silently dropped.
  * <p>
- * <b>Why there is no decoy calibration here.</b> Everywhere else in the deconvolution a correlation is turned into a
- * p-value against decoys, because a correlation over four to nine points means nothing on its own. That cannot be
- * done for a pair of precursors, and the reason is structural: what would make a pair a decoy is that the two are not
- * the same elution, and two precursors that do not elute together have no window in which both were measured, so
- * their correlation is not low - it is undefined, and the null distribution comes out empty. The threshold here is
- * therefore an explicit statement about resolution rather than a calibrated one, and it is a knob the comparison
- * against a DDA measurement can settle.
+ * <b>How the threshold is calibrated.</b> A pair of precursors admits no decoy - what would make one is that the two
+ * are not the same elution, and then no window holds both, so their correlation is undefined rather than low. The
+ * calibration therefore comes from the other side, from {@link TraceCorrelationStatistics}: isotope peaks are one
+ * elution measured twice, so how well they correlate says how well a genuine co-elution correlates, and two
+ * precursors that reach that are indistinguishable from one. The threshold is read per pair, since it runs from about
+ * 0.88 just above the noise to 0.998 a hundredfold above it, and a single number would be both too strict for weak
+ * precursors and too lenient for strong ones.
+ * <p>
+ * The same statistics say when a precursor is too weak to be judged at all. Near the noise a known co-elution either
+ * correlates well or not at all, so a low correlation there means "we could not tell" rather than "different
+ * compound", and a precursor in that regime cannot be distinguished from anything. Rather than group it with whatever
+ * happens to be nearby, it is dropped as a precursor - which is what a data dependent acquisition does with such a
+ * peak too, by never selecting it.
  * <p>
  * Correlation is measured over the <em>union</em> of the two features' windows, not their overlap: if one elutes a
  * little later than the other, that difference is exactly what the union shows and the overlap hides.
@@ -38,13 +45,41 @@ import java.util.Locale;
 public final class DiaPrecursorGroups {
 
     /**
-     * How well two features have to correlate, at the channel's resolution, to count as indistinguishable.
+     * How well two features have to correlate to count as indistinguishable, when nothing was learned about this
+     * sample and the statistics cannot answer.
      * <p>
      * Deliberately high. Being in one group means giving up on separating the members at all, so the cost of grouping
      * two features that could have been told apart is losing a compound's spectrum entirely, while the cost of
      * leaving two indistinguishable ones apart is what the pipeline already does today.
      */
+    /**
+     * The cutoff for the overload that is given no statistics at all, and nothing else.
+     * <p>
+     * Deliberately high, because a caller with no measured distribution has no grounds for grouping anything it is not
+     * sure about. Where statistics are available they decide, floored per datapoint condition by
+     * {@link TraceCorrelationStatistics#MINIMUM_CUTOFF} - grouping imposes no minimum of its own on top.
+     * <p>
+     * It used to, at 0.95, on the argument that no evidence is a reason to be conservative. Measured on a dilution
+     * series that cost six of eighty library identifications: grouping more absorbs a weak precursor's fragments into
+     * the intense one it cannot be told apart from, and that is the better answer more often than not. The argument
+     * was built on numbers taken before the alignment storage stopped removing masses of interest it did not own, and
+     * did not survive them being reproducible.
+     */
     public static final double DEFAULT_MIN_CORRELATION = 0.95;
+
+    /**
+     * Which quantile of the genuine co-elutions a pair has to reach. At five per cent, a pair is grouped when it
+     * correlates at least as well as ninety five per cent of pairs known to be one elution.
+     */
+    public static final double DEFAULT_QUANTILE = 0.05;
+
+    /**
+     * How intense a member has to be, relative to its group's most intense one, before the group reports it too.
+     * <p>
+     * See {@link Group#reportedMembers}. A half means that a member the channel cannot separate from the dominant one
+     * and which carries at least half its signal is not silently dropped in the dominant one's favour.
+     */
+    public static final double DEFAULT_MIN_REPORTED_SHARE = 0.5;
 
     /**
      * Only features whose apexes are within this many scan points of each other are compared at all.
@@ -69,7 +104,7 @@ public final class DiaPrecursorGroups {
          */
         private final double pollutionRatio;
 
-        private Group(int[] members, int representative, double pollutionRatio) {
+        Group(int[] members, int representative, double pollutionRatio) {
             this.members = members;
             this.representative = representative;
             this.pollutionRatio = pollutionRatio;
@@ -77,6 +112,39 @@ public final class DiaPrecursorGroups {
 
         public int size() {
             return members.length;
+        }
+
+        /**
+         * The members this group speaks for: its representative, and every member intense enough that calling the
+         * representative the owner would be arbitrary.
+         * <p>
+         * A group is a set of precursors the channel cannot separate, so the fragments belong to it as a whole and
+         * the only question is who is told about them. Where one member dominates, naming it the owner is what a
+         * data dependent acquisition does when it picks the most intense peak of an isolation window. Where a member
+         * is of comparable abundance there is no evidence for that choice, so it is not made: both are reported with
+         * the same peaks, and {@link #getPollutionRatio()} records that neither can be confirmed.
+         * <p>
+         * The threshold is a share of the dominant member's intensity rather than an absolute intensity, because
+         * what makes the choice arbitrary is the ratio between them and nothing else. At one, only the representative
+         * speaks; low enough, every member does, which is the behaviour of not grouping at all.
+         *
+         * @param features the list the member indices point into
+         * @return member indices, the representative first
+         */
+        public int[] reportedMembers(List<PrecursorFeature> features, double minShareOfDominant) {
+            double dominant = 0d;
+            for (int member : members) dominant = Math.max(dominant, features.get(member).getApexIntensity());
+            final IntArrayList reported = new IntArrayList(members.length);
+            reported.add(representative);
+            if (dominant > 0) {
+                for (int member : members) {
+                    if (member == representative) continue;
+                    if (features.get(member).getApexIntensity() >= minShareOfDominant * dominant) {
+                        reported.add(member);
+                    }
+                }
+            }
+            return reported.toIntArray();
         }
 
         public boolean isAmbiguous() {
@@ -93,8 +161,50 @@ public final class DiaPrecursorGroups {
     private DiaPrecursorGroups() {
     }
 
+    /**
+     * What the grouping made of a channel's features. Every feature is in exactly one group, and the indices are into
+     * the list that was handed in.
+     */
+    public record Result(List<Group> groups) {
+        public int numberOfAmbiguousGroups() {
+            int count = 0;
+            for (Group group : groups) if (group.isAmbiguous()) ++count;
+            return count;
+        }
+    }
+
+    /** with a fixed threshold and nothing dropped, which is what a sample without learned statistics gets */
     public static List<Group> of(DiaChannel channel, List<PrecursorFeature> features) {
         return of(channel, features, DEFAULT_MIN_CORRELATION, DEFAULT_MAX_APEX_DISTANCE);
+    }
+
+    /**
+     * With the threshold read per pair from what this sample says a genuine co-elution looks like, and features too
+     * weak for that question to be answerable dropped.
+     *
+     * @param statistics see {@link TraceCorrelationStatistics}; an empty one falls back to
+     *                   {@link #DEFAULT_MIN_CORRELATION} and drops nothing
+     * @param noiseLevel the sample's noise level, which the statistics' intensity conditions are relative to
+     */
+    public static Result of(DiaChannel channel, List<PrecursorFeature> features,
+                            TraceCorrelationStatistics statistics, double noiseLevel) {
+        return of(channel, features, statistics, noiseLevel, DEFAULT_QUANTILE, DEFAULT_MAX_APEX_DISTANCE);
+    }
+
+    public static Result of(DiaChannel channel, List<PrecursorFeature> features,
+                            TraceCorrelationStatistics statistics, double noiseLevel, double quantile,
+                            int maxApexDistance) {
+        // what the sample measured, held up only by the statistic's own per condition floor
+        final Correlation threshold = (left, right) -> statistics.cutoffFor(
+                left.getWindow().union(right.getWindow()).length(),
+                Math.min(left.getApexIntensity(), right.getApexIntensity()), noiseLevel, quantile);
+        return new Result(group(channel, features, threshold, maxApexDistance));
+    }
+
+
+    /** how well two features have to correlate to be indistinguishable, which depends on the pair */
+    private interface Correlation {
+        double minimumFor(PrecursorFeature left, PrecursorFeature right);
     }
 
     /**
@@ -105,6 +215,11 @@ public final class DiaPrecursorGroups {
      */
     public static List<Group> of(DiaChannel channel, List<PrecursorFeature> features, double minCorrelation,
                                  int maxApexDistance) {
+        return group(channel, features, (left, right) -> minCorrelation, maxApexDistance);
+    }
+
+    private static List<Group> group(DiaChannel channel, List<PrecursorFeature> features, Correlation threshold,
+                                     int maxApexDistance) {
         final int n = features.size();
         final List<Group> groups = new ArrayList<>();
         if (n == 0) return groups;
@@ -139,7 +254,7 @@ public final class DiaPrecursorGroups {
                     if (Math.abs(features.get(candidate).getApexChannelIndex()
                             - features.get(seed).getApexChannelIndex()) > maxApexDistance) break;
                     if (taken[candidate]) continue;
-                    if (correlatesWithAll(channel, features, members, candidate, minCorrelation)) {
+                    if (correlatesWithAll(channel, features, members, candidate, threshold)) {
                         taken[candidate] = true;
                         members.add(candidate);
                     }
@@ -152,11 +267,14 @@ public final class DiaPrecursorGroups {
 
     /** complete linkage: a candidate has to be indistinguishable from every member, not just from the seed */
     private static boolean correlatesWithAll(DiaChannel channel, List<PrecursorFeature> features,
-                                             IntArrayList members, int candidate, double minCorrelation) {
+                                             IntArrayList members, int candidate, Correlation threshold) {
         for (int member : members) {
             final DiaTraceCorrelation.Result correlation = correlate(channel, features.get(member),
                     features.get(candidate));
-            if (!correlation.isDefined() || correlation.correlation() < minCorrelation) return false;
+            if (!correlation.isDefined()) return false;
+            if (correlation.correlation() < threshold.minimumFor(features.get(member), features.get(candidate))) {
+                return false;
+            }
         }
         return true;
     }
