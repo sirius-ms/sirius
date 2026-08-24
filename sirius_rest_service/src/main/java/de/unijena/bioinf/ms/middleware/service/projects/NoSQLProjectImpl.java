@@ -1429,10 +1429,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             feature.setTags(null);
         }
 
-        // The fold changes are restored by the index mapper on every read because the update path needs them to
-        // merge into (FoldChangeWorkflow), but no client can use them - the field is hidden from the api and is
-        // not in the generated clients, so it is dropped again on arrival after being the largest part of the
-        // response. Whoever asks for them keeps what the index carried; nothing is loaded for them here.
+        // Dropped like every other field nobody asked for - but, unlike them, never loaded here. Fold changes
+        // are fetched in bulk or not at all: by statJob in annotateApiFeatures for a batch, or off the index
+        // document for a search hit. Loading one feature's here would mean a query per feature, and it would
+        // fire for exactly the features that have none, since most features are not in both a sample and a
+        // blank run. Whoever asks for them therefore gets what one of those two paths already put in place;
+        // a feature built from its own document (findAlignedFeaturesById) carries none, by the same rule.
         if (!optFields.contains(AlignedFeature.OptField.statistics))
             feature.setStats(null);
 
@@ -1992,14 +1994,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (features.isEmpty())
             return Page.empty(pageable);
 
-        if (!AlignedFeature.INDEXED_OPT_FIELDS.equals(optFields)) {
-            features.stream().parallel().forEach(f ->
-                    annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, msDataSearchPrepared, optFields));
-        } else if (!optFields.contains(AlignedFeature.OptField.statistics)) {
-            // everything asked for came out of the index, so the assembly pass is skipped - but the fold changes
-            // came out of it too, and nobody asked for those
-            features.forEach(f -> f.setStats(null));
-        }
+        // A document holds every indexed field whether or not this caller asked for it, so what comes back has
+        // to be brought down to what was asked for. annotateApiFeature is what does that - for each opt field it
+        // loads what is missing and drops what nobody wants - and it is cheap on a feature that came out of the
+        // index, because every load it could do is guarded on the field still being absent.
+        features.stream().parallel().forEach(f ->
+                annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, msDataSearchPrepared, optFields));
 
         return features;
     }
