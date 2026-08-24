@@ -21,6 +21,24 @@ import java.util.stream.Collectors;
 
 public class CheckMs2Quality implements FeatureQualityChecker{
 
+    /**
+     * How much ion current a data independent spectrum has to carry, as a multiple of the run's MS2 noise level,
+     * before it is worth anything.
+     * <p>
+     * Only applied to data independent spectra, and the reason is the acquisition rather than a preference: there the
+     * peaks attributed to a precursor are the outcome of a correlation over a handful of scan points, so a spectrum
+     * can consist entirely of signal barely above the noise while looking perfectly ordinary once normalised. A
+     * targeted spectrum cannot fail that way - what was isolated was measured - so the same bound there would only
+     * punish compounds that are genuinely faint.
+     * <p>
+     * The numbers are quartile boundaries of the quantity's own distribution, measured against a DDA run of the same
+     * sample: of the spectra below five, 90 % share less than a fifth of their peaks with the reference; below twenty,
+     * 76 %; below a hundred and fifty, 61 %; above it, 42 %. So they mark real changes in what a spectrum is worth
+     * rather than round numbers, and no single one of them separates cleanly - this ranks spectra, it does not
+     * partition them.
+     */
+    private static final double[] DIA_ION_COUNT_OVER_NOISE = {5d, 20d, 150d};
+
     private static final String[] mostCommonLosses = {"C2H2", "CO", "C2H4", "H2O", "CHN", "C3H2", "C3H4", "CH4", "CH3", "CH2O", "C2H2O", "C4H4", "C4H2", "HN", "C2H3", "C3H6", "C2H4O", "C2H3N", "CH3N", "H3N", "CH2N", "C4H6", "CHO"};
     private static final double[] massDeltas = Arrays.stream(mostCommonLosses).mapToDouble(x-> MolecularFormula.parseOrThrow(x).getMass()).toArray();
 
@@ -86,6 +104,7 @@ public class CheckMs2Quality implements FeatureQualityChecker{
                     DataQuality.GOOD, QualityReport.Weight.MAJOR
             ));
         }
+        addIonCountItems(peakQuality, run, spectra);
         if (signal < 1) {
             peakQuality.getItems().add(new QualityReport.Item(
                     "All peaks in the spectrum have similar intensities, which is usually an indication for a noise spectrum",
@@ -238,5 +257,51 @@ public class CheckMs2Quality implements FeatureQualityChecker{
             }
         }
         return new PeakStats(count, count / (float)spectrum.size(), (float)(intensity/intSum));
+    }
+
+    /**
+     * How much measured ion current a data independent spectrum was built from, relative to the run's MS2 noise.
+     * <p>
+     * Not answerable from the peaks: a merged peak's intensity is weighted by the merge score and the spectrum a
+     * reader sees is normalised, so this has to come from {@link MergedMSnSpectrum#getTotalIonCount()}, recorded
+     * before either happened. Nothing is added for a targeted spectrum, or for a project written before the field
+     * existed.
+     */
+    private void addIonCountItems(QualityReport.Category peakQuality, MergedLCMSRun run,
+                                  List<MergedMSnSpectrum> spectra) {
+        final double noise = run.getSampleStats().getMs2NoiseLevel();
+        if (!(noise > 0)) return;
+        double total = 0d;
+        boolean dataIndependent = false, recorded = false;
+        for (MergedMSnSpectrum spectrum : spectra) {
+            if (!Boolean.TRUE.equals(spectrum.getDataIndependent())) continue;
+            dataIndependent = true;
+            if (spectrum.getTotalIonCount() == null) continue;
+            total += spectrum.getTotalIonCount();
+            recorded = true;
+        }
+        if (!dataIndependent || !recorded) return;
+
+        final double overNoise = total / noise;
+        if (overNoise < DIA_ION_COUNT_OVER_NOISE[0]) {
+            peakQuality.getItems().add(new QualityReport.Item(String.format(Locale.US,
+                    "The fragments assigned to this precursor carry only %.1f times the noise level in total. At "
+                            + "that level the assignment is not supported by measurable signal.", overNoise),
+                    DataQuality.LOWEST, QualityReport.Weight.MAJOR));
+        } else if (overNoise < DIA_ION_COUNT_OVER_NOISE[1]) {
+            peakQuality.getItems().add(new QualityReport.Item(String.format(Locale.US,
+                    "The fragments assigned to this precursor carry %.0f times the noise level in total, which is "
+                            + "little for a spectrum assembled from co-isolated fragments.", overNoise),
+                    DataQuality.BAD, QualityReport.Weight.MAJOR));
+        } else if (overNoise < DIA_ION_COUNT_OVER_NOISE[2]) {
+            peakQuality.getItems().add(new QualityReport.Item(String.format(Locale.US,
+                    "The fragments assigned to this precursor carry %.0f times the noise level in total.", overNoise),
+                    DataQuality.DECENT, QualityReport.Weight.MAJOR));
+        } else {
+            peakQuality.getItems().add(new QualityReport.Item(String.format(Locale.US,
+                    "The fragments assigned to this precursor carry %.0f times the noise level in total, which is "
+                            + "ample signal for an assignment.", overNoise),
+                    DataQuality.GOOD, QualityReport.Weight.MAJOR));
+        }
     }
 }
