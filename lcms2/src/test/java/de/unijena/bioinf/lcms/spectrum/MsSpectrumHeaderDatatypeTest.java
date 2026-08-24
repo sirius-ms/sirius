@@ -73,13 +73,31 @@ public class MsSpectrumHeaderDatatypeTest {
         assertEquals(200.0, back.getTargetedMz(), 1e-9, "the targeted mass is not the precursor mass");
     }
 
+    /**
+     * Whether a spectrum was acquired data independently decides which quality checks apply to it, so it has to be a
+     * property of the spectrum rather than something a reader infers from the width of the isolation window.
+     */
+    @Test
+    public void theDataIndependentFlagSurvives() {
+        final Ms2SpectrumHeader dia = new Ms2SpectrumHeader(1, 2, "scan=2", 1, 2, true, new CollisionEnergy(35),
+                new IsolationWindow(0d, 100d), 3, 214.0038, 214.0038, 100d).asDataIndependent();
+        assertTrue(dia.isDataIndependent(), "the fixture has to be marked in the first place");
+        assertTrue(((Ms2SpectrumHeader) roundTrip(dia)).isDataIndependent());
+
+        final Ms2SpectrumHeader dda = new Ms2SpectrumHeader(1, 2, "scan=2", 1, 2, true, new CollisionEnergy(35),
+                new IsolationWindow(0d, 2d), 3, 214.0038, 214.0038, 100d);
+        assertFalse(dda.isDataIndependent(), "and an ordinary header may not be marked by default");
+        assertFalse(((Ms2SpectrumHeader) roundTrip(dda)).isDataIndependent());
+    }
+
     /** the uid is assigned by the store after the header exists, so it has to survive being replaced */
     @Test
     public void withUidKeepsEverythingElse() {
         final Ms2SpectrumHeader header = new Ms2SpectrumHeader(1, 2, "scan=2", 1, 2, true, new CollisionEnergy(35),
-                new IsolationWindow(0d, 100d), 3, 214.0038, 200.0, 100d);
+                new IsolationWindow(0d, 100d), 3, 214.0038, 200.0, 100d).asDataIndependent();
         final Ms2SpectrumHeader renumbered = header.withUid(77);
         assertEquals(77, renumbered.getUid());
         assertEquals(200.0, renumbered.getTargetedMz(), 1e-9);
+        assertTrue(renumbered.isDataIndependent());
     }
 }

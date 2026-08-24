@@ -831,6 +831,8 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                         Arrays.stream(sampleIds).mapToObj(x->ms2Pointers.get(x).projectedScans().toIntArray()).toArray(int[][]::new),
                         Arrays.stream(m.getHeaders()).mapToDouble(Ms2SpectrumHeader::getPrecursorMz).toArray(),
                         m.getChimericPollutionRatio(),
+                        m.getTotalIonCount(),
+                        m.isDataIndependent(),
                         StorageUtils.cleanMsnDataInLCMSProcessingForImport(m)
                 );
 
