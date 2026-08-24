@@ -10,6 +10,10 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureMatch;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
@@ -21,6 +25,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -299,6 +304,140 @@ public class ProjectSchemaMigratorTest {
         assertEquals(SiriusProjectDocumentDatabase.CURRENT_PROJECT_SCHEMA_VERSION,
                 ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION,
                 "the data schema was raised without adapting the conversion to it");
+    }
+
+    // ---- blank removal fold changes ----------------------------------------
+
+    /** A stored fold change as the run type dialog used to write it: blank over sample, the wrong way round. */
+    private static FoldChange.AlignedFeaturesFoldChange blankOverSample(long alignedFeatureId,
+                                                                       double blankAbundance,
+                                                                       double sampleAbundance) {
+        return FoldChange.AlignedFeaturesFoldChange.builder()
+                .alignedFeatureId(alignedFeatureId)
+                .leftGroup(TagDefinitions.SAMPLE_TYPE_BLANK).rightGroup(TagDefinitions.SAMPLE_TYPE_SAMPLE)
+                .leftAbundance(blankAbundance).rightAbundance(sampleAbundance)
+                .aggregation(AggregationType.AVG).quantification(QuantMeasure.APEX_INTENSITY)
+                .build();
+    }
+
+    private static FoldChange.AlignedFeaturesFoldChange sampleOverBlank(long alignedFeatureId,
+                                                                       double sampleAbundance,
+                                                                       double blankAbundance) {
+        return FoldChange.AlignedFeaturesFoldChange.builder()
+                .alignedFeatureId(alignedFeatureId)
+                .leftGroup(TagDefinitions.SAMPLE_TYPE_SAMPLE).rightGroup(TagDefinitions.SAMPLE_TYPE_BLANK)
+                .leftAbundance(sampleAbundance).rightAbundance(blankAbundance)
+                .aggregation(AggregationType.AVG).quantification(QuantMeasure.APEX_INTENSITY)
+                .build();
+    }
+
+    private static List<FoldChange.AlignedFeaturesFoldChange> foldChangesOf(NitriteSirirusProject db)
+            throws Exception {
+        return db.getStorage().findAllStr(FoldChange.AlignedFeaturesFoldChange.class).toList();
+    }
+
+    /** A project at the schema before the fold changes were turned, so the conversion has something to do. */
+    private static void atTheSchemaBeforeTheFoldChangesWereTurned(NitriteSirirusProject db) throws Exception {
+        db.upsertProjectSchemaVersion(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION - 1);
+    }
+
+    /**
+     * The blank filter reads a fold change of sample over blank, and a project written by an older build holds
+     * the comparison the other way round - under a group pair the filter's index field name never names, and
+     * with the reciprocal value. Turning it is what makes an upgraded project answer without the user having to
+     * recompute anything.
+     */
+    @Test
+    public void testAReversedBlankRemovalFoldChangeIsTurnedRound() {
+        withFreshDb(db -> {
+            atTheSchemaBeforeTheFoldChangesWereTurned(db);
+            db.getStorage().insert(blankOverSample(42L, 1.0, 100.0));
+
+            assertTrue(ProjectSchemaMigrator.migrateIfNeeded(db),
+                    "turning them rewrites what the index is built from, so it has to be rebuilt");
+
+            List<FoldChange.AlignedFeaturesFoldChange> turned = foldChangesOf(db);
+            assertEquals(1, turned.size(), "turned, not duplicated: " + turned);
+            assertEquals(TagDefinitions.SAMPLE_TYPE_SAMPLE, turned.getFirst().getLeftGroup());
+            assertEquals(TagDefinitions.SAMPLE_TYPE_BLANK, turned.getFirst().getRightGroup());
+            assertEquals(100.0, turned.getFirst().getLeftAbundance(), Double.MIN_VALUE,
+                    "the sample abundance is now the numerator");
+            assertEquals(1.0, turned.getFirst().getRightAbundance(), Double.MIN_VALUE);
+            assertEquals(100.0, turned.getFirst().getFoldChange(), Double.MIN_VALUE,
+                    "a hundred times more abundant in the sample, which is what the filter asks about");
+        });
+    }
+
+    /**
+     * A project can hold both: the import path always computed sample over blank, while the run type dialog
+     * wrote the reverse for the same comparison. Turning the reversed one would then store the same comparison
+     * twice, which is one fold-change table column with two values in it.
+     */
+    @Test
+    public void testAReversedFoldChangeIsDroppedWhenTheCorrectOneAlreadyExists() {
+        withFreshDb(db -> {
+            atTheSchemaBeforeTheFoldChangesWereTurned(db);
+            db.getStorage().insert(sampleOverBlank(42L, 100.0, 1.0));
+            db.getStorage().insert(blankOverSample(42L, 1.0, 100.0));
+
+            ProjectSchemaMigrator.migrateIfNeeded(db);
+
+            List<FoldChange.AlignedFeaturesFoldChange> kept = foldChangesOf(db);
+            assertEquals(1, kept.size(), "one comparison, one record: " + kept);
+            assertEquals(TagDefinitions.SAMPLE_TYPE_SAMPLE, kept.getFirst().getLeftGroup());
+            assertEquals(100.0, kept.getFirst().getLeftAbundance(), Double.MIN_VALUE,
+                    "the record that was already right is the one that stays");
+        });
+    }
+
+    /**
+     * A comparison between groups a user defined is theirs, in whatever direction they asked for it - only the
+     * pair the blank removal job submits has an orientation anything else depends on.
+     */
+    @Test
+    public void testAComparisonBetweenOtherGroupsIsLeftAsItIs() {
+        withFreshDb(db -> {
+            atTheSchemaBeforeTheFoldChangesWereTurned(db);
+            db.getStorage().insert(FoldChange.AlignedFeaturesFoldChange.builder()
+                    .alignedFeatureId(42L).leftGroup("Control").rightGroup("Treated")
+                    .leftAbundance(1.0).rightAbundance(100.0)
+                    .aggregation(AggregationType.AVG).quantification(QuantMeasure.APEX_INTENSITY)
+                    .build());
+
+            ProjectSchemaMigrator.migrateIfNeeded(db);
+
+            FoldChange.AlignedFeaturesFoldChange untouched = foldChangesOf(db).getFirst();
+            assertEquals("Control", untouched.getLeftGroup());
+            assertEquals("Treated", untouched.getRightGroup());
+            assertEquals(1.0, untouched.getLeftAbundance(), Double.MIN_VALUE);
+        });
+    }
+
+    /**
+     * The conversion a project is missing is the only one that runs. The passes here are proportional to the
+     * collections they walk, so bringing a project up to a schema that only turned its fold changes must not
+     * read every feature and every formula candidate again to do it.
+     */
+    @Test
+    public void testOnlyTheMissingConversionRuns() {
+        withFreshDb(db -> {
+            importFirst(db, "/peaklists/laudanosine.mgf");
+            // What the flag backfill leaves behind: stamped, and the fields it fills in are present.
+            assertTrue(ProjectSchemaMigrator.migrateIfNeeded(db));
+            assertEquals(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION,
+                    db.findProjectSchemaVersion().orElseThrow());
+
+            atTheSchemaBeforeTheFoldChangesWereTurned(db);
+            db.getStorage().insert(blankOverSample(42L, 1.0, 100.0));
+
+            ProjectSchemaMigrator.ConversionJob job = ProjectSchemaMigrator.convert(db,
+                    ProjectSchemaMigrator.neededPasses(db, db.getStorage()),
+                    ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE,
+                    ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE_LIMIT);
+
+            assertEquals(1, job.getFoldChangesTurned().get(), "the fold change pass ran");
+            assertEquals(0, job.getFeaturesFilled().get(), "and the feature pass did not");
+        });
     }
 
     /**
