@@ -104,6 +104,36 @@ public class DiaChannelFragmentsTest {
         return hits.getFirst();
     }
 
+    /**
+     * What a channel reports must be what it stored, and in an order that follows the traces rather than the index.
+     * <p>
+     * The result used to be collected from what the picker handed back per seed, and the picker hands back the trace
+     * that already covers a peak instead of picking a new one. Where two traces cover the same peak - about one lookup
+     * in a hundred on real data - which one comes back follows the rectangle index's page layout, so a trace that no
+     * lookup happened to return was missing from the result, and differently so between two runs on the same data.
+     * That was the last of the run to run variation in the DIA fragment counts.
+     */
+    @Test
+    public void theResultIsEveryStoredTraceInADefinedOrder() throws IOException {
+        ProcessedSample sample = sample(List.of(
+                new Fragment(2, 150.1, 30d, 3d, 5000d),
+                new Fragment(2, 233.4, 30d, 3d, 3000d),
+                new Fragment(2, 301.9, 50d, 3d, 4000d)), 0);
+        DiaScanIndex index = DiaScanIndexBuilder.build(sample).orElseThrow();
+        DiaChannel channel = channelCovering(index, 400);
+
+        DiaChannelFragments.Result result = DiaChannelFragments.pickAll(sample, channel, NOISE);
+
+        // nothing the channel stored may be absent from what it reports
+        assertEquals(sample.getStorage().getMs2TraceStorage().forChannel(channel.getChannelId(), channel.getAxis()).size(),
+                result.numberOfTraces(), "every stored trace is reported");
+        // and the order is the traces' own, so anything indexed by it is reproducible
+        final double[] reported = result.traces().stream().mapToDouble(ContiguousTrace::averagedMz).toArray();
+        final double[] ascending = reported.clone();
+        java.util.Arrays.sort(ascending);
+        assertArrayEquals(ascending, reported, 1e-9, "reported in ascending mass, not in index order");
+    }
+
     @Test
     public void everyFragmentOfTheChannelIsPickedExactlyOnce() throws IOException {
         ProcessedSample sample = sample(List.of(

@@ -56,4 +56,14 @@ public class Ms2ChannelTraceCache implements TraceCachingStrategy.Cache {
     public int numberOfTraces() {
         return traces.size();
     }
+
+    /**
+     * Every trace picked in this channel, in a defined order. What a caller should use rather than collecting what
+     * {@link #getTraceFromCache} handed back: a peak already covered makes the picker return the covering trace
+     * instead of picking a new one, so a trace that no lookup ever returns would be missing from such a collection.
+     */
+    public java.util.List<ContiguousTrace> all() {
+        return traces.all();
+    }
+
 }
