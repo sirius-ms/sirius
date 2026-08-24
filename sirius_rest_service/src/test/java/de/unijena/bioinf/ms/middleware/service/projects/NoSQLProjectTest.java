@@ -41,6 +41,8 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.tags.Groups;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
@@ -755,6 +757,99 @@ public class NoSQLProjectTest {
                 (AlignedFeature indexed) -> assertNotNull(indexed.getStats(),
                         "a document without fold changes has none, which is not the same as unknown"),
                 AlignedFeature.class);
+    }
+
+    /**
+     * The whole blank removal chain, from run types to the query the gui runs: the run type dialog's job
+     * submission, the fold changes it computes, the field the mapper names them under, and the filter reading
+     * that field back. Every part of it is pinned somewhere on its own; this is the only place that asks the
+     * question the user asks, which is whether a feature enriched in the samples survives the filter and one
+     * that is not does not.
+     * <p>
+     * The group names are the real ones, so the field name assembled here is character for character the one
+     * {@code FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME} builds in the gui, which cannot be imported
+     * from this module.
+     */
+    @Test
+    @SneakyThrows
+    public void testTheBlankFilterKeepsTheFeaturesEnrichedInTheSamples() {
+        String sampleGroup = Groups.SAMPLE_RUNS.getGroupName();
+        String blankGroup = Groups.BLANK_RUNS.getGroupName();
+        String blankRemovalField = "stats.foldChange." + sampleGroup + "." + blankGroup
+                + "." + QuantMeasure.APEX_INTENSITY + "." + AggregationType.AVG;
+
+        project.createTags(List.of(TagDefinitionImport.builder().tagName(TagDefinitions.SAMPLE_TYPE.getTagName())
+                .valueType(ValueType.TEXT).possibleValues(List.of(sampleGroup, blankGroup)).build()), true);
+
+        List<LCMSRun> runs = List.of(lcmsRun("sampleRun"), lcmsRun("blankRun"));
+        insertRunsAndIndex(runs, project);
+        project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(
+                Tag.builder().tagName(TagDefinitions.SAMPLE_TYPE.getTagName()).value(sampleGroup).build()));
+        project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(
+                Tag.builder().tagName(TagDefinitions.SAMPLE_TYPE.getTagName()).value(blankGroup).build()));
+        project.addTagGroup(sampleGroup, Groups.SAMPLE_RUNS.getLuceneQuery(), "sampleType");
+        project.addTagGroup(blankGroup, Groups.BLANK_RUNS.getLuceneQuery(), "sampleType");
+
+        // apex intensity in the sample run vs in the blank run
+        long enriched = featureAcross(runs, 100.0, 1.0);   // a hundred times the blank
+        long modest = featureAcross(runs, 3.0, 1.0);       // three times the blank
+        long inBlankOnly = featureAcross(runs, 1.0, 100.0);// a hundredth of the blank - carry-over, not sample
+
+        // exactly what the run type dialog submits
+        new BackgroundRuns(project, null).runFoldChange(
+                FoldChangeJobSubmission.of(sampleGroup, blankGroup, AggregationType.AVG, QuantMeasure.APEX_INTENSITY),
+                QuantRowType.FEATURES).awaitResult();
+
+        assertEquals(100.0, foldChangeOf(enriched), 1e-9, "sample over blank, not the other way round");
+        assertEquals(0.01, foldChangeOf(inBlankOnly), 1e-9);
+
+        // and what the gui filter runs for "at least 2x"
+        assertEquals(Set.of(enriched, modest), featuresPassingBlankFilter(blankRemovalField, 2.0),
+                "at least twice the blank keeps both enriched features and drops the blank-dominated one");
+        assertEquals(Set.of(enriched), featuresPassingBlankFilter(blankRemovalField, 5.0),
+                "raising the minimum to five drops the three-fold feature as well");
+        assertEquals(Set.of(), featuresPassingBlankFilter(blankRemovalField, 200.0),
+                "and a minimum nothing reaches keeps nothing");
+    }
+
+    private static LCMSRun lcmsRun(String name) {
+        return LCMSRun.builder().name(name)
+                .chromatography(Chromatography.LC)
+                .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                .ionization(Ionization.byValue("ESI").orElseThrow())
+                .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                .build();
+    }
+
+    /** One aligned feature seen in both runs with the given apex intensities, indexed like an imported one. */
+    @SneakyThrows
+    private long featureAcross(List<LCMSRun> runs, double inSample, double inBlank) {
+        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name("af").build();
+        ps.getStorage().insert(af);
+        ps.getStorage().insertAll(List.of(
+                Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
+                        .apexIntensity(inSample).runId(runs.get(0).getRunId()).build(),
+                Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
+                        .apexIntensity(inBlank).runId(runs.get(1).getRunId()).build()));
+        ps.getStorage().flush();
+        project.getSearchService().addDocument(project.getProjectId(), project.convertToApiFeature(af, false));
+        return af.getAlignedFeatureId();
+    }
+
+    @SneakyThrows
+    private double foldChangeOf(long alignedFeatureId) {
+        List<FoldChange> foldChanges = project.getFoldChanges(QuantRowType.FEATURES, Long.toString(alignedFeatureId));
+        assertEquals(1, foldChanges.size(), "one comparison was computed for this feature");
+        return foldChanges.getFirst().getFoldChange();
+    }
+
+    /** The features the gui's blank filter keeps for a given minimum fold change. */
+    private Set<Long> featuresPassingBlankFilter(String blankRemovalField, double minFoldChange) {
+        return project.getSearchService().search(project.getProjectId(),
+                        blankRemovalField + ":[" + minFoldChange + " TO *]", Pageable.unpaged(), AlignedFeature.class)
+                .getContent().stream()
+                .map(f -> Long.parseLong(f.getAlignedFeatureId()))
+                .collect(Collectors.toSet());
     }
 
     @Test
