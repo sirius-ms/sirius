@@ -30,6 +30,11 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.LCMSProcessing;
+import de.unijena.bioinf.lcms.deconvolution.CorrelationAssignmentStrategy;
+import de.unijena.bioinf.lcms.deconvolution.DiaAssignmentStrategy;
+import de.unijena.bioinf.lcms.deconvolution.GroupedAssignmentStrategy;
+import de.unijena.bioinf.lcms.deconvolution.UncontestedAssignmentStrategy;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.lcms.adducts.AdductManager;
 import de.unijena.bioinf.lcms.adducts.AdductNetwork;
 import de.unijena.bioinf.lcms.adducts.ProjectSpaceTraceProvider;
@@ -255,6 +260,52 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
      * @param indexOfFirstFile index of the first of the given files within the input files, needed to match
      *                         the user specified sample names and types to the files
      */
+    /**
+     * Which way the fragments of a data independent acquisition are assigned to precursors.
+     * <p>
+     * There is more than one defensible answer and the choice is a question for measurement rather than for a
+     * default, so it is selectable: {@code correlation} scores every precursor against every fragment and spreads
+     * each fragment over the candidates, {@code grouped} first collapses the precursors a channel cannot separate and
+     * gives the fragments to the group, and {@code uncontested} judges each pair against fixed thresholds with no
+     * competition at all. Ignored for data dependent input, which has nothing to assign.
+     *
+     * @see de.unijena.bioinf.lcms.deconvolution.DiaAssignmentStrategy
+     */
+    public static final String DIA_STRATEGY_PROPERTY = "de.unijena.bioinf.sirius.dia.strategy";
+
+    /**
+     * The precursor height {@code uncontested} attempts a spectrum from, with the fragment bar a tenth of it.
+     * <p>
+     * Absolute intensities do not transfer between instruments: this strategy's Orbitrap default rejected 99.2% of the
+     * precursors of a TripleTOF series. Judging pairs against fixed bars is the whole of what it is, so the bars have
+     * to be rescalable or it cannot be compared against the two strategies that learn theirs.
+     */
+    public static final String DIA_UNCONTESTED_INTENSITY_PROPERTY =
+            "de.unijena.bioinf.sirius.dia.uncontested.minPrecursorIntensity";
+
+    private static DiaAssignmentStrategy diaAssignmentStrategy() {
+        // the system property first, because PropertyManager composes only the persistent and file based configs and
+        // never sees -D, and being able to set this per invocation is the whole point of it being selectable
+        final String name = System.getProperty(DIA_STRATEGY_PROPERTY,
+                PropertyManager.getProperty(DIA_STRATEGY_PROPERTY, null, "correlation"));
+        return switch (name.toLowerCase(java.util.Locale.US)) {
+            case "correlation" -> new CorrelationAssignmentStrategy();
+            case "grouped" -> new GroupedAssignmentStrategy();
+            case "uncontested" -> {
+                final UncontestedAssignmentStrategy strategy = new UncontestedAssignmentStrategy();
+                final String bar = System.getProperty(DIA_UNCONTESTED_INTENSITY_PROPERTY,
+                        PropertyManager.getProperty(DIA_UNCONTESTED_INTENSITY_PROPERTY, null, null));
+                if (bar != null && !bar.isBlank()) {
+                    strategy.setMinPrecursorIntensity(Double.parseDouble(bar.trim()));
+                    strategy.setMinFragmentIntensity(strategy.getMinPrecursorIntensity() / 10d);
+                }
+                yield strategy;
+            }
+            default -> throw new IllegalArgumentException(DIA_STRATEGY_PROPERTY + " is '" + name
+                    + "', which is not one of correlation, grouped or uncontested");
+        };
+    }
+
     private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, List<Path> files, int indexOfFirstFile) throws IOException {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -270,6 +321,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         //
         processing.setSegmentationStrategy(new PersistentHomology(this.filter, Math.min(2, this.minSNR), PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT));
         processing.setAlignmentThresholds(this.alignmentThresholds);
+        processing.setDiaAssignmentStrategy(diaAssignmentStrategy());
         processing.setTracker(tracker);
         if (userSpecifiedThresholds.hasUserInput()) {
             processing.setStatisticsCollector(userSpecifiedThresholds);
