@@ -28,6 +28,17 @@ public class MergedSpectrum implements Spectrum<MergedPeak> {
 
     private IntArrayList sampleIds = new IntArrayList();
     private double chimericPollution;
+    /**
+     * The ion count of the spectra this was merged from, summed over their raw intensities.
+     * <p>
+     * Accumulated here because this is the last place the raw intensities exist: a merged peak's intensity is a sum
+     * weighted by {@code msms.score}, and everything downstream normalises. For a data independent spectrum this is
+     * the quantity that says how much measured signal correlated with the precursor well enough to be attributed to
+     * it, which after normalisation is not recoverable from the peaks at all.
+     */
+    private double totalIonCount;
+    /** true if any of the merged spectra was acquired data independently */
+    private boolean dataIndependent;
 
     public void merge(MsMsQuerySpectrum msms) {
         int sampleId = msms.sampleId;
@@ -57,6 +68,8 @@ public class MergedSpectrum implements Spectrum<MergedPeak> {
                     ms2.getMzAt(unmatched), (float)ms2.getIntensityAt(unmatched), sampleId, header.getUid(), unmatched, (float)weight
             )}));
         }
+        for (int k = 0; k < ms2.size(); ++k) totalIonCount += ms2.getIntensityAt(k);
+        dataIndependent |= header.isDataIndependent();
         scoreSum += msms.score;
         precursorMzWeighted += msms.score*msms.exactParentMass;
         precursorMz = precursorMzWeighted/scoreSum;
@@ -66,6 +79,14 @@ public class MergedSpectrum implements Spectrum<MergedPeak> {
         sampleIds.add(msms.sampleId);
 
         this.chimericPollution += weight * (msms.chimericPollution/msms.ms1Intensity);
+    }
+
+    public double getTotalIonCount() {
+        return totalIonCount;
+    }
+
+    public boolean isDataIndependent() {
+        return dataIndependent;
     }
 
     public double getChimericPollutionRatio() {

@@ -49,7 +49,37 @@ public class MergedMSnSpectrum {
 
     private Double chimericPollutionRatio;
 
+    /**
+     * The ion count of the spectra this was merged from, over their raw intensities and before any weighting or
+     * normalisation.
+     * <p>
+     * Meaningful for any acquisition - it is how much signal the fragmentation produced - and necessary for a data
+     * independent one, where it is the amount of measured intensity that correlated with the precursor well enough to
+     * be attributed to it. The peaks themselves cannot answer that: a merged peak's intensity is weighted by the
+     * merge score, and the spectrum a reader finally sees is normalised, so a spectrum assembled from signal barely
+     * above the noise looks exactly like one assembled from strong peaks.
+     * <p>
+     * Null for spectra from projects written before this was recorded.
+     */
+    private Double totalIonCount;
+
+    /**
+     * Whether the fragments were acquired data independently, so that the assignment of peaks to this precursor is a
+     * computation rather than a measurement and its peaks may belong to a co-eluting neighbour.
+     * <p>
+     * A flag rather than something inferred from the isolation window's width, so that quality checks specific to
+     * this failure mode apply exactly where they should. Null for projects written before this was recorded.
+     */
+    private Boolean dataIndependent;
+
     private SimpleSpectrum peaks;
+
+    /** the ion count of a spectrum as it stands, for the paths that build one from a plain MS/MS */
+    private static double totalIonCountOf(MutableMs2Spectrum spec) {
+        double total = 0d;
+        for (int k = 0; k < spec.size(); ++k) total += spec.getIntensityAt(k);
+        return total;
+    }
 
     /**
      * This method can be used to transform ms2spectra within an MsExperiment object into a MergedMsnSpectrum
@@ -67,6 +97,8 @@ public class MergedMSnSpectrum {
                 new int[0][],
                 new int[0][],
                 new double[0],
+                null,
+                totalIonCountOf(spec),
                 null,
                 new SimpleSpectrum(spec)
         );

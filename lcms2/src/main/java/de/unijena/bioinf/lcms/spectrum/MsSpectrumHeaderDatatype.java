@@ -22,6 +22,7 @@ public class MsSpectrumHeaderDatatype extends CustomDataType<Ms1SpectrumHeader> 
         if (obj.polarity<0) flags |= 4;
         if (obj.centroided) flags |= 8;
         if (obj instanceof Ms2SpectrumHeader) flags |= 16;
+        if (obj instanceof Ms2SpectrumHeader header && header.isDataIndependent()) flags |= 32;
         buff.putInt(obj.uid);
         buff.putInt(obj.scanId);
         // the source id is nullable; getSourceId() derives one from the scan id in that case
@@ -72,7 +73,8 @@ public class MsSpectrumHeaderDatatype extends CustomDataType<Ms1SpectrumHeader> 
             double rt = buff.getDouble();
             int level = buff.getInt();
             return new Ms2SpectrumHeader(
-                    uid, scanid, sourceId, polarity, level, centroided, ce, window, pid, mz, targeted, rt
+                    uid, scanid, sourceId, polarity, level, centroided, ce, window, pid, mz, targeted, rt,
+                    (flags & 32) != 0
             );
         } else { // MS1 Header
             return new Ms1SpectrumHeader(uid,scanid, sourceId, polarity, centroided);
