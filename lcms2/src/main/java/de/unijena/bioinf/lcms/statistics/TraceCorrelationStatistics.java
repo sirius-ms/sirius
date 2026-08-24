@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -64,11 +65,56 @@ public class TraceCorrelationStatistics {
     /** number of intensity bins, one more than there are bounds */
     public static final int INTENSITY_BINS = INTENSITY_MULTIPLES.length + 1;
 
-    /** how many pairs a bin needs before it stands on its own instead of being merged with its neighbour */
-    public static final int MIN_OBSERVATIONS = 200;
+    /**
+     * How many pairs a bin needs before it may be read, and equally how far the thin bins above it accumulate before
+     * they stop absorbing the bin below.
+     * <p>
+     * Both roles pull the same way and the second is the binding one. The pairs above ten times the noise number in
+     * the tens on an ordinary sample while the bin just above the noise holds hundreds, so a floor set too high stops
+     * the strong tail from ever standing on its own and it swallows a weak bin it disagrees with; the pooled quantile
+     * is then the weak bin's, it falls under {@link #MIN_MEANINGFUL_CORRELATION}, and a regime that was measured
+     * perfectly well reports that it cannot be judged. At two hundred that happened to every bin of a real sample.
+     * <p>
+     * A hundred keeps the quantile a statistic rather than an extremum - the fifth percentile of a hundred pairs is
+     * the fifth smallest, not the smallest - which is the property that would be lost by going much lower.
+     */
+    public static final int MIN_OBSERVATIONS = 100;
 
     /** below this a correlation is not evidence of anything, so a bin that cannot beat it is discarded */
     public static final double MIN_MEANINGFUL_CORRELATION = 0.5;
+
+    /**
+     * The correlation two profiles have to reach to count as one elution where this sample cannot say, and the floor
+     * no learned cutoff may fall below, per datapoint condition: {@code {few, many}}.
+     * <p>
+     * The isotope distribution is a lower bound on what a genuine co-elution reaches, so read literally it would
+     * license grouping at whatever the few-point regime happens to manage - which on a real sample is below zero:
+     * the fifth percentile of pairs that are the same elution by construction is -0.92 below one times the noise and
+     * -0.53 in the many-point condition. Following it down is the wrong risk to take. Grouping two distinct compounds
+     * costs both of them, since the fragments of one are then reported for the other and neither spectrum is right;
+     * failing to group two indistinguishable ones only forgoes the pollution accounting, and each still gets its
+     * fragments. So learning may raise the bar and never lower it, and where there is nothing to learn these stand in.
+     * <p>
+     * <b>The values are chosen on that asymmetry rather than on a measurement, because no measurement separates
+     * them.</b> On the eighteen sample dilution series, unique library structures at cosine 0.7 came out at 70 for
+     * {0.8, 0.9}, 71 for {0.9, 0.9}, 66 for {0.8, 0.95}, 69 for {0.9, 0.95} and 72 for {0.95, 0.98} - a spread of six
+     * that is not monotone in the bar and is the same size as the difference between two configurations that agree on
+     * only half of what they identify. The metric cannot rank them, so the conservative bar is preferred. Note that
+     * where the distribution *can* be read it asks for 0.950 to 0.991, so these are not stricter than a measured
+     * standard, only stricter than the absence of one. Measured 2026-08-21, after the determinism and isotope fixes;
+     * figures taken before those describe a different pipeline.
+     * <p>
+     * Per condition because a correlation over four points and one over forty are not the same measurement, and the
+     * few-point one is the more lenient of the two because it is the noisier measurement, not because less is asked
+     * of it.
+     * <p>
+     * These are the floor of this statistic and nothing more. What a caller does with a co-elution standard is the
+     * caller's policy and belongs where that policy lives - a grouping of precursors asserts that two traces cannot be
+     * told apart and needs a far stricter bar than this, while another consumer of the same distribution may not - so
+     * no such minimum is enforced here. Ask {@link #hasLearnedCutoffFor} to tell a measurement from a fallback and
+     * apply your own.
+     */
+    public static final double[] MINIMUM_CUTOFF = {0.9, 0.95};
 
     /** the quantile a bin is judged by, so which bins are usable does not depend on what a caller asks for */
     public static final double REFERENCE_QUANTILE = 0.05;
@@ -98,7 +144,12 @@ public class TraceCorrelationStatistics {
     private final float[][] groups;
     private final boolean[] usable;
 
-    TraceCorrelationStatistics(float[][] raw) {
+    /**
+     * @param raw the pairs of every bin, sorted ascending, as {@link #binOf} indexes them. Public because the store
+     *            reconstructs an instance from exactly this and because a caller has to be able to state a
+     *            distribution to test against; the merging and discarding above are applied here, not by the caller.
+     */
+    public TraceCorrelationStatistics(float[][] raw) {
         if (raw.length != binCount()) {
             throw new IllegalArgumentException("expected " + binCount() + " bins, got " + raw.length);
         }
@@ -222,6 +273,79 @@ public class TraceCorrelationStatistics {
     public double quantileOfSameElution(int datapoints, double weakerIntensity, double noiseLevel, double quantile) {
         final int group = groupOfBin[binOf(datapoints, weakerIntensity, noiseLevel)];
         return usable[group] ? quantileOf(groups[group], quantile) : Double.NaN;
+    }
+
+    /**
+     * One distribution from several, by pooling their pairs bin by bin.
+     * <p>
+     * Sound because the bins are relative to each sample's own noise level rather than absolute: a pair from a
+     * sensitive run and one from a dull run land in the same bin when they stand equally far above what their own run
+     * can see, which is the condition the cutoff is a function of. Thinned per bin like any other, so pooling a large
+     * experiment costs no more memory than one sample.
+     */
+    public static TraceCorrelationStatistics pooled(Collection<TraceCorrelationStatistics> parts) {
+        final float[][] all = new float[binCount()][];
+        for (int bin = 0; bin < binCount(); ++bin) {
+            final FloatArrayList merged = new FloatArrayList();
+            for (TraceCorrelationStatistics part : parts) {
+                for (float value : part.observations(bin)) merged.add(value);
+            }
+            all[bin] = thin(merged);
+        }
+        return new TraceCorrelationStatistics(all);
+    }
+
+    /**
+     * This distribution, with the bins of every datapoint condition it cannot read taken from {@code other}.
+     * <p>
+     * Per condition and not wholesale, because a sample can perfectly well calibrate its many-point correlations and
+     * have nothing to say about its few-point ones. And a fallback rather than a merge: where this sample can read a
+     * condition it keeps what it measured, since pooling in the weak pairs of every other sample would lower the
+     * cutoff of exactly the samples that did not need help.
+     */
+    public TraceCorrelationStatistics fallingBackTo(TraceCorrelationStatistics other) {
+        final float[][] combined = new float[binCount()][];
+        boolean replaced = false;
+        for (int points = 0; points < 2; ++points) {
+            // any datapoint count of the condition answers for it
+            final boolean readable = !Double.isNaN(minimumUsableIntensity(
+                    points == 0 ? FEW_POINTS_THRESHOLD - 1 : FEW_POINTS_THRESHOLD));
+            replaced |= !readable;
+            for (int intensity = 0; intensity < INTENSITY_BINS; ++intensity) {
+                final int bin = points * INTENSITY_BINS + intensity;
+                combined[bin] = readable ? raw[bin] : other.raw[bin];
+            }
+        }
+        // this instance itself when it needed no help, so a caller can tell whether anything was borrowed
+        return replaced ? new TraceCorrelationStatistics(combined) : this;
+    }
+
+    /** the floor for a datapoint condition, see {@link #MINIMUM_CUTOFF} */
+    public static double minimumCutoff(int datapoints) {
+        return MINIMUM_CUTOFF[datapoints < FEW_POINTS_THRESHOLD ? 0 : 1];
+    }
+
+    /**
+     * The correlation two profiles of this regime have to reach to count as one elution, as far as this statistic can
+     * say: what was measured where something was, held up by {@link #MINIMUM_CUTOFF}, and that floor where nothing
+     * was. Always a number, so no caller needs a default of its own - but a caller with a policy of its own should ask
+     * {@link #hasLearnedCutoffFor} as well, since this cannot distinguish the two cases.
+     */
+    public double cutoffFor(int datapoints, double weakerIntensity, double noiseLevel, double quantile) {
+        final double learned = quantileOfSameElution(datapoints, weakerIntensity, noiseLevel, quantile);
+        final double floor = minimumCutoff(datapoints);
+        return Double.isNaN(learned) ? floor : Math.max(floor, learned);
+    }
+
+    /**
+     * Whether {@link #cutoffFor} answered from this experiment's own pairs or fell back to {@link #MINIMUM_CUTOFF}.
+     * <p>
+     * The distinction a caller needs to apply a policy: "co-elutions here reach only 0.6" and "nothing here could be
+     * measured" are different statements, and a consumer that must not act without evidence cannot tell them apart
+     * from the cutoff alone.
+     */
+    public boolean hasLearnedCutoffFor(int datapoints, double weakerIntensity, double noiseLevel) {
+        return !Double.isNaN(quantileOfSameElution(datapoints, weakerIntensity, noiseLevel, REFERENCE_QUANTILE));
     }
 
     /**
