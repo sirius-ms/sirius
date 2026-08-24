@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -158,6 +159,39 @@ public class TraceCorrelationStatisticsTest {
         assertEquals(0.80, statistics.quantileOfSameElution(20, 1000 * NOISE, NOISE, 0.05), 1e-6);
     }
 
+    /**
+     * The strong tail keeps its own company rather than being dissolved into a weak bin that contradicts it.
+     * <p>
+     * The bin counts are those a real sample produced, where the pairs above ten times the noise number in the tens
+     * while the bin just above the noise holds hundreds. The tail correlates as a known co-elution should and the
+     * weak bin does not, so pooling the two answers the strong regime with the weak bin's distribution - and since
+     * that distribution is below the minimum, the strong regime comes out unjudgeable although it was measured
+     * perfectly well. The accumulation of thin bins is what prevents this, but only while the floor is low enough
+     * that the tail can reach it before it has to swallow the weak bin.
+     */
+    @Test
+    public void theStrongTailIsNotDissolvedIntoAContradictingWeakBin() {
+        final float[][] bins = new float[TraceCorrelationStatistics.binCount()][];
+        Arrays.fill(bins, new float[0]);
+        // 2-5x holds the many mediocre pairs, and every bin above it the few good ones
+        bins[TraceCorrelationStatistics.binOf(20, 3 * NOISE, NOISE)] = filled(234, 0.2f);
+        bins[TraceCorrelationStatistics.binOf(20, 7 * NOISE, NOISE)] = filled(88, 0.9f);
+        bins[TraceCorrelationStatistics.binOf(20, 15 * NOISE, NOISE)] = filled(27, 0.99f);
+        bins[TraceCorrelationStatistics.binOf(20, 30 * NOISE, NOISE)] = filled(21, 0.99f);
+        bins[TraceCorrelationStatistics.binOf(20, 70 * NOISE, NOISE)] = filled(9, 0.99f);
+        bins[TraceCorrelationStatistics.binOf(20, 500 * NOISE, NOISE)] = filled(2, 0.99f);
+        final TraceCorrelationStatistics statistics = new TraceCorrelationStatistics(bins);
+
+        final double strong = statistics.quantileOfSameElution(20, 30 * NOISE, NOISE, 0.05);
+        assertFalse(Double.isNaN(strong),
+                "the tail holds 147 pairs that agree; it must not be answered by the 234 that do not");
+        assertEquals(0.9, strong, 1e-6, "the cutoff is the tail's own quantile, not the weak bin's");
+        // and the weak bin still reports that it cannot be judged, which is the honest answer there
+        assertTrue(Double.isNaN(statistics.quantileOfSameElution(20, 3 * NOISE, NOISE, 0.05)));
+        assertEquals(5d, statistics.minimumUsableIntensity(20), 1e-6,
+                "co-elution becomes judgeable where the tail begins");
+    }
+
     /** more signal cannot make a co-elution harder to see, so usability has to be monotone in intensity */
     @Test
     public void aStrongBinIsNeverUnusableWhileAWeakerOneIsUsable() {
@@ -191,6 +225,115 @@ public class TraceCorrelationStatisticsTest {
         assertTrue(Double.isNaN(statistics.quantileOfSameElution(20, 1.5 * NOISE, NOISE, 0.05)),
                 "a regime where a known co-elution does not correlate cannot yield a cutoff");
         assertTrue(Double.isNaN(statistics.minimumUsableIntensity(20)), "and nothing is usable here");
+    }
+
+    /**
+     * What a caller is told when the sample could not learn a cutoff, and what a learned one may not undercut.
+     * <p>
+     * Two separate claims. Where nothing was learned there still has to be a number, and it belongs to the datapoint
+     * condition rather than being one constant for both: a correlation over four points and one over forty are not
+     * the same measurement. And a learned cutoff may only ever make the bar stricter - the isotope distribution is a
+     * lower bound on what a genuine co-elution reaches, so following it downwards would group on evidence that the
+     * few-point regime cannot actually supply, and grouping two distinct compounds loses both of them while failing
+     * to group them only forgoes the pollution accounting.
+     */
+    @Test
+    public void aCutoffIsNeverLowerThanTheConditionsOwnMinimum() {
+        final double few = TraceCorrelationStatistics.minimumCutoff(4);
+        final double many = TraceCorrelationStatistics.minimumCutoff(20);
+        assertTrue(few <= many, "the few-point condition is the noisier measurement and may not ask for more");
+
+        // where nothing was measured this statistic answers with its own floor and says that it was a fallback; what
+        // a consumer does about that is the consumer's policy and is not decided here
+        final TraceCorrelationStatistics nothing = TraceCorrelationStatistics.empty();
+        assertEquals(few, nothing.cutoffFor(4, 1000 * NOISE, NOISE, 0.05), 1e-9);
+        assertEquals(many, nothing.cutoffFor(20, 1000 * NOISE, NOISE, 0.05), 1e-9);
+        assertFalse(nothing.hasLearnedCutoffFor(4, 1000 * NOISE, NOISE), "and it says so");
+        assertFalse(nothing.hasLearnedCutoffFor(20, 1000 * NOISE, NOISE));
+
+        // a learned distribution that is more lenient than the minimum does not lower it
+        final float[][] lenient = new float[TraceCorrelationStatistics.binCount()][];
+        Arrays.fill(lenient, new float[0]);
+        lenient[TraceCorrelationStatistics.binOf(4, 30 * NOISE, NOISE)] =
+                filled(TraceCorrelationStatistics.MIN_OBSERVATIONS * 2, 0.6f);   // below any allowed minimum
+        final TraceCorrelationStatistics loose = new TraceCorrelationStatistics(lenient);
+        assertEquals(0.6, loose.quantileOfSameElution(4, 30 * NOISE, NOISE, 0.05), 1e-6,
+                "precondition: this is what the pairs say");
+        assertEquals(few, loose.cutoffFor(4, 30 * NOISE, NOISE, 0.05), 1e-9,
+                "but the cutoff stays at the minimum");
+
+        // while a learned distribution stricter than the minimum is followed
+        final float[][] strict = new float[TraceCorrelationStatistics.binCount()][];
+        Arrays.fill(strict, new float[0]);
+        final float stricter = (float) Math.min(0.999, many + 0.005);
+        strict[TraceCorrelationStatistics.binOf(20, 30 * NOISE, NOISE)] =
+                filled(TraceCorrelationStatistics.MIN_OBSERVATIONS * 2, stricter);
+        assertEquals(stricter, new TraceCorrelationStatistics(strict).cutoffFor(20, 30 * NOISE, NOISE, 0.05), 1e-6,
+                "learning may raise the bar, which is the direction it is evidence for");
+    }
+
+    /**
+     * A sample that could not calibrate borrows the distribution the experiment as a whole can measure.
+     * <p>
+     * Pooling across samples is sound because the bins are relative to each sample's own noise level rather than
+     * absolute, so pairs from a sensitive run and a dull one land in the same bin when they are equally far above
+     * what their own run can see. On a dilution series this is the difference between a cutoff and no cutoff: the
+     * concentrated samples have isotope pairs well above the noise, the diluted ones have none, and the compounds are
+     * the same throughout.
+     * <p>
+     * It is a fallback and not a merge. A sample that can read a condition keeps its own distribution there, or the
+     * many weak pairs of the diluted samples would drag down the cutoff of the concentrated ones - the pooling would
+     * cost exactly the samples it was supposed to leave alone.
+     */
+    @Test
+    public void aSampleThatCannotCalibrateBorrowsThePooledDistribution() {
+        // one sample with too few pairs to read anything, one with plenty
+        final float[][] thin = new float[TraceCorrelationStatistics.binCount()][];
+        Arrays.fill(thin, new float[0]);
+        thin[TraceCorrelationStatistics.binOf(20, 30 * NOISE, NOISE)] = filled(5, 0.97f);
+        final TraceCorrelationStatistics diluted = new TraceCorrelationStatistics(thin);
+        assertTrue(Double.isNaN(diluted.quantileOfSameElution(20, 30 * NOISE, NOISE, 0.05)),
+                "precondition: five pairs cannot be read");
+
+        final float[][] fat = new float[TraceCorrelationStatistics.binCount()][];
+        Arrays.fill(fat, new float[0]);
+        fat[TraceCorrelationStatistics.binOf(20, 30 * NOISE, NOISE)] =
+                filled(TraceCorrelationStatistics.MIN_OBSERVATIONS * 2, 0.97f);
+        final TraceCorrelationStatistics concentrated = new TraceCorrelationStatistics(fat);
+
+        final TraceCorrelationStatistics pooled =
+                TraceCorrelationStatistics.pooled(List.of(diluted, concentrated));
+        assertEquals(0.97, pooled.quantileOfSameElution(20, 30 * NOISE, NOISE, 0.05), 1e-6,
+                "together they can be read");
+
+        // the diluted sample now gets a cutoff where alone it had only the floor
+        assertFalse(diluted.hasLearnedCutoffFor(20, 30 * NOISE, NOISE),
+                "alone it has no evidence about this regime, and reports as much");
+        assertEquals(TraceCorrelationStatistics.minimumCutoff(20),
+                diluted.cutoffFor(20, 30 * NOISE, NOISE, 0.05), 1e-9, "so it answers with its own floor");
+        assertTrue(diluted.fallingBackTo(pooled).hasLearnedCutoffFor(20, 30 * NOISE, NOISE),
+                "with the pooled distribution behind it the regime is measured after all");
+        assertEquals(0.97, diluted.fallingBackTo(pooled).cutoffFor(20, 30 * NOISE, NOISE, 0.05), 1e-6,
+                "and the answer is what the experiment measured");
+    }
+
+    /** a sample that can read a condition is not overwritten in it, however much the pool holds */
+    @Test
+    public void aSampleThatCanCalibrateKeepsItsOwnDistribution() {
+        final float[][] own = new float[TraceCorrelationStatistics.binCount()][];
+        Arrays.fill(own, new float[0]);
+        own[TraceCorrelationStatistics.binOf(20, 30 * NOISE, NOISE)] =
+                filled(TraceCorrelationStatistics.MIN_OBSERVATIONS * 2, 0.99f);
+        final TraceCorrelationStatistics strict = new TraceCorrelationStatistics(own);
+
+        final float[][] loose = new float[TraceCorrelationStatistics.binCount()][];
+        Arrays.fill(loose, new float[0]);
+        loose[TraceCorrelationStatistics.binOf(20, 30 * NOISE, NOISE)] =
+                filled(TraceCorrelationStatistics.MIN_OBSERVATIONS * 20, 0.91f);
+        final TraceCorrelationStatistics pool = new TraceCorrelationStatistics(loose);
+
+        assertEquals(0.99, strict.fallingBackTo(pool).cutoffFor(20, 30 * NOISE, NOISE, 0.05), 1e-6,
+                "its own measurement stands, and the pool does not lower it");
     }
 
     private static float[] filled(int count, float value) {
