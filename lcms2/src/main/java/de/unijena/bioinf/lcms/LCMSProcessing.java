@@ -36,6 +36,8 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
 import de.unijena.bioinf.lcms.utils.Tracker;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
@@ -128,7 +130,13 @@ public class LCMSProcessing {
 
     @Getter @Setter private IsotopePatternExtractionStrategy isotopePatternExtractionStrategy = new MergedApexIsotopePatternExtractor();
 
-    @Getter @Setter private DeconvolutionDecision deconvolutionDecision = new DeconvoluteForLargeIsolationWindows();
+    /**
+     * Whether to attempt DIA deconvolution at all. Defaults to yes for every sample, because the question cannot be
+     * answered before looking: {@code DiaScanIndexBuilder} decides per isolation window whether its scans were
+     * revisited densely enough to be correlated, and refuses the sample when too few of them were. A veto here is an
+     * escape hatch for a caller that wants the data dependent path regardless of what the acquisition looks like.
+     */
+    @Getter @Setter private DeconvolutionDecision deconvolutionDecision = sample -> true;
 
     /**
      * Assigns the fragments of a DIA measurement to its precursors, in both phases. Only used when
@@ -325,9 +333,12 @@ public class LCMSProcessing {
         cleanupSample(sample);
         extractTraces(sample);
         learnTraceCorrelations(sample);
-        if (deconvolutionDecision.performDeconvolution(sample)) {
-            deconvoluteDia(sample);
-        } else {
+        // A sample the deconvolution took is a data independent measurement, and the scans its channels could not
+        // use are not ordinary MS2: their isolation window holds everything co-eluting in it, so assigning one to the
+        // most intense trace of that window attaches other compounds' fragments - the failure deconvolution exists to
+        // avoid. Those are dropped, as before. Only a sample the deconvolution declined goes to the data dependent
+        // path in full, and that is the case a wide window used to break.
+        if (!deconvolutionDecision.performDeconvolution(sample) || deconvoluteDia(sample).isEmpty()) {
             assignMs2Trace(sample);
         }
         sample.setNormalizer(normalizationStrategy.computeNormalization(sample));
@@ -581,18 +592,18 @@ public class LCMSProcessing {
      * {@code PrecursorsWithMsMsAreConfidentStrategy} rewards precursors whose deconvolution actually found
      * co-eluting fragments - a meaningful confidence signal for DIA, with no code change.
      */
-    private void deconvoluteDia(ProcessedSample sample) {
+    private IntSet deconvoluteDia(ProcessedSample sample) {
         final Optional<DiaScanIndex> maybeIndex = DiaScanIndexBuilder.build(sample);
         if (maybeIndex.isEmpty()) {
-            LoggerFactory.getLogger(LCMSProcessing.class).warn("{} looks like a data independent acquisition, but no "
-                    + "usable acquisition scheme could be recovered from its MS/MS scans. Its features will have no "
-                    + "MS/MS attached.", sample.getRun().getName());
-            return;
+            // not a DIA measurement, or not one we can deconvolute; either way its MS2 scans are ordinary ones and
+            // the caller assigns them. Nothing is lost, so there is nothing to warn about.
+            return IntSets.EMPTY_SET;
         }
         final DiaScanIndex index = maybeIndex.get();
         final DiaReport report = diaAssignmentStrategy.assign(sample, index, tracker);
         LoggerFactory.getLogger(LCMSProcessing.class).info("{}: {}", sample.getRun().getName(), report.describe());
         diaReports.put(sample, report);
+        return index.claimedMs2Uids();
     }
 
     /**
@@ -617,6 +628,7 @@ public class LCMSProcessing {
                     diaSamples.add(new DiaAssignmentStrategy.SampleIndex(sample, index)));
         }
         if (diaSamples.isEmpty()) return Optional.empty();
+        lendPooledTraceCorrelations(diaSamples);
 
         final List<DiaFinalPrecursors.Aligned> features = new ArrayList<>();
         for (final Rect rect : merged.getStorage().getMergeStorage().getRectangleMap()) {
@@ -633,6 +645,40 @@ public class LCMSProcessing {
         for (DiaAssignmentStrategy.SampleIndex sample : diaSamples) sample.sample().getStorage().commit();
         diaRefinementReport = report;
         return Optional.ofNullable(report);
+    }
+
+    /**
+     * Lets every DIA sample fall back to the experiment's pooled same-elution distribution for the conditions it
+     * could not calibrate itself.
+     * <p>
+     * Only possible here and not at stage one: the distribution is learned per sample right after trace picking, while
+     * the samples are still being processed independently, so the first point at which all of them exist is after
+     * alignment. A dilution series is the case that needs it - the concentrated samples have isotope pairs well above
+     * the noise and the diluted ones have none, while the compounds are the same throughout - and without it the
+     * diluted samples fall back on {@link TraceCorrelationStatistics#MINIMUM_CUTOFF} instead of on a measurement.
+     */
+    private void lendPooledTraceCorrelations(List<DiaAssignmentStrategy.SampleIndex> diaSamples) {
+        final List<TraceCorrelationStatistics> learned = new ArrayList<>(diaSamples.size());
+        for (DiaAssignmentStrategy.SampleIndex sample : diaSamples) {
+            learned.add(sample.sample().getStorage().getStatistics().getTraceCorrelations());
+        }
+        final TraceCorrelationStatistics pooled = TraceCorrelationStatistics.pooled(learned);
+        int borrowed = 0;
+        for (DiaAssignmentStrategy.SampleIndex sample : diaSamples) {
+            final SampleStats stats = sample.sample().getStorage().getStatistics();
+            final TraceCorrelationStatistics own = stats.getTraceCorrelations();
+            final TraceCorrelationStatistics resolved = own.fallingBackTo(pooled);
+            if (resolved != own) {
+                sample.sample().getStorage().setStatistics(stats.withTraceCorrelations(resolved));
+                ++borrowed;
+            }
+        }
+        LoggerFactory.getLogger(LCMSProcessing.class).info(
+                "pooled same elution correlations over {} DIA samples:\n{}", diaSamples.size(), pooled.describe());
+        if (borrowed > 0) {
+            LoggerFactory.getLogger(LCMSProcessing.class).info(
+                    "{} of {} samples take a condition from the pooled distribution", borrowed, diaSamples.size());
+        }
     }
 
     private void assignMs2Trace(ProcessedSample sample) {
