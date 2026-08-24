@@ -64,7 +64,14 @@ public class BeamSearchAlgorithm implements AlignmentAlgorithm{
 
         @Override
         public int compareTo(@NotNull BeamSearchAlgorithm.PossibleAlignment o) {
-            return Float.compare(o.score, score);
+            final int byScore = Float.compare(o.score, score);
+            if (byScore != 0) return byScore;
+            // Equal scores are common and the greedy pass claims each mass of interest once, so whichever of two
+            // equally good alignments comes first wins and the other is discarded. Left to the sort that is the
+            // order the candidates were generated in, which follows the alignment storage and is not stable across
+            // runs; the indices decide it instead.
+            final int byLeft = Integer.compare(left, o.left);
+            return byLeft != 0 ? byLeft : Integer.compare(right, o.right);
         }
     }
 }
