@@ -57,9 +57,32 @@ public class Ms2ChannelTracePicker extends AbstractTracePicker {
         this.expectedPeakWidth = sample.getStorage().getStatistics().getExpectedPeakWidth().orElse(0d).floatValue();
     }
 
+    /**
+     * Whether to verify that a spectrum handed out really is sorted by mass.
+     * <p>
+     * {@link SimpleSpectrum} declares itself an {@code OrderedSpectrum}, and {@code Spectrums} therefore reaches every
+     * peak in it by binary search - but nothing checks the claim, and the datatype rebuilds a stored spectrum with the
+     * constructor that neither copies nor orders. A spectrum that is not sorted would make a binary search miss peaks
+     * that a linear scan finds, which is what one run did while another did not.
+     */
+    private static final boolean VERIFY_ORDER =
+            Boolean.getBoolean("de.unijena.bioinf.sirius.dia.verifySpectrumOrder");
+
     @Override
     public SimpleSpectrum getSpectrum(int channelIndex) {
-        return spectrumStorage.getMs2Spectrum(channel.ms2UidAt(channelIndex));
+        final SimpleSpectrum spectrum = spectrumStorage.getMs2Spectrum(channel.ms2UidAt(channelIndex));
+        if (VERIFY_ORDER && spectrum != null) {
+            for (int k = 1; k < spectrum.size(); ++k) {
+                if (spectrum.getMzAt(k - 1) > spectrum.getMzAt(k)) {
+                    org.slf4j.LoggerFactory.getLogger(Ms2ChannelTracePicker.class).error(String.format(
+                            java.util.Locale.US, "UNSORTED ms2 spectrum uid=%d channelIndex=%d size=%d at %d: "
+                                    + "%.9f > %.9f", channel.ms2UidAt(channelIndex), channelIndex, spectrum.size(),
+                            k, spectrum.getMzAt(k - 1), spectrum.getMzAt(k)));
+                    break;
+                }
+            }
+        }
+        return spectrum;
     }
 
     @Override
