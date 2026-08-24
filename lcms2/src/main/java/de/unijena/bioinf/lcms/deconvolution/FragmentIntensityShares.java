@@ -50,21 +50,7 @@ public final class FragmentIntensityShares {
      * @return the fragment's peak height in each candidate's spectrum, in the order of {@code candidates}
      */
     public static double[] of(DiaChannel channel, List<PrecursorFeature> candidates, Trace fragment) {
-        return of(channel, candidates, fragment, true);
-    }
-
-    /**
-     * @param split false to give every candidate the fragment's full height inside its window, which is what the
-     *              pipeline did before the shares existed. Only useful for measuring what they are worth.
-     */
-    public static double[] of(DiaChannel channel, List<PrecursorFeature> candidates, Trace fragment, boolean split) {
         final double[] shares = new double[candidates.size()];
-        if (!split) {
-            for (int j = 0; j < candidates.size(); ++j) {
-                shares[j] = candidates.get(j).getWindow().apexIntensityIn(fragment);
-            }
-            return shares;
-        }
         if (candidates.isEmpty()) return shares;
         final int from = Math.max(0, fragment.startId());
         final int to = Math.min(channel.numberOfScans() - 1, fragment.endId());

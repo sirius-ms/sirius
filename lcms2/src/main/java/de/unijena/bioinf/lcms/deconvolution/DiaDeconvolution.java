@@ -1,8 +1,10 @@
 package de.unijena.bioinf.lcms.deconvolution;
 
+import de.unijena.bioinf.lcms.statistics.TraceCorrelationStatistics;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -48,7 +50,17 @@ public class DiaDeconvolution {
 
     private final double unassignedWeight;
 
-    private final double minProbability;
+    /**
+     * How likely an assignment has to be to be kept at all.
+     * <p>
+     * Note what this is a threshold on: a share of the fragment over its candidate set, not a confidence in any one
+     * candidate. The two coincide only when a fragment has few candidates. Where it has many comparably intense ones
+     * the share of even a perfectly correlating candidate is bounded by one over their number, so a fixed threshold
+     * rejects by how crowded the isolation window is rather than by the quality of the evidence - which the
+     * significance floor already judges.
+     */
+    @Getter @Setter
+    private double minProbability;
 
     private final int maxDecoyPrecursors;
 
@@ -70,11 +82,34 @@ public class DiaDeconvolution {
     private int minFragmentScanPoints = DEFAULT_MIN_FRAGMENT_SCAN_POINTS;
 
     /**
-     * Whether a fragment several precursors could have produced is split between them, see
-     * {@link FragmentIntensityShares}. Only useful to turn off in order to measure what it does.
+     * Whether the precursors of a channel are first grouped into the sets it cannot separate, and only one feature
+     * per group competes for the fragments.
+     * <p>
+     * The whole assignment then works on the same nodes, edges, calibration and shares as before - a group is
+     * represented by one of its own features, so nothing downstream can tell the difference - but two things change.
+     * Members of a group other than its representative are no longer candidates for anything, so they receive no
+     * spectrum, as a data dependent acquisition also gives none to a peak it never selected. And a precursor too weak
+     * for its co-elution to be judged at all is dropped rather than competing on evidence that does not exist.
+     *
+     * @see DiaPrecursorGroups
      */
     @Getter @Setter
-    private boolean intensityShares = true;
+    private boolean groupIndistinguishablePrecursors = false;
+
+    /** how likely a fragment has to be to appear in a spectrum, see {@link #getMinProbability()} */
+    @Getter @Setter
+    private double minProbabilityForSpectrum = DiaPseudoSpectra.DEFAULT_MIN_PROBABILITY;
+
+    /** see {@link DiaPseudoSpectra#write}; zero keeps every candidate that cleared the significance floor */
+    @Getter @Setter
+    private double minRelativeProbabilityForSpectrum = 0d;
+
+    /**
+     * How intense a member of a precursor group has to be, relative to its most intense member, to receive the
+     * group's spectrum as well. Only meaningful with {@link #groupIndistinguishablePrecursors}.
+     */
+    @Getter @Setter
+    private double minReportedShareOfGroup = DiaPrecursorGroups.DEFAULT_MIN_REPORTED_SHARE;
 
     /** which quantile of a channel's intensities counts as its noise floor, see {@link DiaChannelNoise} */
     @Getter @Setter
@@ -108,6 +143,23 @@ public class DiaDeconvolution {
     public static class ChannelResult {
         private final DiaChannel channel;
         private final DiaAssignmentGraph graph;
+        /**
+         * Per precursor, the mean log p-value of the edges it was assigned, or NaN where it was assigned none. How
+         * far the evidence cleared the floor is not the same question as how many fragments there were, and nothing
+         * downstream could reconstruct it: the p-values exist only while the channel is being resolved.
+         */
+        private final double[] meanLogPValue;
+        /**
+         * Per precursor, the sum of the most significant log p-values of the edges it was assigned, over
+         * {@link #EVIDENCE_SLOTS} slots with unfilled ones contributing nothing.
+         */
+        private final double[] bestLogPValueSum;
+        /**
+         * Per precursor of the graph, the other members of its group that are reported with it, see
+         * {@link DiaPrecursorGroups.Group#reportedMembers}. Empty without grouping, where every precursor is its own
+         * node and speaks only for itself.
+         */
+        private final List<List<PrecursorFeature>> coReported;
         private final DiaFragmentResolver.Result resolution;
         private final float noiseLevel;
         private final int fragmentSeeds;
@@ -118,7 +170,11 @@ public class DiaDeconvolution {
 
         ChannelResult(DiaChannel channel, DiaAssignmentGraph graph, DiaFragmentResolver.Result resolution,
                       float noiseLevel, int fragmentSeeds, int decoyPrecursors, int decoyEdges,
-                      boolean ownNullDistribution) {
+                      boolean ownNullDistribution, List<List<PrecursorFeature>> coReported,
+                      double[] meanLogPValue, double[] bestLogPValueSum) {
+            this.bestLogPValueSum = bestLogPValueSum;
+            this.coReported = coReported;
+            this.meanLogPValue = meanLogPValue;
             this.channel = channel;
             this.graph = graph;
             this.resolution = resolution;
@@ -135,15 +191,117 @@ public class DiaDeconvolution {
         }
     }
 
+    /**
+     * Hands every candidate edge of a resolved channel to the tracker.
+     * <p>
+     * The probability is recomputed here rather than read out of the assignment, because the assignment only keeps
+     * what cleared {@link #minProbability} and the question a tracker is pointed at is usually why something did not.
+     * It is the same division the resolver does, and the two would have to be changed together.
+     */
+    private void report(ProcessedSample sample, DiaAssignmentGraph graph, Nulls nulls,
+                        DiaFragmentResolver.Result resolution, Tracker tracker) {
+        final List<PrecursorFeature> precursors = graph.getPrecursors();
+        final List<ContiguousTrace> fragments = graph.getFragments();
+        final String channel = graph.getChannel().describe();
+        for (int f = 0; f < fragments.size(); ++f) {
+            final List<DiaAssignmentGraph.PrecursorEdge> edges = graph.edgesTo(f);
+            if (edges.isEmpty()) continue;
+            final ContiguousTrace fragment = fragments.get(f);
+            final FragmentAssignment assignment = resolution.getAssignments()[f];
+            // the resolver drops zero weight edges before normalising the capacities, so the largest capacity is
+            // taken over the candidates that survive the floor, not over all of them
+            double total = Math.max(0d, unassignedWeight), largestCapacity = 0d;
+            final double[] weights = new double[edges.size()];
+            for (DiaAssignmentGraph.PrecursorEdge edge : edges) {
+                if (DiaFragmentResolver.weightFromLogPValue(nulls.logPvalue(edge), significanceFloor) <= 0) continue;
+                largestCapacity = Math.max(largestCapacity, intensityPrior
+                        ? precursors.get(edge.precursorIndex()).getApexIntensity() : 1d);
+            }
+            for (int k = 0; k < edges.size(); ++k) {
+                final DiaAssignmentGraph.PrecursorEdge edge = edges.get(k);
+                final double weight = DiaFragmentResolver.weightFromLogPValue(nulls.logPvalue(edge),
+                        significanceFloor);
+                final double capacity = intensityPrior
+                        ? precursors.get(edge.precursorIndex()).getApexIntensity() : 1d;
+                weights[k] = weight * (largestCapacity > 0 ? Math.max(0d, capacity) / largestCapacity : 1d);
+                total += weights[k];
+            }
+            // the candidate set as a whole, so a fragment lost to many weak competitors can be told from one lost
+            // to a few strong ones
+            double strongestIntensity = 0d;
+            for (DiaAssignmentGraph.PrecursorEdge edge : edges) {
+                strongestIntensity = Math.max(strongestIntensity,
+                        precursors.get(edge.precursorIndex()).getApexIntensity());
+            }
+            double strongestWeight = 0d, strongestMz = Double.NaN;
+            double aboveHalf = 0d, aboveTenth = 0d, belowTenth = 0d;
+            int countAboveHalf = 0, countAboveTenth = 0;
+            for (int k = 0; k < edges.size(); ++k) {
+                final PrecursorFeature candidate = precursors.get(edges.get(k).precursorIndex());
+                if (weights[k] > strongestWeight) {
+                    strongestWeight = weights[k];
+                    strongestMz = candidate.getMz();
+                }
+                final double relative = strongestIntensity > 0
+                        ? candidate.getApexIntensity() / strongestIntensity : 0d;
+                if (relative >= 0.5) {
+                    aboveHalf += weights[k];
+                    ++countAboveHalf;
+                } else if (relative >= 0.1) {
+                    aboveTenth += weights[k];
+                    ++countAboveTenth;
+                } else {
+                    belowTenth += weights[k];
+                }
+            }
+            tracker.diaFragmentCompetition(sample, channel, new Tracker.DiaFragmentCompetition(
+                    fragment.averagedMz(), graph.getChannel().getAxis().getRetentionTimeAt(fragment.apex()),
+                    fragment.endId() - fragment.startId() + 1, edges.size(), total, Math.max(0d, unassignedWeight),
+                    strongestWeight, strongestMz, strongestIntensity, countAboveHalf, countAboveTenth,
+                    aboveHalf, aboveTenth, belowTenth));
+
+            for (int k = 0; k < edges.size(); ++k) {
+                final DiaAssignmentGraph.PrecursorEdge edge = edges.get(k);
+                final PrecursorFeature precursor = precursors.get(edge.precursorIndex());
+                final double probability = total > 0 ? weights[k] / total : 0d;
+                double stored = 0d;
+                for (int rank = 0; rank < assignment.size(); ++rank) {
+                    if (assignment.precursorIndexAt(rank) == edge.precursorIndex()) {
+                        stored = assignment.probabilityAt(rank);
+                    }
+                }
+                final String outcome;
+                if (weights[k] <= 0) {
+                    outcome = "no weight: below the significance floor of " + significanceFloor;
+                } else if (stored <= 0) {
+                    outcome = String.format(Locale.US, "dropped, %.4f is below the minimum probability of %.2f "
+                            + "(%d competitors, unassigned weight %.1f)", probability, minProbability,
+                            edges.size() - 1, unassignedWeight);
+                } else {
+                    outcome = "assigned";
+                }
+                tracker.diaFragmentJudged(sample, channel, new Tracker.DiaFragmentJudgement("per sample",
+                        precursor.getMz(), precursor.getRetentionTime(), precursor.getApexIntensity(),
+                        fragment.averagedMz(),
+                        graph.getChannel().getAxis().getRetentionTimeAt(fragment.apex()), fragment.apexIntensity(),
+                        edge.correlation().datapoints(), edge.correlation().correlation(), nulls.logPvalue(edge),
+                        edge.specificity(), weights[k], stored, Double.NaN, edges.size(), outcome));
+            }
+        }
+    }
+
     @Getter
     public static class Result {
         private final List<ChannelResult> channels;
         /** decoy edges pooled over the whole sample, the fallback for channels that have too few of their own */
         private final int pooledDecoyEdges;
+        /** what the precursor grouping did, or empty if it was not used */
+        private final String grouping;
 
-        Result(List<ChannelResult> channels, int pooledDecoyEdges) {
+        Result(List<ChannelResult> channels, int pooledDecoyEdges, String grouping) {
             this.channels = channels;
             this.pooledDecoyEdges = pooledDecoyEdges;
+            this.grouping = grouping;
         }
 
         /**
@@ -194,6 +352,7 @@ public class DiaDeconvolution {
                     "DIA deconvolution: %d channels, %d precursor features, %d fragments, %d assigned, %d ambiguous%n",
                     channels.size(), numberOfPrecursorFeatures(), numberOfFragments(), numberOfAssignedFragments(),
                     numberOfAmbiguousFragments()));
+            buf.append(grouping);
             if (nullDistributionTooThin()) {
                 buf.append(String.format(Locale.US, "  WARNING: only %d decoy edges in the whole sample, which is "
                         + "too few to call anything significant; no fragment can be assigned%n", pooledDecoyEdges));
@@ -223,6 +382,10 @@ public class DiaDeconvolution {
     public static final int MIN_DECOY_EDGES = 50;
 
     public Result deconvolute(ProcessedSample sample, DiaScanIndex index) {
+        return deconvolute(sample, index, new Tracker.NOOP());
+    }
+
+    public Result deconvolute(ProcessedSample sample, DiaScanIndex index, Tracker tracker) {
         // one pass over the MS1 traces, dispatching each of them to the channels it is a precursor for and to the
         // channels it can serve as a decoy for. The trace store is on disc, so reading it once per channel would
         // mean deserialising every trace of the sample as many times as there are channels.
@@ -251,6 +414,8 @@ public class DiaDeconvolution {
             }
         }
 
+        final GroupingReport grouping = new GroupingReport();
+        final List<DiaPrecursorSurvival.Result> survival = new ArrayList<>(channelCount);
         // Phase one: pick the fragments of every channel and build both graphs. Both are needed before anything
         // can be resolved, because a channel with too few decoys of its own has to fall back to the pool.
         final List<DiaChannel> channels = index.getChannels();
@@ -259,11 +424,17 @@ public class DiaDeconvolution {
             final DiaChannel channel = channels.get(c);
             final float noiseLevel = DiaChannelNoise.estimate(sample, channel, noiseQuantile);
             final DiaChannelFragments.Result fragments = DiaChannelFragments.pickAll(sample, channel, noiseLevel,
-                    minFragmentScanPoints);
+                    new de.unijena.bioinf.lcms.trace.segmentation.NoSegmentation(), minFragmentScanPoints, tracker);
             final List<PrecursorFeature> decoys = DiaDecoys.thin(decoyCandidates.get(c), maxDecoyPrecursors);
-            drafts.add(new Draft(channel, noiseLevel, fragments.seedsTried(), decoys.size(),
-                    DiaAssignmentGraph.build(channel, realFeatures.get(c), fragments.traces()),
-                    DiaAssignmentGraph.build(channel, decoys, fragments.traces())));
+            // which of the channel's features actually compete for its fragments
+            final Nodes nodes = groupIndistinguishablePrecursors
+                    ? precursorNodesOf(channel, realFeatures.get(c), sample, grouping, tracker)
+                    : Nodes.of(realFeatures.get(c));
+            final DiaAssignmentGraph real = DiaAssignmentGraph.build(channel, nodes.precursors(), fragments.traces());
+            drafts.add(new Draft(channel, noiseLevel, fragments.seedsTried(), decoys.size(), real,
+                    DiaAssignmentGraph.build(channel, decoys, fragments.traces()), nodes.coReported()));
+            survival.add(DiaPrecursorSurvival.of(real,
+                    sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces()));
         }
 
         // Phase two: the null distributions, pooled over the sample as a fallback
@@ -290,14 +461,172 @@ public class DiaDeconvolution {
                     intensityPrior ? precursorIndex -> features.get(precursorIndex).getApexIntensity()
                             : DiaFragmentResolver.UNIFORM_CAPACITY,
                     unassignedWeight, minProbability);
+            final double[][] evidence = evidenceOf(draft.graph, resolution, nulls);
             results.add(new ChannelResult(draft.channel, draft.graph, resolution, draft.noiseLevel,
-                    draft.fragmentSeeds, draft.decoyPrecursors, decoyEdges, ownNull));
+                    draft.fragmentSeeds, draft.decoyPrecursors, decoyEdges, ownNull, draft.coReported,
+                    evidence[0], evidence[1]));
+            if (tracker.tracksDia()) {
+                report(sample, draft.graph, nulls, resolution, tracker);
+            }
         }
-        return new Result(results, pooled.decoyCount());
+        final StringBuilder survivalReport = new StringBuilder();
+        for (int c = 0; c < survival.size(); ++c) {
+            survivalReport.append(String.format(Locale.US, "  channel %s: %s%n",
+                    channels.get(c).describe(), survival.get(c).describe()));
+        }
+        return new Result(results, pooled.decoyCount(), grouping.describe() + survivalReport);
+    }
+
+    /**
+     * One feature per set the channel cannot separate, the most intense of each, plus nothing at all for the
+     * features it cannot judge. The pollution of every group is recorded on the way, since the spectrum of a
+     * representative is chimeric by exactly that much.
+     */
+    /** the precursors that compete for a channel's fragments, and who else each of them speaks for */
+    record Nodes(List<PrecursorFeature> precursors, List<List<PrecursorFeature>> coReported) {
+        static Nodes of(List<PrecursorFeature> precursors) {
+            final List<List<PrecursorFeature>> none = new ArrayList<>(precursors.size());
+            for (int k = 0; k < precursors.size(); ++k) none.add(List.of());
+            return new Nodes(precursors, none);
+        }
+    }
+
+    /** one group, in the terms the tracker understands: the masses, times and intensities of its members */
+    private static void reportGroup(DiaChannel channel, List<PrecursorFeature> features,
+                                    DiaPrecursorGroups.Group group, Tracker tracker, ProcessedSample sample) {
+        final int[] members = group.getMembers();
+        final double[] mz = new double[members.length];
+        final double[] rt = new double[members.length];
+        final double[] intensity = new double[members.length];
+        int representative = 0;
+        for (int k = 0; k < members.length; ++k) {
+            final PrecursorFeature member = features.get(members[k]);
+            mz[k] = member.getMz();
+            rt[k] = member.getRetentionTime();
+            intensity[k] = member.getApexIntensity();
+            if (members[k] == group.getRepresentative()) representative = k;
+        }
+        tracker.diaPrecursorGroup(sample, new Tracker.DiaPrecursorGroup(channel.describe(), mz, rt, intensity,
+                representative, group.getPollutionRatio()));
+    }
+
+    private Nodes precursorNodesOf(DiaChannel channel, List<PrecursorFeature> features,
+                                   ProcessedSample sample, GroupingReport report, Tracker tracker) {
+        final TraceCorrelationStatistics statistics = sample.getStorage().getStatistics().getTraceCorrelations();
+        final double noiseLevel = TraceCorrelationStatistics.medianNoiseLevel(sample.getStorage().getStatistics());
+        final DiaPrecursorGroups.Result grouped = DiaPrecursorGroups.of(channel, features, statistics, noiseLevel,
+                DiaPrecursorGroups.DEFAULT_QUANTILE, DiaPrecursorGroups.DEFAULT_MAX_APEX_DISTANCE);
+        final List<PrecursorFeature> representatives = new ArrayList<>(grouped.groups().size());
+        final List<List<PrecursorFeature>> coReported = new ArrayList<>(grouped.groups().size());
+        final boolean tracked = tracker.tracksDia();
+        for (DiaPrecursorGroups.Group group : grouped.groups()) {
+            representatives.add(features.get(group.getRepresentative()));
+            // the members the group also speaks for, which receive the same spectrum
+            final int[] reported = group.reportedMembers(features, minReportedShareOfGroup);
+            final List<PrecursorFeature> others = new ArrayList<>(reported.length - 1);
+            for (int member : reported) {
+                if (member != group.getRepresentative()) others.add(features.get(member));
+            }
+            coReported.add(others);
+            if (tracked) reportGroup(channel, features, group, tracker, sample);
+        }
+        report.add(features.size(), grouped);
+        return new Nodes(representatives, coReported);
+    }
+
+    /** what the grouping did over all channels of a sample, for the log and for the report */
+    static final class GroupingReport {
+        private int features, groups, ambiguous, largest;
+        private double pollution;
+
+        void add(int featureCount, DiaPrecursorGroups.Result result) {
+            features += featureCount;
+            groups += result.groups().size();
+            ambiguous += result.numberOfAmbiguousGroups();
+            for (DiaPrecursorGroups.Group group : result.groups()) {
+                largest = Math.max(largest, group.size());
+                if (group.isAmbiguous()) pollution += group.getPollutionRatio();
+            }
+        }
+
+        String describe() {
+            if (features == 0) return "";
+            return String.format(Locale.US, "  precursor grouping: %d features, %d groups "
+                            + "(%d ambiguous, largest %d, mean pollution %.2f)%n", features, groups,
+                    ambiguous, largest, ambiguous == 0 ? 0d : pollution / ambiguous);
+        }
+    }
+
+    /**
+     * How many of a spectrum's best supported peaks the evidence budget asks about.
+     * <p>
+     * A mean over the assignment lets one strongly supported peak speak for a whole spectrum, and the weakest edge
+     * lets one poorly supported peak condemn it. Neither is what makes a spectrum usable, which is that several of its
+     * peaks are well supported - so the evidence is summed over a fixed number of slots, filled with the most
+     * significant peaks, and a spectrum with fewer than that many simply leaves slots empty.
+     */
+    static final int EVIDENCE_SLOTS = 5;
+
+    /**
+     * Per precursor, two summaries of the evidence behind the fragments it was assigned: the mean log p-value, and
+     * the sum over the {@link #EVIDENCE_SLOTS} most significant of them.
+     * <p>
+     * Both taken over the assignment rather than over the candidates, because what a spectrum is worth is decided by
+     * the evidence behind the fragments it kept, not behind the ones it lost.
+     *
+     * @return {@code {mean, bestSum}}, each indexed by precursor, the mean NaN where nothing was assigned
+     */
+    private static double[][] evidenceOf(DiaAssignmentGraph graph, DiaFragmentResolver.Result resolution,
+                                         Nulls nulls) {
+        final int n = graph.getPrecursors().size();
+        final double[] sum = new double[n];
+        final int[] counts = new int[n];
+        // the most significant, i.e. most negative, log p-values seen for each precursor so far
+        final double[][] best = new double[n][];
+        for (DiaAssignmentGraph.PrecursorEdge edge : graph.getPrecursorEdges()) {
+            final FragmentAssignment assignment = resolution.getAssignments()[edge.fragmentIndex()];
+            for (int rank = 0; rank < assignment.size(); ++rank) {
+                if (assignment.precursorIndexAt(rank) != edge.precursorIndex()) continue;
+                final int p = edge.precursorIndex();
+                final double logP = nulls.logPvalue(edge);
+                sum[p] += logP;
+                ++counts[p];
+                if (best[p] == null) best[p] = new double[EVIDENCE_SLOTS];
+                keepBest(best[p], logP);
+                break;
+            }
+        }
+        final double[] bestSum = new double[n];
+        for (int p = 0; p < n; ++p) {
+            sum[p] = counts[p] == 0 ? Double.NaN : sum[p] / counts[p];
+            if (best[p] == null) {
+                bestSum[p] = Double.NaN;
+                continue;
+            }
+            double total = 0d;
+            for (double value : best[p]) total += value;
+            bestSum[p] = total;
+        }
+        return new double[][]{sum, bestSum};
+    }
+
+    /**
+     * Inserts a log p-value into the running list of the most significant ones, which is sorted ascending and
+     * initialised to zero - the value of an empty slot, since zero log p is no evidence at all.
+     */
+    static void keepBest(double[] best, double logP) {
+        if (logP >= best[best.length - 1]) return;
+        int at = best.length - 1;
+        while (at > 0 && best[at - 1] > logP) {
+            best[at] = best[at - 1];
+            --at;
+        }
+        best[at] = logP;
     }
 
     private record Draft(DiaChannel channel, float noiseLevel, int fragmentSeeds, int decoyPrecursors,
-                         DiaAssignmentGraph graph, DiaAssignmentGraph decoyGraph) {
+                         DiaAssignmentGraph graph, DiaAssignmentGraph decoyGraph,
+                         List<List<PrecursorFeature>> coReported) {
     }
 
     /**

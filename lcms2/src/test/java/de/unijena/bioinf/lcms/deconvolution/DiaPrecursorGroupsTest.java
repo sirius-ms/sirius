@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.deconvolution;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.lcms.ScanPointMapping;
+import de.unijena.bioinf.lcms.statistics.TraceCorrelationStatistics;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import org.junit.jupiter.api.Test;
@@ -165,9 +166,107 @@ public class DiaPrecursorGroupsTest {
         assertEquals(2, DiaPrecursorGroups.of(channel(), List.of(sharp, broad)).size());
     }
 
+    /**
+     * A measured co-elution standard is followed, down to the floor of the statistic that measured it.
+     * <p>
+     * Grouping imposes no minimum of its own: the bar lives in {@link TraceCorrelationStatistics#MINIMUM_CUTOFF},
+     * which is the only thing {@code cutoffFor} consults, and raising it there is how the standard is tightened.
+     * <p>
+     * This comment used to carry two figures - that raising the few-point cutoff from 0.8 to 0.9 cost seven library
+     * identifications and the many-point one from 0.9 to 0.95 cost five. Neither reproduces. Re-measured 2026-08-21
+     * on the same eighteen samples, after the determinism and isotope fixes, raising the few-point cutoff alone
+     * *gained* one and raising the many-point one alone cost four; the spread over five settings of the pair is six,
+     * not monotone, and no larger than the disagreement between configurations that score the same. The figures were
+     * taken before the isotope fix removed 489628 non-finite m/z values and moved the feature count by a hundred, so
+     * they described a pipeline that no longer exists.
+     */
+    @Test
+    public void aMeasuredStandardIsFollowedDownToTheStatisticsOwnFloor() {
+        // 0.7 s apart, which clears the many-point floor. The pair used to be one second apart, correlating at
+        // about 0.947: that sat above the floor when it was 0.9 and below it once it became 0.95, so the fixture
+        // moved with the constant. What is being tested is unchanged - a learned standard below the floor is
+        // raised to the floor and no further, and a pair that clears the floor is grouped.
+        final List<PrecursorFeature> features = List.of(at(400.2, 59.3d, 900_000d), at(420.7, 60d, 1_000_000d));
+        final TraceCorrelationStatistics lenient = statisticsWith(0.6, 0d);
+        final double cutoff = lenient.cutoffFor(20, 1e6, 100d, 0.05);
+        assertEquals(TraceCorrelationStatistics.minimumCutoff(20), cutoff, 1e-9,
+                "precondition: a measurement below the floor is raised to it, and no further");
+
+        assertEquals(1, DiaPrecursorGroups.of(channel(), features, lenient, 100d).groups().size(),
+                "the pair clears the floor, so nothing above it may keep them apart");
+    }
+
+    /** a distribution of known same-elutions, as the sample statistics would have learned it */
+    private static TraceCorrelationStatistics statisticsWith(double minCorrelationOfSameElution,
+                                                             double minUsableMultipleOfNoise) {
+        final float[][] bins = new float[TraceCorrelationStatistics.binCount()][];
+        java.util.Arrays.fill(bins, new float[0]);
+        for (int points = 0; points < 2; ++points) {
+            for (int intensity = 0; intensity < TraceCorrelationStatistics.INTENSITY_BINS; ++intensity) {
+                final double lower = intensity == 0 ? 0d : TraceCorrelationStatistics.INTENSITY_MULTIPLES[intensity - 1];
+                final float[] values = new float[TraceCorrelationStatistics.MIN_OBSERVATIONS * 2];
+                // below the usable intensity the pairs do not correlate, which is what makes the bin unusable
+                java.util.Arrays.fill(values, lower < minUsableMultipleOfNoise ? 0.1f
+                        : (float) minCorrelationOfSameElution);
+                bins[points * TraceCorrelationStatistics.INTENSITY_BINS + intensity] = values;
+            }
+        }
+        return new TraceCorrelationStatistics(bins);
+    }
+
+    @Test
+    public void theThresholdComesFromWhatARealCoElutionReaches() {
+        // 0.4 s apart correlates at 0.9916 here. Both standards below are above DEFAULT_MIN_CORRELATION on purpose:
+        // this test is about the learned distribution deciding, and a standard under the floor would be decided by
+        // the floor instead - which is what aLenientMeasurementDoesNotLowerWhatGroupingDemands covers.
+        final List<PrecursorFeature> features = List.of(at(400.2, 59.6, 900_000d), at(420.7, 60d, 1_000_000d));
+        final double noise = 100d;
+
+        assertEquals(2, DiaPrecursorGroups.of(channel(), features, statisticsWith(0.999, 0d), noise)
+                .groups().size(), "a strict co-elution standard tells them apart");
+        assertEquals(1, DiaPrecursorGroups.of(channel(), features, statisticsWith(0.96, 0d), noise)
+                .groups().size(), "a lenient one cannot");
+    }
+
     @Test
     public void nothingToGroupIsNoProblem() {
         assertTrue(DiaPrecursorGroups.of(channel(), List.of()).isEmpty());
         assertEquals(1, DiaPrecursorGroups.of(channel(), List.of(at(400.2, 60d, 100d))).size());
+    }
+
+    /**
+     * A group speaks for more than its representative when a member is nearly as intense.
+     * <p>
+     * Giving the group's fragments only to its most intense member is what a data dependent acquisition does, and it
+     * is honest where one member dominates. Where two members are of comparable abundance it is a coin toss, and the
+     * evidence for calling one of them the owner does not exist - so both are reported, each carrying the group's
+     * pollution ratio. The threshold is on the share of the dominant member's intensity, not on an absolute value,
+     * because what makes the choice arbitrary is the ratio.
+     */
+    @Test
+    public void aGroupReportsEveryMemberComparableToItsDominant() {
+        final List<PrecursorFeature> features = List.of(at(400.2, 60d, 100_000d), at(420.7, 60d, 60_000d),
+                at(430.3, 60d, 10_000d));
+        final List<DiaPrecursorGroups.Group> groups = DiaPrecursorGroups.of(channel(), features, 0.9,
+                DiaPrecursorGroups.DEFAULT_MAX_APEX_DISTANCE);
+        assertEquals(1, groups.size(), "three identical elutions are one group");
+
+        final int[] half = groups.getFirst().reportedMembers(features, 0.5);
+        assertEquals(2, half.length, "the dominant and the member at 60 % of it");
+        assertEquals(groups.getFirst().getRepresentative(), half[0], "the representative comes first");
+
+        assertEquals(1, groups.getFirst().reportedMembers(features, 1.0).length,
+                "at a threshold of one only the dominant speaks");
+        assertEquals(3, groups.getFirst().reportedMembers(features, 0.05).length,
+                "and a low enough threshold reports everything, which is the ungrouped behaviour");
+    }
+
+    /** a group of one has nothing to decide */
+    @Test
+    public void aGroupOfOneReportsItself() {
+        final List<PrecursorFeature> features = List.of(at(400.2, 60d, 100_000d));
+        final List<DiaPrecursorGroups.Group> groups = DiaPrecursorGroups.of(channel(), features,
+                DiaPrecursorGroups.DEFAULT_MIN_CORRELATION, DiaPrecursorGroups.DEFAULT_MAX_APEX_DISTANCE);
+        assertArrayEquals(new int[]{0}, groups.getFirst().reportedMembers(features, 0.5));
     }
 }

@@ -7,6 +7,7 @@ import de.unijena.bioinf.lcms.msms.MsMsTraceReference;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
@@ -75,15 +76,26 @@ public final class DiaPseudoSpectra {
     }
 
     public static Result write(ProcessedSample sample, DiaDeconvolution.Result deconvolution) {
-        return write(sample, deconvolution, DEFAULT_MIN_PROBABILITY, true);
+        return write(sample, deconvolution, DEFAULT_MIN_PROBABILITY);
     }
 
     public static Result write(ProcessedSample sample, DiaDeconvolution.Result deconvolution, double minProbability) {
-        return write(sample, deconvolution, minProbability, true);
+        return write(sample, deconvolution, minProbability, new Tracker.NOOP());
     }
 
     public static Result write(ProcessedSample sample, DiaDeconvolution.Result deconvolution, double minProbability,
-                               boolean intensityShares) {
+                               Tracker tracker) {
+        return write(sample, deconvolution, minProbability, 0d, tracker);
+    }
+
+    /**
+     * @param minRelativeProbability keep a candidate only if its probability is at least this fraction of the best
+     *                               candidate's, which bounds the candidate set by how much worse an explanation it is
+     *                               rather than by how many competitors it happens to have. Zero keeps all of them.
+     */
+    public static Result write(ProcessedSample sample, DiaDeconvolution.Result deconvolution, double minProbability,
+                               double minRelativeProbability, Tracker tracker) {
+        final boolean tracked = tracker.tracksDia();
         int spectra = 0, peaks = 0, without = 0;
         for (DiaDeconvolution.ChannelResult channel : deconvolution.getChannels()) {
             final List<PrecursorFeature> precursors = channel.getGraph().getPrecursors();
@@ -102,15 +114,23 @@ public final class DiaPseudoSpectra {
                 final FragmentAssignment assignment = channel.assignmentOf(f);
                 final IntArrayList assignedTo = new IntArrayList(assignment.size());
                 final List<PrecursorFeature> candidates = new ArrayList<>(assignment.size());
+                final double best = assignment.isEmpty() ? 0d : assignment.probabilityOfMostLikely();
                 for (int rank = 0; rank < assignment.size(); ++rank) {
                     if (assignment.probabilityAt(rank) < minProbability) continue;  // sorted, but be explicit
+                    if (assignment.probabilityAt(rank) < minRelativeProbability * best) continue;
                     assignedTo.add(assignment.precursorIndexAt(rank));
                     candidates.add(precursors.get(assignment.precursorIndexAt(rank)));
                 }
                 if (assignedTo.isEmpty()) continue;
                 final double[] shares = FragmentIntensityShares.of(channel.getChannel(), candidates,
-                        fragments.get(f), intensityShares);
+                        fragments.get(f));
                 for (int k = 0; k < assignedTo.size(); ++k) {
+                    if (tracked) {
+                        tracker.diaPeakWritten(sample, channel.getChannel().describe(),
+                                precursors.get(assignedTo.getInt(k)).getMz(), fragments.get(f).averagedMz(),
+                                shares[k], assignment.probabilityAt(k), shares[k] > 0,
+                                "the intensity factorisation gave this precursor no share of the fragment");
+                    }
                     if (shares[k] <= 0) continue;
                     byPrecursor.get(assignedTo.getInt(k)).add(f);
                     intensities.get(assignedTo.getInt(k)).add(shares[k]);
@@ -125,22 +145,48 @@ public final class DiaPseudoSpectra {
                 }
                 final PrecursorFeature precursor = precursors.get(p);
                 final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(assigned.size());
+                // what the fragments measured in this window before the factorisation decided how much of it this
+                // precursor may claim, which is what the attributed current has to be read against
+                double attributed = 0d, measured = 0d, base = 0d;
                 for (int k = 0; k < assigned.size(); ++k) {
-                    buffer.addPeak(fragments.get(assigned.getInt(k)).averagedMz(), intensities.get(p).getDouble(k));
+                    final ContiguousTrace fragment = fragments.get(assigned.getInt(k));
+                    final double intensity = intensities.get(p).getDouble(k);
+                    buffer.addPeak(fragment.averagedMz(), intensity);
+                    attributed += intensity;
+                    measured += precursor.getWindow().apexIntensityIn(fragment);
+                    base = Math.max(base, intensity);
                 }
                 if (buffer.isEmpty()) {
                     ++without;
                     continue;
                 }
-                writeSpectrum(sample, channel.getChannel(), precursor, new SimpleSpectrum(buffer));
+                final SimpleSpectrum written = new SimpleSpectrum(buffer);
+                if (tracked) {
+                    tracker.diaSpectrumQuality(sample, channel.getChannel().describe(),
+                            new Tracker.DiaSpectrumQuality("per sample", precursor.getMz(),
+                                    precursor.getRetentionTime(), buffer.size(), attributed, measured, base,
+                                    channel.getNoiseLevel(), precursor.getApexIntensity(), Double.NaN,
+                                    channel.getMeanLogPValue()[p], channel.getBestLogPValueSum()[p], Double.NaN,
+                                    Double.NaN, 1));
+                }
+                writeSpectrum(sample, channel.getChannel(), precursor, written);
                 ++spectra;
                 peaks += buffer.size();
+                // the other members of this precursor's group, if it speaks for any. They receive the same peaks
+                // because the channel cannot say which of them produced them, which is the honest answer rather
+                // than a split invented to look like one.
+                for (PrecursorFeature member : channel.getCoReported().get(p)) {
+                    writeSpectrum(sample, channel.getChannel(), member, written);
+                    ++spectra;
+                    peaks += buffer.size();
+                }
             }
         }
         return new Result(spectra, peaks, without);
     }
 
-    private static void writeSpectrum(ProcessedSample sample, DiaChannel channel, PrecursorFeature precursor,
+    /** package visible so a strategy that builds its spectra differently still registers them identically */
+    static void writeSpectrum(ProcessedSample sample, DiaChannel channel, PrecursorFeature precursor,
                                       SimpleSpectrum spectrum) {
         final double precursorMz = precursor.getMz();
         final int parentId = precursor.getSegment().apex;
@@ -151,10 +197,12 @@ public final class DiaPseudoSpectra {
                 .ms2SpectrumHeader(channel.ms2UidAt(apexChannelIndex)).getScanId();
         final IsolationWindow window = channel.isolationWindowFor(precursorMz);
 
+        // marked as data independent, which is what decides later that its peaks may belong to a co-eluting
+        // neighbour and that the checks for that failure mode apply
         final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
                 SOURCE_ID_PREFIX + ms2ScanId, ms2ScanId, sample.getPolarity(), 2, true,
                 channel.getCollisionEnergy(), window, parentId, precursorMz, precursorMz,
-                precursor.getRetentionTime());
+                precursor.getRetentionTime()).asDataIndependent();
         final Ms2SpectrumHeader stored = sample.getStorage().getSpectrumStorage().addMs2Spectrum(header, spectrum);
         sample.getStorage().getTraceStorage().assignTraceForMs2(new MsMsTraceReference(
                 stored.getUid(), precursor.getTraceUid(), parentId, ms2ScanId));

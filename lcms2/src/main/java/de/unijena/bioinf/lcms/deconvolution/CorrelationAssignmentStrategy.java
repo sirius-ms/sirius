@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.deconvolution;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import lombok.Getter;
 import org.slf4j.LoggerFactory;
 
@@ -37,8 +38,8 @@ public class CorrelationAssignmentStrategy implements DiaAssignmentStrategy {
     }
 
     @Override
-    public DiaReport assign(ProcessedSample sample, DiaScanIndex index) {
-        final DiaDeconvolution.Result deconvoluted = deconvolution.deconvolute(sample, index);
+    public DiaReport assign(ProcessedSample sample, DiaScanIndex index, Tracker tracker) {
+        final DiaDeconvolution.Result deconvoluted = deconvolution.deconvolute(sample, index, tracker);
         if (deconvoluted.nullDistributionTooThin()) {
             LoggerFactory.getLogger(CorrelationAssignmentStrategy.class).warn("{} does not contain enough precursors "
                     + "outside its isolation windows to tell a real co-elution from an accidental one, so no fragment "
@@ -46,7 +47,8 @@ public class CorrelationAssignmentStrategy implements DiaAssignmentStrategy {
             return DiaReport.nothingAssigned(index, deconvoluted.describe());
         }
         final DiaPseudoSpectra.Result spectra = DiaPseudoSpectra.write(sample, deconvoluted,
-                DiaPseudoSpectra.DEFAULT_MIN_PROBABILITY, deconvolution.isIntensityShares());
+                deconvolution.getMinProbabilityForSpectrum(),
+                deconvolution.getMinRelativeProbabilityForSpectrum(), tracker);
         sample.getStorage().commit();
         return new DiaReport(index, spectra.spectraWritten(), spectra.peaksWritten(),
                 spectra.featuresWithoutFragments(), deconvoluted.describe() + spectra.describe() + "\n");
@@ -54,7 +56,8 @@ public class CorrelationAssignmentStrategy implements DiaAssignmentStrategy {
 
     @Override
     public String refine(List<SampleIndex> samples, List<DiaFinalPrecursors.Aligned> features,
-                         Deviation massDeviation, double rtTolerance) {
-        return refinement.refine(samples, features, massDeviation, rtTolerance).describe();
+                         Deviation massDeviation, double rtTolerance, Tracker tracker) {
+        return refinement.refine(samples, features, massDeviation, rtTolerance, tracker).describe()
+                + refinement.describeStrategy();
     }
 }

@@ -590,7 +590,7 @@ public class LCMSProcessing {
             return;
         }
         final DiaScanIndex index = maybeIndex.get();
-        final DiaReport report = diaAssignmentStrategy.assign(sample, index);
+        final DiaReport report = diaAssignmentStrategy.assign(sample, index, tracker);
         LoggerFactory.getLogger(LCMSProcessing.class).info("{}: {}", sample.getRun().getName(), report.describe());
         diaReports.put(sample, report);
     }
@@ -628,7 +628,7 @@ public class LCMSProcessing {
 
         final String report = diaAssignmentStrategy.refine(diaSamples, features,
                 backbone.getStatistics().getExpectedMassDeviationBetweenSamples(),
-                backbone.getStatistics().getExpectedRetentionTimeDeviation());
+                backbone.getStatistics().getExpectedRetentionTimeDeviation(), tracker);
         if (report != null) LoggerFactory.getLogger(LCMSProcessing.class).info(report);
         for (DiaAssignmentStrategy.SampleIndex sample : diaSamples) sample.sample().getStorage().commit();
         diaRefinementReport = report;
