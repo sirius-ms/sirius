@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.LCMSProcessing;
 import de.unijena.bioinf.lcms.adducts.AdductManager;
 import de.unijena.bioinf.lcms.adducts.AdductNetwork;
@@ -277,39 +278,41 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         try {
             {
                 updateProgress(totalProgress, progress, "Processing Runs");
-                List<BasicJJob<ProcessedSample>> jobs = new ArrayList<>();
+                List<JJob<ProcessedSample>> jobs = new ArrayList<>();
+                List<Path> sources = new ArrayList<>();
                 int atmost = Integer.MAX_VALUE;
                 for (int i = 0; i < files.size(); i++) {
                     if (--atmost < 0) break;
                     final Path f = files.get(i);
                     final String sampleName = sampleNameAt(indexOfFirstFile + i);
-                    jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
-                        @Override
-                        protected ProcessedSample compute() throws Exception {
-                            ProcessedSample sample;
-                            try {
-                                sample = processing.processSample(f, sampleName);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                                LoggerFactory.getLogger(LCMSProcessing.class).warn("Ignore input file " + f);
-                                return null;
-                            }
-                            int hasIsotopes = 0, hasNoIsotopes = 0;
-                            for (MoI m : sample.getStorage().getAlignmentStorage()) {
-                                if (m.hasIsotopes()) ++hasIsotopes;
-                                else ++hasNoIsotopes;
-                            }
-                            sample.inactive();
-                            System.out.println(sample.getUid() + " with " + hasIsotopes + " / " + (hasIsotopes + hasNoIsotopes) + " isotope features");
-                            return sample;
-                        }
-                    }));
+                    // Created in the order the files were given, which is what numbers the samples: processSampleAsync
+                    // reserves the uid here rather than inside the job, so the alignment does not depend on which file
+                    // finishes parsing first. Submitting processSample into jobs of our own would undo that.
+                    jobs.add(submitSubJob(processing.processSampleAsync(f, sampleName)));
+                    sources.add(f);
                 }
 
                 int count = 0;
-                for (BasicJJob<ProcessedSample> job : jobs) {
-                    ProcessedSample processedSample = job.takeResult();
-                    if (processedSample==null) continue;
+                for (int i = 0; i < jobs.size(); i++) {
+                    final ProcessedSample processedSample;
+                    try {
+                        processedSample = jobs.get(i).awaitResult();
+                    } catch (Exception e) {
+                        // one unreadable file is not a reason to abandon the experiment, and its uid simply stays unused
+                        LoggerFactory.getLogger(LCMSProcessing.class).warn("Ignore input file " + sources.get(i), e);
+                        continue;
+                    }
+                    if (processedSample == null) continue;
+                    // processSampleAsync leaves the sample released, so it has to be woken to be counted
+                    processedSample.active();
+                    int hasIsotopes = 0, hasNoIsotopes = 0;
+                    for (MoI m : processedSample.getStorage().getAlignmentStorage()) {
+                        if (m.hasIsotopes()) ++hasIsotopes;
+                        else ++hasNoIsotopes;
+                    }
+                    processedSample.inactive();
+                    System.out.println(processedSample.getUid() + " with " + hasIsotopes + " / "
+                            + (hasIsotopes + hasNoIsotopes) + " isotope features");
                     System.out.println(processedSample.getUid() + " (" + ++count + " / " + jobs.size() + ")");
                     updateProgress(totalProgress, ++progress, "Processing Runs");
                 }

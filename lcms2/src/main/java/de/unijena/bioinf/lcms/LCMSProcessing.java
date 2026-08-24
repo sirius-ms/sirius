@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.centroiding.CentroidIndividualSpectraStrategy;
 import de.unijena.bioinf.lcms.centroiding.CentroidingStrategy;
@@ -56,6 +57,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LCMSProcessing {
 
@@ -153,6 +155,17 @@ public class LCMSProcessing {
     }
 
     protected List<ProcessedSample> samples = new ArrayList<>();
+
+    /**
+     * Handed out in the order samples are given to us, not the order their processing finishes.
+     * <p>
+     * The distinction is the whole point: samples are processed in parallel, so taking a uid when a sample is done
+     * makes it a function of the thread scheduler. Everything ordered by uid downstream - which sample seeds the
+     * alignment backbone, the order the rest are merged into it - then differs between two runs on identical input.
+     * Reserving it in {@link #processSampleAsync} on the calling thread costs nothing and makes it a function of the
+     * input alone.
+     */
+    private final AtomicInteger nextSampleUid = new AtomicInteger();
     private HashMap<Integer, ProcessedSample> sampleByIdx = new HashMap<>();
 
     private final boolean saveFeatureIds;
@@ -210,9 +223,47 @@ public class LCMSProcessing {
             boolean saveRawScans,
             Chromatography chromatography
     ) throws IOException {
+        return importAndProcess(file, sampleName, saveRawScans, chromatography, nextSampleUid.getAndIncrement());
+    }
+
+    /**
+     * The parallel form of {@link #processSample(Path, String, boolean, Chromatography)}: the sample's identity is
+     * fixed here, on the calling thread, and only the parsing and processing happen in the job.
+     * <p>
+     * Callers that process several files at once have to use this rather than submitting {@code processSample} into
+     * jobs of their own, or the samples are numbered in the order they finish and the alignment is not reproducible.
+     * Create the jobs in the order the files should be numbered in; the returned job is not submitted yet, so the
+     * caller decides where it runs and can submit it as a sub job of its own. The sample is left in low memory mode,
+     * since a caller importing many files does not want them all cached at once - reactivate it before reading.
+     */
+    public JJob<ProcessedSample> processSampleAsync(
+            Path file,
+            @Nullable String sampleName,
+            boolean saveRawScans,
+            Chromatography chromatography
+    ) {
+        final int uid = nextSampleUid.getAndIncrement();
+        return new BasicJJob<ProcessedSample>() {
+            @Override
+            protected ProcessedSample compute() throws Exception {
+                final ProcessedSample sample = importAndProcess(file, sampleName, saveRawScans, chromatography, uid);
+                // released here rather than by the caller: with many samples in flight the peak memory is decided by
+                // how long each one stays cached after its own work is done, and only this thread knows when that is
+                sample.inactive();
+                return sample;
+            }
+        };
+    }
+
+    public JJob<ProcessedSample> processSampleAsync(Path file, @Nullable String sampleName) {
+        return processSampleAsync(file, sampleName, false, Chromatography.LC);
+    }
+
+    private ProcessedSample importAndProcess(Path file, @Nullable String sampleName, boolean saveRawScans,
+                                             Chromatography chromatography, int uid) throws IOException {
         ProcessedSample sample = LCMSImporter.importToProject(
                 file, sampleName, storageFactory, siriusDatabaseAdapter, centroidingStrategy, saveRawScans, chromatography);
-        processSample(sample);
+        processSample(sample, uid);
         return sample;
     }
 
@@ -228,7 +279,7 @@ public class LCMSProcessing {
         // parse file and extract spectra
         ProcessedSample sample = LCMSImporter.importToProject(
                 input, storageFactory, siriusDatabaseAdapter, saveRawScans, chromatography);
-        processSample(sample);
+        processSample(sample, nextSampleUid.getAndIncrement());
         return sample;
     }
 
@@ -258,10 +309,13 @@ public class LCMSProcessing {
         }
     }
 
-    private void processSample(ProcessedSample sample) throws IOException {
-        final int sampleUid;
+    /**
+     * @param sampleUid reserved by the caller before any work started, see {@link #nextSampleUid}. The list itself is
+     *                  still filled in completion order, since only successful samples belong in it - a reserved slot
+     *                  would leave a hole for a file that failed to parse - and it is ordered by uid before alignment.
+     */
+    private void processSample(ProcessedSample sample, int sampleUid) throws IOException {
         synchronized (this) {
-            sampleUid = this.samples.size();
             this.samples.add(sample);
             this.sampleByIdx.put(sampleUid, sample);
         }
@@ -284,13 +338,19 @@ public class LCMSProcessing {
     }
 
     public AlignmentBackbone align() throws IOException {
+        // Samples were added in the order their parallel jobs finished, which is not the order they were given in.
+        // Alignment depends on that order - one sample seeds the backbone and the rest are merged into it greedily -
+        // as does the polarity read off the first sample below, so it is restored to the order the caller reserved
+        // the uids in. Deterministic because the uid is, see nextSampleUid.
+        samples.sort(Comparator.comparingInt(ProcessedSample::getUid));
         LCMSStorage mergedStorage = storageFactory.createNewMergedStorage();
         AlignmentBackbone alignmentBackbone = alignmentStrategy.makeAlignmentBackbone(mergedStorage.getAlignmentStorage(), samples, alignmentAlgorithm, alignmentThresholds, alignmentScorerBackbone);
         ProcessedSample merged = new ProcessedSample(
                 alignmentBackbone.getScanPointMapping(),
                 mergedStorage,
                 samples.get(0).getPolarity(),
-                samples.size() // TODO: better use sample idx 0?
+                // its own reserved uid: samples.size() would collide with the uid of a sample that failed to parse
+                nextSampleUid.getAndIncrement()
         );
         makeMergeStatistics(merged, alignmentBackbone.getSamples());
         samples.add(merged);
