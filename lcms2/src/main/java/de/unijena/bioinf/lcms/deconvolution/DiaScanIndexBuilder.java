@@ -3,6 +3,7 @@ package de.unijena.bioinf.lcms.deconvolution;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
+import de.unijena.bioinf.lcms.statistics.TraceStats;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
@@ -35,6 +36,42 @@ public class DiaScanIndexBuilder {
     public static final int MIN_SCANS_PER_CHANNEL = 5;
 
     /**
+     * How often a window has to be revisited within one chromatographic peak before its scans can be deconvoluted.
+     * <p>
+     * The question a DIA acquisition has to answer is not how wide its isolation windows are but whether its scans
+     * can be correlated, and that is decided per window: consecutive visits must fall inside the same elution.
+     * A data dependent run re-selecting the same precursor also produces a recurring window, so width cannot tell
+     * the two apart - measured on real files, two genuine SWATH acquisitions reach about eleven and four points per
+     * peak while two data dependent ones reach about one.
+     * <p>
+     * Three is what the correlation needs at all and is also as high as this can go: the four of the SWATH run our
+     * DIA validation rests on leaves no room above it.
+     */
+    public static final int MIN_POINTS_PER_PEAK = 3;
+
+    /**
+     * What a chromatographic peak spans, in units of the peak width the samples measure.
+     * <p>
+     * {@code TraceStats} measures a peak as the intensity weighted standard deviation of its retention time, a
+     * gaussian sigma rather than a width at half maximum, and a peak is usable across roughly plus or minus two of
+     * those. The factor is written down here rather than folded into {@link #MIN_POINTS_PER_PEAK} because the two
+     * are different claims: one is about what the instrument must deliver, the other about what a peak is.
+     */
+    public static final double PEAK_SPAN_IN_SIGMA = 4d;
+
+    /**
+     * The share of a sample's MS2 scans that has to end up in deconvolutable channels before the sample is treated
+     * as a DIA measurement at all.
+     * <p>
+     * A per window rule alone would deconvolute the few dense windows of an ordinary data dependent run, and that is
+     * worse than leaving them alone: the log p-values every assignment is judged by come from decoy edges collected
+     * over the channels being processed, so a handful of channels means a null distribution built from almost
+     * nothing, and a significance floor that cannot be cleared honestly rather than one that is merely hard to clear.
+     * Below this share the sample is not DIA and all of its scans belong to the data dependent path.
+     */
+    public static final double MIN_SCAN_COVERAGE = 0.05;
+
+    /**
      * How far the referenced precursor scan may be away from its MS2 scan, in multiples of the median MS1 scan
      * distance, before we distrust the reference and fall back to retention time.
      */
@@ -48,7 +85,10 @@ public class DiaScanIndexBuilder {
         final List<Ms2SpectrumHeader> headers = new ArrayList<>();
         for (Ms2SpectrumHeader header : sample.getStorage().getSpectrumStorage().ms2SpectraHeader()) headers.add(header);
         Int2ObjectMap<float[]> multiplexed = sample.getMultiplexedIsolationWindows();
-        return build(headers, multiplexed == null ? Int2ObjectMaps.emptyMap() : multiplexed, sample.getMapping());
+        // the peak width has to be measured here rather than read from the sample statistics: the merged
+        // expectedPeakWidth is only set after merging, which is long after this decision is made
+        return build(headers, multiplexed == null ? Int2ObjectMaps.emptyMap() : multiplexed, sample.getMapping(),
+                TraceStats.averagePeakWidthOf(sample));
     }
 
     /**
@@ -61,7 +101,7 @@ public class DiaScanIndexBuilder {
      */
     public static Optional<DiaScanIndex> build(Iterable<Ms2SpectrumHeader> headers,
                                                Int2ObjectMap<float[]> multiplexedWindows,
-                                               ScanPointMapping ms1Mapping) {
+                                               ScanPointMapping ms1Mapping, double peakWidth) {
         final Map<DiaChannelKey, List<Ms2SpectrumHeader>> groups = new HashMap<>();
         int droppedScans = 0, deconvolutedScans = 0;
         for (Ms2SpectrumHeader header : headers) {
@@ -82,6 +122,12 @@ public class DiaScanIndexBuilder {
         if (groups.isEmpty()) return Optional.empty();
 
         final double parentTolerance = MAX_PARENT_DISTANCE_IN_MS1_STEPS * medianScanInterval(ms1Mapping);
+        // how long a window may go unvisited and still sample a peak MIN_POINTS_PER_PEAK times; zero disables the
+        // rule, which is what an unmeasurable peak width has to mean - it is not evidence that nothing co-elutes
+        final double maximumRevisitGap = peakWidth > 0
+                ? PEAK_SPAN_IN_SIGMA * peakWidth / MIN_POINTS_PER_PEAK : 0d;
+        int ms2WithWindow = 0;
+        for (List<Ms2SpectrumHeader> group : groups.values()) ms2WithWindow += group.size();
 
         // canonical channel order, so that the result never depends on the order the scans were read in
         final List<DiaChannelKey> keys = new ArrayList<>(groups.keySet());
@@ -94,6 +140,13 @@ public class DiaScanIndexBuilder {
             if (scans.size() < MIN_SCANS_PER_CHANNEL) {
                 droppedScans += scans.size();
                 log.debug("Ignoring DIA channel {} because it only contains {} scans.", key, scans.size());
+                continue;
+            }
+            // and it has to be revisited inside a peak, or its scans are of unrelated elutions
+            if (maximumRevisitGap > 0 && medianRevisitGap(scans) > maximumRevisitGap) {
+                droppedScans += scans.size();
+                log.debug("Ignoring DIA channel {}: revisited every {} s, which cannot sample a peak.",
+                        key, medianRevisitGap(scans));
                 continue;
             }
             // retention time is the one thing we can rely on
@@ -131,6 +184,13 @@ public class DiaScanIndexBuilder {
             log.debug("No DIA channel of this sample fires at least {} times; not treating it as DIA.", MIN_SCANS_PER_CHANNEL);
             return Optional.empty();
         }
+        int claimedScans = 0;
+        for (DiaChannel channel : channels) claimedScans += channel.numberOfScans();
+        if (claimedScans < MIN_SCAN_COVERAGE * ms2WithWindow) {
+            log.debug("Only {} of {} MS2 scans fall into deconvolutable windows, below {}; not treating it as DIA.",
+                    claimedScans, ms2WithWindow, MIN_SCAN_COVERAGE);
+            return Optional.empty();
+        }
         return Optional.of(new DiaScanIndex(channels, droppedScans, repairedParents, deconvolutedScans));
     }
 
@@ -149,6 +209,17 @@ public class DiaScanIndexBuilder {
         if (!Double.isFinite(target) || target <= 0) target = header.getPrecursorMz();
         if (!Double.isFinite(target) || target <= 0) return null;
         return new float[]{(float) (target + window.getLeftOffset()), (float) (target + window.getRightOffset())};
+    }
+
+    /** the median gap between consecutive visits of one window, in seconds */
+    private static double medianRevisitGap(List<Ms2SpectrumHeader> scans) {
+        final double[] retentionTimes = new double[scans.size()];
+        for (int k = 0; k < retentionTimes.length; ++k) retentionTimes[k] = scans.get(k).getRetentionTime();
+        Arrays.sort(retentionTimes);
+        final double[] gaps = new double[retentionTimes.length - 1];
+        for (int k = 1; k < retentionTimes.length; ++k) gaps[k - 1] = retentionTimes[k] - retentionTimes[k - 1];
+        Arrays.sort(gaps);
+        return gaps[gaps.length / 2];
     }
 
     private static double medianScanInterval(ScanPointMapping mapping) {

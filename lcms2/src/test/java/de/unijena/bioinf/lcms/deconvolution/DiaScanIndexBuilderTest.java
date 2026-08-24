@@ -27,6 +27,26 @@ public class DiaScanIndexBuilderTest {
      * A plain SWATH scheme: {@code windowsPerCycle} windows of 100 m/z width, one MS1 in front of every MS2,
      * exactly like the Thermo files we tested against.
      */
+    /**
+     * As {@link #swath(int, int)} but with an explicit gap between one window's visits, which is the quantity the
+     * deconvolvability rule judges: a window revisited slowly cannot carry a peak shape however often it fires.
+     */
+    private static Fixture swathRevisitedEvery(int windowsPerCycle, int cycles, double gapSeconds) {
+        final List<Ms2SpectrumHeader> headers = new ArrayList<>();
+        final it.unimi.dsi.fastutil.doubles.DoubleArrayList ms1Rts = new it.unimi.dsi.fastutil.doubles.DoubleArrayList();
+        int uid = 0;
+        for (int cycle = 0; cycle < cycles; ++cycle) {
+            final double cycleStart = cycle * gapSeconds;
+            ms1Rts.add(cycleStart);
+            final int parentId = ms1Rts.size() - 1;
+            for (int w = 0; w < windowsPerCycle; ++w) {
+                headers.add(header(uid++, 200d + w * 100d, 50, 50, 35d, parentId,
+                        cycleStart + (w + 1) * gapSeconds / (windowsPerCycle + 1)));
+            }
+        }
+        return new Fixture(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray()));
+    }
+
     private static Fixture swath(int windowsPerCycle, int cycles) {
         final List<Ms2SpectrumHeader> headers = new ArrayList<>();
         final it.unimi.dsi.fastutil.doubles.DoubleArrayList ms1Rts = new it.unimi.dsi.fastutil.doubles.DoubleArrayList();
@@ -58,10 +78,66 @@ public class DiaScanIndexBuilderTest {
         return new ScanPointMapping(retentionTimes, scanIds, null);
     }
 
+    /** generous enough that the existing fixtures' fast cadence always clears the density rule */
+    private static final double PEAK_WIDTH = 10d;
+
     private record Fixture(List<Ms2SpectrumHeader> headers, Int2ObjectMap<float[]> multiplexed, ScanPointMapping ms1) {
         Optional<DiaScanIndex> build() {
-            return DiaScanIndexBuilder.build(headers, multiplexed, ms1);
+            return build(PEAK_WIDTH);
         }
+
+        Optional<DiaScanIndex> build(double peakWidth) {
+            return DiaScanIndexBuilder.build(headers, multiplexed, ms1, peakWidth);
+        }
+    }
+
+    /**
+     * A window revisited too slowly to sample a peak is not a channel we can deconvolute.
+     * <p>
+     * The rule is the only thing separating a DIA acquisition from a data dependent one that happens to re-select
+     * the same precursor: both produce a window that recurs, and only one produces a window whose consecutive
+     * visits fall inside the same elution. Measured on real files the two sit at about eleven and four points per
+     * peak against about one, so the margin is real but not large, and the quantity has to be the revisit gap
+     * against the peak width rather than the scan count.
+     */
+    @Test
+    public void aWindowRevisitedTooSlowlyToSampleAPeakIsNotAChannel() {
+        // sigma of one second: a peak spans about four, so three points need a gap of no more than 1.33 s
+        final Fixture dense = swathRevisitedEvery(3, 40, 1.2);
+        final Fixture sparse = swathRevisitedEvery(3, 40, 6d);
+
+        assertEquals(3, dense.build(1d).orElseThrow().numberOfChannels(),
+                "revisited well inside a peak, so every window is deconvolutable");
+        assertTrue(sparse.build(1d).isEmpty(),
+                "revisited every six seconds against a one second sigma: nothing to correlate");
+        // and the same sparse acquisition becomes deconvolutable if the peaks are broad enough
+        assertEquals(3, sparse.build(6d).orElseThrow().numberOfChannels(),
+                "the rule is about the gap relative to the peak, not the gap alone");
+    }
+
+    /**
+     * A handful of deconvolutable windows in an otherwise data dependent run is not a DIA acquisition.
+     * <p>
+     * Deconvolution rests on a null distribution built from the decoy edges of the channels it processes, so a run
+     * where only a few per cent of the scans qualify is calibrated against almost nothing - the p-values would be
+     * unmeasured rather than merely weak. Below {@link DiaScanIndexBuilder#MIN_SCAN_COVERAGE} the honest answer is
+     * that this is not a DIA measurement, and every scan belongs to the data dependent path.
+     */
+    @Test
+    public void aFewDeconvolutableWindowsDoNotMakeTheSampleDia() {
+        // one window revisited densely, and many that are not: together far below the coverage the gate wants
+        final List<Ms2SpectrumHeader> headers = new ArrayList<>(swathRevisitedEvery(1, 12, 1d).headers());
+        final it.unimi.dsi.fastutil.doubles.DoubleArrayList ms1Rts = new it.unimi.dsi.fastutil.doubles.DoubleArrayList();
+        for (int k = 0; k < 400; ++k) ms1Rts.add(k * 1d);
+        int uid = 10_000;
+        for (int k = 0; k < 400; ++k) {
+            // a different precursor every scan, as data dependent selection produces
+            headers.add(header(uid++, 300d + k * 0.7, 15, 15, 35d, k, k * 1d + 0.3));
+        }
+        final Fixture mixed = new Fixture(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray()));
+
+        assertTrue(mixed.build(1d).isEmpty(),
+                "12 of 412 scans is under the coverage gate, so the sample is not treated as DIA");
     }
 
     @Test
@@ -94,7 +170,7 @@ public class DiaScanIndexBuilderTest {
 
         List<Ms2SpectrumHeader> shuffled = new ArrayList<>(ordered.headers());
         Collections.shuffle(shuffled, new Random(42));
-        DiaScanIndex fromShuffled = DiaScanIndexBuilder.build(shuffled, ordered.multiplexed(), ordered.ms1()).orElseThrow();
+        DiaScanIndex fromShuffled = DiaScanIndexBuilder.build(shuffled, ordered.multiplexed(), ordered.ms1(), PEAK_WIDTH).orElseThrow();
 
         assertEquals(fromOrdered.numberOfChannels(), fromShuffled.numberOfChannels());
         for (int c = 0; c < fromOrdered.numberOfChannels(); ++c) {
@@ -131,7 +207,7 @@ public class DiaScanIndexBuilderTest {
             multiplexed.put(cycle, new float[]{1150, 1250, 1050, 1150, 950, 1050});
             rt += 0.1;
         }
-        DiaScanIndex index = DiaScanIndexBuilder.build(headers, multiplexed, mapping(ms1Rts.toDoubleArray())).orElseThrow();
+        DiaScanIndex index = DiaScanIndexBuilder.build(headers, multiplexed, mapping(ms1Rts.toDoubleArray()), PEAK_WIDTH).orElseThrow();
 
         assertEquals(1, index.numberOfChannels());
         DiaChannel channel = index.getChannels().getFirst();
@@ -157,7 +233,7 @@ public class DiaScanIndexBuilderTest {
                 rt += 0.1;
             }
         }
-        DiaScanIndex index = DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray())).orElseThrow();
+        DiaScanIndex index = DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray()), PEAK_WIDTH).orElseThrow();
         assertEquals(2, index.numberOfChannels());
         for (DiaChannel c : index.getChannels()) assertEquals(10, c.numberOfScans());
     }
@@ -178,7 +254,7 @@ public class DiaScanIndexBuilderTest {
             headers.add(header(cycle, 400d + (cycle % 5 - 2) * 0.01, 50, 50, 35d, ms1Rts.size() - 1, rt));
             rt += 0.1;
         }
-        DiaScanIndex index = DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray())).orElseThrow();
+        DiaScanIndex index = DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray()), PEAK_WIDTH).orElseThrow();
         assertEquals(1, index.numberOfChannels());
         assertEquals(20, index.getChannels().getFirst().numberOfScans());
         assertEquals(350f, index.getChannels().getFirst().windowLowerBound(0), 1e-3f);
@@ -199,7 +275,7 @@ public class DiaScanIndexBuilderTest {
                 rt += 0.1;
             }
         }
-        DiaScanIndex index = DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray())).orElseThrow();
+        DiaScanIndex index = DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray()), PEAK_WIDTH).orElseThrow();
         assertEquals(2, index.numberOfChannels());
     }
 
@@ -247,7 +323,7 @@ public class DiaScanIndexBuilderTest {
                 rt += 0.1;
             }
         }
-        DiaScanIndex index = DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray())).orElseThrow();
+        DiaScanIndex index = DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray()), PEAK_WIDTH).orElseThrow();
         assertEquals(2, index.numberOfChannels());
         assertEquals(2, index.channelsCovering(420).size(), "a precursor in the overlap belongs to both channels");
         assertEquals(1, index.channelsCovering(360).size());
@@ -265,7 +341,7 @@ public class DiaScanIndexBuilderTest {
             headers.add(header(k, 100d + k * 1.37, 0.2, 0.2, 35d, ms1Rts.size() - 1, rt));
             rt += 0.1;
         }
-        assertTrue(DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray())).isEmpty());
+        assertTrue(DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray()), PEAK_WIDTH).isEmpty());
     }
 
     @Test
@@ -280,13 +356,13 @@ public class DiaScanIndexBuilderTest {
                     null, ms1Rts.size() - 1, 400d, 400d, rt).withUid(k));
             rt += 0.1;
         }
-        assertTrue(DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray())).isEmpty(),
+        assertTrue(DiaScanIndexBuilder.build(headers, new Int2ObjectOpenHashMap<>(), mapping(ms1Rts.toDoubleArray()), PEAK_WIDTH).isEmpty(),
                 "without isolation windows there is nothing we could deconvolute");
     }
 
     @Test
     public void emptyInputYieldsNoIndex() {
-        assertTrue(DiaScanIndexBuilder.build(List.of(), new Int2ObjectOpenHashMap<>(), mapping(new double[]{0, 1, 2})).isEmpty());
+        assertTrue(DiaScanIndexBuilder.build(List.of(), new Int2ObjectOpenHashMap<>(), mapping(new double[]{0, 1, 2}), PEAK_WIDTH).isEmpty());
     }
 
     /** A window that only fires a handful of times cannot carry a chromatographic peak shape. */
@@ -297,7 +373,7 @@ public class DiaScanIndexBuilderTest {
         // add a fourth window that only fires twice
         headers.add(header(1000, 900d, 50, 50, 35d, 0, 0.05));
         headers.add(header(1001, 900d, 50, 50, 35d, 1, 0.15));
-        DiaScanIndex index = DiaScanIndexBuilder.build(headers, fixture.multiplexed(), fixture.ms1()).orElseThrow();
+        DiaScanIndex index = DiaScanIndexBuilder.build(headers, fixture.multiplexed(), fixture.ms1(), PEAK_WIDTH).orElseThrow();
         assertEquals(3, index.numberOfChannels());
         assertTrue(index.channelsCovering(900).isEmpty());
         assertEquals(2, index.getNumberOfDroppedScans());
