@@ -57,7 +57,9 @@ import java.util.Set;
 public class AlignedFeature implements Taggable {
     // topAnnotationsSummary are the indext summary field that can be retrieved very fast and are needed for quick gui loading.
     @Schema(name = "AlignedFeatureOptField", nullable = true)
-    public enum OptField {none, msData, topAnnotationsSummary, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags, statistics}
+    public enum OptField {none, msData, topAnnotationsSummary, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags,
+        //hidden from API via SwaggerConfig.java
+        statistics}
 
     /**
      * The optional fields the search index document carries, as opposed to the ones that have to be read from
