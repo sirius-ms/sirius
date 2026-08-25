@@ -228,7 +228,7 @@ Insert following snippet into your `build.gradle` to add this package as depende
 }
 
 dependencies {
-    implementation "io.sirius-ms:sirius-sdk:3.1+sirius6.5.4"
+    implementation "io.sirius-ms:sirius-sdk:3.2+sirius6.5.4"
 }
 ```
 <!--end gradle-dependency-->
@@ -248,7 +248,7 @@ Insert following snippet into your project's POM to add this package as dependen
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk</artifactId>
-  <version>3.1+sirius6.5.4</version>
+  <version>3.2+sirius6.5.4</version>
   <scope>compile</scope>
 </dependency>
 ```
