@@ -41,6 +41,8 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.tags.Groups;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
@@ -582,6 +584,297 @@ public class NoSQLProjectTest {
         project.deleteFoldChange(QuantRowType.FEATURES, "sample", "blank", AggregationType.MAX, QuantMeasure.APEX_INTENSITY);
         fc = project.listFoldChanges(QuantRowType.FEATURES, Pageable.unpaged()).getContent();
         assertEquals(0, fc.size());
+    }
+
+    @SneakyThrows
+    private void runSampleOverBlankFoldChange() {
+        new BackgroundRuns(project, null).runFoldChange(
+                FoldChangeJobSubmission.of("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY),
+                QuantRowType.FEATURES
+        ).awaitResult();
+    }
+
+    private long featuresWithFoldChangeBetween(double min, double max) {
+        return project.getSearchService().search(project.getProjectId(),
+                "stats.foldChange.sample.blank.APEX_INTENSITY.AVG:[" + min + " TO " + max + "]",
+                Pageable.ofSize(10), AlignedFeature.class).getTotalElements();
+    }
+
+    /**
+     * A project holding one sample run, one blank run and one feature found in both - tagged and grouped the
+     * way the blank removal fold change job expects, and with the feature already indexed, which the workflow's
+     * index merge needs.
+     *
+     * @return the feature as it is in the sample run, so a caller can change its intensity and recompute
+     */
+    @SneakyThrows
+    private Feature sampleAndBlankWithOneFeature(double sampleApexIntensity, double blankApexIntensity) {
+        project.createTags(List.of(
+                TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT)
+                        .possibleValues(List.of("sample", "blank")).build()
+        ), true);
+
+        List<LCMSRun> runs = List.of(
+                LCMSRun.builder().name("sampleRun")
+                        .chromatography(Chromatography.LC)
+                        .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                        .ionization(Ionization.byValue("ESI").orElseThrow())
+                        .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                        .build(),
+                LCMSRun.builder().name("blankRun")
+                        .chromatography(Chromatography.LC)
+                        .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                        .ionization(Ionization.byValue("ESI").orElseThrow())
+                        .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                        .build()
+        );
+        insertRunsAndIndex(runs, project);
+        project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()),
+                List.of(Tag.builder().tagName("sample").value("sample").build()));
+        project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()),
+                List.of(Tag.builder().tagName("sample").value("blank").build()));
+        project.addTagGroup("sample", "tags.sample:sample", "type1");
+        project.addTagGroup("blank", "tags.sample:blank", "type1");
+
+        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name("af").build();
+        ps.getStorage().insert(af);
+        Feature inSample = Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
+                .apexIntensity(sampleApexIntensity).runId(runs.get(0).getRunId()).build();
+        Feature inBlank = Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
+                .apexIntensity(blankApexIntensity).runId(runs.get(1).getRunId()).build();
+        ps.getStorage().insertAll(List.of(inSample, inBlank));
+
+        // the workflow merges the fold changes into the indexed feature, so it has to be indexed first
+        project.getSearchService().addDocument(project.getProjectId(), project.convertToApiFeature(af, false));
+        return inSample;
+    }
+
+    /**
+     * Recomputing a group pair has to replace its fold changes, in the project and in the search index that
+     * the gui filters on. Both halves failed silently. The cleanup filter named fields the stored record does
+     * not have, so nothing was deleted and the recompute left a second set behind; and the index merge kept
+     * whichever entry was already there, because fold changes compare by group pair and quantification while
+     * their abundances are excluded from equality. Together a recompute produced duplicate rows and a search
+     * index still answering with the superseded numbers.
+     */
+    @Test
+    @SneakyThrows
+    public void testRecomputingFoldChangesReplacesTheOldOnes() {
+        Feature inSample = sampleAndBlankWithOneFeature(2.0, 1.0);
+
+        runSampleOverBlankFoldChange();
+
+        String afId = Long.toString(inSample.getAlignedFeatureId());
+        assertEquals(1, project.getFoldChanges(QuantRowType.FEATURES, afId).size());
+        assertEquals(2.0, project.getFoldChanges(QuantRowType.FEATURES, afId).getFirst().getFoldChange(),
+                Double.MIN_VALUE);
+        assertEquals(1, featuresWithFoldChangeBetween(1.5, 2.5), "indexed after the first run");
+
+        // twice as abundant in the sample as before: same group pair, new value
+        inSample.setApexIntensity(4.0);
+        ps.getStorage().upsert(inSample);
+        ps.getStorage().flush();
+
+        runSampleOverBlankFoldChange();
+
+        List<FoldChange> recomputed = project.getFoldChanges(QuantRowType.FEATURES, afId);
+        assertEquals(1, recomputed.size(), "the recompute must replace the fold change, not add a second one");
+        assertEquals(4.0, recomputed.getFirst().getFoldChange(), Double.MIN_VALUE);
+
+        assertEquals(1, featuresWithFoldChangeBetween(3.5, 4.5),
+                "the search index must carry the recomputed fold change");
+        assertEquals(0, featuresWithFoldChangeBetween(1.5, 2.5),
+                "and must not still answer with the superseded one");
+    }
+
+    /**
+     * The index is also written from scratch, and that path has to carry the fold changes too. It is not a
+     * corner: it runs after every lc-ms data import, and on opening a project whose persisted index was
+     * discarded. Rebuilding without them leaves a project whose fold changes are all in place and whose blank
+     * filter matches nothing - which is what the import path did, even though it computes them in the
+     * orientation the filter reads.
+     */
+    @Test
+    @SneakyThrows
+    public void testRebuildingTheIndexKeepsTheFoldChanges() {
+        sampleAndBlankWithOneFeature(4.0, 1.0);
+
+        runSampleOverBlankFoldChange();
+        assertEquals(1, featuresWithFoldChangeBetween(3.5, 4.5), "indexed by the fold change run");
+
+        project.createSearchIndex(true);
+
+        assertEquals(1, featuresWithFoldChangeBetween(3.5, 4.5),
+                "a rebuilt index must still answer for the fold change the project holds");
+    }
+
+    /**
+     * A feature the bulk queries found nothing for comes back with the empty value, not with null.
+     * <p>
+     * The distinction is what keeps the listing from asking again. Null is what the per-feature pass reads as
+     * "not fetched yet", so writing it for a feature that simply has no tags makes that pass issue a lookup per
+     * feature - over exactly the features the bulk query has just established have none, which on an index
+     * rebuild is most of them. The empty value says "asked, nothing there" instead, and it is what the
+     * per-feature lookup would have arrived at, so no response changes shape.
+     */
+    @Test
+    @SneakyThrows
+    public void testTheBulkListingReportsNothingFoundAsEmptyRatherThanNull() {
+        for (int i = 0; i < 3; i++)
+            ps.getStorage().insert(AlignedFeatures.builder().charge((byte) 1).name("af" + i).build());
+        ps.getStorage().flush();
+
+        List<AlignedFeature> features = project.findAlignedFeatures(Pageable.unpaged(), false,
+                        EnumSet.of(AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools,
+                                AlignedFeature.OptField.statistics))
+                .getContent();
+
+        assertEquals(3, features.size());
+        for (AlignedFeature feature : features) {
+            assertNotNull(feature.getTags(), "an untagged feature is tagged with nothing, not unknown");
+            assertTrue(feature.getTags().isEmpty());
+            assertNotNull(feature.getComputedTools(), "nothing computed is not the same as not looked up");
+            assertNotNull(feature.getStats(), "no fold change is not the same as not looked up");
+            assertTrue(feature.getStats().isEmpty());
+        }
+    }
+
+    /**
+     * ... and the same from the index, which is the other way a feature is assembled. The fold changes are the
+     * field where the two used to disagree: the tag mapper answers a document with no tags with an empty map,
+     * the fold change mapper answered a document with no fold change with null.
+     */
+    @Test
+    @SneakyThrows
+    public void testTheIndexAlsoReportsNoFoldChangeAsEmptyRatherThanNull() {
+        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name("af").build();
+        ps.getStorage().insert(af);
+        ps.getStorage().flush();
+        project.getSearchService().addDocument(project.getProjectId(), project.convertToApiFeature(af, false));
+
+        project.getSearchService().updateDocumentsFields(project.getProjectId(),
+                List.of(Long.toString(af.getAlignedFeatureId())),
+                (AlignedFeature indexed) -> assertNotNull(indexed.getStats(),
+                        "a document without fold changes has none, which is not the same as unknown"),
+                AlignedFeature.class);
+    }
+
+    /**
+     * The whole blank removal chain, from run types to the query the gui runs: the run type dialog's job
+     * submission, the fold changes it computes, the field the mapper names them under, and the filter reading
+     * that field back. Every part of it is pinned somewhere on its own; this is the only place that asks the
+     * question the user asks, which is whether a feature enriched in the samples survives the filter and one
+     * that is not does not.
+     * <p>
+     * The group names are the real ones, so the field name assembled here is character for character the one
+     * {@code FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME} builds in the gui, which cannot be imported
+     * from this module.
+     */
+    @Test
+    @SneakyThrows
+    public void testTheBlankFilterKeepsTheFeaturesEnrichedInTheSamples() {
+        String sampleGroup = Groups.SAMPLE_RUNS.getGroupName();
+        String blankGroup = Groups.BLANK_RUNS.getGroupName();
+        String blankRemovalField = "stats.foldChange." + sampleGroup + "." + blankGroup
+                + "." + QuantMeasure.APEX_INTENSITY + "." + AggregationType.AVG;
+
+        project.createTags(List.of(TagDefinitionImport.builder().tagName(TagDefinitions.SAMPLE_TYPE.getTagName())
+                .valueType(ValueType.TEXT).possibleValues(List.of(sampleGroup, blankGroup)).build()), true);
+
+        List<LCMSRun> runs = List.of(lcmsRun("sampleRun"), lcmsRun("blankRun"));
+        insertRunsAndIndex(runs, project);
+        project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(
+                Tag.builder().tagName(TagDefinitions.SAMPLE_TYPE.getTagName()).value(sampleGroup).build()));
+        project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(
+                Tag.builder().tagName(TagDefinitions.SAMPLE_TYPE.getTagName()).value(blankGroup).build()));
+        project.addTagGroup(sampleGroup, Groups.SAMPLE_RUNS.getLuceneQuery(), "sampleType");
+        project.addTagGroup(blankGroup, Groups.BLANK_RUNS.getLuceneQuery(), "sampleType");
+
+        // apex intensity in the sample run vs in the blank run
+        long enriched = featureAcross(runs, 100.0, 1.0);   // a hundred times the blank
+        long modest = featureAcross(runs, 3.0, 1.0);       // three times the blank
+        long inBlankOnly = featureAcross(runs, 1.0, 100.0);// a hundredth of the blank - carry-over, not sample
+
+        // exactly what the run type dialog submits
+        new BackgroundRuns(project, null).runFoldChange(
+                FoldChangeJobSubmission.of(sampleGroup, blankGroup, AggregationType.AVG, QuantMeasure.APEX_INTENSITY),
+                QuantRowType.FEATURES).awaitResult();
+
+        assertEquals(100.0, foldChangeOf(enriched), 1e-9, "sample over blank, not the other way round");
+        assertEquals(0.01, foldChangeOf(inBlankOnly), 1e-9);
+
+        // and what the gui filter runs for "at least 2x"
+        assertEquals(Set.of(enriched, modest), featuresPassingBlankFilter(blankRemovalField, 2.0),
+                "at least twice the blank keeps both enriched features and drops the blank-dominated one");
+        assertEquals(Set.of(enriched), featuresPassingBlankFilter(blankRemovalField, 5.0),
+                "raising the minimum to five drops the three-fold feature as well");
+        assertEquals(Set.of(), featuresPassingBlankFilter(blankRemovalField, 200.0),
+                "and a minimum nothing reaches keeps nothing");
+    }
+
+    private static LCMSRun lcmsRun(String name) {
+        return LCMSRun.builder().name(name)
+                .chromatography(Chromatography.LC)
+                .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                .ionization(Ionization.byValue("ESI").orElseThrow())
+                .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                .build();
+    }
+
+    /** One aligned feature seen in both runs with the given apex intensities, indexed like an imported one. */
+    @SneakyThrows
+    private long featureAcross(List<LCMSRun> runs, double inSample, double inBlank) {
+        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name("af").build();
+        ps.getStorage().insert(af);
+        ps.getStorage().insertAll(List.of(
+                Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
+                        .apexIntensity(inSample).runId(runs.get(0).getRunId()).build(),
+                Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
+                        .apexIntensity(inBlank).runId(runs.get(1).getRunId()).build()));
+        ps.getStorage().flush();
+        project.getSearchService().addDocument(project.getProjectId(), project.convertToApiFeature(af, false));
+        return af.getAlignedFeatureId();
+    }
+
+    @SneakyThrows
+    private double foldChangeOf(long alignedFeatureId) {
+        List<FoldChange> foldChanges = project.getFoldChanges(QuantRowType.FEATURES, Long.toString(alignedFeatureId));
+        assertEquals(1, foldChanges.size(), "one comparison was computed for this feature");
+        return foldChanges.getFirst().getFoldChange();
+    }
+
+    /** The features the gui's blank filter keeps for a given minimum fold change. */
+    private Set<Long> featuresPassingBlankFilter(String blankRemovalField, double minFoldChange) {
+        return project.getSearchService().search(project.getProjectId(),
+                        blankRemovalField + ":[" + minFoldChange + " TO *]", Pageable.unpaged(), AlignedFeature.class)
+                .getContent().stream()
+                .map(f -> Long.parseLong(f.getAlignedFeatureId()))
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * The run type dialog does not submit one comparison, it submits four - two aggregations over two
+     * quantifications - and the cleanup that keeps a rerun from piling them up names those as a set. A filter
+     * over a set is a different thing from a filter over one value, and only the one-value form was covered.
+     */
+    @Test
+    @SneakyThrows
+    public void testRecomputingReplacesEveryCombinationTheDialogSubmits() {
+        Feature inSample = sampleAndBlankWithOneFeature(2.0, 1.0);
+        String afId = Long.toString(inSample.getAlignedFeatureId());
+        FoldChangeJobSubmission asTheDialogSubmitsIt = FoldChangeJobSubmission.builder()
+                .leftRunGroup("sample").rightRunGroup("blank")
+                .aggregationTypes(EnumSet.of(AggregationType.AVG, AggregationType.MAX))
+                .quantificationMeasures(EnumSet.of(QuantMeasure.APEX_INTENSITY, QuantMeasure.AREA_UNDER_CURVE))
+                .build();
+
+        new BackgroundRuns(project, null).runFoldChange(asTheDialogSubmitsIt, QuantRowType.FEATURES).awaitResult();
+        assertEquals(4, project.getFoldChanges(QuantRowType.FEATURES, afId).size(),
+                "two aggregations over two quantifications");
+
+        new BackgroundRuns(project, null).runFoldChange(asTheDialogSubmitsIt, QuantRowType.FEATURES).awaitResult();
+        assertEquals(4, project.getFoldChanges(QuantRowType.FEATURES, afId).size(),
+                "and a rerun replaces all four rather than adding four more");
     }
 
     @Test
