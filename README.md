@@ -28,7 +28,7 @@ Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jen
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 6.5.4 (2026-08-20)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 6.5.4 (2026-08-25)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
 - for Windows (x86-64/amd64/x64): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.5.4/sirius-6.5.4-win-x64.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.5.4/sirius-6.5.4-win-x64.zip)
 - for Mac (x86-64/amd64/x64): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.5.4/sirius-6.5.4-macos-x64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.5.4/sirius-6.5.4-macos-x64.zip)
