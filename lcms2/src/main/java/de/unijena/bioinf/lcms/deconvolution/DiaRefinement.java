@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.deconvolution;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.lcms.utils.Tracker;
+import org.slf4j.LoggerFactory;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
@@ -274,6 +275,18 @@ public class DiaRefinement {
             pooled.addAll(graph);
         }
         pooled.calibrate();
+
+        // Without a null distribution nothing can be called significant, so this stage has no basis for any verdict -
+        // and replacing stage one's spectra with the nothing it found would destroy a result it cannot judge. It
+        // leaves them alone instead. Only reporting this was how an all ion acquisition ended up with every one of
+        // its spectra emptied.
+        if (pooled.decoyCount() < DiaDeconvolution.MIN_DECOY_EDGES) {
+            LoggerFactory.getLogger(DiaRefinement.class).warn("Only {} decoy edges over the whole experiment, which "
+                    + "is too few to call anything significant. The spectra of stage one are kept as they are.",
+                    pooled.decoyCount());
+            return new Result(List.of(), features.size(), pooled.decoyCount(), String.format(Locale.US,
+                    "%.1f ppm / %.4f Da", massDeviation.getPpm(), massDeviation.getAbsolute()));
+        }
 
         final List<ChannelResult> results = new ArrayList<>(channels.size());
         for (Map.Entry<DiaChannelKey, List<DiaAlignedFragments.SampleFragments>> entry : channels.entrySet()) {
