@@ -42,6 +42,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 import static de.unijena.bioinf.ms.gui.dialogs.import5.CombinedImportDialog.POSSIBLE_SAMPLE_TYPES;
 import static de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions.*;
@@ -200,15 +201,24 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
                                 .value(sampleType)
                                 .tagName(SAMPLE_TYPE.getTagName())));
 
-                LoadingBackroundTask<Job> task = gui.applySiriusClient((client, pid) -> {
-                    client.runs().addTagsToRunsExperimental(pid, tags);
+                // Both calls are blocking and this runs on the EDT - applySiriusClient hands the client to the
+                // caller's own thread - so making them here is what left the gui unresponsive between this
+                // dialog closing and the progress bar appearing. Submitting the job is the slow half: the run
+                // it starts covers every feature in the project, and collecting those to lock them reads all of
+                // them before the call returns. It is background work either way; now it says so while it runs.
+                LoadingBackroundTask<Job> submission = gui.applySiriusClient((client, pid) ->
+                        Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Assigning run types...",
+                                (Callable<Job>) () -> {
+                                    client.runs().addTagsToRunsExperimental(pid, tags);
+                                    return client.featureStatistics().computeAlignedFeatureFoldChangesExperimental(
+                                            pid, blankRemovalJobSubmission(), List.of(JobOptField.PROGRESS));
+                                }));
+                Job job = submission.awaitResult();
 
-                    FoldChangeJobSubmission request = blankRemovalJobSubmission();
-
-                    Job job = client.featureStatistics().computeAlignedFeatureFoldChangesExperimental(pid, request, List.of(JobOptField.PROGRESS));
-                    return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Computing blank removal fold changes...", new io.sirius.ms.sdk.jjobs.SseProgressJJob(gui.getSiriusClient(), pid, job));
-                });
-                task.awaitResult();
+                LoadingBackroundTask<Job> run = gui.applySiriusClient((client, pid) ->
+                        Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Computing blank removal fold changes...",
+                                new io.sirius.ms.sdk.jjobs.SseProgressJJob(client, pid, job)));
+                run.awaitResult();
             }
         } catch (Exception exc) {
             Jobs.runEDTLater(() -> new ErrorWithDetailsDialog(gui.getMainFrame(), exc.getMessage(), exc.getCause() != null ? exc.getCause(): exc));
