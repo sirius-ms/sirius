@@ -384,6 +384,20 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 ps.getStorage().insertAll(sampleTypeTags);
             }
 
+            if (!processing.hasLcMsRuns()) {
+                // every run given here holds fragmentation spectra and no MS1 scan at all. There is no chromatogram
+                // to align, to merge or to pick features from, so all the experiment can contribute is its spectra:
+                // each of them becomes a compound of its own if it is worth keeping.
+                updateProgress(totalProgress, ++progress, "Importing runs without MS1 scans");
+                int imported = processing.importMs2OnlyRunsAlone();
+                importedFeatureIds.addAll(processing.getImportedFeatureIds());
+                if (imported == 0) System.err.println("No features found.");
+                else System.out.printf("Imported %d features from runs that contain no MS1 scans.%n", imported);
+                progress += 4;
+                updateProgress(totalProgress, progress, imported == 0 ? "No features" : "Done");
+                return;
+            }
+
             updateProgress(totalProgress, progress, "Aligning runs");
             AlignmentBackbone bac = processing.align();
             HashMap<DataQuality, Integer> countMap, countMapMs2;
