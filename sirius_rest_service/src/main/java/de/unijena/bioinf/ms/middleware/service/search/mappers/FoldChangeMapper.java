@@ -66,7 +66,7 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
     }
 
     @Override
-    public @Nullable List<Statistics> toPojo(@NotNull String rootFieldName, @NotNull Iterable<IndexableField> document) {
+    public @NotNull List<Statistics> toPojo(@NotNull String rootFieldName, @NotNull Iterable<IndexableField> document) {
         String prefix = rootFieldName + ".foldChange";
 
 
@@ -80,15 +80,15 @@ public abstract class FoldChangeMapper implements FieldMapper<Collection<Statist
         if (objectId == null)
             throw new IllegalStateException("Could not find objectId field: " + getObjectIdFieldName());
 
-        List<Statistics> stats = null;
+        // Empty rather than null for a document that carries no fold change, the way TagMapper answers for a
+        // document with no tag: null is what the read path reads as "not fetched yet", and a field that says
+        // that when it has in fact been looked up is what makes something look it up again.
+        List<Statistics> stats = new ArrayList<>();
         for (IndexableField storedField : document) {
             String name = storedField.name();
             if (name.startsWith(prefix)) {
                 BytesRef binaryValue = storedField.binaryValue();
                 if (binaryValue == null) continue;
-
-                if (stats == null)
-                    stats = new ArrayList<>();
                 // fold change only case add more if needed
                 String[] split = name.split("[.]");
 

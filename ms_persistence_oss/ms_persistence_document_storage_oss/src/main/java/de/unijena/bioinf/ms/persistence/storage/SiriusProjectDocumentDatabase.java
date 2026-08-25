@@ -177,7 +177,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
      * {@code ProjectSchemaMigrator} to produce it in the same change - the two are asserted to agree, because a
      * conversion left behind would quietly hand back projects a version older than newly created ones.
      */
-    int CURRENT_PROJECT_SCHEMA_VERSION = 2;
+    int CURRENT_PROJECT_SCHEMA_VERSION = 3;
 
     default Optional<Integer> findProjectSchemaVersion() {
         return findProjectPropertyAsInt(PROJECT_SCHEMA_VERSION_KEY);

@@ -124,6 +124,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -252,10 +253,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     // Mark incomplete for the duration of the (re)build so an interrupted build is not
                     // persisted and gets rebuilt on the next open (M5).
                     searchService.setIndexComplete(projectId, AlignedFeature.class, false);
-                    Pages.forEach(
-                            pageable -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS),
-                            page -> searchService.addDocuments(projectId, page.getContent())
-                    );
+                    feedAllFeaturesToIndex(alfs -> searchService.addDocuments(projectId, alfs));
                     searchService.setIndexComplete(projectId, AlignedFeature.class, true);
                 }
 
@@ -304,8 +302,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * than {@link AlignedFeature#INDEXED_OPT_FIELDS} is missing them until something rewrites it, and
      * {@link #findAlignedFeatures(String, Pageable, boolean, EnumSet)} serves a request for exactly those
      * fields straight from the index - so a field that was never written comes back absent instead of being
-     * re-read from the database. Every path that feeds features to the index therefore goes through here, and
-     * there is no opt-field parameter to disagree about.
+     * re-read from the database. Every path that feeds features to the index therefore goes through here or
+     * through {@link #feedAllFeaturesToIndex(Consumer)}, and neither has an opt-field parameter to disagree
+     * about.
      *
      * @param batchConsumer what to do with each batch: add the documents, or replace the existing ones
      */
@@ -316,6 +315,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Partition<Long> partition = Partition.ofSize(featureIds.stream().sorted().toList(), LARGE_BATCH_SIZE);
         for (List<Long> ids : partition)
             batchConsumer.accept(findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS));
+    }
+
+    /**
+     * The same for every feature in the project, for building the index from scratch rather than adding to it.
+     * <p>
+     * Pages rather than taking a list of ids: a rebuild spans the whole project, and what bounds what it holds
+     * is one page of assembled features at a time. It is a sibling of {@link #feedFeaturesToIndex} rather than a
+     * caller of it for that reason alone - what matters is that the two agree on the fields, which they do by
+     * both naming {@link AlignedFeature#INDEXED_OPT_FIELDS} and neither taking it as a parameter.
+     */
+    private void feedAllFeaturesToIndex(@NotNull Consumer<List<AlignedFeature>> batchConsumer) {
+        Pages.forEach(
+                pageable -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS),
+                page -> batchConsumer.accept(page.getContent())
+        );
     }
 
     @SneakyThrows
@@ -1429,10 +1443,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             feature.setTags(null);
         }
 
-        // The fold changes are restored by the index mapper on every read because the update path needs them to
-        // merge into (FoldChangeWorkflow), but no client can use them - the field is hidden from the api and is
-        // not in the generated clients, so it is dropped again on arrival after being the largest part of the
-        // response. Whoever asks for them keeps what the index carried; nothing is loaded for them here.
+        // Dropped like every other field nobody asked for - but, unlike them, never loaded here. Fold changes
+        // are fetched in bulk or not at all: by statJob in annotateApiFeatures for a batch, or off the index
+        // document for a search hit. Loading one feature's here would mean a query per feature, and it would
+        // fire for exactly the features that have none, since most features are not in both a sample and a
+        // blank run. Whoever asks for them therefore gets what one of those two paths already put in place;
+        // a feature built from its own document (findAlignedFeaturesById) carries none, by the same rule.
         if (!optFields.contains(AlignedFeature.OptField.statistics))
             feature.setStats(null);
 
@@ -1992,14 +2008,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (features.isEmpty())
             return Page.empty(pageable);
 
-        if (!AlignedFeature.INDEXED_OPT_FIELDS.equals(optFields)) {
-            features.stream().parallel().forEach(f ->
-                    annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, msDataSearchPrepared, optFields));
-        } else if (!optFields.contains(AlignedFeature.OptField.statistics)) {
-            // everything asked for came out of the index, so the assembly pass is skipped - but the fold changes
-            // came out of it too, and nobody asked for those
-            features.forEach(f -> f.setStats(null));
-        }
+        // A document holds every indexed field whether or not this caller asked for it, so what comes back has
+        // to be brought down to what was asked for. annotateApiFeature is what does that - for each opt field it
+        // loads what is missing and drops what nobody wants - and it is cheap on a feature that came out of the
+        // index, because every load it could do is guarded on the field still being absent.
+        features.stream().parallel().forEach(f ->
+                annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, msDataSearchPrepared, optFields));
 
         return features;
     }
@@ -2032,6 +2046,25 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 storage().findAllByPrimaryKeyStr(featureIds, AlignedFeatures.class),
                 msDataAsCosineQuery,
                 optFields);
+    }
+
+    /**
+     * What a bulk retrieval found for one feature: what it holds for it, or the empty value when it found
+     * nothing - which is not the same as null, because null is what the per-feature pass below reads as "not
+     * fetched yet" and answers with a query.
+     * <p>
+     * Null for a field this request did not ask for, though. That pass drops such a field either way, so the
+     * empty value would be built for every feature of every listing only to be thrown away - and the fields a
+     * listing does not ask for are usually most of them.
+     */
+    private static <T> T bulkResult(@NotNull EnumSet<AlignedFeature.OptField> optFields,
+                                    @NotNull AlignedFeature.OptField field,
+                                    @NotNull Long2ObjectOpenHashMap<T> found, long id,
+                                    @NotNull Supplier<T> nothingFound) {
+        if (!optFields.contains(field))
+            return null;
+        T value = found.get(id);
+        return value != null ? value : nothingFound.get();
     }
 
     private List<AlignedFeature> annotateApiFeatures(@NotNull Stream<AlignedFeatures> apifeatures, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
@@ -2127,10 +2160,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(alf -> {
                     long fid = alf.getAlignedFeatureId();
                     AlignedFeature apiFeture = convertToApiFeature(alf, msDataAsCosineQuery, EnumSet.noneOf(AlignedFeature.OptField.class));
-                    apiFeture.setQualities(convertToQualityMap(quality.get(fid)));
-                    apiFeture.setComputedTools(computed.get(fid));
-                    apiFeture.setTags(tags.get(fid));
-                    apiFeture.setStats(stats.get(fid));
+                    // Empty rather than null for whatever the bulk query did not find, because null is what
+                    // annotateApiFeature below reads as "not fetched yet" and answers with a query per feature -
+                    // over exactly the features the bulk query has just established have nothing. These are the
+                    // values that per-feature load would arrive at anyway, so nothing about the response
+                    // changes. Mutable, because a fetched collection is something the index update path edits
+                    // in place (see deleteFoldChange).
+                    // convertToQualityMap answers a missing report with an empty map, so this one is already
+                    // "empty, not null" - it only needs the same restraint about a field nobody asked for.
+                    apiFeture.setQualities(optFields.contains(AlignedFeature.OptField.qualities)
+                            ? convertToQualityMap(quality.get(fid)) : null);
+                    apiFeture.setComputedTools(bulkResult(optFields, AlignedFeature.OptField.computedTools,
+                            computed, fid, () -> ComputedSubtools.builder().build()));
+                    apiFeture.setTags(bulkResult(optFields, AlignedFeature.OptField.tags, tags, fid, HashMap::new));
+                    apiFeture.setStats(bulkResult(optFields, AlignedFeature.OptField.statistics,
+                            stats, fid, ArrayList::new));
                     if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
                         apiFeture.setTopAnnotations(extractSearchIndexTopAnnotations(fid, csires.get(fid)));
                     //add additional anotations that are not yes covered by bulk retrieval.

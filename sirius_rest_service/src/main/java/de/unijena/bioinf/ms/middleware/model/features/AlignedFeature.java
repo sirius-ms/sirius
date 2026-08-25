@@ -59,8 +59,22 @@ public class AlignedFeature implements Taggable {
     @Schema(name = "AlignedFeatureOptField", nullable = true)
     public enum OptField {none, msData, topAnnotationsSummary, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags, statistics}
 
+    /**
+     * The optional fields the search index document carries, as opposed to the ones that have to be read from
+     * the project. Everything annotated {@link IndexField} or {@link IndexFieldWithMapper} below that is not
+     * part of a feature unconditionally.
+     * <p>
+     * Says what a document holds, which is what a document has to be written with - that is its one job. It is
+     * deliberately not a statement about what a response should carry: {@link OptField#statistics} is in here
+     * because the index needs it and hidden from the api because no client can read it, and those are not in
+     * conflict as long as what leaves the api is decided by what was asked for rather than by this set.
+     * <p>
+     * Shared, and an {@code EnumSet} because that is what every opt-field parameter takes - so it must not be
+     * mutated.
+     */
     public static final EnumSet<OptField> INDEXED_OPT_FIELDS =  EnumSet.of(
-            OptField.tags, OptField.computedTools, OptField.topAnnotationsSummary, OptField.qualities);
+            OptField.tags, OptField.computedTools, OptField.topAnnotationsSummary, OptField.qualities,
+            OptField.statistics);
 
     // identifier
     /**
@@ -218,8 +232,11 @@ public class AlignedFeature implements Taggable {
      * NULL if not a sample run or no fold change exists
      */
     //NOTE: This field is mainly for search index building and therefore hidden from the api. It is only filled
-    // when OptField.statistics is requested: it is not part of the documented api, so nothing reads it, while it
-    // is by far the largest part of a feature - one entry per group pair, quantification and aggregation.
+    // when OptField.statistics is requested: the field is absent from the generated clients, so no client can
+    // read a feature's fold changes THROUGH the feature - they are read from the /statistics endpoints instead,
+    // straight out of the project - while this is by far the largest part of a feature, one entry per group
+    // pair, quantification and aggregation. The index document, on the other hand, has to carry them: a Lucene
+    // query is the only way the gui's blank filter can ask about them.
     @IndexFieldWithMapper(mapper = FoldChangeMapper.AlignedFeatureFoldChange.class)
     @Schema(nullable = true, hidden = true)
     protected List<Statistics> stats;

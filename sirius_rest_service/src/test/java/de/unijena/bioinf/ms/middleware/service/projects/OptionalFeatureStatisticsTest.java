@@ -154,16 +154,26 @@ public class OptionalFeatureStatisticsTest {
         assertEquals("blanks", stat.getRightGroup());
     }
 
+    /**
+     * Asking for everything else the index holds is not asking for these.
+     * <p>
+     * Spelled out rather than taken from {@code INDEXED_OPT_FIELDS}, which contains the fold changes: a document
+     * carries them, so every read hands them back and something has to drop them again. This is the request
+     * where that is easiest to get wrong, because every field in it comes off the document and nothing has to be
+     * read for it.
+     */
     @Test
-    @DisplayName("the index fast path drops them too")
-    void indexedOptFieldsAlsoOmitStatistics() {
+    @DisplayName("asking for the rest of the indexed fields does not ask for these")
+    void everyOtherIndexedFieldStillOmitsStatistics() {
         String id = importFeature();
         indexFoldChange(id);
 
-        // Everything in this set comes out of the index, so the per-feature assembly pass is skipped entirely -
-        // and the fold changes come out of the index with it.
+        EnumSet<AlignedFeature.OptField> everythingElseInTheIndex = EnumSet.of(
+                AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools,
+                AlignedFeature.OptField.topAnnotationsSummary, AlignedFeature.OptField.qualities);
+
         AlignedFeature feature = project
-                .findAlignedFeatures(null, Pageable.unpaged(), false, AlignedFeature.INDEXED_OPT_FIELDS)
+                .findAlignedFeatures(null, Pageable.unpaged(), false, everythingElseInTheIndex)
                 .getContent().getFirst();
         assertNull(feature.getStats());
     }
