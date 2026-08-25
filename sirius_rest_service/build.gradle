@@ -129,6 +129,63 @@ openApi {
 }
 forkedSpringBootRun.dependsOn(':sirius_rest_service:bootJar')
 
+// springdoc boots a real SIRIUS and reads the spec off it, but SiriusMiddlewareApplication refuses to start
+// while another healthy instance is running ("SIRIUS ALREADY RUNNING!", exit 1). The plugin never notices the
+// fork died: generateOpenApiDocs polls the dead port for the full waitTimeInSeconds and the build then sits in
+// forkedSpringBootStop until it is killed by hand. Check the two things that can block the fork before it is
+// started, and name the fix in the message instead.
+tasks.register('checkSpecGenerationPreconditions') {
+    group 'openApi'
+    description 'Fails fast when a running SIRIUS or an occupied port would stall OpenAPI spec generation.'
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def firstLine = { File f -> f.isFile() ? f.readLines().findResult { it.isBlank() ? null : it.trim() } : null }
+
+        // Mirrors SiriusSDKUtils.restHealthCheck: 2xx plus a body reporting status UP.
+        def healthyAt = { String p ->
+            try {
+                HttpURLConnection con = new URL("http://localhost:${p}/actuator/health").openConnection() as HttpURLConnection
+                con.connectTimeout = 2000
+                con.readTimeout = 2000
+                if (con.responseCode < 200 || con.responseCode >= 300)
+                    return false
+                return 'UP'.equalsIgnoreCase(new JsonSlurper().parseText(con.inputStream.getText('UTF-8'))?.status?.toString())
+            } catch (Exception ignored) {
+                return false
+            }
+        }
+
+        // The same discovery files SiriusSDK.findAndConnectLocally() reads; major version follows the frontend version.
+        String major = siriusFrontendVersion.toString().split('\\.')[0]
+        File siriusDir = new File(System.getProperty('user.home'), '.sirius')
+        String runningPort = firstLine(new File(siriusDir, "sirius-${major}.port"))
+
+        // Only a *healthy* instance blocks the fork - a stale port file gets cleaned up by SIRIUS itself.
+        if (runningPort != null && healthyAt(runningPort)) {
+            String pid = firstLine(new File(siriusDir, "sirius-${major}.pid"))
+            throw new GradleException(
+                    "A SIRIUS instance is already running at http://localhost:${runningPort}/" +
+                            (pid != null ? " (pid ${pid})" : "") + ".\n" +
+                            "Only one SIRIUS service may run at a time, so spec generation would start, exit immediately, " +
+                            "and leave the build waiting for a server that is not there.\n" +
+                            "Shut it down and retry" + (pid != null ? ", e.g. 'kill ${pid}'." : "."))
+        }
+
+        // The port the forked app binds ('-p' in customBootRun) is the one apiDocsUrl is polled on; keep them in sync.
+        int port = URI.create(openApi.apiDocsUrl.get()).port
+        try {
+            new ServerSocket(port).close()
+        } catch (IOException ignored) {
+            throw new GradleException(
+                    "Port ${port} is occupied, but OpenAPI spec generation needs it to boot SIRIUS on.\n" +
+                            "Free the port, or point openApi.apiDocsUrl and customBootRun's '-p' at a free one, then retry.")
+        }
+    }
+}
+
+forkedSpringBootRun.dependsOn('checkSpecGenerationPreconditions')
+
 
 tasks.register("generateOpenApiDocsEnumsAsString") {
     description "Creates the api docs with enums treated as strings which seems to be mor compatible with some languages."
