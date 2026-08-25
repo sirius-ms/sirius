@@ -37,10 +37,19 @@ package de.unijena.bioinf.ms.middleware.service.search.mappers;
 public final class IndexFormat {
 
     /**
-     * Version 1 - the first version that is checked at all. Every index written before this existed reports no
-     * version and is rebuilt once, which is what makes the check retroactive.
+     * Version 2 - the fold changes of a feature are written to its document again, in the orientation the gui's
+     * blank filter reads.
+     * <p>
+     * Every index in existence is wrong about them in one of two ways, neither of which the shape can see. One
+     * written by a build that made the fold changes an opt-in field of the api carries none at all, because the
+     * index write asked for the fields an api response wants. An older one carries them under the group pair
+     * the blank removal job used to submit, {@code Blank.Sample} rather than {@code Sample.Blank} - a field name
+     * the filter never queries.
+     * <p>
+     * Version 1 was the first version that was checked at all. Every index written before that existed reports
+     * no version and is rebuilt once, which is what makes the check retroactive.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
 
     private IndexFormat() {
     }
