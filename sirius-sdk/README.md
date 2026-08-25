@@ -114,11 +114,13 @@ List<AlignedFeature> importedFeatures = sirius.features()
 
 
 ## Availability
-The `sirius-sdk` is available as maven artifact.
+The `sirius-sdk` is available as maven artifact. The coordinates below are kept in sync with the published
+version by the `refreshSdkReadme` Gradle task - edit the task, not the version strings.
 
 ### Gradle
 Insert following snippet into your `build.gradle` to add this package as dependency:
 
+<!--begin gradle-dependency-->
 ```groovy
   repositories {
     maven {
@@ -130,10 +132,12 @@ dependencies {
     implementation "io.sirius-ms:sirius-sdk:3.1+sirius6.5.4"
 }
 ```
+<!--end gradle-dependency-->
 
 ### Maven
 Insert following snippet into your project's POM to add this package as dependency:
 
+<!--begin maven-dependency-->
 ```xml
 <repositories>
   <repository>
@@ -149,3 +153,4 @@ Insert following snippet into your project's POM to add this package as dependen
   <scope>compile</scope>
 </dependency>
 ```
+<!--end maven-dependency-->

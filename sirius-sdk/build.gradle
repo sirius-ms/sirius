@@ -101,3 +101,53 @@ openApiGenerate {
             "ProblemDetail": "org.springframework.http.ProblemDetail"
     ])
 }
+
+// The dependency coordinates in README.md used to be hand-typed and drifted: they still advertised
+// 3.1+sirius6.3.4-SNAPSHOT while the SDK was published as 3.1+sirius6.5.4. Derive them from the very
+// version the artifacts are published under so the README cannot disagree with the registry. Marker
+// idiom and 'publishing' group follow the root project's 'refreshReadMe'.
+tasks.register('refreshSdkReadme') {
+    group = 'publishing'
+    description = 'Syncs the dependency coordinates in README.md with the version the SDK is published under.'
+
+    File readme = file('README.md')
+    String coordinate = "${project.group}:${project.name}:${project.version}"
+    inputs.property('coordinate', coordinate)
+    outputs.file(readme)
+
+    doLast {
+        List<String> lines = readme.readLines()
+        List<String> nuLines = new ArrayList<>(lines.size())
+        String region = null
+
+        lines.each { String line ->
+            def begin = line =~ /^<!--begin (.+)-->$/
+            if (begin.matches()) {
+                region = begin.group(1)
+                nuLines.add(line)
+            } else if (line ==~ /^<!--end .+-->$/) {
+                region = null
+                nuLines.add(line)
+            } else if (region == 'gradle-dependency' && line.contains('implementation "')) {
+                nuLines.add(line.replaceFirst(/"[^"]*"/, "\"${coordinate}\""))
+            } else if (region == 'maven-dependency' && line.contains('<version>')) {
+                nuLines.add(line.replaceFirst(/<version>[^<]*<\/version>/, "<version>${project.version}</version>"))
+            } else {
+                nuLines.add(line)
+            }
+        }
+
+        if (!nuLines.contains('<!--begin gradle-dependency-->') || !nuLines.contains('<!--begin maven-dependency-->'))
+            throw new GradleException("README.md lost its dependency markers, cannot sync coordinates to ${coordinate}.")
+
+        if (nuLines != lines) {
+            readme.setText(nuLines.join('\n') + '\n', 'UTF-8')
+            logger.lifecycle("Updated README.md dependency coordinates to ${coordinate}")
+        }
+    }
+}
+
+// Regenerating the SDK is the moment the advertised version can become wrong, so refresh the README with it.
+tasks.named('openApiGenerate') {
+    finalizedBy 'refreshSdkReadme'
+}
