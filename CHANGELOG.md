@@ -1,7 +1,7 @@
 # Changelog
 
 ## SIRIUS 6
-### 6.5.4 (2026-08-20)
+### 6.5.4 (2026-08-25)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,
   which is the basis for the new query and filter capabilities:
   - a chip based query bar above the feature list. Fields, operators and values are suggested while
