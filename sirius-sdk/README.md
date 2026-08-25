@@ -23,14 +23,14 @@ Detailed documentation about the different endpoints can be found [here]().
             ProjectInfo project = sirius.projects().createProject("myProject", "/tmp/" + UUID.randomUUID(), null);
 
             // Import peak-list data from files.
-            sirius.projects().importPreprocessedData(project.getProjectId(), true, true, List.of(
+            sirius.projects().importPreprocessedData(project.getProjectId(), List.of(
                     new File("/mydata/spectra1.mgf"),
                     new File("/mydata/spectra1.ms"),
                     new File("/mydata/spectra1.cef")
-            ));
+            ), true, true);
             
             //get default compute configuration/parameters from SIRIUS (optional)
-            JobSubmission sub = sirius.jobs().getDefaultJobConfig(false);
+            JobSubmission sub = sirius.jobs().getDefaultJobConfig(false, null, null);
             sub.getZodiacParams().setEnabled(false); //enable/disable tools
 
             //submit job to be computed in background
@@ -38,7 +38,7 @@ Detailed documentation about the different endpoints can be found [here]().
             job = sirius.awaitJob(project.getProjectId(), job.getId());
 
             // fetch results from the project
-            sirius.features().getAlignedFeatures(project.getProjectId(), List.of(AlignedFeatureOptField.TOPANNOTATIONS))
+            sirius.features().getAlignedFeatures(project.getProjectId(), null, List.of(AlignedFeatureOptField.TOP_ANNOTATIONS))
                     .forEach(System.out::println);
 
         } catch (Exception e) {
@@ -48,24 +48,29 @@ Detailed documentation about the different endpoints can be found [here]().
 ### Import Option 1:
 Import peak-list data from files. Can be executed synchronously or asynchronously as a job
 ```java
-sirius.projects().importPreprocessedData(project.getProjectId(), true, true, List.of(
+sirius.projects().importPreprocessedData(project.getProjectId(), List.of(
     new File("/mydata/spectra1.mgf"),
     new File("/mydata/spectra1.ms"),
     new File("/mydata/spectra1.cef")
-));
+), true, true);
 ```
 ### Import Option 2:
-Import LCMS Runs from file and Find and Align features during import. Can be executed synchronously or asynchronously as a job.
+Import LCMS Runs from file and Find and Align features during import. Can be executed synchronously
+(`importMsRunData`) or asynchronously as a job (`importMsRunDataAsJob`). Feature finding and alignment are
+configured through `LcmsSubmissionParameters` instead of positional flags. A fresh instance is a sensible
+default: unset mass deviations, noise intensity and retention-time tolerance are estimated from the data,
+which is what SIRIUS recommends. Set `sampleNames`/`sampleTypes` if you need to map results back to your own
+sample identifiers or have blank runs taken into account.
 ```java
-Job importJob = sirius.projects().importMsRunDataAsJob(project.getProjectId(), true, true, List.of(
+Job importJob = sirius.projects().importMsRunDataAsJob(project.getProjectId(), List.of(
     new File("/myRuns/run1a.mzml"),
     new File("/myRuns/run2a.mzml"),
     new File("/myRuns/run1b.mzml"),
     new File("/myRuns/run2b.mzml")
-));
+), new LcmsSubmissionParameters().alignLCMSRuns(true), null);
 ```
 ### Import Option 3:
-Direct data import. Synchronously only .
+Direct data import. Synchronously only.
 ```java
 FeatureImport featureToImport = new FeatureImport()
                     .charge(1)
