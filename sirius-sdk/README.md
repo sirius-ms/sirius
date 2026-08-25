@@ -9,7 +9,10 @@ The class `SiriusSDK` serves a single entry point to all features. It allows you
 API endpoints.
 
 ## Usage
-Detailed documentation about the different endpoints can be found [here]().
+Detailed documentation about the different endpoints and models can be found in
+[sirius-sdk.openapi](sirius-sdk.openapi/README.md): an index of every endpoint and every model, generated
+from the API specification and therefore always current for this version. The endpoint table links to
+[per-endpoint](sirius-sdk.openapi/docs) pages with parameters, return types and status codes.
 
 ### Example Code
 
