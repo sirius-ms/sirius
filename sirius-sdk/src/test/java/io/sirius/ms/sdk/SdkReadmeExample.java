@@ -20,6 +20,9 @@
 
 package io.sirius.ms.sdk;
 
+import io.sirius.ms.sse.DataEventType;
+import io.sirius.ms.sse.DataObjectEvent;
+import io.sirius.ms.sse.DataObjectEvents;
 import io.sirius.ms.sdk.model.AlignedFeature;
 import io.sirius.ms.sdk.model.AlignedFeatureOptField;
 import io.sirius.ms.sdk.model.BasicSpectrum;
@@ -29,8 +32,11 @@ import io.sirius.ms.sdk.model.JobSubmission;
 import io.sirius.ms.sdk.model.LcmsSubmissionParameters;
 import io.sirius.ms.sdk.model.ProjectInfo;
 import io.sirius.ms.sdk.model.SimplePeak;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 
@@ -138,5 +144,73 @@ public class SdkReadmeExample {
 
         List<AlignedFeature> importedFeatures = sirius.features()
                 .addAlignedFeatures(project.getProjectId(), List.of(featureToImport), null, null);
+    }
+
+    /** The "Connecting to SIRIUS" section. */
+    static void connect() throws Exception {
+        // Start a SIRIUS installation found on this system, or reuse a compatible one that already runs.
+        try (SiriusSDK started = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, false)) {
+            System.out.println(started.getBasePath());
+        }
+
+        // Start against an isolated workspace, so the instance shares no state with the user's own SIRIUS.
+        try (SiriusSDK isolated = SiriusSDK.startAndConnectLocallyIsolated(
+                SiriusSDK.ShutdownMode.ALWAYS, false, true, false, null, Path.of("/tmp/my-workspace"))) {
+            System.out.println(isolated.getBasePath());
+        }
+
+        // Attach to a running instance without ever starting one. Returns null if none is reachable.
+        try (SiriusSDK found = SiriusSDK.findAndConnectLocally(SiriusSDK.ShutdownMode.NEVER, false)) {
+            if (found != null)
+                System.out.println(found.infos().getInfo(null, null));
+        }
+
+        // Talk to an instance whose address you already know - another machine, a container, a fixed port.
+        try (SiriusClient remote = new SiriusClient("http://sirius-host:8080", null)) {
+            System.out.println(remote.infos().getInfo(null, null));
+        }
+    }
+
+    /** The "Waiting for jobs" section. */
+    static void awaitJobs(SiriusSDK sirius, String projectId, Job job) throws InterruptedException {
+        // Poll until the job reaches a terminal state.
+        Job done = sirius.awaitJob(projectId, job.getId());
+
+        // Same, but give up after 600s, ask for the affected ids, and stay cancellable from your own code.
+        Job detailed = sirius.awaitJob(projectId, job.getId(), 2, 600, false, true, () -> {
+            if (Thread.currentThread().isInterrupted())
+                throw new InterruptedException("Cancelled by caller.");
+        });
+
+        // Finished jobs stay in the job list until removed; this waits and then cleans up.
+        Job cleaned = sirius.awaitAndDeleteJob(projectId, job.getId(), 2, 600, false, false, () -> {});
+    }
+
+    /** The "Listening to events" section. */
+    static void listenToEvents(SiriusSDK sirius, String projectId) {
+        // Opens the server-sent-event stream. Nothing is delivered before this call.
+        sirius.enableEventListening(DataEventType.JOB, DataEventType.PROJECT);
+
+        PropertyChangeListener listener = evt -> {
+            DataObjectEvent<?> event = (DataObjectEvent<?>) evt.getNewValue();
+            // The payload type follows event.getDataType(); ask for the one you care about.
+            DataObjectEvents.toDataObjectEventData(event, Job.class)
+                    .ifPresent(j -> System.out.println(j.getId() + " -> " + j.getProgress()));
+        };
+
+        sirius.addEventListener(listener, projectId, DataEventType.JOB);
+        // ... and when you are done with it, or the listener leaks for the lifetime of the client:
+        sirius.removeEventListener(listener);
+    }
+
+    /** The "Error handling" section. */
+    static void handleErrors(SiriusSDK sirius) {
+        try {
+            sirius.projects().getProject("does-not-exist", null);
+        } catch (WebClientResponseException e) {
+            // The HTTP body carries a ProblemDetail; e.getMessage() alone only says "404 Not Found".
+            System.err.println(sirius.unwrapErrorMessage(e));
+            sirius.unwrapErrorResponse(e).ifPresent(problem -> System.err.println(problem.getDetail()));
+        }
     }
 }

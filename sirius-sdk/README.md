@@ -111,6 +111,105 @@ List<AlignedFeature> importedFeatures = sirius.features()
     .addAlignedFeatures(project.getProjectId(), List.of(featureToImport), null, null);
 ```
 
+## Connecting to SIRIUS
+`SiriusSDK` covers the cases where the SDK manages the SIRIUS process for you; `SiriusClient`, its
+superclass, covers the case where something else does.
+
+```java
+// Start a SIRIUS installation found on this system, or reuse a compatible one that already runs.
+SiriusSDK started = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, false);
+
+// Start against an isolated workspace, so the instance shares no state with the user's own SIRIUS.
+SiriusSDK isolated = SiriusSDK.startAndConnectLocallyIsolated(
+        SiriusSDK.ShutdownMode.ALWAYS, false, true, false, null, Path.of("/tmp/my-workspace"));
+
+// Attach to a running instance without ever starting one. Returns null if none is reachable.
+SiriusSDK found = SiriusSDK.findAndConnectLocally(SiriusSDK.ShutdownMode.NEVER, false);
+
+// Talk to an instance whose address you already know - another machine, a container, a fixed port.
+SiriusClient remote = new SiriusClient("http://sirius-host:8080", null);
+```
+
+Note that a locally started SIRIUS binds a free port rather than a fixed one, so discover the address via
+`getBasePath()` instead of assuming a port.
+
+`ShutdownMode` decides what closing the client does to the SIRIUS process:
+
+| Mode | Effect on `close()` |
+|---|---|
+| `AUTO` | Shuts SIRIUS down only if this client started it |
+| `ALWAYS` | Shuts SIRIUS down either way |
+| `NEVER` | Leaves SIRIUS running either way |
+
+## Waiting for jobs
+Computations are submitted as jobs and run in the background. `awaitJob` polls one until it reaches a
+terminal state; `awaitAndDeleteJob` additionally removes it from the job list afterwards. The long
+overloads add a timeout and an `InterruptionCheck` so waiting stays cancellable from your own code.
+
+```java
+Job done = sirius.awaitJob(projectId, job.getId());
+
+Job detailed = sirius.awaitJob(projectId, job.getId(), 2, 600, false, true, () -> {
+    if (Thread.currentThread().isInterrupted())
+        throw new InterruptedException("Cancelled by caller.");
+});
+```
+
+## Listening to events
+Instead of polling, you can subscribe to the server-sent-event stream and be told when jobs progress,
+projects change or an import finishes. Call `enableEventListening` first - no events are delivered before
+the stream is open - then register listeners per project.
+
+```java
+sirius.enableEventListening(DataEventType.JOB, DataEventType.PROJECT);
+
+PropertyChangeListener listener = evt -> {
+    DataObjectEvent<?> event = (DataObjectEvent<?>) evt.getNewValue();
+    // The payload type follows event.getDataType(); ask for the one you care about.
+    DataObjectEvents.toDataObjectEventData(event, Job.class)
+            .ifPresent(j -> System.out.println(j.getId() + " -> " + j.getProgress()));
+};
+
+sirius.addEventListener(listener, projectId, DataEventType.JOB);
+// ... and when you are done with it, or the listener leaks for the lifetime of the client:
+sirius.removeEventListener(listener);
+```
+
+`DataEventType.JOB`, `PROJECT`, `DATA_IMPORT` and `BACKGROUND_COMPUTATIONS_STATE` carry typed payloads
+(`Job`, `ProjectChangeEvent`, `DataImportEvent`, `BackgroundComputationsStateEvent`), which
+`DataObjectEvents.toDataObjectEventData` unwraps for you. A `java.util.concurrent.Flow.Subscriber` can be
+registered instead of a `PropertyChangeListener` if that suits your code better, and `addJobEventListener`
+narrows the subscription to a single job.
+
+## Error handling
+Endpoint calls fail with Spring's `WebClientResponseException`, whose own message is just the status line.
+The response body carries a `ProblemDetail` with the actual reason, which the client unwraps:
+
+```java
+try {
+    sirius.projects().getProject("does-not-exist", null);
+} catch (WebClientResponseException e) {
+    System.err.println(sirius.unwrapErrorMessage(e));
+    sirius.unwrapErrorResponse(e).ifPresent(problem -> System.err.println(problem.getDetail()));
+}
+```
+
+`unwrapErrorMessage` falls back to the throwable's own message when there is no problem detail to read, so
+it is safe to use unconditionally.
+
+## Deprecated method names
+`compounds()`, `features()` and `jobs()` return `*ApiCompat` subclasses of the generated API classes. These
+add nothing but the pre-rename method names - `getAlignedFeaturesPaged` for `getAlignedFeaturesPage`, and so
+on - kept as `@Deprecated(forRemoval = true)` delegates so that a rename in the API does not break existing
+integrations immediately. They will be removed in the next major release; the javadoc of each names its
+replacement.
+
+## Modules
+| Module | Purpose |
+|---|---|
+| `sirius-sdk` | The entry point: `SiriusSDK`/`SiriusClient`, process handling, event stream |
+| `sirius-sdk.openapi` | Generated models and endpoint clients. Consumed transitively - do not depend on it directly |
+| `sirius-sdk.jjobs` | Optional adapter exposing an API job as a `de.unijena.bioinf:jjobs-core` `JJob` via `SseProgressJJob`, for integration with jjobs-based scheduling |
 
 
 ## Availability
