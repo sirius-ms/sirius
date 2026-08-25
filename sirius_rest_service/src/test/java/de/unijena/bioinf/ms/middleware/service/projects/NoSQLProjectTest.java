@@ -852,6 +852,31 @@ public class NoSQLProjectTest {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * The run type dialog does not submit one comparison, it submits four - two aggregations over two
+     * quantifications - and the cleanup that keeps a rerun from piling them up names those as a set. A filter
+     * over a set is a different thing from a filter over one value, and only the one-value form was covered.
+     */
+    @Test
+    @SneakyThrows
+    public void testRecomputingReplacesEveryCombinationTheDialogSubmits() {
+        Feature inSample = sampleAndBlankWithOneFeature(2.0, 1.0);
+        String afId = Long.toString(inSample.getAlignedFeatureId());
+        FoldChangeJobSubmission asTheDialogSubmitsIt = FoldChangeJobSubmission.builder()
+                .leftRunGroup("sample").rightRunGroup("blank")
+                .aggregationTypes(EnumSet.of(AggregationType.AVG, AggregationType.MAX))
+                .quantificationMeasures(EnumSet.of(QuantMeasure.APEX_INTENSITY, QuantMeasure.AREA_UNDER_CURVE))
+                .build();
+
+        new BackgroundRuns(project, null).runFoldChange(asTheDialogSubmitsIt, QuantRowType.FEATURES).awaitResult();
+        assertEquals(4, project.getFoldChanges(QuantRowType.FEATURES, afId).size(),
+                "two aggregations over two quantifications");
+
+        new BackgroundRuns(project, null).runFoldChange(asTheDialogSubmitsIt, QuantRowType.FEATURES).awaitResult();
+        assertEquals(4, project.getFoldChanges(QuantRowType.FEATURES, afId).size(),
+                "and a rerun replaces all four rather than adding four more");
+    }
+
     @Test
     @SneakyThrows
     public void testTags() {

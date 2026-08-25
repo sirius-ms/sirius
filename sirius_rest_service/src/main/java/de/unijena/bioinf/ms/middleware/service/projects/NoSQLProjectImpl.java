@@ -2049,13 +2049,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     /**
-     * What a bulk retrieval found for one feature, or what "it found nothing" looks like as a value.
+     * What a bulk retrieval found for one feature: what it holds for it, or the empty value when it found
+     * nothing - which is not the same as null, because null is what the per-feature pass below reads as "not
+     * fetched yet" and answers with a query.
      * <p>
-     * The empty value is built only when it is needed rather than handed in ready-made: this runs per feature
-     * of every listing, and the map answers for most of them.
+     * Null for a field this request did not ask for, though. That pass drops such a field either way, so the
+     * empty value would be built for every feature of every listing only to be thrown away - and the fields a
+     * listing does not ask for are usually most of them.
      */
-    private static <T> T orIfAbsent(@NotNull Long2ObjectOpenHashMap<T> found, long id,
+    private static <T> T bulkResult(@NotNull EnumSet<AlignedFeature.OptField> optFields,
+                                    @NotNull AlignedFeature.OptField field,
+                                    @NotNull Long2ObjectOpenHashMap<T> found, long id,
                                     @NotNull Supplier<T> nothingFound) {
+        if (!optFields.contains(field))
+            return null;
         T value = found.get(id);
         return value != null ? value : nothingFound.get();
     }
@@ -2156,14 +2163,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     // Empty rather than null for whatever the bulk query did not find, because null is what
                     // annotateApiFeature below reads as "not fetched yet" and answers with a query per feature -
                     // over exactly the features the bulk query has just established have nothing. These are the
-                    // values that per-feature load would arrive at anyway, so nothing about the response changes.
-                    // convertToQualityMap already returns an empty map for a missing report, which is why
-                    // qualities never had the problem. Mutable, because a fetched collection is something the
-                    // index update path edits in place (see deleteFoldChange).
-                    apiFeture.setQualities(convertToQualityMap(quality.get(fid)));
-                    apiFeture.setComputedTools(orIfAbsent(computed, fid, () -> ComputedSubtools.builder().build()));
-                    apiFeture.setTags(orIfAbsent(tags, fid, HashMap::new));
-                    apiFeture.setStats(orIfAbsent(stats, fid, ArrayList::new));
+                    // values that per-feature load would arrive at anyway, so nothing about the response
+                    // changes. Mutable, because a fetched collection is something the index update path edits
+                    // in place (see deleteFoldChange).
+                    // convertToQualityMap answers a missing report with an empty map, so this one is already
+                    // "empty, not null" - it only needs the same restraint about a field nobody asked for.
+                    apiFeture.setQualities(optFields.contains(AlignedFeature.OptField.qualities)
+                            ? convertToQualityMap(quality.get(fid)) : null);
+                    apiFeture.setComputedTools(bulkResult(optFields, AlignedFeature.OptField.computedTools,
+                            computed, fid, () -> ComputedSubtools.builder().build()));
+                    apiFeture.setTags(bulkResult(optFields, AlignedFeature.OptField.tags, tags, fid, HashMap::new));
+                    apiFeture.setStats(bulkResult(optFields, AlignedFeature.OptField.statistics,
+                            stats, fid, ArrayList::new));
                     if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
                         apiFeture.setTopAnnotations(extractSearchIndexTopAnnotations(fid, csires.get(fid)));
                     //add additional anotations that are not yes covered by bulk retrieval.
