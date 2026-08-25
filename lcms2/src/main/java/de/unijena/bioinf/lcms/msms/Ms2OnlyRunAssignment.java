@@ -67,7 +67,7 @@ public class Ms2OnlyRunAssignment {
      * discarded: a feature without any LC/MS information is worth having only for the spectrum it carries, so a
      * spectrum that says nothing leaves nothing behind.
      */
-    @Getter @Setter private DataQuality minimumQualityForOwnFeature = DataQuality.LOWEST;
+    @Getter @Setter private DataQuality minimumQualityForOwnFeature = DataQuality.BAD;
 
     /** a feature of the merged experiment, reduced to what an MS/MS can be matched against */
     public record FeatureTarget(long alignedFeatureId, double mass, double retentionTimeStart,
