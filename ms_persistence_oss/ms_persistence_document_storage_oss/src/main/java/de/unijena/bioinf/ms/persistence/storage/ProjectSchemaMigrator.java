@@ -51,6 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 /**
  * One-time, in-place conversion of older ("pre-index") SIRIUS projects to the current project-data schema.
@@ -264,10 +265,10 @@ public class ProjectSchemaMigrator {
             needed.add(ConversionJob.Pass.FEATURES);
             needed.add(ConversionJob.Pass.FORMULA_CANDIDATES);
         }
-        // Version 3 turned the blank removal fold changes the right way round. Nothing to probe for: a project
-        // with no fold changes needs no conversion either, and the pass over an empty collection is free.
+        // Version 3 drops the blank removal fold changes, for the user to recompute. Nothing to probe for: a
+        // project with none needs no repair, and the pass over an empty collection is free.
         if (recorded < 3)
-            needed.add(ConversionJob.Pass.BLANK_REMOVAL_ORIENTATION);
+            needed.add(ConversionJob.Pass.BLANK_REMOVAL_REPAIR);
         return needed;
     }
 
@@ -291,8 +292,8 @@ public class ProjectSchemaMigrator {
             FEATURES,
             /** Over the formula-candidate keys: lipid annotations, off each candidate's fragmentation tree. */
             FORMULA_CANDIDATES,
-            /** Over the feature fold-change keys: blank removal turned from blank/sample to sample/blank. */
-            BLANK_REMOVAL_ORIENTATION
+            /** Over the fold changes: the blank removal ones are dropped, to be recomputed from the tags. */
+            BLANK_REMOVAL_REPAIR
         }
 
         /** How many workers a pass uses. Overridable so a benchmark can ask what the right number is. */
@@ -300,6 +301,12 @@ public class ProjectSchemaMigrator {
 
         /** How many keys between two progress reports, so a slow project is not a silent one. Overridable for tests. */
         static int progressEvery = 500;
+
+        /**
+         * How many fold changes are deleted per write, so the store is not held for the whole of a large
+         * project's worth of them. Overridable so a test can cross the boundary without ten thousand records.
+         */
+        static int deleteBatch = BUFFER;
 
         /**
          * How much time may pass between two progress reports, whatever the count cadence says. The work behind
@@ -325,9 +332,7 @@ public class ProjectSchemaMigrator {
         @Getter
         private final AtomicInteger formulaCandidatesFilled = new AtomicInteger();
         @Getter
-        private final AtomicInteger foldChangesTurned = new AtomicInteger();
-        @Getter
-        private final AtomicInteger foldChangesDropped = new AtomicInteger();
+        private final AtomicInteger blankRemovalFoldChangesDropped = new AtomicInteger();
 
         /**
          * Progress is one count over the whole conversion - a unit of work is one primary key handled, and the
@@ -367,8 +372,8 @@ public class ProjectSchemaMigrator {
             }
             if (passes.contains(Pass.FORMULA_CANDIDATES))
                 work += storage.countAll(FormulaCandidate.class);
-            if (passes.contains(Pass.BLANK_REMOVAL_ORIENTATION))
-                work += storage.countAll(FoldChange.AlignedFeaturesFoldChange.class);
+            // The blank removal repair is not counted: it does not walk keys one at a time, it reads the fold
+            // changes once and deletes in one go, so it has no per-key progress to contribute.
             return work;
         }
 
@@ -430,13 +435,9 @@ public class ProjectSchemaMigrator {
                 overPrimaryKeysOf(FormulaCandidate.class, "Updating formula candidates",
                         List.of(FormulaCandidate.class), this::convertFormulaCandidate);
 
-            if (passes.contains(Pass.BLANK_REMOVAL_ORIENTATION)) {
-                // Not declared as rewritten, unlike the passes above: this one looks a record's siblings up
-                // through the alignedFeatureId index while it writes, so the index has to stay in place. It
-                // rewrites at most one record per key of a collection that is small next to the features.
-                overPrimaryKeysOf(FoldChange.AlignedFeaturesFoldChange.class,
-                        "Updating blank removal fold changes...", List.of(), this::turnBlankRemovalFoldChange);
-                dropSupersededFoldChanges();
+            if (passes.contains(Pass.BLANK_REMOVAL_REPAIR)) {
+                report(workDone.get(), "Clearing blank removal fold changes...");
+                dropBlankRemovalFoldChanges();
             }
 
             // Stamped last: a pass that threw leaves the version behind, so the next open converts again.
@@ -446,11 +447,11 @@ public class ProjectSchemaMigrator {
             report(totalWork, "Project schema updated!");
 
             log.info("Converted project '{}' to schema version {} in {} ms ({} features, {} structure-search "
-                            + "results, {} formula candidates, {} fold changes turned, {} superseded fold "
-                            + "changes dropped).",
+                            + "results, {} formula candidates, {} blank removal fold changes dropped for "
+                            + "recomputation).",
                     storage.location(), MIGRATES_TO_SCHEMA_VERSION, millisSince(start), featuresFilled.get(),
-                    structureResultsFilled.get(), formulaCandidatesFilled.get(), foldChangesTurned.get(),
-                    foldChangesDropped.get());
+                    structureResultsFilled.get(), formulaCandidatesFilled.get(),
+                    blankRemovalFoldChangesDropped.get());
             return rewroteAnything();
         }
 
@@ -464,8 +465,7 @@ public class ProjectSchemaMigrator {
          */
         boolean rewroteAnything() {
             return featuresFilled.get() > 0 || structureResultsFilled.get() > 0
-                    || formulaCandidatesFilled.get() > 0
-                    || foldChangesTurned.get() > 0 || foldChangesDropped.get() > 0;
+                    || formulaCandidatesFilled.get() > 0 || blankRemovalFoldChangesDropped.get() > 0;
         }
 
 
@@ -637,86 +637,63 @@ public class ProjectSchemaMigrator {
             buffer.add(searchResult);
         }
 
-        /** The reversed records this pass replaced with an already correct one, deleted once at its end. */
-        private final List<Object> supersededFoldChanges = Collections.synchronizedList(new ArrayList<>());
-
         /**
-         * Turns one blank removal fold change the way round the gui reads it.
+         * Drops every blank removal fold change the project holds, in either direction.
          * <p>
-         * The run type dialog used to submit its job with the blank runs as the left group, so a project holds
-         * the comparison of blank over sample where every reader wants sample over blank: the search index names
-         * its field after the group pair, so the blank filter queries a field that was never written, and the
-         * value is the reciprocal of the one it asks about.
+         * Deletion rather than correction, because what a project holds here cannot be inferred from what it
+         * ought to hold. The records were written by a build with two bugs in this area - one that stated the
+         * comparison the wrong way round, one whose cleanup deleted nothing so a rerun piled a second set on top
+         * - so reversed and correct records can sit side by side, either can be duplicated, and one old enough
+         * carries no abundances to reason with at all. Any rule for turning them is a guess about a history
+         * nobody can enumerate; removing them is not.
          * <p>
-         * A fold change is {@code leftAbundance / rightAbundance} and both abundances are stored, so swapping
-         * the groups and the abundances together produces exactly what a recompute would - nothing is derived
-         * from an assumption and nothing is lost. Scoped to the default blank and sample groups: those are the
-         * only pair the dialog ever submitted, and no other reader expects a particular orientation.
+         * Nothing is computed in their place. Recomputing needs the fold change job, which lives in a module
+         * this one is a dependency of, and going after it would mean carrying the request across an open in
+         * something persistent - a lot of machinery for a feature that has never been released. A project simply
+         * ends up without blank removal fold changes, which is a state that explains itself: the blank filter
+         * greys itself out, and assigning the run types again computes them. That is a worse afternoon for the
+         * few affected projects than an automatic repair, and a much smaller thing to get wrong.
+         * <p>
+         * Only the pair the blank removal job submits. A comparison between groups a user defined is theirs, and
+         * nothing here knows better than they do what it should say.
          */
-        private void turnBlankRemovalFoldChange(Object foldChangeId, WriteBuffer buffer) throws Exception {
-            FoldChange.AlignedFeaturesFoldChange reversed = storage
-                    .getByPrimaryKey(foldChangeId, FoldChange.AlignedFeaturesFoldChange.class).orElse(null);
-            if (reversed == null || !TagDefinitions.SAMPLE_TYPE_BLANK.equals(reversed.getLeftGroup())
-                    || !TagDefinitions.SAMPLE_TYPE_SAMPLE.equals(reversed.getRightGroup()))
+        private void dropBlankRemovalFoldChanges() throws IOException {
+            // Only the ids of the records that go, never the records: this collection holds one document per
+            // feature per comparison, so keeping them all to look at their group names would hold the largest
+            // part of it in memory to delete a part of it. Reading each one is unavoidable - the group names are
+            // not indexed, so there is no filter that could answer this without looking.
+            List<Object> doomed = new ArrayList<>();
+            try (Stream<FoldChange.AlignedFeaturesFoldChange> foldChanges =
+                         storage.findAllStr(FoldChange.AlignedFeaturesFoldChange.class)) {
+                foldChanges.filter(ConversionJob::isBlankRemoval)
+                        .map(FoldChange.AlignedFeaturesFoldChange::getId)
+                        .forEach(doomed::add);
+            }
+            if (doomed.isEmpty())
                 return;
 
-            // A record from a schema that stored only the ratio cannot be turned by swapping abundances it does
-            // not have. Those predate blank removal in the gui, so they are not what this pass is here for.
-            if (reversed.getLeftAbundance() == 0 && reversed.getRightAbundance() == 0
-                    && reversed.getFoldChange() != 1.0) {
-                log.warn("Fold change {} of feature {} compares blank over sample but carries no abundances; "
-                                + "leaving it as it is. Recompute the blank removal to replace it.",
-                        foldChangeId, reversed.getAlignedFeatureId());
-                return;
+            // In batches, so the store is not held under one write lock for as long as it takes to delete every
+            // fold change of a large project. Each batch is a point delete per id; a filter over the ids would
+            // scan the collection again instead of using the id map.
+            for (int from = 0; from < doomed.size(); from += deleteBatch) {
+                List<Object> batch = doomed.subList(from, Math.min(from + deleteBatch, doomed.size()));
+                storage.write(() -> storage.removeAllByPrimaryKey(batch,
+                        FoldChange.AlignedFeaturesFoldChange.class));
+                blankRemovalFoldChangesDropped.addAndGet(batch.size());
+                oneKeyDone("Clearing blank removal fold changes...");
             }
 
-            // The feature's other fold changes, by point lookup on the only index the collection has. Whether
-            // this record can be turned depends on them: the same comparison must not end up stored twice.
-            for (FoldChange.AlignedFeaturesFoldChange sibling : storage.find(
-                    Filter.where("alignedFeatureId").eq(reversed.getAlignedFeatureId()),
-                    FoldChange.AlignedFeaturesFoldChange.class)) {
-                if (sibling.getId() == reversed.getId() || !sameSlot(sibling, reversed))
-                    continue;
-                boolean alreadyCorrect = TagDefinitions.SAMPLE_TYPE_SAMPLE.equals(sibling.getLeftGroup())
-                        && TagDefinitions.SAMPLE_TYPE_BLANK.equals(sibling.getRightGroup());
-                // Two reversed records for one comparison are what the old cleanup left behind when a recompute
-                // piled up instead of replacing. Whichever has the lower id is turned and the rest go, so every
-                // worker reaches the same verdict without having to agree with the others.
-                boolean turnedByAnother = TagDefinitions.SAMPLE_TYPE_BLANK.equals(sibling.getLeftGroup())
-                        && TagDefinitions.SAMPLE_TYPE_SAMPLE.equals(sibling.getRightGroup())
-                        && sibling.getId() < reversed.getId();
-                if (alreadyCorrect || turnedByAnother) {
-                    supersededFoldChanges.add(reversed.getId());
-                    foldChangesDropped.incrementAndGet();
-                    return;
-                }
-            }
-
-            double blankAbundance = reversed.getLeftAbundance();
-            reversed.setLeftGroup(TagDefinitions.SAMPLE_TYPE_SAMPLE);
-            reversed.setRightGroup(TagDefinitions.SAMPLE_TYPE_BLANK);
-            reversed.setLeftAbundance(reversed.getRightAbundance());
-            reversed.setRightAbundance(blankAbundance);
-            foldChangesTurned.incrementAndGet();
-            buffer.add(reversed);
+            log.info("Dropped {} blank removal fold change(s) of project '{}'. They are not recomputed; "
+                            + "assigning the run types again computes them.",
+                    blankRemovalFoldChangesDropped.get(), storage.location());
         }
 
-        /** Whether two fold changes describe the same comparison, disregarding which way round it is stated. */
-        private static boolean sameSlot(@NotNull FoldChange left, @NotNull FoldChange right) {
-            return left.getAggregation() == right.getAggregation()
-                    && left.getQuantification() == right.getQuantification();
-        }
-
-        /**
-         * Removes the reversed records that were superseded rather than turned, once, by primary key - a filter
-         * over their ids would scan the collection instead of using the id map.
-         */
-        private void dropSupersededFoldChanges() throws IOException {
-            if (supersededFoldChanges.isEmpty())
-                return;
-            storage.write(() -> storage.removeAllByPrimaryKey(supersededFoldChanges,
-                    FoldChange.AlignedFeaturesFoldChange.class));
-            supersededFoldChanges.clear();
+        /** Whether this fold change is a blank removal comparison, stated either way round. */
+        private static boolean isBlankRemoval(@NotNull FoldChange foldChange) {
+            return (TagDefinitions.SAMPLE_TYPE_SAMPLE.equals(foldChange.getLeftGroup())
+                    && TagDefinitions.SAMPLE_TYPE_BLANK.equals(foldChange.getRightGroup()))
+                    || (TagDefinitions.SAMPLE_TYPE_BLANK.equals(foldChange.getLeftGroup())
+                    && TagDefinitions.SAMPLE_TYPE_SAMPLE.equals(foldChange.getRightGroup()));
         }
 
         /**

@@ -331,6 +331,17 @@ public class ProjectSchemaMigratorTest {
                 .build();
     }
 
+    private static FoldChange.AlignedFeaturesFoldChange blankRemoval(long alignedFeatureId,
+                                                                     AggregationType aggregation,
+                                                                     QuantMeasure quantification) {
+        return FoldChange.AlignedFeaturesFoldChange.builder()
+                .alignedFeatureId(alignedFeatureId)
+                .leftGroup(TagDefinitions.SAMPLE_TYPE_SAMPLE).rightGroup(TagDefinitions.SAMPLE_TYPE_BLANK)
+                .leftAbundance(100.0).rightAbundance(1.0)
+                .aggregation(aggregation).quantification(quantification)
+                .build();
+    }
+
     private static List<FoldChange.AlignedFeaturesFoldChange> foldChangesOf(NitriteSirirusProject db)
             throws Exception {
         return db.getStorage().findAllStr(FoldChange.AlignedFeaturesFoldChange.class).toList();
@@ -341,54 +352,7 @@ public class ProjectSchemaMigratorTest {
         db.upsertProjectSchemaVersion(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION - 1);
     }
 
-    /**
-     * The blank filter reads a fold change of sample over blank, and a project written by an older build holds
-     * the comparison the other way round - under a group pair the filter's index field name never names, and
-     * with the reciprocal value. Turning it is what makes an upgraded project answer without the user having to
-     * recompute anything.
-     */
-    @Test
-    public void testAReversedBlankRemovalFoldChangeIsTurnedRound() {
-        withFreshDb(db -> {
-            atTheSchemaBeforeTheFoldChangesWereTurned(db);
-            db.getStorage().insert(blankOverSample(42L, 1.0, 100.0));
 
-            assertTrue(ProjectSchemaMigrator.migrateIfNeeded(db),
-                    "turning them rewrites what the index is built from, so it has to be rebuilt");
-
-            List<FoldChange.AlignedFeaturesFoldChange> turned = foldChangesOf(db);
-            assertEquals(1, turned.size(), "turned, not duplicated: " + turned);
-            assertEquals(TagDefinitions.SAMPLE_TYPE_SAMPLE, turned.getFirst().getLeftGroup());
-            assertEquals(TagDefinitions.SAMPLE_TYPE_BLANK, turned.getFirst().getRightGroup());
-            assertEquals(100.0, turned.getFirst().getLeftAbundance(), Double.MIN_VALUE,
-                    "the sample abundance is now the numerator");
-            assertEquals(1.0, turned.getFirst().getRightAbundance(), Double.MIN_VALUE);
-            assertEquals(100.0, turned.getFirst().getFoldChange(), Double.MIN_VALUE,
-                    "a hundred times more abundant in the sample, which is what the filter asks about");
-        });
-    }
-
-    /**
-     * A project can hold both: the import path always computed sample over blank, while the run type dialog
-     * wrote the reverse for the same comparison. Turning the reversed one would then store the same comparison
-     * twice, which is one fold-change table column with two values in it.
-     */
-    @Test
-    public void testAReversedFoldChangeIsDroppedWhenTheCorrectOneAlreadyExists() {
-        withFreshDb(db -> {
-            atTheSchemaBeforeTheFoldChangesWereTurned(db);
-            db.getStorage().insert(sampleOverBlank(42L, 100.0, 1.0));
-            db.getStorage().insert(blankOverSample(42L, 1.0, 100.0));
-
-            ProjectSchemaMigrator.migrateIfNeeded(db);
-
-            List<FoldChange.AlignedFeaturesFoldChange> kept = foldChangesOf(db);
-            assertEquals(1, kept.size(), "one comparison, one record: " + kept);
-            assertEquals(TagDefinitions.SAMPLE_TYPE_SAMPLE, kept.getFirst().getLeftGroup());
-            assertEquals(100.0, kept.getFirst().getLeftAbundance(), Double.MIN_VALUE,
-                    "the record that was already right is the one that stays");
-        });
-    }
 
     /**
      * A comparison between groups a user defined is theirs, in whatever direction they asked for it - only the
@@ -414,6 +378,76 @@ public class ProjectSchemaMigratorTest {
     }
 
     /**
+     * A project's blank removal fold changes are dropped, whatever state they were in.
+     * <p>
+     * The records were written by a build that got the direction wrong and whose cleanup deleted nothing, so
+     * both orientations and duplicates of either can be sitting there. Nothing inspects them - they all go, and
+     * the user recomputes them by assigning the run types again.
+     */
+    @Test
+    public void testEveryBlankRemovalFoldChangeIsDropped() {
+        withFreshDb(db -> {
+            atTheSchemaBeforeTheFoldChangesWereTurned(db);
+            // the mess a project can be in: reversed, correct, and a duplicate of the reversed one
+            db.getStorage().insert(blankOverSample(42L, 1.0, 100.0));
+            db.getStorage().insert(sampleOverBlank(42L, 100.0, 1.0));
+            db.getStorage().insert(blankOverSample(42L, 1.0, 100.0));
+
+            assertTrue(ProjectSchemaMigrator.migrateIfNeeded(db),
+                    "dropping them changes what the index was built from");
+
+            assertTrue(foldChangesOf(db).isEmpty(), "all of them go, whichever way round they were");
+        });
+    }
+
+
+    /**
+     * Deleting them in batches clears all of them, including the partial batch at the end.
+     * <p>
+     * The batching is what keeps the store from being held under one write for as long as a large project's
+     * fold changes take to delete; its boundary is the only place it could go wrong, and at the real batch size
+     * that would take ten thousand records to reach.
+     */
+    @Test
+    public void testEveryBatchOfFoldChangesIsDeletedIncludingAPartialOne() {
+        int realBatch = ProjectSchemaMigrator.ConversionJob.deleteBatch;
+        ProjectSchemaMigrator.ConversionJob.deleteBatch = 2;
+        try {
+            withFreshDb(db -> {
+                atTheSchemaBeforeTheFoldChangesWereTurned(db);
+                for (int i = 0; i < 7; i++) // three full batches of two and one of one
+                    db.getStorage().insert(blankOverSample(i, 1.0, 100.0));
+
+                assertTrue(ProjectSchemaMigrator.migrateIfNeeded(db));
+
+                assertTrue(foldChangesOf(db).isEmpty(), "no batch is left behind, partial or not");
+            });
+        } finally {
+            ProjectSchemaMigrator.ConversionJob.deleteBatch = realBatch;
+        }
+    }
+
+    /** A comparison between groups a user defined is theirs; the repair is only about blank removal. */
+    @Test
+    public void testAComparisonBetweenOtherGroupsIsNotDropped() {
+        withFreshDb(db -> {
+            atTheSchemaBeforeTheFoldChangesWereTurned(db);
+            db.getStorage().insert(FoldChange.AlignedFeaturesFoldChange.builder()
+                    .alignedFeatureId(42L).leftGroup("Control").rightGroup("Treated")
+                    .leftAbundance(1.0).rightAbundance(100.0)
+                    .aggregation(AggregationType.AVG).quantification(QuantMeasure.APEX_INTENSITY)
+                    .build());
+
+            assertFalse(ProjectSchemaMigrator.migrateIfNeeded(db), "nothing of ours to drop");
+
+            assertEquals(1, foldChangesOf(db).size());
+            assertEquals("Control", foldChangesOf(db).getFirst().getLeftGroup());
+        });
+    }
+
+
+
+    /**
      * A project the newest conversion has nothing to correct is brought up to date without its index being
      * thrown away.
      * <p>
@@ -427,8 +461,7 @@ public class ProjectSchemaMigratorTest {
             importFirst(db, "/peaklists/laudanosine.mgf");
             ProjectSchemaMigrator.migrateIfNeeded(db); // -> up to date, flags present
             atTheSchemaBeforeTheFoldChangesWereTurned(db);
-            db.getStorage().insert(sampleOverBlank(42L, 100.0, 1.0)); // already the right way round
-
+            // no blank removal fold changes, so the newest conversion finds nothing to drop
             assertFalse(ProjectSchemaMigrator.migrateIfNeeded(db),
                     "nothing was corrected, so the index is still right and must not be rebuilt");
             assertEquals(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION,
@@ -437,17 +470,6 @@ public class ProjectSchemaMigratorTest {
         });
     }
 
-    /** ... while one that did correct something says so, because those documents are now stale in the index. */
-    @Test
-    public void testTurningAFoldChangeAsksForAnIndexRebuild() {
-        withFreshDb(db -> {
-            atTheSchemaBeforeTheFoldChangesWereTurned(db);
-            db.getStorage().insert(blankOverSample(42L, 1.0, 100.0));
-
-            assertTrue(ProjectSchemaMigrator.migrateIfNeeded(db),
-                    "a turned fold change is indexed under a different field name than before");
-        });
-    }
 
     /**
      * The conversion a project is missing is the only one that runs. The passes here are proportional to the
@@ -471,7 +493,7 @@ public class ProjectSchemaMigratorTest {
                     ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE,
                     ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE_LIMIT);
 
-            assertEquals(1, job.getFoldChangesTurned().get(), "the fold change pass ran");
+            assertEquals(1, job.getBlankRemovalFoldChangesDropped().get(), "the fold change pass ran");
             assertEquals(0, job.getFeaturesFilled().get(), "and the feature pass did not");
         });
     }
