@@ -73,6 +73,15 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
         public SampleStats done() {
             final float ms2NoiseAvg = ms2Noise.isEmpty() ? 0 : (float)Statistics.robustAverage(ms2Noise.toFloatArray());
             final float[] ms1Noises = noise.toFloatArray();
+            if (ms1Noises.length == 0) {
+                // an MS/MS only run. There is no MS1 signal to read a noise level or a minimum intensity off, and
+                // nothing asks for one either: such a run is never traced or aligned, only its MS2 noise level is
+                // used, and that is measured above.
+                return SampleStats.builder().noiseLevelPerScan(ms1Noises).ms2NoiseLevel(ms2NoiseAvg)
+                        .minimumIntensity(0f)
+                        .ms1MassDeviationWithinTraces(new Deviation(8, 3e-4))
+                        .minimumMs1MassDeviationBetweenTraces(new Deviation(10, 3e-4)).build();
+            }
             if (ms1Noises.length <= 20) {
                 Arrays.sort(ms1Noises);
                 final float median = ms1Noises[ms1Noises.length/2];
