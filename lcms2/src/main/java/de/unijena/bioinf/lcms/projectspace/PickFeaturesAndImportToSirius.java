@@ -880,7 +880,12 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         return mergeAndNormalizeMsnSpectra(ionMass, Arrays.stream(msn).map(MergedMSnSpectrum::toMs2Spectrum).toList());
     }
 
-    private SimpleSpectrum mergeAndNormalizeMsnSpectra(double ionMass, List<MutableMs2Spectrum> msn) {
+    /**
+     * How the MS/MS spectra of one feature become the single spectrum a reader sees. Public and static because
+     * everything that attaches MS/MS to a feature has to produce the same merged spectrum, whether it came through
+     * the trace based path or from a run that has no traces at all.
+     */
+    public static SimpleSpectrum mergeAndNormalizeMsnSpectra(double ionMass, List<MutableMs2Spectrum> msn) {
         Deviation ms2AllowedMassDeviation = new Deviation(10);
         SimpleSpectrum merged = HighIntensityMsMsMerger.mergePeaks(msn, ionMass, ms2AllowedMassDeviation, false, true);
         return Spectrums.getNormalizedSpectrum(

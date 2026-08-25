@@ -62,6 +62,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class LCMSProcessing {
 
@@ -130,6 +131,14 @@ public class LCMSProcessing {
 
     @Getter @Setter private Ms2MergeStrategy ms2MergeStrategy = new MergeGreedyStrategy();
 
+    /**
+     * What becomes of the fragmentation spectra of runs that have no MS1 scans, see {@link #assignMs2OnlyRuns}.
+     */
+    @Getter @Setter private Ms2OnlyRunAssignment ms2OnlyRunAssignment = new Ms2OnlyRunAssignment();
+
+    /** what {@link #assignMs2OnlyRuns} did, kept for inspection rather than only logged */
+    @Getter private String ms2OnlyRunReport;
+
     @Getter @Setter private IsotopePatternExtractionStrategy isotopePatternExtractionStrategy = new MergedApexIsotopePatternExtractor();
 
     /**
@@ -165,6 +174,16 @@ public class LCMSProcessing {
     }
 
     protected List<ProcessedSample> samples = new ArrayList<>();
+
+    /**
+     * The runs that hold fragmentation spectra but no MS1 scan at all, see {@link ProcessedSample#isMs2Only()}.
+     * <p>
+     * Kept apart from {@link #samples} rather than filtered out later, because every step of the preprocessing -
+     * trace picking, alignment, merging, feature extraction - works on MS1 traces and there are none here. Their
+     * spectra rejoin the experiment in {@link #assignMs2OnlyRuns}, once the features they can be matched against
+     * exist.
+     */
+    private final List<ProcessedSample> ms2OnlySamples = new ArrayList<>();
 
     /**
      * Handed out in the order samples are given to us, not the order their processing finishes.
@@ -325,6 +344,10 @@ public class LCMSProcessing {
      *                  would leave a hole for a file that failed to parse - and it is ordered by uid before alignment.
      */
     private void processSample(ProcessedSample sample, int sampleUid) throws IOException {
+        if (sample.isMs2Only()) {
+            processMs2OnlySample(sample, sampleUid);
+            return;
+        }
         synchronized (this) {
             this.samples.add(sample);
             this.sampleByIdx.put(sampleUid, sample);
@@ -347,6 +370,43 @@ public class LCMSProcessing {
         collectStatisticsBeforeAlignment(sample);
         importScanPointMapping(sample, sample.getRun().getRunId());
         sample.getStorage().commit();
+    }
+
+    /**
+     * All a run without MS1 scans can contribute is its fragmentation spectra, so the only thing measured on it is
+     * the MS2 noise level the quality checks need. Everything else - traces, masses of interest, normalisation, the
+     * retention time axis - describes a chromatogram this run does not have.
+     */
+    private void processMs2OnlySample(ProcessedSample sample, int sampleUid) throws IOException {
+        synchronized (this) {
+            this.ms2OnlySamples.add(sample);
+            this.sampleByIdx.put(sampleUid, sample);
+        }
+        sample.setUid(sampleUid);
+        sample.active();
+        collectStatistics(sample);
+        sample.getStorage().commit();
+    }
+
+    /**
+     * Whether any run of this experiment has MS1 scans, i.e. whether there is a chromatogram to align at all.
+     * <p>
+     * Only meaningful before {@link #align()}, which adds the merged sample to the same list. An experiment where
+     * this is false consists of nothing but MS/MS spectra: there is no alignment, no merged run and no trace, and
+     * the only thing to do with it is {@link #importMs2OnlyRunsAlone()}.
+     */
+    public boolean hasLcMsRuns() {
+        return !samples.isEmpty();
+    }
+
+    /**
+     * Imports the runs without MS1 scans when the experiment holds nothing else, so that there are no features to
+     * match their spectra against. Every spectrum that is worth keeping becomes a compound of its own.
+     *
+     * @return how many features were created
+     */
+    public int importMs2OnlyRunsAlone() throws IOException {
+        return assignMs2OnlyRuns(List.of(), -1L);
     }
 
     public AlignmentBackbone align() throws IOException {
@@ -441,6 +501,10 @@ public class LCMSProcessing {
         System.out.println("Start importing features and peak picking");
         int featureCount = 0;
         long TIME1 = System.currentTimeMillis();
+        // where the MS/MS of runs without MS1 scans can be assigned to. Collected while the features are imported
+        // rather than read back afterwards, and only when there is such a run - see assignMs2OnlyRuns
+        final List<Ms2OnlyRunAssignment.FeatureTarget> ms2OnlyTargets =
+                ms2OnlySamples.isEmpty() ? null : Collections.synchronizedList(new ArrayList<>());
         List<BasicJJob<long[]>> jobs = new ArrayList<>();
         for (final Rect r : merged.getStorage().getMergeStorage().getRectangleMap()) {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<long[]>() {
@@ -448,7 +512,12 @@ public class LCMSProcessing {
                 protected long[] compute() throws Exception {
                     MergedTrace mergedTrace = collectMergedTrace(merged, r.id);
                     if (mergedTrace!=null && isSuitableForImport(mergedTrace)) {
-                        return Arrays.stream(importer.importMergedTrace(mergedTraceSegmentationStrategy, siriusDatabaseAdapter, obj,merged, mergedTrace, tracker)).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
+                        AlignedFeatures[] features = importer.importMergedTrace(mergedTraceSegmentationStrategy, siriusDatabaseAdapter, obj,merged, mergedTrace, tracker);
+                        if (ms2OnlyTargets != null) {
+                            for (AlignedFeatures feature : features)
+                                ms2OnlyTargets.add(Ms2OnlyRunAssignment.FeatureTarget.of(feature));
+                        }
+                        return Arrays.stream(features).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
                     } else {
                         tracker.rejectedForFeatureExtraction(r, mergedTrace);
                     }
@@ -473,8 +542,62 @@ public class LCMSProcessing {
         } else {
             siriusDatabaseAdapter.removeMergedRun(mergedRun);
         }
+        if (ms2OnlyTargets != null) {
+            featureCount += assignMs2OnlyRuns(ms2OnlyTargets, featureCount > 0 ? mergedRun.getRunId() : -1L);
+        }
 
         return featureCount;
+    }
+
+    /**
+     * Gives the fragmentation spectra of every run without MS1 scans somewhere to live.
+     * <p>
+     * Runs after the features of the experiment have been imported, because that is what a spectrum is matched
+     * against: it names a precursor m/z and a retention time, and if a feature was measured there then the spectrum
+     * is a second measurement of that feature. What is left over becomes a compound of its own, carrying nothing but
+     * its spectra, if the spectrum is worth keeping at all - see {@link Ms2OnlyRunAssignment}.
+     *
+     * @param mergedRunId the run whose features are read back to be updated, or -1 if no feature was imported
+     * @return how many features were created on top of the ones that came from the traces
+     */
+    private int assignMs2OnlyRuns(List<Ms2OnlyRunAssignment.FeatureTarget> targets, long mergedRunId)
+            throws IOException {
+        final List<Ms2OnlyRunAssignment.Fragmentation> spectra = new ArrayList<>();
+        for (ProcessedSample sample : ms2OnlySamples) {
+            sample.active();
+            final SpectrumStorage storage = sample.getStorage().getSpectrumStorage();
+            for (Ms2SpectrumHeader header : storage.ms2SpectraHeader()) {
+                spectra.add(new Ms2OnlyRunAssignment.Fragmentation(sample, header,
+                        storage.getMs2Spectrum(header.getUid())));
+            }
+            // the spectra are in memory now, so the storage does not have to stay cached for them
+            sample.inactive();
+        }
+        if (spectra.isEmpty()) return 0;
+
+        final Ms2OnlyRunAssignment.Result result = ms2OnlyRunAssignment.assign(spectra, targets);
+        if (!result.assigned().isEmpty() && mergedRunId >= 0) {
+            // one pass over the imported features to find the ones that were given spectra. They are collected
+            // rather than written back right away, because the stream reads from the very collection that would
+            // be written to
+            final List<AlignedFeatures> touched = siriusDatabaseAdapter.getImportedFeatureStream(mergedRunId)
+                    .filter(feature -> result.assigned().containsKey(feature.getAlignedFeatureId()))
+                    .collect(Collectors.toList());
+            for (AlignedFeatures feature : touched) {
+                ms2OnlyRunAssignment.addTo(feature, result.assigned().get(feature.getAlignedFeatureId()));
+                siriusDatabaseAdapter.updateAlignedFeature(feature);
+            }
+        }
+        int created = 0;
+        for (List<Ms2OnlyRunAssignment.Fragmentation> group : result.unassignedGroups()) {
+            final AlignedFeatures feature = ms2OnlyRunAssignment.toFeature(group);
+            if (!siriusDatabaseAdapter.importFeatureWithoutLCMS(feature)) continue;
+            if (saveFeatureIds) importedFeatureIds.add(feature.getAlignedFeatureId());
+            ++created;
+        }
+        ms2OnlyRunReport = result.describe();
+        LoggerFactory.getLogger(LCMSProcessing.class).info(ms2OnlyRunReport);
+        return created;
     }
 
     private SampleStatistics collectFinalStatistics(ProcessedSample merged, AlignmentBackbone alignmentBackbone) throws IOException {

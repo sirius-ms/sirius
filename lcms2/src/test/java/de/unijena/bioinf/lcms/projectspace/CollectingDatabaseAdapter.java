@@ -78,6 +78,19 @@ public class CollectingDatabaseAdapter implements SiriusDatabaseAdapter {
     }
 
     @Override
+    public synchronized void updateAlignedFeature(AlignedFeatures alignedFeatures) {
+        // the very object is already in the list, so there is nothing to write back
+    }
+
+    @Override
+    public synchronized boolean importFeatureWithoutLCMS(AlignedFeatures alignedFeatures) {
+        alignedFeatures.setAlignedFeatureId(ids.getAndIncrement());
+        alignedFeatures.setCompoundId(ids.getAndIncrement());
+        features.add(alignedFeatures);
+        return true;
+    }
+
+    @Override
     public void importRetentionTimeAxis(RetentionTimeAxis axis, boolean update) {
     }
 

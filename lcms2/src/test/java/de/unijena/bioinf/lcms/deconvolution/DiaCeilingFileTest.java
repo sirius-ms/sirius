@@ -313,6 +313,9 @@ public class DiaCeilingFileTest {
         }
         @Override public void removeMergedTrace(long id) {
         }
+        @Override public void updateAlignedFeature(AlignedFeatures alignedFeatures) { }
+        @Override public boolean importFeatureWithoutLCMS(AlignedFeatures alignedFeatures) { return true; }
+
         @Override public boolean importAlignedFeature(AlignedFeatures alignedFeatures) {
             return true;
         }

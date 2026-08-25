@@ -20,7 +20,9 @@
 
 package de.unijena.bioinf.lcms.projectspace;
 
+import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
@@ -123,6 +125,36 @@ public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
             alignedFeatures.setExternalFeatureId(String.valueOf(featureCounter.getAndIncrement()));
 
         store.importAlignedFeatures(List.of(alignedFeatures));
+        return true;
+    }
+
+    @Override
+    public void updateAlignedFeature(AlignedFeatures alignedFeatures) throws IOException {
+        store.getStorage().upsert(alignedFeatures);
+        if (alignedFeatures.getMSData().isPresent()) {
+            MSData msData = alignedFeatures.getMSData().get();
+            msData.setAlignedFeatureId(alignedFeatures.getAlignedFeatureId());
+            store.getStorage().upsert(msData);
+        }
+    }
+
+    @Override
+    public boolean importFeatureWithoutLCMS(AlignedFeatures alignedFeatures) throws IOException {
+        // the same two rules importAlignedFeature applies. A feature SIRIUS cannot work with is no more usable for
+        // arriving without a chromatogram, and a charge of zero means the file did not record its polarity
+        if (Math.abs(alignedFeatures.getCharge()) != 1) {
+            LoggerFactory.getLogger(SiriusProjectDocumentDbAdapter.class).debug(String.format(Locale.US,
+                    "SIRIUS does not support ions of charge %d. This MS/MS only feature will be ignored: m/z = %.4f",
+                    alignedFeatures.getCharge(), alignedFeatures.getAverageMass()));
+            return false;
+        }
+        if (alignedFeatures.getExternalFeatureId() == null)
+            alignedFeatures.setExternalFeatureId(String.valueOf(featureCounter.getAndIncrement()));
+        store.importCompounds(List.of(Compound.builder()
+                .name(alignedFeatures.getName())
+                .rt(alignedFeatures.getRetentionTime())
+                .adductFeatures(List.of(alignedFeatures))
+                .build()));
         return true;
     }
 

@@ -35,6 +35,22 @@ public interface SiriusDatabaseAdapter {
 
     boolean importAlignedFeature(AlignedFeatures alignedFeatures) throws IOException;
 
+    /**
+     * Writes an already imported feature back, together with its MS data. Needed by everything that adds to a
+     * feature after the fact - the fragmentation spectra of a run without MS1 scans are only matched against the
+     * features once all of them exist.
+     */
+    void updateAlignedFeature(AlignedFeatures alignedFeatures) throws IOException;
+
+    /**
+     * Imports a feature that consists of nothing but its fragmentation spectra, together with the compound it forms
+     * on its own. Such a feature never reaches the adduct network - it has no chromatographic peak to correlate with
+     * anything - so this is the only place it can be given a compound.
+     *
+     * @return false if the feature was rejected, by the same rules that reject one coming from a trace
+     */
+    boolean importFeatureWithoutLCMS(AlignedFeatures alignedFeatures) throws IOException;
+
     void importRetentionTimeAxis(RetentionTimeAxis axis, boolean update) throws IOException;
 
     Stream<AlignedFeatures> getImportedFeatureStream(long runId) throws IOException;
