@@ -501,3 +501,43 @@ tasks.register('refreshReadMe') {
 }
 refreshReadMe.dependsOn refreshTrainingLinks
 refreshReadMe.dependsOn refreshDownloadLinks
+
+// The changelog entry and the readme download block both date the release, and for 6.5.4 they disagreed
+// (2026-08-20 against 2026-08-16): the readme's date comes from new Date() inside refreshDownloadLinks, the
+// changelog's was typed by hand whenever the entry was written. refreshReadMe runs directly before
+// publishing, so its date is the one the release actually goes out on - take it from there rather than
+// asking anybody to keep two dates in step.
+tasks.register('refreshChangelogDate') {
+    group = 'publishing'
+    description = 'Dates the changelog entry for the version being released with the readme release date.'
+    inputs.files(refreshDownloadLinks.outputs.files.singleFile)
+    outputs.file("${getRootDir()}/CHANGELOG.md")
+
+    doLast {
+        File changelog = outputs.files.singleFile
+        String version = siriusFrontendVersion.toString()
+
+        // The heading refreshDownloadLinks just wrote: '### ... - Version <version> (yyyy-MM-dd)'
+        String heading = Files.readAllLines(inputs.files.singleFile.toPath()).find { it.startsWith('###') }
+        def date = heading == null ? null : (heading =~ /\((\d{4}-\d{2}-\d{2})\)/)
+        if (date == null || !date.find())
+            throw new GradleException("No release date in '${inputs.files.singleFile.name}'; cannot date the changelog.")
+        String releaseDate = date.group(1)
+
+        // Only the entry being released is restamped. Older entries are history and are left alone, whatever
+        // their heading depth - the file mixes '###' and '####'.
+        def entry = ~/^(#+ )\Q${version}\E(?: \(\d{4}-\d{2}-\d{2}\))?\s*$/
+        List<String> lines = Files.readAllLines(changelog.toPath())
+        int at = (0..<lines.size()).find { entry.matcher(lines.get(it)).matches() } ?: -1
+        if (at < 0)
+            throw new GradleException("No changelog entry for ${version}; write one before releasing.")
+
+        String nuLine = "${entry.matcher(lines.get(at)).with { it.matches(); it.group(1) }}${version} (${releaseDate})"
+        if (nuLine != lines.get(at)) {
+            lines.set(at, nuLine)
+            Files.write(changelog.toPath(), lines, StandardOpenOption.TRUNCATE_EXISTING)
+            logger.lifecycle("Dated the changelog entry for ${version} as ${releaseDate}")
+        }
+    }
+}
+refreshReadMe.finalizedBy refreshChangelogDate
