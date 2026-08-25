@@ -60,13 +60,14 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/vnd.spring-boot.actuator.v3+json, application/vnd.spring-boot.actuator.v2+json, application/json
+- **Accept**: application/vnd.spring-boot.actuator.v3+json, application/vnd.spring-boot.actuator.v2+json, application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 
 
 ## shutdown
@@ -127,4 +128,5 @@ No authorization required
 |-------------|-------------|------------------|
 | **204** | No Content |  -  |
 | **400** | Bad Request |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
 

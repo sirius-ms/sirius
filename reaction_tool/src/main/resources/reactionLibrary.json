@@ -1,0 +1,156 @@
+[ {
+  "name" : "Aliphatic hydroxylation",
+  "smarts" : "[CX4:1][H]>>[C:1]O"
+}, {
+  "name" : "Aromatic hydroxylation",
+  "smarts" : "[c:1][H]>>[c:1]O"
+}, {
+  "name" : "Benzylic hydroxylation",
+  "smarts" : "[CX4;$([CX4][c]):1][H]>>[C:1]O"
+}, {
+  "name" : "Alcohol oxidation to carbonyl",
+  "smarts" : "[CX4:1]([H])[OX2:2][H]>>[C:1]=[O:2]"
+}, {
+  "name" : "Aldehyde oxidation to carboxylic acid",
+  "smarts" : "[CX3:1]([H])=[O:2]>>[C:1](=[O:2])O"
+}, {
+  "name" : "Tertiary amine N-oxidation",
+  "smarts" : "[NX3;H0;!$([NX3]C=O);!$([NX3]=*):1]>>[N+:1][O-]"
+}, {
+  "name" : "Amine N-hydroxylation",
+  "smarts" : "[NX3;!$([NX3]C=O);!$([NX3]=*):1][H]>>[N:1]O"
+}, {
+  "name" : "Sulfide S-oxidation to sulfoxide",
+  "smarts" : "[#16X2H0:1]>>[#16:1]=O"
+}, {
+  "name" : "Sulfoxide oxidation to sulfone",
+  "smarts" : "[SX3:1]=[O:2]>>[S:1](=[O:2])=O"
+}, {
+  "name" : "Alkene epoxidation",
+  "smarts" : "[C:1]=[C:2]>>[C:1]1[C:2]O1"
+}, {
+  "name" : "Oxidative deamination",
+  "smarts" : "[CX4:1]([H])[NX3H2]>>[C:1]=O"
+}, {
+  "name" : "Phosphorothioate desulfuration",
+  "smarts" : "[P:1]=[S:2]>>[P:1]=O"
+}, {
+  "name" : "Nitro reduction to amine",
+  "smarts" : "[NX3+:1](=O)[O-]>>[N+0:1]"
+}, {
+  "name" : "Azo reduction",
+  "smarts" : "[#7:1]=[#7:2]>>[#7:1].[#7:2]"
+}, {
+  "name" : "Carbonyl reduction to alcohol",
+  "smarts" : "[CX3;!$([CX3](=O)[!#6;!#1]):1]=[O:2]>>[C:1][O:2]"
+}, {
+  "name" : "Disulfide reduction to thiols",
+  "smarts" : "[SX2:1][SX2:2]>>[S:1].[S:2]"
+}, {
+  "name" : "Reductive dehalogenation",
+  "smarts" : "[#6:1][F,Cl,Br,I]>>[#6:1][H]"
+}, {
+  "name" : "Ester hydrolysis",
+  "smarts" : "[#6:5][CX3:1](=[O:2])[OX2:3][#6:4]>>[#6:5][C:1](=[O:2])[O:3].[#6:4]O"
+}, {
+  "name" : "Amide hydrolysis",
+  "smarts" : "[#6:5][CX3:1](=[O:2])[NX3:3]>>[#6:5][C:1](=[O:2])O.[N:3]"
+}, {
+  "name" : "Carbamate hydrolysis",
+  "smarts" : "[#6:1][OX2:2][CX3:3](=[OX1:4])[NX3:5]>>[#6:1][O:2].[N:5]"
+}, {
+  "name" : "Epoxide hydrolysis to vicinal diol",
+  "smarts" : "[C:1]1[O:2][C:3]1>>[C:1]([O:2])[C:3]O"
+}, {
+  "name" : "Nitrile hydrolysis to carboxylic acid",
+  "smarts" : "[C:1]#[N:2]>>[C:1](=O)O"
+}, {
+  "name" : "Nitrile hydration to amide",
+  "smarts" : "[C:1]#[N:2]>>[C:1](=O)[N:2]"
+}, {
+  "name" : "Imine hydrolysis",
+  "smarts" : "[CX3:1]=[NX2:2]>>[C:1]=O.[N:2]"
+}, {
+  "name" : "Phosphate ester hydrolysis",
+  "smarts" : "[P:1][OX2:2][#6:3]>>[P:1][O:2].[#6:3]O"
+}, {
+  "name" : "Acetal hydrolysis",
+  "smarts" : "[OX2:2][CX4:1][OX2:3][#6:4]>>[O:2][C:1]O.[#6:4][O:3]"
+}, {
+  "name" : "Hydrolytic dehalogenation",
+  "smarts" : "[CX4:1][F,Cl,Br,I]>>[C:1]O"
+}, {
+  "name" : "Decarboxylation",
+  "smarts" : "[#6:1]C(=O)[OX2H1]>>[#6:1][H]"
+}, {
+  "name" : "Dehydration of alcohol",
+  "smarts" : "[CX4:1]([H])[CX4:2][OX2H1]>>[C:1]=[C:2]"
+}, {
+  "name" : "Alkene hydration",
+  "smarts" : "[C:1]=[C:2]>>[C:1][C:2]O"
+}, {
+  "name" : "Alkene dihydroxylation",
+  "smarts" : "[C:1]=[C:2]>>[C:1](O)[C:2]O"
+}, {
+  "name" : "O-Demethylation",
+  "smarts" : "[OX2:1][CH3]>>[O:1][H]"
+}, {
+  "name" : "N-Demethylation",
+  "smarts" : "[NX3:1][CH3]>>[N:1][H]"
+}, {
+  "name" : "S-Demethylation",
+  "smarts" : "[SX2:1][CH3]>>[S:1][H]"
+}, {
+  "name" : "O-Deethylation",
+  "smarts" : "[OX2:1][CH2][CH3]>>[O:1][H]"
+}, {
+  "name" : "O-Glucuronidation",
+  "smarts" : "[OX2H1;$([OX2H1][#6;!$([CX3]=[OX1])]):1]>>[O:1]C2OC(C(=O)O)C(O)C(O)C2O"
+}, {
+  "name" : "N-Glucuronidation",
+  "smarts" : "[NX3;H1,H2;$([NX3][#6]);!$([NX3]C=O):1]>>[N:1]C2OC(C(=O)O)C(O)C(O)C2O"
+}, {
+  "name" : "O-Sulfation",
+  "smarts" : "[OX2H1;$([OX2H1][#6;!$([CX3]=[OX1])]):1]>>[O:1]S(=O)(=O)O"
+}, {
+  "name" : "O-Methylation",
+  "smarts" : "[OX2H1;$([OX2H1]c):1]>>[O:1]C"
+},
+  {
+  "name" : "N-Acetylation",
+  "smarts" : "[NX3;H1,H2;$([NX3][#6;!$([CX3]=[OX1])]):1]>>[N:1]C(C)=O"
+}, {
+  "name" : "O-Acetylation",
+  "smarts" : "[OX2H1;$([OX2H1][#6;!$([CX3]=[OX1])]):1]>>[O:1]C(C)=O"
+}, {
+  "name" : "Glycine conjugation",
+  "smarts" : "[CX3:1](=[O:2])[OX2H1:3]>>[C:1](=[O:2])NCC(=O)O"
+}, {
+  "name" : "Glutathione conjugation (epoxide ring-opening)",
+  "smarts" : "[C:1]1[O:2][C:3]1>>[C:1](SCC(NC(=O)CCC(N)C(=O)O)C(=O)NCC(=O)O)[C:3][O:2]"
+},
+  { "name" : "Allylic hydroxylation",                          "smarts" : "[CX4;$([CX4][CX3]=[CX3]):1][H]>>[C:1]O" },
+  { "name" : "Primary alcohol oxidation to carboxylic acid",   "smarts" : "[CX4;H2:1][OX2H1:2]>>[C:1](=[O:2])O" },
+  { "name" : "Desaturation (alkane to alkene)",                "smarts" : "[CX4:1]([H])[CX4:2][H]>>[C:1]=[C:2]" },
+  { "name" : "Methylenedioxy cleavage to catechol",           "smarts" : "[OX2:1][CH2][OX2:2]>>[O:1][H].[O:2][H]" },
+  { "name" : "Oxidative dehalogenation (gem-dihalide)",        "smarts" : "[CX4:1]([F,Cl,Br,I])[F,Cl,Br,I]>>[C:1]=O" },
+  { "name" : "Amine N-oxide reduction",                        "smarts" : "[NX4+:1][O-]>>[N+0:1]" },
+  { "name" : "Sulfoxide reduction to sulfide",                "smarts" : "[SX3:1]=O>>[S:1]" },
+  { "name" : "Nitroso reduction to amine",                     "smarts" : "[NX2:1]=[OX1]>>[N+0:1]" },
+  { "name" : "Alkene reduction",                               "smarts" : "[C:1]=[C:2]>>[C:1][C:2]" },
+  { "name" : "Vicinal dihalide elimination to alkene",        "smarts" : "[C:1]([F,Cl,Br,I])[C:2][F,Cl,Br,I]>>[C:1]=[C:2]" },
+  { "name" : "Azo reduction to hydrazine",                     "smarts" : "[#7:1]=[#7:2]>>[#7:1]-[#7:2]" },
+  { "name" : "Sulfonamide hydrolysis",                         "smarts" : "[#6:5][SX4:1](=[O:2])(=[O:3])[NX3:4]>>[#6:5][S:1](=[O:2])(=[O:3])O.[N:4]" },
+  { "name" : "Sulfate ester hydrolysis",                       "smarts" : "[#6:1][OX2:2][SX4](=O)(=O)[OX2H1]>>[#6:1][O:2][H]" },
+  { "name" : "Anhydride hydrolysis",                           "smarts" : "[CX3:1](=[O:2])[OX2][CX3:3]=[O:4]>>[C:1](=[O:2])O.[C:3](=[O:4])O" },
+  { "name" : "Urea hydrolysis",                                "smarts" : "[NX3:1][CX3](=O)[NX3:2]>>[N:1].[N:2]" },
+  { "name" : "Carbonate hydrolysis",                           "smarts" : "[#6:1][OX2:2][CX3](=O)[OX2:3][#6:4]>>[#6:1][O:2].[#6:4][O:3]" },
+  { "name" : "N-Methylation",                                  "smarts" : "[NX3;H1,H2;$([NX3][#6;!$([CX3]=[OX1])]):1]>>[N:1]C" },
+  { "name" : "S-Methylation",                                  "smarts" : "[SX2H1:1]>>[S:1]C" },
+  { "name" : "Thiol oxidation to sulfonic acid",              "smarts" : "[SX2H1:1]>>[S:1](=O)(=O)O" },
+  { "name" : "Taurine conjugation",                            "smarts" : "[CX3:1](=[O:2])[OX2H1:3]>>[C:1](=[O:2])NCCS(=O)(=O)O" },
+  { "name" : "Glutamine conjugation",                          "smarts" : "[CX3:1](=[O:2])[OX2H1:3]>>[C:1](=[O:2])NC(CCC(N)=O)C(=O)O" },
+  { "name" : "Glutathione conjugation (Michael addition)",     "smarts" : "[CX3:1]=[CX3:2][CX3:3]=[OX1:4]>>[C:1](SCC(NC(=O)CCC(N)C(=O)O)C(=O)NCC(=O)O)[C:2][C:3]=[O:4]" },
+  { "name" : "N-Acetylcysteine (mercapturate) conjugation",    "smarts" : "[C:1]1[O:2][C:3]1>>[C:1](SCC(NC(C)=O)C(=O)O)[C:3][O:2]" },
+  { "name" : "O-Galactosylation",                              "smarts" : "[OX2H1;$([OX2H1][CX4;H1;R]):1]>>[O:1]C1OC(CO)C(O)C(O)C1O" },
+  { "name" : "Nitro reduction to nitroso",                     "smarts" : "[NX3+:1](=O)[O-]>>[N+0:1]=O" }]

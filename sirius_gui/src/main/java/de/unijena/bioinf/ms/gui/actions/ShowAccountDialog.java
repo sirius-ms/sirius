@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import com.formdev.flatlaf.util.ScaledImageIcon;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -71,8 +72,10 @@ public class ShowAccountDialog extends AbstractGuiAction implements PropertyChan
                     try {
                         Image image = ImageIO.read(imageURI.toURL());
                         image = Icons.makeEllipse(image);
-                        image = Icons.scaledInstance(image, 32, 32);
-                        putValue(Action.LARGE_ICON_KEY, new ImageIcon(image));
+                        // handed over unscaled: ScaledImageIcon rasterises the original at the
+                        // device resolution, while a 32x32 raster in an ImageIcon would be stretched
+                        // by the desktop scale factor (Windows 125% / 150%) and look blurry
+                        putValue(Action.LARGE_ICON_KEY, new ScaledImageIcon(new ImageIcon(image), 32, 32));
                     } catch (IOException e) {
                         putValue(Action.LARGE_ICON_KEY, Icons.USER_GREEN.derive(32, 32)); //login is fine but image is broken
                         LoggerFactory.getLogger(getClass()).warn("Could not load User image from token. Using placeholder instead.");

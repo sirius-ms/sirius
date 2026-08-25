@@ -11,7 +11,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.MassMap;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.babelms.cef.P;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.adducts.assignment.AdductAssignment;
@@ -352,7 +351,7 @@ public class AdductNetwork {
         while (e.hasNext()) e.next().getOther(v).removeEdgeTo(v);
     }
 
-    public void assignNetworksAndAdductsToFeatures(JobManager manager, SubnetworkResolver resolver, int charge, IOFunctions.IOConsumer<AlignedFeatures> updateRoutineForFeatures,
+    public Set<PrecursorIonType> assignNetworksAndAdductsToFeatures(JobManager manager, SubnetworkResolver resolver, int charge, IOFunctions.IOConsumer<AlignedFeatures> updateRoutineForFeatures,
                                                    IOFunctions.IOFunction<de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork, Long> updateRoutineForNetworks,
                                                    IOFunctions.IOFunction<de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures, Long> feature2compoundRoutine) throws IOException {
         final ArrayList<BasicJJob<HashMap<AdductNode, AdductAssignment>>> jobs = new ArrayList<>();
@@ -373,11 +372,14 @@ public class AdductNetwork {
                 }
             }));
         }
+        Set<PrecursorIonType> detectedAdducts = new HashSet<>();
 
         // DEBUG
         HashMap<String, Integer> uniqueIonModeCounter = new HashMap<>();
         HashMap<String, Double> adductCounter = new HashMap<>();
         int ambigous = 0; int networkNodes=0; int unambigous=0;
+        // DEBUG END
+
         ListIterator<BasicJJob<HashMap<AdductNode, AdductAssignment>>> iter = jobs.listIterator();
         while (iter.hasNext()) {
             HashMap<AdductNode, AdductAssignment> map = iter.next().takeResult();
@@ -400,6 +402,10 @@ public class AdductNetwork {
             // finally update all compounds in database
             for (AdductNode node : map.keySet()) {
                 updateRoutineForFeatures.accept(node.features);
+                // collect all detected adducts as return value
+                node.features.getDetectedAdducts().getDetectedAdductsStr().map(DetectedAdduct::getAdduct)
+                        .filter(Objects::nonNull)
+                        .forEach(detectedAdducts::add);
             }
 
             // DEBUG
@@ -415,7 +421,7 @@ public class AdductNetwork {
                 }
                 ++networkNodes;
             }
-
+            // DEBUG END
             iter.set(null); // free memory
         }
         // also process all singleton nodes
@@ -429,8 +435,11 @@ public class AdductNetwork {
             f.setAdductNetworkId(null);
             feature2compoundRoutine.apply(f);
             updateRoutineForFeatures.accept(f);
+            // collect all detected adducts as return value
+            f.getDetectedAdducts().getDetectedAdductsStr().map(DetectedAdduct::getAdduct)
+                    .filter(Objects::nonNull)
+                    .forEach(detectedAdducts::add);
         }
-
         // DEBUG
         /*
         System.out.println("##########################################");
@@ -441,6 +450,7 @@ public class AdductNetwork {
         System.out.println(adductCounter);
         System.out.println("##########################################");
         */
+        return detectedAdducts;
 
     }
 

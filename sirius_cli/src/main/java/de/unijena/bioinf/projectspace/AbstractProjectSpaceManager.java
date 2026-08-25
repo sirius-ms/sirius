@@ -29,6 +29,8 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.webapi.WebAPI;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -36,6 +38,10 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 public abstract class AbstractProjectSpaceManager implements ProjectSpaceManager {
+    @Getter
+    @Setter
+    boolean tempProject = false;
+
 
     public synchronized void writeFingerIdDataIfMissing(WebAPI<?> api) throws IOException {
         if (!hasFingerIdData(1) || !hasFingerIdData(-1)) {

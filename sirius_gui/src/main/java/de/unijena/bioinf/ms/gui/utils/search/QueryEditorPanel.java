@@ -1,0 +1,1900 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2024 Bright Giant GmbH
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
+package de.unijena.bioinf.ms.gui.utils.search;
+import de.unijena.bioinf.ms.gui.utils.query.*;
+
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Buttons;
+import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.configs.CompactToggleIcon;
+import de.unijena.bioinf.ms.gui.configs.FilterButton;
+import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.configs.InvertIcon;
+import de.unijena.bioinf.ms.gui.configs.QueryModeIcon;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
+import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+/**
+ * The reusable, host-agnostic inline lucene query builder, modeled after GitLab's filtered search.
+ * Two stacked zones: an upper CHIPS zone holds the finished terms (filter-dialog state as outlined
+ * chips, the user's committed clause chips, groups as nested paren chips), wrapping across rows in a
+ * height-capped scrollable area; a lower TYPING zone holds only the term currently being built - open
+ * -group markers, the staged token fragments and the text input - so the stage prompt stays readable
+ * however many chips fill the zone above. An embedded suggestion list below offers all candidates for
+ * the current stage ({@link TokenInputModel}) and narrows while typing.
+ * <p>
+ * This is a plain {@link JPanel} with no window/lifecycle knowledge: it delegates the two
+ * host-specific concerns - "my content changed height, re-fit me" and "I want to be dismissed" - to
+ * a {@link Host}. {@link SearchBarOverlay} hosts it in a floating dialog; the feature filter dialog
+ * embeds it directly.
+ * <p>
+ * Every suggestion carries the connector that would join it to the terms already there ({@code AND
+ * ionMass}), so choosing a term chooses how it is combined - there is no separate connector step. The
+ * {@link QueryMode} toggle in the controls row decides which connectors are offered: simple mode ANDs
+ * the top-level terms, ORs the alternatives inside a group and does not nest groups; advanced mode
+ * offers both everywhere. The joint between the filter-panel block and the user's own query is the one
+ * the query is built around: the chips zone braces both blocks and puts it between them as a chip that
+ * flips AND/OR on click, and the connector picked for the very first user term is that joint (its row
+ * shows the brace it opens). Typing a connector that is not on offer is refused rather than
+ * reinterpreted - the input turns red and says why (see {@link #styleInput()}).
+ * <p>
+ * Up/Down navigate the suggestion list; Enter and Tab both ADD the highlighted suggestion (or the
+ * typed value) to the query. An untouched input highlights the run-action row ("Search") on top
+ * instead, so Enter on an empty input runs the search - typing a term and pressing Enter twice is the
+ * quick full-text search. Tab never runs the search (it skips that row); Backspace on empty input
+ * pops a stage.
+ * <p>
+ * The builder state compiles into the {@link FeatureFilterModel}'s shared search text document on
+ * commit - the model itself needs no change and the filter dialog's fulltext field shows the
+ * compiled query automatically.
+ */
+@Slf4j
+public class QueryEditorPanel extends JPanel {
+
+    private static final int ICON_SIZE = 24; // px; sized to sit on the input row next to the field
+    private static final int MAX_LIST_ROWS = 10;
+    /**
+     * The finished-chips zone shows at most this many rows, then scrolls (keeps the typing row visible).
+     */
+    private static final int MAX_CHIP_ROWS = 3;
+    /**
+     * Vertical gap between chip rows; shared by the chips-zone {@link WrapLayout} and the height cap.
+     */
+    private static final int CHIP_VGAP = 4;
+    /**
+     * Horizontal gap between chips; also the breathing room kept between the last chip of the first
+     * row and the controls overlaid on that row's right end.
+     */
+    private static final int CHIP_HGAP = 4;
+    /** Font enlargement of a brace around a group inside the user's query. */
+    private static final float GROUP_PAREN_FONT_DELTA = 2f;
+    /** ... and of the braces around the two fixed blocks, which are a level above those groups. */
+    private static final float BLOCK_PAREN_FONT_DELTA = 8f;
+    /** Enlargement of the block joint, which belongs to the big braces rather than to the chips. */
+    private static final float BLOCK_JOIN_FONT_DELTA = 3f;
+
+    /**
+     * What a commit produced - the collapsed bar renders its chips from this snapshot (never by
+     * parsing the compiled string).
+     */
+    public record Commit(@NotNull QueryContainer root, @NotNull String freeText, @NotNull String compiled) {
+    }
+
+    /**
+     * The window/lifecycle concerns the editor delegates to whatever hosts it.
+     */
+    public interface Host {
+        /**
+         * The editor's content changed height; re-fit the surrounding container (e.g. resize the overlay).
+         */
+        void editorContentChanged();
+
+        /**
+         * The editor asked to be dismissed (Esc / Cancel / after commit).
+         */
+        void editorCloseRequested();
+
+        /**
+         * Enter was pressed with nothing left to add, i.e. the query should be run/applied. The
+         * floating overlay handles that itself (it runs the search), so this is only overridden by
+         * the embedded host (the filter dialog), for which it means Apply.
+         */
+        default void editorCommitRequested() {
+        }
+
+        /**
+         * A model chip was clicked to open its full editor. The floating overlay steps aside (closes)
+         * and then opens it; a host that embeds the editor next to that full editor (the filter
+         * dialog) just runs it - e.g. selecting the owning tab - without dismissing itself.
+         */
+        default void editorHandoff(@NotNull Runnable openFullEditor) {
+            editorCloseRequested();
+            SwingUtilities.invokeLater(openFullEditor);
+        }
+    }
+
+    private final FeatureFilterModel filterModel;
+    private final SearchableFieldsProvider fieldsProvider;
+    private final Supplier<List<FilterTerm>> termSupplier;
+    private final FilterEditorHost editorHost;
+    private final SearchRenderState renderState;
+    private final Runnable refreshCollapsedBar;
+    private final Consumer<Commit> onCommitted;
+    private final Host host;
+    /**
+     * Embedded (in the filter dialog) vs. floating (the overlay). Embedded drops its own commit
+     * controls, Esc binding and model-update listener - the dialog owns commit/dismissal - and
+     * renders model chips as read-only navigation targets (their value is edited via the widgets).
+     */
+    private final boolean embedded;
+    /**
+     * Opens the full filter dialog from the overlay's in-field funnel icon; null when there is no
+     * such affordance (the embedded host is already the dialog).
+     */
+    @Nullable
+    private final Runnable openFilterPanel;
+    /**
+     * Full reset of every filter and the search query (the overlay's Clear button). When null the
+     * Clear button only clears the user's own query (the embedded dialog keeps its own Reset).
+     */
+    @Nullable
+    private final Runnable clearFilter;
+    /**
+     * Restores the default filter configuration (SIRIUS's recommended starting filter). When null the
+     * restore button is hidden (e.g. the embedded dialog manages its own defaults).
+     */
+    @Nullable
+    private final Runnable restoreDefaults;
+    /**
+     * The overlay's funnel button, kept so its tint can track the active filter state; null when embedded.
+     */
+    @Nullable
+    private FilterButton filterButton;
+    /**
+     * The field-name display toggle's glyph, kept so it can flip between compact/expanded on toggle.
+     */
+    private CompactToggleIcon modeIcon;
+    /** The invert toggle's glyph, kept so it can be re-tinted when the inversion state flips. */
+    private InvertIcon invertIcon;
+    private JButton invertToggle;
+    /** The query-mode toggle's glyph, kept so it can flip between the flat and the nested structure. */
+    private QueryModeIcon queryModeIcon;
+    private JButton queryModeToggle;
+
+    // --- builder state ---
+    private QueryContainer root = QueryContainer.empty();
+    private int[] openPath = new int[0];
+    private final TokenInputModel tokenModel = new TokenInputModel();
+    /** Whether the whole query is inverted ({@code *:* AND NOT (...)}); a model-level flag surfaced and
+     *  edited here (see the invert toggle), applied to the model at the host's commit point. */
+    private boolean inverted;
+    /**
+     * How the filter-panel block and the user's own query are joined - the "big" connector of
+     * {@code (facets) AND (query)}. A model-level flag like {@link #inverted}: surfaced here as the
+     * clickable chip between the two braced blocks, applied to the model on commit. AND by default,
+     * which is what it stays for everyone who never touches it.
+     */
+    private LogicOp queryJoin = LogicOp.AND;
+    /**
+     * The applied query the working state reverts to on Cancel: captured when the session opens and
+     * whenever a search is committed. Uncommitted edits made while open are discarded back to this.
+     */
+    private QueryContainer baselineRoot = QueryContainer.empty();
+    private String baselineFreeText = "";
+    private boolean baselineInverted;
+    private LogicOp baselineQueryJoin = LogicOp.AND;
+    /**
+     * The query string this editor last wrote into the shared search document. If the document
+     * differs on open, it was edited elsewhere (filter dialog) - the builder then degrades the
+     * document content into its free-text segment instead of trying to parse it back into chips.
+     */
+    private String lastCompiled = "";
+    /**
+     * Model-filter chip removals staged in the editor but not yet applied. Like the user's own
+     * clauses, they take effect only on commit (Search) and are discarded on Cancel - so the
+     * {@link FeatureFilterModel} is left untouched until the query is actually run. Keyed by chip
+     * label so {@link #rebuild} can hide a staged-removed chip without mutating the model.
+     */
+    private final LinkedHashMap<String, Runnable> pendingModelRemovals = new LinkedHashMap<>();
+
+    // --- ui ---
+    /**
+     * Upper zone: the finished terms as chips (wraps across rows, height-capped + scrollable).
+     */
+    private final JPanel chipsRow;
+    /**
+     * The scroll pane wrapping {@link #chipsRow}; kept so rebuilds can scroll it to the newest chips.
+     */
+    private JScrollPane chipsScroll;
+    /**
+     * The chips zone with the controls overlaid on its top-right corner; kept so a rebuild can
+     * re-place that overlay when the chips zone gains or loses its scrollbar.
+     */
+    private JPanel chipsHeader;
+    /**
+     * Lower zone, left part: the open-group markers and staged fragments of the term being built.
+     * The input itself takes the rest of that line (see {@link #typingLine}).
+     */
+    private final JPanel typingRow;
+    /** Right end of the typing line: the close-group control (while a group is open) and the key hint. */
+    private final JPanel typingTrailing = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 2));
+    /**
+     * The whole typing line: staged fragments (west), the input (center, grows to the full remaining
+     * width) and the trailing controls (east).
+     */
+    private JPanel typingLine;
+    private final PlaceholderTextField input;
+    /**
+     * Trailing hint on the typing row telling what the accept/run keys do RIGHT NOW. Only shown while
+     * something is typed - on an empty input the highlighted run-action row says it instead.
+     */
+    private final JLabel keyHint = new JLabel();
+    /**
+     * The input's normal text colour, captured before anything can tint it: rejected text is painted
+     * {@link Colors#TEXT_ERROR} and has to return to exactly this, whatever the theme provides.
+     */
+    private final Color inputForeground;
+    private final JList<TokenInputModel.Suggestion> suggestionList;
+    private final JScrollPane suggestionScroll;
+    /**
+     * Where the pointer sat when the session opened. Hover-selection is ignored while it is still
+     * there, so an editor popping up UNDER the cursor (Ctrl+F with the mouse over the result view)
+     * does not silently move the selection off the default row. Cleared by the first real move.
+     */
+    @Nullable
+    private Point hoverAnchor;
+
+    public QueryEditorPanel(@NotNull FeatureFilterModel filterModel,
+                            @NotNull SearchableFieldsProvider fieldsProvider,
+                            @NotNull Supplier<List<FilterTerm>> termSupplier,
+                            @NotNull FilterEditorHost editorHost,
+                            @NotNull SearchRenderState renderState,
+                            @NotNull Consumer<Commit> onCommitted,
+                            @NotNull Runnable refreshCollapsedBar,
+                            @NotNull Host host,
+                            boolean embedded,
+                            @Nullable Runnable openFilterPanel,
+                            @Nullable Runnable clearFilter,
+                            @Nullable Runnable restoreDefaults) {
+        super(new BorderLayout());
+        this.filterModel = filterModel;
+        this.fieldsProvider = fieldsProvider;
+        this.termSupplier = termSupplier;
+        this.editorHost = editorHost;
+        this.renderState = renderState;
+        this.onCommitted = onCommitted;
+        this.refreshCollapsedBar = refreshCollapsedBar;
+        this.host = host;
+        this.embedded = embedded;
+        this.openFilterPanel = openFilterPanel;
+        this.clearFilter = clearFilter;
+        this.restoreDefaults = restoreDefaults;
+
+        // the top row of an untouched input: Enter runs the search (overlay) / applies the dialog
+        tokenModel.setRunAction(new TokenInputModel.RunAction("Search",
+                "Apply the filter and close",
+                "Type to add query terms"));
+
+        setBackground(UIManager.getColor("TextField.background"));
+        setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Colors.Menu.FILTER_BUTTON, 1),
+                BorderFactory.createEmptyBorder(3, 5, 3, 5)));
+
+        // --- two zones: finished terms as chips (upper) over the term being built (lower) ---
+        // the chips zone wraps across rows in a height-capped, vertically-scrollable area so the
+        // typing row and its instructions stay visible no matter how many finished chips there are
+        WrapLayout chipsLayout = new WrapLayout(FlowLayout.LEFT, CHIP_HGAP, CHIP_VGAP);
+        chipsRow = new WrapScrollPanel(chipsLayout);
+        chipsScroll = new JScrollPane(chipsRow,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+            @Override
+            public Dimension getPreferredSize() {
+                Dimension d = super.getPreferredSize();
+                return new Dimension(d.width, Math.min(d.height, chipsZoneMaxHeight()));
+            }
+        };
+        chipsScroll.setOpaque(false);
+        chipsScroll.getViewport().setOpaque(false);
+        chipsScroll.setBorder(BorderFactory.createEmptyBorder());
+
+        input = new PlaceholderTextField(18);
+        inputForeground = input.getForeground();
+        input.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
+        input.setOpaque(false);
+        wireInput();
+
+        typingRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2)); // the term being built, on its own line
+        typingRow.setOpaque(false);
+
+        keyHint.setForeground(UIManager.getColor("TextField.inactiveForeground"));
+        keyHint.setFont(keyHint.getFont().deriveFont(Font.PLAIN, keyHint.getFont().getSize2D() - 1f));
+        keyHint.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 4));
+        typingTrailing.setOpaque(false);
+        // the staged fragments on the left and the trailing controls on the right take their natural
+        // width; everything in between belongs to the input, so there is room to type a long term
+        typingLine = new JPanel(new BorderLayout());
+        typingLine.setOpaque(false);
+        typingLine.add(typingRow, BorderLayout.WEST);
+        typingLine.add(input, BorderLayout.CENTER);
+        typingLine.add(typingTrailing, BorderLayout.EAST);
+
+        Box controls = Box.createHorizontalBox();
+
+
+        // borderless in-field buttons on the left of the controls (same affordances as the collapsed
+        // bar): Clear does a full reset of all filters + the query; the funnel opens the full dialog
+
+        JButton clear = Buttons.getBackspaceButton(ICON_SIZE, "Clear all filters and the search query", true);
+        clear.setFocusable(false); // must not grab focus (e.g. would auto-close the search overlay)
+        clear.setMargin(new Insets(0, 0, 0, 0));
+        clear.addActionListener(e -> {
+            clearAll();
+            input.requestFocusInWindow();
+        });
+
+        // restore the default filter configuration (distinct from Clear, which removes all filters);
+        // only shown when the host provides the action (the embedded filter dialog; the search overlay
+        // passes null, so no restore button there)
+        JButton restore = null;
+        if (restoreDefaults != null) {
+            restore = Buttons.getRestoreDefaultsButton(ICON_SIZE, "Restore default filters", true);
+            restore.setFocusable(false); // must not grab focus (would auto-close the search overlay)
+            restore.setMargin(new Insets(0, 0, 0, 0));
+            restore.addActionListener(e -> {
+                restoreDefaultsAll();
+                input.requestFocusInWindow();
+            });
+        }
+        if (openFilterPanel != null) {
+
+            // hands off via the host so the overlay steps aside before the (modal) dialog opens
+            filterButton = Buttons.getFilterButton(ICON_SIZE,
+                    "Open the filter panel (" + GuiUtils.shortcut("Shift+F") + ")", true);
+            filterButton.setFocusable(false);
+            filterButton.addActionListener(e -> host.editorHandoff(openFilterPanel));
+            filterButton.setMargin(new Insets(0, 0, 0, 0));
+        }
+
+        // Field-name display toggle (compact terminal names <-> fully-qualified), built but NOT put on
+        // the controls row: no two searchable fields currently share a terminal name, so the compact name
+        // identifies a field on its own and switching to the full path only makes the chips longer. The
+        // full path is one hover away everywhere it is shortened (every such chip and suggestion row
+        // carries it in its tooltip), which is what the toggle was really for. Kept assembled so it can
+        // be put back by adding it to `controls` the day fields do collide.
+        modeIcon = new CompactToggleIcon(ICON_SIZE, Colors.searchFieldIconColor(), renderState.mode() == FieldDisplay.Mode.COMPACT);
+        ToolbarButton modeToggle = new ToolbarButton(modeIcon, null, true);
+        modeToggle.setFocusable(false);
+        modeToggle.setMargin(new Insets(0, 0, 0, 0));
+        modeToggle.addActionListener(e -> {
+            renderState.toggleMode();
+            styleModeToggle(modeToggle);
+            rebuild();
+            refreshCollapsedBar.run();
+        });
+        styleModeToggle(modeToggle);
+
+        // query-mode toggle: simple (AND at the top level, OR inside a group, no nesting) vs. advanced
+        // (both connectors everywhere, groups nest). Sits with the other meta controls rather than in
+        // the overlay's footer, because the embedded editor (filter dialog) has no footer.
+        queryModeIcon = new QueryModeIcon(ICON_SIZE, Colors.searchFieldIconColor(),
+                renderState.queryMode() == QueryMode.ADVANCED);
+        queryModeToggle = new ToolbarButton(queryModeIcon, null, true);
+        queryModeToggle.setFocusable(false);
+        queryModeToggle.setMargin(new Insets(0, 0, 0, 0));
+        queryModeToggle.addActionListener(e -> {
+            renderState.toggleQueryMode();
+            rebuild(); // re-reads the mode into the token model and re-offers the suggestions
+            input.requestFocusInWindow();
+        });
+        styleQueryModeToggle();
+
+        // invert toggle: flips the whole query to its complement (a model-level flag surfaced here),
+        // tinted like the funnel (grey / blue / red). A borderless in-field icon like the others.
+        invertIcon = new InvertIcon(ICON_SIZE, Colors.searchFieldIconColor());
+        invertToggle = new ToolbarButton(invertIcon, null, true);
+        invertToggle.setFocusable(false);
+        invertToggle.setMargin(new Insets(0, 0, 0, 0));
+        invertToggle.addActionListener(e -> setInverted(!inverted));
+
+        // order left-to-right: query-state actions (clear, restore, invert) then meta controls (query
+        // mode, funnel)
+        controls.add(clear);
+        if (restore != null)
+            controls.add(restore);
+        controls.add(invertToggle);
+        controls.add(queryModeToggle);
+        if (filterButton != null)
+            controls.add(filterButton);
+
+        // chips zone with the trailing controls (clear / invert / mode / funnel) at its top-right,
+        // and the typing zone stacked directly beneath it. The controls float above the chips zone
+        // rather than owning a full-height column of their own, and the chips layout keeps that
+        // corner free - so they narrow only the line they actually sit on, not every chip row.
+        JPanel controlsAligned = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 2));
+        // opaque: chips scrolled up behind the controls have to be hidden by them, not shine through
+        controlsAligned.setOpaque(true);
+        controlsAligned.setBackground(getBackground());
+        controlsAligned.add(controls);
+        chipsLayout.setReservedTopRight(() -> {
+            if (!controlsAligned.isVisible())
+                return null;
+            Dimension d = controlsAligned.getPreferredSize();
+            return new Dimension(d.width + CHIP_HGAP, d.height);
+        });
+        chipsHeader = new CornerOverlayPanel(chipsScroll, controlsAligned);
+
+        Box northStack = Box.createVerticalBox();
+        northStack.setOpaque(false);
+        northStack.add(chipsHeader);
+        northStack.add(typingLine);
+        add(northStack, BorderLayout.NORTH);
+
+        // the floating overlay's main actions live in a right-aligned footer (like the app's dialogs);
+        // the embedded editor omits it - the filter dialog owns commit/dismissal (Apply / Discard)
+        if (!embedded) {
+            JButton apply = new JButton("Apply");
+            apply.setFocusable(false); // keep keyboard focus in the input (Enter still applies)
+            apply.setToolTipText("Apply the filter and close (Enter on an empty input)");
+            apply.addActionListener(e -> runSearch());
+
+            JButton discard = new JButton("Discard");
+            discard.setFocusable(false);
+            discard.setToolTipText("Close without applying (Esc)");
+            discard.addActionListener(e -> host.editorCloseRequested());
+
+            // icon-only copy of the whole query (filters + user query), left-aligned in the footer
+            ToolbarButton copy = new ToolbarButton(Icons.CLIP_BOARD.derive(ICON_SIZE, ICON_SIZE),
+                    "Copy the full search query to the clipboard", true);
+            copy.setFocusable(false); // a focus grab would auto-close the overlay
+            copy.setMargin(new Insets(0, 0, 0, 0));
+            copy.addActionListener(e -> copyQueryToClipboard());
+            JPanel copyBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
+            copyBox.setOpaque(false);
+            copyBox.add(copy);
+
+            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 4));
+            actions.setOpaque(false);
+            actions.add(apply);
+            actions.add(discard);
+
+            JPanel footer = new JPanel(new BorderLayout());
+            footer.setOpaque(false);
+            footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Colors.Menu.FILTER_BUTTON));
+            footer.add(copyBox, BorderLayout.WEST);
+            footer.add(actions, BorderLayout.EAST);
+            add(footer, BorderLayout.SOUTH);
+        }
+
+        // --- embedded suggestion list (no separate window) ---
+        // JList does not consult the cell renderer for tooltips, so the hovered row resolves its own
+        // (which carries the fully-qualified field name and the description in full)
+        suggestionList = new JList<TokenInputModel.Suggestion>() {
+            @Override
+            public String getToolTipText(MouseEvent event) {
+                int index = locationToIndex(event.getPoint());
+                if (index < 0 || index >= getModel().getSize())
+                    return null;
+                Rectangle cell = getCellBounds(index, index);
+                if (cell == null || !cell.contains(event.getPoint()))
+                    return null; // the empty space below the last row is not a row
+                return SuggestionDisplay.of(getModel().getElementAt(index), renderState.mode()).tooltip();
+            }
+        };
+        ToolTipManager.sharedInstance().registerComponent(suggestionList);
+        suggestionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        suggestionList.setFocusable(false);
+        suggestionList.setCellRenderer(new SuggestionRenderer());
+        suggestionList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int index = suggestionList.locationToIndex(e.getPoint());
+                if (index >= 0) {
+                    suggestionList.setSelectedIndex(index);
+                    // a click on a row does what Enter on it would do (the run-action row runs the search)
+                    if (isRunActionSelected())
+                        runOrCommit();
+                    else
+                        acceptCurrentToken(false);
+                }
+            }
+        });
+        suggestionList.addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                // a list that appears under a resting cursor gets a mouseMoved without any actual
+                // movement - that must not hijack the default selection (the run-action row)
+                if (hoverAnchor != null) {
+                    if (hoverAnchor.equals(e.getLocationOnScreen()))
+                        return;
+                    hoverAnchor = null;
+                }
+                int index = suggestionList.locationToIndex(e.getPoint());
+                if (index >= 0)
+                    suggestionList.setSelectedIndex(index);
+            }
+        });
+        suggestionScroll = new JScrollPane(suggestionList,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        suggestionScroll.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Colors.Menu.FILTER_BUTTON));
+        suggestionScroll.setVisible(false);
+        add(suggestionScroll, BorderLayout.CENTER);
+
+        if (!embedded) {
+            // Esc dismisses via the host even when focus sits on a button inside the editor
+            getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                    .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "closeSearchOverlay");
+            getActionMap().put("closeSearchOverlay", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    host.editorCloseRequested();
+                }
+            });
+
+            // Structured filters may change under the floating overlay (dialog, quick toggles).
+            // The embedded editor instead re-renders from the dialog's live widget state (see the
+            // widget listeners the dialog attaches) and would leak a listener per dialog open.
+            // The event can be fired off the EDT (background project reload), so marshal onto it.
+            filterModel.addUpdateCompleteListener(evt -> SwingUtilities.invokeLater(() -> {
+                if (isShowing())
+                    rebuild();
+            }));
+        }
+    }
+
+    /**
+     * Clears the user's own query (typed clauses + free text); the filter-dialog filters are kept.
+     */
+    public void clearUserQuery() {
+        root = QueryContainer.empty();
+        openPath = new int[0];
+        tokenModel.reset();
+        input.setText("");
+        pendingModelRemovals.clear(); // restore any staged-removed chips
+        rebuild();
+    }
+
+    /**
+     * Clear: reset every filter and the search query. The contract differs by host:
+     * <ul>
+     *   <li><b>Embedded dialog</b> - resets the backing widgets via {@link #clearFilter} and wipes the
+     *       working query. Staged like every dialog edit: applied on Apply, reverted by Discard/Esc.</li>
+     *   <li><b>Overlay</b> - stages a removal of every active facet and clears the working query, leaving
+     *       the baseline intact. Applied on Apply/Enter (commit), reverted on Esc/close; the model is not
+     *       touched on click.</li>
+     * </ul>
+     */
+    public void clearAll() {
+        if (embedded) {
+            if (clearFilter != null)
+                clearFilter.run(); // reset the backing widgets (staged; the model is not touched now)
+            resetLocalQueryToEmptyBaseline();
+        } else {
+            // overlay: stage a removal of every active facet and clear the working query, leaving the
+            // baseline intact so Esc/close restores the applied filter and Apply/Enter applies the clear.
+            for (FilterTerm term : termSupplier.get())
+                pendingModelRemovals.put(term.id(), term::remove);
+            root = QueryContainer.empty();
+            openPath = new int[0];
+            tokenModel.reset();
+            input.setText("");
+            inverted = false; // a full clear also drops the inversion
+            rebuild();
+        }
+    }
+
+    /**
+     * Restore the default filter configuration (SIRIUS's recommended starting filter) instead of clearing
+     * everything. Dialog-only and staged: {@link #restoreDefaults} resets the backing widgets to their
+     * defaults (applied on Apply, reverted by Discard/Esc), and the editor's own query state is reset to
+     * match.
+     */
+    public void restoreDefaultsAll() {
+        if (restoreDefaults != null)
+            restoreDefaults.run();
+        resetLocalQueryToEmptyBaseline();
+    }
+
+    /**
+     * Resets the editor's own working query (chips + free text + inversion) to empty and adopts that as the
+     * new baseline, so a later Cancel/close does not resurrect the old query. Shared by the embedded Clear
+     * and the Restore-defaults action.
+     */
+    private void resetLocalQueryToEmptyBaseline() {
+        root = QueryContainer.empty();
+        openPath = new int[0];
+        tokenModel.reset();
+        input.setText("");
+        pendingModelRemovals.clear();
+        inverted = false;
+        queryJoin = LogicOp.AND;
+        baselineRoot = root;
+        baselineFreeText = "";
+        baselineInverted = false;
+        baselineQueryJoin = LogicOp.AND;
+        lastCompiled = Optional.ofNullable(filterModel.getSearchText()).orElse("");
+        rebuild();
+    }
+
+    /**
+     * Copies the whole query as currently shown - the panel facets (minus any staged removals) joined to
+     * the user's own query by the block joint, wrapped for inversion - to the system clipboard. Mirrors the executed-query
+     * composition in {@link FeatureFilterModel} (facets AND free-text segment, {@code *:* AND NOT (...)}
+     * when inverted), but from the live editor state rather than the committed model, so it reflects
+     * unsaved edits.
+     */
+    private void copyQueryToClipboard() {
+        List<QueryNode> facets = new ArrayList<>();
+        for (FilterTerm term : termSupplier.get())
+            if (!pendingModelRemovals.containsKey(term.id()))
+                facets.add(term.toQueryNode());
+        List<LogicOp> ands = new ArrayList<>(Math.max(0, facets.size() - 1));
+        for (int i = 1; i < facets.size(); i++)
+            ands.add(LogicOp.AND);
+        // the user query rides in as the free-text segment, so it becomes "(facets) AND (userQuery)".
+        // The facets are compiled as executed (incl. the match-all anchor for negation-only facets such
+        // as "no lipid class"), so the copied query runs as-is; the user query stays verbatim.
+        String userQuery = LuceneQueryCompiler.compile(root, freeTextForCommit());
+        String core = LuceneQueryCompiler.compileExecutable(new QueryContainer(facets, ands), userQuery, queryJoin);
+        String whole = inverted && !core.isBlank() ? "*:* AND NOT (" + core + ")" : core;
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(whole), null);
+    }
+
+    /** The working joint between the panel block and the user's query (applied to the model on commit). */
+    @NotNull
+    public LogicOp getQueryJoin() {
+        return queryJoin;
+    }
+
+    /** Whether the working query is inverted (applied to the model at the host's commit point). */
+    public boolean isInverted() {
+        return inverted;
+    }
+
+    /** Sets the working inversion and re-renders (the toggle tint and the inversion chip). */
+    public void setInverted(boolean inverted) {
+        if (this.inverted == inverted)
+            return;
+        this.inverted = inverted;
+        rebuild();
+    }
+
+    /**
+     * Labels the field-name display toggle for the current mode.
+     */
+    private void styleModeToggle(JButton button) {
+        boolean compact = renderState.mode() == FieldDisplay.Mode.COMPACT;
+        // action-oriented: show the arrows for what a click will do - expand (outward) while compact,
+        // collapse (inward) while fully-qualified
+        modeIcon.setExpand(compact);
+        button.setToolTipText(GuiUtils.formatToolTip(compact
+                ? "Show fully-qualified field names"
+                : "Show compact field names"));
+        button.repaint();
+    }
+
+    /**
+     * Labels the query-mode toggle and draws the structure the current mode allows: flat while simple,
+     * nested while advanced. Tinted like the other meta controls, and in the accent colour while
+     * advanced - a non-default mode should be visible without hovering it.
+     */
+    private void styleQueryModeToggle() {
+        boolean advanced = renderState.queryMode() == QueryMode.ADVANCED;
+        queryModeIcon.setAdvanced(advanced);
+        queryModeIcon.setColor(advanced ? Colors.Menu.FILTER_BUTTON : Colors.searchFieldIconColor());
+        queryModeToggle.setToolTipText(GuiUtils.formatToolTip(advanced
+                ? "Advanced query mode: AND or OR for every term, groups can be nested."
+                + " Click for simple mode."
+                : "Simple query mode: top-level terms are combined with AND, the alternatives inside a"
+                + " group with OR, and groups are not nested. Click for advanced mode."));
+        queryModeToggle.repaint();
+    }
+
+    /** Tints the invert toggle exactly like the funnel: idle grey when no filter is active, the accent
+     *  (blue) when active and not inverted, the inverted accent (red) when inverted. */
+    private void styleInvertToggle() {
+        // the filled half follows the state: left while the query reads as written, right once it is inverted
+        invertIcon.setInverted(inverted);
+        invertIcon.setColor(hasWorkingQuery()
+                ? (inverted ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON)
+                : Colors.searchFieldIconColor());
+        invertToggle.setToolTipText(GuiUtils.formatToolTip(inverted
+                ? "Query is inverted - click to un-invert (matching features become non-matching and vice versa)"
+                : "Invert the whole query (matching features become non-matching and vice versa)"));
+        invertToggle.repaint();
+    }
+
+    /** The accent colour for the query chips/groups: the inverted tone while the query is inverted,
+     *  the normal filter accent otherwise - so an inverted query reads red-ish rather than blue-ish. */
+    private Color queryAccent() {
+        return inverted ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON;
+    }
+
+    /** Whether the working query has anything to filter/invert: a user clause, free text, or a
+     *  (not-staged-for-removal) panel facet. Drives the live funnel / invert-toggle tint. */
+    private boolean hasWorkingQuery() {
+        return !root.items().isEmpty() || !freeTextForCommit().isEmpty() || hasPanelTerms();
+    }
+
+    // --- session lifecycle (driven by the host) ---
+
+    /**
+     * Prepares the editor for a fresh editing session: degrades an externally-edited document into
+     * free text, captures the revert baseline, applies the optional type-ahead keystroke and kicks
+     * off a background refresh of the searchable fields. The host handles making itself visible and
+     * then calls {@link #focusInputAndRefresh()}.
+     */
+    public void openSession(@Nullable String typeAhead) {
+        hoverAnchor = pointerLocation(); // ignore hover-selection until the mouse really moves
+        String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
+        if (!docText.equals(lastCompiled)) {
+            openPath = new int[0];
+            tokenModel.reset();
+            // hydrate the existing query into editable chips; if it uses constructs we do not model
+            // (or is not valid lucene) fall back to showing its text in the input as a free-text edit
+            Optional<QueryContainer> parsed = QueryStringParser.parse(docText, fieldsProvider.getCached());
+            if (parsed.isPresent()) {
+                root = parsed.get();
+                input.setText("");
+            } else {
+                root = QueryContainer.empty();
+                input.setText(docText);
+            }
+            lastCompiled = docText;
+        }
+        // seed the working inversion and block joint from the applied model state each open
+        inverted = filterModel.isInverted();
+        queryJoin = filterModel.getQueryJoin();
+        // the applied query is the baseline Cancel reverts to (before any type-ahead edit)
+        baselineRoot = root;
+        baselineFreeText = input.getText();
+        baselineInverted = inverted;
+        baselineQueryJoin = queryJoin;
+        if (typeAhead != null)
+            input.setText(input.getText() + typeAhead);
+
+        // tags are dynamic - refresh the searchable fields in the background; list updates on arrival
+        Jobs.runInBackground(() -> {
+            fieldsProvider.refreshIfStale();
+            SwingUtilities.invokeLater(() -> {
+                if (isShowing())
+                    refreshSuggestions();
+            });
+        });
+
+        rebuild();
+    }
+
+    /** The pointer's screen position, or null when it cannot be determined (headless, no pointer). */
+    @Nullable
+    private static Point pointerLocation() {
+        try {
+            PointerInfo info = MouseInfo.getPointerInfo();
+            return info == null ? null : info.getLocation();
+        } catch (RuntimeException e) {
+            log.debug("Could not read the pointer location", e);
+            return null;
+        }
+    }
+
+    /**
+     * Focuses the input and shows the dropdown; the host calls this once it is on screen.
+     */
+    public void focusInputAndRefresh() {
+        input.requestFocusInWindow();
+        input.setCaretPosition(input.getText().length());
+        refreshSuggestions();
+    }
+
+    /**
+     * Discards any uncommitted edits: the working state reverts to the last applied query (the
+     * baseline). A commit updates the baseline first, so reverting right after committing keeps the
+     * applied query.
+     */
+    public void revertToBaseline() {
+        root = baselineRoot;
+        inverted = baselineInverted;
+        queryJoin = baselineQueryJoin;
+        openPath = new int[0];
+        tokenModel.reset();
+        input.setText(baselineFreeText);
+        pendingModelRemovals.clear(); // discard staged model-filter removals -> model stays as applied
+    }
+
+    // --- input wiring: suggestions, keyboard semantics ---
+
+    private void wireInput() {
+        input.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                onTyped();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                onTyped();
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                onTyped();
+            }
+        });
+
+        input.setFocusTraversalKeysEnabled(false);
+        input.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_DOWN -> {
+                        moveSuggestionSelection(1);
+                        e.consume();
+                    }
+                    case KeyEvent.VK_UP -> {
+                        moveSuggestionSelection(-1);
+                        e.consume();
+                    }
+                    case KeyEvent.VK_TAB -> {
+                        // Tab only ever ADDS to the query: it picks the highlighted suggestion (the
+                        // run-action row is skipped - Tab never runs the search) or commits the
+                        // typed value / advances the token. Text the mode rejects adds nothing: a
+                        // typed OR must not turn into the AND the row offers.
+                        if (!inputRejected())
+                            acceptCurrentToken(true);
+                        e.consume();
+                    }
+                    case KeyEvent.VK_ENTER -> {
+                        // Enter applies the highlighted row: the run-action row on top of an
+                        // untouched input runs the search, everything else is added like Tab. With
+                        // nothing left to add, Enter runs the search too - so typing a term and
+                        // pressing Enter twice is the quick full-text search. Embedded, "run" is
+                        // the dialog's Apply (which bakes a terminal token via commitToDocument).
+                        // ... except while the typed text is rejected (see inputRejected): there is
+                        // nothing to add, and running the query would drop the text silently
+                        if (!inputRejected() && (isRunActionSelected() || !acceptCurrentToken(false)))
+                            runOrCommit();
+                        e.consume();
+                    }
+                    case KeyEvent.VK_BACK_SPACE -> {
+                        if (input.getText().isEmpty()) {
+                            tokenModel.backspaceOnEmpty().ifPresent(QueryEditorPanel.this::applyEvent);
+                            rebuild();
+                            e.consume();
+                        }
+                    }
+                    case KeyEvent.VK_ESCAPE -> {
+                        host.editorCloseRequested();
+                        e.consume();
+                    }
+                }
+            }
+        });
+    }
+
+    private void onTyped() {
+        refreshSuggestions();
+    }
+
+    /**
+     * Whether what is typed asks for something the current query mode does not offer (an OR between
+     * top-level terms, a nested group). Such text is never applied - not by the accept keys, not by
+     * running the query - so the user has to see and fix it; {@link #styleInput()} says how.
+     */
+    private boolean inputRejected() {
+        return tokenModel.inputProblem(input.getText()).isPresent();
+    }
+
+    private void applySuggestion(TokenInputModel.Suggestion suggestion) {
+        tokenModel.choose(suggestion).ifPresent(this::applyEvent);
+        input.setText("");
+        rebuild(); // restores input focus (see rebuild)
+    }
+
+    private void applyEvent(TokenInputModel.Event event) {
+        // A connector picked while the user's query is still empty joins it to the panel block - the
+        // "big" joint, which lives on the model rather than in the tree (a container drops the logic of
+        // its first item). Read before the event is applied, while the container is still empty.
+        boolean picksBlockJoin = joinContext() == TokenInputModel.Join.PANEL_TERMS;
+        if (picksBlockJoin)
+            blockJoinPicked(event);
+        boolean nesting = renderState.queryMode() == QueryMode.ADVANCED;
+        if (event instanceof TokenInputModel.Event.ClauseCompleted completed) {
+            applyPathResult(QueryTreeOps.appendJoined(root, openPath, completed.clause(), completed.logic(), nesting));
+        } else if (event instanceof TokenInputModel.Event.QueryParsed parsed) {
+            // splice the parsed query into the open container: the first item joins the existing chips by
+            // the connector logic - the joint we own, so it is normalised - and the rest by the parsed
+            // query's own connectors, which are left exactly as they were written
+            List<QueryNode> items = parsed.container().items();
+            List<LogicOp> logics = parsed.container().logics();
+            for (int i = 0; i < items.size(); i++)
+                if (i == 0)
+                    applyPathResult(QueryTreeOps.appendJoined(root, openPath, items.get(0), parsed.logic(), nesting));
+                else
+                    root = QueryTreeOps.append(root, openPath, items.get(i), logics.get(i - 1));
+        } else if (event instanceof TokenInputModel.Event.OpenGroup group) {
+            applyPathResult(QueryTreeOps.openGroupJoined(root, openPath, group.negated(), group.logic(), nesting));
+        } else if (event instanceof TokenInputModel.Event.CloseGroup) {
+            QueryTreeOps.PathResult result = QueryTreeOps.closeGroup(root, openPath);
+            root = result.root();
+            openPath = result.path();
+        } else if (event instanceof TokenInputModel.Event.RemoveLastNode) {
+            removeLastNode();
+        }
+    }
+
+    private void applyPathResult(QueryTreeOps.PathResult result) {
+        root = result.root();
+        openPath = result.path();
+    }
+
+    /** The connector the event carries, applied to the block joint (see {@link #applyEvent}). */
+    private void blockJoinPicked(TokenInputModel.Event event) {
+        if (event instanceof TokenInputModel.Event.ClauseCompleted completed)
+            queryJoin = completed.logic();
+        else if (event instanceof TokenInputModel.Event.QueryParsed parsed)
+            queryJoin = parsed.logic();
+        else if (event instanceof TokenInputModel.Event.OpenGroup group)
+            queryJoin = group.logic();
+    }
+
+    /**
+     * Backspace with nothing staged: removes the last chip of the open container; an empty open
+     * group closes (and thereby drops) instead.
+     */
+    private void removeLastNode() {
+        QueryContainer container = QueryTreeOps.containerAt(root, openPath);
+        if (container.isEmpty()) {
+            if (openPath.length > 0) {
+                QueryTreeOps.PathResult result = QueryTreeOps.closeGroup(root, openPath);
+                root = result.root();
+                openPath = result.path();
+            }
+            return;
+        }
+        QueryTreeOps.PathResult removed = QueryTreeOps.removeNode(root, openPath, container.items().get(container.items().size() - 1).id());
+        root = removed.root();
+        openPath = removed.path();
+    }
+
+    // --- embedded suggestion list handling ---
+
+    private void refreshSuggestions() {
+        tokenModel.updateContext(fieldsProvider.getCached(), joinContext(), openPath.length > 0);
+        if (isShowing())
+            showSuggestions(tokenModel.suggestions(input.getText()));
+        styleInput();
+        updateKeyHint();
+    }
+
+    /**
+     * What the term being built would be joined to: the terms already in the open container, else - at
+     * the top level - the filter-panel block, which the user's query is ANDed onto. Only with neither
+     * is a term the first thing in the query and joined to nothing.
+     */
+    private TokenInputModel.Join joinContext() {
+        if (!QueryTreeOps.containerAt(root, openPath).isEmpty())
+            return TokenInputModel.Join.USER_TERMS;
+        return openPath.length == 0 && hasPanelTerms()
+                ? TokenInputModel.Join.PANEL_TERMS : TokenInputModel.Join.NOTHING;
+    }
+
+    /** Whether any panel facet is showing, i.e. not staged for removal. */
+    private boolean hasPanelTerms() {
+        return termSupplier.get().stream().anyMatch(t -> !pendingModelRemovals.containsKey(t.id()));
+    }
+
+    private void showSuggestions(List<TokenInputModel.Suggestion> suggestions) {
+        if (suggestions.isEmpty()) {
+            if (suggestionScroll.isVisible()) {
+                suggestionScroll.setVisible(false);
+                host.editorContentChanged();
+            }
+            return;
+        }
+        TokenInputModel.Suggestion previous = suggestionList.getSelectedValue();
+        suggestionList.setListData(suggestions.toArray(TokenInputModel.Suggestion[]::new));
+        // while the run-action row is offered it IS the default pick - keeping an earlier selection
+        // would leave a field highlighted after the input was emptied again (Enter would add it)
+        boolean runActionOnTop = suggestions.get(0) instanceof TokenInputModel.Suggestion.RunActionSuggestion;
+        int keep = previous == null || runActionOnTop ? -1 : suggestions.indexOf(previous);
+        suggestionList.setSelectedIndex(Math.max(keep, 0));
+        suggestionList.ensureIndexIsVisible(suggestionList.getSelectedIndex());
+        suggestionList.setVisibleRowCount(Math.min(suggestions.size(), MAX_LIST_ROWS));
+        suggestionScroll.setVisible(true);
+        host.editorContentChanged();
+    }
+
+    private void moveSuggestionSelection(int delta) {
+        int size = suggestionList.getModel().getSize();
+        if (!suggestionScroll.isVisible() || size == 0)
+            return;
+        int index = ((suggestionList.getSelectedIndex() + delta) % size + size) % size;
+        suggestionList.setSelectedIndex(index);
+        suggestionList.ensureIndexIsVisible(index);
+    }
+
+    /**
+     * Adds the current token to the query: the highlighted suggestion, or the typed text where the
+     * stage can take it. False when there is nothing to add at all - the caller (Enter) then runs
+     * the search instead.
+     *
+     * @param skipRunAction Tab's contract: never run the action, use the first real row below it
+     */
+    private boolean acceptCurrentToken(boolean skipRunAction) {
+        if (chooseSelectedSuggestion(skipRunAction))
+            return true;
+        if (!tokenModel.canAccept(input.getText()))
+            return false;
+        tokenModel.submitTyped(input.getText()).ifPresent(QueryEditorPanel.this::applyEvent);
+        input.setText("");
+        rebuild();
+        return true;
+    }
+
+    /** Runs the query: the search for the floating overlay, Apply for the embedded dialog. */
+    private void runOrCommit() {
+        if (embedded)
+            host.editorCommitRequested();
+        else
+            runSearch();
+    }
+
+    /** Whether the highlighted row is the run-action row (Enter on it runs the search / applies). */
+    private boolean isRunActionSelected() {
+        return suggestionScroll.isVisible()
+                && suggestionList.getSelectedValue() instanceof TokenInputModel.Suggestion.RunActionSuggestion;
+    }
+
+    /**
+     * Picks the highlighted suggestion; false when there is nothing to pick, so the caller can fall
+     * back to its own handling. The run-action row is never "picked" here: Enter handles it before
+     * calling (it runs the search), and Tab - which must not run anything - either steps over it to
+     * the first real row below ({@code skipRunAction}) or reports nothing to pick.
+     */
+    private boolean chooseSelectedSuggestion(boolean skipRunAction) {
+        if (!suggestionScroll.isVisible())
+            return false;
+        TokenInputModel.Suggestion selected = suggestionList.getSelectedValue();
+        if (selected instanceof TokenInputModel.Suggestion.RunActionSuggestion) {
+            int next = suggestionList.getSelectedIndex() + 1;
+            if (!skipRunAction || next >= suggestionList.getModel().getSize())
+                return false;
+            selected = suggestionList.getModel().getElementAt(next);
+        }
+        if (selected == null)
+            return false;
+        applySuggestion(selected);
+        return true;
+    }
+
+    /**
+     * Styles the input for what is typed: text the stage cannot take at all (a word where only a
+     * connector may follow) is painted in the error colour with a matching outline, so the user sees
+     * the input has left the grammar while the list re-offers what is allowed. Otherwise the advisory
+     * validation of the free-text segment applies - syntax problems and unknown fields as a warning
+     * outline, suppressed while the list offers something. Both explain themselves via the tooltip.
+     */
+    private void styleInput() {
+        Optional<String> rejected = tokenModel.inputProblem(input.getText());
+        String problem = rejected.orElseGet(() -> tokenModel.acceptsFreeText() && !suggestionScroll.isVisible()
+                ? QueryValidator.validate(input.getText(), fieldsProvider.getCached()).orElse(null)
+                : null);
+        input.setForeground(rejected.isPresent() ? Colors.TEXT_ERROR : inputForeground);
+        input.putClientProperty("JComponent.outline",
+                problem == null ? null : rejected.isPresent() ? "error" : "warning");
+        input.setToolTipText(problem == null ? null : GuiUtils.formatToolTip(problem));
+    }
+
+    /**
+     * The trailing key hint: what Enter/Tab do with what is currently typed. An empty input shows
+     * nothing here - there the highlighted run-action row is the hint (and the field's placeholder,
+     * {@link TokenInputModel#stagePrompt()}, invites typing).
+     */
+    private void updateKeyHint() {
+        keyHint.setText(keyHintText());
+    }
+
+    private String keyHintText() {
+        if (input.getText().isEmpty())
+            return "";
+        if (inputRejected())
+            return "not available in simple mode";
+        boolean addable = (suggestionScroll.isVisible() && suggestionList.getSelectedValue() != null
+                && !isRunActionSelected()) || tokenModel.canAccept(input.getText());
+        if (addable)
+            return "Tab or Enter to add";
+        return "Enter to apply";
+    }
+
+    // --- compile & commit ---
+
+    /**
+     * The input text only counts as a free-text search segment where the stage allows one (the field
+     * stage); at a mid-token stage it is a value/operator fragment, and at the connector stage text is
+     * rejected outright - either way running the query discards it (the accept key would have
+     * committed it into a clause first).
+     */
+    private String freeTextForCommit() {
+        return tokenModel.acceptsFreeText() && !inputRejected() ? input.getText().trim() : "";
+    }
+
+    /** The compiled user query (committed chips + any trailing free text) as it stands, WITHOUT
+     *  committing to the shared document - for callers that need the current search-bar query, e.g.
+     *  the dialog's delete-non-matching complement. Excludes a half-built (unaccepted) clause. */
+    public String userQuery() {
+        return LuceneQueryCompiler.compile(root, freeTextForCommit());
+    }
+
+    /**
+     * Accepts a terminal token as a chip, then runs the search. Shared by the Apply button and by
+     * Enter (once there is nothing left to add) so both behave the same.
+     */
+    private void runSearch() {
+        if (tokenModel.isTerminal(input.getText())) {
+            if (tokenModel.acceptsFreeText())
+                applyEvent(tokenModel.completeFreeText(input.getText()));
+            else
+                tokenModel.submitTyped(input.getText()).ifPresent(this::applyEvent);
+            input.setText("");
+        }
+        commitSearch();
+    }
+
+    private void commitSearch() {
+        String freeText = freeTextForCommit();
+        tokenModel.reset(); // a half-built token is not part of the query
+        // now that the search is actually being run, apply the model-filter removals staged in the
+        // editor (Cancel would instead have discarded them in revertToBaseline())
+        pendingModelRemovals.values().forEach(Runnable::run);
+        pendingModelRemovals.clear();
+        String compiled = LuceneQueryCompiler.compile(root, freeText);
+        writeDocument(compiled);
+        // the overlay applies the model-level flags here (the dialog does it in applyToModel)
+        filterModel.setInverted(inverted);
+        filterModel.setQueryJoin(queryJoin);
+        lastCompiled = compiled;
+        // the applied query becomes the new baseline, so the close below keeps it (no revert)
+        baselineRoot = root;
+        baselineFreeText = freeText;
+        baselineInverted = inverted;
+        baselineQueryJoin = queryJoin;
+        filterModel.fireUpdateCompleted();
+        Commit commit = new Commit(root, freeText, compiled);
+        host.editorCloseRequested();
+        onCommitted.accept(commit);
+    }
+
+    /**
+     * Bakes the user's query into the shared search document WITHOUT firing an update or dismissing -
+     * for the embedded host (the filter dialog), whose Apply writes the widget model and this query
+     * together and then fires a single update. A half-built terminal token is accepted first, like
+     * {@link #runSearch()}.
+     */
+    public void commitToDocument() {
+        if (tokenModel.isTerminal(input.getText())) {
+            if (tokenModel.acceptsFreeText())
+                applyEvent(tokenModel.completeFreeText(input.getText()));
+            else
+                tokenModel.submitTyped(input.getText()).ifPresent(this::applyEvent);
+            input.setText("");
+        }
+        String freeText = freeTextForCommit();
+        tokenModel.reset();
+        String compiled = LuceneQueryCompiler.compile(root, freeText);
+        writeDocument(compiled);
+        lastCompiled = compiled;
+        baselineRoot = root;
+        baselineFreeText = freeText;
+        // the dialog's applyToModel reads isInverted()/getQueryJoin() to apply them
+        baselineInverted = inverted;
+        baselineQueryJoin = queryJoin;
+    }
+
+    private void writeDocument(String text) {
+        Document doc = filterModel.getSearchTextDoc();
+        try {
+            doc.remove(0, doc.getLength());
+            doc.insertString(0, text, null);
+        } catch (BadLocationException e) {
+            log.error("Could not write search query into the filter document", e);
+        }
+    }
+
+    // --- rendering ---
+
+    public void rebuild() {
+        // the query mode lives in the shared render state; push it into the token model before
+        // anything below asks the model a question whose answer depends on it
+        tokenModel.setMode(renderState.queryMode());
+        // keep the funnel and invert toggle in sync with the WORKING filter state (grey / blue / red),
+        // so they recolour live as the query is built/inverted - not only after the change is committed
+        if (filterButton != null)
+            filterButton.setFilterActive(hasWorkingQuery(), inverted);
+        styleInvertToggle();
+        styleQueryModeToggle();
+
+        // removeAll() detaches the (focused) input, which drops the keyboard focus; restore it
+        // after the re-layout so typing continues seamlessly after choosing a suggestion
+        boolean refocus = input.isFocusOwner();
+        chipsRow.removeAll();
+
+        // --- upper zone: the finished terms as chips ---
+        // render only the model filters not staged for removal - a staged removal hides the chip but
+        // does not touch the model until the search is committed (Cancel discards it, see revertToBaseline())
+        List<FilterTerm> terms = termSupplier.get().stream()
+                .filter(t -> !pendingModelRemovals.containsKey(t.id()))
+                .toList();
+        // both blocks present -> show the structure the executed query has: (facets) <join> (query),
+        // with the joint the one thing about it the user can change. Braced only then: a single block
+        // has no joint, and bracketing it alone would suggest one
+        List<QueryNode> items = root.items();
+        boolean bothBlocks = !terms.isEmpty() && !items.isEmpty();
+        if (bothBlocks)
+            chipsRow.add(parenLabel("(", BLOCK_PAREN_FONT_DELTA));
+        for (int i = 0; i < terms.size(); i++) {
+            if (i > 0)
+                chipsRow.add(ChipComponent.implicitAndLabel()); // dialog filters always AND together
+            FilterTerm term = terms.get(i);
+            QueryNode node = term.toQueryNode();
+            chipsRow.add(new ChipComponent(
+                    QueryNodeRenderer.label(node, renderState.mode(), renderState.suffixLengthResolver()),
+                    GuiUtils.formatToolTip(LuceneQueryCompiler.render(node),
+                            embedded ? "Filter from the tabs above - click to jump to its control; combined with AND"
+                                    : "Filter from the filter dialog - click to edit; combined with AND"),
+                    ChipComponent.Style.MODEL,
+                    // hand off to the full editor (overlay: close + open dialog; embedded dialog: jump to the tab)
+                    () -> host.editorHandoff(() -> term.openEditor(editorHost)),
+                    // remove the model filter: the embedded dialog resets the backing widget through the
+                    // host (its chips mirror widget state); the overlay stages a removal on its own
+                    // snapshot model (applied on commit, reverted on Cancel)
+                    embedded ? () -> editorHost.removeFilter(term) : () -> {
+                        pendingModelRemovals.put(term.id(), term::remove);
+                        rebuild();
+                    }).withAccent(queryAccent()));
+        }
+
+        if (bothBlocks) {
+            chipsRow.add(parenLabel(")", BLOCK_PAREN_FONT_DELTA));
+            chipsRow.add(blockJoinChip());
+            chipsRow.add(parenLabel("(", BLOCK_PAREN_FONT_DELTA));
+        }
+        for (int i = 0; i < items.size(); i++) {
+            if (i > 0)
+                chipsRow.add(buildLogicComponent(root.logics().get(i - 1), new int[]{i}));
+            chipsRow.add(buildNode(items.get(i), new int[]{i}));
+        }
+        if (bothBlocks)
+            chipsRow.add(parenLabel(")", BLOCK_PAREN_FONT_DELTA));
+
+        // --- lower zone: the term currently being built, on its own line ---
+        buildTypingRow();
+
+        // refresh first: it re-syncs the token stage with the (possibly changed) sibling context,
+        // which the stage prompt below reads
+        refreshSuggestions();
+        input.setPlaceholder(tokenModel.stagePrompt());
+        chipsRow.revalidate();
+        chipsRow.repaint();
+        chipsHeader.revalidate(); // the scroll pane is a validate root: re-place the overlay ourselves
+        typingLine.revalidate();
+        typingLine.repaint();
+        if (isShowing())
+            host.editorContentChanged();
+        // when the chips zone overflows (e.g. while building a group), keep the newest / in-progress
+        // chips in view rather than the already-finished ones at the top
+        SwingUtilities.invokeLater(this::scrollChipsToBottom);
+        if (refocus)
+            SwingUtilities.invokeLater(input::requestFocusInWindow);
+    }
+
+    /**
+     * Scrolls the chips zone to the bottom; a no-op when everything already fits (no scrollbar).
+     */
+    private void scrollChipsToBottom() {
+        JScrollBar bar = chipsScroll.getVerticalScrollBar();
+        bar.setValue(bar.getMaximum());
+    }
+
+    /**
+     * (Re)builds the lower typing zone: one open-group marker per open nesting level (so the user
+     * sees the committed clause will land inside those groups), then the staged token fragments and
+     * the text input. The input always lives on this line, so the stage prompt stays readable no
+     * matter how many finished chips fill the zone above.
+     */
+    private void buildTypingRow() {
+        typingRow.removeAll();
+        for (int depth = 0; depth < openPath.length; depth++)
+            typingRow.add(openGroupMarker());
+        for (TokenInputModel.Fragment fragment : tokenModel.pendingFragments()) {
+            // a field fragment follows the display mode like every committed chip; its tooltip keeps
+            // the fully-qualified name that will actually be submitted
+            boolean isField = fragment.fieldName() != null;
+            String text = isField
+                    ? QueryNodeRenderer.displayField(fragment.fieldName(), renderState.mode(), renderState.suffixLengthResolver())
+                    : fragment.text();
+            String tooltip = isField
+                    ? GuiUtils.formatToolTip(fragment.fieldName(), "Being built - Backspace removes it")
+                    : "Being built - Backspace removes it";
+            typingRow.add(new ChipComponent(text, tooltip, ChipComponent.Style.USER, null, null));
+        }
+        // the input sits between these two (BorderLayout.CENTER), so it fills the rest of the line
+        typingTrailing.removeAll();
+        // a clickable ) at the end of the line being typed, to close the innermost open group and continue
+        if (openPath.length > 0)
+            typingTrailing.add(closeGroupControl());
+        typingTrailing.add(keyHint);
+    }
+
+    /**
+     * A dimmed "(" marker shown in the typing row while a group is open (one per nesting level).
+     */
+    private JComponent openGroupMarker() {
+        JLabel marker = parenLabel("(");
+        marker.setToolTipText(GuiUtils.formatToolTip(
+                "Adding inside a group - the finished clause lands in the open group above; use the \")\" here to close it."));
+        return marker;
+    }
+
+    /**
+     * The interactive ")" in the typing row: closes the innermost open group (same as typing ")").
+     */
+    private JComponent closeGroupControl() {
+        JLabel close = parenLabel(")");
+        close.setToolTipText(GuiUtils.formatToolTip("Close the group and keep adding filters (or type \")\")"));
+        close.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        close.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                closeOpenGroup();
+            }
+        });
+        return close;
+    }
+
+    /**
+     * Closes the innermost open group and returns focus to the input.
+     */
+    private void closeOpenGroup() {
+        applyEvent(new TokenInputModel.Event.CloseGroup());
+        rebuild();
+        input.requestFocusInWindow();
+    }
+
+    /**
+     * One connector of the user's query, flipped by a click - so a query can be rearranged after the fact
+     * instead of rebuilt.
+     * <p>
+     * The flip never leaves a level mixing AND with OR, because such a level is not read by lucene the
+     * way the chips show it ({@code a AND b OR c} is {@code +a +b c}, a required pair with an optional
+     * extra). {@link QueryTreeOps#setLogic} groups what the flipped connector joins instead:
+     * {@code a AND b AND c} becomes {@code a AND (b OR c)}, and the brace appearing is what tells the
+     * user what their alternative binds to. Flipping back dissolves the group again.
+     * <p>
+     * Inert only where that restructuring has nowhere to go: in simple mode a flip that could only be
+     * resolved by nesting one group in another is refused, which the tooltip says.
+     */
+    private JComponent buildLogicComponent(LogicOp logic, int[] pathOfFollowingNode) {
+        int[] containerPath = Arrays.copyOf(pathOfFollowingNode, pathOfFollowingNode.length - 1);
+        int index = pathOfFollowingNode[pathOfFollowingNode.length - 1] - 1;
+        LogicOp other = logic == LogicOp.AND ? LogicOp.OR : LogicOp.AND;
+        boolean nesting = renderState.queryMode() == QueryMode.ADVANCED;
+        boolean flippable = QueryTreeOps.canSetLogic(root, containerPath, index, other, nesting);
+        return new JoinChip(logic.toString(), queryAccent(), true, 0f,
+                GuiUtils.formatToolTip(flippable
+                        ? "Click to combine with " + other + " instead."
+                        : "Switching this to " + other + " would need a group inside a group."
+                          + " Switch to advanced mode to nest groups."),
+                flippable ? () -> setLogicBefore(containerPath, index, other) : null);
+    }
+
+    private void setLogicBefore(int[] containerPath, int index, LogicOp logic) {
+        QueryTreeOps.setLogic(root, openPath, containerPath, index, logic,
+                renderState.queryMode() == QueryMode.ADVANCED).ifPresent(result -> {
+            applyPathResult(result);
+            rebuild();
+            input.requestFocusInWindow();
+        });
+    }
+
+    private JComponent buildNode(QueryNode node, int[] path) {
+        if (node instanceof QueryClause clause) {
+            String text = clause.isFreeText()
+                    ? (clause.negated() ? "NOT " : "") + "“" + clause.value1() + "”"
+                    : (clause.negated() ? "NOT " : "")
+                      + QueryNodeRenderer.displayField(clause.field(), renderState.mode(), renderState.suffixLengthResolver())
+                      + " " + clauseBody(clause);
+            String tooltip = clause.isFreeText()
+                    // reveal the (possibly faded-out) full phrase on hover, plus what it does
+                    ? GuiUtils.formatToolTip("“" + clause.value1() + "”", "Full-text search in the default fields")
+                    : LuceneQueryCompiler.render(clause);
+            return new ChipComponent(text, tooltip, ChipComponent.Style.USER,
+                    null, () -> {
+                QueryTreeOps.PathResult removed = QueryTreeOps.removeNode(root, openPath, clause.id());
+                root = removed.root();
+                openPath = removed.path();
+                rebuild();
+            }).withAccent(queryAccent());
+        }
+
+        QueryGroup group = (QueryGroup) node;
+        boolean open = Arrays.equals(path, openPath);
+        JPanel groupPanel = new GroupPanel(open, queryAccent());
+
+        if (open) {
+            JToggleButton not = new JToggleButton("NOT", group.negated());
+            not.setToolTipText(group.negated() ? "Click to un-negate this group" : "Click to negate this group");
+            not.addActionListener(e -> {
+                root = QueryTreeOps.updateContainer(root, Arrays.copyOf(path, path.length - 1), container -> {
+                    List<QueryNode> newItems = new ArrayList<>(container.items());
+                    int idx = path[path.length - 1];
+                    newItems.set(idx, newItems.get(idx).withNegated(!newItems.get(idx).negated()));
+                    return new QueryContainer(newItems, container.logics());
+                });
+                rebuild();
+            });
+            groupPanel.add(not);
+        } else if (group.negated()) {
+            groupPanel.add(new ChipComponent("NOT", null, ChipComponent.Style.USER, null, null).withAccent(queryAccent()));
+        }
+
+        groupPanel.add(parenLabel("("));
+
+        List<QueryNode> children = group.items();
+        for (int i = 0; i < children.size(); i++) {
+            int[] childPath = Arrays.copyOf(path, path.length + 1);
+            childPath[path.length] = i;
+            if (i > 0)
+                groupPanel.add(buildLogicComponent(group.logics().get(i - 1), childPath));
+            groupPanel.add(buildNode(children.get(i), childPath));
+        }
+
+        // the in-progress token no longer renders inside the group - it lives in the typing row below,
+        // and so does the interactive close (see buildTypingRow / closeGroupControl); the open group
+        // here shows only its committed children, so its ) is purely visual
+        groupPanel.add(parenLabel(")"));
+
+        if (!open)
+            groupPanel.add(ChipComponent.closeLabel(queryAccent(), "Remove this group with all its filters",
+                    () -> {
+                        QueryTreeOps.PathResult removed = QueryTreeOps.removeNode(root, openPath, group.id());
+                        root = removed.root();
+                        openPath = removed.path();
+                        rebuild();
+                    }));
+        return groupPanel;
+    }
+
+    /**
+     * The joint between the filter-panel block and the user's query: a chip that flips AND to OR and
+     * back on click. AND narrows (the panel filters restrict the query); OR widens (the query becomes an
+     * alternative to them, so features the panel filters exclude can come back), which is why the chip
+     * spells out both what it means and what a click does.
+     */
+    private JComponent blockJoinChip() {
+        boolean and = queryJoin == LogicOp.AND;
+        return new JoinChip(queryJoin.toString(), queryAccent(), false, BLOCK_JOIN_FONT_DELTA,
+                GuiUtils.formatToolTip(
+                        and ? "The filter-panel filters narrow your query (AND)."
+                                : "Your query is an alternative to the filter-panel filters (OR):"
+                                  + " features they exclude can still match.",
+                        "Click to switch to " + (and ? "OR" : "AND") + "."),
+                () -> {
+                    queryJoin = and ? LogicOp.OR : LogicOp.AND;
+                    rebuild();
+                    input.requestFocusInWindow();
+                });
+    }
+
+    /** The brace of a group inside the user's query. */
+    private JLabel parenLabel(String paren) {
+        return parenLabel(paren, GROUP_PAREN_FONT_DELTA);
+    }
+
+    /**
+     * A brace, sized by {@code fontDelta}: the two fixed blocks (panel filters, user query) get a
+     * distinctly bigger pair than the groups inside the query, so the outer structure reads as the
+     * level it is and not as one more group.
+     */
+    private JLabel parenLabel(String paren, float fontDelta) {
+        JLabel label = new JLabel(paren);
+        label.setFont(label.getFont().deriveFont(Font.BOLD, label.getFont().getSize2D() + fontDelta));
+        label.setForeground(queryAccent());
+        return label;
+    }
+
+    /**
+     * Height of one chip row: a representative chip WITH a close button (its bold "x" label is the
+     * tallest element - the empty-close sample used before under-measured the real chips), plus a
+     * few px headroom so slightly taller rows (group / paren chips, e.g. adducts and quality) are
+     * not clipped either.
+     */
+    private static int chipRowHeight() {
+        int chip = new ChipComponent("Ag", null, ChipComponent.Style.MODEL, null, () -> {
+        }).getPreferredSize().height;
+        // the block braces are the tallest thing in the zone - measure against them, or the cap would
+        // promise MAX_CHIP_ROWS rows and show a fraction less
+        JLabel brace = new JLabel("(");
+        brace.setFont(brace.getFont().deriveFont(Font.BOLD, brace.getFont().getSize2D() + BLOCK_PAREN_FONT_DELTA));
+        return Math.max(chip, brace.getPreferredSize().height) + 4;
+    }
+
+    /**
+     * The capped height of the chips zone: {@link WrapLayout} lays out N rows as
+     * {@code N*rowHeight + (N+1)*vgap}, so cap at exactly {@link #MAX_CHIP_ROWS} rows (fully visible,
+     * then scroll).
+     */
+    private static int chipsZoneMaxHeight() {
+        return MAX_CHIP_ROWS * chipRowHeight() + (MAX_CHIP_ROWS + 1) * CHIP_VGAP;
+    }
+
+    /**
+     * A panel that reports {@code true} for {@link #getScrollableTracksViewportWidth()} so its
+     * {@link WrapLayout} wraps to the enclosing scroll pane's viewport width (and grows in height)
+     * rather than scrolling horizontally.
+     */
+    private static final class WrapScrollPanel extends JPanel implements Scrollable {
+        WrapScrollPanel(LayoutManager layout) {
+            super(layout);
+            setOpaque(false);
+        }
+
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return 16;
+        }
+
+        @Override
+        public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return Math.max(16, visibleRect.height - 16);
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportHeight() {
+            return false;
+        }
+    }
+
+    /**
+     * Stacks a corner component on top of a filling one instead of giving it a column of its own:
+     * the corner keeps its preferred size at the top-right of the fill component's visible area and
+     * paints over whatever is beneath it. When the fill component is a {@link JScrollPane} the
+     * corner is aligned to its viewport, so a vertical scrollbar stays clear of it.
+     * <p>
+     * Used for the chips zone: with the controls in a {@link BorderLayout#EAST} column they would
+     * narrow every chip row; overlaid (and with the chip {@link WrapLayout} reserving that corner)
+     * they narrow only the row they cover.
+     */
+    private static final class CornerOverlayPanel extends JPanel {
+        private final JComponent fill;
+        private final JComponent corner;
+
+        CornerOverlayPanel(JComponent fill, JComponent corner) {
+            super(null);
+            setOpaque(false);
+            this.fill = fill;
+            this.corner = corner;
+            add(corner); // index 0 is painted last, i.e. on top of the fill component
+            add(fill);
+        }
+
+        @Override
+        public void doLayout() {
+            fill.setBounds(0, 0, getWidth(), getHeight());
+            // lay the fill component out now so a scroll pane's viewport bounds - which decide where
+            // the corner goes - already reflect the size it was just given
+            fill.doLayout();
+            Dimension pref = corner.getPreferredSize();
+            int rightEdge = getWidth();
+            if (fill instanceof JScrollPane scroll) {
+                Rectangle viewport = scroll.getViewport().getBounds();
+                rightEdge = fill.getX() + viewport.x + viewport.width;
+            }
+            int width = Math.min(pref.width, getWidth());
+            corner.setBounds(Math.max(0, rightEdge - width), 0, width, Math.min(pref.height, getHeight()));
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            if (isPreferredSizeSet())
+                return super.getPreferredSize();
+            return union(fill.getPreferredSize(), corner.getPreferredSize());
+        }
+
+        @Override
+        public Dimension getMinimumSize() {
+            if (isMinimumSizeSet())
+                return super.getMinimumSize();
+            return union(fill.getMinimumSize(), corner.getMinimumSize());
+        }
+
+        @Override
+        public Dimension getMaximumSize() {
+            if (isMaximumSizeSet())
+                return super.getMaximumSize();
+            // as the replaced BorderLayout did: free to be stretched by the enclosing Box
+            return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        }
+
+        private static Dimension union(Dimension a, Dimension b) {
+            return new Dimension(Math.max(a.width, b.width), Math.max(a.height, b.height));
+        }
+    }
+
+    /**
+     * Operator + value as shown on a clause chip, e.g. {@code >= 100} or {@code [100 TO 200]};
+     * text-like clauses read as {@code : value}. Package-visible: the collapsed bar renders its
+     * committed chips with the same wording.
+     */
+    static String clauseBody(QueryClause clause) {
+        if (clause.op() == null)
+            return ": " + clause.value1();
+        String v1 = clause.value1().isEmpty() ? "*" : clause.value1();
+        String v2 = clause.value2() == null || clause.value2().isEmpty() ? "*" : clause.value2();
+        return switch (clause.op()) {
+            case EQ -> "= " + v1;
+            case LT -> "< " + v1;
+            case LTE -> "<= " + v1;
+            case GT -> "> " + v1;
+            case GTE -> ">= " + v1;
+            case RANGE_INCLUSIVE -> "[" + v1 + " TO " + v2 + "]";
+            case RANGE_EXCLUSIVE -> "{" + v1 + " TO " + v2 + "}";
+        };
+    }
+
+    /**
+     * A connector between chips that a click flips: {@code AND} to {@code OR} and back.
+     * <p>
+     * Two looks from one component, because the two connectors are not the same thing. The joint
+     * between the filter-panel block and the user's query is drawn unfilled and brace-sized - it sits
+     * between the two big braces and belongs to that structure, not to either block. A connector inside
+     * the user's query is a filled chip like the terms it joins.
+     * <p>
+     * Both light up on hover - the wash fades in over {@link #HOVER_MILLIS} rather than snapping, which
+     * is what makes a chip feel clickable before it is clicked.
+     */
+    private static final class JoinChip extends JPanel {
+        private static final int ARC = 14;
+        private static final int HOVER_MILLIS = 120;
+        private static final int HOVER_STEPS = 8;
+        /** Alpha the wash of an unfilled chip reaches on hover; a filled one brightens instead. */
+        private static final int HOVER_WASH_ALPHA = 52;
+
+        private final Color accent;
+        private final boolean filled;
+        /** 0 = at rest, 1 = fully hovered; animated between the two. */
+        private float hover;
+        @Nullable
+        private javax.swing.Timer animation;
+
+        JoinChip(@NotNull String text, @NotNull Color accent, boolean filled, float fontDelta,
+                 @Nullable String tooltip, @Nullable Runnable onFlip) {
+            super(new FlowLayout(FlowLayout.LEFT, 4, 2));
+            this.accent = accent;
+            this.filled = filled;
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder(1, 7, 1, 7));
+
+            JLabel label = new JLabel(text);
+            // the filled variant keeps the plain weight of the term chips it sits between; the unfilled
+            // one is bold, because it has no fill to carry it and belongs to the braces around it
+            label.setFont(label.getFont().deriveFont(filled ? Font.PLAIN : Font.BOLD,
+                    label.getFont().getSize2D() + fontDelta));
+            label.setForeground(filled ? Colors.Menu.FILTER_BUTTON_TEXT : accent);
+            add(label);
+            if (tooltip != null) {
+                setToolTipText(tooltip);
+                label.setToolTipText(tooltip);
+            }
+            if (onFlip == null)
+                return;
+
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            MouseAdapter mouse = new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    onFlip.run();
+                }
+
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    animateHover(1f);
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    animateHover(0f);
+                }
+            };
+            addMouseListener(mouse);
+            label.addMouseListener(mouse);
+        }
+
+        /** Steps {@link #hover} towards {@code target}; a running animation is replaced, not queued. */
+        private void animateHover(float target) {
+            if (animation != null)
+                animation.stop();
+            float step = (target - hover) / HOVER_STEPS;
+            animation = new javax.swing.Timer(HOVER_MILLIS / HOVER_STEPS, null);
+            animation.addActionListener(e -> {
+                hover += step;
+                if ((step > 0 && hover >= target) || (step <= 0 && hover <= target)) {
+                    hover = target;
+                    animation.stop();
+                }
+                repaint();
+            });
+            animation.start();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth() - 1;
+                int h = getHeight() - 1;
+                if (filled) {
+                    // a filled chip cannot gain a wash - it brightens towards white instead
+                    g2.setColor(blend(accent, Color.WHITE, hover * 0.25f));
+                    g2.fillRoundRect(0, 0, w, h, ARC, ARC);
+                } else {
+                    if (hover > 0) {
+                        g2.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(),
+                                Math.round(HOVER_WASH_ALPHA * hover)));
+                        g2.fillRoundRect(0, 0, w, h, ARC, ARC);
+                    }
+                    g2.setStroke(new BasicStroke(1.4f));
+                    g2.setColor(accent);
+                    g2.drawRoundRect(0, 0, w, h, ARC, ARC);
+                }
+            } finally {
+                g2.dispose();
+            }
+            super.paintComponent(g);
+        }
+
+        private static Color blend(Color from, Color to, float amount) {
+            float a = Math.max(0, Math.min(1, amount));
+            return new Color(
+                    Math.round(from.getRed() + (to.getRed() - from.getRed()) * a),
+                    Math.round(from.getGreen() + (to.getGreen() - from.getGreen()) * a),
+                    Math.round(from.getBlue() + (to.getBlue() - from.getBlue()) * a));
+        }
+    }
+
+    private static class GroupPanel extends JPanel {
+        private final boolean open;
+        private final Color accent;
+
+        GroupPanel(boolean open, @NotNull Color accent) {
+            super(new FlowLayout(FlowLayout.LEFT, 3, 2));
+            this.open = open;
+            this.accent = accent;
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(accent);
+                if (open) {
+                    g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND,
+                            0, new float[]{4, 3}, 0));
+                }
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+            } finally {
+                g2.dispose();
+            }
+            super.paintComponent(g);
+        }
+    }
+
+    /**
+     * Renders a suggestion row: the connector, the name, and the dimmed text behind it, all composed by
+     * {@link SuggestionDisplay} (the description wins that spot; the fully-qualified name lives in the
+     * row's tooltip). Only the dimmed text is truncated here, so the row stays one line.
+     * <p>
+     * The connector is drawn like the implicit-AND label of the chips zone - a size smaller, italic and
+     * dimmed ({@link ChipComponent#implicitAndLabel()}) - so it reads as the joint between the terms
+     * rather than as the start of the field name.
+     */
+    private class SuggestionRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                      boolean isSelected, boolean cellHasFocus) {
+            TokenInputModel.Suggestion suggestion = (TokenInputModel.Suggestion) value;
+            SuggestionDisplay.Row row = SuggestionDisplay.of(suggestion, renderState.mode());
+
+            // the name carries the weight; the connector before it and the description behind it are
+            // dimmed, so the eye lands on what the row actually adds
+            String name = row.dimmed() == null ? escape(row.display()) : "<b>" + escape(row.display()) + "</b>";
+            String text = row.connector() == null && row.dimmed() == null
+                    ? escape(row.display())
+                    : "<html>" + connectorMarkup(row.connector()) + name
+                      + (row.dimmed() == null ? ""
+                      : "&nbsp;&nbsp;<span style='color:" + dimmedHex() + "'>" + escape(truncate(row.dimmed())) + "</span>")
+                      + "</html>";
+            Component component = super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
+            // the run-action row is not a query part - set it apart by the accent tint and a rule
+            // below it, so the rows underneath read as "and these add to the query"
+            if (suggestion instanceof TokenInputModel.Suggestion.RunActionSuggestion) {
+                ((JComponent) component).setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createMatteBorder(0, 0, 1, 0, Colors.Menu.FILTER_BUTTON),
+                        BorderFactory.createEmptyBorder(3, 8, 3, 8)));
+                if (!isSelected)
+                    component.setForeground(Colors.Menu.FILTER_BUTTON);
+            } else {
+                ((JComponent) component).setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
+            }
+            // the negation is the one row that does not add something to look for but turns the search around,
+            // and it sits high in the list (see TokenInputModel#withNegationUpFront) where that has to be
+            // unmistakable - so it is drawn in the colour this UI uses for "the opposite of what you asked"
+            if (TokenInputModel.isNegation(suggestion) && !isSelected)
+                component.setForeground(Colors.TEXT_ERROR);
+            return component;
+        }
+
+        /** The connector as the chips zone draws it: dimmed italic, a little smaller, with room after it. */
+        private static String connectorMarkup(@Nullable String connector) {
+            if (connector == null)
+                return "";
+            return "<span style='color:" + dimmedHex() + "'><i>" + escape(connector) + "</i></span>&nbsp;&nbsp;";
+        }
+
+        private static String dimmedHex() {
+            Color dimmed = UIManager.getColor("Label.disabledForeground");
+            return Colors.asHex(dimmed != null ? dimmed : Color.GRAY);
+        }
+
+        private static String truncate(String text) {
+            String firstLine = text.split("\n", 2)[0];
+            return firstLine.length() > 80 ? firstLine.substring(0, 77) + "..." : firstLine;
+        }
+
+        private static String escape(String text) {
+            return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        }
+    }
+}

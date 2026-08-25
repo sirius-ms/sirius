@@ -37,9 +37,11 @@ import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.*;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
-import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.tags.TagSubmission;
 import de.unijena.bioinf.ms.middleware.security.Authorities;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
@@ -50,11 +52,10 @@ import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.spectraldb.SpectrumType;
-import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
-import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
+import de.unijena.bioinf.spectraldb.entities.*;
+import io.swagger.v3.oas.annotations.Hidden;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bioinf.webapi.WebAPI;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.Getter;
@@ -72,8 +73,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -104,27 +109,115 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * Get all available features (aligned over runs) in the given project-space.
      *
-     * @param projectId project-space to read from.
+     * Get features (aligned over runs) in the given project-space.
+     *
+     * <h2>Supported filter syntax</h2>
+     *
+     * <p>The filter string must contain one or more clauses. A clause is prefixed
+     * by a field name.
+     * </p>
+     *
+     * Searchable fields are the indexed properties of the feature (e.g. {@code ionMass}, {@code name},
+     * {@code quality}, {@code hasMsMs}), its annotations addressed via dot notation
+     * (e.g. {@code topAnnotations.structureAnnotation.structureName}), and project tags prefixed with the
+     * namespace {@code tags.} (e.g. {@code tags.MyTag}).
+     * Use the {@code searchable-fields} endpoint (getAlignedFeaturesSearchableFields) to list all fields that
+     * can be searched, including their value type, whether they support word based (full text) search, and
+     * whether results can be sorted by them.
+     * Possible value types are <strong>text</strong>, <strong>integer</strong>, <strong>double</strong>,
+     * <strong>boolean</strong>, <strong>date</strong>, or <strong>time</strong>.
+     *
+     * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
+     *
+     * <p>A clause may be:</p>
+     * <ul>
+     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tags.MyTagA:sample}</li>
+     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code name:"Bicuculline methiodide"}</li>
+     *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code tags.MyTagA:/[mb]oat/}</li>
+     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code ionMass<300}</li>
+     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code ionMass:[300 TO 400]}</li>
+     *     <li>a <strong>boolean</strong>: boolean fields are matched as follows: e.g. {@code hasMsMs:true}, {@code tags.MyTagA:false}</li>
+     *     <li>a <strong>value-less</strong>: tags without values (See TagDefinition) are matched as follows: e.g. {@code tags.MyTagA:*} or {@code tags.MyTagA:true}</li>
+     * </ul>
+     *
+     * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>
+     *
+     * <h3>Example</h3>
+     *
+     * <p>The syntax allows to build complex filter queries such as:</p>
+     *
+     * <p>{@code ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:"Alkaloids" AND tags.city:"new york" OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time<10\:00\:00 }</p>
+     *
+     * @param projectId    project space to get features (aligned over runs) from.
+     * @param searchQuery  Optional search query in lucene syntax. Omit this parameter to page over all features.
+     * @param pageable     pageable.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
+     *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                            peak assignments and reference spectra.
+     * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
+     *
+     * @return tagged features (aligned over runs)
+     */
+    @Operation(operationId = "getAlignedFeaturesPage")
+    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<AlignedFeature> getAlignedFeaturesPage(
+            @PathVariable String projectId,
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
+            @RequestParam(defaultValue = "tags, computedTools, qualities") EnumSet<AlignedFeature.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(searchQuery, pageable, msDataSearchPrepared, removeNone(optFields));
+    }
+
+    /**
+     * Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints.
+     * <p>
+     * Use this to build valid lucene queries: the field type determines which clauses are supported
+     * (e.g. range queries like {@code ionMass:[300 TO 400]} for numeric fields, word based search for
+     * full-text fields). Includes the dynamic tag fields ({@code tags.<tagName>}) of this project.
+     * An empty list means there are no searchable fields.
+     *
+     * @param projectId project space to read the searchable feature fields from.
+     * @return fields usable in searchQuery parameters of feature endpoints.
+     */
+    @Operation(operationId = "getAlignedFeaturesSearchableFields")
+    @GetMapping(value = "/searchable-fields", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SearchableField> getAlignedFeaturesSearchableFields(@PathVariable String projectId) {
+        return projectsProvider.getProjectOrThrow(projectId).getSearchableFields(AlignedFeature.class);
+    }
+
+    /**
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId project-space to delete from.
+     * @param groupName tag group name.
+     * @param pageable  pageable.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     *
-     * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
+     * @return tagged features (aligned over runs)
      */
-    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<AlignedFeature> getAlignedFeaturesPaged(
-            @PathVariable String projectId, @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
-            @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
+    @Operation(operationId = "getAlignedFeaturesByGroupExperimental")
+    @GetMapping(value = "/grouped", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<AlignedFeature> getAlignedFeaturesByGroup(@PathVariable String projectId,
+                                                          @RequestParam String groupName,
+                                                          @ParameterObject Pageable pageable,
+                                                          @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
+                                                          @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, msDataSearchPrepared, removeNone(optFields));
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesByGroup(groupName, pageable, msDataSearchPrepared, optFields);
     }
 
     /**
-     * Get all available features (aligned over runs) in the given project-space.
+     * [DEPRECATED] Get all available features (aligned over runs) in the given project-space.
+     * <p>
+     * [DEPRECATED] Use /aligned-features/page instead. Loading all features at once does not scale for large
+     * projects. This endpoint will be removed in the next major version of this API.
      *
      * @param projectId project-space to read from.
      * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
@@ -134,6 +227,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<AlignedFeature> getAlignedFeatures(
             @PathVariable String projectId,
             @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
@@ -154,8 +248,21 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * Import (aligned) features into the project. Features must not exist in the project.
-     * Otherwise, they will exist twice.
+     * Delete all features (aligned over runs) that match the given lucene search query from the specified
+     * project-space. The query is resolved server-side against the search index, so callers do not need to
+     * page the matching ids to the client and send them back for deletion.
+     *
+     * @param projectId   project-space to delete from.
+     * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match
+     *                    every feature).
+     */
+    @PutMapping(value = "/delete-by-query")
+    public void deleteAlignedFeaturesByQuery(@PathVariable String projectId, @RequestParam String searchQuery) {
+        projectsProvider.getProjectOrThrow(projectId).deleteAlignedFeaturesByQuery(searchQuery);
+    }
+
+    /**
+     * Import (aligned) features into the project. Features must not exist in the project, otherwise they will be duplicated.
      *
      * @param projectId project-space to import into.
      * @param features  the feature data to be imported
@@ -204,13 +311,38 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * Get list of features that were aligned over runs with the given identifier from the specified project-space.
+     * Page of features the given feature (aligned over runs) was aligned from, one per run it has been detected in.
+     * <p>
+     * A feature carries what is specific to the run it was detected in: where it sits on that run's retention time
+     * axis, the m/z it was measured at there, and how much of it was measured. Use the run id to relate it to the run
+     * it belongs to; a feature of a project that was imported from preprocessed data belongs to no run and has none.
      *
      * @param projectId        project-space to read from.
-     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return AlignedFeature with additional annotations and MS/MS data (if specified).
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @param pageable         pageable.
+     * @return Features of this feature (aligned over runs).
      */
-    @Hidden
+    @Operation(operationId = "getFeaturesPage")
+    @GetMapping(value = "/{alignedFeatureId}/features/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<Feature> getFeaturesPage(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId,
+            @ParameterObject Pageable pageable
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findFeaturesByAlignedFeatureId(alignedFeatureId, pageable);
+    }
+
+    /**
+     * [DEPRECATED] Get all features the given feature (aligned over runs) was aligned from.
+     * <p>
+     * [DEPRECATED] Use /features/page instead. Loading all features at once does not scale for a project with many
+     * runs, since a feature is aligned from one feature per run it was detected in.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) whose features to read.
+     * @return Features of this feature (aligned over runs).
+     */
+    @Deprecated(forRemoval = true)
+    @Operation(operationId = "getFeatures")
     @GetMapping(value = "/{alignedFeatureId}/features", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Feature> getFeatures(
             @PathVariable String projectId, @PathVariable String alignedFeatureId
@@ -239,7 +371,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/db-structures/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<StructureCandidateFormula> getStructureCandidatesPaged(
+    public Page<StructureCandidateFormula> getStructureCandidatesPage(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
@@ -249,7 +381,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of structure database search candidates ranked by CSI:FingerID score for the given 'alignedFeatureId' with minimal information.
+     * [DEPRECATED] List of structure database search candidates ranked by CSI:FingerID score for the given 'alignedFeatureId' with minimal information.
+     * <p>
+     * [DEPRECATED] Use /db-structures/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      * StructureCandidates can be enriched with molecular fingerprint, structure database links.
      *
      * @param projectId        project-space to read from.
@@ -258,11 +393,12 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/db-structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<StructureCandidateFormula> getStructureCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return getStructureCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
+        return getStructureCandidatesPage(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
     }
 
     /**
@@ -275,7 +411,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/denovo-structures/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<StructureCandidateFormula> getDeNovoStructureCandidatesPaged(
+    public Page<StructureCandidateFormula> getDeNovoStructureCandidatesPage(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
@@ -285,7 +421,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given 'alignedFeatureId' with minimal information.
+     * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given 'alignedFeatureId' with minimal information.
+     * <p>
+     * [DEPRECATED] Use /denovo-structures/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      * StructureCandidates can be enriched with molecular fingerprint.
      *
      * @param projectId        project-space to read from.
@@ -294,11 +433,12 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/denovo-structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<StructureCandidateFormula> getDeNovoStructureCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return getDeNovoStructureCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
+        return getDeNovoStructureCandidatesPage(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
     }
 
     /**
@@ -306,7 +446,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * @param projectId           project-space to read from.
      * @param alignedFeatureId    feature (aligned over runs) the structure candidates belong to.
-     * @param smiles              smiles
+     * @param smiles              SMILES strings of the structures to add
      * @param skipExistenceCheck  if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return StructureCandidate of this feature candidate with specified optional fields.
      */
@@ -387,7 +527,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return Spectral library matches of this feature (aligned over runs).
      */
     @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<SpectralLibraryMatch> getSpectralLibraryMatchesPaged(
+    public Page<SpectralLibraryMatch> getSpectralLibraryMatchesPage(
             @PathVariable String projectId,
             @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
@@ -406,18 +546,22 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         }
 
         if (matches != null && removeNone(optFields).contains(SpectralLibraryMatch.OptField.referenceSpectrum))
-            matches.getContent().forEach(this::extractRefSpectraSneaky);
+            extractRefSpectraSneaky(matches.getContent());
         return matches;
     }
 
     /**
-     * List of spectral library matches for the given 'alignedFeatureId'.
+     * [DEPRECATED] List of spectral library matches for the given 'alignedFeatureId'.
+     * <p>
+     * [DEPRECATED] Use /spectral-library-matches/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @return Spectral library matches of this feature (aligned over runs).
      */
     @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<SpectralLibraryMatch> getSpectralLibraryMatches(
             @PathVariable String projectId,
             @PathVariable String alignedFeatureId,
@@ -426,7 +570,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @RequestParam(defaultValue = "") @Nullable String inchiKey,
             @RequestParam(defaultValue = "none") EnumSet<SpectralLibraryMatch.OptField> optFields
     ) {
-        return getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), minSharedPeaks, minSimilarity, inchiKey, optFields).stream().toList();
+        return getSpectralLibraryMatchesPage(projectId, alignedFeatureId, globalConfig.unpaged(), minSharedPeaks, minSimilarity, inchiKey, optFields).stream().toList();
     }
 
     /**
@@ -523,7 +667,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return All FormulaCandidate of this feature with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<FormulaCandidate> getFormulaCandidatesPaged(
+    public Page<FormulaCandidate> getFormulaCandidatesPage(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
             @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
@@ -533,7 +677,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of FormulaResultContainers available for this feature with minimal information.
+     * [DEPRECATED] List of FormulaResultContainers available for this feature with minimal information.
+     * <p>
+     * [DEPRECATED] Use /formulas/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      * Can be enriched with an optional results overview.
      *
      * @param projectId           project-space to read from.
@@ -545,12 +692,13 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return All FormulaCandidate of this feature with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<FormulaCandidate> getFormulaCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
             @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
     ) {
-        return getFormulaCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), msDataSearchPrepared, optFields).stream().toList();
+        return getFormulaCandidatesPage(projectId, alignedFeatureId, globalConfig.unpaged(), msDataSearchPrepared, optFields).stream().toList();
     }
 
     /**
@@ -588,7 +736,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/db-structures/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<StructureCandidateScored> getStructureCandidatesByFormulaPaged(
+    public Page<StructureCandidateScored> getStructureCandidatesByFormulaPage(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
@@ -598,7 +746,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of CSI:FingerID structure database search candidates for the given 'formulaId' with minimal information.
+     * [DEPRECATED] List of CSI:FingerID structure database search candidates for the given 'formulaId' with minimal information.
+     * <p>
+     * [DEPRECATED] Use /formulas/{formulaId}/db-structures/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      * StructureCandidates can be enriched with molecular fingerprint, structure database links.
      *
      * @param projectId        project-space to read from.
@@ -608,11 +759,12 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/db-structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<StructureCandidateScored> getStructureCandidatesByFormula(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, globalConfig.unpaged(), optFields)
+        return getStructureCandidatesByFormulaPage(projectId, alignedFeatureId, formulaId, globalConfig.unpaged(), optFields)
                 .stream().toList();
     }
 
@@ -627,7 +779,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/denovo-structures/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<StructureCandidateScored> getDeNovoStructureCandidatesByFormulaPaged(
+    public Page<StructureCandidateScored> getDeNovoStructureCandidatesByFormulaPage(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
@@ -637,7 +789,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given 'formulaId' with minimal information.
+     * [DEPRECATED] List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given 'formulaId' with minimal information.
+     * <p>
+     * [DEPRECATED] Use /formulas/{formulaId}/denovo-structures/page instead. Loading all entries at once does not scale for large
+     * result sets. This endpoint will be removed in the next major version of this API.
      * StructureCandidates can be enriched with molecular fingerprint.
      *
      * @param projectId        project-space to read from.
@@ -647,18 +802,19 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/denovo-structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated(forRemoval = true)
     public List<StructureCandidateScored> getDeNovoStructureCandidatesByFormula(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return getDeNovoStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, globalConfig.unpaged(), optFields)
+        return getDeNovoStructureCandidatesByFormulaPage(projectId, alignedFeatureId, formulaId, globalConfig.unpaged(), optFields)
                 .stream().toList();
     }
 
     /**
      * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey
      * <p>
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result.
      * These annotations are only available if a fragmentation tree is available.
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -802,7 +958,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.
      * <p>
      * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses
-     * for the given formula result identifier
+     * for the given formula result identifier.
      * These annotations are only available if a fragmentation tree and the structure candidate are available.
      *
      * @param projectId        project-space to read from.
@@ -867,7 +1023,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation", produces = MediaType.APPLICATION_JSON_VALUE)
     public LipidAnnotation getLipidAnnotation(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         LipidAnnotation res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId,false, FormulaCandidate.OptField.lipidAnnotation)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, false)
                 .getLipidAnnotation();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Lipid annotation for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -915,7 +1071,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     /**
      * Return Best matching compound classes for given formulaId.
      * <p>
-     * Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     * Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of the ClassyFire and NPC ontology,
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -956,42 +1112,59 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      */
 
     /**
-     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).
+     * [INTERNAL] Returns a quantification table that contains the given feature (alignedFeatureId) as its only row.
      * <p>
-     * The quantification table contains a quantity of the feature within all samples it is contained in.
+     * The columns of the row refer to the runs the feature has been quantified in, given as run ids and run names.
      * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     * [DEPRECATED] Will be replaced by the quantification table endpoint with filter query support, which allows
+     * to request the quantification of an arbitrary subset of the project.
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
-     * @param type             quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @param type             quantification type. APEX_INTENSITY is the intensity of the feature at its apex,
+     *                         AREA_UNDER_CURVE the area under its curve.
      * @return Quant table row for this feature
      */
-    @Operation(operationId = "getQuantTableRowExperimental")
+    @Deprecated(forRemoval = true)
+    @Operation(operationId = "getFeatureQuantTableRow")
     @GetMapping(value = "/{alignedFeatureId}/quant-table-row", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantTable getQuantification(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
-        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(alignedFeatureId, type, QuantRowType.FEATURES);
+    public QuantTable getQuantTableRow(
+            @PathVariable String projectId,
+            @PathVariable String alignedFeatureId,
+            @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type,
+            @RequestParam(defaultValue = "none") EnumSet<QuantTable.OptField> optFields
+    ) {
+        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId)
+                .getFeatureQuantification("alignedFeatureId:" + alignedFeatureId, type, removeNone(optFields));
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, alignedFeatureId) + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();
     }
 
     /**
-     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).
+     * Returns the full quantification table of features.
      * <p>
-     * Returns the full quantification table. The quantification table contains a quantities of the features within all
-     * runs they are contained in.
+     * The quantification table contains the quantities of the features within all runs they are contained in.
+     * Rows refer to features, columns to runs, both given as ids and names.
      * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * The optional search query allows to quantify an arbitrary subset of the project. It uses the same lucene
+     * syntax as the paged listing endpoints. Omit it to quantify all objects of the project.
      *
-     * @param projectId project-space to read from.
-     * @param type      quantification type.
-     * @return Quant table if akk feature in this project
+     * @param projectId   project-space to read from.
+     * @param searchQuery Optional search query in lucene syntax. Omit this parameter to quantify all features.
+     * @param type        quantification type.
+     * @return Quant table of the features of this project
      */
     @GetMapping(value = "/quant-table", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(operationId = "getFeatureQuantTableExperimental")
-    public QuantTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
-        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantRowType.FEATURES);
+    @Operation(operationId = "getFeatureQuantTable")
+    public QuantTable getQuantTable(@PathVariable String projectId,
+                                    @RequestParam(required = false) String searchQuery,
+                                    @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure type,
+                                    @RequestParam(defaultValue = "none") EnumSet<QuantTable.OptField> optFields
+    ) {
+        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId)
+                .getFeatureQuantification(searchQuery, type, removeNone(optFields));
         if (quantificationForAlignedFeature.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();
@@ -1043,54 +1216,6 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     //region tags and groups
-
-    /**
-     * [EXPERIMENTAL] Get features (aligned over runs) by tag.
-     *
-     * <h2>Supported filter syntax</h2>
-     *
-     * <p>The filter string must contain one or more clauses. A clause is prefíxed
-     * by a field name.
-     * </p>
-     * <p>
-     * Currently the only searchable fields are names of tags ({@code tagName}) followed by a clause that is valued for the value type of the tag (See TagDefinition).
-     * Tag name based field need to be prefixed with the namespace {@code tags.}.
-     * Possible value types of tags are <strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value
-     *
-     * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
-     *
-     * <p>A clause may be:</p>
-     * <ul>
-     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tags.MyTagA:sample}</li>
-     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code tags.MyTagA:"Some Text"}</li>
-     *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code tags.MyTagA:/[mb]oat/}</li>
-     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code tags.MyTagB<3}</li>
-     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code tags.MyTagB:[* TO 3] }</li>
-     * </ul>
-     *
-     * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>
-     *
-     * <h3>Example</h3>
-     *
-     * <p>The syntax allows to build complex filter queries such as:</p>
-     *
-     * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId project space to get features (aligned over runs) from.
-     * @param filter    tag filter.
-     * @param pageable  pageable.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @return tagged features (aligned over runs)
-     */
-    @Operation(operationId = "getAlignedFeaturesByTagExperimental")
-    @Override
-    public Page<AlignedFeature> getObjectsByTag(String projectId, String filter, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
-        return TaggableController.super.getObjectsByTag(projectId, filter, pageable, optFields);
-    }
-
-
     /**
      * [EXPERIMENTAL] Get all tags associated with this Object
      *
@@ -1110,7 +1235,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId        project-space to add to.
-     * @param alignedFeatureId run to add tags to.
+     * @param alignedFeatureId feature to add tags to.
      * @param tags             tags to add.
      * @return the tags that have been added
      */
@@ -1119,6 +1244,21 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @Override
     public List<Tag> addTags(String projectId, String alignedFeatureId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
         return TaggableController.super.addTags(projectId, alignedFeatureId, tags);
+    }
+
+    /**
+     *
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId  project-space to add to.
+     * @param tags       tags with the id of feature they shall be added to.
+     */
+    @Operation(operationId = "addTagsToAlignedFeaturesExperimental")
+    @Override
+    public void addTagsToObjects(String projectId, List<TagSubmission> tags) {
+        TaggableController.super.addTagsToObjects(projectId, tags);
     }
 
     /**
@@ -1135,24 +1275,6 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @Override
     public void removeTags(String projectId, String alignedFeatureId, String tagName) {
         TaggableController.super.removeTags(projectId, alignedFeatureId, tagName);
-    }
-
-    /**
-     * [EXPERIMENTAL] Get features (aligned over runs) by tag group.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId project-space to delete from.
-     * @param groupName tag group name.
-     * @param pageable  pageable.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @return tagged features (aligned over runs)
-     */
-
-    @Operation(operationId = "getAlignedFeaturesByGroupExperimental")
-    @Override
-    public Page<AlignedFeature> getObjectsByGroup(String projectId, String groupName, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
-        return TaggableController.super.getObjectsByGroup(projectId, groupName, pageable, optFields);
     }
 
     @Override
@@ -1185,14 +1307,44 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not load Spectrum: '%s'. Database '%s' does not exist!", match.getUuid(), match.getDbName())));
     }
 
+    /**
+     * Loads the reference spectrum of the given match, leaving it without reference spectrum if unavailable.
+     * A reference spectrum that cannot be loaded (usually a custom database that is not installed on this
+     * machine anymore) is a user-side condition, not a server error, so it is reported as a plain warning
+     * without a stack trace. The stack trace is available on debug level.
+     */
     @Nullable
     private ReferenceSpectrum extractRefSpectraSneaky(SpectralLibraryMatch match) {
         try {
             return extractRefSpectra(match);
         } catch (ResponseStatusException e) {
-            log.error(e.getReason(), e);
+            log.warn("{}", e.getReason());
+            log.debug("Could not load reference spectrum of match '{}'.", match.getUuid(), e);
             return null;
         }
+    }
+
+    /**
+     * Loads the reference spectra of all given matches (see the single-match variant above). Failures are
+     * summarized per database, so a single missing database does not produce one warning per match.
+     */
+    private void extractRefSpectraSneaky(Collection<SpectralLibraryMatch> matches) {
+        Map<String, List<String>> reasonsByDb = new LinkedHashMap<>();
+        for (SpectralLibraryMatch match : matches) {
+            try {
+                extractRefSpectra(match);
+            } catch (ResponseStatusException e) {
+                reasonsByDb.computeIfAbsent(match.getDbName(), db -> new ArrayList<>()).add(e.getReason());
+                log.debug("Could not load reference spectrum of match '{}'.", match.getUuid(), e);
+            }
+        }
+
+        reasonsByDb.values().forEach(reasons -> {
+            if (reasons.size() == 1)
+                log.warn("{}", reasons.getFirst());
+            else
+                log.warn("{} ({} of {} spectral library matches affected)", reasons.getFirst(), reasons.size(), matches.size());
+        });
     }
 
     /**

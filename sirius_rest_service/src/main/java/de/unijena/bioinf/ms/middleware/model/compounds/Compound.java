@@ -23,7 +23,12 @@ package de.unijena.bioinf.ms.middleware.model.compounds;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsCSI;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsDeNovo;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.statistics.Statistics;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.FoldChangeMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +41,13 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Compound {
+public class Compound implements Taggable {
+
     @Schema(name = "CompoundOptField", nullable = true)
     public enum OptField {none, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations, tags}
 
     /**
-     * uid of this compound Entity
+     * Unique id of the compound entity.
      */
     @NotNull
     protected String compoundId;
@@ -53,39 +59,39 @@ public class Compound {
     protected String name;
 
     /**
-     * The merged/consensus retention time start (earliest rt) of this compound
+     * The merged/consensus retention time start (earliest rt) of the compound
      */
     @Schema(nullable = true)
     protected Double rtStartSeconds;
 
     /**
-     * The merged/consensus retention time end (latest rt) of this compound
+     * The merged/consensus retention time end (latest rt) of the compound
      */
     @Schema(nullable = true)
     protected Double rtEndSeconds;
 
     /**
-     * Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature of
-     * this compound should result in the same neutral mass
+     * Neutral mass of the compound. Ion mass minus the mass of the assigned adduct of each feature of
+     * the compound should result in the same neutral mass
      */
     @Schema(nullable = true)
     protected Double neutralMass;
 
     /**
-     * List of aligned features (adducts) that belong to the same (this) compound
+     * List of aligned features (adducts) that belong to the compound
      */
     protected List<AlignedFeature> features;
 
     /**
-     * The consensus of the top annotations from all the features of this compound.
-     * Null if it was not requested und non-null otherwise. Might contain empty fields if results are not available
+     * The consensus of the top annotations from all the features of the compound.
+     * Null if it was not requested and non-null otherwise. Might contain empty fields if results are not available
      */
     @Schema(nullable = true)
     ConsensusAnnotationsCSI consensusAnnotations;
 
     /**
-     * The consensus of the top de novo annotations from all the features of this compound.
-     * Null if it was not requested und non-null otherwise. Might contain empty fields if results are not available
+     * The consensus of the top de novo annotations from all the features of the compound.
+     * Null if it was not requested and non-null otherwise. Might contain empty fields if results are not available
      */
     @Schema(nullable = true)
     ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo;
@@ -99,6 +105,16 @@ public class Compound {
     /**
      * Key: tagName, value: tag
      */
+    @IndexFieldWithMapper(mapper = TagMapper.class)
     @Schema(nullable = true)
-    protected Map<String, ? extends Tag> tags;
+    protected Map<String, Tag> tags;
+
+    /**
+     * Aggregated fold change of sample runs vs blank runs for the compound
+     * NULL if no fold change has been computed for the compound
+     */
+    //NOTE: This field is mainly for search index building and therefore hidden from the api
+    @IndexFieldWithMapper(mapper = FoldChangeMapper.CompoundFoldChange.class)
+    @Schema(nullable = true, hidden = true)
+    protected List<Statistics> stats;
 }

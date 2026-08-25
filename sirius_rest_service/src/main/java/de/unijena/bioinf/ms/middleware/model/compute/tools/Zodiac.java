@@ -34,8 +34,8 @@ import lombok.experimental.SuperBuilder;
 import java.util.Map;
 
 /**
- * User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).
- * Needs results from Formula/SIRIUS Tool
+ * User/developer friendly parameter subset for the ZODIAC tool (network-based molecular formula re-ranking).
+ * Needs results from the Formula/SIRIUS tool.
  */
 @Getter
 @Setter
@@ -56,7 +56,7 @@ public class Zodiac extends Tool<ZodiacOptions> {
     Integer consideredCandidatesAt800Mz;
 
     /**
-     * As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining.
+     * By default, ZODIAC runs a 2-step approach: first running only 'good quality compounds', and afterwards including the remaining ones.
      */
     @Schema(nullable = true)
     Boolean runInTwoSteps;

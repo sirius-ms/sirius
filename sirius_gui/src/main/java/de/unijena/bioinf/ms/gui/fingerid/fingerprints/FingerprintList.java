@@ -120,7 +120,7 @@ public class FingerprintList extends ActionList<FingerIdPropertyBean, FormulaRes
                                 Jobs.runEDTAndWait(() -> elementList.addAll(tmp));
                             } catch (IOException e) {
                                 checkForInterruption();
-                                new ExceptionDialog(gui.getMainFrame(), GuiUtils.formatToolTip("Could not get Fingerprint information for Fingerprint View! This project might be Corrupted!"));
+                                new ExceptionDialog(gui.getMainFrame(), GuiUtils.formatToolTip("Could not get fingerprint information for the fingerprint view! This project might be corrupted!"));
                                 LoggerFactory.getLogger(getClass()).warn("Could not get Fingerprint information!", e);
                             }
                         }

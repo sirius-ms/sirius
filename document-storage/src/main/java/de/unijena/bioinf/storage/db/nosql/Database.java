@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.storage.db.nosql;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.function.IORunnable;
 
 import java.io.Closeable;
@@ -47,6 +48,19 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         ASCENDING, DESCENDING
     }
 
+    /**
+     * A system-wide unique identifier for this database that is robust against content change, file move or rename.
+     * It should also be unique among mounted network devices. Whereas it is beneficial to be robust against remounts
+     * it is not mandatory.
+     * <p>
+     * It further needs to guaranty that to copies of the database must not have the same identifier.
+     *
+     * @return A system-wide unique identifier for this database.
+     */
+    @NotNull
+    String systemUID();
+
+    @NotNull
     Path location();
 
     //force to write data to disk
@@ -241,7 +255,31 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     <T> long count(Filter filter, Class<T> clazz, long offset, int pageSize) throws IOException;
 
+    /**
+     * Every primary key of a collection, read from the collection's own primary-key index rather than from its
+     * documents.
+     * <p>
+     * There is no cheap way to a document's key alone: the store decodes every value on a page when it loads
+     * the page, so walking a collection to collect its keys costs a full read of all of it. The primary-key
+     * index is a separate structure holding only key-to-id pairs, and reading that is several times cheaper per
+     * key. Use it to drive work over a collection that is then fetched by key in parallel, which is what turns a
+     * single-threaded walk into one.
+     * <p>
+     * The keys come back in key order rather than in insertion order.
+     *
+     * @throws IllegalArgumentException if the collection has no single-field index on its primary key
+     */
+    <T> List<Object> primaryKeys(Class<T> clazz) throws IOException;
+
     <T> long countAll(Class<T> clazz) throws IOException;
+
+    /**
+     * Checks whether a (representative) stored document of the given repository {@code clazz} actually contains
+     * {@code field}. Intended to distinguish a persisted primitive default (e.g. a stored {@code false}) from a
+     * field that is entirely absent. Implementations inspect a single document; an empty repository is reported as
+     * {@code true} (there is nothing to migrate).
+     */
+    <T> boolean isFieldPresent(String field, Class<T> clazz) throws IOException;
 
     long count(String collectionName, Filter filter) throws IOException;
 
@@ -294,6 +332,70 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     default <T> Stream<T> findStr(Filter filter, Class<T> clazz, long offset, int pageSize, String[] sortFields, SortOrder[] sortOrders, String... withOptionalFields) throws IOException {
         return StreamSupport.stream(find(filter, clazz, offset, pageSize, sortFields, sortOrders, withOptionalFields).spliterator(), false);
+    }
+
+    /**
+     * Streams all objects whose {@code indexedField} equals any of the given {@code values} by running one
+     * indexed {@code eq} lookup per distinct value instead of a single {@code in} filter.
+     * <p>
+     * Nitrite selects no index for {@code in}/{@code or} filters and falls back to a full collection scan with
+     * per-document deserialization, whereas a single {@code eq} on an indexed field takes the fast indexed path.
+     * For a small selection of values against a large, indexed collection this is dramatically cheaper than one
+     * {@code in}. Only use it when {@code indexedField} is (the leading component of) an index and the value list
+     * is small relative to the collection; for large selections or unindexed fields a single scanning {@code in}
+     * is preferable, and for a collection's own primary-key field prefer {@code getByPrimaryKey}.
+     * <p>
+     * Duplicate values are looked up once. Results are returned in per-value lookup order and fully materialized,
+     * so the stream holds no open cursor.
+     */
+    default <T> Stream<T> findAllByIndexedFieldStr(@NotNull String indexedField, @NotNull Collection<?> values, Class<T> clazz, String... withOptionalFields) throws IOException {
+        if (values.isEmpty())
+            return Stream.empty();
+        List<T> result = new ArrayList<>();
+        Set<Object> seen = new HashSet<>();
+        for (Object value : values) {
+            if (seen.add(value))
+                find(Filter.where(indexedField).eq(value), clazz, withOptionalFields).forEach(result::add);
+        }
+        return result.stream();
+    }
+
+    /**
+     * Streams the objects for the given {@code primaryKeys} by point-looking-up each key, skipping keys with no
+     * match. Results are returned in the iteration order of {@code primaryKeys} (duplicates looked up once) and
+     * fully materialized, so the stream holds no open cursor.
+     * <p>
+     * Prefer this over {@code Filter.where(idField).in(keys)} when {@code idField} is the collection's own
+     * primary key: Nitrite scans the whole collection for an {@code in} filter and does not treat a named id
+     * field as the map key, whereas {@link #getByPrimaryKey} is a direct point lookup. For a non-primary indexed
+     * field use {@link #findAllByIndexedFieldStr} instead.
+     */
+    default <T> Stream<T> findAllByPrimaryKeyStr(@NotNull Collection<?> primaryKeys, Class<T> clazz, String... withOptionalFields) throws IOException {
+        if (primaryKeys.isEmpty())
+            return Stream.empty();
+        List<T> result = new ArrayList<>();
+        Set<Object> seen = new HashSet<>();
+        for (Object key : primaryKeys) {
+            if (seen.add(key))
+                getByPrimaryKey(key, clazz, withOptionalFields).ifPresent(result::add);
+        }
+        return result.stream();
+    }
+
+    /**
+     * Removes the objects for the given {@code primaryKeys} by point-deleting each key and returns the number
+     * removed (duplicate keys removed once). Prefer over {@code removeAll(Filter.where(idField).in(keys))} for a
+     * collection's own primary key, for the same reason as {@link #findAllByPrimaryKeyStr}. This is not atomic on
+     * its own; wrap the call in {@link #write(Callable)} when the whole batch must be a single transaction.
+     */
+    default <T> int removeAllByPrimaryKey(@NotNull Collection<?> primaryKeys, Class<T> clazz) throws IOException {
+        int removed = 0;
+        Set<Object> seen = new HashSet<>();
+        for (Object key : primaryKeys) {
+            if (seen.add(key))
+                removed += removeByPrimaryKey(key, clazz);
+        }
+        return removed;
     }
 
     default Stream<DocType> findStr(String collectionName, Filter filter, String... withOptionalFields) throws IOException {
@@ -441,5 +543,9 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     //endregion
 
     Set<Class<?>> getAllRegisteredClasses();
+
+    default long getStorageCommitId() {
+        return -1;
+    }
 
 }

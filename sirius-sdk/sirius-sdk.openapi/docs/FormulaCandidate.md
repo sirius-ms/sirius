@@ -9,7 +9,7 @@ Molecular formula candidate that holds a unique identifier (molecular formula + 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
 |**formulaId** | **String** | Unique identifier of this formula candidate |  [optional] |
-|**molecularFormula** | **String** | molecular formula of this formula candidate |  [optional] |
+|**molecularFormula** | **String** | Molecular formula of this formula candidate. |  [optional] |
 |**adduct** | **String** | Adduct of this formula candidate |  [optional] |
 |**rank** | **Integer** |  |  [optional] |
 |**siriusScoreNormalized** | **Double** | Normalized Sirius Score of the formula candidate.  If NULL result is not available |  [optional] |

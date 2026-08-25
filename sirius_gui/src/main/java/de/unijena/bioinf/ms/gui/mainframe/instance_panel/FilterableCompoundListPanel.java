@@ -42,20 +42,15 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
 
     private final ExperimentListChangeListener sizeListener = new ExperimentListChangeListener() {
         @Override
-        public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {
-            decorateElementCounter(selection.getSelected().size(), event.getSourceList().size(), fullSize);
+        public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, long totalElements) {
+            decorateElementCounter(selection.getSelected().size(), event.getSourceList().size(), (int) totalElements);
         }
 
         @Override
-        public void fullListChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int filteredSize) {
-            decorateElementCounter(selection.getSelected().size(), filteredSize, event.getSourceList().size());
-        }
-
-        @Override
-        public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, java.util.List<InstanceBean> selected, java.util.List<InstanceBean> deselected, int fullSize) {
+        public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, java.util.List<InstanceBean> selected, java.util.List<InstanceBean> deselected, long totalElements) {
             int selectedSize = selected.size();
             int filteredSize = (deselected.size() + selectedSize);
-            decorateElementCounter(selectedSize, filteredSize, fullSize);
+            decorateElementCounter(selectedSize, filteredSize, (int) totalElements);
         }
     };
 
@@ -76,47 +71,19 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         super(new BorderLayout());
         center = new LoadablePanel(view);
         view.sourceList.addChangeListener(sizeListener);
-        view.sourceList.backgroundFilterMatcher.setLoadable(center);
         compoundListView = view;
 
-        Box includeBox = Box.createHorizontalBox();
-        includeBox.add(new JLabel("Include"));
-        includeBox.add(Box.createHorizontalGlue());
-
-        JLabel ms1onlyLabel = new JLabel("MS1-only:");
-        ms1onlyLabel.setToolTipText("Include features that have no MS/MS data.");
-        JLabel badQualityLabel = new JLabel("Bad:");
-        ms1onlyLabel.setToolTipText("Include features with overall quality 'Bad' and 'Lowest'.");
-        JLabel mulimereLabel = new JLabel("Multi:");
-        ms1onlyLabel.setToolTipText("Include multimeres and multiple charged features.");
-
-        Box filterButtonPanel = Box.createHorizontalBox();
-        filterButtonPanel.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 0));
-        filterButtonPanel.add(Box.createHorizontalStrut(2));
-        filterButtonPanel.add(ms1onlyLabel);
-        filterButtonPanel.add(Box.createHorizontalStrut(1));
-        filterButtonPanel.add(view.sourceList.msMsToggleSwitch);
-        filterButtonPanel.add(Box.createHorizontalStrut(2));
-        filterButtonPanel.add(badQualityLabel);
-        filterButtonPanel.add(Box.createHorizontalStrut(1));
-        filterButtonPanel.add(view.sourceList.qualityToggleSwitch);
-        filterButtonPanel.add(Box.createHorizontalStrut(2));
-        filterButtonPanel.add(mulimereLabel);
-        filterButtonPanel.add(Box.createHorizontalStrut(1));
-        filterButtonPanel.add(view.sourceList.adductToggleSwitch);
-        filterButtonPanel.add(Box.createHorizontalGlue());
-
-
+        // The default-active filters (MS/MS present, quality, single adducts) are no longer exposed
+        // as quick-toggle switches here - they are shown as chips in the search bar/overlay, which
+        // both indicates they are active and lets the user change them.
+        // the full filter dialog is opened from the funnel icon inside the search bar now (no
+        // separate button beside it)
         Box searchButtonPanel = Box.createHorizontalBox();
-        searchButtonPanel.add(view.sourceList.searchField);
-        searchButtonPanel.add(view.sourceList.openFilterPanelButton);
+        searchButtonPanel.add(view.sourceList.searchBar);
+        // a little breathing room so the (taller) search bar does not butt directly against the list
+        searchButtonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
 
-        Box searchPanel = Box.createVerticalBox();
-        searchPanel.add(searchButtonPanel);
-        searchPanel.add(includeBox);
-        searchPanel.add(Box.createHorizontalGlue());
-        searchPanel.add(filterButtonPanel);
-        add(searchPanel, BorderLayout.NORTH);
+        add(searchButtonPanel, BorderLayout.NORTH);
         add(center, BorderLayout.CENTER);
         JPanel j = new JPanel(new GridBagLayout());
         j.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));

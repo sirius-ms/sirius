@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -42,12 +43,17 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Category
  */
 @JsonPropertyOrder({
+  Category.JSON_PROPERTY_CATEGORY_ID,
   Category.JSON_PROPERTY_CATEGORY_NAME,
   Category.JSON_PROPERTY_OVERALL_QUALITY,
   Category.JSON_PROPERTY_ITEMS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Category {
+  public static final String JSON_PROPERTY_CATEGORY_ID = "categoryId";
+  @jakarta.annotation.Nullable
+  private String categoryId;
+
   public static final String JSON_PROPERTY_CATEGORY_NAME = "categoryName";
   @jakarta.annotation.Nullable
   private String categoryName;
@@ -63,6 +69,31 @@ public class Category {
   public Category() {
   }
 
+  public Category categoryId(@jakarta.annotation.Nullable String categoryId) {
+    
+    this.categoryId = categoryId;
+    return this;
+  }
+
+  /**
+   * Get categoryId
+   * @return categoryId
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_CATEGORY_ID, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getCategoryId() {
+    return categoryId;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_CATEGORY_ID, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCategoryId(@jakarta.annotation.Nullable String categoryId) {
+    this.categoryId = categoryId;
+  }
+
   public Category categoryName(@jakarta.annotation.Nullable String categoryName) {
     
     this.categoryName = categoryName;
@@ -74,7 +105,7 @@ public class Category {
    * @return categoryName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_CATEGORY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getCategoryName() {
@@ -82,7 +113,7 @@ public class Category {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_CATEGORY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCategoryName(@jakarta.annotation.Nullable String categoryName) {
     this.categoryName = categoryName;
@@ -99,7 +130,7 @@ public class Category {
    * @return overallQuality
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_OVERALL_QUALITY)
+  @JsonProperty(value = JSON_PROPERTY_OVERALL_QUALITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public DataQuality getOverallQuality() {
@@ -107,7 +138,7 @@ public class Category {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_OVERALL_QUALITY)
+  @JsonProperty(value = JSON_PROPERTY_OVERALL_QUALITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setOverallQuality(@jakarta.annotation.Nullable DataQuality overallQuality) {
     this.overallQuality = overallQuality;
@@ -132,7 +163,7 @@ public class Category {
    * @return items
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ITEMS)
+  @JsonProperty(value = JSON_PROPERTY_ITEMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<QualityItem> getItems() {
@@ -140,7 +171,7 @@ public class Category {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ITEMS)
+  @JsonProperty(value = JSON_PROPERTY_ITEMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setItems(@jakarta.annotation.Nullable List<QualityItem> items) {
     this.items = items;
@@ -156,20 +187,22 @@ public class Category {
       return false;
     }
     Category category = (Category) o;
-    return Objects.equals(this.categoryName, category.categoryName) &&
+    return Objects.equals(this.categoryId, category.categoryId) &&
+        Objects.equals(this.categoryName, category.categoryName) &&
         Objects.equals(this.overallQuality, category.overallQuality) &&
         Objects.equals(this.items, category.items);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(categoryName, overallQuality, items);
+    return Objects.hash(categoryId, categoryName, overallQuality, items);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class Category {\n");
+    sb.append("    categoryId: ").append(toIndentedString(categoryId)).append("\n");
     sb.append("    categoryName: ").append(toIndentedString(categoryName)).append("\n");
     sb.append("    overallQuality: ").append(toIndentedString(overallQuality)).append("\n");
     sb.append("    items: ").append(toIndentedString(items)).append("\n");

@@ -55,7 +55,6 @@ public class FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<Siriu
     protected FormulaSearchStrategy formulaSearchStrategy;
 
 
-    protected final List<InstanceBean> allInstances;
     protected final List<InstanceBean> ecs;
 
     private final GlobalConfigPanel computeConfigPanel;
@@ -67,7 +66,6 @@ public class FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<Siriu
 
     public FormulaIDConfigPanel(SiriusGui gui, List<InstanceBean> ecs, GlobalConfigPanel computeConfigPanel, boolean ms2) {
         super(SiriusOptions.class, false);
-        this.allInstances = gui.getMainFrame().getCompounds();
         this.ecs = ecs;
         this.gui = gui;
         this.computeConfigPanel = computeConfigPanel;

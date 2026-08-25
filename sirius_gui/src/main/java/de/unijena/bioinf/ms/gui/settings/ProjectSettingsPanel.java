@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.settings;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import io.sirius.ms.sdk.model.ProjectInfo;
 import io.sirius.ms.sdk.model.ProjectInfoOptField;
@@ -48,7 +49,7 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
         loadSize();
 
         JButton compactButton = new JButton("Compact");
-        compactButton.setToolTipText("Compacting the project tries to reduce the projects file size. May take some time for large projects.");
+        compactButton.setToolTipText("Compacting the project tries to reduce the project's file size. May take some time for large projects.");
         addNamed("", compactButton);
 
         compactButton.addActionListener(e -> {
@@ -56,6 +57,17 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
             if (projectInfo != null) {
                 loadSize(projectInfo);
             }
+        });
+
+
+        JButton rebuildSearchIndex = new JButton("Rebuild Search Index");
+        rebuildSearchIndex.setToolTipText("Rebuild the search index used for filtering the feature list.");
+        addNamed("", rebuildSearchIndex);
+        rebuildSearchIndex.addActionListener(evt -> {
+            Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Rebuilding search index...", () -> {
+                gui.getSiriusClient().projects().buildSearchIndex(gui.getProjectManager().getProjectId(), true);
+                gui.getProjectManager().reloadFeatures();
+            });
         });
 
         addVerticalGlue();

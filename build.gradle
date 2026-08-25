@@ -189,7 +189,7 @@ allprojects {
 
         compileOnly libs.lombok
         annotationProcessor libs.lombok
-        
+
         api libs.jetbrainsAnnotations
         api libs.swaggerAnnotations
 
@@ -219,7 +219,7 @@ allprojects {
 
         testImplementation libs.slf4jLog4jOverSlf4j
         testImplementation libs.slf4jJclOverSlf4j
-        
+
         testImplementation libs.junitJupiter
         testImplementation libs.junitJupiterParams
         testImplementation libs.mockitoJUnitJupiter
@@ -244,6 +244,16 @@ allprojects {
         }
     }
 
+    // A test worker that dies without a word - killed by the OOM killer, say - leaves Gradle
+    // blocked on its output streams forever, which on CI looks like a silent hang until the job
+    // timeout kills it an hour later. Make the worker exit loudly on OOM and bound every test task
+    // so a stuck one fails with a stack dump instead of stalling the pipeline.
+    tasks.withType(Test).configureEach {
+        maxHeapSize = "1g" //explicit; the Gradle default of 512m leaves little headroom
+        jvmArgs "-XX:+HeapDumpOnOutOfMemoryError", "-XX:+ExitOnOutOfMemoryError"
+        timeout.set(java.time.Duration.ofMinutes(30))
+    }
+
     tasks.named('test', Test) {
         useJUnitPlatform {
             filter { //filter test groups that do not have to run on every commit
@@ -253,6 +263,11 @@ allprojects {
                 failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
             }
         }
+        // Unit tests are quick (whole modules run in seconds), so a single method that blocks is a
+        // bug worth failing on. Only set for 'test': the integration suites legitimately run long.
+        systemProperty 'junit.jupiter.execution.timeout.testable.method.default', '5m'
+        systemProperty 'junit.jupiter.execution.timeout.lifecycle.method.default', '5m'
+        timeout.set(java.time.Duration.ofMinutes(15))
     }
 
 
@@ -262,12 +277,36 @@ allprojects {
         testClassesDirs = sourceSets.test.output.classesDirs
         classpath = sourceSets.test.runtimeClasspath
         useJUnitPlatform {
+            // account-state tests mutate the server-global login state and run in 'accountIntegrationTest' instead
+            excludeTags 'account-state'
             filter {
                 includeTestsMatching "*IntegrationTest"
                 includeTestsMatching "*ApiTest"
                 failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
             }
         }
+    }
+
+    // Account-state tests (login/logout/subscription switching) run against a dedicated SIRIUS instance with an
+    // isolated workspace. Strictly ordered after integrationTest; both tasks belong to the same project, so Gradle
+    // never runs them concurrently and only one test-started SIRIUS server exists at a time.
+    def accountIntegrationTest = tasks.register("accountIntegrationTest", Test) {
+        group = 'verification'
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
+        mustRunAfter integrationTest
+        useJUnitPlatform {
+            includeTags 'account-state'
+            filter {
+                failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
+            }
+        }
+    }
+
+    tasks.register("allIntegrationTests") {
+        group = 'verification'
+        description = 'Runs integrationTest and accountIntegrationTest sequentially.'
+        dependsOn integrationTest, accountIntegrationTest
     }
 
     def acceptanceTest = tasks.register("acceptanceTest", Test) {
@@ -286,6 +325,18 @@ allprojects {
     tasks.withType(AbstractCopyTask).configureEach {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
+
+//  Profiling test runs
+//    tasks.named('test', Test) {
+//        jvmArgs '-XX:+FlightRecorder', '-XX:StartFlightRecording=filename=build/test-profile.jfr'
+//    }
+//
+//    tasks.named('integrationTest', Test) {
+//        jvmArgs '-XX:StartFlightRecording=filename=build/integrationTest-profile.jfr'
+//    }
+//    tasks.named('accountIntegrationTest', Test) {
+//        jvmArgs '-XX:StartFlightRecording=filename=build/accountIntegrationTest-profile.jfr'
+//    }
 }
 
 subprojects {
@@ -450,3 +501,43 @@ tasks.register('refreshReadMe') {
 }
 refreshReadMe.dependsOn refreshTrainingLinks
 refreshReadMe.dependsOn refreshDownloadLinks
+
+// The changelog entry and the readme download block both date the release, and for 6.5.4 they disagreed
+// (2026-08-20 against 2026-08-16): the readme's date comes from new Date() inside refreshDownloadLinks, the
+// changelog's was typed by hand whenever the entry was written. refreshReadMe runs directly before
+// publishing, so its date is the one the release actually goes out on - take it from there rather than
+// asking anybody to keep two dates in step.
+tasks.register('refreshChangelogDate') {
+    group = 'publishing'
+    description = 'Dates the changelog entry for the version being released with the readme release date.'
+    inputs.files(refreshDownloadLinks.outputs.files.singleFile)
+    outputs.file("${getRootDir()}/CHANGELOG.md")
+
+    doLast {
+        File changelog = outputs.files.singleFile
+        String version = siriusFrontendVersion.toString()
+
+        // The heading refreshDownloadLinks just wrote: '### ... - Version <version> (yyyy-MM-dd)'
+        String heading = Files.readAllLines(inputs.files.singleFile.toPath()).find { it.startsWith('###') }
+        def date = heading == null ? null : (heading =~ /\((\d{4}-\d{2}-\d{2})\)/)
+        if (date == null || !date.find())
+            throw new GradleException("No release date in '${inputs.files.singleFile.name}'; cannot date the changelog.")
+        String releaseDate = date.group(1)
+
+        // Only the entry being released is restamped. Older entries are history and are left alone, whatever
+        // their heading depth - the file mixes '###' and '####'.
+        def entry = ~/^(#+ )\Q${version}\E(?: \(\d{4}-\d{2}-\d{2}\))?\s*$/
+        List<String> lines = Files.readAllLines(changelog.toPath())
+        int at = (0..<lines.size()).find { entry.matcher(lines.get(it)).matches() } ?: -1
+        if (at < 0)
+            throw new GradleException("No changelog entry for ${version}; write one before releasing.")
+
+        String nuLine = "${entry.matcher(lines.get(at)).with { it.matches(); it.group(1) }}${version} (${releaseDate})"
+        if (nuLine != lines.get(at)) {
+            lines.set(at, nuLine)
+            Files.write(changelog.toPath(), lines, StandardOpenOption.TRUNCATE_EXISTING)
+            logger.lifecycle("Dated the changelog entry for ${version} as ${releaseDate}")
+        }
+    }
+}
+refreshReadMe.finalizedBy refreshChangelogDate

@@ -33,7 +33,7 @@ public class ShowSettingsDialogAction extends AbstractGuiAction {
     public ShowSettingsDialogAction(SiriusGui gui) {
         super("Settings", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.GEAR.derive(32,32));
-        putValue(Action.SHORT_DESCRIPTION,"Open Sirius settings");
+        putValue(Action.SHORT_DESCRIPTION,"Open SIRIUS settings");
     }
     @Override
     public void actionPerformed(ActionEvent e) {

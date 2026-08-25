@@ -24,6 +24,8 @@ import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedElements;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleElement;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 
 import java.io.IOException;
@@ -159,5 +161,43 @@ public class DNNRegressionPredictor implements ElementPredictor {
     }
     public void enableSilicon() {
         silicon = true;
+    }
+
+    public PossibleElement[] detectElements(SimpleSpectrum pickedPattern) {
+        final HashMap<Element, Integer> elements = new HashMap<>(10);
+        // special case for selene
+        if (pickedPattern.size() > 5) {
+            double intensityAfterFifth = 0d;
+            for (int i=pickedPattern.size()-1; i >= 5; --i) {
+                intensityAfterFifth += pickedPattern.getIntensityAt(i);
+            }
+            double intensityBeforeFifth = 0d;
+            for (int i=0; i < 5; ++i) {
+                intensityBeforeFifth += pickedPattern.getIntensityAt(i);
+            }
+            intensityAfterFifth /= intensityBeforeFifth;
+            if (intensityAfterFifth > 0.25) elements.put(SELENE, 1);
+        }
+        for (TrainedElementDetectionNetwork network : networks) {
+            if (network.numberOfPeaks() <= pickedPattern.size() ) {
+                final double[] prediction = network.predict(pickedPattern);
+                for (int i=0; i < prediction.length; ++i) {
+                    final Element e = DETECTABLE_ELEMENTS[i];
+                    int number = (int)Math.ceil(prediction[i]-0.22);
+                    if (number > 0) number = (int)Math.ceil(prediction[i]+modifiers[i]);
+                    if (elements.containsKey(e)) elements.put(e, Math.max(elements.get(e), number));
+                    else elements.put(e, number);
+                }
+                break;
+            }
+        }
+        {
+            final Iterator<Element> iter = elements.keySet().iterator();
+            while (iter.hasNext()) {
+                if (elements.get(iter.next())<=0) iter.remove();
+            }
+        }
+        if (!silicon) elements.remove(PeriodicTable.getInstance().getByName("Si"));
+        return elements.entrySet().stream().map(e->new PossibleElement(e.getKey(), 0, 0, e.getValue())).toArray(PossibleElement[]::new);
     }
 }

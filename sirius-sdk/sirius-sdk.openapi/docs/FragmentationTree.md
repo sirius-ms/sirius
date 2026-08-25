@@ -2,7 +2,7 @@
 
 # FragmentationTree
 
-Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges  Root fragment has index 0;  Molecular formula and adduct are identical to the ones of the corresponding molecular formula candidate and SpectrumAnnotation
+Simple and easy serializable fragmentation tree model with annotated fragments/nodes and losses/edges  Root fragment has index 0;  Molecular formula and adduct are identical to the ones of the corresponding molecular formula candidate and SpectrumAnnotation
 
 ## Properties
 

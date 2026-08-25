@@ -19,12 +19,14 @@
 
 package de.unijena.bioinf.ms.gui.utils;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -63,7 +65,58 @@ public class GuiUtils {
     public final static int MEDIUM_GAP = 10;
     public final static int LARGE_GAP = 20;
 
+    /**
+     * Default size for windows showing large content that has no meaningful preferred size of its
+     * own, e.g. web views. Always to be used together with {@link #shrinkToUsableScreen(Dimension)}
+     * or {@link #packWithinUsableScreen(Window)}, since it may exceed small screens.
+     */
+    public final static Dimension LARGE_CONTENT_SIZE = new Dimension(1350, 800);
+
+    /**
+     * Size of a popup window showing a single web page, e.g. an external page that could not be
+     * opened in the system browser.
+     */
+    public final static Dimension WEB_VIEW_POPUP_SIZE = new Dimension(600, 800);
+
+    /**
+     * @return the screen area that is usable for windows, so excluding task bars and the like
+     */
+    public static Rectangle getUsableScreenBounds() {
+        return GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+    }
+
+    /**
+     * Shrinks the given size to the screen area that is usable for windows.
+     */
+    public static Dimension shrinkToUsableScreen(@NotNull Dimension size) {
+        Rectangle usableScreenBounds = getUsableScreenBounds();
+        return new Dimension(Math.min(usableScreenBounds.width, size.width),
+                Math.min(usableScreenBounds.height, size.height));
+    }
+
+    /**
+     * Sizes the given window to fit its content but never larger than the screen area that is usable
+     * for windows.
+     */
+    public static void packWithinUsableScreen(@NotNull Window window) {
+        window.pack(); //preferred size of the content including window decorations
+        window.setSize(shrinkToUsableScreen(window.getSize()));
+    }
+
+    /**
+     * A keyboard shortcut as it is written for the user, with the platform's menu modifier in front:
+     * {@code shortcut("Shift+F")} is {@code Ctrl+Shift+F}, and {@code Cmd+Shift+F} on macOS - the same
+     * modifier {@link java.awt.Toolkit#getMenuShortcutKeyMaskEx()} binds the stroke to.
+     */
+    public static String shortcut(@NotNull String keys) {
+        return (SystemUtils.IS_OS_MAC ? "Cmd+" : "Ctrl+") + keys;
+    }
+
     public static synchronized void initUI() {
+        // 1. Enable custom window decorations
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JDialog.setDefaultLookAndFeelDecorated(true);
+
         // disable custom scaling on Mac because Mac is preventing it anyway.
         if (SystemUtils.IS_OS_MAC) {
             SiriusProperties.setProperty("de.unijena.bioinf.sirius.customUiScale", "false");
@@ -212,7 +265,7 @@ public class GuiUtils {
     public static JPanel newNoResultsComputedPanel(@Nullable String message) {
         JPanel p = new JPanel(new BorderLayout());
         JPanel pp = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        pp.add(new JLabel(message == null ? "No results Computed!" : message));
+        pp.add(new JLabel(message == null ? "No results computed!" : message));
         p.add(pp, BorderLayout.SOUTH);
         return p;
     }
@@ -308,26 +361,39 @@ public class GuiUtils {
 
         @NotNull BrowserPanelProvider<?> browserProvider = gui.getBrowserPanelProvider();
 
-        if (owner instanceof JDialog dialog)
-            browserProvider.newBrowserPopUp(dialog, title == null ? "SIRIUS WebView" : title, url);
-        else if (owner instanceof JFrame frame)
-            browserProvider.newBrowserPopUp(frame, title == null ? "SIRIUS WebView" : title, url);
-        else
-            browserProvider.newBrowserPopUp((Frame) null, title == null ? "SIRIUS WebView" : title, url);
-
+        browserProvider.newBrowserWindow(url)
+                .title(title == null ? "SIRIUS WebView" : title)
+                .owner(owner)
+                .modality(Dialog.ModalityType.APPLICATION_MODAL)
+                .size(WEB_VIEW_POPUP_SIZE)
+                .resizable(false)
+                .show();
     }
 
     /**
      * Adds a key binding to close the given dialog on pressing escape
      */
     public static void closeOnEscape(JDialog dialog) {
-        JRootPane rootPane = dialog.getRootPane();
+        closeOnEscape(dialog, dialog.getRootPane());
+    }
+
+    /**
+     * Adds a key binding to close the given frame on pressing escape
+     */
+    public static void closeOnEscape(JFrame frame) {
+        closeOnEscape(frame, frame.getRootPane());
+    }
+
+    /**
+     * Adds a key binding to close the given window on pressing escape
+     */
+    public static void closeOnEscape(Window window, JRootPane rootPane) {
         String escapePressed = "escapePressed";
         rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ESCAPE"), escapePressed);
         rootPane.getActionMap().put(escapePressed, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
+                window.dispatchEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSING));
             }
         });
     }
@@ -471,5 +537,35 @@ public class GuiUtils {
         }
 
         return sb.toString();
+    }
+
+    // If GuiUtils enables JDialog.setDefaultLookAndFeelDecorated(true), a new dialog is created with
+    // FlatLaf window decorations (rootpane windowDecorationStyle == PLAIN_DIALOG). For this floating,
+    // inline-expansion overlay we clear that decoration style so FlatLaf draws no title bar. The
+    // USE_WINDOW_DECORATIONS client property alone does not undo the already-decorated rootpane;
+    // resetting the standard windowDecorationStyle to NONE is what actually removes it.
+
+    public static void setUndecorated(JFrame frame) {
+        frame.setUndecorated(true);
+        frame.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+        frame.getRootPane().putClientProperty(FlatClientProperties.USE_WINDOW_DECORATIONS, false);
+    }
+
+    public static void setUndecorated(JDialog dialog) {
+        dialog.setUndecorated(true);
+        dialog.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+        dialog.getRootPane().putClientProperty(FlatClientProperties.USE_WINDOW_DECORATIONS, false);
+    }
+
+    public static void hideTitleBarClose(@NotNull JDialog dialog){
+        configure(dialog, FlatClientProperties.TITLE_BAR_SHOW_CLOSE, false);
+    }
+
+    public static void showTitleBarClose(@NotNull JDialog dialog){
+        configure(dialog, FlatClientProperties.TITLE_BAR_SHOW_CLOSE, true);
+    }
+
+    public static void configure(@NotNull JDialog dialog, @NotNull String flatlafClientProperties, boolean enabled){
+        dialog.getRootPane().putClientProperty(flatlafClientProperties, enabled);
     }
 }

@@ -99,7 +99,7 @@ public class Sirius extends Tool<SiriusOptions> {
     IsotopeMs2Settings.Strategy isotopeMs2Settings;
 
     /**
-     * When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.
+     * When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the measured one, even if their MS/MS pattern has high score.
      */
     @Schema(nullable = true)
     Boolean filterByIsotopePattern;
@@ -108,7 +108,7 @@ public class Sirius extends Tool<SiriusOptions> {
 
     //region Molecular formula generation and search
     /**
-     * El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforeced as molecular formula candidate.
+     * El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforced as a molecular formula candidate.
      */
     @Schema(nullable = true)
     Boolean enforceElGordoFormula;
@@ -127,7 +127,7 @@ public class Sirius extends Tool<SiriusOptions> {
 
 
     /**
-     * List Structure database to extract molecular formulas from to reduce formula search space.
+     * List of structure databases to extract molecular formulas from, to reduce the formula search space.
      * SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.
      */
     @Schema(nullable = true)
@@ -194,14 +194,14 @@ public class Sirius extends Tool<SiriusOptions> {
     //region Spectral library search
     /**
      * If true formula candidates that belong to spectral library matches above a certain threshold will
-     * we inject/preserved for further analyses no matter which score they have or which filter is applied
+     * be injected and preserved for further analyses, no matter which score they have or which filter is applied
      */
     @Schema(nullable = true)
     Boolean injectSpecLibMatchFormulas;
 
     /**
      * Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.
-     * If threshold >= 0 formulas candidates with reference spectrum similarity above the threshold will be injected.
+     * If the threshold is >= 0, formula candidates with a reference spectrum similarity above the threshold will be injected.
      */
     @Schema(nullable = true)
     Double minScoreToInjectSpecLibMatch;

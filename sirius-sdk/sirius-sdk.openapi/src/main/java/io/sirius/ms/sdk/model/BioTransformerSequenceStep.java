@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BioTransformerSequenceStep.JSON_PROPERTY_METABOLIC_TRANSFORMATION,
   BioTransformerSequenceStep.JSON_PROPERTY_ITERATIONS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class BioTransformerSequenceStep {
   public static final String JSON_PROPERTY_METABOLIC_TRANSFORMATION = "metabolicTransformation";
   @jakarta.annotation.Nullable
@@ -65,7 +66,7 @@ public class BioTransformerSequenceStep {
    * @return metabolicTransformation
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_METABOLIC_TRANSFORMATION)
+  @JsonProperty(value = JSON_PROPERTY_METABOLIC_TRANSFORMATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public MetabolicTransformation getMetabolicTransformation() {
@@ -73,7 +74,7 @@ public class BioTransformerSequenceStep {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_METABOLIC_TRANSFORMATION)
+  @JsonProperty(value = JSON_PROPERTY_METABOLIC_TRANSFORMATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMetabolicTransformation(@jakarta.annotation.Nullable MetabolicTransformation metabolicTransformation) {
     this.metabolicTransformation = metabolicTransformation;
@@ -90,7 +91,7 @@ public class BioTransformerSequenceStep {
    * @return iterations
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ITERATIONS)
+  @JsonProperty(value = JSON_PROPERTY_ITERATIONS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getIterations() {
@@ -98,7 +99,7 @@ public class BioTransformerSequenceStep {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ITERATIONS)
+  @JsonProperty(value = JSON_PROPERTY_ITERATIONS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIterations(@jakarta.annotation.Nullable Integer iterations) {
     this.iterations = iterations;

@@ -19,20 +19,30 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
+import de.unijena.bioinf.ms.middleware.model.statistics.Statistics;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.PrecursorIonTypeQueryRewriter;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.FoldChangeMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.sirius.ComputedSubtools;
+import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 
 /**
  * The AlignedFeature contains the ID of a feature (aligned over runs) together with some read-only information
@@ -41,106 +51,195 @@ import java.util.Set;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AlignedFeature {
-
+public class AlignedFeature implements Taggable {
+    // topAnnotationsSummary are the indext summary field that can be retrieved very fast and are needed for quick gui loading.
     @Schema(name = "AlignedFeatureOptField", nullable = true)
-    public enum OptField {none, msData, topAnnotationsSummary, topAnnotations, topAnnotationsDeNovo, computedTools, tags}
+    public enum OptField {none, msData, topAnnotationsSummary, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags,
+        //hidden from API via SwaggerConfig.java
+        statistics}
+
+    /**
+     * The optional fields the search index document carries, as opposed to the ones that have to be read from
+     * the project. Everything annotated {@link IndexField} or {@link IndexFieldWithMapper} below that is not
+     * part of a feature unconditionally.
+     * <p>
+     * Says what a document holds, which is what a document has to be written with - that is its one job. It is
+     * deliberately not a statement about what a response should carry: {@link OptField#statistics} is in here
+     * because the index needs it and hidden from the api because no client can read it, and those are not in
+     * conflict as long as what leaves the api is decided by what was asked for rather than by this set.
+     * <p>
+     * Shared, and an {@code EnumSet} because that is what every opt-field parameter takes - so it must not be
+     * mutated.
+     */
+    public static final EnumSet<OptField> INDEXED_OPT_FIELDS =  EnumSet.of(
+            OptField.tags, OptField.computedTools, OptField.topAnnotationsSummary, OptField.qualities,
+            OptField.statistics);
 
     // identifier
+    /**
+     * Unique identifier of the aligned feature within the project.
+     */
+    @IndexField(documentId = true, sortable = true, defaultSearchField = true)
     @NotNull
     protected String alignedFeatureId;
 
+    /**
+     * Identifier of the compound the feature belongs to.
+     * Features that are different adducts or isotopologues of the same molecule share it.
+     */
+    @IndexField
     protected String compoundId;
 
     // identifier source
+    /**
+     * Informative, human-readable name of the feature.
+     */
+    @IndexField(fullTextSearch = true, defaultSearchField = true, sortable = true)
     protected String name;
 
     /**
      * Externally provided FeatureId (e.g. by some preprocessing tool).
      * This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source.
      */
+    @IndexField(defaultSearchField = true)
     protected String externalFeatureId;
 
     // additional attributes
+    /**
+     * Mass-to-charge ratio (m/z) of the precursor ion of the feature.
+     */
+    @IndexField(sortable = true)
     protected Double ionMass;
 
     /**
-     * Ion mode (charge) this feature has been measured in.
+     * Ion mode (charge) the feature has been measured in.
      */
+    @IndexField
     @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
     protected int charge;
 
     /**
-     *  Adducts of this feature that have been detected during preprocessing.
+     * Adducts that have been detected for the feature during preprocessing.
+     * Never empty: if no adduct could be detected, the unknown ion type matching the feature's
+     * charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.
      */
+    @IndexField(queryRewriter = PrecursorIonTypeQueryRewriter.class)
     @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
     protected Set<String> detectedAdducts;
 
+    /**
+     * Start of the retention time range the feature was detected in, in seconds.
+     */
+    @IndexField
     @Schema(nullable = true)
     protected Double rtStartSeconds;
+    /**
+     * End of the retention time range the feature was detected in, in seconds.
+     */
+    @IndexField
     @Schema(nullable = true)
     protected Double rtEndSeconds;
+    /**
+     * Retention time of the intensity apex of the feature, in seconds.
+     */
+    @IndexField(sortable = true)
     @Schema(nullable = true)
     protected Double rtApexSeconds;
 
     /**
-     * Quality of this feature.
+     * Overall quality of the feature. NOT_APPLICABLE if no quality data is available
      */
-    protected DataQuality quality;
+    @IndexField(sortable = true)
+    @Schema
+    @Builder.Default
+    @NotNull
+    protected DataQuality quality = DataQuality.NOT_APPLICABLE;
     /**
-     * If true, the feature has at lease one MS1 spectrum
+     * If true, the feature has at least one MS1 spectrum
      */
+    @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     protected boolean hasMs1;
     /**
-     * If true, the feature has at lease one MS/MS spectrum
+     * If true, the feature has at least one MS/MS spectrum
      */
+    @IndexField
+    @SearchableFieldDoc(possibleValues = FieldVocabulary.PresenceFlag.class)
     protected boolean hasMsMs;
 
     /**
-     * Mass Spec data of this feature (input data)
+     * Mass Spec data of the feature (input data)
      */
     @Schema(nullable = true)
     protected MsData msData;
 
     /**
-     * Top annotations of this feature.
+     * Top annotations of the feature.
      * If a CSI:FingerID structureAnnotation is available, the FormulaCandidate that corresponds to the
      * structureAnnotation is returned. Otherwise, it's the FormulaCandidate with the highest SiriusScore is returned.
      * CANOPUS Compound classes correspond to the FormulaCandidate no matter how it was selected
      *
-     * Null if it was not requested und non-null otherwise.
+     * Null if it was not requested and non-null otherwise.
      */
+    @IndexField
     @Schema(nullable = true)
     protected FeatureAnnotations topAnnotations;
 
     /**
-     * Top de novo annotations of this feature.
+     * Top de novo annotations of the feature.
      * The FormulaCandidate with the highest SiriusScore is returned. MSNovelist structureAnnotation and
      * CANOPUS compoundClasses correspond to the FormulaCandidate.
      *
-     * Null if it was not requested und non-null otherwise.
+     * Null if it was not requested and non-null otherwise.
      */
     @Schema(nullable = true)
     protected FeatureAnnotations topAnnotationsDeNovo;
 
 
     /**
-     * Write lock for this feature. If the feature is locked no write operations are possible.
-     * True if any computation is modifying this feature or its results
+     * Write lock for the feature. If the feature is locked no write operations are possible.
+     * True if any computation is modifying the feature or its results.
      */
     protected boolean computing;
 
+    @IndexField
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, description =
-                    "Specifies which tools have been executed for this feature. " +
+                    "Specifies which tools have been executed for the feature. " +
                     "Can be used to estimate which results can be expected. " +
-                            "Null if it was not requested und non-null otherwise.")
+                            "Null if it was not requested and non-null otherwise.")
     @JsonIgnoreProperties(value = { "alignedFeatureId" })
     protected ComputedSubtools computedTools;
+
+
+    /**
+     * Qualities per top level quality category.
+     */
+    @IndexField
+    @Schema(nullable = true)
+    protected Map<String, DataQuality> qualities;
 
     /**
      * Key: tagName, value: tag
      */
+    @IndexFieldWithMapper(mapper = TagMapper.class)
     @Schema(nullable = true)
-    protected Map<String, ? extends Tag> tags;
+    protected Map<String, Tag> tags;
+
+
+    /**
+     * Aggregated fold change of sample runs vs blank runs for the aligned feature
+     * NULL if not a sample run or no fold change exists
+     */
+    //NOTE: This field is mainly for search index building and therefore hidden from the api. It is only filled
+    // when OptField.statistics is requested: the field is absent from the generated clients, so no client can
+    // read a feature's fold changes THROUGH the feature - they are read from the /statistics endpoints instead,
+    // straight out of the project - while this is by far the largest part of a feature, one entry per group
+    // pair, quantification and aggregation. The index document, on the other hand, has to carry them: a Lucene
+    // query is the only way the gui's blank filter can ask about them.
+    @IndexFieldWithMapper(mapper = FoldChangeMapper.AlignedFeatureFoldChange.class)
+    @Schema(nullable = true, hidden = true)
+    protected List<Statistics> stats;
 }

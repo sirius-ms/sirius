@@ -4,6 +4,7 @@ import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.AggregationType;
 import io.sirius.ms.sdk.model.FoldChange;
+import io.sirius.ms.sdk.model.FoldChangeJobSubmission;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.QuantMeasure;
@@ -31,7 +32,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class FeatureStatisticsApi {
     private ApiClient apiClient;
 
@@ -51,33 +52,28 @@ public class FeatureStatisticsApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * [EXPERIMENTAL] Compute the fold change between two groups of runs
      * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to compute the fold change in.
-     * @param leftGroupName name of the left tag group.
-     * @param rightGroupName name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param foldChangeJobSubmission Parameters of fold change job
      * @param optFields job opt fields.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec computeAlignedFeatureFoldChangesExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
-        Object postBody = null;
+    private ResponseSpec computeAlignedFeatureFoldChangesExperimentalRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull FoldChangeJobSubmission foldChangeJobSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        Object postBody = foldChangeJobSubmission;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling computeAlignedFeatureFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'leftGroupName' is set
-        if (leftGroupName == null) {
-            throw new WebClientResponseException("Missing the required parameter 'leftGroupName' when calling computeAlignedFeatureFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'rightGroupName' is set
-        if (rightGroupName == null) {
-            throw new WebClientResponseException("Missing the required parameter 'rightGroupName' when calling computeAlignedFeatureFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'foldChangeJobSubmission' is set
+        if (foldChangeJobSubmission == null) {
+            throw new WebClientResponseException("Missing the required parameter 'foldChangeJobSubmission' when calling computeAlignedFeatureFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -89,17 +85,15 @@ public class FeatureStatisticsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "leftGroupName", leftGroupName));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "rightGroupName", rightGroupName));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
@@ -112,59 +106,62 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Compute the fold change between two groups of runs
      * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to compute the fold change in.
-     * @param leftGroupName name of the left tag group.
-     * @param rightGroupName name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param foldChangeJobSubmission Parameters of fold change job
      * @param optFields job opt fields.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job computeAlignedFeatureFoldChangesExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+    public Job computeAlignedFeatureFoldChangesExperimental(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull FoldChangeJobSubmission foldChangeJobSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields).bodyToMono(localVarReturnType).block();
+        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, foldChangeJobSubmission, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * [EXPERIMENTAL] Compute the fold change between two groups of runs
      * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to compute the fold change in.
-     * @param leftGroupName name of the left tag group.
-     * @param rightGroupName name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param foldChangeJobSubmission Parameters of fold change job
      * @param optFields job opt fields.
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> computeAlignedFeatureFoldChangesExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> computeAlignedFeatureFoldChangesExperimentalWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull FoldChangeJobSubmission foldChangeJobSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields).toEntity(localVarReturnType).block();
+        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, foldChangeJobSubmission, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
      * [EXPERIMENTAL] Compute the fold change between two groups of runs
      * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to compute the fold change in.
-     * @param leftGroupName name of the left tag group.
-     * @param rightGroupName name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param foldChangeJobSubmission Parameters of fold change job
      * @param optFields job opt fields.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec computeAlignedFeatureFoldChangesExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull String leftGroupName, @jakarta.annotation.Nonnull String rightGroupName, @jakarta.annotation.Nullable AggregationType aggregation, @jakarta.annotation.Nullable QuantMeasure quantification, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
-        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
+    public ResponseSpec computeAlignedFeatureFoldChangesExperimentalWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nonnull FoldChangeJobSubmission foldChangeJobSubmission, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, foldChangeJobSubmission, optFields);
     }
 
     /**
      * [EXPERIMENTAL] Delete fold changes
      * [EXPERIMENTAL] Delete fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param leftGroupName name of the left group.
      * @param rightGroupName name of the right group.
@@ -200,7 +197,7 @@ public class FeatureStatisticsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "rightGroupName", rightGroupName));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
-        
+
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -216,6 +213,9 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Delete fold changes
      * [EXPERIMENTAL] Delete fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param leftGroupName name of the left group.
      * @param rightGroupName name of the right group.
@@ -232,6 +232,9 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Delete fold changes
      * [EXPERIMENTAL] Delete fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param leftGroupName name of the left group.
      * @param rightGroupName name of the right group.
@@ -248,6 +251,9 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Delete fold changes
      * [EXPERIMENTAL] Delete fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete from.
      * @param leftGroupName name of the left group.
      * @param rightGroupName name of the right group.
@@ -264,6 +270,9 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Get table of all fold changes in the project space
      * [EXPERIMENTAL] Get table of all fold changes in the project space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - table of fold changes.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
@@ -288,9 +297,9 @@ public class FeatureStatisticsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -306,6 +315,9 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Get table of all fold changes in the project space
      * [EXPERIMENTAL] Get table of all fold changes in the project space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - table of fold changes.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
@@ -321,6 +333,9 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Get table of all fold changes in the project space
      * [EXPERIMENTAL] Get table of all fold changes in the project space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - table of fold changes.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
@@ -336,6 +351,9 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Get table of all fold changes in the project space
      * [EXPERIMENTAL] Get table of all fold changes in the project space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - table of fold changes.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
@@ -350,6 +368,9 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] List all fold changes that are associated with an object
      * [EXPERIMENTAL] List all fold changes that are associated with an object.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - fold changes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
      * @return List&lt;FoldChange&gt;
@@ -377,7 +398,7 @@ public class FeatureStatisticsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -393,6 +414,9 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] List all fold changes that are associated with an object
      * [EXPERIMENTAL] List all fold changes that are associated with an object.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - fold changes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
      * @return List&lt;FoldChange&gt;
@@ -407,6 +431,9 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] List all fold changes that are associated with an object
      * [EXPERIMENTAL] List all fold changes that are associated with an object.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - fold changes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
      * @return ResponseEntity&lt;List&lt;FoldChange&gt;&gt;
@@ -421,6 +448,9 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] List all fold changes that are associated with an object
      * [EXPERIMENTAL] List all fold changes that are associated with an object.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - fold changes
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
      * @return ResponseSpec

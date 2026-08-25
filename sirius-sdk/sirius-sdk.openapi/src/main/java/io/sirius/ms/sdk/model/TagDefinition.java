@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -50,7 +51,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   TagDefinition.JSON_PROPERTY_MIN_VALUE,
   TagDefinition.JSON_PROPERTY_MAX_VALUE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class TagDefinition {
   public static final String JSON_PROPERTY_EDITABLE = "editable";
   @jakarta.annotation.Nullable
@@ -98,7 +99,7 @@ public class TagDefinition {
    * @return editable
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EDITABLE)
+  @JsonProperty(value = JSON_PROPERTY_EDITABLE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isEditable() {
@@ -106,7 +107,7 @@ public class TagDefinition {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_EDITABLE)
+  @JsonProperty(value = JSON_PROPERTY_EDITABLE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setEditable(@jakarta.annotation.Nullable Boolean editable) {
     this.editable = editable;
@@ -123,7 +124,7 @@ public class TagDefinition {
    * @return tagName
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_TAG_NAME)
+  @JsonProperty(value = JSON_PROPERTY_TAG_NAME, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public String getTagName() {
@@ -131,7 +132,7 @@ public class TagDefinition {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TAG_NAME)
+  @JsonProperty(value = JSON_PROPERTY_TAG_NAME, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setTagName(@jakarta.annotation.Nonnull String tagName) {
     this.tagName = tagName;
@@ -148,7 +149,7 @@ public class TagDefinition {
    * @return description
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonProperty(value = JSON_PROPERTY_DESCRIPTION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getDescription() {
@@ -156,7 +157,7 @@ public class TagDefinition {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonProperty(value = JSON_PROPERTY_DESCRIPTION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDescription(@jakarta.annotation.Nullable String description) {
     this.description = description;
@@ -173,7 +174,7 @@ public class TagDefinition {
    * @return tagType
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TAG_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_TAG_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getTagType() {
@@ -181,7 +182,7 @@ public class TagDefinition {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TAG_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_TAG_TYPE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTagType(@jakarta.annotation.Nullable String tagType) {
     this.tagType = tagType;
@@ -198,7 +199,7 @@ public class TagDefinition {
    * @return valueType
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_VALUE_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_VALUE_TYPE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public ValueType getValueType() {
@@ -206,7 +207,7 @@ public class TagDefinition {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_VALUE_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_VALUE_TYPE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setValueType(@jakarta.annotation.Nonnull ValueType valueType) {
     this.valueType = valueType;
@@ -231,7 +232,7 @@ public class TagDefinition {
    * @return possibleValues
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_POSSIBLE_VALUES)
+  @JsonProperty(value = JSON_PROPERTY_POSSIBLE_VALUES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<Object> getPossibleValues() {
@@ -239,7 +240,7 @@ public class TagDefinition {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_POSSIBLE_VALUES)
+  @JsonProperty(value = JSON_PROPERTY_POSSIBLE_VALUES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPossibleValues(@jakarta.annotation.Nullable List<Object> possibleValues) {
     this.possibleValues = possibleValues;
@@ -256,7 +257,7 @@ public class TagDefinition {
    * @return minValue
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MIN_VALUE)
+  @JsonProperty(value = JSON_PROPERTY_MIN_VALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Object getMinValue() {
@@ -264,7 +265,7 @@ public class TagDefinition {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MIN_VALUE)
+  @JsonProperty(value = JSON_PROPERTY_MIN_VALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMinValue(@jakarta.annotation.Nullable Object minValue) {
     this.minValue = minValue;
@@ -281,7 +282,7 @@ public class TagDefinition {
    * @return maxValue
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MAX_VALUE)
+  @JsonProperty(value = JSON_PROPERTY_MAX_VALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Object getMaxValue() {
@@ -289,7 +290,7 @@ public class TagDefinition {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MAX_VALUE)
+  @JsonProperty(value = JSON_PROPERTY_MAX_VALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMaxValue(@jakarta.annotation.Nullable Object maxValue) {
     this.maxValue = maxValue;

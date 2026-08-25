@@ -23,6 +23,7 @@ package de.unijena.bioinf.sirius.elementdetection;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedElements;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
@@ -49,15 +50,10 @@ public class DeepNeuralNetworkElementDetector implements ElementDetection {
 
     @Override
     @Nullable
-    public DetectedFormulaConstraints detect(ProcessedInput processedInput) {
-        final FormulaSettings settings = processedInput.getAnnotationOrDefault(FormulaSettings.class);
-        checkDetectableElements(settings);
-        final PossibleAdducts possibleAdducts = processedInput.getAnnotationOrDefault(PossibleAdducts.class);
+    public DetectedElements detect(ProcessedInput processedInput) {
         SimpleSpectrum ms1 = processedInput.getAnnotationOrThrow(Ms1IsotopePattern.class).getSpectrum();
-        if (ms1.size()<=2) return new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()), false);
-        final FormulaConstraints constraints = adjustPredictedConstraintsWithAdducts(dnnRegressionPredictor.predictConstraints(ms1), possibleAdducts);
-        //limit detection to detectable elements and add enforced alphabet
-        return new DetectedFormulaConstraints(constraints.intersection(settings.getAutoDetectionElements().toArray(new Element[0])).getExtendedConstraints(settings.getEnforcedAlphabet()), true);
+        if (ms1.size()<=2) return DetectedElements.singleton(DetectedElements.Source.ISOTOPE_PATTERN_DETECTION);
+        else return DetectedElements.singleton(DetectedElements.Source.ISOTOPE_PATTERN_DETECTION, dnnRegressionPredictor.detectElements(ms1));
     }
 
     /**

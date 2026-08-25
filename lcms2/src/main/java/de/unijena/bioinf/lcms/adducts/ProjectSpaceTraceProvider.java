@@ -121,6 +121,18 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    public Optional<SimpleSpectrum> getMsMsSpectrumOf(AbstractAlignedFeatures features) {
+        try {
+            Optional<MSData> msdata = getMsData(features);
+            if (msdata.isEmpty() || msdata.get().getMsnSpectra()==null || msdata.get().getMsnSpectra().isEmpty()) return Optional.empty();
+            return msdata.map(MSData::getMergedMSnSpectrum);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public Optional<SimpleSpectrum> getIsotopes(AbstractAlignedFeatures features) {
         try {

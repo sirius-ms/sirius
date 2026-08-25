@@ -22,10 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.statistics;
 
 import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 @SuperBuilder
 @Getter
 @Setter
+@EqualsAndHashCode(callSuper = true)
 public class FoldChange extends Statistics {
     @NotNull
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
@@ -43,7 +41,18 @@ public class FoldChange extends Statistics {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     protected String objectId;
 
+    @EqualsAndHashCode.Exclude
     @NotNull
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     protected Double foldChange;
+
+    @EqualsAndHashCode.Exclude
+    @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected Double leftAbundance;
+
+    @EqualsAndHashCode.Exclude
+    @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected Double rightAbundance;
 }

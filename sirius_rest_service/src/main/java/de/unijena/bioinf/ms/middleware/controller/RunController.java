@@ -21,11 +21,10 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
-import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
-import de.unijena.bioinf.ms.middleware.model.statistics.SampleTypeFoldChangeRequest;
-import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagSubmission;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -44,104 +43,45 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/runs")
-@io.swagger.v3.oas.annotations.tags.Tag(name = "Runs", description = "[EXPERIMENTAL] This API allows accessing LC/MS runs. " +
-        "All endpoints are experimental and not part of the stable API specification. " +
-        "These endpoints can change at any time, even in minor updates.")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Runs", description = "This API allows accessing LC/MS runs, " +
+        "e.g. to map quantification results back to the data they have been computed from. The tag based endpoints " +
+        "are experimental and not part of the stable API specification. These endpoints can change at any time, " +
+        "even in minor updates.")
 public class RunController implements TaggableController<Run, Run.OptField> {
 
     @Getter
     private final ProjectsProvider<?> projectsProvider;
 
-    private final ComputeService computeService;
-
     @Autowired
-    public RunController(ProjectsProvider<?> projectsProvider, ComputeService computeService) {
+    public RunController(ProjectsProvider<?> projectsProvider) {
         this.projectsProvider = projectsProvider;
-        this.computeService = computeService;
-    }
-
-    /**
-     * [EXPERIMENTAL] Get all available runs in the given project-space.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId project-space to read from.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @return Runs with tags (if specified).
-     */
-    @Operation(operationId = "getRunPageExperimental")
-    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<Run> getRunsPaged(
-            @PathVariable String projectId,
-            @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "") EnumSet<Run.OptField> optFields
-    ) {
-        return projectsProvider.getProjectOrThrow(projectId).findRuns(pageable, removeNone(optFields));
-    }
-
-    /**
-     * [EXPERIMENTAL] Get run with the given identifier from the specified project-space.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId        project-space to read from.
-     * @param runId            identifier of run to access.
-     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
-     * @return Run with tags (if specified).
-     */
-    @Operation(operationId = "getRunExperimental")
-    @GetMapping(value = "/{runId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Run getRun(
-            @PathVariable String projectId, @PathVariable String runId,
-            @RequestParam(defaultValue = "") EnumSet<Run.OptField> optFields
-    ) {
-        return projectsProvider.getProjectOrThrow(projectId).findRunById(runId, removeNone(optFields));
-    }
-
-    /**
-     * [EXPERIMENTAL] Compute the fold changes that are required for the fold change filter.
-     *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
-     *
-     * @param projectId project-space to compute the fold change in.
-     * @param request   request with lists of run IDs that are sample, blank, and control runs
-     * @param optFields job opt fields.
-     * @return
-     */
-    @PutMapping(value = "/blanksubtract/compute",  produces = MediaType.APPLICATION_JSON_VALUE)
-    public Job computeFoldChangeForBlankSubtraction(
-            @PathVariable String projectId,
-            @RequestBody @Valid SampleTypeFoldChangeRequest request,
-            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
-    ) {
-        return computeService.createAndSubmitFoldChangeForBlankSubtractionJob(
-                getProjectsProvider().getProjectOrThrow(projectId),
-                request.getSampleRunIds(),
-                request.getBlankRunIds(),
-                request.getControlRunIds(),
-                removeNone(optFields));
     }
 
     /**
      *
-     * [EXPERIMENTAL] Get runs by tag.
+     * Get runs in the given project-space.
      *
      * <h2>Supported filter syntax</h2>
      *
-     * <p>The filter string must contain one or more clauses. A clause is prefíxed
+     * <p>The filter string must contain one or more clauses. A clause is prefixed
      * by a field name.
      * </p>
      *
-     * Currently the only searchable fields are names of tags ({@code tagName}) followed by a clause that is valued for the value type of the tag (See TagDefinition).
-     * Tag name based field need to be prefixed with the namespace {@code tags.}.
-     * Possible value types of tags are <strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value
+     * Searchable fields are the indexed properties of the run (e.g. {@code name}, {@code source},
+     * {@code chromatography}, {@code ionization}) and project tags prefixed with the namespace
+     * {@code tags.} (e.g. {@code tags.MyTag}).
+     * Use the {@code searchable-fields} endpoint (getRunsSearchableFields) to list all fields that can be
+     * searched, including their value type, whether they support word based (full text) search, and whether
+     * results can be sorted by them.
+     * Possible value types are <strong>text</strong>, <strong>integer</strong>, <strong>double</strong>,
+     * <strong>boolean</strong>, <strong>date</strong>, or <strong>time</strong>.
      *
      * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
      *
      * <p>A clause may be:</p>
      * <ul>
-     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tags.MyTagA:sample}</li>
-     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code tags.MyTagA:"Some Text"}</li>
+     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code chromatography:LC}</li>
+     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code name:"Blank Sample 25"}</li>
      *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code tags.MyTagA:/[mb]oat/}</li>
      *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code tags.MyTagB<3}</li>
      *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code tags.MyTagB:[* TO 3] }</li>
@@ -153,20 +93,58 @@ public class RunController implements TaggableController<Run, Run.OptField> {
      *
      * <p>The syntax allows to build complex filter queries such as:</p>
      *
-     * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
+     * <p>{@code name:"Blank" AND chromatography:LC AND tags.city:"new york" OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time<10\:00\:00 }</p>
      *
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId    project space to get runs from.
-     * @param filter       tag filter.
+     * @param searchQuery  Optional search query in lucene syntax. Omit this parameter to page over all runs.
      * @param pageable     pageable.
      * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged runs
      */
-    @Operation(operationId = "getRunsByTagExperimental")
-    @Override
-    public Page<Run> getObjectsByTag(String projectId, String filter, Pageable pageable, EnumSet<Run.OptField> optFields) {
-        return TaggableController.super.getObjectsByTag(projectId, filter, pageable, optFields);
+    @Operation(operationId = "getRunsPage")
+    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<Run> getRunsPage(
+            @PathVariable String projectId,
+            @RequestParam(required = false) String searchQuery,
+            @ParameterObject Pageable pageable,
+            @RequestParam(defaultValue = "") EnumSet<Run.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findRuns(searchQuery, pageable, removeNone(optFields));
+    }
+
+    /**
+     * Get all fields that can be used in the searchQuery parameter of run endpoints.
+     * <p>
+     * Use this to build valid lucene queries: the field type determines which clauses are supported
+     * (e.g. range queries for numeric fields, word based search for full-text fields). Includes the
+     * dynamic tag fields ({@code tags.<tagName>}) of this project. An empty list means there are no
+     * searchable fields.
+     *
+     * @param projectId project space to read the searchable run fields from.
+     * @return fields usable in searchQuery parameters of run endpoints.
+     */
+    @Operation(operationId = "getRunsSearchableFields")
+    @GetMapping(value = "/searchable-fields", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SearchableField> getRunsSearchableFields(@PathVariable String projectId) {
+        return projectsProvider.getProjectOrThrow(projectId).getSearchableFields(Run.class);
+    }
+
+    /**
+     * Get run with the given identifier from the specified project-space.
+     *
+     * @param projectId        project-space to read from.
+     * @param runId            identifier of run to access.
+     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
+     * @return Run with tags (if specified).
+     */
+    @Operation(operationId = "getRun")
+    @GetMapping(value = "/{runId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Run getRun(
+            @PathVariable String projectId, @PathVariable String runId,
+            @RequestParam(defaultValue = "") EnumSet<Run.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findRunById(runId, removeNone(optFields));
     }
 
     /**
@@ -201,6 +179,21 @@ public class RunController implements TaggableController<Run, Run.OptField> {
     }
 
     /**
+     *
+     * [EXPERIMENTAL] Add tags to a run in the project. Tags with the same name will be overwritten.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId  project-space to add to.
+     * @param tags       tags with the id of run they shall be added to.
+     */
+    @Operation(operationId = "addTagsToRunsExperimental")
+    @Override
+    public void addTagsToObjects(String projectId, List<TagSubmission> tags) {
+        TaggableController.super.addTagsToObjects(projectId, tags);
+    }
+
+    /**
      * [EXPERIMENTAL] Delete tag with the given name from the run with the specified ID in the specified project-space.
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -228,10 +221,15 @@ public class RunController implements TaggableController<Run, Run.OptField> {
      * @return tagged runs
      */
     @Operation(operationId = "getRunsByGroupExperimental")
-    @Override
-    public Page<Run> getObjectsByGroup(String projectId, String groupName, Pageable pageable, EnumSet<Run.OptField> optFields) {
-        return TaggableController.super.getObjectsByGroup(projectId, groupName, pageable, optFields);
+    @GetMapping(value = "/grouped", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<Run> getRunsByGroup(@PathVariable String projectId,
+                                                          @RequestParam String groupName,
+                                                          @ParameterObject Pageable pageable,
+                                                          @RequestParam(defaultValue = "none") EnumSet<Run.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findRunsByGroup(groupName, pageable, optFields);
     }
+
 
     @Override
     public Class<Run> getTagTarget() {

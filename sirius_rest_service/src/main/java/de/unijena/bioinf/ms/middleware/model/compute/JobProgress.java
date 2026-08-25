@@ -28,8 +28,8 @@ import lombok.Setter;
 
 /**
  * Progress information of a computation job that has already been submitted to SIRIUS.
- * if  currentProgress == maxProgress job is finished and should change to state done soon.
- * if a job is DONE all results can be accessed via the Project-Spaces api.
+ * If currentProgress == maxProgress, the job is finished and should change to state DONE soon.
+ * If a job is DONE, all results can be accessed via the project-space API.
  */
 @Getter
 @Setter
@@ -68,7 +68,7 @@ public class JobProgress {
     @Schema(nullable = true)
     String message;
     /**
-     * Error message if the job did not finish successfully failed.
+     * Error message if the job did not finish successfully.
      */
     @Schema(nullable = true)
     String errorMessage;

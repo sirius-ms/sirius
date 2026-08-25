@@ -27,16 +27,45 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LcmsSubmissionParameters {
+    /**
+     * Sample names for each input file to link imported results, e.g. QuantTable back to the input data.
+     * If NULL or empty sample names will be derived from the input files.
+     * <p>
+     * The names are matched to the input files by index. Partial lists are allowed: a NULL entry and any
+     * input file without a corresponding entry get their name derived from the input file. Surplus entries
+     * that match no input file are ignored.
+     * <p>
+     * Names must neither be blank nor duplicated, otherwise the import is rejected.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, nullable = true)
+    protected List<String> sampleNames = null;
+
+    /**
+     * Sample type for each input file to be used to compute fold changes between blank and sample runs
+     * If NULL or empty no fold changes will be computed during preprocessing.
+     * <p>
+     * The types are matched to the input files by index. In contrast to sampleNames either all or no sample
+     * types have to be given: if the number of types does not match the number of input files or if any type
+     * is NULL or blank, the import is rejected.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, nullable = true)
+    protected List<String> sampleTypes = null;
+
     /**
      * Specifies whether LC/MS runs should be aligned
      */
@@ -46,7 +75,7 @@ public class LcmsSubmissionParameters {
     /**
      * Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level
      * to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.
-     * If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify
+     * If not specified, the noise intensity is detected automatically from the data. We recommend NOT specifying
      * this parameter, as the automated detection is usually sufficient.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "-1")
@@ -69,7 +98,7 @@ public class LcmsSubmissionParameters {
     protected Deviation alignMaxMassDeviation = null;
 
     /**
-     * Maximal allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from data.
+     * Maximum allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from the data.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "-1")
     protected double alignMaxRetentionTimeDeviation = -1;
@@ -81,7 +110,7 @@ public class LcmsSubmissionParameters {
     protected DataSmoothing filter = DataSmoothing.AUTO;
 
     /**
-     * Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory
+     * Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensity features we recommend a min-snr of 2, but this will increase runtime and storage requirements
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "3", hidden = false)
     protected double minSNR = 3;
@@ -98,5 +127,34 @@ public class LcmsSubmissionParameters {
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "8", hidden = true)
     protected int waveletScale = 8;
 
+    /**
+     * Checks that sample names and types can be matched to the given input files, see {@code sampleNames}
+     * and {@code sampleTypes} for the respective rules.
+     *
+     * @param numberOfInputFiles number of input files these parameters are submitted with
+     * @throws IllegalArgumentException if names or types cannot be applied to the input files
+     */
+    public void validate(int numberOfInputFiles) throws IllegalArgumentException {
+        if (sampleNames != null && !sampleNames.isEmpty()) {
+            Set<String> uniqueNames = new HashSet<>();
+            for (String sampleName : sampleNames) {
+                if (sampleName == null)
+                    continue; //name is derived from the input file
+                if (sampleName.isBlank())
+                    throw new IllegalArgumentException("Sample names must not be blank. " +
+                            "Use null to derive the name of a sample from its input file.");
+                if (!uniqueNames.add(sampleName))
+                    throw new IllegalArgumentException("Sample names must be unique but '" + sampleName + "' was given multiple times.");
+            }
+        }
+
+        if (sampleTypes != null && !sampleTypes.isEmpty()) {
+            if (sampleTypes.size() != numberOfInputFiles)
+                throw new IllegalArgumentException("Either all or no sample types have to be given, but "
+                        + sampleTypes.size() + " sample types were given for " + numberOfInputFiles + " input files.");
+            if (sampleTypes.stream().anyMatch(Utils::isNullOrBlank))
+                throw new IllegalArgumentException("Either all or no sample types have to be given, but at least one given sample type is null or blank.");
+        }
+    }
 
 }

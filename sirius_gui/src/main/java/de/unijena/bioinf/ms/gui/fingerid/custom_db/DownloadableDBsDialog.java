@@ -4,13 +4,13 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db_downloader.DownloadDatabaseOptions;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db_downloader.DownloadableDBsOptions;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.table.SiriusListCellRenderer;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import io.sirius.ms.sdk.model.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -22,17 +22,17 @@ import java.util.Objects;
 
 public class DownloadableDBsDialog extends JDialog {
 
-    private final SiriusGui gui;
+    private final CustomDbContext context;
     private final DatabaseDialog databaseDialog;
     private final JList<DownloadableDatabase> databaseList;
     private final JTextPane descriptionPane;
     private final JButton downloadButton;
 
 
-    public DownloadableDBsDialog(Frame owner, DatabaseDialog databaseDialog, SiriusGui gui) {
-        super(owner, "Curated Custom Databases for Download", true);
+    public DownloadableDBsDialog(@NotNull DatabaseDialog databaseDialog) {
+        super(databaseDialog, "Curated Custom Databases for Download", true);
         this.databaseDialog = databaseDialog;
-        this.gui = gui;
+        this.context = databaseDialog.getContext();
         setLayout(new BorderLayout());
 
         databaseList = new JList<>();
@@ -72,7 +72,7 @@ public class DownloadableDBsDialog extends JDialog {
 
         GuiUtils.closeOnEscape(this);
         this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        this.setLocationRelativeTo(owner);
+        this.setLocationRelativeTo(databaseDialog);
         setSize(new Dimension(650, 450));
         setVisible(true);
     }
@@ -80,11 +80,12 @@ public class DownloadableDBsDialog extends JDialog {
     private void loadDatabases() {
         List<DownloadableDatabase> databases = List.of();
         try {
-            databases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading Databases...",
-                    () -> gui.applySiriusClient((c, pid) -> c.databases().getDownloadableDatabases())
+            //this dialog is not visible yet when loading initially, so the parent window is used
+            databases = Jobs.runInBackgroundAndLoad(databaseDialog, "Loading Databases...",
+                    () -> context.client().databases().getDownloadableDatabases()
             ).awaitResult();
         } catch (Exception ex) {
-            SwingUtilities.invokeLater(() -> gui.getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
+            SwingUtilities.invokeLater(() -> context.client().unwrapErrorResponse(ex).ifPresentOrElse(
                     err -> JOptionPane.showMessageDialog(this, err.getDetail(), "Error " + err.getStatus() + ": " + err.getTitle(), JOptionPane.ERROR_MESSAGE),
                     () -> JOptionPane.showMessageDialog(this, ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE)
             ));
@@ -114,7 +115,7 @@ public class DownloadableDBsDialog extends JDialog {
     @Nullable
     private String getDatabasePath(DownloadableDatabase db) {
         try {
-            SearchableDatabase localDb = gui.applySiriusClient((c, pid) -> c.databases().getDatabase(db.getId(), false));
+            SearchableDatabase localDb = context.client().databases().getDatabase(db.getId(), false);
             String path = localDb.getLocation();
             if (path != null && db.getSize() != null
                 && Files.size(Path.of(path)) == db.getSize()) {
@@ -145,17 +146,15 @@ public class DownloadableDBsDialog extends JDialog {
             command.addCommandItem("--db=" + db.getId());
             command.addCommandItem("--destination=" + destination);
 
-            gui.applySiriusClient((c, pid) -> {
-                Job j = c.jobs().startCommand(pid, command, List.of(JobOptField.PROGRESS));
-                return LoadingBackroundTask.runInBackground(gui.getMainFrame(),
-                        "Downloading " + db.getId() + "...", null,
-                        new io.sirius.ms.sdk.jjobs.SseProgressJJob(gui.getSiriusClient(), pid, j));
-            }).awaitResult();
+            Job j = context.client().jobs().startCommand(context.commandProjectId(), command, List.of(JobOptField.PROGRESS));
+            LoadingBackroundTask.runInBackground(databaseDialog,
+                    "Downloading " + db.getId() + "...", null,
+                    new io.sirius.ms.sdk.jjobs.SseProgressJJob(context.client(), context.commandProjectId(), j)).awaitResult();
 
             dispose();
             databaseDialog.whenCustomDbIsAdded(db.getId());
         } catch (Exception ex) {
-            SwingUtilities.invokeLater(() -> gui.getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
+            SwingUtilities.invokeLater(() -> context.client().unwrapErrorResponse(ex).ifPresentOrElse(
                     err -> JOptionPane.showMessageDialog(this, err.getDetail(), "Error " + err.getStatus() + ": " + err.getTitle(), JOptionPane.ERROR_MESSAGE),
                     () -> JOptionPane.showMessageDialog(this, ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE)
             ));

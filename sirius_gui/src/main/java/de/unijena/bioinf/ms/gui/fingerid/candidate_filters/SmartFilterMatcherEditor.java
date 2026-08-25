@@ -78,7 +78,7 @@ public class SmartFilterMatcherEditor extends AbstractMatcherEditor<FingerprintC
                 isValidSmartString = false;
                 textField.setBackground(Colors.TEXT_ERROR);
                 textField.setForeground(Color.BLACK);
-                textField.setToolTipText("invalid SMART string.");
+                textField.setToolTipText("Invalid SMARTS string.");
             }
         }
 

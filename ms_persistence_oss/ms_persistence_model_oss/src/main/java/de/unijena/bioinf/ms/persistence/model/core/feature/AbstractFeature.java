@@ -44,6 +44,8 @@ public abstract class AbstractFeature {
 
     /**
      * ID of the run this feature belongs to
+     * For aligned features this refers to MergedLCMSRun
+     * For features this refers to LCMSRun
      */
     protected Long runId;
 

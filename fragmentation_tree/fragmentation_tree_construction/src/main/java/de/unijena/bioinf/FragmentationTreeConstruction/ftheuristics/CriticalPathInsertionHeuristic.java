@@ -36,6 +36,15 @@ public class CriticalPathInsertionHeuristic extends AbstractHeuristic {
     protected BitSet usedColors;
     protected ArrayList<Loss> selectableEdges;
     protected double[] criticalPaths;
+    /*
+      Marks which entries of criticalPaths are valid. This has to be kept out of the value domain of
+      criticalPaths: a non-finite loss weight makes a critical path score NaN (Math.max(x, NaN) is
+      NaN, and +Infinity + -Infinity is NaN too), so a NaN stored in criticalPaths itself cannot tell
+      "not computed yet" from "computed, and the result is NaN". Using NaN for both silently disabled
+      the memoization and degenerated the sweep into an enumeration of every path in the graph.
+      Forbidden losses score -Infinity in production, so those weights do occur.
+     */
+    protected boolean[] criticalPathComputed;
     protected final TIntObjectHashMap<Loss> color2Edge;
     protected final TIntArrayList usedColorList;
 
@@ -48,8 +57,8 @@ public class CriticalPathInsertionHeuristic extends AbstractHeuristic {
         this.usedColors = new BitSet(ncolors+1);
         this.selectableEdges = new ArrayList<Loss>(ncolors+1);
         this.criticalPaths = new double[graph.numberOfVertices()];
+        this.criticalPathComputed = new boolean[graph.numberOfVertices()];
         color2Edge = new TIntObjectHashMap<>(ncolors, 0.75f, -1);
-        Arrays.fill(criticalPaths, Double.NaN);
         this.maxOut = new double[graph.numberOfVertices()];
         this.maxOutLoss = new Loss[graph.numberOfVertices()];
         usedColorList = new TIntArrayList(ncolors);
@@ -127,7 +136,7 @@ public class CriticalPathInsertionHeuristic extends AbstractHeuristic {
             while (searchKey< graph.numberOfVertices() && graph.getFragmentAt(searchKey).getColor() == color)
                 ++searchKey;
         }
-        Arrays.fill(criticalPaths, 0, searchKey, Double.NaN);
+        Arrays.fill(criticalPathComputed, 0, searchKey, false);
     }
 
     public FTree solve() {
@@ -239,9 +248,11 @@ public class CriticalPathInsertionHeuristic extends AbstractHeuristic {
     }
 
     protected double recomputeCriticalScore(int vertexId) {
-        if (!Double.isNaN(criticalPaths[vertexId]))
+        if (criticalPathComputed[vertexId])
             return criticalPaths[vertexId];
         final Fragment u = graph.getFragmentAt(vertexId);
+        // marked before descending, so that every vertex is entered at most once per insertion step
+        criticalPathComputed[vertexId] = true;
         criticalPaths[vertexId] = 0d;
         for (int i=0, n = u.getOutDegree(); i < n; ++i) {
             final Loss uv = u.getOutgoingEdge(i);

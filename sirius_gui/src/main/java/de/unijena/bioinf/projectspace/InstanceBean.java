@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.projectspace.FormulaResultBean.ensureDefaultOptFields;
+import static io.sirius.ms.sdk.model.AlignedFeatureOptField.*;
 
 /**
  * This is the wrapper for the Instance class to interact with the gui
@@ -67,12 +68,11 @@ import static de.unijena.bioinf.projectspace.FormulaResultBean.ensureDefaultOptF
  */
 public class InstanceBean implements SiriusPCS {
     private static final Logger log = LoggerFactory.getLogger(InstanceBean.class);
+    private static final ComputedSubtools NO_COMPUTATIONS = new ComputedSubtools().librarySearch(false).formulaSearch(false).zodiac(false).fingerprint(false).canopus(false).structureSearch(false).deNovoSearch(false);
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
     @Getter
     private final String featureId;
     private volatile AlignedFeature sourceFeature;
-    private final Set<AlignedFeatureOptField> optFields;
-
     private volatile MsData msData;
     private volatile SpectralMatchingCache spectralMatchingCache;
     private volatile List<FormulaResultBean> formulaAnnotationCache;
@@ -100,26 +100,27 @@ public class InstanceBean implements SiriusPCS {
 
     //todo som unregister listener stategy
 
-    public InstanceBean(@NotNull AlignedFeature sourceFeature, @NotNull Collection<AlignedFeatureOptField> sourceOptFields, @NotNull GuiProjectManager projectManager) {
-        this(sourceFeature.getAlignedFeatureId(), sourceFeature, sourceOptFields, projectManager);
+    //todo LUCENE MAKE loading feature data fast again.
+    public InstanceBean(@NotNull AlignedFeature sourceFeature, @NotNull Collection<AlignedFeatureOptField> optsLoaded, @NotNull GuiProjectManager projectManager) {
+        this(sourceFeature.getAlignedFeatureId(), sourceFeature, optsLoaded, projectManager);
     }
 
     public InstanceBean(@NotNull String featureId, @NotNull GuiProjectManager projectManager) {
         this(featureId, null, null, projectManager);
     }
 
-    private InstanceBean(@NotNull String featureId, @Nullable AlignedFeature sourceFeature, @Nullable Collection<AlignedFeatureOptField> sourceOptFields, @NotNull GuiProjectManager projectManager) {
+    private InstanceBean(@NotNull String featureId, @Nullable AlignedFeature sourceFeature, @Nullable Collection<AlignedFeatureOptField> optsLoaded, @NotNull GuiProjectManager projectManager) {
         this.featureId = featureId;
         this.projectManager = projectManager;
         this.sourceFeature = sourceFeature;
-        this.optFields = new HashSet<>();
-        if (sourceOptFields != null)
-            this.optFields.addAll(sourceOptFields);
+        this.optsLoaded = new HashSet<>(10);
+        if (optsLoaded != null)
+            this.optsLoaded.addAll(optsLoaded);
 
         if (this.sourceFeature == null) {
             //preload minimal information for the compound list to prevent them from being loaded in EDT.
             this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
-            this.optFields.addAll(DEFAULT_OPT_FEATURE_FIELDS);
+            this.optsLoaded.addAll(DEFAULT_OPT_FEATURE_FIELDS);
         }
 
         this.listener = new PropertyChangeListener() {
@@ -144,12 +145,16 @@ public class InstanceBean implements SiriusPCS {
         if (SwingUtilities.isEventDispatchThread())
             log.warn("Cache update happened in GUI thread. Might cause GUI stutters!");
         synchronized (this) {
-            this.optFields.clear();
             try {
-                this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
-                this.optFields.addAll(DEFAULT_OPT_FEATURE_FIELDS);
-            } catch (WebClientResponseException.NotFound e) {  // feature has been deleted on server, will be deleted on client with a following event
-                this.sourceFeature = null;
+                AlignedFeature reloaded = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+                this.sourceFeature = reloaded;
+                this.optsLoaded.clear();
+                this.optsLoaded.addAll(DEFAULT_OPT_FEATURE_FIELDS);
+            } catch (WebClientResponseException.NotFound e) {
+                // Feature deleted on the server; the following FEATURE_DELETED event will remove this bean.
+                // Keep the last-known snapshot (and its loaded opt-fields) rather than nulling it: a null
+                // source is a landmine - any EDT access in the meantime (the action-enablement list scan,
+                // the cell renderer) would otherwise force a blocking reload or NPE for every such bean.
             }
 
             //todo this should go into  clearResultCache but this seems to have side effects, due to suboptimal caching architecture
@@ -207,6 +212,11 @@ public class InstanceBean implements SiriusPCS {
         return getProjectManager().getClient();
     }
 
+    //todo can we remove this again? bad architecture
+    public GuiProjectManager getProjectManager() {
+        return projectManager;
+    }
+
 
     @NotNull
     public AlignedFeature getSourceFeature() {
@@ -218,27 +228,42 @@ public class InstanceBean implements SiriusPCS {
         return Optional.ofNullable(sourceFeature);
     }
 
-    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(AlignedFeatureOptField.COMPUTED_TOOLS, AlignedFeatureOptField.TOP_ANNOTATIONS_SUMMARY);
+    // Opt-fields preloaded for every bean in the compound list. This MUST cover everything the compound-list
+    // sort comparators and cell renderer read, or those accessors fall through to a lazy getSourceFeature(...)
+    // reload - a synchronous per-bean backend call on the EDT (the landmine class fixed elsewhere). In
+    // particular TOP_ANNOTATIONS_SUMMARY backs the confidence sort/column; COMPUTED_TOOLS backs isComputing().
+    // If you trim this list to save bandwidth, move the affected sort/render off the feature snapshot first.
+    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(COMPUTED_TOOLS, TOP_ANNOTATIONS_SUMMARY);
+
+    private final Set<AlignedFeatureOptField> optsLoaded;
+
+    @NotNull
+    public AlignedFeature getSourceFeature(AlignedFeatureOptField... optFields) {
+        return getSourceFeature(List.of(optFields));
+    }
 
     @NotNull
     public AlignedFeature getSourceFeature(@Nullable List<AlignedFeatureOptField> optFields) {
         //we always load top annotations because it contains mandatory information for the SIRIUS GUI
-        List<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
-                ? Stream.concat(optFields.stream(), DEFAULT_OPT_FEATURE_FIELDS.stream()).distinct().toList()
-                : DEFAULT_OPT_FEATURE_FIELDS);
+        Set<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(NONE))
+                ? Stream.concat(optFields.stream().filter(opt -> !NONE.equals(opt)), optsLoaded.stream()).collect(Collectors.toSet())
+                : optsLoaded);
 
         //double-checked locking source feature must be volatile
-        if (sourceFeature == null || !this.optFields.containsAll(of)) {
+        if (sourceFeature == null || !optsLoaded.containsAll(of)) {
             synchronized (this) {
                 // we update every time here since we do not know which optional fields are already loaded.
-                if (sourceFeature == null || !this.optFields.containsAll(of)) {
+                if (sourceFeature == null || !optsLoaded.containsAll(of)) {
                     if (SwingUtilities.isEventDispatchThread())
-                        log.warn("Reload Featured '{}' with nu [{}] vs current [{}] in Event Thread. Might cause GUI stutters!", sourceFeature.getAlignedFeatureId(), of.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")), this.optFields.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")));
+                        log.warn("Reload Featured '{}' with nu [{}] vs current [{}] in Event Thread. Might cause GUI stutters!", getFeatureId(), of.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")), this.optsLoaded.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")));
 
+                    optsLoaded.clear();
                     sourceFeature = withIds((pid, fid) ->
-                            getClient().features().getAlignedFeature(pid, fid, false, of));
-                    this.optFields.clear();
-                    this.optFields.addAll(of);
+                            getClient().features().getAlignedFeature(pid, fid, false, of.stream().toList()));
+                    optsLoaded.addAll(of);
+                    // this is to ensure that TOP_ANNOTATIONS_SUMMARY request do not cause reload if TOPANNOTATIONS have already been loaded
+                    if (optsLoaded.contains(TOP_ANNOTATIONS))
+                        optsLoaded.add(TOP_ANNOTATIONS_SUMMARY);
                 }
                 return sourceFeature;
             }
@@ -316,7 +341,10 @@ public class InstanceBean implements SiriusPCS {
 
 
     public boolean isComputing() {
-        return getSourceFeature().isComputing();
+        // Polled over the whole list on every list change (action enablement). Read the cached snapshot only:
+        // it must never force a blocking reload, and must tolerate a feature whose source is gone/not-yet-loaded
+        // (treated as not computing). isComputing is part of the default opt-fields, so the cache always has it.
+        return sourceFeature().map(AlignedFeature::isComputing).orElse(false);
     }
 
     public Optional<RetentionTime> getRT() {
@@ -360,9 +388,11 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
-        return viewMode == ConfidenceDisplayMode.APPROXIMATE ?
-                Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getConfidenceApproxMatch) :
-                Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getConfidenceExactMatch);
+        return viewMode == ConfidenceDisplayMode.APPROXIMATE
+                ? Optional.ofNullable(getSourceFeature(TOP_ANNOTATIONS_SUMMARY).getTopAnnotations())
+                .map(FeatureAnnotations::getConfidenceApproxMatch)
+                : Optional.ofNullable(getSourceFeature(TOP_ANNOTATIONS_SUMMARY).getTopAnnotations())
+                .map(FeatureAnnotations::getConfidenceExactMatch);
     }
 
     @NotNull
@@ -468,7 +498,7 @@ public class InstanceBean implements SiriusPCS {
         if (!getSourceFeature().getComputedTools().isStructureSearch())
             return null;
         return withIdsCatched((pid, fid) -> getClient().features()
-                .getStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
+                .getStructureCandidatesPage(pid, fid, pageNum, pageSize, null,
                         fp ? List.of(StructureCandidateOptField.DB_LINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DB_LINKS)));
     }
 
@@ -489,7 +519,7 @@ public class InstanceBean implements SiriusPCS {
         if (!getSourceFeature().getComputedTools().isDeNovoSearch())
             return null;
         return withIdsCatched((pid, fid) -> getClient().features()
-                .getDeNovoStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
+                .getDeNovoStructureCandidatesPage(pid, fid, pageNum, pageSize, null,
                         fp ? List.of(StructureCandidateOptField.DB_LINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DB_LINKS)));
     }
 
@@ -578,10 +608,10 @@ public class InstanceBean implements SiriusPCS {
 
     @NotNull
     public ComputedSubtools getComputedTools() {
-        ComputedSubtools tools = getSourceFeature().getComputedTools();
+        ComputedSubtools tools = getSourceFeature(COMPUTED_TOOLS).getComputedTools();
         if (tools == null) { //should not happen
-            log.warn("Computed subtools information is null for feature {}.", getFeatureId());
-            return new ComputedSubtools();
+//            log.warn("Computed subtools information is null for feature {}.", getFeatureId());
+            return NO_COMPUTATIONS;
         }
         return tools;
     }
@@ -626,12 +656,25 @@ public class InstanceBean implements SiriusPCS {
         throw new UnsupportedOperationException("Implement modification features in nightsky api");
     }
 
+    /**
+     * Applies a compute-state change from the server.
+     * <p>
+     * Deliberately silent: a job usually covers every feature of the project, so starting or finishing one
+     * flips thousands of these at once. Firing a property change per feature would turn each flip into a list
+     * change, and every list change makes each toolbar action scan the whole list again - quadratic in the
+     * number of features, on the event dispatch thread. The list is repainted once for the whole batch
+     * instead, and the actions are told once, see {@code ExperimentListChangeListener.computeStateChanged}.
+     *
+     * @return whether this actually changed anything, so a batch can tell whether it has something to report.
+     * The server repeats the state of a job on every progress event, so most calls change nothing.
+     */
     synchronized boolean changeComputeStateOfCache(boolean computeState) {
-        if (sourceFeature != null) {
-            sourceFeature.setComputing(computeState);
-            return true;
-        }
-        return false;
+        if (sourceFeature == null)
+            return false;
+        if (Boolean.valueOf(computeState).equals(sourceFeature.isComputing()))
+            return false;
+        sourceFeature.setComputing(computeState);
+        return true;
     }
 
     public class Setter {

@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.service.databases;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.BioTransformerParameters;
+import de.unijena.bioinf.ms.middleware.model.databases.DatabaseStructure;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
 import org.jetbrains.annotations.NotNull;
@@ -58,4 +59,6 @@ public interface ChemDbService {
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not find database at location: " + location));
     }
     List<SearchableDatabase> add(List<String> pathToDatabases);
+
+    Page<DatabaseStructure> findAllStructures(String databaseId, Pageable pageable);
 }

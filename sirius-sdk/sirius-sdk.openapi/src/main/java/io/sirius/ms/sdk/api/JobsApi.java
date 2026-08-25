@@ -31,7 +31,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class JobsApi {
     private ApiClient apiClient;
 
@@ -51,11 +51,13 @@ public class JobsApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * Delete job.
      * Delete job. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
      * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
@@ -85,7 +87,7 @@ public class JobsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "cancelIfRunning", cancelIfRunning));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "awaitDeletion", awaitDeletion));
-        
+
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -101,6 +103,9 @@ public class JobsApi {
      * Delete job.
      * Delete job. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
      * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
@@ -116,6 +121,9 @@ public class JobsApi {
      * Delete job.
      * Delete job. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
      * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
@@ -131,6 +139,9 @@ public class JobsApi {
      * Delete job.
      * Delete job. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
      * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
@@ -146,6 +157,9 @@ public class JobsApi {
      * Delete job configuration with given name.
      * Delete job configuration with given name.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to delete
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -180,6 +194,9 @@ public class JobsApi {
      * Delete job configuration with given name.
      * Delete job configuration with given name.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to delete
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -192,6 +209,9 @@ public class JobsApi {
      * Delete job configuration with given name.
      * Delete job configuration with given name.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to delete
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -204,6 +224,9 @@ public class JobsApi {
      * Delete job configuration with given name.
      * Delete job configuration with given name.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to delete
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -213,9 +236,12 @@ public class JobsApi {
     }
 
     /**
-     * * Delete ALL jobs.
-     * * Delete ALL jobs. Specify how to behave for running jobs.
+     * Delete ALL jobs.
+     * Delete ALL jobs. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete jobs from
      * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
      * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
@@ -239,7 +265,7 @@ public class JobsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "cancelIfRunning", cancelIfRunning));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "awaitDeletion", awaitDeletion));
-        
+
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -252,9 +278,12 @@ public class JobsApi {
     }
 
     /**
-     * * Delete ALL jobs.
-     * * Delete ALL jobs. Specify how to behave for running jobs.
+     * Delete ALL jobs.
+     * Delete ALL jobs. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete jobs from
      * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
      * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
@@ -266,9 +295,12 @@ public class JobsApi {
     }
 
     /**
-     * * Delete ALL jobs.
-     * * Delete ALL jobs. Specify how to behave for running jobs.
+     * Delete ALL jobs.
+     * Delete ALL jobs. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete jobs from
      * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
      * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
@@ -280,9 +312,12 @@ public class JobsApi {
     }
 
     /**
-     * * Delete ALL jobs.
-     * * Delete ALL jobs. Specify how to behave for running jobs.
+     * Delete ALL jobs.
+     * Delete ALL jobs. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to delete jobs from
      * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
      * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
@@ -297,6 +332,8 @@ public class JobsApi {
      * Get a CLI command for the given job configuration.
      * Get a CLI command for the given job configuration.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param jobSubmission The jobSubmission parameter
      * @return List&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -316,7 +353,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -334,6 +371,8 @@ public class JobsApi {
      * Get a CLI command for the given job configuration.
      * Get a CLI command for the given job configuration.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param jobSubmission The jobSubmission parameter
      * @return List&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -347,6 +386,8 @@ public class JobsApi {
      * Get a CLI command for the given job configuration.
      * Get a CLI command for the given job configuration.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param jobSubmission The jobSubmission parameter
      * @return ResponseEntity&lt;List&lt;String&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -360,6 +401,8 @@ public class JobsApi {
      * Get a CLI command for the given job configuration.
      * Get a CLI command for the given job configuration.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param jobSubmission The jobSubmission parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -371,10 +414,12 @@ public class JobsApi {
     /**
      * Request default job configuration
      * Request default job configuration
-     * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
+     * <p><b>200</b> - &lt;code&gt;JobSubmission&lt;/code&gt; with all parameters set to default values.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            spectral library search contains also all available custom DB.                                            If No custom dbs are selected, spectral library search is disabled by default.
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            and spectral library search also contains all available custom databases.                                            If no custom databases are selected, spectral library search is disabled by default.
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -391,9 +436,9 @@ public class JobsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeConfigMap", includeConfigMap));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeCustomDbsForStructureSearch", includeCustomDbsForStructureSearch));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -408,10 +453,12 @@ public class JobsApi {
     /**
      * Request default job configuration
      * Request default job configuration
-     * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
+     * <p><b>200</b> - &lt;code&gt;JobSubmission&lt;/code&gt; with all parameters set to default values.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            spectral library search contains also all available custom DB.                                            If No custom dbs are selected, spectral library search is disabled by default.
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            and spectral library search also contains all available custom databases.                                            If no custom databases are selected, spectral library search is disabled by default.
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -423,10 +470,12 @@ public class JobsApi {
     /**
      * Request default job configuration
      * Request default job configuration
-     * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
+     * <p><b>200</b> - &lt;code&gt;JobSubmission&lt;/code&gt; with all parameters set to default values.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            spectral library search contains also all available custom DB.                                            If No custom dbs are selected, spectral library search is disabled by default.
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            and spectral library search also contains all available custom databases.                                            If no custom databases are selected, spectral library search is disabled by default.
      * @return ResponseEntity&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -438,10 +487,12 @@ public class JobsApi {
     /**
      * Request default job configuration
      * Request default job configuration
-     * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
+     * <p><b>200</b> - &lt;code&gt;JobSubmission&lt;/code&gt; with all parameters set to default values.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            spectral library search contains also all available custom DB.                                            If No custom dbs are selected, spectral library search is disabled by default.
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            and spectral library search also contains all available custom databases.                                            If no custom databases are selected, spectral library search is disabled by default.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -453,8 +504,11 @@ public class JobsApi {
      * Get job information and its current state and progress (if available).
      * Get job information and its current state and progress (if available).
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobId of the job to be returned
+     * @param jobId id of the job to be returned
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -481,9 +535,9 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -499,8 +553,11 @@ public class JobsApi {
      * Get job information and its current state and progress (if available).
      * Get job information and its current state and progress (if available).
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobId of the job to be returned
+     * @param jobId id of the job to be returned
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -514,8 +571,11 @@ public class JobsApi {
      * Get job information and its current state and progress (if available).
      * Get job information and its current state and progress (if available).
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobId of the job to be returned
+     * @param jobId id of the job to be returned
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -529,8 +589,11 @@ public class JobsApi {
      * Get job information and its current state and progress (if available).
      * Get job information and its current state and progress (if available).
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobId of the job to be returned
+     * @param jobId id of the job to be returned
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -542,7 +605,10 @@ public class JobsApi {
     /**
      * Request job configuration with given name.
      * Request job configuration with given name.
-     * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
+     * <p><b>200</b> - &lt;code&gt;JobSubmission&lt;/code&gt; for given name.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to return
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return StoredJobSubmission
@@ -565,9 +631,9 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -582,7 +648,10 @@ public class JobsApi {
     /**
      * Request job configuration with given name.
      * Request job configuration with given name.
-     * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
+     * <p><b>200</b> - &lt;code&gt;JobSubmission&lt;/code&gt; for given name.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to return
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return StoredJobSubmission
@@ -596,7 +665,10 @@ public class JobsApi {
     /**
      * Request job configuration with given name.
      * Request job configuration with given name.
-     * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
+     * <p><b>200</b> - &lt;code&gt;JobSubmission&lt;/code&gt; for given name.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to return
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return ResponseEntity&lt;StoredJobSubmission&gt;
@@ -610,7 +682,10 @@ public class JobsApi {
     /**
      * Request job configuration with given name.
      * Request job configuration with given name.
-     * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
+     * <p><b>200</b> - &lt;code&gt;JobSubmission&lt;/code&gt; for given name.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to return
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return ResponseSpec
@@ -624,6 +699,7 @@ public class JobsApi {
      * [DEPRECATED] Get all (non-default) job configuration names  
      * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      * @deprecated
@@ -640,7 +716,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -656,6 +732,7 @@ public class JobsApi {
      * [DEPRECATED] Get all (non-default) job configuration names  
      * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -668,6 +745,7 @@ public class JobsApi {
      * [DEPRECATED] Get all (non-default) job configuration names  
      * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;List&lt;String&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -680,6 +758,7 @@ public class JobsApi {
      * [DEPRECATED] Get all (non-default) job configuration names  
      * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -690,7 +769,8 @@ public class JobsApi {
     /**
      * Request all available job configurations
      * Request all available job configurations
-     * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
+     * <p><b>200</b> - list of available &lt;code&gt;JobSubmission&lt;/code&gt;s
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;StoredJobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -705,7 +785,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -720,7 +800,8 @@ public class JobsApi {
     /**
      * Request all available job configurations
      * Request all available job configurations
-     * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
+     * <p><b>200</b> - list of available &lt;code&gt;JobSubmission&lt;/code&gt;s
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;StoredJobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -732,7 +813,8 @@ public class JobsApi {
     /**
      * Request all available job configurations
      * Request all available job configurations
-     * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
+     * <p><b>200</b> - list of available &lt;code&gt;JobSubmission&lt;/code&gt;s
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;List&lt;StoredJobSubmission&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -744,7 +826,8 @@ public class JobsApi {
     /**
      * Request all available job configurations
      * Request all available job configurations
-     * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
+     * <p><b>200</b> - list of available &lt;code&gt;JobSubmission&lt;/code&gt;s
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -753,14 +836,19 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get list of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get list of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return List&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
      */
+    @Deprecated
     private ResponseSpec getJobsRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
@@ -778,9 +866,9 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -793,9 +881,12 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get list of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get list of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return List&lt;Job&gt;
@@ -807,9 +898,12 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get list of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get list of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;List&lt;Job&gt;&gt;
@@ -821,9 +915,12 @@ public class JobsApi {
     }
 
     /**
-     * Get List of all available jobs with information such as current state and progress (if available).
-     * Get List of all available jobs with information such as current state and progress (if available).
+     * [DEPRECATED] Get list of all available jobs with information such as current state and progress (if available)
+     * [DEPRECATED] Get list of all available jobs with information such as current state and progress (if available).  &lt;p&gt;  [DEPRECATED] Use /jobs/page instead. Loading all jobs at once does not scale for long running projects.  This endpoint will be removed in the next major version of this API.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
@@ -837,6 +934,9 @@ public class JobsApi {
      * Get Page of jobs with information such as current state and progress (if available).
      * Get Page of jobs with information such as current state and progress (if available).
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
@@ -845,11 +945,11 @@ public class JobsApi {
      * @return PagedModelJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getJobsPagedRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getJobsPageRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getJobsPaged", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getJobsPage", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -865,9 +965,9 @@ public class JobsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -883,6 +983,9 @@ public class JobsApi {
      * Get Page of jobs with information such as current state and progress (if available).
      * Get Page of jobs with information such as current state and progress (if available).
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
@@ -891,15 +994,18 @@ public class JobsApi {
      * @return PagedModelJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelJob getJobsPaged(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+    public PagedModelJob getJobsPage(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelJob> localVarReturnType = new ParameterizedTypeReference<PagedModelJob>() {};
-        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+        return getJobsPageRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Get Page of jobs with information such as current state and progress (if available).
      * Get Page of jobs with information such as current state and progress (if available).
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
@@ -908,15 +1014,18 @@ public class JobsApi {
      * @return ResponseEntity&lt;PagedModelJob&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelJob> getJobsPagedWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelJob> getJobsPageWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelJob> localVarReturnType = new ParameterizedTypeReference<PagedModelJob>() {};
-        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
+        return getJobsPageRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
      * Get Page of jobs with information such as current state and progress (if available).
      * Get Page of jobs with information such as current state and progress (if available).
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
@@ -925,14 +1034,17 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getJobsPagedWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
-        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields);
+    public ResponseSpec getJobsPageWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Integer page, @jakarta.annotation.Nullable Integer size, @jakarta.annotation.Nullable List<String> sort, @jakarta.annotation.Nullable List<JobOptField> optFields) throws WebClientResponseException {
+        return getJobsPageRequestCreation(projectId, page, size, sort, optFields);
     }
 
     /**
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param includeFinished The includeFinished parameter
      * @return Boolean
@@ -955,9 +1067,9 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeFinished", includeFinished));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -973,6 +1085,9 @@ public class JobsApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param includeFinished The includeFinished parameter
      * @return Boolean
@@ -987,6 +1102,9 @@ public class JobsApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param includeFinished The includeFinished parameter
      * @return ResponseEntity&lt;Boolean&gt;
@@ -1001,6 +1119,9 @@ public class JobsApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId The projectId parameter
      * @param includeFinished The includeFinished parameter
      * @return ResponseSpec
@@ -1014,6 +1135,9 @@ public class JobsApi {
      * Add new job configuration with given name.
      * Add new job configuration with given name.
      * <p><b>200</b> - StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to add
      * @param jobSubmission to add
      * @param overrideExisting The overrideExisting parameter
@@ -1043,9 +1167,9 @@ public class JobsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "overrideExisting", overrideExisting));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -1063,6 +1187,9 @@ public class JobsApi {
      * Add new job configuration with given name.
      * Add new job configuration with given name.
      * <p><b>200</b> - StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to add
      * @param jobSubmission to add
      * @param overrideExisting The overrideExisting parameter
@@ -1079,6 +1206,9 @@ public class JobsApi {
      * Add new job configuration with given name.
      * Add new job configuration with given name.
      * <p><b>200</b> - StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to add
      * @param jobSubmission to add
      * @param overrideExisting The overrideExisting parameter
@@ -1095,6 +1225,9 @@ public class JobsApi {
      * Add new job configuration with given name.
      * Add new job configuration with given name.
      * <p><b>200</b> - StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility).
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name name of the job-config to add
      * @param jobSubmission to add
      * @param overrideExisting The overrideExisting parameter
@@ -1110,6 +1243,9 @@ public class JobsApi {
      * [DEPRECATED] Start computation for given command and input
      * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - Job of the command to be executed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1139,9 +1275,9 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -1159,6 +1295,9 @@ public class JobsApi {
      * [DEPRECATED] Start computation for given command and input
      * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - Job of the command to be executed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1174,6 +1313,9 @@ public class JobsApi {
      * [DEPRECATED] Start computation for given command and input
      * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - Job of the command to be executed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1189,6 +1331,9 @@ public class JobsApi {
      * [DEPRECATED] Start computation for given command and input
      * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.  [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
      * <p><b>200</b> - Job of the command to be executed.
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1203,8 +1348,11 @@ public class JobsApi {
      * Start computation for given compounds and with given parameters.
      * Start computation for given compounds and with given parameters.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobSubmission configuration of the job that will be submitted of the job to be returned
+     * @param jobSubmission configuration of the job to be submitted
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1230,9 +1378,9 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -1250,8 +1398,11 @@ public class JobsApi {
      * Start computation for given compounds and with given parameters.
      * Start computation for given compounds and with given parameters.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobSubmission configuration of the job that will be submitted of the job to be returned
+     * @param jobSubmission configuration of the job to be submitted
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1265,8 +1416,11 @@ public class JobsApi {
      * Start computation for given compounds and with given parameters.
      * Start computation for given compounds and with given parameters.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobSubmission configuration of the job that will be submitted of the job to be returned
+     * @param jobSubmission configuration of the job to be submitted
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1280,8 +1434,11 @@ public class JobsApi {
      * Start computation for given compounds and with given parameters.
      * Start computation for given compounds and with given parameters.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobSubmission configuration of the job that will be submitted of the job to be returned
+     * @param jobSubmission configuration of the job to be submitted
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1294,8 +1451,11 @@ public class JobsApi {
      * Start computation for given compounds and with parameters from a stored job-config.
      * Start computation for given compounds and with parameters from a stored job-config.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobConfigName name if the config to be used
+     * @param jobConfigName name of the config to be used
      * @param requestBody List of alignedFeatureIds to be computed
      * @param recompute enable or disable recompute. If null the stored value will be used.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1329,9 +1489,9 @@ public class JobsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "jobConfigName", jobConfigName));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "recompute", recompute));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -1349,8 +1509,11 @@ public class JobsApi {
      * Start computation for given compounds and with parameters from a stored job-config.
      * Start computation for given compounds and with parameters from a stored job-config.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobConfigName name if the config to be used
+     * @param jobConfigName name of the config to be used
      * @param requestBody List of alignedFeatureIds to be computed
      * @param recompute enable or disable recompute. If null the stored value will be used.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1366,8 +1529,11 @@ public class JobsApi {
      * Start computation for given compounds and with parameters from a stored job-config.
      * Start computation for given compounds and with parameters from a stored job-config.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobConfigName name if the config to be used
+     * @param jobConfigName name of the config to be used
      * @param requestBody List of alignedFeatureIds to be computed
      * @param recompute enable or disable recompute. If null the stored value will be used.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1383,8 +1549,11 @@ public class JobsApi {
      * Start computation for given compounds and with parameters from a stored job-config.
      * Start computation for given compounds and with parameters from a stored job-config.
      * <p><b>202</b> - Accepted
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId project-space to run jobs on
-     * @param jobConfigName name if the config to be used
+     * @param jobConfigName name of the config to be used
      * @param requestBody List of alignedFeatureIds to be computed
      * @param recompute enable or disable recompute. If null the stored value will be used.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.

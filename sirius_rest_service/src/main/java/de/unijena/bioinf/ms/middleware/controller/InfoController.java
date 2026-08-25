@@ -39,7 +39,7 @@ import java.util.Optional;
 
 @Slf4j
 @RestController
-@Tag(name = "Info", description = "Status und Information")
+@Tag(name = "Info", description = "Status and version information")
 public class InfoController {
     private final SiriusContext siriusContext;
     private final ConnectionChecker connectionChecker;

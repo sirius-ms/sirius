@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -44,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Axes.JSON_PROPERTY_SCAN_IDS,
   Axes.JSON_PROPERTY_RETENTION_TIME_IN_SECONDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Axes {
   public static final String JSON_PROPERTY_SCAN_NUMBER = "scanNumber";
   @jakarta.annotation.Nullable
@@ -80,7 +81,7 @@ public class Axes {
    * @return scanNumber
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SCAN_NUMBER)
+  @JsonProperty(value = JSON_PROPERTY_SCAN_NUMBER, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<Integer> getScanNumber() {
@@ -88,7 +89,7 @@ public class Axes {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SCAN_NUMBER)
+  @JsonProperty(value = JSON_PROPERTY_SCAN_NUMBER, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setScanNumber(@jakarta.annotation.Nullable List<Integer> scanNumber) {
     this.scanNumber = scanNumber;
@@ -113,7 +114,7 @@ public class Axes {
    * @return scanIds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SCAN_IDS)
+  @JsonProperty(value = JSON_PROPERTY_SCAN_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getScanIds() {
@@ -121,7 +122,7 @@ public class Axes {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SCAN_IDS)
+  @JsonProperty(value = JSON_PROPERTY_SCAN_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setScanIds(@jakarta.annotation.Nullable List<String> scanIds) {
     this.scanIds = scanIds;
@@ -146,7 +147,7 @@ public class Axes {
    * @return retentionTimeInSeconds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RETENTION_TIME_IN_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RETENTION_TIME_IN_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<Double> getRetentionTimeInSeconds() {
@@ -154,7 +155,7 @@ public class Axes {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RETENTION_TIME_IN_SECONDS)
+  @JsonProperty(value = JSON_PROPERTY_RETENTION_TIME_IN_SECONDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRetentionTimeInSeconds(@jakarta.annotation.Nullable List<Double> retentionTimeInSeconds) {
     this.retentionTimeInSeconds = retentionTimeInSeconds;

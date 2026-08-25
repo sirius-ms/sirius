@@ -36,4 +36,9 @@ public class LayerNorm {
     }
 
 
+    public float[] compute(float[] x) {
+        x = x.clone();
+        computeInplace(x);
+        return x;
+    }
 }

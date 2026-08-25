@@ -78,77 +78,104 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         }
     }
 
+    @CommandLine.Option(names = {"--in-memory-index", "--inMemoryIndex"}, description = "Use volatile in-memory lucene search index for projects.")
+    private void setInMemoryIndex(boolean inMemoryIndex) {
+        System.setProperty("io.sirius-ms.project.index.inMemory", String.valueOf(inMemoryIndex));
+    }
+
     public enum ApiDocMode {STABLE, BASIC, STABLE_ADVANCED, ADVANCED}
 
     private final static List<String> INTERNAL_EXCLUSIONS = List.of(
             "/api/databases/downloadable",
             "/api/projects/*/aligned-features/*/denovo-structures/add-candidate",
             "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree",
+            "/api/projects/*/aligned-features/*/quant-table-row",
+            "/api/projects/*/compounds/*/quant-table-row",
             "/api/projects/*/copy",
             "/api/projects/*/import/ms-data-local-files-job",
             "/api/projects/*/import/ms-local-data-files",
             "/api/projects/*/import/preprocessed-local-data-files",
             "/api/projects/*/import/preprocessed-local-data-files-job",
-            "/api/projects/*/jobs/run-command"
+            "/api/projects/*/jobs/run-command",
+            "/api/projects/*/open-job"
     );
 
     private final static List<String> DEPRECATED_EXCLUSIONS = List.of(
             "/api/databases",
             "/api/databases/downloadable",
             "/api/job-config-names",
+            "/api/projects/*/aligned-features",
+            "/api/projects/*/aligned-features/*/db-structures",
+            "/api/projects/*/aligned-features/*/denovo-structures",
+            "/api/projects/*/aligned-features/*/features",
+            "/api/projects/*/aligned-features/*/formulas",
+            "/api/projects/*/aligned-features/*/formulas/*/db-structures",
+            "/api/projects/*/aligned-features/*/formulas/*/denovo-structures",
+            "/api/projects/*/aligned-features/*/quant-table-row",
+            "/api/projects/*/aligned-features/*/spectral-library-matches",
+            "/api/projects/*/compounds",
+            "/api/projects/*/compounds/*/quant-table-row",
             "/api/projects/*/copy",
             "/api/projects/*/import/ms-data-local-files-job",
             "/api/projects/*/import/ms-local-data-files",
             "/api/projects/*/import/preprocessed-local-data-files",
             "/api/projects/*/import/preprocessed-local-data-files-job",
+            "/api/projects/*/jobs",
             "/api/projects/*/jobs/run-command"
     );
 
     private final static List<String> EXPERIMENTAL_EXCLUSIONS = List.of(
+            "/api/databases/*/structures",
             "/api/projects/*/aligned-features/*/adducts",
             "/api/projects/*/aligned-features/*/formulas/*/structures/*/annotated-msmsdata",
             "/api/projects/*/aligned-features/*/formulas/*/structures/*/annotated-spectrum",
             "/api/projects/*/aligned-features/*/quality-report",
-            "/api/projects/*/aligned-features/*/quant-table-row",
             "/api/projects/*/aligned-features/*/spectral-library-matches/*/annotated",
             "/api/projects/*/aligned-features/*/traces",
             "/api/projects/*/aligned-features/grouped",
-            "/api/projects/*/aligned-features/quant-table",
             "/api/projects/*/aligned-features/statistics/foldchange/compute",
             "/api/projects/*/aligned-features/statistics/foldchanges",
             "/api/projects/*/aligned-features/statistics/foldchanges/*",
             "/api/projects/*/aligned-features/statistics/foldchanges/stats-table",
-            "/api/projects/*/aligned-features/tagged",
+            "/api/projects/*/aligned-features/tags",
             "/api/projects/*/aligned-features/tags/*",
             "/api/projects/*/aligned-features/tags/*/*",
-            "/api/projects/*/compounds/*/quant-table-row",
+            "/api/projects/*/classyfire-classes/statistics/foldchange/compute",
+            "/api/projects/*/classyfire-classes/statistics/foldchanges",
+            "/api/projects/*/classyfire-classes/statistics/foldchanges/stats-table",
             "/api/projects/*/compounds/*/traces",
             "/api/projects/*/compounds/grouped",
-            "/api/projects/*/compounds/quant-table",
             "/api/projects/*/compounds/statistics/foldchange/compute",
             "/api/projects/*/compounds/statistics/foldchanges",
             "/api/projects/*/compounds/statistics/foldchanges/*",
             "/api/projects/*/compounds/statistics/foldchanges/stats-table",
-            "/api/projects/*/compounds/tagged",
+            "/api/projects/*/compounds/tags",
             "/api/projects/*/compounds/tags/*",
             "/api/projects/*/compounds/tags/*/*",
             "/api/projects/*/groups",
             "/api/projects/*/groups/*",
-            "/api/projects/*/runs/*",
-            "/api/projects/*/runs/blanksubtract/compute",
+            "/api/projects/*/npc-classes/statistics/foldchange/compute",
+            "/api/projects/*/npc-classes/statistics/foldchanges",
+            "/api/projects/*/npc-classes/statistics/foldchanges/stats-table",
             "/api/projects/*/runs/grouped",
-            "/api/projects/*/runs/page",
-            "/api/projects/*/runs/tagged",
+            "/api/projects/*/runs/tags",
             "/api/projects/*/runs/tags/*",
             "/api/projects/*/runs/tags/*/*",
             "/api/projects/*/tags",
-            "/api/projects/*/tags/*"
+            "/api/projects/*/tags/*",
+            "/api/reactions",
+            "/api/reactions/library",
+            "/api/reactions/library/*",
+            "/api/reactions/sequences",
+            "/api/reactions/sequences/*",
+            "/api/reactions/sequences/library",
+            "/api/reactions/sequences/library/*"
     );
 
     private static final List<String> ADVANCED_EXCLUSIONS = List.of("/api/projects/*/gui/advanced");
 
 
-    @CommandLine.Option(names = {"--api-doc-mode", "--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true)
+    @CommandLine.Option(names = {"--api-doc-mode", "--stableDocOnly"}, description = "Show only the stable and non-deprecated API endpoints in the Swagger GUI and OpenAPI spec.", hidden = true)
     private void setStableDocOnly(boolean stableDocOnly) {
         if (stableDocOnly)
             setApiDocMode(ApiDocMode.STABLE);
@@ -198,7 +225,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         @CommandLine.Option(names = {"--gui", "-g"}, description = "Start GUI on specified project or on temporary project otherwise.")
         private boolean startGui;
 
-        @CommandLine.Option(names = {"--headless"}, description = {"Enforce headless or gui mode (default) for SIRIUS service.", "Headless mode Prevents loading features that are not available on headless systems. This is usually auto-detected but in case this gives not the expected behavior this parameter can be used to enforce it."}, defaultValue = "false", order = 1000, negatable = true)
+        @CommandLine.Option(names = {"--headless"}, description = {"Enforce headless or gui mode (default) for SIRIUS service.", "Headless mode prevents loading features that are not available on headless systems. This is usually auto-detected, but in case this does not give the expected behavior, this parameter can be used to enforce it."}, defaultValue = "false", order = 1000, negatable = true)
         private boolean headless;
     }
 
@@ -244,9 +271,6 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                     if (guiService != null) {
                         if (isStartGui())
                             guiService.createGuiInstance(startPs.getProjectId());
-
-                        //increase priority of GUI thread.
-                        Jobs.runEDTLater(() -> Thread.currentThread().setPriority(9));
                     } else {
                         log.info("No GUI service found. Skipping GUI startup, likely due to headless mode!");
                     }

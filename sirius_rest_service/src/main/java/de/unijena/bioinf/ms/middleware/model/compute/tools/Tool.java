@@ -37,7 +37,7 @@ public abstract class Tool<C> {
     private final CommandLine.Command command;
 
     /**
-     * tags whether the tool is enabled
+     * Indicates whether the tool is enabled.
      */
     @Setter
     @Getter

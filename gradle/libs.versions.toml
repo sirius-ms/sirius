@@ -1,8 +1,8 @@
 [versions]
-springBoot = "4.0.6"
+springBoot = "4.0.7"
 springDoc = "3.0.3"
-jjobs = "0.10.0"
-cdk = "2.9"
+jjobs = "0.13.1"
+cdk = "2.12"
 jetbrainsAnnotations = "26.0.1"
 trove4j = "3.1.0"  # DEPRECATED -> use fast util instead
 fastutil = "8.5.12"
@@ -18,7 +18,7 @@ commonsConfiguration2 = "2.11.0"
 gradleUtilPlugins = "0.1.0-RELEASE"
 snakeyaml = "1.29"
 jxbrowserPlugin = "2.0.0"
-jxbrowser = "9.0.1"
+jxbrowser = "9.3.1"
 concurrentLocks = "1.0.0"
 minio = "8.6.0"
 okhttp = "5.1.0"  # matches minio
@@ -63,23 +63,36 @@ liblinear = "1.95"
 libsvm = "3.20"
 jna = "5.4.0"
 scribejava = "8.3.3"
-nitrite = "4.3.0"
+# Fork of nitrite 4.3.3, see https://github.com/mfleisch/nitrite-java branch sirius-4.3.3. It carries three patches
+# we cannot do without: index keys keep full long precision (stock 4.3.3 folds every number into a double, which makes
+# TSID primary keys collide); document ids stay text, so projects and custom databases written here can still be
+# opened and modified by released SIRIUS versions; and the index dirty marker is persisted durably (sirius2), so a
+# completed index build clears it on disk instead of leaving the index permanently dirty and forcing a full index
+# rebuild on the first write after every open.
+nitrite = { strictly = "4.3.3-sirius3" }
+# nitrite-jackson-mapper switched to Jackson 3 (tools.jackson) in 4.3.3, 4.3.2 is the last Jackson 2 release. Not
+# forked, so it stays on the upstream version until the storage serializers are ported.
+nitriteJacksonMapper = "4.3.2"
 ejml = "0.41"
 jgrapht = "1.0.1"
 jdom = "2.0.2"
 mavenArtifact = "3.5.0"
-openapiGenerator = "7.14.0"
+openapiGenerator = "7.17.0"
 cpdetector = "1.0.10"
 batikSwing = "1.6-1"
 biotransformerSirius = "3.0.0"
 cmlxom = "3.1"
 grappa = "1.2"
-lucene = "10.0.0"
+lucene = "10.4.0" #10.3.2
 
 [libraries]
 # BOMs
 springBootDependencies = { group = "org.springframework.boot", name = "spring-boot-dependencies", version.ref = "springBoot" }
-nitriteBom = { group = "org.dizitart", name = "nitrite-bom", version.ref = "nitrite" }
+# the version ref carries "strictly", so an upgrade pulled in by anything else fails the build instead of
+# silently replacing the fork. Bump the fork in [versions] only - these entries must never pin a version themselves.
+nitrite = { group = "org.dizitart", name = "nitrite", version.ref = "nitrite" }
+nitriteMvstoreAdapter = { group = "org.dizitart", name = "nitrite-mvstore-adapter", version.ref = "nitrite" }
+nitriteJacksonMapper = { group = "org.dizitart", name = "nitrite-jackson-mapper", version = { strictly = "4.3.2" } }
 
 # Buildscript Dependencies
 buildscriptSpringBootPlugin = { group = "org.springframework.boot", name = "spring-boot-gradle-plugin", version.ref = "springBoot" }
@@ -201,7 +214,8 @@ batikSwing = { group = "batik", name = "batik-swing", version.ref = "batikSwing"
 biotransformerSirius = { group = "wishartlab.openscience.biotransformer", name = "biotransformer-sirius-mod-relocated-min-no-envi-path", version.ref = "biotransformerSirius" }
 luceneQueryparser = { group = "org.apache.lucene", name = "lucene-queryparser", version.ref = "lucene" }
 luceneAnalysisCommon = { group = "org.apache.lucene", name = "lucene-analysis-common", version.ref = "lucene" }
-
+luceneCore = { group = "org.apache.lucene", name = "lucene-core", version.ref = "lucene" }
+luceneBackwardCodecs = { group = "org.apache.lucene", name = "lucene-backward-codecs", version.ref = "lucene" }
 cdkSmiles = { group = "org.openscience.cdk", name = "cdk-smiles", version.ref = "cdk" }
 cdkSilent = { group = "org.openscience.cdk", name = "cdk-silent", version.ref = "cdk" }
 cdkQsarmolecular = { group = "org.openscience.cdk", name = "cdk-qsarmolecular", version.ref = "cdk" }
@@ -225,6 +239,8 @@ cdkRenderawt = { group = "org.openscience.cdk", name = "cdk-renderawt", version.
 cdkIoformats = { group = "org.openscience.cdk", name = "cdk-ioformats", version.ref = "cdk" }
 cdkSdg = { group = "org.openscience.cdk", name = "cdk-sdg", version.ref = "cdk" }
 cdkSmarts = { group = "org.openscience.cdk", name = "cdk-smarts", version.ref = "cdk" }
+cdkSmirks = { group = "org.openscience.cdk", name = "cdk-smirks", version.ref = "cdk" }
+
 
 cmlxom = { group = "org.xml-cml", name = "cmlxom", version.ref = "cmlxom" }
 grappa = { group = "att.grappa", name = "grappa", version.ref = "grappa" }

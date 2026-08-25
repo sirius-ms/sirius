@@ -24,9 +24,25 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import picocli.CommandLine;
 
 public interface PreprocessingTool<T extends PreprocessingJob<?>> {
 
     T makePreprocessingJob(@NotNull RootOptions<?> rootOptions, @NotNull ProjectSpaceManagerFactory<?> projectFactory, @Nullable ParameterConfig config);
+
+    /**
+     * Checks whether this tool can be run with the given options and input before
+     * {@link #makePreprocessingJob(RootOptions, ProjectSpaceManagerFactory, ParameterConfig)} is called. The input is
+     * given via the root options and hence not part of the parse result of this tool.
+     * <p>
+     * The parse result is passed in because it cannot be determined from an injected
+     * {@link CommandLine.Model.CommandSpec}, see {@link ToolChainOptions#validate(CommandLine.ParseResult)}.
+     *
+     * @param parseResult parse result of this tool
+     * @param rootOptions root options the tool will be run with
+     * @throws CommandLine.ParameterException if this tool cannot be run with the given options and input
+     */
+    default void validate(@NotNull CommandLine.ParseResult parseResult, @NotNull RootOptions<?> rootOptions) throws CommandLine.ParameterException {
+    }
 
 }

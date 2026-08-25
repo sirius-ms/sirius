@@ -32,12 +32,12 @@ public class KendrickMassDefectPanel extends JPanel implements ExperimentListCha
     }
 
     @Override
-    public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {
+    public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, long fullSize) {
         //selection change will also happen if list change affects selection
     }
 
     @Override
-    public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+    public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, long fullSize) {
         browserPanel.updateSelectedFeature(selected == null || selected.isEmpty() ? null
                 : selected.getFirst().getFeatureId());
     }

@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -52,7 +53,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Run.JSON_PROPERTY_MASS_ANALYZERS,
   Run.JSON_PROPERTY_TAGS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Run {
   public static final String JSON_PROPERTY_RUN_ID = "runId";
   @jakarta.annotation.Nullable
@@ -100,7 +101,7 @@ public class Run {
    * @return runId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RUN_ID)
+  @JsonProperty(value = JSON_PROPERTY_RUN_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getRunId() {
@@ -108,7 +109,7 @@ public class Run {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RUN_ID)
+  @JsonProperty(value = JSON_PROPERTY_RUN_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRunId(@jakarta.annotation.Nullable String runId) {
     this.runId = runId;
@@ -121,11 +122,11 @@ public class Run {
   }
 
   /**
-   * Informative, human-readable name of this run
+   * Informative, human-readable name of the run
    * @return name
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getName() {
@@ -133,7 +134,7 @@ public class Run {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setName(@jakarta.annotation.Nullable String name) {
     this.name = name;
@@ -150,7 +151,7 @@ public class Run {
    * @return source
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SOURCE)
+  @JsonProperty(value = JSON_PROPERTY_SOURCE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getSource() {
@@ -158,7 +159,7 @@ public class Run {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SOURCE)
+  @JsonProperty(value = JSON_PROPERTY_SOURCE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSource(@jakarta.annotation.Nullable String source) {
     this.source = source;
@@ -171,11 +172,11 @@ public class Run {
   }
 
   /**
-   * Get chromatography
+   * Chromatography the run was measured with, e.g. &#39;Liquid Chromatography&#39;.
    * @return chromatography
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CHROMATOGRAPHY)
+  @JsonProperty(value = JSON_PROPERTY_CHROMATOGRAPHY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getChromatography() {
@@ -183,7 +184,7 @@ public class Run {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CHROMATOGRAPHY)
+  @JsonProperty(value = JSON_PROPERTY_CHROMATOGRAPHY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setChromatography(@jakarta.annotation.Nullable String chromatography) {
     this.chromatography = chromatography;
@@ -196,11 +197,11 @@ public class Run {
   }
 
   /**
-   * Get ionization
+   * Ionization the run was measured with, named as in the HUPO PSI-MS controlled vocabulary,  e.g. &#39;electrospray ionization&#39;.
    * @return ionization
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_IONIZATION)
+  @JsonProperty(value = JSON_PROPERTY_IONIZATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getIonization() {
@@ -208,7 +209,7 @@ public class Run {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_IONIZATION)
+  @JsonProperty(value = JSON_PROPERTY_IONIZATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIonization(@jakarta.annotation.Nullable String ionization) {
     this.ionization = ionization;
@@ -221,11 +222,11 @@ public class Run {
   }
 
   /**
-   * Get fragmentation
+   * Fragmentation the run was measured with, named as in the HUPO PSI-MS controlled vocabulary,  e.g. &#39;beam-type collision-induced dissociation&#39;.
    * @return fragmentation
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FRAGMENTATION)
+  @JsonProperty(value = JSON_PROPERTY_FRAGMENTATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getFragmentation() {
@@ -233,7 +234,7 @@ public class Run {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FRAGMENTATION)
+  @JsonProperty(value = JSON_PROPERTY_FRAGMENTATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFragmentation(@jakarta.annotation.Nullable String fragmentation) {
     this.fragmentation = fragmentation;
@@ -254,11 +255,11 @@ public class Run {
   }
 
   /**
-   * Get massAnalyzers
+   * Mass analyzers of the instrument the run was measured on, named as in the HUPO PSI-MS  controlled vocabulary, e.g. &#39;orbitrap&#39;.
    * @return massAnalyzers
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MASS_ANALYZERS)
+  @JsonProperty(value = JSON_PROPERTY_MASS_ANALYZERS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getMassAnalyzers() {
@@ -266,7 +267,7 @@ public class Run {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MASS_ANALYZERS)
+  @JsonProperty(value = JSON_PROPERTY_MASS_ANALYZERS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMassAnalyzers(@jakarta.annotation.Nullable List<String> massAnalyzers) {
     this.massAnalyzers = massAnalyzers;
@@ -291,7 +292,7 @@ public class Run {
    * @return tags
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TAGS)
+  @JsonProperty(value = JSON_PROPERTY_TAGS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Map<String, Tag> getTags() {
@@ -299,7 +300,7 @@ public class Run {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TAGS)
+  @JsonProperty(value = JSON_PROPERTY_TAGS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTags(@jakarta.annotation.Nullable Map<String, Tag> tags) {
     this.tags = tags;

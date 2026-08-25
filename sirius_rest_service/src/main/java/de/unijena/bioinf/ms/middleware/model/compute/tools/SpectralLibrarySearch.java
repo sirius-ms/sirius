@@ -49,7 +49,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     /**
      * Structure Databases with Reference spectra to search in.
      * <p>
-     * Defaults to BIO + Custom Databases. Possible values are available to Database API.
+     * Defaults to BIO + Custom Databases. Possible values are available via the Database API.
      */
     @Schema(nullable = true)
     List<String> spectraSearchDBs;
@@ -104,7 +104,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
      * Specify scoring method to match spectra
      * INTENSITY: Intensity weighted. Each peak matches at most one peak in the other spectrum.
      * GAUSSIAN: Treat peaks as (un-normalized) Gaussians and score overlapping areas of PDFs. Each peak might score against multiple peaks in the other spectrum.
-     * MODIFIED_COSINE:  This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u and v are within the allowed mass tolerance. To be used for analog search with different precursor masses.
+     * MODIFIED_COSINE: This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u and v are within the allowed mass tolerance. To be used for analog search with different precursor masses.
      */
     @Schema(nullable = true)
     @Deprecated(forRemoval = true)

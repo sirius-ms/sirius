@@ -81,7 +81,7 @@ public class InputFilesOptions {
             InstanceImporter.expandInput(files, this);
         }
 
-        @CommandLine.Option(names = {"--ignore-formula"}, description = "ignore given molecular formula if present in .ms or .mgf input files.", defaultValue = "false", order = 322)
+        @CommandLine.Option(names = {"--ignore-formula"}, description = "Ignore given molecular formula if present in .ms or .mgf input files.", defaultValue = "false", order = 322)
         public void setIgnoreFormula(boolean ignoreFormula) {
             this.ignoreFormula = ignoreFormula;
         }
@@ -122,7 +122,7 @@ public class InputFilesOptions {
 
         public List<File> ms2;
 
-        @CommandLine.Option(names = {"-z", "--parentmass", "--precursor", "--mz"}, description = "The mass of the parent ion for the specified ms2 spectra", required = true, order = 333)
+        @CommandLine.Option(names = {"-z", "--parentmass", "--precursor", "--mz"}, description = "The mass of the parent ion for the specified MS2 spectra", required = true, order = 333)
         public Double parentMz;
 
         @CommandLine.Option(names = {"--ionization", "--adduct"}, description = "Specify the adduct for this compound", defaultValue = "[M+?]+", order = 334)

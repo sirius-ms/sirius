@@ -175,9 +175,17 @@ public class CustomDatabases {
     }
 
     public static Stream<FingerprintCandidateWrapper> getContents(CustomDatabase db) throws IOException {
+        return toNitriteDb(db).getAll();
+    }
+
+    public static Stream<FingerprintCandidateWrapper> getContentsPaged(CustomDatabase db, long offset, int size) throws IOException {
+        return toNitriteDb(db).getAll(offset, size);
+    }
+
+    private static ChemicalNitriteDatabase toNitriteDb(CustomDatabase db) {
         AbstractChemicalDatabase chemDb = db.toChemDB().orElseThrow();
         if (chemDb instanceof ChemicalNitriteDatabase nitriteDb) {
-            return nitriteDb.getAll();
+            return nitriteDb;
         } else {
             throw new RuntimeException("Unsupported database type.");
         }

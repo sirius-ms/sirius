@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.client.StringUtil;
 
 import java.awt.event.ActionEvent;
 import java.util.Comparator;
@@ -33,6 +34,7 @@ public class OrderCompoundByName extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        mainFrame.getCompoundList().orderBy(Comparator.comparing(InstanceBean::getGUIName));
+        mainFrame.getFilterableCompoundListPanel().runInBackgroundAndLoad(() ->
+                mainFrame.getCompoundList().orderBy(Comparator.comparing(InstanceBean::getGUIName)));
     }
 }

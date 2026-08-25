@@ -23,7 +23,9 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.middleware.controller.mixins.StatisticsController;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChangeJobSubmission;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
@@ -61,14 +63,14 @@ public class AlignedFeatureStatisticsController implements StatisticsController<
     }
 
     @Override
-    public Class<AlignedFeature> getTarget() {
-        return AlignedFeature.class;
+    public QuantRowType getTarget() {
+        return QuantRowType.FEATURES;
     }
 
     @Operation(operationId = "computeAlignedFeatureFoldChangesExperimental")
     @Override
-    public Job computeFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification, EnumSet<Job.OptField> optFields) {
-        return StatisticsController.super.computeFoldChanges(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
+    public Job computeFoldChanges(String projectId, FoldChangeJobSubmission jobSubmission, EnumSet<Job.OptField> optFields) {
+        return StatisticsController.super.computeFoldChanges(projectId, jobSubmission, optFields);
     }
 
     @Operation(operationId = "getFoldChangesByAlignedFeatureExperimental")

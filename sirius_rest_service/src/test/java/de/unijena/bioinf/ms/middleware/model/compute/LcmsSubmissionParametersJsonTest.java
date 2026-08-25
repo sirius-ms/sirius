@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -75,5 +78,77 @@ class LcmsSubmissionParametersJsonTest {
         assertTrue(deviation.isObject(), "mass deviations are documented as objects in the OpenAPI schema");
         assertEquals(10.0, deviation.get("ppm").asDouble());
         assertEquals(0.005, deviation.get("absolute").asDouble());
+    }
+
+    @Test
+    void deserializesSampleNamesIncludingNullEntries() {
+        LcmsSubmissionParameters params = MAPPER.readValue(
+                "{\"sampleNames\":[\"my sample\",null,\"my blank\"]}", LcmsSubmissionParameters.class);
+
+        assertEquals(Arrays.asList("my sample", null, "my blank"), params.getSampleNames());
+    }
+
+    @Test
+    void acceptsPartialSampleNames() {
+        LcmsSubmissionParameters params = new LcmsSubmissionParameters();
+        params.setSampleNames(Arrays.asList("my sample", null));
+
+        assertDoesNotThrow(() -> params.validate(3), "missing names are derived from the input files");
+    }
+
+    @Test
+    void rejectsBlankSampleName() {
+        LcmsSubmissionParameters params = new LcmsSubmissionParameters();
+        params.setSampleNames(List.of("my sample", "  "));
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> params.validate(2));
+        assertTrue(e.getMessage().contains("blank"), "Unexpected error message: " + e.getMessage());
+    }
+
+    @Test
+    void acceptsNoSampleNamesAtAll() {
+        assertDoesNotThrow(() -> new LcmsSubmissionParameters().validate(3));
+    }
+
+    @Test
+    void rejectsDuplicateSampleNames() {
+        LcmsSubmissionParameters params = new LcmsSubmissionParameters();
+        params.setSampleNames(List.of("my sample", "my sample"));
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> params.validate(2));
+        assertTrue(e.getMessage().contains("unique"), "Unexpected error message: " + e.getMessage());
+    }
+
+    @Test
+    void acceptsSeveralMissingSampleNames() {
+        LcmsSubmissionParameters params = new LcmsSubmissionParameters();
+        params.setSampleNames(Arrays.asList(null, "my sample", null));
+
+        assertDoesNotThrow(() -> params.validate(3), "missing names are not duplicates of each other");
+    }
+
+    @Test
+    void acceptsSampleTypeForEveryInputFile() {
+        LcmsSubmissionParameters params = new LcmsSubmissionParameters();
+        params.setSampleTypes(List.of("Sample", "Blank"));
+
+        assertDoesNotThrow(() -> params.validate(2));
+    }
+
+    @Test
+    void rejectsSampleTypesForOnlySomeInputFiles() {
+        LcmsSubmissionParameters params = new LcmsSubmissionParameters();
+        params.setSampleTypes(List.of("Sample"));
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> params.validate(2));
+        assertTrue(e.getMessage().contains("all or no sample types"), "Unexpected error message: " + e.getMessage());
+    }
+
+    @Test
+    void rejectsMissingSampleType() {
+        LcmsSubmissionParameters params = new LcmsSubmissionParameters();
+        params.setSampleTypes(Arrays.asList("Sample", null));
+
+        assertThrows(IllegalArgumentException.class, () -> params.validate(2));
     }
 }

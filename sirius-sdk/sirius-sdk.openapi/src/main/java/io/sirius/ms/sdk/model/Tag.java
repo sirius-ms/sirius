@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Tag.JSON_PROPERTY_TAG_NAME,
   Tag.JSON_PROPERTY_VALUE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Tag {
   public static final String JSON_PROPERTY_TAG_NAME = "tagName";
   @jakarta.annotation.Nonnull
@@ -60,11 +61,11 @@ public class Tag {
   }
 
   /**
-   * Name of the tag as defined by the corresponding TagDefinition  Links tag object to their definition.
+   * Name of the tag as defined by the corresponding TagDefinition  Links the tag object to its definition.
    * @return tagName
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_TAG_NAME)
+  @JsonProperty(value = JSON_PROPERTY_TAG_NAME, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public String getTagName() {
@@ -72,7 +73,7 @@ public class Tag {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TAG_NAME)
+  @JsonProperty(value = JSON_PROPERTY_TAG_NAME, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setTagName(@jakarta.annotation.Nonnull String tagName) {
     this.tagName = tagName;
@@ -85,11 +86,11 @@ public class Tag {
   }
 
   /**
-   * Optional value of the tag.  &lt;p&gt;  Generic value of the tag as defined by the corresponding TagDefinition.  Can be Integer, Double, Boolean and String, whereas String values can represent Text, Date (yyyy-MM-dd) or Time (HH:mm:ss).
+   * Get value
    * @return value
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_VALUE)
+  @JsonProperty(value = JSON_PROPERTY_VALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Object getValue() {
@@ -97,7 +98,7 @@ public class Tag {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_VALUE)
+  @JsonProperty(value = JSON_PROPERTY_VALUE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setValue(@jakarta.annotation.Nullable Object value) {
     this.value = value;

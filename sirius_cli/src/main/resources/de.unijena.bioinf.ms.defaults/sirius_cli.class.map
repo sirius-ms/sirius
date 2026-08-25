@@ -1,6 +1,5 @@
 IdentitySearchSettings=de.unijena.bioinf.ms.frontend.subtools.spectra_search.IdentitySearchSettings
 AnalogueSearchSettings=de.unijena.bioinf.ms.frontend.subtools.spectra_search.AnalogueSearchSettings
-PrintCitations=de.unijena.bioinf.ms.annotations.PrintCitations
 RecomputeResults=de.unijena.bioinf.ms.annotations.RecomputeResults
 NumberOfMsNovelistCandidates=de.unijena.bioinf.ms.frontend.subtools.msnovelist.NumberOfMsNovelistCandidates
 SpectralSearchLog=de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectralSearchLog

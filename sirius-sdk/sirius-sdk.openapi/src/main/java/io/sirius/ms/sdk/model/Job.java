@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -39,7 +40,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Identifier created by the SIRIUS Nightsky API for a newly created Job.  Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information.  This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal.
+ * Identifier created by the SIRIUS Nightsky API for a newly created Job.  Object can be enriched with Job status/progress information (&lt;code&gt;JobProgress&lt;/code&gt;) and/or Job command information.  This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal.
  */
 @JsonPropertyOrder({
   Job.JSON_PROPERTY_ID,
@@ -49,7 +50,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Job.JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS,
   Job.JSON_PROPERTY_JOB_EFFECT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Job {
   public static final String JSON_PROPERTY_ID = "id";
   @jakarta.annotation.Nullable
@@ -89,7 +90,7 @@ public class Job {
    * @return id
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ID)
+  @JsonProperty(value = JSON_PROPERTY_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getId() {
@@ -97,7 +98,7 @@ public class Job {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ID)
+  @JsonProperty(value = JSON_PROPERTY_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setId(@jakarta.annotation.Nullable String id) {
     this.id = id;
@@ -114,7 +115,7 @@ public class Job {
    * @return command
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_COMMAND)
+  @JsonProperty(value = JSON_PROPERTY_COMMAND, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getCommand() {
@@ -122,7 +123,7 @@ public class Job {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_COMMAND)
+  @JsonProperty(value = JSON_PROPERTY_COMMAND, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCommand(@jakarta.annotation.Nullable String command) {
     this.command = command;
@@ -139,7 +140,7 @@ public class Job {
    * @return progress
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PROGRESS)
+  @JsonProperty(value = JSON_PROPERTY_PROGRESS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public JobProgress getProgress() {
@@ -147,7 +148,7 @@ public class Job {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PROGRESS)
+  @JsonProperty(value = JSON_PROPERTY_PROGRESS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setProgress(@jakarta.annotation.Nullable JobProgress progress) {
     this.progress = progress;
@@ -168,11 +169,11 @@ public class Job {
   }
 
   /**
-   * List of compoundIds that are affected by this job.  This lis will also contain compoundIds where not all features of the compound are affected by the job.  If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished
+   * List of compoundIds that are affected by this job.  This list will also contain compoundIds where not all features of the compound are affected by the job.  If this job is creating compounds (e.g. data import jobs) this value will be NULL until the job has finished
    * @return affectedCompoundIds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_AFFECTED_COMPOUND_IDS)
+  @JsonProperty(value = JSON_PROPERTY_AFFECTED_COMPOUND_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getAffectedCompoundIds() {
@@ -180,7 +181,7 @@ public class Job {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_AFFECTED_COMPOUND_IDS)
+  @JsonProperty(value = JSON_PROPERTY_AFFECTED_COMPOUND_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAffectedCompoundIds(@jakarta.annotation.Nullable List<String> affectedCompoundIds) {
     this.affectedCompoundIds = affectedCompoundIds;
@@ -201,11 +202,11 @@ public class Job {
   }
 
   /**
-   * List of alignedFeatureIds that are affected by this job.  If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished
+   * List of alignedFeatureIds that are affected by this job.  If this job is creating features (e.g. data import jobs) this value will be NULL until the job has finished
    * @return affectedAlignedFeatureIds
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getAffectedAlignedFeatureIds() {
@@ -213,7 +214,7 @@ public class Job {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS)
+  @JsonProperty(value = JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAffectedAlignedFeatureIds(@jakarta.annotation.Nullable List<String> affectedAlignedFeatureIds) {
     this.affectedAlignedFeatureIds = affectedAlignedFeatureIds;
@@ -230,7 +231,7 @@ public class Job {
    * @return jobEffect
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_JOB_EFFECT)
+  @JsonProperty(value = JSON_PROPERTY_JOB_EFFECT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public JobEffect getJobEffect() {
@@ -238,7 +239,7 @@ public class Job {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_JOB_EFFECT)
+  @JsonProperty(value = JSON_PROPERTY_JOB_EFFECT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setJobEffect(@jakarta.annotation.Nullable JobEffect jobEffect) {
     this.jobEffect = jobEffect;

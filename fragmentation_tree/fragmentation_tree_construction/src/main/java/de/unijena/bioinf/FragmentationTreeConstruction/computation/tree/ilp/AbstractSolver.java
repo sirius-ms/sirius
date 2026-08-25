@@ -409,10 +409,8 @@ abstract public class AbstractSolver {
             if (g.getParent() == pseudoRoot) {
                 score -= g.getIncomingEdge().getWeight();
             } else {
-                //if (t.getFormula().isEmpty()) continue;
                 final Loss in = t.getIncomingEdge();
                 for (int k = 0; k < g.getInDegree(); ++k)
-//                    if (in.getSource().getFormula().equals(g.getIncomingEdge(k).getSource().getFormula())) {
                     if (in.getSource().getFormula().equals(g.getIncomingEdge(k).getSource().getFormula()) && in.getSource().getIonization().equals(g.getIncomingEdge(k).getSource().getIonization())) {
                         score -= g.getIncomingEdge(k).getWeight();
                     }
@@ -426,10 +424,10 @@ abstract public class AbstractSolver {
             }
         }
         */
-        if (score > 1e-9d) {
+        if (Math.abs(score) >= 1e-4d) {
             logger.warn("There is a large gap between the optimal solution and the score of the computed fragmentation tree: Gap is " + score + " for a score of " + optSolScore);
-        }
-        return Math.abs(score) < 1e-4d;
+            return false;
+        } else return true;
     }
 
     private static Logger logger = LoggerFactory.getLogger(AbstractSolver.class);

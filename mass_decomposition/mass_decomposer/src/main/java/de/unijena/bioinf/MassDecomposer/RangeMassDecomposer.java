@@ -375,19 +375,6 @@ public class RangeMassDecomposer<T> extends MassDecomposer<T> {
         }
         final long[][][] ERTs = this.ERTs;
 
-        {
-            long largest = 0;
-            for (long[][] t : ERTs) {
-                for (long[] r : t) {
-                    for (long v : r) {
-                        if (v < Long.MAX_VALUE) {
-                            largest = Math.max(largest, v);
-                        }
-                    }
-                }
-            }
-        }
-
         //take ERT with required deviation
         long[][] currentERT;
         if (deviation == 0) currentERT = ERTs[0];
@@ -410,9 +397,12 @@ public class RangeMassDecomposer<T> extends MassDecomposer<T> {
         m[i] = mass; // m[i] corresponds to M, m[i-1] ^= m
         while (i != k) {
             if (i == 0) {
-                deepCopy = c.clone();
-                deepCopy[0] = (int) (m[i] / a);
-                if (deepCopy[0] <= bounds[0]) result.add(deepCopy);
+                final int v = (int) (m[i] / a);
+                if (v <= bounds[0]) {
+                    deepCopy = c.clone();
+                    deepCopy[0] = v;
+                    result.add(deepCopy);
+                }
                 ++i; // "return" from recursion
                 flagWhile = true; // in this recursion-depth we are in the while-loop, cause the next recursion (the one we just exited) was called
                 m[i - 1] -= weights.get(i).getLcm(); // execute the rest of the while

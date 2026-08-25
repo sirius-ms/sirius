@@ -352,6 +352,34 @@ public class NitriteDatabaseTest {
         }
     }
 
+    /**
+     * Primary keys are TSIDs, which are longs around 8.7e17. A double can only represent integers up to 2^53 exactly,
+     * so as soon as an index stores keys as doubles, two ids that differ by less than 128 become the same key: a
+     * unique index rejects the second insert and a lookup on a non-unique index returns foreign entries. Nitrite 4.3.3
+     * introduced exactly that (DBValue normalizes every non-Double number to double), which is why the store cannot be
+     * upgraded past 4.3.2 while ids are TSIDs.
+     */
+    @Test
+    public void testIdsBeyondDoublePrecisionStayDistinct() throws IOException {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+        try (NitriteDatabase db = new NitriteDatabase(file,
+                Metadata.build().addRepository(NitriteEntryWithDoubleKey.class))) {
+            //consecutive TSIDs of the same millisecond differ by 1, doubles of this magnitude are 128 apart
+            long first = 873854787789274837L;
+            db.insert(new NitriteEntryWithDoubleKey(first, 1.0, "a"));
+            db.insert(new NitriteEntryWithDoubleKey(first + 1, 2.0, "b"));
+
+            assertEquals("both ids must be stored", 2L, db.countAll(NitriteEntryWithDoubleKey.class));
+            assertEquals("an id must select its own entry", "a",
+                    db.findStr(Filter.where("primaryKey").eq(first), NitriteEntryWithDoubleKey.class)
+                            .map(e -> e.someProperty).collect(Collectors.joining()));
+            assertEquals("an id must select its own entry", "b",
+                    db.findStr(Filter.where("primaryKey").eq(first + 1), NitriteEntryWithDoubleKey.class)
+                            .map(e -> e.someProperty).collect(Collectors.joining()));
+        }
+    }
+
 
     @Test
     public void testCRUD() throws IOException {
@@ -507,10 +535,13 @@ public class NitriteDatabaseTest {
 
             db.insert("entries", parent);
 
+            //a foreign key on "_id" has to hold the value as it is stored, which is not the same as the numeric
+            //id: NitriteId.getIdValue() is a long while the document field itself holds its text form
+            Object parentId = parent.get("_id");
             List<Document> children = Arrays.asList(
-                    Document.createDocument("name", "A").put("parentId", parent.getId().getIdValue()),
-                    Document.createDocument("name", "B").put("parentId", parent.getId().getIdValue()),
-                    Document.createDocument("name", "C").put("parentId", parent.getId().getIdValue())
+                    Document.createDocument("name", "A").put("parentId", parentId),
+                    Document.createDocument("name", "B").put("parentId", parentId),
+                    Document.createDocument("name", "C").put("parentId", parentId)
             );
 
             db.insertAll("children", children);
@@ -538,10 +569,11 @@ public class NitriteDatabaseTest {
 
             db.insert("entries", parentB);
 
+            Object parentBId = parentB.get("_id");
             List<Document> childrenB = Arrays.asList(
-                    Document.createDocument("name", "A").put("parentId", parentB.getId().getIdValue()),
-                    Document.createDocument("name", "B").put("parentId", parentB.getId().getIdValue()),
-                    Document.createDocument("name", "C").put("parentId", parentB.getId().getIdValue())
+                    Document.createDocument("name", "A").put("parentId", parentBId),
+                    Document.createDocument("name", "B").put("parentId", parentBId),
+                    Document.createDocument("name", "C").put("parentId", parentBId)
             );
 
             db.insertAll("children", childrenB);
@@ -917,6 +949,41 @@ public class NitriteDatabaseTest {
             Assert.assertEquals(updatedNames, removed);
         }
 
+    }
+
+    /**
+     * A compound index's field order defines its sort/prefix semantics, so re-declaring the same fields in a
+     * different order must drop and rebuild the index. Reconciling indexes by an unordered set of field names
+     * would treat the two as identical and silently keep the stale on-disk order.
+     */
+    @Test
+    public void testCompoundIndexFieldReorderTriggersRebuild() throws Exception {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
+                .addRepository(NitriteEntryWithDoubleKey.class, Index.nonUnique("otherKey", "someProperty")))) {
+            db.insert(new NitriteEntryWithDoubleKey(1, 1.0, "a"));
+            assertEquals(List.of("otherKey", "someProperty"), twoFieldIndexOrder(db, NitriteEntryWithDoubleKey.class));
+        }
+
+        // reopen declaring the SAME fields in reversed order: it is a different index and must be rebuilt
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
+                .addRepository(NitriteEntryWithDoubleKey.class, Index.nonUnique("someProperty", "otherKey")))) {
+            assertEquals(List.of("someProperty", "otherKey"), twoFieldIndexOrder(db, NitriteEntryWithDoubleKey.class));
+        }
+    }
+
+    /** Reflectively read the ordered field names of the (single) two-field index on the repository. */
+    private static List<String> twoFieldIndexOrder(NitriteDatabase db, Class<?> clazz) throws Exception {
+        java.lang.reflect.Field dbField = NitriteDatabase.class.getDeclaredField("db");
+        dbField.setAccessible(true);
+        org.dizitart.no2.Nitrite nitrite = (org.dizitart.no2.Nitrite) dbField.get(db);
+        return nitrite.getRepository(clazz).listIndices().stream()
+                .map(d -> d.getFields().getFieldNames())
+                .filter(names -> names.size() == 2)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no two-field index found"));
     }
 
 }

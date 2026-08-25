@@ -30,11 +30,11 @@ import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
+import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.storage.db.nosql.Database;
-import io.hypersistence.tsid.TSID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
@@ -56,10 +56,10 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
 
     @Override
     public NoSQLProjectSpaceManager createOrOpen(@Nullable Path projectLocation) throws IOException {
-
-        if (projectLocation == null) {
-            projectLocation = FileUtils.newTempFile("sirius-tmp-project-" + TSID.fast(), SIRIUS_PROJECT_SUFFIX);
-            log.warn("No unique output location found. Writing output to Temporary folder: {}", projectLocation.toString());
+        final boolean tmpProject = projectLocation == null;
+        if (tmpProject) {
+            projectLocation = FileUtils.createTmpProjectSpaceLocation(SIRIUS_PROJECT_SUFFIX);
+            log.warn("No unique output location found. Writing output to Temporary folder: {}", projectLocation);
             if (Files.exists(projectLocation)) {
                 throw new IOException("Could not create new Project '" + projectLocation + "' because it already exists");
             }
@@ -75,10 +75,21 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
         }
         boolean exists = Files.exists(projectLocation);
         NoSQLProjectSpaceManager projectSpaceManager = new NoSQLProjectSpaceManager(new NitriteSirirusProject(projectLocation));
+        projectSpaceManager.setTempProject(tmpProject);
+        projectSpaceManager.getProject().initDefaultTagDefinitions();
+        projectSpaceManager.getProject().initDefaultGroups();
         // new projects get project-type unimported to prevent updates for newly created projects
         Optional<ProjectType> typeOpt = exists
                 ? projectSpaceManager.getProject().findProjectType()
                 : projectSpaceManager.getProject().upsertProjectType(ProjectType.UNIMPORTED);
+
+        if (!exists)
+            // A project written by this version is at the current schema, and recording that is what keeps it
+            // from being converted on a later open: the conversion is gated on the recorded version, so a
+            // project that records nothing is indistinguishable from one written before these fields existed
+            // and gets reread in full for no reason. An existing project keeps whatever it recorded.
+            projectSpaceManager.getProject()
+                    .upsertProjectSchemaVersion(SiriusProjectDocumentDatabase.CURRENT_PROJECT_SCHEMA_VERSION);
 
 
         updateProjectType(projectSpaceManager.getProject(), typeOpt);
@@ -154,13 +165,6 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
                     log.info("Updating project source information done in {}.", w);
 
                 }, () -> log.info("Could not update project source information because project type info is missing!"));
-                project.findProjectSourceFormats().ifPresent(projectSourceFormats -> {
-                    try {
-                        System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(projectSourceFormats));
-                    } catch (JsonProcessingException e) {
-                       log.error("Error while printing project source formats!", e);
-                    }
-                });
             }
         }
     }

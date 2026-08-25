@@ -41,7 +41,7 @@ public class ExpansiveSearchLabel extends JLabel implements ActiveElementChanged
         setBackground(Colors.EXPANSIVE_SEARCH_WARNING);
         setOpaque(true);
         setToolTipText(GuiUtils.formatToolTip(
-                "Search results were expnanded to the fallback database (PubChem) because the top molecular structure hit has a significantly higher confidence score than the hit in the specified database selection."));
+                "Search results were expanded to the fallback database (PubChem) because the top molecular structure hit has a significantly higher confidence score than the hit in the specified database selection."));
 
         source.addActiveResultChangedListener(this);
     }

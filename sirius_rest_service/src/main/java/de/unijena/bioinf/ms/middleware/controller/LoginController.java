@@ -62,7 +62,7 @@ public class LoginController {
      *
      * @param credentials      used to log in.
      * @param failWhenLoggedIn if true request fails if an active login already exists.
-     * @param includeSubs      include available and active subscriptions in {@link AccountInfo}.
+     * @param includeSubs      include available and active subscriptions in {@code AccountInfo}.
      * @return Basic information about the account that has been logged in and its subscriptions.
      */
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -110,7 +110,7 @@ public class LoginController {
     /**
      * Get information about the account currently logged in. Fails if not logged in.
      *
-     * @param includeSubs include available and active subscriptions in {@link AccountInfo}.
+     * @param includeSubs include available and active subscriptions in {@code AccountInfo}.
      * @return Basic information about the account that has been logged in and its subscriptions.
      */
     @GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)

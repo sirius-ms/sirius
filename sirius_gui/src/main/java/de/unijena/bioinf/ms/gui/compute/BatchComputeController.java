@@ -291,7 +291,7 @@ public class BatchComputeController {
                     final AtomicBoolean success = new AtomicBoolean(false);
                     if (highMass > 1) //do not ask for a single compound
                         Jobs.runEDTAndWait(() -> success.set(new QuestionDialog(rootOwner, "High mass Compounds detected!",
-                                GuiUtils.formatToolTip("Your analysis contains '" + highMass + "' compounds with a mass higher than 850Da. Fragmentation tree computation may take very long (days) to finish. You might want to exclude compounds with mass >850Da and compute them on individual basis afterwards.", "", "Do you wish to exclude the high mass compounds?"),
+                                GuiUtils.formatToolTip("Your analysis contains '" + highMass + "' compounds with a mass higher than 850Da. Fragmentation tree computation may take very long (days) to finish. You might want to exclude compounds with a mass >850 Da and compute them on an individual basis afterwards.", "", "Do you wish to exclude the high mass compounds?"),
                                 DO_NOT_SHOW_AGAIN_KEY_S_MASS).isSuccess()));
                     if (success.get())
                         finalComps = lowMass;

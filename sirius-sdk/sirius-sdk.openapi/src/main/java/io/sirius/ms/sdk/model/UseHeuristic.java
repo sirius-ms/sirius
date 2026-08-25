@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   UseHeuristic.JSON_PROPERTY_USE_HEURISTIC_ABOVE_MZ,
   UseHeuristic.JSON_PROPERTY_USE_ONLY_HEURISTIC_ABOVE_MZ
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class UseHeuristic {
   public static final String JSON_PROPERTY_USE_HEURISTIC_ABOVE_MZ = "useHeuristicAboveMz";
   @jakarta.annotation.Nullable
@@ -64,7 +65,7 @@ public class UseHeuristic {
    * @return useHeuristicAboveMz
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_USE_HEURISTIC_ABOVE_MZ)
+  @JsonProperty(value = JSON_PROPERTY_USE_HEURISTIC_ABOVE_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getUseHeuristicAboveMz() {
@@ -72,7 +73,7 @@ public class UseHeuristic {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_USE_HEURISTIC_ABOVE_MZ)
+  @JsonProperty(value = JSON_PROPERTY_USE_HEURISTIC_ABOVE_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setUseHeuristicAboveMz(@jakarta.annotation.Nullable Integer useHeuristicAboveMz) {
     this.useHeuristicAboveMz = useHeuristicAboveMz;
@@ -89,7 +90,7 @@ public class UseHeuristic {
    * @return useOnlyHeuristicAboveMz
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_USE_ONLY_HEURISTIC_ABOVE_MZ)
+  @JsonProperty(value = JSON_PROPERTY_USE_ONLY_HEURISTIC_ABOVE_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getUseOnlyHeuristicAboveMz() {
@@ -97,7 +98,7 @@ public class UseHeuristic {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_USE_ONLY_HEURISTIC_ABOVE_MZ)
+  @JsonProperty(value = JSON_PROPERTY_USE_ONLY_HEURISTIC_ABOVE_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setUseOnlyHeuristicAboveMz(@jakarta.annotation.Nullable Integer useOnlyHeuristicAboveMz) {
     this.useOnlyHeuristicAboveMz = useOnlyHeuristicAboveMz;

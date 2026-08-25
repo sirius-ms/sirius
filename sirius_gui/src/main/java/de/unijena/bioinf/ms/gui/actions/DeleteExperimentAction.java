@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -48,7 +47,7 @@ public class DeleteExperimentAction extends AbstractGuiAction {
 
     public DeleteExperimentAction(SiriusGui gui) {
         super("Delete", gui);
-        putValue(Action.SMALL_ICON, Icons.REMOVE_DOC.derive(16,16));
+        putValue(Action.SMALL_ICON, Icons.REMOVE_DOC.derive(16, 16));
         putValue(Action.SHORT_DESCRIPTION, "Delete the selected data");
 
 
@@ -56,12 +55,18 @@ public class DeleteExperimentAction extends AbstractGuiAction {
 
         this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {
+            public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, long totalElements) {
                 setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
             }
 
             @Override
-            public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+            public void computeStateChanged(AdvancedListSelectionModel<InstanceBean> selection, long totalElements) {
+                // one signal for a whole batch of features, so re-ask the same question the selection asks
+                setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
+            }
+
+            @Override
+            public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, long totalElements) {
                 setEnabled(SiriusActions.notComputingOrEmpty(selected));
             }
         });
@@ -84,46 +89,25 @@ public class DeleteExperimentAction extends AbstractGuiAction {
         //clear selection to prevent EventList from going crazy.
         mainFrame.getCompoundList().getCompoundListSelectionModel().clearSelection();
 
-        Jobs.runInBackgroundAndLoad(mainFrame, "Deleting Data...", false, new TinyBackgroundJJob<Boolean>() {
+        Jobs.runInBackgroundAndLoad(mainFrame, "Deleting Data...", true, new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() {
-                synchronized (this) {
-                    final int max = toRemove.size() + 2;
-                    Utils.withTime("Deleting took: ", w -> {
-                    updateProgress(0, max, 0);
-                        List<InstanceBean> removed = new ArrayList<>();
-//                        gui.getProjectManager().disbableProjectListener();
-                        try {
-                            gui.acceptSiriusClient((client, pid) ->
-                                toRemove.forEach(feature -> {
-                                    try {
-                                        updateProgress(0, max, removed.size(),"Removing '" + feature.getGUIName() + "'...");
-                                        if (!feature.isComputing()) {
-                                            client.features().deleteAlignedFeature(pid, feature.getFeatureId());
-                                            removed.add(feature);
-                                        } else {
-                                            log.warn("Cannot delete '{}' because it is currently computing. Skipping!", feature.getFeatureId());
-                                        }
-                                    } catch (Exception e) {
-                                        log.error("Could not delete: {}", feature.getFeatureId(), e);
-                                    }
-                                }));
-
-                        } finally {
-//                            updateProgress(0, toRemove.size(), removed.size() + 1,"Cleaning up...");
-//                            gui.getProjectManager().INSTANCE_LIST.removeAll(removed);
-//                            gui.getProjectManager().enableProjectListener();
-                            updateProgress(0, toRemove.size(), removed.size() + 2,"DONE!");
-
-                        }
-                    });
-
-                    return true;
+                // Skip features that are currently computing (can't be deleted), mirroring the previous behaviour.
+                List<String> idsToDelete = new ArrayList<>(toRemove.size());
+                for (InstanceBean feature : toRemove) {
+                    if (feature.isComputing())
+                        log.warn("Cannot delete '{}' because it is currently computing. Skipping!", feature.getFeatureId());
+                    else
+                        idsToDelete.add(feature.getFeatureId());
                 }
+                // One bulk server call; the manager suppresses the FEATURE_DELETED storm and rebuilds the list
+                // once, authoritatively, afterwards (and reconciles list + counters even on failure/cancel).
+                gui.getProjectManager().deleteAlignedFeaturesByIds(idsToDelete);
+                return true;
             }
         });
 
-        if (toRemove.size() >= 100 && JOptionPane.showConfirmDialog(mainFrame, "Compact project to reduce projects file size? (may take some time)", null, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+        if (toRemove.size() >= 100 && JOptionPane.showConfirmDialog(mainFrame, "Compact project to reduce the project's file size? (may take some time)", null, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             gui.getProjectManager().compactWithLoading(mainFrame);
         }
     }

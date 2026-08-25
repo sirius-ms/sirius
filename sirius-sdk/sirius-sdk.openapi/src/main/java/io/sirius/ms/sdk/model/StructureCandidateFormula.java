@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -59,7 +60,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateFormula.JSON_PROPERTY_ADDUCT,
   StructureCandidateFormula.JSON_PROPERTY_FORMULA_ID
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class StructureCandidateFormula {
   public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
   @jakarta.annotation.Nullable
@@ -131,11 +132,11 @@ public class StructureCandidateFormula {
   }
 
   /**
-   * Get inchiKey
+   * InChIKey of the structure candidate.  Searching with a full 27 character key matches its 2D (skeleton) part, so stereoisomers of the  searched structure are found alike.
    * @return inchiKey
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INCHI_KEY)
+  @JsonProperty(value = JSON_PROPERTY_INCHI_KEY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getInchiKey() {
@@ -143,7 +144,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_INCHI_KEY)
+  @JsonProperty(value = JSON_PROPERTY_INCHI_KEY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setInchiKey(@jakarta.annotation.Nullable String inchiKey) {
     this.inchiKey = inchiKey;
@@ -160,7 +161,7 @@ public class StructureCandidateFormula {
    * @return smiles
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SMILES)
+  @JsonProperty(value = JSON_PROPERTY_SMILES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getSmiles() {
@@ -168,7 +169,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SMILES)
+  @JsonProperty(value = JSON_PROPERTY_SMILES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSmiles(@jakarta.annotation.Nullable String smiles) {
     this.smiles = smiles;
@@ -181,11 +182,11 @@ public class StructureCandidateFormula {
   }
 
   /**
-   * Get structureName
+   * Name of the structure candidate.  Searching also resolves the searched term as a PubChem synonym, so a structure is found by any  of its common names.
    * @return structureName
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getStructureName() {
@@ -193,7 +194,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_NAME)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_NAME, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureName(@jakarta.annotation.Nullable String structureName) {
     this.structureName = structureName;
@@ -210,7 +211,7 @@ public class StructureCandidateFormula {
    * @return structureSvg
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_SVG)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_SVG, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getStructureSvg() {
@@ -218,7 +219,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_STRUCTURE_SVG)
+  @JsonProperty(value = JSON_PROPERTY_STRUCTURE_SVG, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureSvg(@jakarta.annotation.Nullable String structureSvg) {
     this.structureSvg = structureSvg;
@@ -239,11 +240,11 @@ public class StructureCandidateFormula {
   }
 
   /**
-   * List of structure database links belonging to this structure candidate  OPTIONAL: needs to be added by parameter
+   * List of structure database links belonging to the structure candidate  OPTIONAL: needs to be added by parameter
    * @return dbLinks
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DB_LINKS)
+  @JsonProperty(value = JSON_PROPERTY_DB_LINKS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<DBLink> getDbLinks() {
@@ -251,7 +252,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_DB_LINKS)
+  @JsonProperty(value = JSON_PROPERTY_DB_LINKS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDbLinks(@jakarta.annotation.Nullable List<DBLink> dbLinks) {
     this.dbLinks = dbLinks;
@@ -272,11 +273,11 @@ public class StructureCandidateFormula {
   }
 
   /**
-   * List of spectral library matches belonging to this structure candidate  OPTIONAL: needs to be added by parameter
+   * List of spectral library matches belonging to the structure candidate  OPTIONAL: needs to be added by parameter
    * @return spectralLibraryMatches
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES)
+  @JsonProperty(value = JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<SpectralLibraryMatch> getSpectralLibraryMatches() {
@@ -284,7 +285,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES)
+  @JsonProperty(value = JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSpectralLibraryMatches(@jakarta.annotation.Nullable List<SpectralLibraryMatch> spectralLibraryMatches) {
     this.spectralLibraryMatches = spectralLibraryMatches;
@@ -301,7 +302,7 @@ public class StructureCandidateFormula {
    * @return xlogP
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonProperty(value = JSON_PROPERTY_XLOG_P, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getXlogP() {
@@ -309,7 +310,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonProperty(value = JSON_PROPERTY_XLOG_P, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setXlogP(@jakarta.annotation.Nullable Double xlogP) {
     this.xlogP = xlogP;
@@ -322,11 +323,11 @@ public class StructureCandidateFormula {
   }
 
   /**
-   * the overall rank of this candidate among all candidates of this feature
+   * The overall rank of this candidate among all candidates of this feature.
    * @return rank
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_RANK)
+  @JsonProperty(value = JSON_PROPERTY_RANK, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getRank() {
@@ -334,7 +335,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_RANK)
+  @JsonProperty(value = JSON_PROPERTY_RANK, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRank(@jakarta.annotation.Nullable Integer rank) {
     this.rank = rank;
@@ -351,7 +352,7 @@ public class StructureCandidateFormula {
    * @return csiScore
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CSI_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_CSI_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getCsiScore() {
@@ -359,7 +360,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CSI_SCORE)
+  @JsonProperty(value = JSON_PROPERTY_CSI_SCORE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCsiScore(@jakarta.annotation.Nullable Double csiScore) {
     this.csiScore = csiScore;
@@ -372,11 +373,11 @@ public class StructureCandidateFormula {
   }
 
   /**
-   * Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
+   * Tanimoto similarity of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
    * @return tanimotoSimilarity
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TANIMOTO_SIMILARITY)
+  @JsonProperty(value = JSON_PROPERTY_TANIMOTO_SIMILARITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getTanimotoSimilarity() {
@@ -384,7 +385,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TANIMOTO_SIMILARITY)
+  @JsonProperty(value = JSON_PROPERTY_TANIMOTO_SIMILARITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTanimotoSimilarity(@jakarta.annotation.Nullable Double tanimotoSimilarity) {
     this.tanimotoSimilarity = tanimotoSimilarity;
@@ -401,7 +402,7 @@ public class StructureCandidateFormula {
    * @return mcesDistToTopHit
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MCES_DIST_TO_TOP_HIT)
+  @JsonProperty(value = JSON_PROPERTY_MCES_DIST_TO_TOP_HIT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMcesDistToTopHit() {
@@ -409,7 +410,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MCES_DIST_TO_TOP_HIT)
+  @JsonProperty(value = JSON_PROPERTY_MCES_DIST_TO_TOP_HIT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMcesDistToTopHit(@jakarta.annotation.Nullable Double mcesDistToTopHit) {
     this.mcesDistToTopHit = mcesDistToTopHit;
@@ -426,7 +427,7 @@ public class StructureCandidateFormula {
    * @return fingerprint
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FINGERPRINT)
+  @JsonProperty(value = JSON_PROPERTY_FINGERPRINT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public BinaryFingerprint getFingerprint() {
@@ -434,7 +435,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FINGERPRINT)
+  @JsonProperty(value = JSON_PROPERTY_FINGERPRINT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFingerprint(@jakarta.annotation.Nullable BinaryFingerprint fingerprint) {
     this.fingerprint = fingerprint;
@@ -451,7 +452,7 @@ public class StructureCandidateFormula {
    * @return molecularFormula
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getMolecularFormula() {
@@ -459,7 +460,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonProperty(value = JSON_PROPERTY_MOLECULAR_FORMULA, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMolecularFormula(@jakarta.annotation.Nullable String molecularFormula) {
     this.molecularFormula = molecularFormula;
@@ -476,7 +477,7 @@ public class StructureCandidateFormula {
    * @return adduct
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getAdduct() {
@@ -484,7 +485,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(value = JSON_PROPERTY_ADDUCT, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAdduct(@jakarta.annotation.Nullable String adduct) {
     this.adduct = adduct;
@@ -501,7 +502,7 @@ public class StructureCandidateFormula {
    * @return formulaId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FORMULA_ID)
+  @JsonProperty(value = JSON_PROPERTY_FORMULA_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getFormulaId() {
@@ -509,7 +510,7 @@ public class StructureCandidateFormula {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FORMULA_ID)
+  @JsonProperty(value = JSON_PROPERTY_FORMULA_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFormulaId(@jakarta.annotation.Nullable String formulaId) {
     this.formulaId = formulaId;

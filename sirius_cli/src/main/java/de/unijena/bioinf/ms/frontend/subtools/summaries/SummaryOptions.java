@@ -53,7 +53,7 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
     protected boolean fullSummary;
 
     @Getter
-    @CommandLine.Option(names = {"--top-k-summary"}, description = {"Write summary files with top k hits . ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
+    @CommandLine.Option(names = {"--top-k-summary"}, description = {"Write summary files with top k hits. ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
     protected int topK = -1;
 
     @CommandLine.Option(names = {"--feature-quality-summary"}, description = "Write a summary file with feature quality metrics. One line per feature regardless of other option.", defaultValue = "false")
@@ -67,11 +67,11 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
 
     //todo enable when implementing spectral match export, per compound candidate
 //    @Getter
-//    @CommandLine.Option(names = {"--all-spectra"}, description = {"Write project wide summary files with ALL reference spectrum hits. ", "(Use with care! Might create large files and consume large amounts of memory for large projects.)"}, defaultValue = "false", negatable = true)
+//    @CommandLine.Option(names = {"--all-spectra"}, description = {"Write project-wide summary files with ALL reference spectrum hits. ", "(Use with care! Might create large files and consume large amounts of memory for large projects.)"}, defaultValue = "false", negatable = true)
 //    protected boolean allSpectra;
 //
 //    @Getter
-//    @CommandLine.Option(names = {"--top-k-spectra"}, description = {"Write project wide summary files with top k reference spectrum hits . ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
+//    @CommandLine.Option(names = {"--top-k-spectra"}, description = {"Write project-wide summary files with top k reference spectrum hits. ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
 //    protected int topKSpectra = -1;
 
     @CommandLine.Option(names = {"--output", "-o"}, description = {"Specify location for writing summary files.", "By default summaries are written to a directory with project name near the project file."})

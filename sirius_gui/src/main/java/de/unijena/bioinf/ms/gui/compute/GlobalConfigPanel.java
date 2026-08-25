@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.compute;
 
+import ca.odell.glazedlists.EventList;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -11,6 +12,7 @@ import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.utils.EventLists;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
@@ -32,14 +34,22 @@ import static de.unijena.bioinf.ChemistryBase.utils.Utils.getIfIdenticalOrNull;
 public class GlobalConfigPanel extends ConfigPanel {
 
     public enum Instrument {
-        QTOF("Q-TOF", MsInstrumentation.Instrument.QTOF, "qtof", 10),
-        ORBI("Orbitrap", MsInstrumentation.Instrument.ORBI, "orbitrap", 5);
+        QTOF("Q-TOF", MsInstrumentation.Instrument.QTOF),
+        ORBI("Orbitrap", MsInstrumentation.Instrument.ORBI),
+        QTOF_EAD("Q-TOF EAD", MsInstrumentation.Instrument.QTOF_EAD);
 //        BRUKER("Q-TOF (isotopes)", MsInstrumentation.Instrument.BRUKER_MAXIS, "qtof", 10); // there is now if separate MS/MS isotope setting
 
         public final String name, profile;
         public final MsInstrumentation instrument;
         public final int ppm;
 
+        Instrument(String name, MsInstrumentation instrument) {
+            this.name = name;
+            this.instrument = instrument;
+            this.profile = instrument.getRecommendedProfile();
+            this.ppm = (int) instrument.getExpectedMassDeviation().getPpm();
+
+        }
         Instrument(String name, MsInstrumentation instrument, String profile, int ppm) {
             this.name = name;
             this.profile = profile;
@@ -66,7 +76,8 @@ public class GlobalConfigPanel extends ConfigPanel {
     protected DBSelectionListPanel searchDBList;
 
 
-    protected final List<InstanceBean> allInstances;
+    // the live, unfiltered feature list - read it only under its read lock, see EventLists
+    protected final EventList<InstanceBean> allInstances;
     protected final List<InstanceBean> selectedInstances;
 
     protected boolean hasMs2;
@@ -118,7 +129,7 @@ public class GlobalConfigPanel extends ConfigPanel {
             parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
 
             enforceAdducts = new JToggleButton("enforce", false);
-            enforceAdducts.setToolTipText(GuiUtils.formatToolTip("Enforce the selected adducts instead of using them only as fallback only."));
+            enforceAdducts.setToolTipText(GuiUtils.formatToolTip("Enforce the selected adducts instead of using them only as a fallback."));
             if (isBatchDialog()) {
                 adductList.buttons.add(enforceAdducts);
                 parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString() : PossibleAdducts.empty().toString());
@@ -267,12 +278,13 @@ public class GlobalConfigPanel extends ConfigPanel {
                 .filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged())
                 .collect(Collectors.toSet());
 
-        // list of adducts to be shown in the Compute panel
-        Set<PrecursorIonType> possibleAdducts = allInstances.stream()
+        // list of adducts to be shown in the Compute panel. Read locked: this is the live feature list, which a
+        // reload (e.g. a filter change while the compute dialog is open) may swap from another thread.
+        Set<PrecursorIonType> possibleAdducts = EventLists.readLocked(allInstances, () -> allInstances.stream()
                 .map(InstanceBean::getDetectedAdducts)
                 .flatMap(Set::stream)
                 .filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()));
 
         // Subset of possibleAdducts where the checkboxes are pre-selected (checked) in the compute panel.
         Set<PrecursorIonType> selectedAdducts = new HashSet<>();

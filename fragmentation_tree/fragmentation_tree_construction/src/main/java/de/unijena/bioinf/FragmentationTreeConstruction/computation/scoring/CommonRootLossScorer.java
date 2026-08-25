@@ -3,7 +3,9 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
+import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
@@ -17,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 @Called("CommonRootLoss")
 public class CommonRootLossScorer implements FragmentScorer<MolecularFormula>, Parameterized {
@@ -71,6 +74,13 @@ public class CommonRootLossScorer implements FragmentScorer<MolecularFormula>, P
     public double score(Fragment graphFragment, ProcessedPeak correspondingPeak, boolean isRoot, MolecularFormula root) {
         if (root==null) return 0d;
         final MolecularFormula difference = root.subtract(graphFragment.getFormula());
-        return scoring.get(difference) - normalization;
+        return substituteFluor(difference, scoring::get) - normalization;
+    }
+
+    private static Element H= PeriodicTable.getInstance().getByName("H"), F = PeriodicTable.getInstance().getByName("F");
+    private Double substituteFluor(MolecularFormula f, Function<MolecularFormula, Double> function) {
+        MolecularFormula g = f.substitute(H, F);
+        if (g==f) return function.apply(f);
+        else return Math.max(function.apply(f), function.apply(g));
     }
 }

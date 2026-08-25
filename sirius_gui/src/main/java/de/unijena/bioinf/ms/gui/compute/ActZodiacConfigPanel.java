@@ -50,7 +50,7 @@ public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPan
     protected void setComponentsEnabled(boolean enabled) {
         if (enabled) {
             if (new QuestionDialog(gui.getMainFrame(), "Low number of Compounds",
-                    GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
+                    GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyway?"),
                     DO_NOT_SHOW_AGAIN_KEY_Z_COMP, ReturnValue.Success).isCancel()) {
                 activationButton.setSelected(false);
                 return;
@@ -58,7 +58,7 @@ public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPan
 
             if ((totalCompounds > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)) {
                 if (new QuestionDialog(gui.getMainFrame(), "High Memory Consumption",
-                        GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + totalCompounds + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
+                        GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + totalCompounds + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyway?"),
                         DO_NOT_SHOW_AGAIN_KEY_Z_MEM, ReturnValue.Success).isCancel()) {
                     activationButton.setSelected(false);
                     return;

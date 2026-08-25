@@ -7,7 +7,6 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -41,18 +40,23 @@ public abstract class BrowserPanelProvider<BP extends BrowserPanel> {
     }
 
 
-    public BP makeReactPanel(@NotNull String appPath, @NotNull String projectId){
+    public BrowserPanel makeReactPanel(@NotNull String appPath, @NotNull String paramName, @NotNull String paramValue){
+        String url = baseUrl.resolve(appPath) + THEME_REST_PARA + "&" + paramName + "=" + paramValue;
+        return newLoadingBrowserPanel(url);
+    }
+
+    public BrowserPanel makeReactPanel(@NotNull String appPath, @NotNull String projectId){
         return makeReactPanel(appPath, projectId, null, null, null, null);
     }
 
-    public BP makeReactPanel(@NotNull String appPath,
+    public BrowserPanel makeReactPanel(@NotNull String appPath,
                                       @NotNull String projectId,
                                       @Nullable String alignedFeatureId,
                                       @Nullable String formulaId,
                                       @Nullable String inchiKey,
                                       @Nullable String matchId){
         String url = baseUrl.resolve(appPath) +  makeParameters(projectId, alignedFeatureId, formulaId, inchiKey, matchId);
-        return newBrowserPanel(url);
+        return newLoadingBrowserPanel(url);
     }
 
     public BP makeHTMLTextPanel(String htmlText) {
@@ -76,6 +80,15 @@ public abstract class BrowserPanelProvider<BP extends BrowserPanel> {
     }
 
     public BP makeHTMLPanel(String htmlContent, String cssResource) {
+        // Load the data URL
+        return newBrowserPanel(toHtmlDataUrl(htmlContent, cssResource), LinkInterception.ALL);
+    }
+
+    /**
+     * Turns the given html into a data url that a browser can load directly, so it does not have to
+     * be served from anywhere.
+     */
+    protected String toHtmlDataUrl(String htmlContent, String cssResource) {
         // Include the CSS in the HTML if provided
         String cssContent = WebViewUtils.loadCSSAndSetColorThemeAndFont(cssResource);
         if (cssContent != null && !cssContent.isEmpty()) {
@@ -89,10 +102,7 @@ public abstract class BrowserPanelProvider<BP extends BrowserPanel> {
         }
 
         // Create data URL with base64 encoding
-        String dataUrl = WebViewUtils.textToDataURL(htmlContent);
-
-        // Load the data URL
-        return newBrowserPanel(dataUrl, LinkInterception.ALL);
+        return WebViewUtils.textToDataURL(htmlContent);
     }
 
     public abstract BP newBrowserPanel(@NotNull String fullUrlWithParameters, @NotNull LinkInterception linkInterception);
@@ -101,12 +111,73 @@ public abstract class BrowserPanelProvider<BP extends BrowserPanel> {
         return newBrowserPanel(fullUrlWithParameters, LinkInterception.NONE);
     }
 
-    public JDialog newBrowserPopUp(Frame owner, String title, URI url) {
-        return new BrowserDialog(owner, title, newBrowserPanel(url.toString()));
+    /**
+     * Creates a browser panel that shows a loading animation until its web view has been created in
+     * the background. To be used for web views that take long enough to start that waiting for them
+     * would block the event dispatch thread noticeably, which is the case for the react apps.
+     * <p>
+     * Not used for the panels showing plain html, since a data url is loaded immediately and a
+     * loading animation would be bigger than the content of e.g. a single line of text.
+     */
+    public BrowserPanel newLoadingBrowserPanel(@NotNull String fullUrlWithParameters){
+        return newLoadingBrowserPanel(fullUrlWithParameters, LinkInterception.NONE);
     }
 
-    public JDialog newBrowserPopUp(Dialog owner, String title, URI url) {
-        return new BrowserDialog(owner, title, newBrowserPanel(url.toString()));
+    public BrowserPanel newLoadingBrowserPanel(@NotNull String fullUrlWithParameters, @NotNull LinkInterception linkInterception){
+        return new LoadingBrowserPanel(() -> newBrowserPanel(fullUrlWithParameters, linkInterception));
+    }
+
+    /**
+     * Starts building a window showing one of the react apps. It shows a loading animation until the
+     * app is ready, since starting one takes seconds.
+     *
+     * @see #makeReactPanel(String, String, String)
+     */
+    public BrowserWindowBuilder newReactWindow(@NotNull String appPath, @NotNull String paramName, @NotNull String paramValue) {
+        String url = baseUrl.resolve(appPath) + THEME_REST_PARA + "&" + paramName + "=" + paramValue;
+        return new BrowserWindowBuilder(this, url, LinkInterception.NONE, true);
+    }
+
+    /**
+     * Starts building a window showing one of the react apps. It shows a loading animation until the
+     * app is ready, since starting one takes seconds.
+     *
+     * @see #makeReactPanel(String, String, String, String, String, String)
+     */
+    public BrowserWindowBuilder newReactWindow(@NotNull String appPath,
+                                               @NotNull String projectId,
+                                               @Nullable String alignedFeatureId,
+                                               @Nullable String formulaId,
+                                               @Nullable String inchiKey,
+                                               @Nullable String matchId) {
+        String url = baseUrl.resolve(appPath) + makeParameters(projectId, alignedFeatureId, formulaId, inchiKey, matchId);
+        return new BrowserWindowBuilder(this, url, LinkInterception.NONE, true);
+    }
+
+    /**
+     * Starts building a window showing the given url. It shows a loading animation until the page is
+     * there, since how long loading a page takes is not known beforehand.
+     */
+    public BrowserWindowBuilder newBrowserWindow(@NotNull URI url) {
+        return newBrowserWindow(url.toString());
+    }
+
+    public BrowserWindowBuilder newBrowserWindow(@NotNull String url) {
+        return new BrowserWindowBuilder(this, url, LinkInterception.NONE, true);
+    }
+
+    /**
+     * Starts building a window showing the given html.
+     * <p>
+     * Such a window does not show a loading animation, since a data url is there immediately and the
+     * animation would be bigger than the content of e.g. a single line of text.
+     */
+    public BrowserWindowBuilder newHtmlWindow(@NotNull String htmlContent) {
+        return newHtmlWindow(htmlContent, Colors.isDarkTheme() ? CSS_DARK_RESOURCE : CSS_LIGHT_RESOURCE);
+    }
+
+    public BrowserWindowBuilder newHtmlWindow(@NotNull String htmlContent, @NotNull String cssResource) {
+        return new BrowserWindowBuilder(this, toHtmlDataUrl(htmlContent, cssResource), LinkInterception.ALL, false);
     }
 
     public abstract void destroy();

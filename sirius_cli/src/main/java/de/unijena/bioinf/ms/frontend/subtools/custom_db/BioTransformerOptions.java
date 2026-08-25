@@ -32,7 +32,7 @@ public class BioTransformerOptions {
     @CommandLine.Option(names = "--useDB", description = "Retrieving from HMDB.", defaultValue = "false", order = 313)
     private boolean useDB;
 
-    @CommandLine.Option(names = "--useSubstructure", description = "Please specify if you want use 2D structure (first 14 characters of InChIKey) when retrieving from database.", defaultValue = "true", hidden = true, order = 314)
+    @CommandLine.Option(names = "--useSubstructure", description = "Please specify if you want to use 2D structures (first 14 characters of InChIKey) when retrieving from the database.", defaultValue = "true", hidden = true, order = 314)
     private boolean useSubstructure;
 
     @CommandLine.ArgGroup(multiplicity = "1", order = 309)
@@ -88,7 +88,7 @@ public class BioTransformerOptions {
 
 
     public static class Sequence {
-        @CommandLine.Option(names = "--seq-step", description = "Apply multiple transformation steps.\nFor each step, specify the type and optional its iterations. Valid values: ${COMPLETION-CANDIDATES}\n", completionCandidates = MetabolicTransformationSequenceCandidates.class, required = true, order = 321)
+        @CommandLine.Option(names = "--seq-step", description = "Apply multiple transformation steps.\nFor each step, specify the type and optionally its number of iterations. Valid values: ${COMPLETION-CANDIDATES}\n", completionCandidates = MetabolicTransformationSequenceCandidates.class, required = true, order = 321)
         public void setMetabolicTransformation(@NotNull MetabolicTransformation metabolicTransformation) {
             if (!MetabolicTransformation.valueSequenceOnly().contains(metabolicTransformation))
                 throw new CommandLine.PicocliException("Metabolic transformation: '" + metabolicTransformation + "' is not allowed in transformation sequence.");

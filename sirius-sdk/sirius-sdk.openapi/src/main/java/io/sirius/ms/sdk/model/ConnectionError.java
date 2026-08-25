@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -48,7 +49,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ConnectionError.JSON_PROPERTY_ERROR,
   ConnectionError.JSON_PROPERTY_WARNING
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class ConnectionError {
   public static final String JSON_PROPERTY_ERROR_TYPE = "errorType";
   @jakarta.annotation.Nonnull
@@ -96,7 +97,7 @@ public class ConnectionError {
    * @return errorType
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_ERROR_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_ERROR_TYPE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public ConnectionErrorType getErrorType() {
@@ -104,7 +105,7 @@ public class ConnectionError {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ERROR_TYPE)
+  @JsonProperty(value = JSON_PROPERTY_ERROR_TYPE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setErrorType(@jakarta.annotation.Nonnull ConnectionErrorType errorType) {
     this.errorType = errorType;
@@ -121,7 +122,7 @@ public class ConnectionError {
    * @return errorKlass
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_ERROR_KLASS)
+  @JsonProperty(value = JSON_PROPERTY_ERROR_KLASS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public ConnectionErrorClass getErrorKlass() {
@@ -129,7 +130,7 @@ public class ConnectionError {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ERROR_KLASS)
+  @JsonProperty(value = JSON_PROPERTY_ERROR_KLASS, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setErrorKlass(@jakarta.annotation.Nonnull ConnectionErrorClass errorKlass) {
     this.errorKlass = errorKlass;
@@ -146,7 +147,7 @@ public class ConnectionError {
    * @return siriusErrorCode
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_SIRIUS_ERROR_CODE)
+  @JsonProperty(value = JSON_PROPERTY_SIRIUS_ERROR_CODE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getSiriusErrorCode() {
@@ -154,7 +155,7 @@ public class ConnectionError {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SIRIUS_ERROR_CODE)
+  @JsonProperty(value = JSON_PROPERTY_SIRIUS_ERROR_CODE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setSiriusErrorCode(@jakarta.annotation.Nonnull Integer siriusErrorCode) {
     this.siriusErrorCode = siriusErrorCode;
@@ -171,7 +172,7 @@ public class ConnectionError {
    * @return siriusMessage
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_SIRIUS_MESSAGE)
+  @JsonProperty(value = JSON_PROPERTY_SIRIUS_MESSAGE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public String getSiriusMessage() {
@@ -179,7 +180,7 @@ public class ConnectionError {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SIRIUS_MESSAGE)
+  @JsonProperty(value = JSON_PROPERTY_SIRIUS_MESSAGE, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setSiriusMessage(@jakarta.annotation.Nonnull String siriusMessage) {
     this.siriusMessage = siriusMessage;
@@ -196,7 +197,7 @@ public class ConnectionError {
    * @return serverResponseErrorCode
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SERVER_RESPONSE_ERROR_CODE)
+  @JsonProperty(value = JSON_PROPERTY_SERVER_RESPONSE_ERROR_CODE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Integer getServerResponseErrorCode() {
@@ -204,7 +205,7 @@ public class ConnectionError {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SERVER_RESPONSE_ERROR_CODE)
+  @JsonProperty(value = JSON_PROPERTY_SERVER_RESPONSE_ERROR_CODE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setServerResponseErrorCode(@jakarta.annotation.Nullable Integer serverResponseErrorCode) {
     this.serverResponseErrorCode = serverResponseErrorCode;
@@ -221,7 +222,7 @@ public class ConnectionError {
    * @return serverResponseErrorMessage
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SERVER_RESPONSE_ERROR_MESSAGE)
+  @JsonProperty(value = JSON_PROPERTY_SERVER_RESPONSE_ERROR_MESSAGE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getServerResponseErrorMessage() {
@@ -229,7 +230,7 @@ public class ConnectionError {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SERVER_RESPONSE_ERROR_MESSAGE)
+  @JsonProperty(value = JSON_PROPERTY_SERVER_RESPONSE_ERROR_MESSAGE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setServerResponseErrorMessage(@jakarta.annotation.Nullable String serverResponseErrorMessage) {
     this.serverResponseErrorMessage = serverResponseErrorMessage;
@@ -246,7 +247,7 @@ public class ConnectionError {
    * @return error
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ERROR)
+  @JsonProperty(value = JSON_PROPERTY_ERROR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isError() {
@@ -254,7 +255,7 @@ public class ConnectionError {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ERROR)
+  @JsonProperty(value = JSON_PROPERTY_ERROR, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setError(@jakarta.annotation.Nullable Boolean error) {
     this.error = error;
@@ -271,7 +272,7 @@ public class ConnectionError {
    * @return warning
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_WARNING)
+  @JsonProperty(value = JSON_PROPERTY_WARNING, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Boolean isWarning() {
@@ -279,7 +280,7 @@ public class ConnectionError {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_WARNING)
+  @JsonProperty(value = JSON_PROPERTY_WARNING, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setWarning(@jakarta.annotation.Nullable Boolean warning) {
     this.warning = warning;

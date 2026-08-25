@@ -22,10 +22,15 @@ package de.unijena.bioinf.ms.middleware.service.annotations;
 
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
+import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -237,13 +242,37 @@ public class AnnotationUtils {
     }
 
     public static LipidAnnotation asLipidAnnotation(FTree fTree) {
-        return fTree.getAnnotation(LipidSpecies.class).map(ls -> LipidAnnotation.builder()
-                .lipidSpecies(ls.toString())
-                .lipidMapsId(ls.getLipidClass().getLipidMapsId())
-                .lipidClassName(ls.getLipidClass().longName())
-                .chainsUnknown(ls.chainsUnknown())
-                .hypotheticalStructure(ls.generateHypotheticalStructure().orElse(null))
-                .build()
-        ).orElse(LipidAnnotation.builder().build());
+        return asLipidAnnotation(fTree.getAnnotation(LipidSpecies.class).orElse(null));
+    }
+
+    @NotNull
+    public static LipidAnnotation asLipidAnnotation(@Nullable LipidSpecies lipidSpecies) {
+        if (lipidSpecies == null)
+            return LipidAnnotation.builder().build();
+        return LipidAnnotation.builder()
+                .lipidSpecies(lipidSpecies.toString())
+                .lipidMapsId(lipidSpecies.getLipidClass().getLipidMapsId())
+                .lipidClassName(lipidSpecies.getLipidClass().longName())
+                .chainsUnknown(lipidSpecies.chainsUnknown())
+                .hypotheticalStructure(lipidSpecies.generateHypotheticalStructure().orElse(null))
+                .build();
+    }
+
+    @NotNull
+    public static Map<String, DataQuality> convertToQualityMap(@Nullable QualityReport qualityReport) {
+        Map<String, DataQuality> qualities = new HashMap<>();
+        if (qualityReport != null) {
+            qualityReport.getCategories().values()
+                    .forEach(v -> qualities.put(v.getCategoryId(), v.getOverallQuality()));
+        }
+        return qualities;
+    }
+
+    public static AlignedFeatureQuality convertToFeatureQuality(QualityReport qualityReport) {
+        return AlignedFeatureQuality.builder()
+                .alignedFeatureId(String.valueOf(qualityReport.getAlignedFeatureId()))
+                .overallQuality(qualityReport.getOverallQuality())
+                .categories(qualityReport.getCategories())
+                .build();
     }
 }

@@ -66,11 +66,15 @@ public class MvBasedAlignmentStorage implements AlignmentStorage {
     public AlignedMoI mergeMoIs(AlignWithRecalibration recalibration, MoI left, MoI right) {
         AlignedMoI merge = AlignedMoI.merge(recalibration, left, right);
         if (left.getUid() >= 0) {
+            // the left hand partner does belong to this storage, and its entry is replaced by the merge
             mois.remove(left.getUid());
         }
-        if (right.getUid() >= 0) {
-            mois.remove(right.getUid());
-        }
+        // The right hand partner is deliberately not removed. It comes from the sample's own alignment storage and
+        // was never in this one, and a uid is only unique within the storage that handed it out - it is the mass to a
+        // thousandth of a Dalton plus a counter of that storage's own. So removing it here either does nothing or
+        // deletes whatever this storage happens to keep under the same key, which is a real alignment lost for good.
+        // On one experiment that was three of thirty three thousand merges, and which three depended on how the
+        // parallel alignment jobs interleaved.
         addMoI(merge);
         return merge;
     }

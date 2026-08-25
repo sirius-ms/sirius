@@ -20,12 +20,18 @@
 
 package de.unijena.bioinf.ms.middleware.configuration;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.config.PageableHandlerMethodArgumentResolverCustomizer;
 
 @Configuration
+@AllArgsConstructor
+@NoArgsConstructor
 public class GlobalConfig {
 
     @Value("${sirius.middleware.controller.unpagedLimit}")
@@ -34,5 +40,10 @@ public class GlobalConfig {
 
     public Pageable unpaged(){
         return Pageable.ofSize(unpagedLimit);
+    }
+
+    @Bean
+    public PageableHandlerMethodArgumentResolverCustomizer customizePageable() {
+        return resolver -> resolver.setMaxPageSize(Integer.MAX_VALUE);
     }
 }

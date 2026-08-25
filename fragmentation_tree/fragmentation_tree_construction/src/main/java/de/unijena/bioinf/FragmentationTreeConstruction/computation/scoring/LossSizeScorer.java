@@ -45,7 +45,6 @@ public class LossSizeScorer implements LossScorer, PeakPairScorer, MolecularForm
 
     private DensityFunction distribution;
     private double normalization;
-
     private boolean adjustNormalizationBasedOnData;
 
     public LossSizeScorer() {
@@ -92,6 +91,7 @@ public class LossSizeScorer implements LossScorer, PeakPairScorer, MolecularForm
     }
 
     @Override
+    @Deprecated
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[][] scores) {
         final TDoubleArrayList lossSizeScores = adjustNormalizationBasedOnData ? new TDoubleArrayList() : null;
         for (int fragment=0; fragment < peaks.size(); ++fragment) {

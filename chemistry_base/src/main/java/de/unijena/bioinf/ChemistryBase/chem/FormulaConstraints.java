@@ -56,6 +56,7 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
     private final static Pattern INTERVAL = Pattern.compile("\\[(?:(\\d*)\\s*-\\s*)?(\\d*)?\\]");
 
     public static FormulaConstraints fromString(String alphabet) {
+        if (alphabet.replace(",","").trim().isEmpty()) return empty(); //CLI parameters my specify empty constraints, e.g. for FormulaSettings.fallback
         return new FormulaConstraints(alphabet);
     }
 

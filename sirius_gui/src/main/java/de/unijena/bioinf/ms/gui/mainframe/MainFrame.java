@@ -38,6 +38,7 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.LandingPage;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
@@ -197,11 +198,10 @@ public class MainFrame extends JFrame implements DropTargetListener {
         add(toolbar, BorderLayout.NORTH);
 
         // set MainFrames initial size
-        Rectangle usableScreenBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-        setSize(new Dimension(
-                Math.min(usableScreenBounds.width, filterableCompoundListPanel.getPreferredSize().width + landingPage.getPreferredSize().width),
-                Math.min(usableScreenBounds.height, toolbar.getPreferredSize().height + 5 + landingPage.getPreferredSize().height)
-        ));
+        setSize(GuiUtils.shrinkToUsableScreen(new Dimension(
+                filterableCompoundListPanel.getPreferredSize().width + landingPage.getPreferredSize().width,
+                toolbar.getPreferredSize().height + 5 + landingPage.getPreferredSize().height
+        )));
 
         setLocationRelativeTo(null); //init mainframe
     }

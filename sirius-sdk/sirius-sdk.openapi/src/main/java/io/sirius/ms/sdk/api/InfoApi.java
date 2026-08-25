@@ -27,7 +27,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class InfoApi {
     private ApiClient apiClient;
 
@@ -47,11 +47,11 @@ public class InfoApi {
         this.apiClient = apiClient;
     }
 
-    
     /**
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ConnectionCheck
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -66,7 +66,7 @@ public class InfoApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -82,6 +82,7 @@ public class InfoApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ConnectionCheck
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -94,6 +95,7 @@ public class InfoApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;ConnectionCheck&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -106,6 +108,7 @@ public class InfoApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -117,6 +120,8 @@ public class InfoApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param serverInfo The serverInfo parameter
      * @param updateInfo The updateInfo parameter
      * @return Info
@@ -134,9 +139,9 @@ public class InfoApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "serverInfo", serverInfo));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "updateInfo", updateInfo));
-        
+
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -152,6 +157,8 @@ public class InfoApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param serverInfo The serverInfo parameter
      * @param updateInfo The updateInfo parameter
      * @return Info
@@ -166,6 +173,8 @@ public class InfoApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param serverInfo The serverInfo parameter
      * @param updateInfo The updateInfo parameter
      * @return ResponseEntity&lt;Info&gt;
@@ -180,6 +189,8 @@ public class InfoApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param serverInfo The serverInfo parameter
      * @param updateInfo The updateInfo parameter
      * @return ResponseSpec

@@ -33,6 +33,7 @@ public class OrderCompoundByQuality extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        mainFrame.getCompoundList().orderBy(Comparator.nullsLast(Comparator.comparing(InstanceBean::getQuality).reversed()));
+        mainFrame.getFilterableCompoundListPanel().runInBackgroundAndLoad(() ->
+        mainFrame.getCompoundList().orderBy(Comparator.nullsLast(Comparator.comparing(InstanceBean::getQuality).reversed())));
     }
 }

@@ -323,6 +323,15 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
     protected Pattern MULTIMERE_PATTERN = Pattern.compile("\\[\\s*(\\d+)M(?:\\s*[+-]|])");
 
     private PrecursorIonType parseIonType(String name) throws UnknownElementException {
+        return parseIonType(name, false);
+    }
+
+    /**
+     * @param doNotStore if true, an ion mode this table does not know yet is used for the parsed ion type but
+     *                   not registered as a common ion mode. Use it for input that only asks a question - a
+     *                   search query, a validation - where a typo must not widen what SIRIUS treats as common.
+     */
+    private PrecursorIonType parseIonType(String name, boolean doNotStore) throws UnknownElementException {
         int multimereCount = 1;
         Matcher multimereMatcher = MULTIMERE_PATTERN.matcher(name);
         if (multimereMatcher.find()) {
@@ -491,7 +500,8 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
                     //search for possible new ionmode
                     String ionModeName = "[M + " + possibleNewIonType.toString() + "]" + ((charge < 0) ? "-" : "+");
                     IonMode im = new IonMode(charge, ionModeName, possibleNewIonType);
-                    addCommonIonMode(im);
+                    if (!doNotStore)
+                        addCommonIonMode(im);
                     usedIonMode = im;
                     adducts.remove(possibleNewIonType);
                     break;
@@ -1039,8 +1049,22 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
      * [M+H]+
      */
     public PrecursorIonType ionByName(String name) throws UnknownElementException {
+        return ionByName(name, false);
+    }
+
+    /**
+     * Searches for an ion with the given name, without letting the lookup change this table.
+     * <p>
+     * Same answer as {@link #ionByName(String)} - the known ion types are still consulted first and the same
+     * parser handles everything else - except that an ion mode the table does not know yet is not registered as
+     * a common one. Parsing normally does register it, which is right for data being imported and wrong for
+     * anything a user typed: a mistyped adduct would change how every later one is read.
+     *
+     * @param doNotStore true to leave this table exactly as it was
+     */
+    public PrecursorIonType ionByName(String name, boolean doNotStore) throws UnknownElementException {
         PrecursorIonType re = ionByNameFromTableOrNull(name);
-        return re != null ? re : parseIonType(name);
+        return re != null ? re : parseIonType(name, doNotStore);
     }
 
     public PrecursorIonType ionByNameOrThrow(String name) {

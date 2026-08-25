@@ -79,13 +79,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | the tag group that was added |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## addPossibleValuesToTagDefinition
@@ -149,13 +152,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | the definitions of the tags that have been added |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## createTags
@@ -217,13 +223,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | the definitions of the tags that have been created |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## deleteGroup
@@ -291,6 +300,9 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## deleteTag
@@ -358,6 +370,9 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getGroupByName
@@ -419,13 +434,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Tag group. |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getGroups
@@ -487,13 +505,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Groups. |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getTag
@@ -555,13 +576,16 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Tag definition. |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 
 
 ## getTags
@@ -623,11 +647,14 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: application/json, application/problem+json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Tag definitions. |  -  |
+| **500** | Unexpected server-side error. The problem detail carries the reason. |  -  |
+| **404** | The referenced object does not exist in this SIRIUS instance or project. |  -  |
+| **400** | The request body or a parameter is malformed or violates a constraint. |  -  |
 

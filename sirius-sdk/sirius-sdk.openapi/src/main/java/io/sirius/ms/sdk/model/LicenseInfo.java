@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -49,7 +50,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   LicenseInfo.JSON_PROPERTY_CONSUMABLES,
   LicenseInfo.JSON_PROPERTY_TERMS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class LicenseInfo {
   public static final String JSON_PROPERTY_USER_EMAIL = "userEmail";
   @jakarta.annotation.Nullable
@@ -85,7 +86,7 @@ public class LicenseInfo {
    * @return userEmail
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_USER_EMAIL)
+  @JsonProperty(value = JSON_PROPERTY_USER_EMAIL, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getUserEmail() {
@@ -93,7 +94,7 @@ public class LicenseInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_USER_EMAIL)
+  @JsonProperty(value = JSON_PROPERTY_USER_EMAIL, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setUserEmail(@jakarta.annotation.Nullable String userEmail) {
     this.userEmail = userEmail;
@@ -110,7 +111,7 @@ public class LicenseInfo {
    * @return userId
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_USER_ID)
+  @JsonProperty(value = JSON_PROPERTY_USER_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getUserId() {
@@ -118,7 +119,7 @@ public class LicenseInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_USER_ID)
+  @JsonProperty(value = JSON_PROPERTY_USER_ID, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setUserId(@jakarta.annotation.Nullable String userId) {
     this.userId = userId;
@@ -135,7 +136,7 @@ public class LicenseInfo {
    * @return subscription
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SUBSCRIPTION)
+  @JsonProperty(value = JSON_PROPERTY_SUBSCRIPTION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Subscription getSubscription() {
@@ -143,7 +144,7 @@ public class LicenseInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SUBSCRIPTION)
+  @JsonProperty(value = JSON_PROPERTY_SUBSCRIPTION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSubscription(@jakarta.annotation.Nullable Subscription subscription) {
     this.subscription = subscription;
@@ -160,7 +161,7 @@ public class LicenseInfo {
    * @return consumables
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONSUMABLES)
+  @JsonProperty(value = JSON_PROPERTY_CONSUMABLES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public SubscriptionConsumables getConsumables() {
@@ -168,7 +169,7 @@ public class LicenseInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CONSUMABLES)
+  @JsonProperty(value = JSON_PROPERTY_CONSUMABLES, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConsumables(@jakarta.annotation.Nullable SubscriptionConsumables consumables) {
     this.consumables = consumables;
@@ -193,7 +194,7 @@ public class LicenseInfo {
    * @return terms
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TERMS)
+  @JsonProperty(value = JSON_PROPERTY_TERMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<Term> getTerms() {
@@ -201,7 +202,7 @@ public class LicenseInfo {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TERMS)
+  @JsonProperty(value = JSON_PROPERTY_TERMS, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTerms(@jakarta.annotation.Nullable List<Term> terms) {
     this.terms = terms;

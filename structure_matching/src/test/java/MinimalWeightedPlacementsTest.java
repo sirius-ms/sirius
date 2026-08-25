@@ -1,18 +1,17 @@
 import matching.algorithm.MinimalWeightedPlacements;
-import matching.datastructures.*;
+import matching.datastructures.AtomContainerE;
+import matching.datastructures.AtomE;
+import matching.datastructures.SideChain;
+import matching.datastructures.SideChainList;
 import matching.io.SideChainListReader;
 import org.junit.Test;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
-import matching.utils.HungarianAlgorithm;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
@@ -220,9 +219,9 @@ public class MinimalWeightedPlacementsTest {
     }
 
     private AtomContainerE getAtomContainerE(SmilesParser smiParser, String smiles) throws CDKException {
-        AtomContainerE molecule = new AtomContainerE(smiParser.parseSmiles(smiles));
+        IAtomContainer molecule = smiParser.parseSmiles(smiles);
         AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(molecule);
         Aromaticity.cdkLegacy().apply(molecule);
-        return molecule;
+        return new AtomContainerE(molecule);
     }
 }

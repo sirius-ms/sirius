@@ -31,8 +31,10 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationMeasure;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.canopus.CanopusResult;
+import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.MsNovelistFingerblastResult;
@@ -432,19 +434,24 @@ public class NoSQLInstance implements Instance {
         return project().findByFeatureIdStr(id, ComputedSubtools.class).findFirst().orElseGet(() -> ComputedSubtools.builder().alignedFeatureId(id).build());
     }
 
-    @SneakyThrows
     @Override
     public void saveSpectraSearchResult(@Nullable List<SpectralSearchResult.SearchResult> results) {
-        List<SpectraMatch> matches = results == null ? List.of() : results.stream()
-                .map(s -> SpectraMatch.builder().alignedFeatureId(id).searchResult(s).build())
-                .collect(Collectors.toList());
+        try {
+            List<SpectraMatch> matches = results == null ? List.of() : results.stream()
+                    .map(s -> SpectraMatch.builder().alignedFeatureId(id).searchResult(s).build())
+                    .collect(Collectors.toList());
 
-        project().getStorage().write(() -> {
-            if (!matches.isEmpty())
-                project().getStorage().insertAll(matches);
-            upsertComputedSubtools(cs -> cs.setLibrarySearch(true));
-        });
-
+            project().getStorage().write(() -> {
+                if (!matches.isEmpty())
+                    project().getStorage().insertAll(matches);
+                upsertComputedSubtools(cs -> cs.setLibrarySearch(true));
+            });
+        } catch (IOException e) {
+            deleteSpectraSearchResult();
+            throw new RuntimeException(e);
+        } finally {
+//            project().getStorage().flush();
+        }
     }
 
     @Override
@@ -494,6 +501,7 @@ public class NoSQLInstance implements Instance {
                                 .siriusScore(scores.getSiriusScore())
                                 .isotopeScore(scores.getIsotopeMs1Score())
                                 .treeScore(scores.getTreeScore())
+                                .lipidSpecies(tree.getAnnotation(LipidSpecies.class).orElse(null))
                                 .build();
 
                         FTreeResult treeResult = FTreeResult.builder().fTree(tree).alignedFeatureId(id).build();
@@ -515,6 +523,9 @@ public class NoSQLInstance implements Instance {
         } catch (IOException e) {
             deleteSiriusResult(); //try deleting all results in case of io error so that project stays consistent
             throw new RuntimeException(e);
+        } finally {
+            //flushing ensures all events have been fired
+//            project().getStorage().flush();
         }
     }
 
@@ -522,42 +533,51 @@ public class NoSQLInstance implements Instance {
     @Override
     public boolean hasSiriusResult() {
         return getComputedSubtools().isFormulaSearch();
-//        return project().countByFeatureId(id, FormulaCandidate.class) > 0;
     }
 
     @SneakyThrows
     @Override
     public void deleteSiriusResult() {
-        project().getStorage().write(() -> {
-            project().deleteAllByFeatureId(id, FormulaCandidate.class);
-            project().deleteAllByFeatureId(id, FTreeResult.class);
-            upsertComputedSubtools(cs -> cs.setFormulaSearch(false));
-        });
+        try {
+            project().getStorage().write(() -> {
+                project().deleteAllByFeatureId(id, FormulaCandidate.class);
+                project().deleteAllByFeatureId(id, FTreeResult.class);
+                upsertComputedSubtools(cs -> cs.setFormulaSearch(false));
+            });
 
-        removeAndSaveAdductsBySource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH,
-                DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove anymore if MS1 preprocessor is called during import...
+            removeAndSaveAdductsBySource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH,
+                    DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove anymore if MS1 preprocessor is called during import...
+        } finally {
+//            project().getStorage().flush();
+        }
     }
 
-    @SneakyThrows
     @Override
     public void saveZodiacResult(List<FCandidate<?>> zodiacScores) {
-        // mak zodiac score accessible via index
-        Long2ObjectMap<NoSqlFCandidate> zodiacCandidates = new Long2ObjectOpenHashMap<>(zodiacScores.size());
-        zodiacScores.stream().map(fc -> ((NoSqlFCandidate) fc))
-                .forEach(c -> zodiacCandidates.put(c.getId().longValue(), c));
+        try {
+            // mak zodiac score accessible via index
+            Long2ObjectMap<NoSqlFCandidate> zodiacCandidates = new Long2ObjectOpenHashMap<>(zodiacScores.size());
+            zodiacScores.stream().map(fc -> ((NoSqlFCandidate) fc))
+                    .forEach(c -> zodiacCandidates.put(c.getId().longValue(), c));
 
-        // add zodiac score and recompute rank for all candidates.
-        final AtomicInteger rank = new AtomicInteger(1);
-        List<FormulaCandidate> candidates = project().findByFeatureIdStr(id, FormulaCandidate.class).peek(fc -> {
-            if (zodiacCandidates.containsKey(fc.getFormulaId()))
-                zodiacCandidates.get(fc.getFormulaId()).getAnnotation(ZodiacScore.class).map(ZodiacScore::score)
-                        .ifPresent(fc::setZodiacScore);
-        }).sorted().peek(fc -> fc.setFormulaRank(rank.getAndIncrement())).toList();
+            // add zodiac score and recompute rank for all candidates.
+            final AtomicInteger rank = new AtomicInteger(1);
+            List<FormulaCandidate> candidates = project().findByFeatureIdStr(id, FormulaCandidate.class).peek(fc -> {
+                if (zodiacCandidates.containsKey(fc.getFormulaId()))
+                    zodiacCandidates.get(fc.getFormulaId()).getAnnotation(ZodiacScore.class).map(ZodiacScore::score)
+                            .ifPresent(fc::setZodiacScore);
+            }).sorted().peek(fc -> fc.setFormulaRank(rank.getAndIncrement())).toList();
 
-        project().getStorage().write(() -> {
-            project().getStorage().upsertAll(candidates);
-            upsertComputedSubtools(cs -> cs.setZodiac(true));
-        });
+            project().getStorage().write(() -> {
+                project().getStorage().upsertAll(candidates);
+                upsertComputedSubtools(cs -> cs.setZodiac(true));
+            });
+        } catch (IOException e) {
+            deleteZodiacResult();
+            throw new RuntimeException(e);
+        } finally {
+//            project().getStorage().flush();
+        }
     }
 
     @Override
@@ -572,34 +592,38 @@ public class NoSQLInstance implements Instance {
             project().getStorage().insertAll(project().findByFeatureIdStr(id, FormulaCandidate.class).peek(fc -> fc.setZodiacScore(null)).toList());
             upsertComputedSubtools(cs -> cs.setZodiac(false));
         });
-
     }
 
-    @SneakyThrows
     @Override
     public void saveFingerprintResult(@NotNull List<FCandidate<?>> fingerprintResults) {
-        List<CsiPrediction> fps = fingerprintResults.stream()
-                .filter(fc -> fc.hasAnnotation(FingerprintResult.class))
-                .map(fc -> {
-                    @NotNull FingerprintResult fpResult = fc.getAnnotationOrThrow(FingerprintResult.class);
-                    return CsiPrediction.builder()
-                            .formulaId((long) fc.getId())
-                            .alignedFeatureId(id)
-                            .fingerprint(fpResult.fingerprint)
-                            .build();
-                }).collect(Collectors.toList());
+        try {
+            List<CsiPrediction> fps = fingerprintResults.stream()
+                    .filter(fc -> fc.hasAnnotation(FingerprintResult.class))
+                    .map(fc -> {
+                        @NotNull FingerprintResult fpResult = fc.getAnnotationOrThrow(FingerprintResult.class);
+                        return CsiPrediction.builder()
+                                .formulaId((long) fc.getId())
+                                .alignedFeatureId(id)
+                                .fingerprint(fpResult.fingerprint)
+                                .build();
+                    }).collect(Collectors.toList());
 
 
-        project().getStorage().write(() -> {
-            project().getStorage().insertAll(fps);
-            upsertComputedSubtools(cs -> cs.setFingerprint(true));
-        });
+            project().getStorage().write(() -> {
+                project().getStorage().insertAll(fps);
+                upsertComputedSubtools(cs -> cs.setFingerprint(true));
+            });
+        } catch (IOException e) {
+            deleteFingerprintResult();
+            throw new RuntimeException(e);
+        } finally {
+//            project().getStorage().flush();
+        }
     }
 
     @Override
     public boolean hasFingerprintResult() {
         return getComputedSubtools().isFingerprint();
-//        return project().countByFeatureId(id, CsiPrediction.class) > 0;
     }
 
     @SneakyThrows
@@ -615,79 +639,86 @@ public class NoSQLInstance implements Instance {
     public void saveStructureSearchResult(@NotNull List<FCandidate<?>> structureSearchResults) {
         //todo move entity creation to document project space package
         try {
+            Object2IntMap<String> dbFlagsToRank = new Object2IntOpenHashMap<>();
+
+            {
+                List<CsiStructureMatch> matches = structureSearchResults.stream()
+                        .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
+                        .flatMap(fc -> fc.getAnnotationOrThrow(FingerIdResult.class).getAnnotation(FingerblastResult.class)
+                                .map(csiRes -> csiRes.getResults().stream().map(c -> CsiStructureMatch.builder()
+                                        .alignedFeatureId(id)
+                                        .formulaId((long) fc.getId())
+                                        .csiScore(c.getScore())
+                                        .tanimotoSimilarity(c.getCandidate().getTanimoto())
+                                        .mcesDistToTopHit(c.getCandidate().getMcesToTopHit())
+                                        .candidateInChiKey(c.getCandidate().getInchiKey2D())
+                                        .candidate(c.getCandidate())
+                                        .build())
+                                ).orElseGet(Stream::empty))
+                        .sorted(Comparator.comparing(StructureMatch::getCsiScore).reversed())
+                        .collect(Collectors.toList());
+
+                //todo here we could restrict the number of candidates stored.
+
+                {
+                    //adding ranks
+                    final AtomicInteger rank = new AtomicInteger(1);
+                    matches.forEach(m -> m.setStructureRank(rank.getAndIncrement()));
+                    if (!matches.isEmpty())
+                        matches.getFirst().setMcesDistToTopHit(0d); //it seems that top hit zero is sometimes overwritten during expansive search.
+                    //insert matches
+                    project().getStorage().insertAll(matches);
+
+                    //always update to allow for updated flags after custom db removal or adding //todo more efficient solution preferred
+                    int inserted = project().getStorage().upsertAll(matches.stream().map(CsiStructureMatch::getCandidate).toList());
+                    log.debug("Inserted: {} of {} CSI candidates.", inserted, matches.size());
+                }
+
+                //collect DB flags
+                matches.forEach(match -> {
+                    int rank = match.getStructureRank();
+                    match.getCandidate().getLinks().stream().map(DBLink::getName).forEach(
+                            dbName -> dbFlagsToRank.merge(dbName, rank, Math::min));
+                });
+            }
+
+
             //create and structure search results
             List<CsiStructureSearchResult> searchResults = structureSearchResults.stream()
                     .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
                     .flatMap(fc -> {
                         final FingerIdResult idResult = fc.getAnnotationOrThrow(FingerIdResult.class);
                         return idResult.getAnnotation(StructureSearchResult.class).map(searchResult ->
-                                        CsiStructureSearchResult.builder()
-                                                .alignedFeatureId(id)
-                                                .confidenceApprox(searchResult.getConfidencScoreApproximate())
-                                                .confidenceExact(searchResult.getConfidenceScore())
-                                                .specifiedDatabases(searchResult.getSpecifiedSearchDatabases().stream()
-                                                        .map(CustomDataSources.Source::name).distinct().toList())
-                                                .expandedDatabases(searchResult.getExpandedSearchDatabases().stream()
-                                                        .map(CustomDataSources.Source::name).distinct().toList())
-                                                .expansiveSearchConfidenceMode(searchResult.getExpansiveSearchConfidenceMode())
-                                                .build()
+                                CsiStructureSearchResult.builder()
+                                        .alignedFeatureId(id)
+                                        .confidenceApprox(searchResult.getConfidencScoreApproximate())
+                                        .confidenceExact(searchResult.getConfidenceScore())
+                                        .specifiedDatabases(searchResult.getSpecifiedSearchDatabases().stream()
+                                                .map(CustomDataSources.Source::name).distinct().toList())
+                                        .expandedDatabases(searchResult.getExpandedSearchDatabases().stream()
+                                                .map(CustomDataSources.Source::name).distinct().toList())
+                                        .expansiveSearchConfidenceMode(searchResult.getExpansiveSearchConfidenceMode())
+                                        .matchedDatabases(dbFlagsToRank)
+                                        .build()
                         ).stream();
                     }).collect(Collectors.toList());
+
             // write structure search results to db
-            project().getStorage().insertAll(searchResults);
-
-
-            List<CsiStructureMatch> matches = structureSearchResults.stream()
-                    .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
-                    .flatMap(fc -> fc.getAnnotationOrThrow(FingerIdResult.class).getAnnotation(FingerblastResult.class)
-                            .map(csiRes -> csiRes.getResults().stream().map(c -> CsiStructureMatch.builder()
-                                    .alignedFeatureId(id)
-                                    .formulaId((long) fc.getId())
-                                    .csiScore(c.getScore())
-                                    .tanimotoSimilarity(c.getCandidate().getTanimoto())
-                                    .mcesDistToTopHit(c.getCandidate().getMcesToTopHit())
-                                    .candidateInChiKey(c.getCandidate().getInchiKey2D())
-                                    .candidate(c.getCandidate())
-                                    .build())
-                            ).orElseGet(Stream::empty))
-                    .sorted(Comparator.comparing(StructureMatch::getCsiScore).reversed())
-                    .collect(Collectors.toList());
-
-            //adding ranks
-            final AtomicInteger rank = new AtomicInteger(1);
-            matches.forEach(m -> m.setStructureRank(rank.getAndIncrement()));
-            if (!matches.isEmpty())
-                matches.get(0).setMcesDistToTopHit(0d); //it seems that top hit zero is sometimes overwritten during expansive search.
-            //insert matches
-            project().getStorage().insertAll(matches);
-
-            // write only fingerprint candidates that do not yet exist in a transaction
-//            int inserted = project().getStorage().write(() -> {
-//                List<FingerprintCandidate> toInsert = new ArrayList<>(matches.size());
-//                for (CsiStructureMatch m : matches) {
-//                    FingerprintCandidate c = m.getCandidate();
-//                    if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
-//                        toInsert.add(c);
-//                }
-//                //insert all candidates that do not exist
-//                return project().getStorage().upsertAll(toInsert); //should be insert, workaround to prevent duplicate key error.
-//            });
-
-            //always update to allow for updated flags after custom db removal or adding //todo more efficient solution preferred
-            int inserted = project().getStorage().upsertAll(matches.stream().map(CsiStructureMatch::getCandidate).toList());
+            if (!searchResults.isEmpty())
+                project().getStorage().insert(searchResults.getFirst());
+            //finally upsert compute state which is the marker that a computation has been finished and all results have been written
             upsertComputedSubtools(cs -> cs.setStructureSearch(true));
-            log.debug("Inserted: {} of {} CSI candidates.", inserted, matches.size());
-
         } catch (Exception e) {
             deleteStructureSearchResult();
             throw new RuntimeException(e);
+        } finally {
+//          project().getStorage().flush();
         }
     }
 
     @Override
     public boolean hasStructureSearchResult() {
         return getComputedSubtools().isStructureSearch();
-//        return project().countByFeatureId(id, CsiStructureSearchResult.class) > 0;
     }
 
     @SneakyThrows
@@ -698,35 +729,38 @@ public class NoSQLInstance implements Instance {
             project().deleteAllByFeatureId(id, CsiStructureMatch.class);
             upsertComputedSubtools(cs -> cs.setStructureSearch(false));
         });
-
-
     }
 
-    @SneakyThrows
     @Override
     public void saveCanopusResult(@NotNull List<FCandidate<?>> canopusResults) {
-        List<CanopusPrediction> cps = canopusResults.stream()
-                .filter(fc -> fc.hasAnnotation(CanopusResult.class))
-                .map(fc -> {
-                    @NotNull CanopusResult canopusResult = fc.getAnnotationOrThrow(CanopusResult.class);
-                    return CanopusPrediction.builder()
-                            .formulaId((long) fc.getId())
-                            .alignedFeatureId(id)
-                            .cfFingerprint(canopusResult.getCanopusFingerprint())
-                            .npcFingerprint(canopusResult.getNpcFingerprint().orElse(null))
-                            .build();
-                }).collect(Collectors.toList());
+        try {
+            List<CanopusPrediction> cps = canopusResults.stream()
+                    .filter(fc -> fc.hasAnnotation(CanopusResult.class))
+                    .map(fc -> {
+                        @NotNull CanopusResult canopusResult = fc.getAnnotationOrThrow(CanopusResult.class);
+                        return CanopusPrediction.builder()
+                                .formulaId((long) fc.getId())
+                                .alignedFeatureId(id)
+                                .cfFingerprint(canopusResult.getCanopusFingerprint())
+                                .npcFingerprint(canopusResult.getNpcFingerprint().orElse(null))
+                                .build();
+                    }).collect(Collectors.toList());
 
-        project().getStorage().write(() -> {
-            project().getStorage().insertAll(cps);
-            upsertComputedSubtools(cs -> cs.setCanopus(true));
-        });
+            project().getStorage().write(() -> {
+                project().getStorage().insertAll(cps);
+                upsertComputedSubtools(cs -> cs.setCanopus(true));
+            });
+        } catch (IOException e) {
+            deleteCanopusResult();
+            throw new RuntimeException(e);
+        } finally {
+//            project().getStorage().flush();
+        }
     }
 
     @Override
     public boolean hasCanopusResult() {
         return getComputedSubtools().isCanopus();
-//        return project().countByFeatureId(id, CanopusPrediction.class) > 0;
     }
 
     @SneakyThrows
@@ -736,10 +770,8 @@ public class NoSQLInstance implements Instance {
             project().deleteAllByFeatureId(id, CanopusPrediction.class);
             upsertComputedSubtools(cs -> cs.setCanopus(false));
         });
-
     }
 
-    @SneakyThrows
     @Override
     public void saveMsNovelistResult(@NotNull List<FCandidate<?>> msNovelistResults) {
         try {
@@ -789,6 +821,8 @@ public class NoSQLInstance implements Instance {
         } catch (Exception e) {
             deleteMsNovelistResult();
             throw new RuntimeException(e);
+        } finally {
+//            project().getStorage().flush();
         }
     }
 
@@ -844,7 +878,6 @@ public class NoSQLInstance implements Instance {
     @Override
     public boolean hasMsNovelistResult() {
         return getComputedSubtools().isDeNovoSearch();
-//        return project().countByFeatureId(id, DenovoStructureMatch.class) > 0;
     }
 
     @SneakyThrows
@@ -856,14 +889,14 @@ public class NoSQLInstance implements Instance {
         });
     }
 
-    @SneakyThrows
-    private long upsertComputedSubtools(Consumer<ComputedSubtools> modifier) {
+    private long upsertComputedSubtools(Consumer<ComputedSubtools> modifier) throws IOException {
         @NotNull ComputedSubtools it = getComputedSubtools();
         modifier.accept(it);
         return project().getStorage().upsert(it);
     }
 
 
+    // todo this is a weird place for this.
     private class QuantTableImpl implements QuantificationTable {
         private List<String> sampleNames = new ArrayList<>();
         private Object2IntMap<String> namesToIndex = new Object2IntOpenHashMap<>();

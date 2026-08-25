@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.ScanPointMapping;
+import de.unijena.bioinf.lcms.datatypes.SpectrumDatatype;
 import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.LCMSStorage;
@@ -137,7 +138,10 @@ public class MzMLParser implements LCMSParser {
                 // get source location oO
                 reference = new MsDataSourceReference(parent, fileName, runId, mzMlId);
 
-                if (runId != null && !runId.isEmpty() && !runId.isBlank()) {
+                //a name given by the user wins over the ids in the file, which are often not meaningful
+                if (run.getName() != null && !run.getName().isBlank()) {
+                    //keep the given name
+                } else if (runId != null && !runId.isEmpty() && !runId.isBlank()) {
                     run.setName(runId);
                 } else if (mzMlId != null && !mzMlId.isEmpty() && !mzMlId.isBlank()) {
                     run.setName(mzMlId);
@@ -312,6 +316,9 @@ public class MzMLParser implements LCMSParser {
                     continue;
                 }
 
+                // intensities are stored as floats, so they are rounded here and nowhere else - see
+                // SpectrumDatatype#roundIntensitiesToStoredPrecision
+                SpectrumDatatype.roundIntensitiesToStoredPrecision(intArray);
                 SimpleSpectrum peaks = Spectrums.getBaselined(Spectrums.wrap(mzArray, intArray), 0);
                 if (samplePolarity == 0)  {
                     samplePolarity = polarity.charge;

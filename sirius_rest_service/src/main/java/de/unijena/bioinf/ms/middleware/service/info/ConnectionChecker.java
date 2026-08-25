@@ -176,7 +176,7 @@ public final class ConnectionChecker {
         private final LicenseInfo licenseInfo;
 
         /**
-         * List of errors ordered by significance. first error should be reported and addressed first.
+         * List of errors ordered by significance. First error should be reported and addressed first.
          * Following errors might just be follow-up errors
          */
         @NotNull

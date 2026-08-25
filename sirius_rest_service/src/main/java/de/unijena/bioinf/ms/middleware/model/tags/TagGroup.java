@@ -35,7 +35,7 @@ import lombok.*;
 public class TagGroup {
 
     /**
-     * Name of this Grouping query.
+     * Name of this grouping query.
      */
     private String groupName;
 

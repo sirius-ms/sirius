@@ -119,8 +119,8 @@ public final class SiriusProjectSpaceManagerFactory implements ProjectSpaceManag
     
     @Override
     public SiriusProjectSpaceManager createOrOpen(@Nullable Path projectLocation) throws IOException {
-
-        if (projectLocation == null) {
+        boolean tmpProject = projectLocation == null;
+        if (tmpProject) {
             projectLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();
             log.warn("No unique output location found. Writing output to Temporary folder: " + projectLocation.toString());
         }
@@ -133,7 +133,9 @@ public final class SiriusProjectSpaceManagerFactory implements ProjectSpaceManag
         }
 
         //check for formatter
-        return create(psTmp, new StandardMSFilenameFormatter());
+        SiriusProjectSpaceManager psm = create(psTmp, new StandardMSFilenameFormatter());
+        psm.setTempProject(tmpProject);
+        return psm;
     }
 
 

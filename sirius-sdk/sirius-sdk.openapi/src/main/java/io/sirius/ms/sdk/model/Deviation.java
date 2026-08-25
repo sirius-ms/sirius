@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Deviation.JSON_PROPERTY_PPM,
   Deviation.JSON_PROPERTY_ABSOLUTE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class Deviation {
   public static final String JSON_PROPERTY_PPM = "ppm";
   @jakarta.annotation.Nullable
@@ -64,7 +65,7 @@ public class Deviation {
    * @return ppm
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PPM)
+  @JsonProperty(value = JSON_PROPERTY_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getPpm() {
@@ -72,7 +73,7 @@ public class Deviation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PPM)
+  @JsonProperty(value = JSON_PROPERTY_PPM, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPpm(@jakarta.annotation.Nullable Double ppm) {
     this.ppm = ppm;
@@ -89,7 +90,7 @@ public class Deviation {
    * @return absolute
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ABSOLUTE)
+  @JsonProperty(value = JSON_PROPERTY_ABSOLUTE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getAbsolute() {
@@ -97,7 +98,7 @@ public class Deviation {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ABSOLUTE)
+  @JsonProperty(value = JSON_PROPERTY_ABSOLUTE, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAbsolute(@jakarta.annotation.Nullable Double absolute) {
     this.absolute = absolute;

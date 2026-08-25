@@ -26,7 +26,6 @@ import lombok.Getter;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -74,7 +73,7 @@ public class Metadata {
     public <T> Metadata addRepository(
             Class<T> clazz,
             Index... indices
-    ) throws IOException {
+    )  {
         Field pkField = findAndValidatePrimaryKeyField(clazz);
         this.pkFields.put(clazz, pkField);
         Set<Index> ind = new LinkedHashSet<>(List.of(indices));
@@ -87,7 +86,7 @@ public class Metadata {
             Class<T> clazz,
             String pkFieldName,
             Index... indices
-    ) throws IOException {
+    ) {
         Field pkField = findAndValidatePrimaryKeyFieldByName(clazz, pkFieldName);
         this.pkFields.put(clazz, pkField);
         Set<Index> ind = new LinkedHashSet<>(List.of(indices));
@@ -154,35 +153,35 @@ public class Metadata {
         return this;
     }
 
-    private static Field findAndValidatePrimaryKeyField(@NotNull Class<?> clazz) throws IOException {
+    private static Field findAndValidatePrimaryKeyField(@NotNull Class<?> clazz) {
         List<Field> pkFields = FieldUtils.getFieldsListWithAnnotation(clazz, jakarta.persistence.Id.class);
         if (pkFields.isEmpty()) {
-            throw new IOException(clazz + " has no primary key. The primary key must be annotated with jakarta.persistence.Id!");
+            throw new IllegalStateException(clazz + " has no primary key. The primary key must be annotated with jakarta.persistence.Id!");
         } else if (pkFields.size() > 1) {
-            throw new IOException(clazz + " has multiple primary keys. Only one primary key is allowed!");
+            throw new IllegalStateException(clazz + " has multiple primary keys. Only one primary key is allowed!");
         }
-        Field pkField = pkFields.get(0);
+        Field pkField = pkFields.getFirst();
         return validatePrimaryKeyField(clazz, pkField);
     }
 
-    private static Field findAndValidatePrimaryKeyFieldByName(@NotNull Class<?> clazz, @NotNull String fieldName) throws IOException {
+    private static Field findAndValidatePrimaryKeyFieldByName(@NotNull Class<?> clazz, @NotNull String fieldName) {
         List<Field> pkFields = FieldUtils.getAllFieldsList(clazz).stream().filter(f -> Objects.equals(f.getName(), fieldName)).toList();
         if (pkFields.isEmpty()) {
-            throw new IOException(clazz + " has no primary key. The primary key must be annotated with jakarta.persistence.Id!");
+            throw new IllegalStateException(clazz + " has no primary key. The primary key must be annotated with jakarta.persistence.Id!");
         } else if (pkFields.size() > 1) {
-            throw new IOException(clazz + " has multiple primary keys. Only one primary key is allowed!");
+            throw new IllegalStateException(clazz + " has multiple primary keys. Only one primary key is allowed!");
         }
-        Field pkField = pkFields.get(0);
+        Field pkField = pkFields.getFirst();
         return validatePrimaryKeyField(clazz, pkField);
     }
 
     @NotNull
-    private static Field validatePrimaryKeyField(@NotNull Class<?> clazz, @NotNull Field pkField) throws IOException {
+    private static Field validatePrimaryKeyField(@NotNull Class<?> clazz, @NotNull Field pkField) {
         Class<?> pkType = pkField.getType();
         if (pkType.isPrimitive() || ALLOWED_PRIMARY_KEYS.contains(pkType)) {
             return pkField;
         } else {
-            throw new IOException(clazz + " has an invalid primary key type. Allowed are: any Java primitive type; any primitive wrapper type; String; java.util.Date; java.sql.Date; java.math.BigDecimal; java.math.BigInteger.");
+            throw new IllegalStateException(clazz + " has an invalid primary key type. Allowed are: any Java primitive type; any primitive wrapper type; String; java.util.Date; java.sql.Date; java.math.BigDecimal; java.math.BigInteger.");
         }
     }
 

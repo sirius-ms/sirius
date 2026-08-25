@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
@@ -31,14 +32,13 @@ import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.StringToClassMapItem;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -77,7 +77,7 @@ public class ProjectController {
     /**
      * Get project space info by its projectId.
      *
-     * @param projectId unique name/identifier tof the project-space to be accessed.
+     * @param projectId unique name/identifier of the project-space to be accessed.
      */
     @GetMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo getProject(@PathVariable String projectId, @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields) {
@@ -88,7 +88,7 @@ public class ProjectController {
      * Open an existing project-space and make it accessible via the given projectId.
      *
      * @param projectId     unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
-     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by its projectId from default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      */
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo openProject(@PathVariable String projectId,
@@ -96,6 +96,52 @@ public class ProjectController {
                                    @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields
     ) throws IOException {
         return projectsProvider.openProject(projectId, pathToProject, removeNone(optFields));
+    }
+
+    /**
+     * Open an existing project-space in the background and return the job that is doing it.
+     * <p>
+     * Opening a project written by an older SIRIUS converts it first, which on a large project takes minutes.
+     * This endpoint returns as soon as the project id is reserved, so a client can show what is happening and
+     * stay responsive; the project becomes usable when the job reaches DONE, announced by a PROJECT_OPENED
+     * event as well. The synchronous variant is unchanged and still available.
+     * <p>
+     * Cancelling the job is safe: a conversion fills in only what a record is missing and records the schema
+     * version last, so an interrupted one leaves the project as it was and simply runs again next time.
+     * <p>
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     *
+     * @param projectId     unique name/identifier that shall be used to access this project-space.
+     * @param pathToProject local file path to open the project from. If omitted the project will be loaded from the default project space location.
+     * @param optFields     set of optional fields to be included in the returned job
+     * @return the job opening the project
+     */
+    @PutMapping(value = "/{projectId}/open-job", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Job openProjectAsJob(@PathVariable String projectId,
+                                @RequestParam(required = false) String pathToProject,
+                                @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+        return projectsProvider.openProjectAsJob(projectId, pathToProject, removeNone(optFields));
+    }
+
+    /**
+     * The job that is opening, or has opened, the given project.
+     * <p>
+     * For polling clients and for anyone that missed the last event: the job is remembered after it finishes,
+     * so how it ended can still be asked for.
+     * <p>
+     * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
+     *
+     * @param projectId project the job is opening
+     * @param optFields set of optional fields to be included in the returned job
+     */
+    @GetMapping(value = "/{projectId}/open-job", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Job getOpenJob(@PathVariable String projectId,
+                          @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+        return projectsProvider.findOpenJob(projectId, removeNone(optFields))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No opening job known for project '" + projectId + "'."));
     }
 
     /**
@@ -113,12 +159,21 @@ public class ProjectController {
     }
 
     /**
-     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.
+     * Create and open a new project with unique autogenerated projectId. On local filesystems the project will be located in temporary directory.
+     */
+    @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ProjectInfo create(@RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields
+    ) throws IOException {
+        return projectsProvider.createTempProject(optFields);
+    }
+
+    /**
+     * Close project-space and remove it from the application. The project will NOT be deleted from disk.
      * <p>
-     * ATTENTION: This will cancel and remove all jobs running on this Project before closing it.
+     * ATTENTION: This will cancel and remove all jobs running on this project before closing it.
      * If there are many jobs, this might take some time.
      *
-     * @param projectId unique name/identifier of the  project-space to be closed.
+     * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      */
     @DeleteMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -128,15 +183,12 @@ public class ProjectController {
         Project<?> ps = projectsProvider.getProjectOrThrow(projectId);
         computeService.deleteJobs(ps, true, true, true, EnumSet.noneOf(Job.OptField.class));
         //todo check if we can make wait for deletion aync
-        projectsProvider.closeProjectSpace(projectId);
-        if (compact) {
-            ps.getProjectSpaceManager().compact();
-        }
+        projectsProvider.closeProjectSpace(projectId, compact);
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job.
-     * Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project as background job.
+     * Possible formats: mzML, mzXML.
      *
      * @param projectId    Project-space to import into.
      * @param inputFiles   Files to import into project.
@@ -144,8 +196,8 @@ public class ProjectController {
      * @param optFields    Set of optional fields to be included. Use 'none' only to override defaults.
      * @return the import job.
      */
-    @Operation(summary = "Import and Align full MS-Runs from various formats into the specified project as background job.",
-            description = "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)",
+    @Operation(summary = "Import and align full MS runs from various formats into the specified project as background job.",
+            description = "Import and align full MS runs from various formats into the specified project as background job.\n Possible formats: mzML, mzXML.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
                             mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -164,6 +216,7 @@ public class ProjectController {
                                     @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
         importFormatValidationService.validateFiles(request, inputFiles);
+        validateLcmsParameters(parameters, inputFiles.length);
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         try {
             ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
@@ -177,14 +230,14 @@ public class ProjectController {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project
-     * Possible formats (mzML, mzXML)
+     * Import and align full MS runs from various formats into the specified project
+     * Possible formats: mzML, mzXML.
      *
      * @param projectId    Project-space to import into.
      * @param inputFiles   Files to import into project.
      * @param parameters   Parameters for feature alignment and feature finding.
      */
-    @Operation(summary = "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)",
+    @Operation(summary = "Import and align full MS runs from various formats into the specified project\n Possible formats: mzML, mzXML.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
                             mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -202,6 +255,7 @@ public class ProjectController {
                                         @RequestPart LcmsSubmissionParameters parameters
     ) {
         importFormatValidationService.validateFiles(request, inputFiles);
+        validateLcmsParameters(parameters, inputFiles.length);
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
         sub.setInputSources(List.of(inputFiles));
         sub.setLcmsParameters(parameters);
@@ -210,15 +264,16 @@ public class ProjectController {
 
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.
-     * Possible formats (mzML, mzXML)
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project as background job.
+     * Possible formats: mzML, mzXML.
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
      * not on the system where the client SDK is running.
-     * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
+     * It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * API to allow for more flexible use cases. Use 'ms-data-files-job' instead.
+     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later
+     * versions of this API to allow for more flexible use cases. Use 'ms-data-files-job' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
@@ -238,6 +293,8 @@ public class ProjectController {
                                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
         importFormatValidationService.validateFiles(request, localFilePaths);
+        treatBlankSampleNamesAsMissing(parameters);
+        validateLcmsParameters(parameters, localFilePaths.length);
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         try {
             ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
@@ -250,15 +307,16 @@ public class ProjectController {
     }
 
     /**
-     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project
-     * Possible formats (mzML, mzXML)
+     * [DEPRECATED] Import and align full MS runs from various formats into the specified project
+     * Possible formats: mzML, mzXML.
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
      * not on the system where the client SDK is running.
-     * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
+     * It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * API to allow for more flexible use cases. Use 'ms-data-files' instead.
+     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later
+     * versions of this API to allow for more flexible use cases. Use 'ms-data-files' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
@@ -275,6 +333,8 @@ public class ProjectController {
                                                LcmsSubmissionParameters parameters
     ) {
         importFormatValidationService.validateFiles(request, localFilePaths);
+        treatBlankSampleNamesAsMissing(parameters);
+        validateLcmsParameters(parameters, localFilePaths.length);
         ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
         sub.setInputSources(List.of(localFilePaths));
         sub.setLcmsParameters(parameters);
@@ -284,7 +344,7 @@ public class ProjectController {
 
     /**
      * Import ms/ms data from the given format into the specified project-space as background job.
-     * Possible formats (ms, mgf, cef, msp)
+     * Possible formats: ms, mgf, cef, msp.
      *
      * @param projectId project-space to import into.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
@@ -309,7 +369,7 @@ public class ProjectController {
 
     /**
      * Import already preprocessed ms/ms data from various formats into the specified project
-     * Possible formats (ms, mgf, cef, msp)
+     * Possible formats: ms, mgf, cef, msp.
      *
      * @param projectId  project-space to import into.
      * @param inputFiles files to import into project
@@ -331,14 +391,15 @@ public class ProjectController {
 
     /**
      * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.
-     * Possible formats (ms, mgf, cef, msp)
+     * Possible formats: ms, mgf, cef, msp.
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
      * not on the system where the client SDK is running.
-     * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
+     * It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * API to allow for more flexible use cases. Use 'preprocessed-data-files-job' instead.
+     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later
+     * versions of this API to allow for more flexible use cases. Use 'preprocessed-data-files-job' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
@@ -367,14 +428,15 @@ public class ProjectController {
 
     /**
      * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project
-     * Possible formats (ms, mgf, cef, msp)
+     * Possible formats: ms, mgf, cef, msp.
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
      * not on the system where the client SDK is running.
-     * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
+     * It is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * API to allow for more flexible use cases. Use 'preprocessed-data-files' instead.
+     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later
+     * versions of this API to allow for more flexible use cases. Use 'preprocessed-data-files' instead.
      * <p>
      * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * [INTERNAL] This endpoint is for internal use and not intended to become part of the stable API specification at any time. This endpoint can change (or be removed) at any time, even in minor updates.
@@ -407,7 +469,7 @@ public class ProjectController {
      *
      * @param projectId           unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
-     * @param copyProjectId       optional id/mame of the newly created project (copy). If given the project will be opened.
+     * @param copyProjectId       optional id/name of the newly created project (copy). If given the project will be opened.
      * @return ProjectInfo of the newly created project if opened (copyProjectId != null) or the project info of
      * the source project otherwise
      */
@@ -440,4 +502,44 @@ public class ProjectController {
     public String getCanopusNpcData(@PathVariable String projectId, @RequestParam int charge) {
         return projectsProvider.getProjectOrThrow(projectId).getCanopusNpcDataCSV(charge);
     }
+
+    /**
+     * Create a search index for the given project.
+     *
+     * @param projectId     unique name/identifier of the project to create the index for.
+     * @param force         if true an existing index will be deleted and recreated.
+     */
+    @PutMapping(value = "/{projectId}/index", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public void buildSearchIndex(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean force) {
+        projectsProvider.getProjectOrThrow(projectId).createSearchIndex(force);
+    }
+
+    /**
+     * Replaces blank sample names by null, since a query string cannot express null: on the deprecated
+     * endpoints that take the import parameters as query parameters instead of as JSON, a name that should
+     * be derived from its input file arrives as an empty string. To be removed with those endpoints.
+     */
+    @Deprecated(forRemoval = true)
+    static void treatBlankSampleNamesAsMissing(@Nullable LcmsSubmissionParameters parameters) {
+        if (parameters == null || parameters.getSampleNames() == null)
+            return;
+        parameters.setSampleNames(parameters.getSampleNames().stream()
+                .map(sampleName -> Utils.isNullOrBlank(sampleName) ? null : sampleName)
+                .toList());
+    }
+
+    /**
+     * Reports sample names or types that cannot be matched to the given input files as user error.
+     */
+    private static void validateLcmsParameters(@Nullable LcmsSubmissionParameters parameters, int numberOfInputFiles) {
+        if (parameters == null)
+            return;
+        try {
+            parameters.validate(numberOfInputFiles);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
+
 }

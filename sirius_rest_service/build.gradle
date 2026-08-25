@@ -18,6 +18,7 @@ dependencies {
 
     implementation project(':sirius_cli')
     implementation project(':sirius_gui')
+    implementation project(':reaction_tool')
 
     //////////// configure logging ///////////////////
     implementation libs.slf4jLog4jOverSlf4j
@@ -37,7 +38,7 @@ dependencies {
 
     // expose operational information about the running application via /actuator
     implementation "org.springframework.boot:spring-boot-starter-actuator"
-    
+
     implementation libs.fastutil
     ////////////////////////////////////////////////////
 
@@ -49,6 +50,8 @@ dependencies {
     //process javadoc for swagger/openapi
     annotationProcessor libs.therapiRuntimeJavadocScribe
     implementation libs.therapiRuntimeJavadoc
+    // bake javadoc of test classes as well, so tests can cover javadoc-derived field descriptions
+    testAnnotationProcessor libs.therapiRuntimeJavadocScribe
     ////////////////////////////////////////////////////
 
     //must match minio version
@@ -60,8 +63,10 @@ dependencies {
 
     implementation libs.commonsText
 
+    implementation libs.luceneCore
     implementation libs.luceneQueryparser
     implementation libs.luceneAnalysisCommon
+    implementation libs.luceneBackwardCodecs
 
     // needed to einforce swagger core version that is compatible with springdoc 3
     implementation libs.swaggerCore
@@ -74,6 +79,8 @@ dependencies {
     implementation libs.secureApi
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.security:spring-security-test'
 
 }
 
@@ -84,7 +91,7 @@ configurations.configureEach { conf ->
     //replaced by jcl-over-slf4j
     conf.exclude group: "commons-logging", module: "commons-logging"
     conf.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-    
+
     SiriusPlatform.allBut(siriusTargetPlatform).stream()
             .map { it.inchiClassifier() }.flatMap { it.stream() }
             .forEach { conf.exclude(group: "io.github.dan2097", module: "jna-inchi-$it") }
@@ -121,6 +128,63 @@ openApi {
     }
 }
 forkedSpringBootRun.dependsOn(':sirius_rest_service:bootJar')
+
+// springdoc boots a real SIRIUS and reads the spec off it, but SiriusMiddlewareApplication refuses to start
+// while another healthy instance is running ("SIRIUS ALREADY RUNNING!", exit 1). The plugin never notices the
+// fork died: generateOpenApiDocs polls the dead port for the full waitTimeInSeconds and the build then sits in
+// forkedSpringBootStop until it is killed by hand. Check the two things that can block the fork before it is
+// started, and name the fix in the message instead.
+tasks.register('checkSpecGenerationPreconditions') {
+    group 'openApi'
+    description 'Fails fast when a running SIRIUS or an occupied port would stall OpenAPI spec generation.'
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def firstLine = { File f -> f.isFile() ? f.readLines().findResult { it.isBlank() ? null : it.trim() } : null }
+
+        // Mirrors SiriusSDKUtils.restHealthCheck: 2xx plus a body reporting status UP.
+        def healthyAt = { String p ->
+            try {
+                HttpURLConnection con = new URL("http://localhost:${p}/actuator/health").openConnection() as HttpURLConnection
+                con.connectTimeout = 2000
+                con.readTimeout = 2000
+                if (con.responseCode < 200 || con.responseCode >= 300)
+                    return false
+                return 'UP'.equalsIgnoreCase(new JsonSlurper().parseText(con.inputStream.getText('UTF-8'))?.status?.toString())
+            } catch (Exception ignored) {
+                return false
+            }
+        }
+
+        // The same discovery files SiriusSDK.findAndConnectLocally() reads; major version follows the frontend version.
+        String major = siriusFrontendVersion.toString().split('\\.')[0]
+        File siriusDir = new File(System.getProperty('user.home'), '.sirius')
+        String runningPort = firstLine(new File(siriusDir, "sirius-${major}.port"))
+
+        // Only a *healthy* instance blocks the fork - a stale port file gets cleaned up by SIRIUS itself.
+        if (runningPort != null && healthyAt(runningPort)) {
+            String pid = firstLine(new File(siriusDir, "sirius-${major}.pid"))
+            throw new GradleException(
+                    "A SIRIUS instance is already running at http://localhost:${runningPort}/" +
+                            (pid != null ? " (pid ${pid})" : "") + ".\n" +
+                            "Only one SIRIUS service may run at a time, so spec generation would start, exit immediately, " +
+                            "and leave the build waiting for a server that is not there.\n" +
+                            "Shut it down and retry" + (pid != null ? ", e.g. 'kill ${pid}'." : "."))
+        }
+
+        // The port the forked app binds ('-p' in customBootRun) is the one apiDocsUrl is polled on; keep them in sync.
+        int port = URI.create(openApi.apiDocsUrl.get()).port
+        try {
+            new ServerSocket(port).close()
+        } catch (IOException ignored) {
+            throw new GradleException(
+                    "Port ${port} is occupied, but OpenAPI spec generation needs it to boot SIRIUS on.\n" +
+                            "Free the port, or point openApi.apiDocsUrl and customBootRun's '-p' at a free one, then retry.")
+        }
+    }
+}
+
+forkedSpringBootRun.dependsOn('checkSpecGenerationPreconditions')
 
 
 tasks.register("generateOpenApiDocsEnumsAsString") {
@@ -275,7 +339,7 @@ tasks.register('makeProfileTemplates') {
     outputs.dir(layout.buildDirectory.dir("tmp/profiles_concat/"))
 
     doLast {
-        delete(outputs.files.singleFile.listFiles())
+        outputs.files.singleFile.deleteDir()
         def defaultsDir = outputs.files.singleFile.toPath().resolve("de.unijena.bioinf.ms.defaults")
         Files.createDirectories(defaultsDir)
 

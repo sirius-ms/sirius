@@ -25,6 +25,7 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
+import java.util.Locale;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -42,7 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AnnotatedPeak.JSON_PROPERTY_INTENSITY,
   AnnotatedPeak.JSON_PROPERTY_PEAK_ANNOTATION
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.14.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
 public class AnnotatedPeak {
   public static final String JSON_PROPERTY_MZ = "mz";
   @jakarta.annotation.Nullable
@@ -70,7 +71,7 @@ public class AnnotatedPeak {
    * @return mz
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MZ)
+  @JsonProperty(value = JSON_PROPERTY_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getMz() {
@@ -78,7 +79,7 @@ public class AnnotatedPeak {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MZ)
+  @JsonProperty(value = JSON_PROPERTY_MZ, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMz(@jakarta.annotation.Nullable Double mz) {
     this.mz = mz;
@@ -95,7 +96,7 @@ public class AnnotatedPeak {
    * @return intensity
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INTENSITY)
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public Double getIntensity() {
@@ -103,7 +104,7 @@ public class AnnotatedPeak {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_INTENSITY)
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setIntensity(@jakarta.annotation.Nullable Double intensity) {
     this.intensity = intensity;
@@ -120,7 +121,7 @@ public class AnnotatedPeak {
    * @return peakAnnotation
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PEAK_ANNOTATION)
+  @JsonProperty(value = JSON_PROPERTY_PEAK_ANNOTATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public PeakAnnotation getPeakAnnotation() {
@@ -128,7 +129,7 @@ public class AnnotatedPeak {
   }
 
 
-  @JsonProperty(JSON_PROPERTY_PEAK_ANNOTATION)
+  @JsonProperty(value = JSON_PROPERTY_PEAK_ANNOTATION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPeakAnnotation(@jakarta.annotation.Nullable PeakAnnotation peakAnnotation) {
     this.peakAnnotation = peakAnnotation;

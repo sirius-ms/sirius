@@ -20,11 +20,19 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.FormulaElementMapper;
+import de.unijena.bioinf.ms.middleware.service.search.description.LipidClassVocabulary;
+import de.unijena.bioinf.ms.middleware.service.search.description.LipidFieldTypes;
+import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldTypeDoc;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.LipidClassQueryRewriter;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.LipidAnnotationMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -36,19 +44,22 @@ import lombok.*;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormulaCandidate {
     @Schema(name = "FormulaCandidateOptField", nullable = true)
-    public enum OptField {none, statistics, fragmentationTree, annotatedSpectrum, isotopePattern, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPredictions}
+    public enum OptField {
+        none, statistics, fragmentationTree, annotatedSpectrum, isotopePattern, @Deprecated(forRemoval = true) lipidAnnotation, predictedFingerprint, compoundClasses, canopusPredictions}
 
     /**
      * Unique identifier of this formula candidate
      */
     protected String formulaId;
     /**
-     * molecular formula of this formula candidate
+     * Molecular formula of this formula candidate.
      */
+    @IndexFieldWithMapper(mapper = FormulaElementMapper.class)
     protected String molecularFormula;
     /**
      * Adduct of this formula candidate
@@ -111,9 +122,14 @@ public class FormulaCandidate {
     protected IsotopePatternAnnotation isotopePatternAnnotation;
 
     /**
-     * ElGordo lipid annotation of this candidate.
-     * NULL if annotation was not requested. lipidAnnotation.lipidSpecies == NULL if candidate has not been classified as a lipid
+     * ElGordo lipid annotation of this candidate: the lipid class and species it was classified as.
+     * Empty if the candidate has not been classified as a lipid.
      */
+    //NOTE: the whole annotation is null if it was not requested; its lipidSpecies is null if ElGordo
+    //did not classify the candidate as a lipid
+    @IndexFieldWithMapper(mapper = LipidAnnotationMapper.class, queryRewriter = LipidClassQueryRewriter.class)
+    @SearchableFieldDoc(possibleValues = LipidClassVocabulary.class)
+    @SearchableFieldTypeDoc(LipidFieldTypes.class)
     @Schema(nullable = true)
     protected LipidAnnotation lipidAnnotation;
 

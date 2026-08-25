@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.unijena.bioinf.storage.db.nosql.*;
-import de.unijena.bioinf.storage.db.nosql.nitrite.filters.RangeFilter;
 import de.unijena.bioinf.storage.db.nosql.nitrite.joining.JoinedReflectionIterable;
 import de.unijena.bioinf.storage.db.nosql.nitrite.projection.InjectedDocumentStream;
 import de.unijena.bioinf.storage.db.nosql.nitrite.projection.InjectedObjectStream;
@@ -38,14 +37,17 @@ import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.dizitart.no2.common.DBValue;
+import org.dizitart.no2.common.util.IndexUtils;
+import org.dizitart.no2.store.NitriteMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.*;
 import org.dizitart.no2.collection.events.CollectionEventListener;
 import org.dizitart.no2.collection.events.EventType;
 import org.dizitart.no2.common.PersistentCollection;
 import org.dizitart.no2.common.RecordStream;
-import org.dizitart.no2.common.WriteResult;
-import org.dizitart.no2.common.mapper.JacksonMapperModule;
+import org.dizitart.no2.mapper.jackson.JacksonMapperModule;
 import org.dizitart.no2.common.mapper.NitriteMapper;
 import org.dizitart.no2.common.module.NitriteModule;
 import org.dizitart.no2.common.processors.ProcessorChain;
@@ -64,7 +66,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -80,6 +87,11 @@ public class NitriteDatabase implements Database<Document> {
     public enum MVStoreCompression{NONE, LZF, DEFLATE}
 
     protected Path file;
+
+    // the compression the store writes with; used so compact() does not silently change it
+    protected final MVStoreCompression compression;
+
+    protected final String systemUID;
 
     // NITRITE
     private final Nitrite db;
@@ -99,7 +111,7 @@ public class NitriteDatabase implements Database<Document> {
 
     private final Map<String, Set<String>> optionalCollectionFields = Collections.synchronizedMap(new HashMap<>());
 
-    private final Map<Long, CollectionEventListener> listeners = Collections.synchronizedMap(new HashMap<>());
+    private final Map<Long, String> subscriptions = Collections.synchronizedMap(new HashMap<>());
 
     // LOCKS
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
@@ -121,11 +133,31 @@ public class NitriteDatabase implements Database<Document> {
     public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte, boolean readOnly) throws IOException {
         this.file = file;
         this.meta = meta;
+        this.compression = compression;
         this.db = initDB(file, meta, compression, cacheSizeMiB,commitBufferByte, readOnly);
         this.initCollections(meta);
         this.initRepositories(meta);
         this.initOptionalFields(meta);
         this.nitriteMapper = this.db.getConfig().nitriteMapper();
+
+        try {
+            if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+                //fixe/alternative solution in multi-user branch
+                systemUID = hashString(file.toAbsolutePath().toString(), 32);
+                log.debug("Creating project to index link from file ' {}' to search index '{}' on windows. This link is not robust against file renames/moves. Index will be recreated from scratch each time the project file is renamed/moved/",
+                        file.toAbsolutePath(), systemUID);
+            } else {
+                FileStore fileStore = Files.getFileStore(file);
+                // Get filesystem identifier (not always unique)
+                String fsName = fileStore.name();
+                // Get file ID (works on most platforms)
+                Object fileKey = Files.readAttributes(file, BasicFileAttributes.class).fileKey();
+                // Create a composite UID
+                systemUID = hashString(fsName + "-" + fileKey, 32);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Nitrite initDB(Path file, Metadata meta, MVStoreCompression compress, int cacheSizeMiB, int commitBufferByte, boolean readOnly) {
@@ -210,6 +242,11 @@ public class NitriteDatabase implements Database<Document> {
 
     }
 
+    @Override
+    public String systemUID() {
+       return systemUID;
+    }
+
     @SuppressWarnings("unchecked")
     private <T> void addSerializer(SimpleModule module, Class<?> clazz, JsonSerializer<?> serializer) {
         Class<T> c = (Class<T>) clazz;
@@ -276,34 +313,38 @@ public class NitriteDatabase implements Database<Document> {
         List<IndexDescriptor> toDrop = new ArrayList<>();
         List<Index> toBuild = new ArrayList<>();
 
-        Map<Set<String>, IndexDescriptor> rI = new HashMap<>();
-        Map<Set<String>, Index> nI = new HashMap<>();
+        // Key indexes by their ORDERED field list, not an unordered set: for a compound index the field order
+        // defines its sort/prefix semantics, so re-declaring the same fields in a different order is a different
+        // index that must be dropped and rebuilt. An unordered key would treat the two as identical and silently
+        // keep the stale on-disk field order.
+        Map<List<String>, IndexDescriptor> rI = new HashMap<>();
+        Map<List<String>, Index> nI = new HashMap<>();
 
         for (IndexDescriptor descriptor : repository.listIndices()) {
-            rI.put(new HashSet<>(descriptor.getFields().getFieldNames()), descriptor);
+            rI.put(new ArrayList<>(descriptor.getFields().getFieldNames()), descriptor);
         }
         for (Index index : indices) {
-            Set<String> key = new HashSet<>(Arrays.asList(index.getFields()));
+            List<String> key = Arrays.asList(index.getFields());
             if (nI.containsKey(key)) {
                 throw new IllegalArgumentException("Duplicate index: " + String.join(",", key));
             }
             nI.put(key, index);
         }
 
-        Set<Set<String>> intersection = new HashSet<>(rI.keySet());
+        Set<List<String>> intersection = new HashSet<>(rI.keySet());
         intersection.retainAll(nI.keySet());
 
-        Set<Set<String>> dropSet = new HashSet<>(rI.keySet());
+        Set<List<String>> dropSet = new HashSet<>(rI.keySet());
         dropSet.removeAll(nI.keySet());
 
-        Set<Set<String>> addSet = new HashSet<>(nI.keySet());
+        Set<List<String>> addSet = new HashSet<>(nI.keySet());
         addSet.removeAll(rI.keySet());
 
         dropSet.stream().map(rI::get).forEach(toDrop::add);
         addSet.stream().map(nI::get).forEach(toBuild::add);
 
         // compare index types
-        for (Set<String> key : intersection) {
+        for (List<String> key : intersection) {
             IndexDescriptor repoIndex = rI.get(key);
             Index index = nI.get(key);
 
@@ -318,12 +359,12 @@ public class NitriteDatabase implements Database<Document> {
         }
 
         for (IndexDescriptor index : toDrop) {
-            log.info("Dropping index: {}", Arrays.toString(index.getFields().getFieldNames().toArray(new String[0])));
+            log.debug("Dropping index: {}", Arrays.toString(index.getFields().getFieldNames().toArray(new String[0])));
             repository.dropIndex(index.getFields().getFieldNames().toArray(String[]::new));
         }
 
         for (Index index : toBuild) {
-            log.info("(Re)building index: {}", Arrays.toString(index.getFields()));
+            log.debug("(Re)building index: {}", Arrays.toString(index.getFields()));
             switch (index.getType()) {
                 case UNIQUE ->
                         repository.createIndex(IndexOptions.indexOptions(org.dizitart.no2.index.IndexType.UNIQUE), index.getFields());
@@ -353,7 +394,14 @@ public class NitriteDatabase implements Database<Document> {
         stateWriteLock.lock();
         try {
             close();
-            MVStoreTool.compact(file.toString(), true);
+            // Compact with the same compression the store writes with, so compaction does not silently change
+            // a project's on-disk compression. MVStoreTool.compact only exposes an LZF on/off flag, so NONE and
+            // LZF are preserved exactly. DEFLATE cannot be reproduced by the tool, so it is rewritten as LZF; the
+            // store stays readable because MVStore auto-detects the compression per page on read.
+            if (compression == MVStoreCompression.DEFLATE)
+                log.warn("Compacting a DEFLATE-compressed store at {}: MVStoreTool cannot emit DEFLATE, so it is " +
+                        "rewritten with LZF compression. The store stays readable.", file);
+            MVStoreTool.compact(file.toString(), compression != MVStoreCompression.NONE);
         } finally {
             stateWriteLock.unlock();
         }
@@ -372,10 +420,10 @@ public class NitriteDatabase implements Database<Document> {
 
     private <T> T callIfOpen(Callable<T> callable) throws IOException {
         stateReadLock.lock();
-        if (this.db.isClosed()) {
-            throw new IOException("Nitrite database is closed!");
-        }
         try {
+            if (this.db.isClosed()) {
+                throw new IOException("Nitrite database is closed!");
+            }
             return callable.call();
         } catch (IOException e) {
             throw e;
@@ -411,6 +459,39 @@ public class NitriteDatabase implements Database<Document> {
     @Override
     public Set<Class<?>> getAllRegisteredClasses() {
         return this.repositories.keySet();
+    }
+
+    @Override
+    public long getStorageCommitId() {
+        try {
+            var store = this.db.getStore();
+            if (store != null) {
+                for (java.lang.reflect.Method method : store.getClass().getMethods()) {
+                    if (method.getReturnType().equals(org.h2.mvstore.MVStore.class) && method.getParameterCount() == 0) {
+                        org.h2.mvstore.MVStore mvStore = (org.h2.mvstore.MVStore) method.invoke(store);
+                        if (mvStore != null) {
+                            return mvStore.getCurrentVersion();
+                        }
+                    }
+                }
+                Class<?> current = store.getClass();
+                while (current != null && current != Object.class) {
+                    for (java.lang.reflect.Field field : current.getDeclaredFields()) {
+                        if (field.getType().equals(org.h2.mvstore.MVStore.class)) {
+                            field.setAccessible(true);
+                            org.h2.mvstore.MVStore mvStore = (org.h2.mvstore.MVStore) field.get(store);
+                            if (mvStore != null) {
+                                return mvStore.getCurrentVersion();
+                            }
+                        }
+                    }
+                    current = current.getSuperclass();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to get MVStore version from NitriteDatabase", e);
+        }
+        return -1;
     }
 
     @SuppressWarnings("unchecked")
@@ -581,11 +662,10 @@ public class NitriteDatabase implements Database<Document> {
     public int insert(String collectionName, Document document) throws IOException {
         return this.write(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
-            WriteResult result = collection.insert(document);
-            if (result.iterator().hasNext()) {
-                document.put("_id", result.iterator().next().getIdValue());
-            }
-            return result.getAffectedCount();
+            //assign the id up front: Nitrite stores a clone, so an id it generates itself would not be visible to the
+            //caller, and writing it back by hand would tie us to how the store represents it
+            document.getId();
+            return collection.insert(document).getAffectedCount();
         });
     }
 
@@ -594,14 +674,10 @@ public class NitriteDatabase implements Database<Document> {
         return this.write(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
             Document[] docs = StreamSupport.stream(documents.spliterator(),false).toArray(Document[]::new);
-            WriteResult result = collection.insert(docs);
-            List<String> ids = StreamSupport.stream(result.spliterator(), false).map(NitriteId::getIdValue).toList();
-            if (ids.size() == docs.length) {
-                for (int i = 0; i < docs.length; i++) {
-                    docs[i].put("_id", ids.get(i));
-                }
-            }
-            return result.getAffectedCount();
+            //assign the ids up front, see insert(String, Document)
+            for (Document doc : docs)
+                doc.getId();
+            return collection.insert(docs).getAffectedCount();
         });
     }
 
@@ -911,11 +987,63 @@ public class NitriteDatabase implements Database<Document> {
         });
     }
 
+    /**
+     * Every primary key of a collection, read from that collection's own index rather than from its documents.
+     * <p>
+     * A document cannot be reached cheaply for its key alone: MVStore decodes every value on a leaf page when it
+     * loads the page, so walking a collection to collect its keys costs the same as reading all of it - measured
+     * at about 50 us per record on a real project. The unique index on the primary key is a separate map holding
+     * only (key -> id) pairs, so its pages carry hundreds of small entries instead of a handful of documents,
+     * and walking that is what this does.
+     * <p>
+     * The keys come back in index order, which for the primary key is ascending key order rather than insertion
+     * order.
+     *
+     * @throws IllegalArgumentException if the collection has no index on its primary key, which is the case
+     *                                  while the indices are dropped
+     */
+    @Override
+    public <T> List<Object> primaryKeys(Class<T> clazz) throws IOException {
+        return this.read(() -> {
+            Field pkField = this.primaryKeyFields.get(clazz);
+            if (pkField == null)
+                throw new IllegalArgumentException("No primary key is declared for " + clazz.getName() + ".");
+
+            NitriteCollection collection = getRepository(clazz).getDocumentCollection();
+            IndexDescriptor primaryKeyIndex = collection.listIndices().stream()
+                    .filter(descriptor -> !descriptor.isCompoundIndex())
+                    .filter(descriptor -> descriptor.getFields().getFieldNames().equals(List.of(pkField.getName())))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("There is no index on the primary key '"
+                            + pkField.getName() + "' of " + clazz.getName() + ", so its keys cannot be read "
+                            + "without reading every document. Are the indices dropped?"));
+
+            NitriteMap<DBValue, ?> indexMap = this.db.getStore().openMap(
+                    IndexUtils.deriveIndexMapName(primaryKeyIndex), DBValue.class, CopyOnWriteArrayList.class);
+
+            List<Object> keys = new ArrayList<>();
+            for (org.dizitart.no2.common.tuples.Pair<DBValue, ?> entry : indexMap.entries())
+                if (entry.getFirst() != null && entry.getFirst().getValue() != null)
+                    keys.add(entry.getFirst().getValue());
+            return keys;
+        });
+    }
+
     @Override
     public <T> long countAll(Class<T> clazz) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             return repo.size();
+        });
+    }
+
+    @Override
+    public <T> boolean isFieldPresent(String field, Class<T> clazz) throws IOException {
+        return this.read(() -> {
+            Iterator<Document> it = maybeProjectWithoutConvert(clazz, null, FindOptions.skipBy(0).limit(1), new String[0]).iterator();
+            if (!it.hasNext())
+                return true; // empty repository -> nothing to migrate
+            return it.next().containsKey(field);
         });
     }
 
@@ -1062,8 +1190,7 @@ public class NitriteDatabase implements Database<Document> {
             }
         };
         final long tsid = TSID.fast().toLong();
-        this.listeners.put(tsid, wrapper);
-        getRepository(clazz).subscribe(wrapper);
+        this.subscriptions.put(tsid, getRepository(clazz).subscribe(wrapper));
         return tsid;
     }
 
@@ -1077,21 +1204,20 @@ public class NitriteDatabase implements Database<Document> {
             }
         };
         final long tsid = TSID.fast().toLong();
-        this.listeners.put(tsid, wrapper);
-        getCollection(collectionName).subscribe(wrapper);
+        this.subscriptions.put(tsid, getCollection(collectionName).subscribe(wrapper));
         return tsid;
     }
 
     @Override
     public void unsubscribe(Class<?> clazz, long listenerId) throws IOException {
-        getRepository(clazz).unsubscribe(this.listeners.get(listenerId));
-        this.listeners.remove(listenerId);
+        getRepository(clazz).unsubscribe(this.subscriptions.get(listenerId));
+        this.subscriptions.remove(listenerId);
     }
 
     @Override
     public void unsubscribe(String collectionName, long listenerId) throws IOException {
-        getCollection(collectionName).unsubscribe(this.listeners.get(listenerId));
-        this.listeners.remove(listenerId);
+        getCollection(collectionName).unsubscribe(this.subscriptions.get(listenerId));
+        this.subscriptions.remove(listenerId);
     }
 
     @Override
@@ -1128,7 +1254,7 @@ public class NitriteDatabase implements Database<Document> {
                 case GTE -> FluentFilter.where(literal.getField()).gte((Comparable<?>) literal.getValues()[0]);
                 case LT -> FluentFilter.where(literal.getField()).lt((Comparable<?>) literal.getValues()[0]);
                 case LTE -> FluentFilter.where(literal.getField()).lte((Comparable<?>) literal.getValues()[0]);
-                case BETWEEN -> new RangeFilter(literal.getField(), (Comparable) literal.getValues()[0], (Comparable) literal.getValues()[1],(boolean)literal.getValues()[2], (boolean)literal.getValues()[3]);
+                case BETWEEN -> FluentFilter.where(literal.getField()).between((Comparable<?>) literal.getValues()[0], (Comparable<?>) literal.getValues()[1], (boolean) literal.getValues()[2], (boolean) literal.getValues()[3]);
                 case TEXT -> FluentFilter.where(literal.getField()).text((String) literal.getValues()[0]);
                 case REGEX -> FluentFilter.where(literal.getField()).regex((String) literal.getValues()[0]);
                 case IN ->
@@ -1176,6 +1302,16 @@ public class NitriteDatabase implements Database<Document> {
     private static Pair<Object, NitriteFilter> createUniqueFilter(Object object, Field field) throws IOException {
         Object value = getPrimaryKeyValue(object, field).orElseThrow(() -> new IOException("id can not be null"));
         return Pair.of(value, FluentFilter.where(field.getName()).eq(value));
+    }
+
+    private static String hashString(String input, int bits) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash).substring(0, bits);
+        } catch (Exception e) {
+            throw new RuntimeException("Hashing failed", e);
+        }
     }
 
 }

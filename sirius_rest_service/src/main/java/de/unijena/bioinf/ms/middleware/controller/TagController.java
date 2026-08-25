@@ -31,6 +31,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}")
@@ -121,7 +122,7 @@ public class TagController {
     public TagDefinition addPossibleValuesToTagDefinition(
             @PathVariable String projectId,
             @PathVariable String tagName,
-            @Valid @RequestBody List<?> possibleValues
+            @Valid @RequestBody List<Object> possibleValues
     ) {
         return projectsProvider.getProjectOrThrow(projectId).addPossibleValuesToTagDefinition(tagName, possibleValues);
     }

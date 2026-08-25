@@ -49,7 +49,7 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
         license = new JLabel("License: ?");
         license.setToolTipText("Web service license information.");
         consumedQueries = new JLabel("Queries: 'UNLIMITED'");
-        consumedQueries.setToolTipText(GuiUtils.formatToolTip("Quota Utilization. Consumed feature queries in billing period. (If subscription has a feature query quota/limit)"));
+        consumedQueries.setToolTipText(GuiUtils.formatToolTip("Quota utilization. Consumed feature queries in the billing period. (If subscription has a feature query quota/limit)"));
         pendingJobs = new JLabel("Jobs: ?");
         pendingJobs.setToolTipText("Number of pending jobs on web server.");
 

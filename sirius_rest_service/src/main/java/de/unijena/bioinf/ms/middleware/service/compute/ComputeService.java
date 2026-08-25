@@ -25,10 +25,10 @@ import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.CommandSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
+import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChangeJobSubmission;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.DisposableBean;
@@ -55,10 +55,7 @@ public interface ComputeService extends DisposableBean {
     Job createAndSubmitPeakListImportJob(@NotNull Project<?> psm, AbstractImportSubmission<?> importSubmission,
                                          @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitFoldChangeForBlankSubtractionJob(@NotNull Project<?> project, List<String> sampleRunIds, List<String> blankRunIds, List<String> controlRunIds,
-                                     @NotNull EnumSet<Job.OptField> optFields);
-
-    Job createAndSubmitFoldChangeJob(@NotNull Project<?> project, String left, String right, AggregationType aggregation, QuantMeasure quantification, Class<?> target,
+    Job createAndSubmitFoldChangeJob(@NotNull Project<?> project, FoldChangeJobSubmission jobSubmission, QuantRowType target,
                                      @NotNull EnumSet<Job.OptField> optFields);
 
     Job createAndSubmitCommandJob(@NotNull Project<?> psm, CommandSubmission commandSubmission,

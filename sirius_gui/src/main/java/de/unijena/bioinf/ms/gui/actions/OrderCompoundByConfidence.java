@@ -34,8 +34,9 @@ public class OrderCompoundByConfidence extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        mainFrame.getCompoundList().orderBy(Comparator
+        mainFrame.getFilterableCompoundListPanel().runInBackgroundAndLoad(() ->
+                mainFrame.getCompoundList().orderBy(Comparator
                 .comparingDouble((InstanceBean o) -> o.getConfidenceScore(gui.getProperties().getConfidenceDisplayMode()).orElse(Double.NEGATIVE_INFINITY))
-                        .reversed());
+                .reversed()));
     }
 }

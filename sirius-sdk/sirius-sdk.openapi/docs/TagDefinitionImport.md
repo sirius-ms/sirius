@@ -11,9 +11,9 @@
 |**description** | **String** | A human-readable description about the purpose of this tag. |  [optional] |
 |**tagType** | **String** | A simple string based identifier to specify the type/scope/purpose of this tag. |  [optional] |
 |**valueType** | **ValueType** |  |  |
-|**possibleValues** | **List&lt;Object&gt;** |  |  [optional] |
-|**minValue** | **Object** |  |  [optional] |
-|**maxValue** | **Object** |  |  [optional] |
+|**possibleValues** | [**List&lt;Object&gt;**](Object.md) |  |  [optional] |
+|**minValue** | [**Object**](Object.md) |  |  [optional] |
+|**maxValue** | [**Object**](Object.md) |  |  [optional] |
 
 
 

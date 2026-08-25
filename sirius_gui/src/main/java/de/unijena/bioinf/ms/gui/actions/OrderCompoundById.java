@@ -33,6 +33,7 @@ public class OrderCompoundById extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        mainFrame.getCompoundList().orderBy(Comparator.comparing(InstanceBean::getFeatureId));
+        mainFrame.getFilterableCompoundListPanel().runInBackgroundAndLoad(() ->
+                mainFrame.getCompoundList().orderBy(Comparator.comparing(InstanceBean::getFeatureId)));
     }
 }
