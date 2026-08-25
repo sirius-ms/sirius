@@ -2,7 +2,7 @@ package de.unijena.bioinf.lcms.deconvolution;
 
 import de.unijena.bioinf.lcms.LCMSProcessing;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
-import de.unijena.bioinf.lcms.projectspace.SiriusDatabaseAdapter;
+import de.unijena.bioinf.lcms.projectspace.CollectingDatabaseAdapter;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
@@ -69,7 +69,7 @@ final class PipelineRun {
      */
     static PipelineRun run(List<Path> files, String name, Consumer<LCMSProcessing> configure, boolean refine)
             throws IOException {
-        final CollectingAdapter adapter = new CollectingAdapter();
+        final CollectingDatabaseAdapter adapter = new CollectingDatabaseAdapter();
         final LCMSProcessing processing = new LCMSProcessing(adapter, false);
         if (configure != null) configure.accept(processing);
         try {
@@ -112,74 +112,4 @@ final class PipelineRun {
         return withMsMs;
     }
 
-    /** keeps the features instead of persisting them, and hands out the ids the importer expects back */
-    static final class CollectingAdapter implements SiriusDatabaseAdapter {
-        private final AtomicLong ids = new AtomicLong(1);
-        final List<AlignedFeatures> features = new ArrayList<>();
-
-        @Override
-        public void importRun(LCMSRun run) {
-            run.setRunId(ids.getAndIncrement());
-        }
-
-        @Override
-        public void updateRun(LCMSRun run) {
-        }
-
-        MergedLCMSRun mergedRun;
-
-        @Override
-        public void importMergedRun(MergedLCMSRun mergedRun) {
-            mergedRun.setRunId(ids.getAndIncrement());
-            this.mergedRun = mergedRun;
-        }
-
-        @Override
-        public void updateMergedRun(MergedLCMSRun mergedRun) {
-        }
-
-        @Override
-        public void removeMergedRun(MergedLCMSRun run) {
-        }
-
-        @Override
-        public void importScan(Scan scan) {
-        }
-
-        @Override
-        public void importMSMSScan(MSMSScan scan) {
-        }
-
-        @Override
-        public void importTrace(AbstractTrace trace) {
-            // the importer needs an id back, and which kind of trace it is decides where it is stored
-            final long id = ids.getAndIncrement();
-            if (trace instanceof MergedTrace merged) merged.setMergedTraceId(id);
-            else if (trace instanceof SourceTrace source) source.setSourceTraceId(id);
-        }
-
-        @Override
-        public void removeSourceTrace(long id) {
-        }
-
-        @Override
-        public void removeMergedTrace(long id) {
-        }
-
-        @Override
-        public synchronized boolean importAlignedFeature(AlignedFeatures alignedFeatures) {
-            alignedFeatures.setAlignedFeatureId(ids.getAndIncrement());
-            features.add(alignedFeatures);
-            return true;
-        }
-
-        @Override
-        public void importRetentionTimeAxis(RetentionTimeAxis axis, boolean update) {
-        }
-
-        @Override
-        public synchronized Stream<AlignedFeatures> getImportedFeatureStream(long runId) {
-            return new ArrayList<>(features).stream();
-        }
-    }
 }

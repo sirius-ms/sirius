@@ -158,6 +158,8 @@ public class MzMLParser implements LCMSParser {
 
             final DoubleArrayList retentionTimes = new DoubleArrayList();
             final IntArrayList scanids = new IntArrayList();
+            /** how many MS/MS scans were read, so that a run consisting only of them is not mistaken for an empty one */
+            int ms2Count = 0;
             final ArrayList<String> scanIdentifiers = new ArrayList<>();
             final Int2IntMap idmap = new Int2IntOpenHashMap();
 
@@ -427,6 +429,7 @@ public class MzMLParser implements LCMSParser {
                             rt
                     );
                     final Ms2SpectrumHeader storedHeader = storage.getSpectrumStorage().addMs2Spectrum(header, peaks);
+                    ++ms2Count;
 
                     final List<uk.ac.ebi.jmzml.model.mzml.Precursor> allPrecursors = spectrum.getPrecursorList().getPrecursor();
                     if (allPrecursors.size() > 1) {
@@ -451,8 +454,17 @@ public class MzMLParser implements LCMSParser {
 
             }
 
-            if (scanids.isEmpty()) {
+            if (scanids.isEmpty() && ms2Count == 0) {
                 throw new RuntimeException("No spectra imported from " + fileName);
+            }
+            if (scanids.isEmpty()) {
+                // an MS/MS only run: there is no chromatographic axis to pick traces on, so the file carries no
+                // LC/MS information at all. It is still worth keeping - its fragmentation spectra can be matched
+                // against the features of the runs that do have MS1 scans - so it is read rather than refused.
+                LoggerFactory.getLogger(MzMLParser.class).info(
+                        "{} contains {} MS/MS scans and no MS1 scan at all. Its spectra are assigned to the features "
+                                + "of the other runs instead of being preprocessed as a chromatogram.",
+                        fileName, ms2Count);
             }
 
             if (surpressEmptySpectrumLog.size()>1) {

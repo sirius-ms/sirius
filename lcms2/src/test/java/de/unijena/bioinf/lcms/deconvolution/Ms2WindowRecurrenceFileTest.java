@@ -48,7 +48,7 @@ public class Ms2WindowRecurrenceFileTest {
         assumeTrue(!files.isEmpty(), "no file given, set SIRIUS_DIA_TEST_FILE");
 
         for (Path file : files) {
-            final LCMSProcessing processing = new LCMSProcessing(new PipelineRun.CollectingAdapter(), false);
+            final LCMSProcessing processing = new LCMSProcessing(new de.unijena.bioinf.lcms.projectspace.CollectingDatabaseAdapter(), false);
             final ProcessedSample sample = processing.processSample(file);
             // the measured per sample peak width, which TraceStats derives from the MS1 trace segments and
             // makeMergeStatistics later robust-averages into the merged expectedPeakWidth. The merged one is not

@@ -58,7 +58,7 @@ public class IsotopePairIntensityFileTest {
 
         final StringBuilder out = new StringBuilder();
         for (Path file : files.subList(0, Math.min(files.size(), 2))) {
-            final LCMSProcessing processing = new LCMSProcessing(new PipelineRun.CollectingAdapter(), false);
+            final LCMSProcessing processing = new LCMSProcessing(new de.unijena.bioinf.lcms.projectspace.CollectingDatabaseAdapter(), false);
             final ProcessedSample sample = processing.processSample(file);
             final SampleStats stats = sample.getStorage().getStatistics();
             final double noiseLevel = TraceCorrelationStatistics.medianNoiseLevel(stats);

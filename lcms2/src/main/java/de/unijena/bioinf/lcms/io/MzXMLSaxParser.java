@@ -77,6 +77,9 @@ class MzXMLSaxParser extends DefaultHandler {
 
     private final IntArrayList scanids = new IntArrayList();
 
+    /** how many MS/MS scans were read, so that a run consisting only of them is not mistaken for an empty one */
+    private int ms2Count = 0;
+
     private final Int2IntMap idmap = new Int2IntOpenHashMap();
 
     private boolean centroided = false;
@@ -148,8 +151,14 @@ class MzXMLSaxParser extends DefaultHandler {
     }
 
     public ProcessedSample getProcessedSample() {
-        if (scanids.isEmpty()) {
+        if (scanids.isEmpty() && ms2Count == 0) {
             throw new RuntimeException("No spectra imported from " + sourcePath);
+        }
+        if (scanids.isEmpty()) {
+            // an MS/MS only run, see MzMLParser: no chromatographic axis to preprocess, but its spectra are still
+            // matched against the features of the runs that do have MS1 scans.
+            log.info("{} contains {} MS/MS scans and no MS1 scan at all. Its spectra are assigned to the features "
+                    + "of the other runs instead of being preprocessed as a chromatogram.", sourcePath, ms2Count);
         }
         if (surpressEmptySpectraScanNumbers.size() > 100) {
             log.warn("There were {} spectra without any spectral data. Scan numbers: {}...{}",
@@ -431,6 +440,7 @@ class MzXMLSaxParser extends DefaultHandler {
                                         retentionTime
                                 );
                                 storage.getSpectrumStorage().addMs2Spectrum(header, peaks);
+                                ++ms2Count;
                             }
                         }
                     }

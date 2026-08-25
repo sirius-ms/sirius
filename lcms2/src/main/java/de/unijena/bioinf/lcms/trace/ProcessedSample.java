@@ -73,6 +73,17 @@ public class ProcessedSample {
         return Range.of(mapping.getRetentionTimeAt(0),mapping.getRetentionTimeAt(mapping.length()-1));
     }
 
+    /**
+     * Whether this run holds fragmentation spectra but no MS1 scan at all.
+     * <p>
+     * Such a run has no chromatographic axis, so there is nothing to pick traces on, nothing to align and nothing to
+     * merge: everything the preprocessing does happens on MS1 traces. Its MS/MS spectra are assigned to the features
+     * of the runs that do have MS1 scans instead, after those features exist.
+     */
+    public boolean isMs2Only() {
+        return mapping.length() == 0;
+    }
+
     @Override
     public String toString() {
         return run.getName();
