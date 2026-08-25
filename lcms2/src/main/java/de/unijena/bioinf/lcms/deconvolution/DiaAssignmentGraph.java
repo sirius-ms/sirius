@@ -85,6 +85,32 @@ public class DiaAssignmentGraph {
         this.featuresWithoutShapeEvidence = featuresWithoutShapeEvidence;
     }
 
+    /**
+     * Which way round the masses of a pair have to be.
+     * <p>
+     * A channel whose isolation window covers the whole mass range has no precursor outside it, so the decoys
+     * {@link DiaDecoys} relies on do not exist. Inverting this test is the decoy that remains: a fragment heavier
+     * than its precursor cannot have come from it, while everything the correlation is measured on - the window, the
+     * scan points, and above all that the two peak together - is exactly as it is for a real pair.
+     */
+    public enum MassRelation {
+        /** the fragment is light enough to have come from the precursor */
+        FRAGMENT_OF_PRECURSOR,
+        /** the fragment is heavier, so the pair is null by construction */
+        HEAVIER_THAN_PRECURSOR
+    }
+
+    /**
+     * How far above the precursor a decoy fragment has to lie.
+     * <p>
+     * A precursor's own isotopes sit at about one dalton apart and its adducts within a few dozen - sodium alone is
+     * near twenty two - and all of them co-elute with it perfectly, because they are the same compound. Sampled as
+     * decoys they would fill the null with correlations of one and leave every real edge looking unremarkable. The
+     * margin puts a decoy far enough above the precursor to be another compound; what is left of the adduct series
+     * beyond it is rarer than what it excludes.
+     */
+    public static final double DECOY_MZ_MARGIN = 60d;
+
     public static DiaAssignmentGraph build(DiaChannel channel, List<PrecursorFeature> precursors,
                                            List<ContiguousTrace> fragments) {
         return build(channel, precursors, fragments, DEFAULT_APEX_TOLERANCE, DEFAULT_MAX_FRAGMENT_MZ_ABOVE_PRECURSOR);
@@ -93,6 +119,13 @@ public class DiaAssignmentGraph {
     public static DiaAssignmentGraph build(DiaChannel channel, List<PrecursorFeature> precursors,
                                            List<ContiguousTrace> fragments, int apexTolerance,
                                            double maxFragmentMzAbovePrecursor) {
+        return build(channel, precursors, fragments, apexTolerance, maxFragmentMzAbovePrecursor,
+                MassRelation.FRAGMENT_OF_PRECURSOR);
+    }
+
+    public static DiaAssignmentGraph build(DiaChannel channel, List<PrecursorFeature> precursors,
+                                           List<ContiguousTrace> fragments, int apexTolerance,
+                                           double maxFragmentMzAbovePrecursor, MassRelation massRelation) {
         final List<PrecursorEdge> edges = new ArrayList<>();
         int withoutShape = 0;
         for (int p = 0; p < precursors.size(); ++p) {
@@ -101,7 +134,8 @@ public class DiaAssignmentGraph {
             boolean anyShape = false;
             for (int f = 0; f < fragments.size(); ++f) {
                 final ContiguousTrace fragment = fragments.get(f);
-                if (!isCandidate(precursor, fragment, window, apexTolerance, maxFragmentMzAbovePrecursor)) continue;
+                if (!isCandidate(precursor, fragment, window, apexTolerance, maxFragmentMzAbovePrecursor,
+                        massRelation)) continue;
                 final DiaTraceCorrelation.Result correlation =
                         DiaTraceCorrelation.precursorWithFragment(precursor.getTrace(), fragment, channel, window);
                 final double specificity = DiaFragmentSpecificity.of(fragment, window);
@@ -121,9 +155,17 @@ public class DiaAssignmentGraph {
      */
     static boolean isCandidate(PrecursorFeature precursor, Trace fragment, ChannelWindow window,
                                int apexTolerance, double maxFragmentMzAbovePrecursor) {
+        return isCandidate(precursor, fragment, window, apexTolerance, maxFragmentMzAbovePrecursor,
+                MassRelation.FRAGMENT_OF_PRECURSOR);
+    }
+
+    static boolean isCandidate(PrecursorFeature precursor, Trace fragment, ChannelWindow window,
+                               int apexTolerance, double maxFragmentMzAbovePrecursor, MassRelation massRelation) {
         // the fragment has to have been measured inside the feature
         if (fragment.endId() < window.from() || fragment.startId() > window.to()) return false;
-        if (fragment.averagedMz() > precursor.getMz() + maxFragmentMzAbovePrecursor) return false;
+        if (massRelation == MassRelation.HEAVIER_THAN_PRECURSOR) {
+            if (fragment.averagedMz() < precursor.getMz() + DECOY_MZ_MARGIN) return false;
+        } else if (fragment.averagedMz() > precursor.getMz() + maxFragmentMzAbovePrecursor) return false;
         // and it has to peak roughly where the feature does
         final int fragmentApex = window.apexIndexIn(fragment);
         if (fragmentApex < 0) return false;

@@ -431,8 +431,25 @@ public class DiaDeconvolution {
                     ? precursorNodesOf(channel, realFeatures.get(c), sample, grouping, tracker)
                     : Nodes.of(realFeatures.get(c));
             final DiaAssignmentGraph real = DiaAssignmentGraph.build(channel, nodes.precursors(), fragments.traces());
-            drafts.add(new Draft(channel, noiseLevel, fragments.seedsTried(), decoys.size(), real,
-                    DiaAssignmentGraph.build(channel, decoys, fragments.traces()), nodes.coReported()));
+            DiaAssignmentGraph decoyGraph = DiaAssignmentGraph.build(channel, decoys, fragments.traces());
+            int decoyPrecursors = decoys.size();
+            if (decoyGraph.getPrecursorEdges().size() < MIN_DECOY_EDGES) {
+                // An all ion channel isolates the whole mass range, so no precursor lies outside it and the usual
+                // decoys do not exist. What is left is the pair that is wrong for one reason only: a fragment
+                // heavier than its precursor cannot have come from it, and nothing else about the pair changes.
+                final List<PrecursorFeature> violating =
+                        DiaDecoys.thin(nodes.precursors(), maxDecoyPrecursors);
+                final DiaAssignmentGraph byMass = DiaAssignmentGraph.build(channel, violating, fragments.traces(),
+                        DiaAssignmentGraph.DEFAULT_APEX_TOLERANCE,
+                        DiaAssignmentGraph.DEFAULT_MAX_FRAGMENT_MZ_ABOVE_PRECURSOR,
+                        DiaAssignmentGraph.MassRelation.HEAVIER_THAN_PRECURSOR);
+                if (byMass.getPrecursorEdges().size() > decoyGraph.getPrecursorEdges().size()) {
+                    decoyGraph = byMass;
+                    decoyPrecursors = violating.size();
+                }
+            }
+            drafts.add(new Draft(channel, noiseLevel, fragments.seedsTried(), decoyPrecursors, real,
+                    decoyGraph, nodes.coReported()));
             survival.add(DiaPrecursorSurvival.of(real,
                     sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces()));
         }

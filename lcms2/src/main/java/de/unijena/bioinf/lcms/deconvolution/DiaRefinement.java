@@ -270,7 +270,18 @@ public class DiaRefinement {
             alignedFragments.put(entry.getKey(), fragments);
             final List<DiaFinalPrecursors.Aligned> decoys = DiaDecoys.thin(select(features, channel, true),
                     maxDecoyPrecursors, DiaFinalPrecursors.Aligned::getRetentionTime);
-            final DiaConsensusGraph graph = DiaConsensusGraph.build(perSample, decoys, fragments, true);
+            DiaConsensusGraph graph = DiaConsensusGraph.build(perSample, decoys, fragments, true);
+            if (graph.getEdges().size() < DiaDeconvolution.MIN_DECOY_EDGES) {
+                // an all ion channel has no precursor outside its window, so the decoys stage one falls back on are
+                // the only ones to be had here too: pairs whose fragment is heavier than its precursor
+                final List<DiaFinalPrecursors.Aligned> violating = DiaDecoys.thin(select(features, channel, false),
+                        maxDecoyPrecursors, DiaFinalPrecursors.Aligned::getRetentionTime);
+                final DiaConsensusGraph byMass = DiaConsensusGraph.build(perSample, violating, fragments, true,
+                        DiaAssignmentGraph.DEFAULT_APEX_TOLERANCE,
+                        DiaAssignmentGraph.DEFAULT_MAX_FRAGMENT_MZ_ABOVE_PRECURSOR,
+                        DiaAssignmentGraph.MassRelation.HEAVIER_THAN_PRECURSOR);
+                if (byMass.getEdges().size() > graph.getEdges().size()) graph = byMass;
+            }
             decoyGraphs.put(entry.getKey(), graph);
             pooled.addAll(graph);
         }

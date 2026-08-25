@@ -99,6 +99,19 @@ public class DiaConsensusGraph {
                                           List<DiaFinalPrecursors.Aligned> precursors,
                                           List<DiaAlignedFragments.Aligned> fragments, boolean decoy,
                                           int apexTolerance, double maxFragmentMzAbovePrecursor) {
+        return build(perSample, precursors, fragments, decoy, apexTolerance, maxFragmentMzAbovePrecursor,
+                DiaAssignmentGraph.MassRelation.FRAGMENT_OF_PRECURSOR);
+    }
+
+    /**
+     * @param massRelation inverted for the decoys of an all ion channel, where no precursor lies outside the
+     *                     isolation window - see {@link DiaAssignmentGraph.MassRelation}
+     */
+    public static DiaConsensusGraph build(List<DiaAlignedFragments.SampleFragments> perSample,
+                                          List<DiaFinalPrecursors.Aligned> precursors,
+                                          List<DiaAlignedFragments.Aligned> fragments, boolean decoy,
+                                          int apexTolerance, double maxFragmentMzAbovePrecursor,
+                                          DiaAssignmentGraph.MassRelation massRelation) {
         final Int2IntOpenHashMap sampleIndex = new Int2IntOpenHashMap();
         sampleIndex.defaultReturnValue(-1);
         for (int s = 0; s < perSample.size(); ++s) sampleIndex.put(perSample.get(s).sample().getUid(), s);
@@ -113,7 +126,7 @@ public class DiaConsensusGraph {
             boolean anyShape = false;
             for (int f = 0; f < fragments.size(); ++f) {
                 final ConsensusEdge edge = edgeOf(p, f, fragments.get(f), views, perSample, apexTolerance,
-                        maxFragmentMzAbovePrecursor);
+                        maxFragmentMzAbovePrecursor, massRelation);
                 if (edge == null) continue;
                 edges.add(edge);
                 anyShape |= edge.hasShapeEvidence();
@@ -173,7 +186,8 @@ public class DiaConsensusGraph {
     private static ConsensusEdge edgeOf(int precursorIndex, int fragmentIndex,
                                         DiaAlignedFragments.Aligned fragment, PrecursorFeature[] views,
                                         List<DiaAlignedFragments.SampleFragments> perSample, int apexTolerance,
-                                        double maxFragmentMzAbovePrecursor) {
+                                        double maxFragmentMzAbovePrecursor,
+                                        DiaAssignmentGraph.MassRelation massRelation) {
         final List<DiaTraceCorrelation.SampleWindow> windows = new ArrayList<>(views.length);
         // abundances over the samples that measured the feature, so that a sample which did not contribute to it
         // does not enter as a zero: an aligned feature without an instance in a sample says nothing about how much

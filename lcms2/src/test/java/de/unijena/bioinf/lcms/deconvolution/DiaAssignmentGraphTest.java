@@ -151,6 +151,62 @@ public class DiaAssignmentGraphTest {
         assertEquals(1, graph.getPrecursorEdges().getFirst().fragmentIndex(), "only the one within the slack");
     }
 
+    /**
+     * The decoy of an all ion channel, where no precursor lies outside the isolation window and the usual decoys
+     * cannot be had: the same pair, wrong for one reason only - a fragment cannot be heavier than the precursor it
+     * came from. Everything the correlation depends on is untouched, above all that the two peak together.
+     */
+    @Test
+    public void aHeavierFragmentIsTheDecoyOfAnAllIonChannel() {
+        ContiguousTrace precursor = peaks(MS1, 400.2, 0d, new double[]{60d, 4d, 10000d});
+        ContiguousTrace heavier = localFragment(700.5, 60d, 4d, 2000f);
+        ContiguousTrace lighter = localFragment(150.1, 60d, 4d, 2000f);
+
+        DiaAssignmentGraph graph = DiaAssignmentGraph.build(channel(),
+                List.of(feature(precursor, 50d, 60d, 70d)), List.of(heavier, lighter),
+                DiaAssignmentGraph.DEFAULT_APEX_TOLERANCE, DiaAssignmentGraph.DEFAULT_MAX_FRAGMENT_MZ_ABOVE_PRECURSOR,
+                DiaAssignmentGraph.MassRelation.HEAVIER_THAN_PRECURSOR);
+
+        assertEquals(1, graph.getPrecursorEdges().size(), "only the heavier one is a decoy edge");
+        assertEquals(0, graph.getPrecursorEdges().getFirst().fragmentIndex());
+    }
+
+    /**
+     * A precursor's own isotopes and adducts are heavier than it and co-elute with it perfectly. Sampled as decoys
+     * they would fill the null with correlations of one and make every real edge look unremarkable, so a decoy has
+     * to be far enough above the precursor to be another compound.
+     */
+    @Test
+    public void aPrecursorsOwnIsotopesAndAdductsAreNoDecoys() {
+        ContiguousTrace precursor = peaks(MS1, 400.2, 0d, new double[]{60d, 4d, 10000d});
+        ContiguousTrace secondIsotope = localFragment(402.207, 60d, 4d, 2000f);   // M+2
+        ContiguousTrace sodiated = localFragment(422.182, 60d, 4d, 2000f);        // [M+Na]+ against [M+H]+
+        ContiguousTrace anotherCompound = localFragment(700.5, 60d, 4d, 2000f);
+
+        DiaAssignmentGraph graph = DiaAssignmentGraph.build(channel(),
+                List.of(feature(precursor, 50d, 60d, 70d)),
+                List.of(secondIsotope, sodiated, anotherCompound),
+                DiaAssignmentGraph.DEFAULT_APEX_TOLERANCE, DiaAssignmentGraph.DEFAULT_MAX_FRAGMENT_MZ_ABOVE_PRECURSOR,
+                DiaAssignmentGraph.MassRelation.HEAVIER_THAN_PRECURSOR);
+
+        assertEquals(1, graph.getPrecursorEdges().size());
+        assertEquals(2, graph.getPrecursorEdges().getFirst().fragmentIndex(), "only the unrelated mass");
+    }
+
+    /** the decoy still has to look like an edge in every other respect */
+    @Test
+    public void aHeavierFragmentPeakingElsewhereIsNoDecoyEither() {
+        ContiguousTrace precursor = peaks(MS1, 400.2, 0d, new double[]{60d, 4d, 10000d});
+        ContiguousTrace heavier = localFragment(700.5, 60d + 4 * CHANNEL_STEP, 3d, 2000f);
+
+        DiaAssignmentGraph graph = DiaAssignmentGraph.build(channel(),
+                List.of(feature(precursor, 50d, 60d, 70d)), List.of(heavier),
+                DiaAssignmentGraph.DEFAULT_APEX_TOLERANCE, DiaAssignmentGraph.DEFAULT_MAX_FRAGMENT_MZ_ABOVE_PRECURSOR,
+                DiaAssignmentGraph.MassRelation.HEAVIER_THAN_PRECURSOR);
+
+        assertTrue(graph.getPrecursorEdges().isEmpty(), "a decoy that does not co-elute measures nothing");
+    }
+
     @Test
     public void aFragmentPeakingWellBesideTheFeatureIsNoCandidate() {
         ContiguousTrace precursor = peaks(MS1, 400.2, 0d, new double[]{60d, 4d, 10000d});
