@@ -1,0 +1,114 @@
+#!/bin/sh
+# Warn when the agent docs have gone stale — the root and per-module AGENTS.md files and the
+# .agents/skills playbooks.
+#
+# Four checks, all warn-only: a stale doc should never block a checkout.
+#   1. Claude Code can see the skills at all (the .claude/skills pointer exists).
+#   2. Module paths named in the AGENTS.md files are declared in settings.gradle.
+#   3. Repo-relative file paths named anywhere in the docs still resolve.
+#   4. Java type names named anywhere in the docs still appear in the sources.
+#
+# Checks 3 and 4 are deliberately weak in one direction: they accept a name that appears anywhere
+# (a usage, an import, a comment) rather than proving it is declared. Missing a rename is cheap;
+# crying wolf on every checkout is what gets a hook ignored.
+#
+# Runs in the foreground from post-checkout/post-merge, so it must stay fast: it reads the docs and
+# queries the git index (git ls-files, git grep), and starts no JVM (~0.3s).
+# Also runnable by hand: .githooks/check-agent-docs
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+cd "$root" || exit 0
+
+# The AGENTS.md files carry the module map; the skills are prose over the same code.
+agent_docs=''
+for f in AGENTS.md */AGENTS.md; do
+    [ -f "$f" ] && agent_docs="$agent_docs $f"
+done
+docs="$agent_docs"
+for f in .agents/skills/*/SKILL.md; do
+    [ -f "$f" ] && docs="$docs $f"
+done
+[ -n "$docs" ] || exit 0
+
+tmp=$(mktemp -d) || exit 0
+trap 'rm -rf "$tmp"' EXIT
+
+# --- 1. The pointer Claude Code needs -----------------------------------------------------------
+# Gemini CLI reads .agents/skills natively; Claude Code only scans .claude/skills. Without the
+# pointer every skill is invisible, and nothing else says so. -e is false for a dangling link too.
+if [ -d .agents/skills ] && [ ! -e .claude/skills ]; then
+    echo "Claude Code cannot see the agent skills: .claude/skills is missing or dangling."
+    echo "  Run: ./gradlew installAgentSkills"
+fi
+
+# --- 2. Module paths the build no longer declares ------------------------------------------------
+# Gradle treats include 'x' and include ':x' alike, so normalise the leading colon on both sides.
+# Only the AGENTS.md files: the skills quote Gradle *task* paths (`:sirius-sdk:openApiGenerate`),
+# which are indistinguishable from module paths by shape.
+if [ -f settings.gradle ] && [ -n "$agent_docs" ]; then
+    sed -n "s/^[[:space:]]*include[[:space:]]*'\([^']*\)'.*/\1/p" settings.gradle \
+        | sed 's/^://' | sort -u > "$tmp/declared"
+
+    # Module paths the docs claim exist: backtick-quoted tokens starting with ':'.
+    # Skips globs (`chemdb_*`) and placeholders (`:<module>:test`), which are not literal paths.
+    grep -ho '`:[A-Za-z0-9_.:-]*`' $agent_docs \
+        | tr -d '`' \
+        | sed 's/:$//' \
+        | sed 's/^://' \
+        | grep -v '[*<>]' \
+        | sort -u > "$tmp/referenced"
+
+    missing=$(comm -23 "$tmp/referenced" "$tmp/declared")
+    if [ -n "$missing" ]; then
+        echo "AGENTS.md references modules that settings.gradle does not declare:"
+        echo "$missing" | sed 's/^/  /'
+    fi
+fi
+
+# --- 3. File paths that no longer resolve --------------------------------------------------------
+# Only tokens with a directory component: a bare basename in prose (`build.gradle`) is ambiguous,
+# and full paths are what actually break when a file moves. Build output is generated and may
+# legitimately be absent, so it is not checkable here. .md is skipped for the same reason — nearly
+# every .md the docs name lives in the gitignored code map.
+git ls-files 2>/dev/null | sed 's#.*/##' | sort -u > "$tmp/basenames"
+grep -ho '`[A-Za-z0-9_][A-Za-z0-9_./-]*/[A-Za-z0-9_][A-Za-z0-9_./-]*\.\(java\|gradle\|json\|properties\|toml\|yaml\|yml\)`' $docs \
+    | tr -d '`' \
+    | grep -v '[*<>]' \
+    | grep -v '^build/\|/build/' \
+    | sort -u > "$tmp/paths"
+
+: > "$tmp/stale_paths"
+while read -r p; do
+    [ -n "$p" ] || continue
+    [ -e "$p" ] && continue
+    # Basename still tracked somewhere: the file moved rather than vanished. Same fix either way.
+    if grep -qxF "${p##*/}" "$tmp/basenames"; then
+        echo "$p (moved? the file name still exists elsewhere)" >> "$tmp/stale_paths"
+    else
+        echo "$p" >> "$tmp/stale_paths"
+    fi
+done < "$tmp/paths"
+if [ -s "$tmp/stale_paths" ]; then
+    echo "Agent docs reference files that do not exist:"
+    sed 's/^/  /' "$tmp/stale_paths"
+fi
+
+# --- 4. Java type names that appear nowhere in the sources ---------------------------------------
+# Backtick-quoted CamelCase tokens. SCREAMING_CASE is skipped (enum constants, config keys), and a
+# name is accepted if it appears as a word anywhere in the Java sources — external types (List,
+# BasicJJob, Nitrite) show up in imports and usages, so they pass without an allowlist to maintain.
+grep -ho '`[A-Z][A-Za-z0-9_]\{3,\}`' $docs \
+    | tr -d '`' \
+    | grep -v '^[A-Z0-9_]*$' \
+    | sort -u > "$tmp/types"
+
+if [ -s "$tmp/types" ]; then
+    pattern=$(paste -sd'|' "$tmp/types")
+    git grep -h -o -w -E "($pattern)" -- '*.java' 2>/dev/null | sort -u > "$tmp/seen"
+    unknown=$(comm -23 "$tmp/types" "$tmp/seen")
+    if [ -n "$unknown" ]; then
+        echo "Agent docs name types that appear nowhere in the Java sources (renamed or removed?):"
+        echo "$unknown" | sed 's/^/  /'
+    fi
+fi
+
+exit 0

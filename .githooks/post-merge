@@ -1,0 +1,10 @@
+#!/bin/sh
+# Refresh the AI code overview (build/ai-overview) and the .claude/skills pointer after a merge/pull.
+# Opt-in: enable with `./gradlew installGitHooks`. Runs in the background; both tasks are no-ops
+# unless .java sources changed / the pointer is missing or stale.
+# Foreground and JVM-free (~40ms), so its warning is actually visible; the Gradle run below is
+# backgrounded to /dev/null and could not surface one.
+[ -x ./.githooks/check-agent-docs ] && ./.githooks/check-agent-docs
+[ -x ./gradlew ] || exit 0
+(./gradlew aiOverview installAgentSkills -q >/dev/null 2>&1 &)
+exit 0
