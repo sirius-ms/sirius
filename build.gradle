@@ -541,3 +541,9 @@ tasks.register('refreshChangelogDate') {
     }
 }
 refreshReadMe.finalizedBy refreshChangelogDate
+
+/*################### OPTIONAL ################### */
+def agentToolingFile = file('gradle/agent-tooling.gradle')
+if (agentToolingFile.exists()) {
+    apply from: agentToolingFile
+}

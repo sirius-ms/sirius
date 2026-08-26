@@ -57,3 +57,11 @@ hs_err_pid*
 # Local env files
 .envrc
 .env
+
+### AI agent tooling ###
+# Generated pointer to the canonical .agents/skills; created by `./gradlew installAgentSkills`.
+# Never commit it: git only materialises symlinks with core.symlinks=true, so a committed link
+# would become a stray text file on Windows checkouts.
+/.claude/skills
+# Claude Code's auto-maintained, per-developer permission allowlist.
+/.claude/settings.local.json
