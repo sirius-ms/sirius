@@ -84,6 +84,7 @@ biotransformerSirius = "3.0.0"
 cmlxom = "3.1"
 grappa = "1.2"
 lucene = "10.4.0" #10.3.2
+javaparser = "3.26.4"  # build-only: AI overview generator (buildSrc)
 
 [libraries]
 # BOMs
@@ -101,6 +102,9 @@ buildscriptGradleUtilPlugins = { group = "com.github.viswaramamoorthy", name = "
 buildscriptSnakeyaml = { group = "org.yaml", name = "snakeyaml", version.ref = "snakeyaml" }
 buildscriptJxbrowserPlugin = { group = "com.teamdev.jxbrowser", name = "jxbrowser-gradle-plugin", version.ref = "jxbrowserPlugin" }
 buildscriptOpenapiGenerator = { group = "org.openapitools", name = "openapi-generator-gradle-plugin", version.ref = "openapiGenerator" }
+
+# Build-only Libraries (buildSrc)
+javaparser = { group = "com.github.javaparser", name = "javaparser-core", version.ref = "javaparser" }
 
 # Common Libraries
 lombok = { group = "org.projectlombok", name = "lombok" }
