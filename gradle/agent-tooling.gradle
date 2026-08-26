@@ -1,0 +1,133 @@
+/*
+ * Agent tooling: the Markdown code map generator, the git-hook installer, and the Claude Code skill
+ * pointer. None of it is needed to build or ship SIRIUS.
+ *
+ * It lives in one file so it can be filtered out when the repo is mirrored elsewhere. The root
+ * build.gradle applies this file only when it is present, so the build works unchanged without it.
+ *
+ * The aiOverview task type is Java in buildSrc/src/main/java/aioverview, and this file is its only
+ * caller. Filter that directory together with this file - keeping this file while removing the task
+ * type leaves an unresolvable class reference.
+ */
+
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+/*################### AI CODE OVERVIEW ################### */
+// Generates a compact, Lombok-aware Markdown code map of every module for AI agents.
+// Task type lives in buildSrc (aioverview.AiOverviewTask). Output: build/ai-overview (gitignored).
+// Run on demand: ./gradlew aiOverview
+def aiOverviewRevision = providers.exec {
+    commandLine 'git', 'rev-parse', '--short', 'HEAD'
+    ignoreExitValue = true
+}.standardOutput.asText.map { it.trim() }.map { it.isEmpty() ? 'unknown' : it }.orElse('unknown')
+
+tasks.register('aiOverview', aioverview.AiOverviewTask) {
+    group = 'documentation'
+    description = 'Generate a compact Markdown code map of every module for AI agents (build/ai-overview).'
+    def rootPath = rootDir.toPath()
+    // Only source-bearing modules; skips the ~10 aggregator/parent modules without src/main/java.
+    def sourceModules = subprojects.findAll { it.file('src/main/java').isDirectory() }
+    sourceModules.each { p ->
+        def rel = rootPath.relativize(p.file('src/main/java').toPath()).toString()
+        sources.from(layout.projectDirectory.dir(rel).asFileTree.matching { include '**/*.java' })
+    }
+    moduleRoots.set(sourceModules.collectEntries { p ->
+        def rel = rootPath.relativize(p.file('src/main/java').toPath()).toString()
+        [(p.path): layout.projectDirectory.dir(rel)]
+    })
+    outputDir.set(layout.buildDirectory.dir('ai-overview'))
+    revision.set(aiOverviewRevision)
+    // Optional detail controls: -PaiOverview.classDocs=summary|full  -PaiOverview.methodDocs=none|summary|full
+    classDocs.set(providers.gradleProperty('aiOverview.classDocs').orElse('summary'))
+    methodDocs.set(providers.gradleProperty('aiOverview.methodDocs').orElse('none'))
+}
+
+// Inter-module (project→project) dependency edges for module-dependencies.md. Populated after all
+// subprojects are evaluated so their `dependencies {}` blocks have run. External libs are ignored;
+// only ProjectDependency edges are collected, keyed by declaring module path.
+gradle.projectsEvaluated {
+    tasks.named('aiOverview', aioverview.AiOverviewTask) {
+        moduleDependencies.set(subprojects.collectEntries { p ->
+            def edges = [] as TreeSet
+            p.configurations.each { cfg ->
+                cfg.dependencies.withType(org.gradle.api.artifacts.ProjectDependency).each { dep ->
+                    edges << "${cfg.name} ${dep.path}".toString()
+                }
+            }
+            [(p.path): new ArrayList<String>(edges)]
+        })
+    }
+}
+
+// Opt-in: point git at .githooks so the AI overview auto-refreshes on checkout/merge.
+tasks.register('installGitHooks') {
+    group = 'documentation'
+    description = 'Enable .githooks (auto-refresh the AI overview on branch switch / merge).'
+    def hooksDir = file('.githooks')
+    def projectDir = project.projectDir
+    doLast {
+        ['post-checkout', 'post-merge', 'check-agent-docs'].each { new File(hooksDir, it).setExecutable(true) }
+        new ProcessBuilder('git', 'config', 'core.hooksPath', '.githooks')
+                .directory(projectDir).inheritIO().start().waitFor()
+        logger.lifecycle('Installed git hooks (core.hooksPath=.githooks). Disable with: git config --unset core.hooksPath')
+    }
+}
+
+// Agent skills live once, canonically, in .agents/skills (the vendor-neutral path Gemini CLI reads
+// natively). Claude Code only scans .claude/skills, so it needs a pointer to the same directory.
+// The pointer is generated (and gitignored), never committed: git materialises symlinks only with
+// core.symlinks=true, so committing one would leave a stray text file on Windows checkouts.
+tasks.register('installAgentSkills') {
+    group = 'documentation'
+    description = 'Point .claude/skills at the canonical .agents/skills so Claude Code finds the agent skills.'
+    def canonicalDir = file('.agents/skills')
+    def pointerFile = file('.claude/skills')
+    doLast {
+        if (!canonicalDir.isDirectory()) {
+            logger.lifecycle('No .agents/skills directory - nothing to link.')
+            return
+        }
+
+        def pointer = pointerFile.toPath()
+        def canonical = canonicalDir.toPath()
+        // A relative target keeps the link valid regardless of where the repo is checked out.
+        def relTarget = pointer.parent.relativize(canonical)
+
+        if (Files.isSymbolicLink(pointer)) {
+            if (Files.exists(pointer) && Files.isSameFile(pointer, canonical)) {
+                logger.lifecycle("Agent skills already linked: .claude/skills -> $relTarget")
+                return
+            }
+            Files.delete(pointer) // dangling, or pointing somewhere else
+        } else if (pointerFile.isDirectory()) {
+            logger.warn('WARNING: .claude/skills is a real directory, not a link to .agents/skills.\n' +
+                    '  Leaving it untouched to avoid deleting skills. Move its contents into\n' +
+                    '  .agents/skills, remove .claude/skills, then re-run this task.')
+            return
+        } else if (pointerFile.exists()) {
+            Files.delete(pointer) // e.g. a symlink git checked out as a plain text file
+        }
+
+        Files.createDirectories(pointer.parent)
+        try {
+            Files.createSymbolicLink(pointer, relTarget)
+            logger.lifecycle("Linked .claude/skills -> $relTarget")
+        } catch (IOException e) {
+            // Windows without Developer Mode / admin rights cannot create symlinks: copy instead.
+            // The copy is a snapshot, so it has to be refreshed when a skill changes.
+            Files.createDirectories(pointer)
+            Files.walk(canonical).withCloseable { paths ->
+                paths.forEach { src ->
+                    def dst = pointer.resolve(canonical.relativize(src).toString())
+                    if (Files.isDirectory(src))
+                        Files.createDirectories(dst)
+                    else
+                        Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING)
+                }
+            }
+            logger.lifecycle("Symlink unavailable ($e.message); copied .agents/skills to .claude/skills.\n" +
+                    '  Re-run this task after changing a skill to refresh the copy.')
+        }
+    }
+}

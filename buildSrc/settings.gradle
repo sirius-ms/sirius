@@ -1,0 +1,9 @@
+// buildSrc reuses the main project's version catalog so build-only tooling
+// dependencies (e.g. JavaParser for the AI overview generator) stay team-standardized.
+dependencyResolutionManagement {
+    versionCatalogs {
+        create('libs') {
+            from(files('../gradle/libs.versions.toml'))
+        }
+    }
+}
