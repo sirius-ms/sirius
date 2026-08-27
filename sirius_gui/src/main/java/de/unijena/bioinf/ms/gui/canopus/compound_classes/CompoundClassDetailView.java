@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.NumberFormats;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import io.sirius.ms.sdk.model.CompoundClass;
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.DecimalFormat;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.font.FontRenderContext;
@@ -53,6 +55,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 public class CompoundClassDetailView extends JPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
+    private static final DecimalFormat PERCENT = NumberFormats.percentage();
     private final JScrollPane containerSP;
 
     protected CompoundClasses compoundClasses = null;
@@ -228,9 +231,21 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
         protected static final int PADDING = 4, SAFETY_DISTANCE = 4, GAP_TOP = 4;
         protected boolean main;
 
+        /** the box is a link; underline the name while the pointer is on it */
+        private boolean hovered = false;
+
+        /** The ClassyFire page this box links to. */
+        public static URI classyFireUrl(CompoundClass cfClass) {
+            return URI.create(String.format("http://classyfire.wishartlab.com/tax_nodes/C%07d", cfClass.getId()));
+        }
+
         public ClassifClass(CompoundClass cfClass, boolean main, SiriusGui gui) {
             super();
-            setToolTipText("<html><p>Probability: <b>" + (int) (Math.round(cfClass.getProbability() * 100)) + " %</b></p><p>" + cfClass.getDescription() + "</p>");
+            setToolTipText(GuiUtils.formatToolTip(
+                    "Probability: <b>" + PERCENT.format(cfClass.getProbability()) + " %</b>",
+                    cfClass.getDescription(),
+                    classyFireUrl(cfClass).toString()));
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             this.main = main;
             this.gui = gui;
             this.cfClass = cfClass;
@@ -264,7 +279,10 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
 
             g.setFont(classFont);
             g.setColor(Colors.CompoundClassesView.CLASSIFIER_TEXT);
-            g.drawString(cfClass.getName(), PADDING, classBox.height + typeBox.height + PADDING + GAP_TOP);
+            final int baseline = classBox.height + typeBox.height + PADDING + GAP_TOP;
+            g.drawString(cfClass.getName(), PADDING, baseline);
+            if (hovered) //link affordance, like an underlined hyperlink
+                g.drawLine(PADDING, baseline + 2, PADDING + classBox.width, baseline + 2);
 
             // draw header string
             g.setFont(typeFont);
@@ -282,10 +300,14 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             g.drawString(cfClass.getLevel(), gap, typeBox.height + GAP_TOP);
         }
 
+        public boolean isHovered() {
+            return hovered;
+        }
+
         @Override
         public void mouseClicked(MouseEvent e) {
             try {
-                GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), URI.create(String.format("http://classyfire.wishartlab.com/tax_nodes/C%07d", cfClass.getId())), gui);
+                GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), classyFireUrl(cfClass), gui);
             } catch (IOException ex) {
                 LoggerFactory.getLogger(CompoundClassDetailView.class).error("Failed to open webbrowser");
             }
@@ -303,12 +325,14 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
 
         @Override
         public void mouseEntered(MouseEvent e) {
-
+            hovered = true;
+            repaint();
         }
 
         @Override
         public void mouseExited(MouseEvent e) {
-
+            hovered = false;
+            repaint();
         }
     }
 
@@ -324,7 +348,8 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
 
         public NPClass(CompoundClass npcClass) {
             super();
-            setToolTipText("<html><p>Probability: <b>" + (int) (Math.round(npcClass.getProbability() * 100)) + " %</b></p></html>");
+            setToolTipText(GuiUtils.formatToolTip(
+                    "Probability: <b>" + PERCENT.format(npcClass.getProbability()) + " %</b>"));
             this.npcClass = npcClass;
             typeFont = Fonts.FONT_MEDIUM.deriveFont(10f);
             typeName = new TextLayout(npcClass.getLevel(), typeFont, new FontRenderContext(null, false, false));
