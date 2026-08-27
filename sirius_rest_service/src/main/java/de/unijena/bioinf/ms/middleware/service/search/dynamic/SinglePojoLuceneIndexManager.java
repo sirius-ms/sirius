@@ -24,6 +24,9 @@ import org.apache.lucene.index.KeepOnlyLastCommitDeletionPolicy;
 import org.apache.lucene.index.SnapshotDeletionPolicy;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
@@ -439,12 +442,19 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                 doc -> doc.get(pojoMapper.getPojoIdField()));
     }
 
-    @SneakyThrows
     private Query parseQuery(@Nullable String query) {
         if (Utils.isNullOrBlank(query))
             return new MatchAllDocsQuery();
         synchronized (configLock) {
-            return queryParser.parse(query, null);
+            try {
+                return queryParser.parse(query, null);
+            } catch (QueryNodeException | IllegalArgumentException e) {
+                //the client wrote the query, so a query it cannot express is its error, not ours.
+                //IllegalArgumentException (and NumberFormatException below it) is what the field configuration
+                //throws when a value cannot be coerced for its field, e.g. a non numeric bound in a range.
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Malformed or unsupported search query: " + e.getMessage(), e);
+            }
         }
     }
 
