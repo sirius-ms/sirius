@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.table;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
+import de.unijena.bioinf.ms.gui.utils.NumberFormats;
 import eu.hansolo.rangeslider.RangeSlider;
 
 import javax.swing.*;
@@ -79,11 +80,11 @@ public class FilterRangeSlider<L extends ActionList<E, D>, E extends SiriusPCS, 
 
         String prototype = "0000";
         if (percentage) {
-            format = new DecimalFormat("##0");
+            format = NumberFormats.decimalFormat("##0");
             prototype = "100";
             viewMultiplier = valueMultiplier = 100d;
         } else {
-            format = new DecimalFormat(decimalFormat);
+            format = NumberFormats.decimalFormat(decimalFormat);
             viewMultiplier = 1d;
             valueMultiplier = 20d;
         }
