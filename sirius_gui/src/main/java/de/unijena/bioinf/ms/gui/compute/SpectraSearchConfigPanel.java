@@ -73,7 +73,7 @@ public class SpectraSearchConfigPanel extends SubToolConfigPanelAdvancedParams<S
         // Analogue Search params
         final TwoColumnPanel analogSearch = new TwoColumnPanel();
         enableAnalogSearch = makeParameterCheckBox("AnalogueSearchSettings.enabled"); //includes binding
-        analogSearch.addNamed("Perform Analogue Search", enableAnalogSearch);
+        analogSearch.addNamed("Perform Analog Search", enableAnalogSearch);
 
         analogMinSimilarity = makeParameterSpinner("AnalogueSearchSettings.minSimilarity",
                 PropertyManager.DEFAULTS.createInstanceWithDefaults(AnalogueSearchSettings.class).getMinSimilarity(),
@@ -90,7 +90,7 @@ public class SpectraSearchConfigPanel extends SubToolConfigPanelAdvancedParams<S
                 1, 500, 1, m -> String.valueOf(m.getNumber().intValue()));
         addAdvancedParameter(analogSearch, "Matches stored", analogMaxHits);
 
-        TextHeaderBoxPanel edgePanel = new TextHeaderBoxPanel("Analogue Search", analogSearch);
+        TextHeaderBoxPanel edgePanel = new TextHeaderBoxPanel("Analog Search", analogSearch);
         add(edgePanel,"aligny top");
     }
 

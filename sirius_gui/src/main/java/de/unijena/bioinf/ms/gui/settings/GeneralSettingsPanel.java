@@ -119,7 +119,7 @@ public class GeneralSettingsPanel extends TwoColumnPanel implements SettingsPane
         hardwareAcceleratedWebViewsBox = new JCheckBox();
         hardwareAcceleratedWebViewsBox.setSelected(hardwareAcceleratedWebViews);
         hardwareAcceleratedWebViewsBox.setToolTipText(GuiUtils.formatToolTip(
-                "Draw the built-in web views (e.g. LC/MS, Substructure Annotations, Homologue Series) on the graphics card.",
+                "Draw the built-in web views (e.g. LC/MS, Substructure Annotations, Homologous Series) on the graphics card.",
                 "Faster with large plots, but on some systems such a view can flash black for a moment when it is opened."));
         addNamed("Hardware-accelerated web views", hardwareAcceleratedWebViewsBox);
 
@@ -160,9 +160,9 @@ public class GeneralSettingsPanel extends TwoColumnPanel implements SettingsPane
         });
 
         showHomologueSeriesPanel = new JCheckBox();
-        showHomologueSeriesPanel.setToolTipText("Show a result tab displaying a KMD plot for analyzing homologue series.");
+        showHomologueSeriesPanel.setToolTipText("Show a result tab displaying a KMD plot for analyzing homologous series.");
         showHomologueSeriesPanel.setSelected(gui.getProperties().isShowHomologueSeriesPanel());
-        addNamed("Show \"Homologue Series\" tab", showHomologueSeriesPanel);
+        addNamed("Show \"Homologous Series\" tab", showHomologueSeriesPanel);
 
 
         //software tour

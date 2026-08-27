@@ -74,7 +74,7 @@ public class ResultPanel extends JTabbedPane {
     private KendrickMassDefectPanel massDefectTab;
 
     private final String spectralMatchingTabName = "Library Matches";
-    private final String massDefectTabName = "Homologue Series";
+    private final String massDefectTabName = "Homologous Series";
 
     private StructureList databaseStructureList;
     private StructureList combinedStructureListSubstructureView;
