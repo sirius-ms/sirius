@@ -55,6 +55,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     private static class MgfSpec {
 
         private String featureId;
+        private String scans;
         private MutableMs2Spectrum spectrum;
         private PrecursorIonType ionType;
         private HashMap<String, String> fields;
@@ -73,6 +74,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             this.smiles = s.smiles;
             this.name = s.name;
             this.featureId = s.featureId;
+            this.scans = s.scans;
             this.retentionTime = s.retentionTime;
             this.type = s.type;
             this.formula = null;
@@ -238,6 +240,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         spec.smiles = value;
                     }
                 } else if (keyword.equalsIgnoreCase("SCANS")){
+                    spec.scans = value; //kept independently of the name, so it can serve as feature id fallback
                     if(spec.name==null){ //Only use SCANS field if actual fields dont exist, if they do they overwrite
                         spec.name=value;
                     }
@@ -381,6 +384,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         exp.setIonMass(inst.peekNext().spectrum.getPrecursorMz());
         exp.setName(inst.peekNext().name);
         exp.setFeatureId(inst.peekNext().featureId);
+        if (exp.getFeatureId() == null) //MS-DIAL writes no FEATURE_ID; its identifier is the SCANS value
+            exp.setFeatureId(inst.peekNext().scans);
         if (exp.getName() == null)
             exp.setName(exp.getFeatureId());
         if (exp.getName() == null) {
