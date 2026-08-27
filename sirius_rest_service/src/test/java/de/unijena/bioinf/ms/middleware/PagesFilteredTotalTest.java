@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -49,12 +50,49 @@ class PagesFilteredTotalTest {
     }
 
     @Test
-    void emptyContentYieldsEmptyPage() throws IOException {
+    void emptyFirstPageNeedsNoCount() throws IOException {
         Database<?> storage = mock(Database.class);
 
-        Page<String> page = Pages.makePage(storage, PageRequest.of(3, 2), List.of(), Feature.class, FILTER);
+        Page<String> page = Pages.makePage(storage, PageRequest.of(0, 2), List.of(), Feature.class, FILTER);
+
+        assertEquals(0L, page.getTotalElements(), "an empty first page really is an empty collection");
+        verify(storage, never()).count(any(Filter.class), any());
+    }
+
+    /**
+     * A request past the last page used to report totalElements=0, telling the client there was nothing at
+     * all and leaving it no way to recompute the page count and get back (#932).
+     */
+    @Test
+    void pagePastTheEndStillReportsTheRealTotal() throws IOException {
+        Database<?> storage = mock(Database.class);
+        when(storage.count(any(Filter.class), any())).thenReturn(2L);
+
+        Page<String> page = Pages.makePage(storage, PageRequest.of(5, 1), List.of(), Feature.class, FILTER);
+
+        assertTrue(page.getContent().isEmpty(), "there is nothing on that page");
+        assertEquals(2L, page.getTotalElements(), "but the collection is not empty");
+        assertEquals(2, page.getTotalPages());
+    }
+
+    @Test
+    void unfilteredPagePastTheEndStillReportsTheRealTotal() throws IOException {
+        Database<?> storage = mock(Database.class);
+        when(storage.countAll(any(Class.class))).thenReturn(2L);
+
+        Page<String> page = Pages.makePage(storage, PageRequest.of(5, 1), List.of(), Feature.class);
+
+        assertEquals(2L, page.getTotalElements());
+        assertEquals(2, page.getTotalPages());
+    }
+
+    @Test
+    void unfilteredEmptyFirstPageNeedsNoCount() throws IOException {
+        Database<?> storage = mock(Database.class);
+
+        Page<String> page = Pages.makePage(storage, PageRequest.of(0, 2), List.of(), Feature.class);
 
         assertEquals(0L, page.getTotalElements());
-        verify(storage, never()).count(any(Filter.class), any());
+        verify(storage, never()).countAll(any(Class.class));
     }
 }
