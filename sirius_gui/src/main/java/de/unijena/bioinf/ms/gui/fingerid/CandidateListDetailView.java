@@ -46,6 +46,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.EpimetheusPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SubstructurePanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.NumberFormats;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
@@ -71,7 +72,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
@@ -584,7 +584,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
 
     public class CandidateInnerList extends JList<FingerprintCandidateBean> {
-        private final NumberFormat prob = new DecimalFormat("%");
+        private final NumberFormat prob = NumberFormats.percentage();
         Timer popUpTimer;
         CompoundStructureImage compoundStructureImage;
         JWindow popUpWindow;

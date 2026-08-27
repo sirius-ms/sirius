@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.NumberFormats;
 import io.sirius.ms.sdk.model.DataQuality;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
@@ -89,9 +90,9 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         this.gui = gui;
         this.setPreferredSize(new Dimension(210, 86));
         initColorsAndFonts();
-        this.numberFormat = new DecimalFormat("#0.00");
-        this.numberFormatMass = new DecimalFormat("#0.000");
-        this.numberFormatMassLong = new DecimalFormat("#0.00000");
+        this.numberFormat = NumberFormats.decimalFormat("#0.00");
+        this.numberFormatMass = NumberFormats.decimalFormat("#0.000");
+        this.numberFormatMassLong = NumberFormats.decimalFormat("#0.00000");
 
     }
 
