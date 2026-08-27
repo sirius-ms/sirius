@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 public class ComputePresetAndBannerPanel extends JPanel {
+    /** long enough to be read without being in the way */
+    private static final int PRESET_SAVED_BANNER_MILLIS = 2000;
     // should be the same as returned by the server
     public static final String DEFAULT_PRESET_NAME = "Default";
     public static final String MS1_PRESET_NAME = "MS1";
@@ -48,6 +50,7 @@ public class ComputePresetAndBannerPanel extends JPanel {
     @Getter private JComboBox<String> presetDropdown;
     private MessageBanner presetInfoBanner;
     private MessageBanner presetWarningBanner;
+    private MessageBanner presetSavedBanner;
     private MessageBanner connectionMessage;
 
     // Model
@@ -79,13 +82,20 @@ public class ComputePresetAndBannerPanel extends JPanel {
         presetWarningBanner = new MessageBanner("", MessageBanner.BannerType.WARNING);
         presetWarningBanner.setVisible(false);
 
+        presetSavedBanner = new MessageBanner("", MessageBanner.BannerType.GOOD);
+        presetSavedBanner.setVisible(false);
+
         connectionMessage = new MessageBanner();
         connectionMessage.setVisible(false);
 
+        JPanel messageBanners = new JPanel(new BorderLayout());
+        messageBanners.add(presetInfoBanner, BorderLayout.NORTH);
+        messageBanners.add(presetWarningBanner, BorderLayout.CENTER);
+        messageBanners.add(presetSavedBanner, BorderLayout.SOUTH);
+
         JPanel bannerPanel = new JPanel(new BorderLayout());
         bannerPanel.add(connectionMessage, BorderLayout.NORTH);
-        bannerPanel.add(presetInfoBanner, BorderLayout.CENTER);
-        bannerPanel.add(presetWarningBanner, BorderLayout.SOUTH);
+        bannerPanel.add(messageBanners, BorderLayout.CENTER);
         return bannerPanel;
     }
 
@@ -250,9 +260,19 @@ public class ComputePresetAndBannerPanel extends JPanel {
         presetWarningBanner.setVisible(true);
     }
 
+    /**
+     * Confirms a successful save. Transient rather than a dialog: saving a preset is a routine action, and
+     * a modal confirmation for each one would have to be clicked away every time.
+     */
+    public void showPresetSavedBanner(String presetName) {
+        presetSavedBanner.showTransient("Preset \"" + presetName + "\" saved.",
+                MessageBanner.BannerType.GOOD, PRESET_SAVED_BANNER_MILLIS);
+    }
+
     public void hidePresetBanners() {
         presetInfoBanner.setVisible(false);
         presetWarningBanner.setVisible(false);
+        presetSavedBanner.hideBanner();
     }
 
     public StoredJobSubmission savePresetAs(JobSubmission js, String suggestedName) {
