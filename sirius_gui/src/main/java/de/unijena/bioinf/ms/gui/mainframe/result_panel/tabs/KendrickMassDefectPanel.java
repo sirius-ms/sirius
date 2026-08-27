@@ -55,6 +55,6 @@ public class KendrickMassDefectPanel extends JPanel implements ExperimentListCha
     }
 
     public static String getDescriptionString() {
-        return "Kendrick mass defect plot for homologue series.";
+        return "Kendrick mass defect plot for homologous series.";
     }
 }
