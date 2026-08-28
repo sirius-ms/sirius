@@ -21,13 +21,13 @@ package de.unijena.bioinf.ms.gui.table;
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.NumberFormats;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.function.Function;
 
@@ -35,7 +35,7 @@ import java.util.function.Function;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
-    protected NumberFormat nf = new DecimalFormat("#0.000");
+    protected NumberFormat nf = NumberFormats.decimalFormat("#0.000");
 
     protected Color foreColor = Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR;
     protected Color backColor = Colors.CellsAndRows.Tables.ALTERNATING_ROW_1;

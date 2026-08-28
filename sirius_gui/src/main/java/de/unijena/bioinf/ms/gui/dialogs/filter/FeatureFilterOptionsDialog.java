@@ -403,7 +403,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
             pfasFilter = new SegmentedFilterToggle("any", "yes", "no",
                     fieldDescription(FeatureFilterModel.FIELD_PFAS,
-                            "The feature carries a PFAS tag: SIRIUS found it in a PFAS homologue series, "
+                            "The feature carries a PFAS tag: SIRIUS found it in a PFAS homologous series, "
                                     + "or annotated a PFAS molecular formula or structure for it."));
             pfasFilter.setFilterState(filterModel.getPfasDetected());
             classFilters.add(liveToolTipLabel("PFAS detected", pfasFilter::composeToolTip), hugging(pfasFilter),

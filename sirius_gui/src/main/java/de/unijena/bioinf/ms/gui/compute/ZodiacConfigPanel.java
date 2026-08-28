@@ -80,9 +80,9 @@ public class ZodiacConfigPanel extends SubToolConfigPanelAdvancedParams<ZodiacOp
         libraryAnchors.addNamed("Use identity anchors", useIdentityAnchors);
         libraryAnchors.addNamed("Min identity similarity", minSimilarityIdentityAnchors);
         libraryAnchors.add(Box.createVerticalStrut(GuiUtils.MEDIUM_GAP));
-        libraryAnchors.addNamed("Use analogue anchors", useAnalogueAnchors);
-        libraryAnchors.addNamed("Min analogue similarity", minSimilarityAnalogueAnchors);
-        libraryAnchors.addNamed("Min analogue peaks", minPeaksAnalogueAnchors);
+        libraryAnchors.addNamed("Use analog anchors", useAnalogueAnchors);
+        libraryAnchors.addNamed("Min analog similarity", minSimilarityAnalogueAnchors);
+        libraryAnchors.addNamed("Min analog peaks", minPeaksAnalogueAnchors);
         TextHeaderBoxPanel libraryAnchorsPanel = new TextHeaderBoxPanel("Spectral Library Anchors", libraryAnchors);
         addAdvancedComponent(libraryAnchorsPanel);
         add(libraryAnchorsPanel, "wrap");
