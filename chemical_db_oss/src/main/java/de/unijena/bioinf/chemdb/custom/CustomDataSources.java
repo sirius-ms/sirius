@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -246,7 +247,32 @@ public class CustomDataSources {
     }
 
     protected static Stream<Source> getSourcesFromNamesStrm(Collection<String> names) {
-        return names.stream().map(CustomDataSources::getSourceFromName).filter(Objects::nonNull);
+        return names.stream().map(name -> {
+            Source source = getSourceFromName(name);
+            if (source == null)
+                warnAboutUnknownDatabase(name);
+            return source;
+        }).filter(Objects::nonNull);
+    }
+
+    /** unknown names already reported, so a per compound call does not repeat the same warning */
+    private static final Set<String> REPORTED_UNKNOWN_NAMES = ConcurrentHashMap.newKeySet();
+
+    /**
+     * An unknown database name is dropped from the list of databases to search, which otherwise leaves the
+     * user with silently empty results and no hint why. Reported once per name: these lists are built per
+     * compound, so warning on every call would bury the run in identical lines.
+     * <p>
+     * A blank entry is not reported - that is usually an artefact of splitting an empty configuration value,
+     * not a name someone typed.
+     */
+    private static void warnAboutUnknownDatabase(@Nullable String name) {
+        if (name == null || name.isBlank())
+            return;
+        if (REPORTED_UNKNOWN_NAMES.add(name.toUpperCase(Locale.ROOT)))
+            LoggerFactory.getLogger(CustomDataSources.class).warn(
+                    "Unknown database '" + name + "'. It will be ignored, which may leave results empty. Available databases: "
+                            + getAllSelectableDbs().stream().map(Source::name).sorted().collect(Collectors.joining(", ")));
     }
 
 
