@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.properties.MolecularStructuresDisplayColors;
+import de.unijena.bioinf.ms.gui.utils.NumberFormats;
 import de.unijena.bioinf.ms.gui.utils.ThemedAtomColors;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
@@ -49,7 +50,7 @@ class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT
     public static final Dimension PREFERRED_SIZE_CELL = new Dimension(374, 215);
 
     protected static final Font formulaFont, scoreFont;
-    private static final DecimalFormat decimalFormat = new DecimalFormat("#0.000");
+    private static final DecimalFormat decimalFormat = NumberFormats.decimalFormat("#0.000");
 
     static {
         //init fonts

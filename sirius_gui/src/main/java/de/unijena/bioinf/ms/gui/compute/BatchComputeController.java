@@ -76,8 +76,10 @@ public class BatchComputeController {
             StoredJobSubmission newJobSubmission = gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(presetName, currentConfig, true, false));
 
             presetPanel.reloadPresets();
-            if (newJobSubmission != null)
-                presetPanel.selectPreset(presetName, true);
+            if (newJobSubmission != null) {
+                presetPanel.selectPreset(presetName, true); //hides the preset banners, so confirm afterwards
+                presetPanel.showPresetSavedBanner(presetName);
+            }
         });
 
         presetPanel.getSaveAsPreset().addActionListener(e -> {
@@ -86,8 +88,10 @@ public class BatchComputeController {
             StoredJobSubmission newJobSubmission = presetPanel.savePresetAs(currentConfig, presetPanel.getPresetDropdown().getSelectedItem() + "_copy");
 
             presetPanel.reloadPresets();
-            if (newJobSubmission != null)
-                presetPanel.selectPreset(newJobSubmission.getName(), true);
+            if (newJobSubmission != null) {
+                presetPanel.selectPreset(newJobSubmission.getName(), true); //hides the preset banners, so confirm afterwards
+                presetPanel.showPresetSavedBanner(newJobSubmission.getName());
+            }
         });
 
         // add tools panel controls
