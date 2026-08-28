@@ -240,7 +240,9 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 throw new IllegalStateException("Not logged in! Please log in to perform this operation!");
             } finally {
                 try {
-                    AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
+                    //ignoreMissing: this also runs after a failed login, and complaining that there is no token
+                    //to store would replace the real error - wrong credentials - with a bookkeeping one.
+                    AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE, true);
                 } catch (IOException e) {
                     throw new RuntimeException("Error when storing refresh token. You may have to re-login.", e);
                 }
