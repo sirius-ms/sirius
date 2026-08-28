@@ -93,7 +93,7 @@ public class Pages {
     }
 
     public static <T> Page<T> findPage(@NotNull final Database<?> storage, Class<T> clz, Pageable pageable) throws IOException {
-        return makePage(storage, pageable, findPageStr(storage, clz, pageable, sortMapper(clz)).toList());
+        return makePage(storage, pageable, findPageStr(storage, clz, pageable, sortMapper(clz)).toList(), clz);
     }
 
     public static <T> Stream<T> findPageStr(@NotNull final Database<?> storage, Class<T> clz, Pageable pageable) throws IOException {
@@ -126,7 +126,7 @@ public class Pages {
     public static <T> Page<T> findPage(@NotNull final Database<?> storage, Class<T> clz, Pageable pageable,
                                             Function<Sort, Pair<String[], Database.SortOrder[]>> sortTransformer
     ) throws IOException {
-        return makePage(storage, pageable, findPageStr(storage, clz, pageable, sortTransformer).toList());
+        return makePage(storage, pageable, findPageStr(storage, clz, pageable, sortTransformer).toList(), clz);
     }
 
 
@@ -146,11 +146,21 @@ public class Pages {
     }
 
     @SneakyThrows
-    public static <C> Page<C> makePage(@NotNull final Database<?> storage, @NotNull Pageable pageable, @NotNull List<C> content) {
-        if (content.isEmpty())
+    public static <C> Page<C> makePage(@NotNull final Database<?> storage, @NotNull Pageable pageable,
+                                       @NotNull List<C> content, @NotNull Class<?> clz) {
+        if (isEmptyCollection(pageable, content))
             return Page.empty();
-        long total = pageable.isUnpaged() ? content.size() : storage.countAll(content.getFirst().getClass());
+        long total = pageable.isUnpaged() ? content.size() : storage.countAll(clz);
         return new PageImpl<>(content, pageable, total);
+    }
+
+    /**
+     * An empty first page really is an empty collection, so its total is 0 and no count query is needed.
+     * An empty page <em>past</em> the last one is not: the collection has elements, the client just asked
+     * beyond them, and it needs the real total to find its way back (#932).
+     */
+    private static boolean isEmptyCollection(@NotNull Pageable pageable, @NotNull List<?> content) {
+        return content.isEmpty() && (pageable.isUnpaged() || pageable.getOffset() == 0);
     }
 
     /**
@@ -160,7 +170,7 @@ public class Pages {
      */
     public static <C> Page<C> makePage(@NotNull final Database<?> storage, @NotNull Pageable pageable,
                                        @NotNull List<C> content, @NotNull Class<?> clz, @NotNull Filter filter) throws IOException {
-        if (content.isEmpty())
+        if (isEmptyCollection(pageable, content))
             return Page.empty();
         long total = pageable.isUnpaged() ? content.size() : storage.count(filter, clz);
         return new PageImpl<>(content, pageable, total);
