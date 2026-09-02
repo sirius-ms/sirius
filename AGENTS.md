@@ -132,6 +132,9 @@ troubleshooting them.
   overrides it.
 * **Never** push to remote, even if asked.
 * Prefer small self-contained commits over big and bulky commits that contain multiple topics.
+* Remove unused imports from every file a change touches before committing it. The IDE exposes no
+  optimize-imports action over MCP and its reformat rewrites whole files, so the `clean-up-imports`
+  skill covers how: the IDE inspections find them, and only the reported lines go.
 * A build can leave tracked `.class.map` resources modified with nothing but their line order changed,
   in modules you never touched. Revert those; only a file that gained or lost a key belongs in a commit.
 
