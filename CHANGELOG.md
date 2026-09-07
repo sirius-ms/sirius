@@ -1,6 +1,12 @@
 # Changelog
 
 ## SIRIUS 6
+### 6.6.0 (unreleased)
+- fix: projects created or modified with 6.5.4 took up to three times more disk space than they need,
+  and grew further with every recompute. New and recomputed data is stored compactly again - smaller
+  than any earlier version wrote - and parts of large projects open faster. An affected project
+  shrinks as you keep working in it; compacting alone does not reclaim the wasted space.
+
 ### 6.5.4 (2026-08-25)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,
   which is the basis for the new query and filter capabilities:
