@@ -59,11 +59,11 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
     }
 
     private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata, NitriteDatabase.MVStoreCompression compression) throws IOException {
-        this(location, metadata, compression, 256, 65536); //64Kib
+        this(location, metadata, compression, 256, 65536); //64MiB of unsaved pages before MVStore writes a chunk
     }
 
-    private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata, NitriteDatabase.MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte) throws IOException {
-        super(new NitriteDatabase(location, metadata, compression, cacheSizeMiB, commitBufferByte, false));
+    private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata, NitriteDatabase.MVStoreCompression compression, int cacheSizeMiB, int commitBufferKiB) throws IOException {
+        super(new NitriteDatabase(location, metadata, compression, cacheSizeMiB, commitBufferKiB, false));
         this.metadata = metadata;
         updateSerializers();
     }
