@@ -75,12 +75,16 @@ public class NitritePageOccupancyTest {
     }
 
     private static Path write(Path dir, String name, Integer pageSplitSizeByte) throws IOException {
+        return write(dir, name, pageSplitSizeByte, 64);
+    }
+
+    private static Path write(Path dir, String name, Integer pageSplitSizeByte, int cacheSizeMiB) throws IOException {
         Path file = dir.resolve(name + ".db");
         Metadata meta = Metadata.build().addCollection(COLLECTION, Index.unique("key"));
 
         NitriteDatabase db = pageSplitSizeByte == null
-                ? new NitriteDatabase(file, meta, NitriteDatabase.MVStoreCompression.LZF, 64, 8192, false)
-                : new NitriteDatabase(file, meta, NitriteDatabase.MVStoreCompression.LZF, 64, 8192,
+                ? new NitriteDatabase(file, meta, NitriteDatabase.MVStoreCompression.LZF, cacheSizeMiB, 8192, false)
+                : new NitriteDatabase(file, meta, NitriteDatabase.MVStoreCompression.LZF, cacheSizeMiB, 8192,
                         pageSplitSizeByte, false);
         try (NitriteDatabase open = db) {
             Random rnd = new Random(42);
@@ -113,6 +117,17 @@ public class NitritePageOccupancyTest {
         double large = recordsPerLeafPage(write(dir, "large", NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE), null);
         assertTrue(large > small, () -> "a larger budget has to fill pages further, got "
                 + large + " vs " + small + " per page");
+    }
+
+    @Test
+    public void testBudgetIsCappedByTheReadCache(@TempDir Path dir) throws IOException {
+        // MVStore allows at most a 256th of the read cache per page and says nothing when it caps,
+        // so a 4 MiB cache holds the default 64 KiB budget down to 16 KiB
+        double capped = recordsPerLeafPage(write(dir, "capped", null, 4), null);
+        double uncapped = recordsPerLeafPage(write(dir, "uncapped", null, 64), null);
+        assertTrue(capped < uncapped, () -> "a small read cache has to cap the page budget, got "
+                + capped + " vs " + uncapped + " records per page");
+        assertEquals(recordsPerLeafPage(write(dir, "explicit16k", 16 * 1024, 64), null), capped, 0.5);
     }
 
     @Test
