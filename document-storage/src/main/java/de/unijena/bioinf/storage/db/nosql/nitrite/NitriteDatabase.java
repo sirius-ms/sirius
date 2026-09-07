@@ -86,6 +86,31 @@ public class NitriteDatabase implements Database<Document> {
 
     public enum MVStoreCompression{NONE, LZF, DEFLATE}
 
+    /**
+     * Byte budget MVStore gives a B-tree page before it splits it, in bytes.
+     * <p>
+     * MVStore charges a record twice its serialized size against this budget
+     * ({@code ObjectDataType.SerializedObjectType.getMemory()} deliberately
+     * doubles: "we say they are larger, because these objects use quite a lot
+     * of disk space"), and it splits a full page at its midpoint, so pages
+     * settle at half of what the budget would allow. Both effects compound:
+     * Nitrite's own default of 16 KiB fills a page to about a quarter.
+     * <p>
+     * 64 KiB measured 40% smaller on disk than 16 KiB for a 50k
+     * {@code CsiStructureMatch} collection (12.9 vs 21.4 MiB compacted, 3.6 to
+     * 12.7 records per leaf page, tree depth 11 down to 6) at no cost in write
+     * or update time. Larger budgets shrink the file further but pay for it in
+     * copy-on-write amplification, because updating one record rewrites its
+     * whole page - at 256 KiB, rewriting 5% of a collection of 2 KiB records
+     * grew the file by 12 MiB instead of 4.5 MiB.
+     * <p>
+     * Keep this at or below {@code cacheSizeMiB / 256}: MVStore silently clamps
+     * the budget to {@code cache.getMaxItemSize() >> 4} so that a page always
+     * fits the read cache. That is 256 KiB for the 64 MiB default below and
+     * 1 MiB for the 256 MiB the project database uses.
+     */
+    public static final int DEFAULT_PAGE_SPLIT_SIZE_BYTE = 64 * 1024;
+
     protected Path file;
 
     // the compression the store writes with; used so compact() does not silently change it
@@ -131,10 +156,14 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte, boolean readOnly) throws IOException {
+        this(file, meta, compression, cacheSizeMiB, commitBufferByte, DEFAULT_PAGE_SPLIT_SIZE_BYTE, readOnly);
+    }
+
+    public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte, int pageSplitSizeByte, boolean readOnly) throws IOException {
         this.file = file;
         this.meta = meta;
         this.compression = compression;
-        this.db = initDB(file, meta, compression, cacheSizeMiB,commitBufferByte, readOnly);
+        this.db = initDB(file, meta, compression, cacheSizeMiB, commitBufferByte, pageSplitSizeByte, readOnly);
         this.initCollections(meta);
         this.initRepositories(meta);
         this.initOptionalFields(meta);
@@ -160,7 +189,7 @@ public class NitriteDatabase implements Database<Document> {
         }
     }
 
-    private Nitrite initDB(Path file, Metadata meta, MVStoreCompression compress, int cacheSizeMiB, int commitBufferByte, boolean readOnly) {
+    private Nitrite initDB(Path file, Metadata meta, MVStoreCompression compress, int cacheSizeMiB, int commitBufferByte, int pageSplitSizeByte, boolean readOnly) {
         SimpleModule module = new SimpleModule("sirius-nitrite", Version.unknownVersion());
         for (Map.Entry<Class<?>, JsonSerializer<?>> entry : meta.serializers.entrySet()) {
             addSerializer(module, entry.getKey(), entry.getValue());
@@ -173,6 +202,7 @@ public class NitriteDatabase implements Database<Document> {
                 .compressHigh(compress == MVStoreCompression.DEFLATE)
                 .autoCommitBufferSize(commitBufferByte) //8kib for 2048 and lower there is a weired bug in Nitrite + MvStore where the db crashed during close operation in 2% of the cases.
                 .cacheSize(cacheSizeMiB)
+                .pageSplitSize(pageSplitSizeByte) //Nitrite's own default fills a page to about a quarter, see DEFAULT_PAGE_SPLIT_SIZE_BYTE
                 .readOnly(readOnly)
                 .build();
 //        NitriteModule storeModule = RocksDBModule.withConfig().filePath(file.toFile()).build();
