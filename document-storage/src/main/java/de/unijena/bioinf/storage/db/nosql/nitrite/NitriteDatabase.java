@@ -104,12 +104,22 @@ public class NitriteDatabase implements Database<Document> {
      * whole page - at 256 KiB, rewriting 5% of a collection of 2 KiB records
      * grew the file by 12 MiB instead of 4.5 MiB.
      * <p>
-     * Keep this at or below {@code cacheSizeMiB / 256}: MVStore silently clamps
-     * the budget to {@code cache.getMaxItemSize() >> 4} so that a page always
-     * fits the read cache. That is 256 KiB for the 64 MiB default below and
-     * 1 MiB for the 256 MiB the project database uses.
+     * MVStore caps the budget at a 256th of the read cache - {@code cacheSizeMiB}
+     * times 4 KiB - because the cache is segmented 16 ways and no single page may
+     * take more than a 16th of a segment, or caching it would evict the segment's
+     * whole contents. So 64 MiB of cache allows 256 KiB and the 256 MiB the
+     * project database uses allows 1 MiB.
+     * <p>
+     * Read that the other way round when changing either number: 64 KiB needs at
+     * least 16 MiB of cache, so <em>lowering</em> {@code cacheSizeMiB} below that
+     * shrinks the page budget with it. The cap applies silently - MVStore neither
+     * warns nor fails, it just uses the smaller value - which is why
+     * {@link #warnIfPageBudgetIsCapped} logs it.
      */
     public static final int DEFAULT_PAGE_SPLIT_SIZE_BYTE = 64 * 1024;
+
+    /** Read cache MVStore falls back to when no {@code cacheSize} is configured, in MiB. */
+    private static final int MVSTORE_DEFAULT_CACHE_SIZE_MIB = 16;
 
     protected Path file;
 
@@ -155,15 +165,15 @@ public class NitriteDatabase implements Database<Document> {
         this(file, meta, MVStoreCompression.LZF, 64, 8192, readOnly);
     }
 
-    public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte, boolean readOnly) throws IOException {
-        this(file, meta, compression, cacheSizeMiB, commitBufferByte, DEFAULT_PAGE_SPLIT_SIZE_BYTE, readOnly);
+    public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferKiB, boolean readOnly) throws IOException {
+        this(file, meta, compression, cacheSizeMiB, commitBufferKiB, DEFAULT_PAGE_SPLIT_SIZE_BYTE, readOnly);
     }
 
-    public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte, int pageSplitSizeByte, boolean readOnly) throws IOException {
+    public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferKiB, int pageSplitSizeByte, boolean readOnly) throws IOException {
         this.file = file;
         this.meta = meta;
         this.compression = compression;
-        this.db = initDB(file, meta, compression, cacheSizeMiB, commitBufferByte, pageSplitSizeByte, readOnly);
+        this.db = initDB(file, meta, compression, cacheSizeMiB, commitBufferKiB, pageSplitSizeByte, readOnly);
         this.initCollections(meta);
         this.initRepositories(meta);
         this.initOptionalFields(meta);
@@ -189,7 +199,7 @@ public class NitriteDatabase implements Database<Document> {
         }
     }
 
-    private Nitrite initDB(Path file, Metadata meta, MVStoreCompression compress, int cacheSizeMiB, int commitBufferByte, int pageSplitSizeByte, boolean readOnly) {
+    private Nitrite initDB(Path file, Metadata meta, MVStoreCompression compress, int cacheSizeMiB, int commitBufferKiB, int pageSplitSizeByte, boolean readOnly) {
         SimpleModule module = new SimpleModule("sirius-nitrite", Version.unknownVersion());
         for (Map.Entry<Class<?>, JsonSerializer<?>> entry : meta.serializers.entrySet()) {
             addSerializer(module, entry.getKey(), entry.getValue());
@@ -197,10 +207,12 @@ public class NitriteDatabase implements Database<Document> {
         for (Map.Entry<Class<?>, JsonDeserializer<?>> entry : meta.deserializers.entrySet()) {
             addDeserializer(module, entry.getKey(), entry.getValue());
         }
+        warnIfPageBudgetIsCapped(file, cacheSizeMiB, pageSplitSizeByte);
+
         NitriteModule storeModule = MVStoreModule.withConfig().filePath(file.toFile())
                 .compress(compress == MVStoreCompression.LZF)
                 .compressHigh(compress == MVStoreCompression.DEFLATE)
-                .autoCommitBufferSize(commitBufferByte) //8kib for 2048 and lower there is a weired bug in Nitrite + MvStore where the db crashed during close operation in 2% of the cases.
+                .autoCommitBufferSize(commitBufferKiB) //MVStore reads this in KiB, so 8192 is 8 MiB. Below 2048 there is a weired bug in Nitrite + MvStore where the db crashed during close operation in 2% of the cases.
                 .cacheSize(cacheSizeMiB)
                 .pageSplitSize(pageSplitSizeByte) //Nitrite's own default fills a page to about a quarter, see DEFAULT_PAGE_SPLIT_SIZE_BYTE
                 .readOnly(readOnly)
@@ -210,6 +222,25 @@ public class NitriteDatabase implements Database<Document> {
                 .loadModule(new JacksonMapperModule(module))
                 .schemaVersion(meta.getSchemaVersion())
                 .openOrCreate();
+    }
+
+    /**
+     * MVStore caps {@code pageSplitSize} at a 256th of the read cache and says
+     * nothing when it does, so a budget raised past that cap looks applied and
+     * is not. Report it rather than let someone measure a change that never
+     * happened. See {@link #DEFAULT_PAGE_SPLIT_SIZE_BYTE}.
+     */
+    private static void warnIfPageBudgetIsCapped(Path file, int cacheSizeMiB, int pageSplitSizeByte) {
+        // a non-positive cacheSize is not forwarded to MVStore, which then uses its own default
+        int effectiveCacheMiB = cacheSizeMiB > 0 ? cacheSizeMiB : MVSTORE_DEFAULT_CACHE_SIZE_MIB;
+        int capByte = effectiveCacheMiB * 4 * 1024;
+        if (pageSplitSizeByte > capByte) {
+            log.warn("Page split size of {} bytes is capped at {} bytes for {}: MVStore allows at most a 256th of " +
+                            "the {} MiB read cache per page. Raise the cache size to {} MiB to get the requested " +
+                            "budget, or pages will stay smaller than intended and the file larger.",
+                    pageSplitSizeByte, capByte, file, effectiveCacheMiB,
+                    (pageSplitSizeByte + 4 * 1024 - 1) / (4 * 1024));
+        }
     }
 
     private void initCollections(Metadata meta) {
