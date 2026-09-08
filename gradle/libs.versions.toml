@@ -71,8 +71,13 @@ scribejava = "8.3.3"
 # rebuild on the first write after every open; paged reads seek to the offset instead of reading and discarding every
 # skipped document (sirius3), which took paging a collection from O(n^2/pageSize) to one bounded scan; and the MVStore
 # page split size defaults to 16 KiB rather than 16 bytes (sirius4), which stopped every leaf page from being split
-# down to a single record and inflating project files by ~50% permanently.
-nitrite = { strictly = "4.3.3-sirius4" }
+# down to a single record and inflating project files by ~50% permanently. sirius5 pins h2-mvstore to 2.5.250 instead
+# of the 2.4.240 upstream ships: MVStore.compact copies a store's maps in parallel, and in 2.4.240 the page reference
+# it clears is read twice and cleared with a plain write, so another copy thread can see the cleared page without its
+# position. A Nitrite store always has many maps - one per collection plus its index and meta maps - so it always
+# takes that parallel path. 2.5.250 fixes the race; the on-disk format is unchanged, so projects stay readable by
+# older SIRIUS versions.
+nitrite = { strictly = "4.3.3-sirius5" }
 # nitrite-jackson-mapper switched to Jackson 3 (tools.jackson) in 4.3.3, 4.3.2 is the last Jackson 2 release. Not
 # forked, so it stays on the upstream version until the storage serializers are ported.
 nitriteJacksonMapper = "4.3.2"
