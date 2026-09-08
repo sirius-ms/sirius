@@ -13621,6 +13621,11 @@
             "format": "int64",
             "nullable": true
           },
+          "compactionRecommended": {
+            "type": "boolean",
+            "description": "Whether compacting this project would make it markedly smaller than the size above, because it is stored\n in a layout an earlier SIRIUS version wrote. Projects written before 6.6.0 hold a single record per storage\n page, which an ordinary compaction cannot undo; compacting such a project rewrites it and can reclaim\n a large part of its size. If NULL, the information has not been requested (See OptField \u0027sizeInformation\u0027).",
+            "nullable": true
+          },
           "detectedAdducts": {
             "uniqueItems": true,
             "type": "array",

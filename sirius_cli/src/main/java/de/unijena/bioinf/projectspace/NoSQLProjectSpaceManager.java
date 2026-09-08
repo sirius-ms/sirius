@@ -193,6 +193,11 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
     }
 
     @Override
+    public boolean isCompactionRecommended() {
+        return project.getStorage().isCompactionRecommended();
+    }
+
+    @Override
     public @NotNull ProjectDetectedAdducts getDetectedAdducts() {
         return project.findDetectedAdducts().orElse(ProjectDetectedAdducts.EMPTY);
     }

@@ -109,6 +109,15 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
 
     void compact();
 
+    /**
+     * Whether compacting this project would reclaim markedly more than the garbage a
+     * compaction usually reclaims, because the layout it is stored in is out of date.
+     * Cheap to ask; see {@code Database#isCompactionRecommended()}.
+     */
+    default boolean isCompactionRecommended() {
+        return false;
+    }
+
     void writeFingerIdDataIfMissing(WebAPI<?> api) throws IOException;
 
     void writeCanopusDataIfMissing(WebAPI<?> api) throws IOException;
