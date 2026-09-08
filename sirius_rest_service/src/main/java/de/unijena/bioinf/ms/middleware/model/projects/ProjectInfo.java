@@ -87,6 +87,14 @@ public final class ProjectInfo {
      */
     @Schema(nullable = true)
     public final @Nullable Long numOfBytes;
+    /**
+     * Whether compacting this project would make it markedly smaller than the size above, because it is stored
+     * in a layout an earlier SIRIUS version wrote. Projects written before 6.6.0 hold a single record per storage
+     * page, which an ordinary compaction cannot undo; compacting such a project rewrites it and can reclaim
+     * a large part of its size. If NULL, the information has not been requested (See OptField 'sizeInformation').
+     */
+    @Schema(nullable = true)
+    public final @Nullable Boolean compactionRecommended;
 
     /**
      * Set of all detected adducts available in this project.
