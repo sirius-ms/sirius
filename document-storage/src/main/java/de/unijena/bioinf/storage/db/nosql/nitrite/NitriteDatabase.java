@@ -537,8 +537,12 @@ public class NitriteDatabase implements Database<Document> {
      * with nothing.
      * <p>
      * The rewrite restarts the store's commit version, because the call h2 uses to carry
-     * it over is package-private. Whatever is anchored to that version - the persisted
-     * search index is - has to be re-anchored afterwards.
+     * it over is package-private, so whatever is anchored to that version has to be
+     * re-anchored - see {@link Database#compact()}. The middleware does that for its search
+     * index when it closes a project; a compaction run from the CLI therefore costs one index
+     * rebuild on the next open, which is a deliberate choice rather than an oversight: the
+     * rebuild is automatic and correct, and teaching the storage layer to re-anchor would
+     * split the index's own rule across two modules.
      * <p>
      * Leaves the store closed either way, as a compaction always has.
      */

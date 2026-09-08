@@ -68,6 +68,13 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     /**
      * Compact the database to reduce its size on disk.
+     * <p>
+     * Moves the storage's commit version, so whatever is anchored to
+     * {@link #getStorageCommitId()} - the persisted search index is - has to be re-anchored
+     * afterwards by whoever owns it. A storage that rewrites its layout rather than copying
+     * it restarts that version from the beginning, which makes re-anchoring necessary rather
+     * than merely tidy. Deliberately not done here: what the version means to an index, and
+     * how far out of sync is too far, is the index owner's rule, not the storage's.
      */
     void compact();
 
