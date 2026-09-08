@@ -71,6 +71,17 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
      */
     void compact();
 
+    /**
+     * Whether compacting this database would reclaim markedly more than the garbage a
+     * compaction usually reclaims, because its on-disk layout is out of date.
+     * <p>
+     * Cheap to ask - a storage that tracks this answers from what it read when it opened
+     * the file. A storage that has no layout to be out of date says no.
+     */
+    default boolean isCompactionRecommended() {
+        return false;
+    }
+
     //region CRUD operations
 
     <T> int insert(T object) throws IOException;

@@ -126,6 +126,15 @@ public class NitriteDatabase implements Database<Document> {
     // the compression the store writes with; used so compact() does not silently change it
     protected final MVStoreCompression compression;
 
+    // the read cache this store was opened with, so a layout rewrite can reproduce it
+    protected final int cacheSizeMiB;
+
+    // the page budget this store's pages are actually split against, see initPageBudgetMarker()
+    private final int effectivePageBudgetByte;
+
+    // whether this store's pages were written against a smaller budget than the one above
+    private boolean layoutOutdated;
+
     protected final String systemUID;
 
     // NITRITE
@@ -173,7 +182,11 @@ public class NitriteDatabase implements Database<Document> {
         this.file = file;
         this.meta = meta;
         this.compression = compression;
+        this.cacheSizeMiB = cacheSizeMiB;
+        // asked before the store is opened, because opening it creates the file
+        boolean createdNow = !Files.exists(file);
         this.db = initDB(file, meta, compression, cacheSizeMiB, commitBufferKiB, pageSplitSizeByte, readOnly);
+        this.effectivePageBudgetByte = initPageBudgetMarker(createdNow, readOnly);
         this.initCollections(meta);
         this.initRepositories(meta);
         this.initOptionalFields(meta);
@@ -240,6 +253,68 @@ public class NitriteDatabase implements Database<Document> {
                     pageSplitSizeByte, capByte, file, effectiveCacheMiB,
                     (pageSplitSizeByte + 4 * 1024 - 1) / (4 * 1024));
         }
+    }
+
+    /**
+     * Compare the page budget this store's pages were written against with the one they
+     * would be written against now, and mark a store this build creates.
+     * <p>
+     * MVStore does not persist {@code pageSplitSize} - it is read from the open
+     * configuration and never written to the file - so the budget has to be recorded to
+     * be comparable later. It goes into MVStore's own persisted {@code setting.storeVersion}
+     * slot, an int h2 keeps for exactly this purpose ("used to upgrade the structure of
+     * the store after upgrading the application") and which nothing else here uses:
+     * Nitrite's {@code getStoreVersion()} reports the adapter version string and never
+     * touches it, and its own schema versioning lives in a document of its own.
+     * <p>
+     * A store written before this was recorded reads 0, which is the case that matters:
+     * every SIRIUS release so far took Nitrite's {@code pageSplitSize} default of 16
+     * bytes, which splits every leaf down to a single record (#971).
+     *
+     * @return the budget this store's pages are actually split against, which is what a
+     * rewrite has to reproduce. Sets {@link #layoutOutdated} on the way.
+     */
+    private int initPageBudgetMarker(boolean createdNow, boolean readOnly) {
+        org.h2.mvstore.MVStore store = mvStore();
+        if (store == null) {
+            // no store to ask, so nothing can be claimed about its layout
+            return 0;
+        }
+        int effective = effectivePageBudget(store);
+        if (createdNow) {
+            if (!readOnly) {
+                store.setStoreVersion(effective);
+                // commit right away: a marker lost to a crash would cost this store a needless rewrite
+                this.db.commit();
+            }
+            return effective;
+        }
+
+        int recorded = store.getStoreVersion();
+        // '<', not '!=': filling pages further is the only rewrite worth doing. Opening a store with a
+        // smaller read cache lowers the effective budget (see DEFAULT_PAGE_SPLIT_SIZE_BYTE), and
+        // rewriting a healthy store against that smaller budget would make the file bigger, not smaller.
+        this.layoutOutdated = recorded < effective;
+        if (this.layoutOutdated)
+            log.warn("'{}' was written with a {} byte page budget, where this version uses {} bytes: its pages "
+                            + "hold fewer records than they could, which can make the file several times larger "
+                            + "than needed. Compacting it rewrites the layout and reclaims that space.",
+                    file, recorded, effective);
+        return effective;
+    }
+
+    /**
+     * The page budget the given store's pages are actually split against - the requested
+     * one after MVStore's silent cap, see {@link #warnIfPageBudgetIsCapped}.
+     */
+    static int effectivePageBudget(org.h2.mvstore.MVStore store) {
+        // Long.MAX_VALUE for a store without a file, which has no layout to speak of
+        return (int) Math.min(Integer.MAX_VALUE, store.getMaxPageSize());
+    }
+
+    @Override
+    public boolean isCompactionRecommended() {
+        return layoutOutdated;
     }
 
     private void initCollections(Metadata meta) {
@@ -449,21 +524,69 @@ public class NitriteDatabase implements Database<Document> {
         }
     }
 
+    /**
+     * Compact the store, rewriting its page layout when that is what it needs.
+     * <p>
+     * A store written with a smaller page budget than this one uses holds one record per
+     * page, which a plain compaction cannot undo because it copies live pages verbatim.
+     * Rewriting the records into a fresh store does undo it, and reclaims the same
+     * garbage on the way, so it replaces the plain compaction rather than following it -
+     * see {@link #isCompactionRecommended()} for who is told that in advance. It costs a
+     * full read and write of the store and needs free space for a second copy of it, so
+     * a failed rewrite falls back to the plain compaction rather than leaving the caller
+     * with nothing.
+     * <p>
+     * The rewrite restarts the store's commit version, because the call h2 uses to carry
+     * it over is package-private. Whatever is anchored to that version - the persisted
+     * search index is - has to be re-anchored afterwards.
+     * <p>
+     * Leaves the store closed either way, as a compaction always has.
+     */
     @Override
     public void compact() {
         stateWriteLock.lock();
         try {
             close();
             // Compact with the same compression the store writes with, so compaction does not silently change
-            // a project's on-disk compression. MVStoreTool.compact only exposes an LZF on/off flag, so NONE and
-            // LZF are preserved exactly. DEFLATE cannot be reproduced by the tool, so it is rewritten as LZF; the
-            // store stays readable because MVStore auto-detects the compression per page on read.
+            // a project's on-disk compression. Neither path can emit DEFLATE, so a DEFLATE store is rewritten
+            // as LZF; it stays readable because MVStore auto-detects the compression per page on read.
             if (compression == MVStoreCompression.DEFLATE)
-                log.warn("Compacting a DEFLATE-compressed store at {}: MVStoreTool cannot emit DEFLATE, so it is " +
+                log.warn("Compacting a DEFLATE-compressed store at {}: MVStore cannot emit DEFLATE, so it is " +
                         "rewritten with LZF compression. The store stays readable.", file);
+            if (layoutOutdated && rewriteLayout())
+                return;
             MVStoreTool.compact(file.toString(), compression != MVStoreCompression.NONE);
         } finally {
             stateWriteLock.unlock();
+        }
+    }
+
+    /**
+     * Rewrite the closed store through a temporary file, replacing the original only once
+     * the rewrite has returned, so an interrupted one leaves the store as it was.
+     *
+     * @return whether the store was rewritten; {@code false} leaves it untouched for the
+     * caller to compact the plain way
+     */
+    private boolean rewriteLayout() {
+        Path rewritten = file.resolveSibling(file.getFileName() + ".repair");
+        try {
+            Files.deleteIfExists(rewritten);
+            PageLayout.rewrite(file, rewritten, effectivePageBudgetByte,
+                    compression != MVStoreCompression.NONE, cacheSizeMiB);
+            MVStoreTool.moveAtomicReplace(rewritten.toString(), file.toString());
+            layoutOutdated = false;
+            return true;
+        } catch (Exception e) {
+            log.error("Could not rewrite the page layout of {}, compacting it without repairing it. The store is "
+                    + "unchanged and stays larger than it needs to be; a rewrite needs free space for a second "
+                    + "copy of it.", file, e);
+            try {
+                Files.deleteIfExists(rewritten);
+            } catch (IOException cleanupFailed) {
+                log.warn("Could not remove the partial rewrite at {}", rewritten, cleanupFailed);
+            }
+            return false;
         }
     }
 
@@ -523,6 +646,12 @@ public class NitriteDatabase implements Database<Document> {
 
     @Override
     public long getStorageCommitId() {
+        org.h2.mvstore.MVStore mvStore = mvStore();
+        return mvStore == null ? -1 : mvStore.getCurrentVersion();
+    }
+
+    /** The MVStore behind Nitrite's store adapter, which does not expose it, or null. */
+    private org.h2.mvstore.MVStore mvStore() {
         try {
             var store = this.db.getStore();
             if (store != null) {
@@ -530,7 +659,7 @@ public class NitriteDatabase implements Database<Document> {
                     if (method.getReturnType().equals(org.h2.mvstore.MVStore.class) && method.getParameterCount() == 0) {
                         org.h2.mvstore.MVStore mvStore = (org.h2.mvstore.MVStore) method.invoke(store);
                         if (mvStore != null) {
-                            return mvStore.getCurrentVersion();
+                            return mvStore;
                         }
                     }
                 }
@@ -541,7 +670,7 @@ public class NitriteDatabase implements Database<Document> {
                             field.setAccessible(true);
                             org.h2.mvstore.MVStore mvStore = (org.h2.mvstore.MVStore) field.get(store);
                             if (mvStore != null) {
-                                return mvStore.getCurrentVersion();
+                                return mvStore;
                             }
                         }
                     }
@@ -549,9 +678,9 @@ public class NitriteDatabase implements Database<Document> {
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to get MVStore version from NitriteDatabase", e);
+            log.error("Failed to reach the MVStore behind this NitriteDatabase", e);
         }
-        return -1;
+        return null;
     }
 
     @SuppressWarnings("unchecked")
