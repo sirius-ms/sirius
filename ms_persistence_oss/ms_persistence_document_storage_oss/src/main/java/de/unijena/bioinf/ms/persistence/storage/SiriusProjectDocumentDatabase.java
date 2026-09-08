@@ -54,7 +54,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends StatsAndTaggingSupport<Storage>, NetworkingProjectDocumentDatabase<Storage>, MsProjectDocumentDatabase<Storage> {
-    int SIRIUS_PROJECT_SCHEMA_VERSION = 1;
     String SIRIUS_PROJECT_SUFFIX = ".sirius";
     String FP_DATA_COLLECTION = "FP_DATA";
     String PROJECT_PROPERTIES_COLLECTION = "PROJECT_PROPERTIES";
@@ -65,7 +64,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) {
         sourceMetadata
-                .schemaVersion(SIRIUS_PROJECT_SCHEMA_VERSION)
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
                 .addCollection(PROJECT_PROPERTIES_COLLECTION, Index.unique("key"))
 
@@ -165,7 +163,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     /**
      * Project property tracking the SIRIUS project-data schema version this project's data conforms to.
-     * Independent of the underlying storage/Nitrite {@link #SIRIUS_PROJECT_SCHEMA_VERSION}; it gates the
+     * Independent of the underlying storage/Nitrite {@link #CURRENT_PROJECT_SCHEMA_VERSION}; it gates the
      * one-time data conversion of older projects (see {@code ProjectSchemaMigrator}). Absent means "pre-versioning".
      */
     String PROJECT_SCHEMA_VERSION_KEY = "projectSchemaVersion";
