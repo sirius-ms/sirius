@@ -220,7 +220,6 @@ public class NitriteDatabase implements Database<Document> {
 //        NitriteModule storeModule = RocksDBModule.withConfig().filePath(file.toFile()).build();
         return Nitrite.builder().loadModule(storeModule)
                 .loadModule(new JacksonMapperModule(module))
-                .schemaVersion(meta.getSchemaVersion())
                 .openOrCreate();
     }
 

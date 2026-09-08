@@ -34,9 +34,6 @@ import java.util.function.Supplier;
 
 public class Metadata {
 
-    @Getter
-    private int schemaVersion = 1;
-
     final public Map<Class<?>, JsonSerializer<?>> serializers = new HashMap<>();
 
     final public Map<Class<?>, JsonDeserializer<?>> deserializers = new HashMap<>();
@@ -65,10 +62,6 @@ public class Metadata {
         return new Metadata();
     }
 
-    public Metadata schemaVersion(int schemaVersion){
-        this.schemaVersion = schemaVersion;
-        return this;
-    }
 
     public <T> Metadata addRepository(
             Class<T> clazz,
