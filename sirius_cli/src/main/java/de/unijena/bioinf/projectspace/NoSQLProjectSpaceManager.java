@@ -192,7 +192,13 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
         project.getStorage().compact();
     }
 
-    @Override
+    /**
+     * Whether compacting this project would reclaim markedly more than the garbage a
+     * compaction usually reclaims, because the layout it is stored in is out of date.
+     * <p>
+     * Not on {@link ProjectSpaceManager}: only a storage that has a page layout can have an
+     * outdated one, and the file-based project space has none.
+     */
     public boolean isCompactionRecommended() {
         return project.getStorage().isCompactionRecommended();
     }

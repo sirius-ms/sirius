@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
+import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -114,9 +115,12 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
                 .projectId(projectId)
                 .location(psm.getLocation())
                 .type(psm.getType().orElse(null));
-        if (optFields.contains(ProjectInfo.OptField.sizeInformation))
-            b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countAllFeatures()).numOfCompounds(psm.countAllCompounds())
-                    .compactionRecommended(psm.isCompactionRecommended());
+        if (optFields.contains(ProjectInfo.OptField.sizeInformation)) {
+            b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countAllFeatures()).numOfCompounds(psm.countAllCompounds());
+            // only a storage with a page layout can have an outdated one, so this is not asked of every project space
+            if (psm instanceof NoSQLProjectSpaceManager nsql)
+                b.compactionRecommended(nsql.isCompactionRecommended());
+        }
         if (optFields.contains(ProjectInfo.OptField.compatibilityInfo))
             b.compatible(psm.isCompatibleWithBackendDataUnchecked(ApplicationCore.WEB_API()));
         if (optFields.contains(ProjectInfo.OptField.detectedAdducts))
