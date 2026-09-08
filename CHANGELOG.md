@@ -2,10 +2,17 @@
 
 ## SIRIUS 6
 ### 6.6.0 (unreleased)
-- fix: projects created or modified with 6.5.4 took up to three times more disk space than they need,
-  and grew further with every recompute. New and recomputed data is stored compactly again - smaller
-  than any earlier version wrote - and parts of large projects open faster. An affected project
-  shrinks as you keep working in it; compacting alone does not reclaim the wasted space.
+- fix: projects took up to three times more disk space than they need, and grew further with every
+  recompute. Every project written by an earlier SIRIUS version is affected, as is every custom
+  structure and spectral database: the storage engine's default put a single record on each storage
+  page. New and recomputed data is stored compactly again, and parts of large projects open faster.
+  **Compacting an affected project now repairs it**: on a measured project that took it from 1011 to
+  296 MiB, where a plain compaction had reclaimed nothing. So compact your projects once after upgrading - SIRIUS says so in the log when it opens
+  one that would benefit. A repair reads and writes the whole project, so it takes considerably
+  longer than an ordinary compaction and needs free disk space for a second copy while it runs
+  (GUI, CLI and API)
+- improvement: the project info endpoint reports whether compacting a project is recommended, as part
+  of its size information (API)
 
 ### 6.5.4 (2026-08-25)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,
