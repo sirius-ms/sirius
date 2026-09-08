@@ -163,8 +163,9 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     /**
      * Project property tracking the SIRIUS project-data schema version this project's data conforms to.
-     * Independent of the underlying storage/Nitrite {@link #CURRENT_PROJECT_SCHEMA_VERSION}; it gates the
-     * one-time data conversion of older projects (see {@code ProjectSchemaMigrator}). Absent means "pre-versioning".
+     * Says nothing about how the storage underneath lays that data out - see
+     * {@code NitriteDatabase#isCompactionRecommended()} for that; it gates the one-time data conversion of
+     * older projects (see {@code ProjectSchemaMigrator}). Absent means "pre-versioning".
      */
     String PROJECT_SCHEMA_VERSION_KEY = "projectSchemaVersion";
 
