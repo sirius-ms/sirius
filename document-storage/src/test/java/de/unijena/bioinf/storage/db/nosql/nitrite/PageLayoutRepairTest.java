@@ -46,30 +46,20 @@ import static org.junit.jupiter.api.Assertions.*;
  * {@link NitriteDatabase#compact()} does when it finds a store written against a
  * smaller budget than it is opened with.
  * <p>
- * There is deliberately no test here comparing a rewrite against a plain
- * compaction. h2-mvstore 2.4.240 trips its own
- * {@code assert page.isSaved() || !page.isComplete()} in
- * {@code Page.clearPageReference} when compacting a store of a few thousand
- * records, on the background thread it stores from - so it cannot be caught, and
- * it happens with the previous 16 KiB page budget too. Shipped builds run without
- * assertions; measured on a real 6.5.4 project, a compaction takes 1011 MiB to
- * 860 MiB and leaves every page exactly as it was.
+ * That a plain compaction cannot is asserted here too, since it is the whole
+ * reason the rewrite exists: measured on a real 6.5.4 project, a compaction takes
+ * 1011 MiB to 860 MiB and leaves every page exactly as it was.
  */
 public class PageLayoutRepairTest {
     private static final String COLLECTION = "PAGES";
     private static final int RECORDS = 6000;
 
     /**
-     * A budget smaller than one record, which is what every release before the fix wrote
-     * and what leaves one record per page.
-     * <p>
-     * Not the 16 bytes those releases actually used: writing with that trips MVStore's own
-     * {@code assert page.isSaved() || !page.isComplete()} in {@code clearPageReference},
-     * so the fixture cannot be built reliably with assertions on. A budget of 1 KiB
-     * against records of about 1 KiB - which MVStore charges at twice that - produces the
-     * same one-record-per-page layout without driving it that far.
+     * The page budget every release before the fix wrote with: Nitrite's own
+     * {@code MVStoreModuleBuilder} default, which is smaller than any single record and
+     * therefore leaves one record per page.
      */
-    private static final int BROKEN_BUDGET = 1024;
+    private static final int BROKEN_BUDGET = 16;
 
     private static Metadata metadata() {
         return Metadata.build().addCollection(COLLECTION, Index.unique("key"));
@@ -267,6 +257,30 @@ public class PageLayoutRepairTest {
             assertFalse(db.isCompactionRecommended(),
                     "a smaller page budget than the store already has is not a repair");
         }
+    }
+
+    @Test
+    public void testAPlainCompactionLeavesTheLayoutAsItIs(@TempDir Path dir) throws IOException {
+        // A store whose pages are degenerate but whose marker claims the budget they were opened with, so
+        // compact() takes the plain path - which is what every release so far did with such a store, and
+        // what makes the layout permanent rather than merely wasteful.
+        Path file = write(dir, "plain", BROKEN_BUDGET);
+        try (MVStore store = new MVStore.Builder().fileName(file.toString()).open()) {
+            store.setStoreVersion(NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE);
+            store.commit();
+        }
+
+        long[] before = geometry(file);
+        assertEquals(1.0, (double) before[0] / before[1], 0.0001);
+        try (NitriteDatabase db = open(file, NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE, false)) {
+            assertFalse(db.isCompactionRecommended(), "the marker says this store is current, so it is left alone");
+            db.compact();
+        }
+
+        long[] after = geometry(file);
+        assertEquals(RECORDS, after[0], "a compaction must not lose or duplicate records");
+        assertEquals(1.0, (double) after[0] / after[1], 0.0001,
+                "a plain compaction copies live pages verbatim, so it cannot re-split them");
     }
 
     @Test
