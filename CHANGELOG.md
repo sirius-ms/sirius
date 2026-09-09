@@ -10,7 +10,10 @@
   298 MiB, where a plain compaction had reclaimed nothing. So compact your projects once after
   upgrading - SIRIUS says so in the log when it opens one that would benefit. A repair reads and
   writes the whole project, so it takes considerably longer than an ordinary compaction and needs
-  free disk space for a second copy while it runs. (GUI, CLI and API)
+  free disk space for a second copy while it runs. Going back to an older SIRIUS afterwards and
+  continuing to work in a repaired project undoes part of the repair, since older versions store the
+  data the old way again - SIRIUS notices that on the next open and says so, so compact it once more
+  (GUI, CLI and API)
 - improvement: the project info endpoint reports whether compacting a project is recommended, as part
   of its size information (API)
 

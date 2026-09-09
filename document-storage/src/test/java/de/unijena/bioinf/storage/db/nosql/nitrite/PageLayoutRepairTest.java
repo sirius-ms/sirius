@@ -26,9 +26,8 @@ import de.unijena.bioinf.storage.db.nosql.Metadata;
 import org.dizitart.no2.collection.Document;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
+import org.h2.mvstore.MVStoreTool;
 import org.h2.mvstore.Page;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -55,19 +54,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PageLayoutRepairTest {
     private static final String COLLECTION = "PAGES";
 
-    private long markerGate;
-
-    @BeforeEach
-    public void reachTheMarkerVerification() {
-        // the fixtures here are megabytes, not the tens of GiB the gate is there for
-        markerGate = NitriteDatabase.markerVerificationMinFileSizeByte;
-        NitriteDatabase.markerVerificationMinFileSizeByte = 0;
-    }
-
-    @AfterEach
-    public void restoreTheMarkerGate() {
-        NitriteDatabase.markerVerificationMinFileSizeByte = markerGate;
-    }
     private static final int RECORDS = 6000;
 
     /**
@@ -276,27 +262,16 @@ public class PageLayoutRepairTest {
     }
 
     @Test
-    public void testAPlainCompactionLeavesTheLayoutAsItIs(@TempDir Path dir) throws IOException {
-        // A store whose pages are degenerate but whose marker claims the budget they were opened with, so
-        // compact() takes the plain path - which is what every release so far did with such a store, and
-        // what makes the layout permanent rather than merely wasteful.
-        //
-        // Put the size gate back for this one: a store this small is below it in production too, so the
-        // marker is taken at its word and the sampled check that would otherwise catch the lie - see
-        // testAnOlderReleaseWritingUnderASmallerBudgetIsNoticed - does not run.
-        NitriteDatabase.markerVerificationMinFileSizeByte = Long.MAX_VALUE;
-        Path file = write(dir, "plain", BROKEN_BUDGET);
-        try (MVStore store = new MVStore.Builder().fileName(file.toString()).open()) {
-            store.setStoreVersion(NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE);
-            store.commit();
-        }
+    public void testAPlainCompactionCannotResplitPages(@TempDir Path dir) throws IOException {
+        // The premise the rewrite exists for, asserted against h2 itself rather than through our own
+        // decision about which path to take: a compaction copies live pages verbatim, so it reclaims
+        // garbage and keeps whatever layout it finds.
+        Path file = writePreFixStore(dir, "plain");
 
         long[] before = geometry(file);
         assertEquals(1.0, (double) before[0] / before[1], 0.0001);
-        try (NitriteDatabase db = open(file, NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE, false)) {
-            assertFalse(db.isCompactionRecommended(), "the marker says this store is current, so it is left alone");
-            db.compact();
-        }
+
+        MVStoreTool.compact(file.toString(), true);
 
         long[] after = geometry(file);
         assertEquals(RECORDS, after[0], "a compaction must not lose or duplicate records");
