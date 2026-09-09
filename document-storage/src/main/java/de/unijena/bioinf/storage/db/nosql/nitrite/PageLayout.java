@@ -25,8 +25,13 @@ import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.MVStoreTool;
 
+import org.h2.mvstore.Page;
+
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Rewrites an MVStore so that its B-tree pages are split against the page budget
@@ -55,6 +60,105 @@ public class PageLayout {
      * unset would silently bound the rewrite by MVStore's own ~19 MiB default.
      */
     private static final int REWRITE_COMMIT_BUFFER_KIB = 32 * 1024;
+
+
+    /** Leaves drawn per map. Each costs one root-to-leaf descent, so a handful is enough to judge by. */
+    private static final int SAMPLES_PER_MAP = 8;
+
+    /** Maps examined, largest first. A store's tail of tiny maps cannot change the answer. */
+    private static final int MAPS_SAMPLED = 4;
+
+    /** Below this a map is too small for its page count to be worth reporting. */
+    private static final int MIN_RECORDS = 1000;
+
+    /**
+     * How many times more a page must have been able to hold before it counts as written under a
+     * smaller budget.
+     * <p>
+     * Not 2: MVStore splits a full page at its midpoint, so a page written under this very budget
+     * sits at about half of what it could hold and would trip any factor of two. Four leaves that
+     * ordinary shape alone and still catches the one-record-per-page case by a wide margin.
+     */
+    private static final int UNDER_WRITTEN_FACTOR = 4;
+
+    /**
+     * Whether the store's pages look like they were written under a smaller page budget than
+     * {@code budgetByte} - a check on what the recorded budget claims, for stores something else may
+     * have written to since.
+     * <p>
+     * Asks each sampled page what MVStore itself charged it ({@link Page#getMemory()}) and how many
+     * keys that charge covers, which gives the per-key cost the split budget is actually compared
+     * against - no guess about record sizes, and therefore no need to model them. A page that holds
+     * several times fewer keys than that cost would have allowed cannot have been split against this
+     * budget.
+     * <p>
+     * Deliberately reports only what a majority of sampled pages agree on: a few under-filled pages
+     * are ordinary churn - deleting records leaves them behind, and MVStore never merges them - while
+     * a store written under a smaller budget has them everywhere.
+     */
+    static boolean pagesWereWrittenUnderASmallerBudget(MVStore store, int budgetByte) {
+        List<MVMap<Object, Object>> maps = new ArrayList<>();
+        for (String name : store.getMapNames()) {
+            try {
+                MVMap<Object, Object> map = store.openMap(name);
+                if (map.sizeAsLong() >= MIN_RECORDS) maps.add(map);
+            } catch (Exception e) {
+                log.debug("Skipping map '{}' while checking the page layout", name, e);
+            }
+        }
+        if (maps.isEmpty()) return false;
+        maps.sort((a, b) -> Long.compare(b.sizeAsLong(), a.sizeAsLong()));
+
+        Random rnd = new Random(11);
+        int sampled = 0, underWritten = 0;
+        for (MVMap<Object, Object> map : maps.subList(0, Math.min(MAPS_SAMPLED, maps.size()))) {
+            for (int s = 0; s < SAMPLES_PER_MAP; s++) {
+                try {
+                    Page<Object, Object> leaf = sampleLeaf(map, rnd);
+                    int keys = leaf.getKeyCount();
+                    if (keys <= 0) continue;
+                    sampled++;
+                    int perKeyByte = Math.max(1, leaf.getMemory() / keys);
+                    int couldHold = Math.min(store.getKeysPerPage(), Math.max(1, budgetByte / perKeyByte));
+                    if ((long) keys * UNDER_WRITTEN_FACTOR <= couldHold) underWritten++;
+                } catch (Exception e) {
+                    log.debug("Skipping a page of '{}' while checking the page layout", map.getName(), e);
+                }
+            }
+        }
+        if (sampled == 0) return false;
+        log.debug("Page layout check of '{}': {} of {} sampled pages hold several times fewer records "
+                + "than the {} byte budget allows", store.getFileStore(), underWritten, sampled, budgetByte);
+        return underWritten * 2 > sampled;
+    }
+
+    /**
+     * One leaf, picking each child in proportion to the records beneath it.
+     * <p>
+     * Weighting matters: picking children uniformly reads 0.28x the true average occupancy on a
+     * measured store, because a tree with many sparse subtrees is mostly sparse subtrees and hardly
+     * any of the records - and it would bias this check towards reporting a layout problem that is
+     * not there. The count-weighted descent reads 1.07x.
+     */
+    private static Page<Object, Object> sampleLeaf(MVMap<Object, Object> map, Random rnd) {
+        Page<Object, Object> page = map.getRootPage();
+        while (!page.isLeaf()) {
+            long target = (long) (rnd.nextDouble() * page.getTotalCount());
+            int children = page.getRawChildPageCount();
+            int chosen = children - 1;
+            long seen = 0;
+            for (int i = 0; i < children; i++) {
+                long beneath = page.getChildPage(i).getTotalCount();
+                if (target < seen + beneath) {
+                    chosen = i;
+                    break;
+                }
+                seen += beneath;
+            }
+            page = page.getChildPage(chosen);
+        }
+        return page;
+    }
 
     private PageLayout() {
     }
