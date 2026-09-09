@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.MVStoreTool;
+import org.h2.mvstore.type.DataType;
 
 import org.h2.mvstore.Page;
 
@@ -62,11 +63,18 @@ public class PageLayout {
     private static final int REWRITE_COMMIT_BUFFER_KIB = 32 * 1024;
 
 
-    /** Leaves drawn per map. Each costs one root-to-leaf descent, so a handful is enough to judge by. */
-    private static final int SAMPLES_PER_MAP = 8;
+    /** Records drawn per map. Each costs two root-to-leaf descents, so a few per map go a long way. */
+    private static final int SAMPLES_PER_MAP = 4;
 
-    /** Maps examined, largest first. A store's tail of tiny maps cannot change the answer. */
-    private static final int MAPS_SAMPLED = 4;
+    /**
+     * Maps examined, largest first.
+     * <p>
+     * Generous on purpose. Ranking by record count puts the collections with the <em>biggest</em>
+     * records first - traces, predictions - and those hold one record per page however healthy the
+     * store is, so a handful of maps would ask only the collections that cannot answer. The waste
+     * sits in the many small-record maps behind them.
+     */
+    private static final int MAPS_SAMPLED = 32;
 
     /** Below this a map is too small for its page count to be worth reporting. */
     private static final int MIN_RECORDS = 1000;
@@ -75,26 +83,53 @@ public class PageLayout {
      * How many times more a page must have been able to hold before it counts as written under a
      * smaller budget.
      * <p>
-     * Not 2: MVStore splits a full page at its midpoint, so a page written under this very budget
-     * sits at about half of what it could hold and would trip any factor of two. Four leaves that
-     * ordinary shape alone and still catches the one-record-per-page case by a wide margin.
+     * MVStore splits a full page at its midpoint, so a page written under this very budget settles at
+     * about half of what it could hold - which rules out a factor of two and leaves three as the
+     * widest safe choice, with half again as much margin as an honest page needs.
+     * <p>
+     * The other end is a limit worth knowing: a record whose estimate exceeds a third of the budget
+     * is never reported, because at that size a page cannot usefully hold more than the one it has.
+     * Since the estimate sits near 10,000 bytes on a cold store, that puts the cut-off around a
+     * third of the budget in estimate terms rather than in real record sizes.
      */
-    private static final int UNDER_WRITTEN_FACTOR = 4;
+    private static final int UNDER_WRITTEN_FACTOR = 3;
+
+    /**
+     * Page reads this check may spend before it answers with what it has.
+     * <p>
+     * A descent costs one read per level, so the bill is set by tree depth - and depth is exactly what
+     * cannot be relied on here: measured projects hold maps whose leaves sit 1644 levels down. Without
+     * a bound, one such map would make opening the project noticeably slower.
+     */
+    private static final int MAX_PAGE_READS = 4000;
 
     /**
      * Whether the store's pages look like they were written under a smaller page budget than
      * {@code budgetByte} - a check on what the recorded budget claims, for stores something else may
      * have written to since.
      * <p>
-     * Asks each sampled page what MVStore itself charged it ({@link Page#getMemory()}) and how many
-     * keys that charge covers, which gives the per-key cost the split budget is actually compared
-     * against - no guess about record sizes, and therefore no need to model them. A page that holds
-     * several times fewer keys than that cost would have allowed cannot have been split against this
-     * budget.
+     * Asks each sampled page what MVStore charged it ({@link Page#getMemory()}) and over how many
+     * keys, which is the per-key cost a split is decided against. Know what that number is before
+     * relying on it: for serialised objects it is not a measurement but a running average the
+     * {@code DataType} keeps, seeded at 10,000 bytes and moved only as objects are written. On a
+     * store this build has just opened and not written to, it therefore sits near that seed - a
+     * measured 6.5.4 project reported 10.0 to 15.8 KiB per record across maps whose records really
+     * range from 1 to 24 KiB.
      * <p>
-     * Deliberately reports only what a majority of sampled pages agree on: a few under-filled pages
-     * are ordinary churn - deleting records leaves them behind, and MVStore never merges them - while
-     * a store written under a smaller budget has them everywhere.
+     * So this reliably answers one shape of the question: a page holding a single record whose
+     * estimate is well inside the budget cannot have been split against that budget. That is exactly
+     * the layout a {@code pageSplitSize} of 16 bytes produces, which is what 6.5.4 wrote and what
+     * costs a project three times its size. It does <em>not</em> catch the gentler layout that
+     * releases before 6.5.4 wrote - h2 2.2.224 ignored the setting and hard-coded 16 KiB, giving one
+     * to four records per page, which this reads as healthy. Those stores need no help from here:
+     * they record no budget at all, so
+     * {@code NitriteDatabase#isCompactionRecommended()} reports them from the marker without ever
+     * sampling. Measured: true in 35 ms on a 1.0 GiB 6.5.4 project, false in 79 ms on a 47 GiB one
+     * written by 6.2.0.
+     * <p>
+     * Reports only what a majority of sampled pages agree on: a few under-filled pages are ordinary
+     * churn - deleting records leaves them behind and MVStore never merges them - while a store
+     * written under a smaller budget has them everywhere.
      */
     static boolean pagesWereWrittenUnderASmallerBudget(MVStore store, int budgetByte) {
         List<MVMap<Object, Object>> maps = new ArrayList<>();
@@ -111,10 +146,13 @@ public class PageLayout {
 
         Random rnd = new Random(11);
         int sampled = 0, underWritten = 0;
+        int[] pageReads = {0};
         for (MVMap<Object, Object> map : maps.subList(0, Math.min(MAPS_SAMPLED, maps.size()))) {
-            for (int s = 0; s < SAMPLES_PER_MAP; s++) {
+            long records = map.sizeAsLong();
+            for (int s = 0; s < SAMPLES_PER_MAP && pageReads[0] < MAX_PAGE_READS; s++) {
                 try {
-                    Page<Object, Object> leaf = sampleLeaf(map, rnd);
+                    Page<Object, Object> leaf = sampleLeaf(map, (long) (rnd.nextDouble() * records), pageReads);
+                    if (leaf == null) continue;
                     int keys = leaf.getKeyCount();
                     if (keys <= 0) continue;
                     sampled++;
@@ -127,35 +165,35 @@ public class PageLayout {
             }
         }
         if (sampled == 0) return false;
-        log.debug("Page layout check of '{}': {} of {} sampled pages hold several times fewer records "
-                + "than the {} byte budget allows", store.getFileStore(), underWritten, sampled, budgetByte);
+        log.debug("Page layout check against a {} byte budget: {} of {} sampled pages hold at least {} times "
+                        + "fewer records than that allows, in about {} page reads",
+                budgetByte, underWritten, sampled, UNDER_WRITTEN_FACTOR, pageReads[0]);
         return underWritten * 2 > sampled;
     }
 
     /**
-     * One leaf, picking each child in proportion to the records beneath it.
+     * The leaf holding the record at {@code recordIndex}, or null if it could not be reached.
      * <p>
-     * Weighting matters: picking children uniformly reads 0.28x the true average occupancy on a
-     * measured store, because a tree with many sparse subtrees is mostly sparse subtrees and hardly
-     * any of the records - and it would bias this check towards reporting a layout problem that is
-     * not there. The count-weighted descent reads 1.07x.
+     * Two descents of one page read per level, and no bias to correct for: MVStore keeps the number of
+     * records beneath each child in the parent's own child reference, so {@link MVMap#getKey(long)}
+     * navigates to the n-th record reading only the pages on its path, and an index drawn uniformly
+     * makes a record drawn uniformly. Picking children uniformly instead - the obvious way to sample a
+     * tree - reads 0.28x the true average occupancy on a measured store, because a tree with many
+     * sparse subtrees is mostly sparse subtrees and hardly any of the records, and it would bias this
+     * check towards reporting a problem that is not there.
      */
-    private static Page<Object, Object> sampleLeaf(MVMap<Object, Object> map, Random rnd) {
+    private static Page<Object, Object> sampleLeaf(MVMap<Object, Object> map, long recordIndex, int[] pageReads) {
+        Object key = map.getKey(recordIndex);
+        if (key == null) return null;
+        DataType<Object> keyType = map.getKeyType();
         Page<Object, Object> page = map.getRootPage();
         while (!page.isLeaf()) {
-            long target = (long) (rnd.nextDouble() * page.getTotalCount());
-            int children = page.getRawChildPageCount();
-            int chosen = children - 1;
-            long seen = 0;
-            for (int i = 0; i < children; i++) {
-                long beneath = page.getChildPage(i).getTotalCount();
-                if (target < seen + beneath) {
-                    chosen = i;
-                    break;
-                }
-                seen += beneath;
-            }
-            page = page.getChildPage(chosen);
+            // a node's key i separates its child i from its child i+1, and it holds one child more than keys
+            int i = 0, keys = page.getKeyCount();
+            while (i < keys && keyType.compare(key, page.getKey(i)) >= 0) i++;
+            page = page.getChildPage(i);
+            pageReads[0] += 2;   // this read, and the one getKey() made at the same level
+            if (pageReads[0] > 2 * MAX_PAGE_READS) return null;   // a pathologically deep map, see #974
         }
         return page;
     }
