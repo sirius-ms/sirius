@@ -27,6 +27,8 @@ import org.dizitart.no2.collection.Document;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.Page;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -52,6 +54,20 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PageLayoutRepairTest {
     private static final String COLLECTION = "PAGES";
+
+    private long markerGate;
+
+    @BeforeEach
+    public void reachTheMarkerVerification() {
+        // the fixtures here are megabytes, not the tens of GiB the gate is there for
+        markerGate = NitriteDatabase.markerVerificationMinFileSizeByte;
+        NitriteDatabase.markerVerificationMinFileSizeByte = 0;
+    }
+
+    @AfterEach
+    public void restoreTheMarkerGate() {
+        NitriteDatabase.markerVerificationMinFileSizeByte = markerGate;
+    }
     private static final int RECORDS = 6000;
 
     /**
@@ -264,6 +280,11 @@ public class PageLayoutRepairTest {
         // A store whose pages are degenerate but whose marker claims the budget they were opened with, so
         // compact() takes the plain path - which is what every release so far did with such a store, and
         // what makes the layout permanent rather than merely wasteful.
+        //
+        // Put the size gate back for this one: a store this small is below it in production too, so the
+        // marker is taken at its word and the sampled check that would otherwise catch the lie - see
+        // testAnOlderReleaseWritingUnderASmallerBudgetIsNoticed - does not run.
+        NitriteDatabase.markerVerificationMinFileSizeByte = Long.MAX_VALUE;
         Path file = write(dir, "plain", BROKEN_BUDGET);
         try (MVStore store = new MVStore.Builder().fileName(file.toString()).open()) {
             store.setStoreVersion(NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE);
@@ -311,6 +332,35 @@ public class PageLayoutRepairTest {
             assertFalse(db.isCompactionRecommended());
         }
         assertFalse(Files.exists(leftover), "a partial rewrite from a killed compaction has to be dropped");
+    }
+
+    @Test
+    public void testAnOlderReleaseWritingUnderASmallerBudgetIsNoticed(@TempDir Path dir) throws IOException {
+        // The scenario the recorded budget alone cannot see: a project repaired by this build, then written
+        // to by a release that predates the marker. It adds pages under its own budget and cannot lower the
+        // marker, so the project would otherwise stay silently oversized for good.
+        Path file = write(dir, "downgraded", NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE);
+        assertEquals(NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE, recordedBudget(file));
+
+        try (NitriteDatabase old = open(file, BROKEN_BUDGET, false)) {
+            assertFalse(old.isCompactionRecommended(), "the older release does not know about any of this");
+            List<Document> batch = new ArrayList<>();
+            for (int i = 0; i < 20_000; i++) {
+                batch.add(Document.createDocument("key", "old-" + i).put("rank", i % 50).put("label", "v" + i));
+                if (batch.size() == 500) {
+                    old.insertAll(COLLECTION, batch);
+                    batch.clear();
+                }
+            }
+            if (!batch.isEmpty()) old.insertAll(COLLECTION, batch);
+        }
+        assertEquals(NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE, recordedBudget(file),
+                "the older release cannot lower the marker, which is the whole problem");
+
+        try (NitriteDatabase db = open(file, NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE, false)) {
+            assertTrue(db.isCompactionRecommended(),
+                    "pages written under a smaller budget have to be noticed even though the marker looks current");
+        }
     }
 
     @Test

@@ -121,6 +121,12 @@ public class NitriteDatabase implements Database<Document> {
     /** Read cache MVStore falls back to when no {@code cacheSize} is configured, in MiB. */
     private static final int MVSTORE_DEFAULT_CACHE_SIZE_MIB = 16;
 
+    /**
+     * Below this a store is not worth sampling to check its recorded page budget, in bytes.
+     * Overridable so a test does not need a fixture of this size to reach the check.
+     */
+    static long markerVerificationMinFileSizeByte = 64L * 1024 * 1024;
+
     protected Path file;
 
     // the compression the store writes with; used so compact() does not silently change it
@@ -296,13 +302,41 @@ public class NitriteDatabase implements Database<Document> {
         // '<', not '!=': filling pages further is the only rewrite worth doing. Opening a store with a
         // smaller read cache lowers the effective budget (see DEFAULT_PAGE_SPLIT_SIZE_BYTE), and
         // rewriting a healthy store against that smaller budget would make the file bigger, not smaller.
-        this.layoutOutdated = recorded < effective;
-        if (this.layoutOutdated)
+        if (recorded < effective) {
+            this.layoutOutdated = true;
             log.warn("'{}' was written with a {} byte page budget, where this version uses {} bytes: its pages "
                             + "hold fewer records than they could, which can make the file several times larger "
                             + "than needed. Compacting it rewrites the layout and reclaims that space.",
                     file, recorded, effective);
+        } else if (worthVerifyingTheMarker()) {
+            // The marker is only as good as the builds that wrote the pages after it: releases that predate
+            // it write under their own smaller budget and cannot lower it, which is a supported thing to do
+            // (the fork keeps their document ids readable on purpose). So check what it claims rather than
+            // trust a repaired project to have stayed repaired.
+            this.layoutOutdated = PageLayout.pagesWereWrittenUnderASmallerBudget(store, effective);
+            if (this.layoutOutdated)
+                log.warn("'{}' records a {} byte page budget but its pages hold several times fewer records "
+                                + "than that allows, so something wrote to it under a smaller one - an older "
+                                + "SIRIUS release, most likely. Compacting it rewrites the layout.",
+                        file, recorded);
+        }
         return effective;
+    }
+
+    /**
+     * Whether checking the recorded budget against the actual pages is worth what it costs.
+     * <p>
+     * The check is a few dozen page reads, which is milliseconds on a small store and up to a second on
+     * one of tens of GiB, so it is skipped where it cannot pay for itself: a store too small for a
+     * repair to reclaim anything a user would notice. That leaves such a store unflagged until it grows,
+     * which is the right trade - it is the multi-GiB projects the wasted space matters on.
+     */
+    private boolean worthVerifyingTheMarker() {
+        try {
+            return Files.size(file) >= markerVerificationMinFileSizeByte;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     /**
