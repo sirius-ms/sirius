@@ -7,10 +7,10 @@
   structure and spectral database: the storage engine's default put a single record on each storage
   page. New and recomputed data is stored compactly again, and parts of large projects open faster.
   **Compacting an affected project now repairs it**: on a measured project that took it from 1011 to
-  296 MiB, where a plain compaction had reclaimed nothing. So compact your projects once after upgrading - SIRIUS says so in the log when it opens
-  one that would benefit. A repair reads and writes the whole project, so it takes considerably
-  longer than an ordinary compaction and needs free disk space for a second copy while it runs
-  (GUI, CLI and API)
+  298 MiB, where a plain compaction had reclaimed nothing. So compact your projects once after
+  upgrading - SIRIUS says so in the log when it opens one that would benefit. A repair reads and
+  writes the whole project, so it takes considerably longer than an ordinary compaction and needs
+  free disk space for a second copy while it runs. (GUI, CLI and API)
 - improvement: the project info endpoint reports whether compacting a project is recommended, as part
   of its size information (API)
 
