@@ -133,7 +133,7 @@ public class NitriteDatabase implements Database<Document> {
     private final int effectivePageBudgetByte;
 
     // whether this store's pages were written against a smaller budget than the one above
-    private boolean layoutOutdated;
+    private volatile boolean layoutOutdated;
 
     protected final String systemUID;
 
@@ -183,7 +183,9 @@ public class NitriteDatabase implements Database<Document> {
         this.meta = meta;
         this.compression = compression;
         this.cacheSizeMiB = cacheSizeMiB;
-        // asked before the store is opened, because opening it creates the file
+        recoverInterruptedCompaction(file);
+        // asked before the store is opened, because opening it creates the file - and after the recovery
+        // above, which is what decides whether there is a file at all
         boolean createdNow = !Files.exists(file);
         this.db = initDB(file, meta, compression, cacheSizeMiB, commitBufferKiB, pageSplitSizeByte, readOnly);
         this.effectivePageBudgetByte = initPageBudgetMarker(createdNow, readOnly);
@@ -572,8 +574,37 @@ public class NitriteDatabase implements Database<Document> {
      * @return whether the store was rewritten; {@code false} leaves it untouched for the
      * caller to compact the plain way
      */
+    /** Where a layout rewrite assembles the new store before it replaces the old one. */
+    private static Path rewriteTarget(Path file) {
+        return file.resolveSibling(file.getFileName() + ".repair");
+    }
+
+    /**
+     * Put a store back together if a compaction was interrupted, before anything opens or judges it.
+     * <p>
+     * Both compaction paths finish with {@link MVStoreTool#moveAtomicReplace}, whose fallback deletes the
+     * destination before moving the replacement into place - so a crash in that window leaves the store
+     * only as {@code <name>.newFile}, and nothing renames it back on its own. {@code compactCleanUp} does
+     * exactly that, and drops a temporary file left behind by the plain path. Not new with the rewrite,
+     * but the rewrite runs for minutes on a large project where the plain compaction ran for seconds, so
+     * the window is far wider than it was.
+     * <p>
+     * Runs for a read-only open too: the alternative to renaming the file back is a project that cannot
+     * be opened at all.
+     */
+    private static void recoverInterruptedCompaction(Path file) {
+        try {
+            MVStoreTool.compactCleanUp(file.toString());
+            // a rewrite that never got as far as replacing the original leaves this behind; it is worthless
+            // either way, since the next rewrite starts from scratch
+            Files.deleteIfExists(rewriteTarget(file));
+        } catch (Exception e) {
+            log.warn("Could not check {} for an interrupted compaction; opening it as it is.", file, e);
+        }
+    }
+
     private boolean rewriteLayout() {
-        Path rewritten = file.resolveSibling(file.getFileName() + ".repair");
+        Path rewritten = rewriteTarget(file);
         try {
             Files.deleteIfExists(rewritten);
             PageLayout.rewrite(file, rewritten, effectivePageBudgetByte,

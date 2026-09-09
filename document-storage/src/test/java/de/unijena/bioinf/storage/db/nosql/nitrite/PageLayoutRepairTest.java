@@ -284,6 +284,36 @@ public class PageLayoutRepairTest {
     }
 
     @Test
+    public void testAnInterruptedCompactionIsPutBackTogetherOnOpen(@TempDir Path dir) throws IOException {
+        Path file = write(dir, "interrupted", NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE);
+        List<String> keys = readAllKeys(file);
+
+        // What MVStoreTool.moveAtomicReplace's fallback leaves behind when it is killed between deleting
+        // the destination and moving the replacement into place: the store exists only under .newFile,
+        // and h2 renames it back only if something asks it to.
+        Path newFile = file.resolveSibling(file.getFileName() + org.h2.engine.Constants.SUFFIX_MV_STORE_NEW_FILE);
+        Files.move(file, newFile);
+        assertFalse(Files.exists(file), "the fixture has to look like an interrupted replace");
+
+        // goes through a read-only open, which has to recover too - the alternative is a project that
+        // cannot be opened at all
+        assertEquals(keys, readAllKeys(file), "the interrupted compaction has to be recovered on open");
+        assertFalse(Files.exists(newFile), "the replacement has to be moved back, not copied");
+    }
+
+    @Test
+    public void testALeftoverRewriteTargetIsDiscardedOnOpen(@TempDir Path dir) throws IOException {
+        Path file = write(dir, "leftover", NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE);
+        Path leftover = file.resolveSibling(file.getFileName() + ".repair");
+        Files.writeString(leftover, "half a rewrite");
+
+        try (NitriteDatabase db = open(file, NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE, false)) {
+            assertFalse(db.isCompactionRecommended());
+        }
+        assertFalse(Files.exists(leftover), "a partial rewrite from a killed compaction has to be dropped");
+    }
+
+    @Test
     public void testIndexesSurviveARewrite(@TempDir Path dir) throws IOException {
         Path file = writePreFixStore(dir, "indexed");
         try (NitriteDatabase db = open(file, NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE, false)) {
