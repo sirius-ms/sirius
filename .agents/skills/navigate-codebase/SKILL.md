@@ -40,6 +40,15 @@ its accessor call sites are updated; and it can reformat the lines it touches to
 read `git diff` before committing. Rename is the only refactoring exposed — no extract, inline, move or
 change-signature. For runtime rather than structural questions, see the `debug-sirius` skill.
 
+**Connected is not the same as ready.** After a Gradle reimport the tools answer from an incomplete
+model. `analyze_calls` says so, prefixing its result with `Project indexing was in progress; results may
+be incomplete` — which makes it the cheapest readiness check, and means a tree carrying that note is not
+a partial answer but no answer: it can return the declaration and none of its callers. `lint_files`
+carries no such note, and no `timedOut` or `more` flag either. It reports the missing resolution as
+ordinary `ERROR` findings that read like real defects — `Bad return type in lambda expression`,
+`Cannot resolve method 'name' in 'A'` — and they vanish once indexing completes. Errors on a file you
+have not touched are about the model, not the code.
+
 It is not always available (the server may be disconnected). Fall back to the code map plus search
 tools, and say which one you used when it affects confidence in the answer.
 
