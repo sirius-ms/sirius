@@ -25,9 +25,19 @@ import io.sirius.ms.sdk.model.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 
 public class ConnectionChecks {
+    /**
+     * Order of the API model errors by relevance. {@link io.sirius.ms.sdk.model.ConnectionError} is a
+     * generated model without a natural order, so the order of its core counterpart is spelled out here.
+     */
+    private static final Comparator<ConnectionError> BY_RELEVANCE =
+            Comparator.comparing(ConnectionError::getErrorKlass)
+                    .thenComparing(ConnectionError::getSiriusErrorCode,
+                            Comparator.nullsLast(Comparator.naturalOrder()));
+
     private ConnectionChecks() {
     }
 
@@ -72,6 +82,49 @@ public class ConnectionChecks {
                 .findAny().isEmpty();
     }
 
+
+    /**
+     * The error to tell the user about, out of all errors of a connection check.
+     * <p>
+     * The errors are already ordered by relevance, so this is the first one - except for a failing
+     * internet probe, which is skipped in favour of the errors that actually explain the problem. It is
+     * only trusted when the login or the license server is unreachable as well; those two answering
+     * proves there is internet, whatever the probe says.
+     *
+     * @param errors errors of a connection check, must not be empty
+     */
+    @NotNull
+    public static ConnectionError selectMainError(@NotNull List<ConnectionError> errors) {
+        ConnectionError first = errors.getFirst();
+        if (first.getErrorKlass() != ConnectionErrorClass.INTERNET || errors.size() <= 1)
+            return first;
+
+        boolean internetConfirmed = errors.stream().map(ConnectionError::getErrorKlass)
+                .anyMatch(e -> e == ConnectionErrorClass.LOGIN_SERVER)
+                && errors.stream().map(ConnectionError::getErrorKlass)
+                .anyMatch(e -> e == ConnectionErrorClass.LICENSE_SERVER);
+        if (internetConfirmed)
+            return first;
+
+        return errors.stream()
+                .filter(e -> e.getErrorKlass() != ConnectionErrorClass.INTERNET)
+                .min(BY_RELEVANCE)
+                .orElse(first);
+    }
+
+    /**
+     * Names the terms of the selected web service as links, without saying anything about whether they
+     * have been accepted - only the error message knows which one is missing.
+     *
+     * @return the sentence, or an empty string if the subscription carries no terms
+     */
+    @NotNull
+    public static String termsSentence(@Nullable List<Term> terms) {
+        String links = toLinks(terms);
+        if (links == null)
+            return "";
+        return "Terms for the selected Webservice: " + links + ".";
+    }
 
     @Nullable
     public static String toLinks(@Nullable List<Term> terms){
