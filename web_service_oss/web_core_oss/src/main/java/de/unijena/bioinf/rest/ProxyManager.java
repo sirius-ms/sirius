@@ -311,7 +311,7 @@ public class ProxyManager {
             }
             return Optional.empty();
         } catch (Exception e) {
-            LoggerFactory.getLogger(ProxyManager.class).warn("Connection error", e);
+            LoggerFactory.getLogger(ProxyManager.class).warn("Connection error when connecting to: {}", url, e);
             return Optional.of(new ConnectionError(102, "Error when connecting to: " + url,
                     ConnectionError.Klass.UNKNOWN, e));
         }
@@ -436,7 +436,8 @@ public class ProxyManager {
         try {
             doWithClient.accept(client(clientID));
         } catch (IOException e) {
-            e.printStackTrace();
+            // rethrown wrapped, so the caller reports it - kept at debug to avoid a second, context-free stack trace
+            LoggerFactory.getLogger(ProxyManager.class).debug("Http request failed in client '{}'", clientID, e);
             throw new SiriusHttpException(clientID, e);
         } finally {
             reconnectLock.readLock().unlock();
@@ -467,7 +468,8 @@ public class ProxyManager {
         try {
             return doWithClient.apply(ProxyManager.client(clientID));
         } catch (IOException e) {
-            e.printStackTrace();
+            // rethrown wrapped, so the caller reports it - kept at debug to avoid a second, context-free stack trace
+            LoggerFactory.getLogger(ProxyManager.class).debug("Http request failed in client '{}'", clientID, e);
             throw new SiriusHttpException(clientID, e);
         } finally {
             reconnectLock.readLock().unlock();
