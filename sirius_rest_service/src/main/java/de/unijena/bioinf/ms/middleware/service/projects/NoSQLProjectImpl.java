@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -31,16 +30,13 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.Partition;
-import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.gui.configs.ColorGenerator;
 import de.unijena.bioinf.ms.middleware.Pages;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
@@ -50,6 +46,7 @@ import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
@@ -58,13 +55,11 @@ import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsType;
 import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
-import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
+import de.unijena.bioinf.ms.middleware.service.search.description.DetectedAdductPossibleValues;
 import de.unijena.bioinf.ms.middleware.service.search.description.IndexFacts;
 import de.unijena.bioinf.ms.middleware.service.search.description.SearchableFieldService;
 import de.unijena.bioinf.ms.middleware.service.search.description.TagDefinitionDocs;
-import de.unijena.bioinf.ms.middleware.service.search.description.DetectedAdductPossibleValues;
-import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -80,11 +75,10 @@ import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueFormatter;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
-import de.unijena.bioinf.jjobs.JobProgressEvent;
-import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.persistence.storage.ProjectSchemaMigrator;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
@@ -99,6 +93,8 @@ import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.*;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -113,21 +109,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.awt.*;
-import java.net.URI;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URI;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collectors;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.LARGE_BATCH_SIZE;
@@ -3108,6 +3098,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @Override
     public void close(boolean compact) throws IOException {
+        close(compact, false);
+    }
+
+    @Override
+    public void close(boolean compact, boolean rewriteLayout) throws IOException {
         // Capture the project file while the manager is still open; reanchor runs after it is closed.
         java.nio.file.Path projectFile = java.nio.file.Path.of(projectSpaceManager.getLocation());
         try {
@@ -3115,7 +3110,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 // Delete a temp project's (ephemeral) index on close so its on-disk index dir does not linger
                 // until app shutdown; persistent projects keep their index for a fast reopen.
                 searchService.closeProjectIndex(this, isTempProject());
-            if (compact)
+            if (rewriteLayout)
+                projectSpaceManager.compactByRewriting();
+            else if (compact)
                 projectSpaceManager.compact();
         } finally {
             projectSpaceManager.close();
@@ -3123,7 +3120,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         // Reanchor the persisted index versions to the compacted DB commit AFTER the project-space manager
         // is closed, so we never hold two Nitrite handles on the same file at once. reanchor opens its own
         // short-lived handle on the (now closed) compacted file.
-        if (compact && searchService != null)
+        if ((compact || rewriteLayout) && searchService != null)
             searchService.reanchorStorageCommitVersion(this, projectFile);
     }
 

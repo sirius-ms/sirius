@@ -355,6 +355,17 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "compactFull",
+            "in": "query",
+            "description": "if true, compact and always rewrite how the project\u0027s records are laid out on disk, even where that does not look necessary. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.",
+            "required": false,
+            "deprecated": true,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
