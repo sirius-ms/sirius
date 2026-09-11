@@ -37,26 +37,25 @@ import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.dizitart.no2.common.DBValue;
-import org.dizitart.no2.common.util.IndexUtils;
-import org.dizitart.no2.store.NitriteMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.*;
 import org.dizitart.no2.collection.events.CollectionEventListener;
 import org.dizitart.no2.collection.events.EventType;
+import org.dizitart.no2.common.DBValue;
 import org.dizitart.no2.common.PersistentCollection;
 import org.dizitart.no2.common.RecordStream;
-import org.dizitart.no2.mapper.jackson.JacksonMapperModule;
 import org.dizitart.no2.common.mapper.NitriteMapper;
 import org.dizitart.no2.common.module.NitriteModule;
 import org.dizitart.no2.common.processors.ProcessorChain;
+import org.dizitart.no2.common.util.IndexUtils;
 import org.dizitart.no2.filters.FluentFilter;
 import org.dizitart.no2.filters.NitriteFilter;
 import org.dizitart.no2.index.IndexDescriptor;
 import org.dizitart.no2.index.IndexOptions;
+import org.dizitart.no2.mapper.jackson.JacksonMapperModule;
 import org.dizitart.no2.mvstore.MVStoreModule;
 import org.dizitart.no2.repository.ObjectRepository;
+import org.dizitart.no2.store.NitriteMap;
 import org.h2.mvstore.MVStoreTool;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -74,6 +73,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -562,6 +562,22 @@ public class NitriteDatabase implements Database<Document> {
      */
     @Override
     public void compact() {
+        compact(layoutOutdated);
+    }
+
+    /**
+     * Compact, rewriting the page layout whether or not this store looks like it needs it.
+     * <p>
+     * For what {@link #isCompactionRecommended()} cannot see: a layout it reads as healthy because the
+     * records are too large for the check to judge, or a tree that is badly shaped rather than badly
+     * filled (see #974). Costs a full read and write of the store even when it reclaims nothing, so it
+     * belongs behind a deliberate user action rather than behind the ordinary compaction.
+     */
+    public void compactByRewriting() {
+        compact(true);
+    }
+
+    private void compact(boolean rewriteLayout) {
         stateWriteLock.lock();
         try {
             close();
@@ -571,7 +587,7 @@ public class NitriteDatabase implements Database<Document> {
             if (compression == MVStoreCompression.DEFLATE)
                 log.warn("Compacting a DEFLATE-compressed store at {}: MVStore cannot emit DEFLATE, so it is " +
                         "rewritten with LZF compression. The store stays readable.", file);
-            if (layoutOutdated && rewriteLayout())
+            if (rewriteLayout && rewritePages())
                 return;
             MVStoreTool.compact(file.toString(), compression != MVStoreCompression.NONE);
         } finally {
@@ -615,7 +631,7 @@ public class NitriteDatabase implements Database<Document> {
         }
     }
 
-    private boolean rewriteLayout() {
+    private boolean rewritePages() {
         Path rewritten = rewriteTarget(file);
         try {
             Files.deleteIfExists(rewritten);

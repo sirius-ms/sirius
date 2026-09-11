@@ -59,6 +59,19 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
             }
         });
 
+        JButton compactFullButton = new JButton("Full Compact");
+        compactFullButton.setToolTipText("Compacts the project and rewrites how its records are stored, even where "
+                + "that does not look necessary. Reclaims space that plain compacting cannot, for projects written "
+                + "by older versions. Reads and writes every record, so it takes considerably longer.");
+        addNamed("", compactFullButton);
+
+        compactFullButton.addActionListener(e -> {
+            ProjectInfo projectInfo = gui.getProjectManager().compactWithLoading(parent, true);
+            if (projectInfo != null) {
+                loadSize(projectInfo);
+            }
+        });
+
 
         JButton rebuildSearchIndex = new JButton("Rebuild Search Index");
         rebuildSearchIndex.setToolTipText("Rebuild the search index used for filtering the feature list.");

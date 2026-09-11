@@ -100,7 +100,7 @@ No authorization required
 
 ## closeProject
 
-> closeProject(projectId, compact)
+> closeProject(projectId, compact, compactFull)
 
 Close project-space and remove it from the application
 
@@ -124,8 +124,9 @@ public class Example {
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | unique name/identifier of the project-space to be closed.
         Boolean compact = false; // Boolean | if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
+        Boolean compactFull = false; // Boolean | if true, compact and always rewrite how the project's records are laid out on disk, even where that does not look necessary. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
         try {
-            apiInstance.closeProject(projectId, compact);
+            apiInstance.closeProject(projectId, compact, compactFull);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#closeProject");
             System.err.println("Status code: " + e.getCode());
@@ -144,6 +145,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| unique name/identifier of the project-space to be closed. | |
 | **compact** | **Boolean**| if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version. | [optional] [default to false] |
+| **compactFull** | **Boolean**| if true, compact and always rewrite how the project&#39;s records are laid out on disk, even where that does not look necessary. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact. | [optional] [default to false] |
 
 ### Return type
 

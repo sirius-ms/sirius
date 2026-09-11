@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -190,6 +191,19 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
     @Override
     public void compact() {
         project.getStorage().compact();
+    }
+
+    /**
+     * Compacts the project, rewriting how its records are laid out on disk whether or not the storage
+     * thinks that is needed - see {@code NitriteDatabase#compactRewritingLayout()} for when that is
+     * worth asking for. Falls back to an ordinary compaction for a storage that has no layout to
+     * rewrite.
+     */
+    public void compactByRewriting() {
+        if (project.getStorage() instanceof NitriteDatabase nitrite)
+            nitrite.compactByRewriting();
+        else
+            project.getStorage().compact();
     }
 
     /**
