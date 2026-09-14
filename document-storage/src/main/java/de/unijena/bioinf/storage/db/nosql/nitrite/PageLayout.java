@@ -208,7 +208,8 @@ public class PageLayout {
      * Mirrors what {@link MVStore#compact(String, String, boolean, org.h2.mvstore.FileStore)}
      * does, except that records are {@code put} into the target instead of having
      * their pages copied - which is the whole point, and also why this cannot be
-     * expressed as an option to the tool. Two things h2's own copy does are not
+     * expressed as an option to the tool. Values move as bytes rather than as objects, see
+     * {@link RawSerializedValueType}. Two things h2's own copy does are not
      * reachable from outside the package and are therefore not reproduced: the source's
      * commit version ({@code MVStore.setCurrentVersion}), so the rewritten store starts
      * counting again - see {@link NitriteDatabase#compact()} for who has to care - and
@@ -242,8 +243,13 @@ public class PageLayout {
             }
 
             for (String name : in.getMapNames()) {
-                MVMap<Object, Object> from = in.openMap(name);
-                MVMap<Object, Object> to = out.openMap(name);
+                // Values are carried across as the bytes they are stored as; keys keep the ordinary type,
+                // because they have to sort the way the objects they encode sort. One type instance per map:
+                // the ObjectDataType it falls back to keeps per-type state, which is not worth sharing.
+                MVMap.Builder<Object, Object> rawValues =
+                        new MVMap.Builder<Object, Object>().valueType(new RawSerializedValueType());
+                MVMap<Object, Object> from = in.openMap(name, rawValues);
+                MVMap<Object, Object> to = out.openMap(name, rawValues);
                 for (Map.Entry<Object, Object> e : from.entrySet()) {
                     to.put(e.getKey(), e.getValue());
                     entries++;
