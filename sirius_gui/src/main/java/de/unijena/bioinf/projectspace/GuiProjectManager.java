@@ -608,7 +608,8 @@ public class GuiProjectManager implements Closeable {
     /**
      * @param rewriteLayout rewrite how the project's records are laid out on disk even where that does not
      *                      look necessary. Reads and writes every record, so it takes considerably longer
-     *                      than an ordinary compaction - about a minute per gigabyte on a measured project.
+     *                      than an ordinary compaction - about twenty seconds per gigabyte, measured on
+     *                      projects of 1 and 48 GiB.
      */
     public ProjectInfo compactWithLoading(Window parent, boolean rewriteLayout) {
         if (siriusClient.jobs().hasJobs(projectId, false)) {
@@ -617,9 +618,9 @@ public class GuiProjectManager implements Closeable {
             }
         }
         if (rewriteLayout && JOptionPane.showConfirmDialog(parent,
-                "<html>Full compacting reads and writes every record in the project. That takes about a minute<br>"
-                        + "per gigabyte, so it can run for hours on a large project, and it needs as much free<br>"
-                        + "disk space as the project currently uses.<br>Continue?</html>",
+                "<html>Full compacting reads and writes every record in the project. That takes roughly<br>"
+                        + "twenty seconds per gigabyte - a quarter of an hour for a 48 GB project - and it needs<br>"
+                        + "as much free disk space as the project currently uses.<br>Continue?</html>",
                 null, JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
             return null;
         }

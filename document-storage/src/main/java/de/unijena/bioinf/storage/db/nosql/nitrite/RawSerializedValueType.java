@@ -47,10 +47,10 @@ import java.nio.ByteBuffer;
  * has, and the rewrite then fails with {@code ClassNotFoundException} where a plain compaction would
  * have succeeded. That is the reason this type exists; passing bytes through cannot fail that way.
  * <p>
- * And it costs time. A 1.0 GiB project rewrites in 14.5 s instead of 39.5 s, and four million records
- * from the largest maps of a 48 GiB one copy in 80 s instead of 275 s - between two and a half and
- * three and a half times faster, with the file coming out around 2% smaller either way. End to end on
- * a project of tens of GiB the saving has not been measured under controlled conditions.
+ * And it costs time. A 1.0 GiB project rewrites in 14.5 s instead of 39.5 s, and a 48 GiB one in 827 s
+ * instead of 2549 s - between two and a half and three times faster, measured end to end on both.
+ * Roughly twenty seconds per gigabyte either way, which is what the callers that offer a full compact
+ * tell the user to expect.
  * <p>
  * Only values, never keys: keys decide where a record goes in the B-tree, and serialised bytes do
  * not sort like the objects they encode. Keys stay with {@link ObjectDataType}, which is cheap and
