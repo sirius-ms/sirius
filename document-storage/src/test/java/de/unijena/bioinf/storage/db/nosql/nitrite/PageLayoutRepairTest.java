@@ -338,6 +338,65 @@ public class PageLayoutRepairTest {
         }
     }
 
+    /**
+     * A stored value that reports being turned back into an object. Deserialising it is the thing a
+     * rewrite must not do, and counting is the only way to observe that it did not: a value that came
+     * through as bytes is indistinguishable from one that was rebuilt, once it is read back.
+     */
+    public static class DeserialisationProbe implements java.io.Serializable {
+        static final java.util.concurrent.atomic.AtomicInteger READS = new java.util.concurrent.atomic.AtomicInteger();
+        private final String payload;
+
+        DeserialisationProbe(String payload) {
+            this.payload = payload;
+        }
+
+        private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+            in.defaultReadObject();
+            READS.incrementAndGet();
+        }
+
+        String payload() {
+            return payload;
+        }
+    }
+
+    @Test
+    public void testARewriteDoesNotTurnStoredValuesBackIntoObjects(@TempDir Path dir) throws IOException {
+        Path file = dir.resolve("probe.db");
+        try (NitriteDatabase db = open(file, BROKEN_BUDGET, false)) {
+            List<Document> batch = new ArrayList<>();
+            for (int i = 0; i < 2000; i++)
+                batch.add(Document.createDocument("key", "k-" + i).put("probe", new DeserialisationProbe("v-" + i)));
+            db.insertAll(COLLECTION, batch);
+        }
+        try (MVStore store = new MVStore.Builder().fileName(file.toString()).open()) {
+            store.setStoreVersion(0);   // as a release that predates the marker left it
+            store.commit();
+        }
+
+        DeserialisationProbe.READS.set(0);
+        try (NitriteDatabase db = open(file, NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE, false)) {
+            assertTrue(db.isCompactionRecommended());
+            db.compact();
+        }
+        assertEquals(0, DeserialisationProbe.READS.get(),
+                "a rewrite has to move values as bytes - deserialising them costs the time and needs every "
+                        + "class in them on the classpath");
+
+        // and the bytes it moved still decode to what they were
+        try (NitriteDatabase db = open(file, NitriteDatabase.DEFAULT_PAGE_SPLIT_SIZE_BYTE, true)) {
+            int seen = 0;
+            for (Document d : db.findAll(COLLECTION)) {
+                String key = d.get("key", String.class);
+                assertEquals("v-" + key.substring(2), ((DeserialisationProbe) d.get("probe")).payload());
+                seen++;
+            }
+            assertEquals(2000, seen, "every record has to survive the rewrite");
+        }
+        assertTrue(DeserialisationProbe.READS.get() >= 2000, "reading them back does deserialise them");
+    }
+
     @Test
     public void testIndexesSurviveARewrite(@TempDir Path dir) throws IOException {
         Path file = writePreFixStore(dir, "indexed");
