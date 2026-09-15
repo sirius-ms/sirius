@@ -303,7 +303,9 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
             LoggerFactory.getLogger(getClass()).warn(message + " Cause: " + e.getMessage());
             return Optional.of(new ConnectionError(81, message, ConnectionError.Klass.APP_SERVER, e));
         } catch (Exception e) {
-            return Optional.of(new ConnectionError(82, "Unexpected error when contacting unsecured api endpoint", ConnectionError.Klass.APP_SERVER, e));
+            String message = "Unexpected error when contacting unsecured api endpoint";
+            LoggerFactory.getLogger(getClass()).warn("{}: {}", message, e.getMessage(), e);
+            return Optional.of(new ConnectionError(82, message, ConnectionError.Klass.APP_SERVER, e));
         }
     }
 
@@ -327,7 +329,9 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
             LoggerFactory.getLogger(getClass()).error("{}: {}", m, e.getMessage(), e);
             return Optional.of(new ConnectionError(72, m, ConnectionError.Klass.TOKEN, e));
         } catch (Exception e) {
-            return Optional.of(new ConnectionError(92, "Unexpected error when contacting secured api endpoint", ConnectionError.Klass.APP_SERVER, e));
+            String message = "Unexpected error when contacting secured api endpoint";
+            LoggerFactory.getLogger(getClass()).warn("{}: {}", message, e.getMessage(), e);
+            return Optional.of(new ConnectionError(92, message, ConnectionError.Klass.APP_SERVER, e));
         }
     }
 
