@@ -28,6 +28,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -107,11 +108,18 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
         // index (indexDescriptor==null -> nitriteMap.entries() full scan + per-doc deserialization). A single `eq`
         // on an indexed field DOES take the IndexedStream path (the same fast path the GUI uses to load a feature's
         // results), so remove per id with `eq` instead of one `in`/`or` over the whole selection.
+        // Ascending, because neighbouring ids share index and document pages: deleting them one after the
+        // other pays for each page once instead of coming back to it after the commit buffer has written it
+        // out. Measured on 5000 features (88,597 documents): 15.0 s and 75.3 MiB of growth unsorted, 11.5 s
+        // and 54.0 MiB sorted. The nesting below is already the right way round for the same reason - one
+        // collection at a time, rather than one feature across all of them.
+        List<Long> ascendingIds = new ArrayList<>(alignedFeatureIds);
+        ascendingIds.sort(null);
         return this.getStorage().write(() -> {
             long count = 0;
             try {
                 for (Class<?> clazz : getRelatedToAF()) {
-                    for (Long afid : alignedFeatureIds)
+                    for (Long afid : ascendingIds)
                         count += getStorage().removeAll(Filter.where("alignedFeatureId").eq(afid), clazz);
                 }
             } finally {

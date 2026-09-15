@@ -974,6 +974,47 @@ public class NitriteDatabaseTest {
         }
     }
 
+    @Test
+    public void testABatchLookupAnswersInTheOrderItWasAskedIn() throws IOException {
+        // the lookups run in key order for the sake of page locality, which must not reach the caller
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(LongKeyEntry.class))) {
+            for (long pk = 1; pk <= 10; pk++)
+                db.insert(LongKeyEntry.builder().pk(pk).build());
+
+            List<Long> asked = List.of(7L, 3L, 9L, 1L);
+            assertEquals(asked, db.findAllByPrimaryKeyStr(asked, LongKeyEntry.class)
+                    .map(e -> e.pk).toList());
+        }
+    }
+
+    @Test
+    public void testABatchLookupSkipsMissingKeysAndRepeatedOnes() throws IOException {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(LongKeyEntry.class))) {
+            for (long pk = 1; pk <= 3; pk++)
+                db.insert(LongKeyEntry.builder().pk(pk).build());
+
+            assertEquals(List.of(3L, 1L), db.findAllByPrimaryKeyStr(List.of(3L, 99L, 1L, 3L), LongKeyEntry.class)
+                    .map(e -> e.pk).toList());
+        }
+    }
+
+    @Test
+    public void testABatchDeleteRemovesEveryDistinctKeyOnce() throws IOException {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(LongKeyEntry.class))) {
+            for (long pk = 1; pk <= 5; pk++)
+                db.insert(LongKeyEntry.builder().pk(pk).build());
+
+            assertEquals(3, db.removeAllByPrimaryKey(List.of(4L, 2L, 4L, 99L, 1L), LongKeyEntry.class));
+            assertEquals(List.of(3L, 5L), db.findAllStr(LongKeyEntry.class).map(e -> e.pk).sorted().toList());
+        }
+    }
+
     /** Reflectively read the ordered field names of the (single) two-field index on the repository. */
     private static List<String> twoFieldIndexOrder(NitriteDatabase db, Class<?> clazz) throws Exception {
         java.lang.reflect.Field dbField = NitriteDatabase.class.getDeclaredField("db");
