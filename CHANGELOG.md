@@ -5,7 +5,7 @@
 - fix: projects took up to three times more disk space than they need, and grew further with every
   recompute. Every project written by an earlier SIRIUS version is affected, as is every custom
   structure and spectral database: the storage engine's default put a single record on each storage
-  page. New and recomputed data is stored compactly again, and parts of large projects open faster.
+  page. New and recomputed data takes much less space again, and parts of large projects open faster.
   **Compacting an affected project now repairs it**: on a measured project that took it from 1011 to
   298 MiB, where a plain compaction had reclaimed nothing. So compact your projects once after
   upgrading - SIRIUS says so in the log when it opens one that would benefit. A repair reads and
