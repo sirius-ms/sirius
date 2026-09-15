@@ -43,7 +43,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.toLinks;
 import static io.sirius.ms.sdk.model.ConnectionErrorClass.*;
 
 public class ConnectionCheckPanel extends LoadablePanel implements PropertyChangeListener {
@@ -181,18 +180,9 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
             //case 0 NO ERROR
             resultPanel.add(makeHTMLTextPanel("Connection to SIRIUS web services successfully established!", Colors.TEXT_GOOD), BorderLayout.CENTER);
         } else {
-            ConnectionError err = errors.getFirst();
+            //skips an internet error that is just the internet check being unreachable
+            ConnectionError err = ConnectionChecks.selectMainError(errors);
             ConnectionErrorClass mainError = err.getErrorKlass();
-            //check if internet error is not just internet check unreachable
-            if (mainError == INTERNET){
-                if (errors.size() > 1 &&
-                        (errors.stream().map(ConnectionError::getErrorKlass).noneMatch(e -> e == LOGIN_SERVER)
-                    || errors.stream().map(ConnectionError::getErrorKlass).noneMatch(e -> e == LICENSE_SERVER))
-                ){
-                    err = errors.stream().filter(e -> e.getErrorKlass() != INTERNET).sorted().findFirst().get();
-                    mainError = err.getErrorKlass();
-                }
-            }
             switch (mainError) {
                 case INTERNET :
                     resultPanel.add(makeHTMLTextPanel(
@@ -251,8 +241,8 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
                 }
                 case TERMS:
                     resultPanel.add(makeHTMLTextPanel(
-                            err.getSiriusMessage() + "<br><b>" + toLinks(check.getLicenseInfo().getTerms()) +
-                            " for the selected Webservice have not been accepted.</b><br> Click Accept to get Access:", Colors.TEXT_WARN
+                            err.getSiriusMessage() + "<br>" + ConnectionChecks.termsSentence(check.getLicenseInfo().getTerms()) +
+                            "<br> Click Accept to get Access:", Colors.TEXT_WARN
                     ), BorderLayout.CENTER);
                     resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
