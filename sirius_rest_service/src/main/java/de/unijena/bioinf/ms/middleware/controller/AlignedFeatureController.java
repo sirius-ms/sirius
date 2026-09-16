@@ -118,7 +118,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * by a field name.
      * </p>
      *
-     * Searchable fields are the indexed properties of the feature (e.g. {@code ionMass}, {@code name},
+     * Searchable fields are the indexed properties of the feature (e.g. {@code ionMass}, {@code intensityApex}, {@code name},
      * {@code quality}, {@code hasMsMs}), its annotations addressed via dot notation
      * (e.g. {@code topAnnotations.structureAnnotation.structureName}), and project tags prefixed with the
      * namespace {@code tags.} (e.g. {@code tags.MyTag}).
@@ -139,6 +139,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code ionMass:[300 TO 400]}</li>
      *     <li>a <strong>boolean</strong>: boolean fields are matched as follows: e.g. {@code hasMsMs:true}, {@code tags.MyTagA:false}</li>
      *     <li>a <strong>value-less</strong>: tags without values (See TagDefinition) are matched as follows: e.g. {@code tags.MyTagA:*} or {@code tags.MyTagA:true}</li>
+     *     <li>a <strong>relative bound</strong>: on the intensity fields, a range bound or comparison value followed by {@code %} is taken as percent of the most intense feature of the same run, e.g. {@code intensityApex:[10% TO *]} or {@code intensityAUC>=10%} keep the features that reach 10 % of their run's maximum in at least one run</li>
      * </ul>
      *
      * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>

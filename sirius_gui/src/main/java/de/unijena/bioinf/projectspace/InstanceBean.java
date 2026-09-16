@@ -339,6 +339,16 @@ public class InstanceBean implements SiriusPCS {
         return getSourceFeature().getIonMass();
     }
 
+    /** The MS1 peak height: the highest raw apex intensity over the runs the feature was detected in; null if unknown. */
+    public @Nullable Double getIntensityApex() {
+        return getSourceFeature().getIntensityApex();
+    }
+
+    /** The MS1 peak area: the highest raw area under the curve over the runs the feature was detected in; null if unknown. */
+    public @Nullable Double getIntensityAUC() {
+        return getSourceFeature().getIntensityAUC();
+    }
+
 
     public boolean isComputing() {
         // Polled over the whole list on every list change (action enablement). Read the cached snapshot only:

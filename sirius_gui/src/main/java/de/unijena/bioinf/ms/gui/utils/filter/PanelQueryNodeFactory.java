@@ -175,6 +175,16 @@ public final class PanelQueryNodeFactory {
                     number(model.getSampleBlankFoldChange().getCurrentMinFoldChange()), "", false), // [min TO *]
                     m -> m.getSampleBlankFoldChange().reset()));
 
+        if (model.isIntensityFilterActive()) {
+            // a relative threshold stays a percentage in the query - the index matches it against the feature's
+            // intensity relative to its run maximum - so the chip shows the threshold as the user set it
+            IntensityFilter filter = model.getIntensityFilter();
+            String threshold = filter.getMode() == IntensityFilter.Mode.RELATIVE_TO_RUN_MAX
+                    ? number(filter.getMinPercent()) + "%" : number(filter.getMinAbsolute());
+            facets.add(new Facet("intensity", QueryClause.numeric(filter.getMeasure().getField(), NumberOp.RANGE_INCLUSIVE, threshold, "", false), // [min TO *]
+                    m -> m.getIntensityFilter().reset()));
+        }
+
         if (model.isLipidFilterEnabled()) {
             // "no lipid class" is a negated clause; "a lipid class" a plain one
             boolean noLipid = Boolean.FALSE.equals(model.getLipidClassDetected());

@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.filter.DbFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.IntensityFilter;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import org.junit.jupiter.api.Test;
 
@@ -175,6 +176,39 @@ public class PanelQueryNodeFactoryTest {
         assertEquals(FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME, blank.field());
         assertEquals("2", blank.value1());
         assertEquals("", blank.value2(), "fold change is a lower-bounded, open-ended range");
+    }
+
+    @Test
+    public void testAbsoluteIntensityRendersAsOpenEndedRange() {
+        FeatureFilterModel model = cleanSlate();
+        model.getIntensityFilter().setMinAbsolute(1000);
+
+        QueryClause intensity = onlyClause(nodes(model));
+        assertEquals(FeatureFilterModel.FIELD_INTENSITY_APEX, intensity.field());
+        assertEquals(NumberOp.RANGE_INCLUSIVE, intensity.op());
+        assertEquals("1000", intensity.value1());
+        assertEquals("", intensity.value2(), "a minimum intensity is a lower-bounded, open-ended range");
+    }
+
+    @Test
+    public void testRelativeIntensityRendersAsAPercentageBound() {
+        FeatureFilterModel model = cleanSlate();
+        model.getIntensityFilter().setMode(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX);
+        model.getIntensityFilter().setMinPercent(10);
+
+        // the percentage is the index's to match (against the feature's share of its run maximum), so it is
+        // emitted as written and the chip reads "10%"
+        QueryClause intensity = onlyClause(nodes(model));
+        assertEquals(FeatureFilterModel.FIELD_INTENSITY_APEX, intensity.field());
+        assertEquals(NumberOp.RANGE_INCLUSIVE, intensity.op());
+        assertEquals("10%", intensity.value1());
+        assertEquals("", intensity.value2());
+        assertEquals("intensityApex:[10% TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow(),
+                "the percent sign must survive value escaping");
+
+        // the measure picks the field
+        model.getIntensityFilter().setMeasure(IntensityFilter.Measure.AUC);
+        assertEquals(FeatureFilterModel.FIELD_INTENSITY_AUC, onlyClause(nodes(model)).field());
     }
 
     @Test
@@ -348,6 +382,7 @@ public class PanelQueryNodeFactoryTest {
         model.setElementFilter(new ElementFilter("CHNOPS"));
         model.setDbFilter(new DbFilter(List.of(new SearchableDatabase().databaseId("PubChem")), 5));
         model.getSampleBlankFoldChange().setEnabled(true);
+        model.getIntensityFilter().setMinAbsolute(1000);
         model.setLipidClassDetected(false);
 
         String compiled = model.toLuceneQuery(ConfidenceDisplayMode.EXACT)

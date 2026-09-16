@@ -46,6 +46,8 @@ public enum SiriusActions {
     ORDER_BY_ID(OrderCompoundById.class),
     ORDER_BY_RT(OrderCompoundByRT.class),
     ORDER_BY_MASS(OrderCompoundByMass.class),
+    ORDER_BY_INTENSITY_APEX(OrderCompoundByIntensityApex.class),
+    ORDER_BY_INTENSITY_AUC(OrderCompoundByIntensityAUC.class),
     ORDER_BY_NAME(OrderCompoundByName.class),
     ORDER_BY_CONFIDENCE(OrderCompoundByConfidence.class),
 
