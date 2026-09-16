@@ -4,7 +4,7 @@ SIRIUS Nightsky API
 
 - API version: 3.2
 
-- Artifact version: 3.2+sirius6.5.4
+- Artifact version: 3.2+sirius6.6.0-SNAPSHOT
 
 - Generator version: 7.17.0
 

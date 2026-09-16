@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.middleware.model.features;
 
 import de.unijena.bioinf.projectspace.FieldVocabulary;
 import de.unijena.bioinf.projectspace.SearchableFieldDoc;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
@@ -113,6 +114,46 @@ public class AlignedFeature implements Taggable {
      */
     @IndexField(sortable = true)
     protected Double ionMass;
+
+    /**
+     * MS1 intensity of the feature as peak height, in raw instrument counts: the highest apex intensity over all
+     * runs the feature was detected in (as in the quantification table), or the height of the precursor peak in
+     * its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists). NULL if unknown.
+     * A search bound followed by {@code %} is relative to the run: {@code intensityApex:[10% TO *]} keeps the
+     * features that reach 10 % of the most intense feature in at least one of their runs. Data imported without
+     * runs (peak lists) is related to the most intense feature of the same source file instead.
+     */
+    @IndexField(sortable = true)
+    @Schema(nullable = true)
+    protected Double intensityApex;
+
+    /**
+     * MS1 intensity of the feature as area under the chromatographic peak, in raw instrument counts: the highest
+     * area over all runs the feature was detected in. NULL for data without an LC-MS trace.
+     * A search bound followed by {@code %} is relative to the run, see {@code intensityApex}.
+     */
+    @IndexField(sortable = true)
+    @Schema(nullable = true)
+    protected Double intensityAUC;
+
+    /**
+     * Apex intensity in percent of the most intense feature of the same run, the highest such value over the runs
+     * the feature was detected in. This is what a {@code %} bound on {@code intensityApex} is matched against.
+     * Kept for the search index only and hidden from the API.
+     */
+    @IndexField(sortable = true)
+    @Schema(nullable = true, hidden = true)
+    @JsonIgnore
+    protected Double intensityApexRelative;
+
+    /**
+     * Area under curve in percent of the most intense feature of the same run, see {@code intensityApexRelative}.
+     * Kept for the search index only and hidden from the API.
+     */
+    @IndexField(sortable = true)
+    @Schema(nullable = true, hidden = true)
+    @JsonIgnore
+    protected Double intensityAUCRelative;
 
     /**
      * Ion mode (charge) the feature has been measured in.

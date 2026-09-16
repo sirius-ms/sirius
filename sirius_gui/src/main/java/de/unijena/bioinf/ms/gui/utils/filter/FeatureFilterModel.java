@@ -141,6 +141,9 @@ public class FeatureFilterModel implements SiriusPCS {
 
     @Getter
     private final FoldChangeFilter sampleBlankFoldChange;
+
+    @Getter
+    private final IntensityFilter intensityFilter = new IntensityFilter();
     /*
     min/max possible values
      */
@@ -350,6 +353,9 @@ public class FeatureFilterModel implements SiriusPCS {
         if (getSampleBlankFoldChange().isEnabled()) // contributes a range clause to toLuceneQuery
             return true;
 
+        if (isIntensityFilterActive())
+            return true;
+
         return false;
     }
 
@@ -384,6 +390,15 @@ public class FeatureFilterModel implements SiriusPCS {
 
     public boolean isMinConfidenceFilterActive() {
         return currentMinConfidence != minConfidence;
+    }
+
+    /**
+     * The intensity filter contributes a clause as soon as its minimum is above zero, like the other thresholds.
+     * A relative threshold is written as a percentage ({@code intensityApex:[10% TO *]}) that the search index
+     * matches against the feature's intensity relative to its run maximum, so nothing about the project is needed.
+     */
+    public boolean isIntensityFilterActive() {
+        return intensityFilter.isActive();
     }
 
     @Synchronized
@@ -503,6 +518,7 @@ public class FeatureFilterModel implements SiriusPCS {
         setHasMs1(false);
         setHasMsMs(false);
         sampleBlankFoldChange.reset();
+        intensityFilter.reset();
     }
 
     private void clearSearchText() {
@@ -591,6 +607,8 @@ public class FeatureFilterModel implements SiriusPCS {
     // of truth, used both to build the executed query (below) and to render the facets as query chips
     // (PanelQueryNodeFactory). Must match the backend @IndexField names.
     public static final String FIELD_MZ = "ionMass";
+    public static final String FIELD_INTENSITY_APEX = IntensityFilter.Measure.APEX.getField();
+    public static final String FIELD_INTENSITY_AUC = IntensityFilter.Measure.AUC.getField();
     public static final String FIELD_RT_START = "rtStartSeconds";
     public static final String FIELD_RT_APEX = "rtApexSeconds";
     public static final String FIELD_RT_END = "rtEndSeconds";

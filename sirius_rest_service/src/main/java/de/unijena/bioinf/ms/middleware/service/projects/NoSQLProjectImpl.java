@@ -87,6 +87,7 @@ import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.persistence.storage.ProjectSchemaMigrator;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
+import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -253,9 +254,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     // Mark incomplete for the duration of the (re)build so an interrupted build is not
                     // persisted and gets rebuilt on the next open (M5).
                     searchService.setIndexComplete(projectId, AlignedFeature.class, false);
+                    runMaxima = null; // a rebuild derives the relative intensities from the current run maxima
                     feedAllFeaturesToIndex(alfs -> searchService.addDocuments(projectId, alfs));
                     searchService.setIndexComplete(projectId, AlignedFeature.class, true);
                 }
+                runMaxima(); // known from now on, so a later write can tell which run maxima it moved
 
                 //load Run index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, Run.class)) {
@@ -293,6 +296,76 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 runIds == null ? null : runIds.stream().filter(Objects::nonNull).map(Long::parseLong).toList()
 
         );
+    }
+
+    // The highest intensities per run - what the relative intensities in the search index refer to. Derived from
+    // the run features, so it is dropped whenever features are written and derived again on the next read.
+    private volatile FeatureIntensities.RunMaxima runMaxima;
+
+    @SneakyThrows
+    private FeatureIntensities.RunMaxima runMaxima() {
+        FeatureIntensities.RunMaxima maxima = runMaxima;
+        if (maxima == null) {
+            FeatureIntensities.RunMaxima.Builder builder = FeatureIntensities.RunMaxima.builder();
+            // a run feature without a run (peak-list data) is grouped by the source file of its aligned feature,
+            // which only the aligned feature knows
+            Map<Long, Feature> runless = new HashMap<>();
+            try (Stream<Feature> runFeatures = storage().findAllStr(Feature.class)) {
+                runFeatures.forEach(f -> {
+                    if (f.getRunId() != null)
+                        builder.add(FeatureIntensities.runGroup(f.getRunId()), f);
+                    else
+                        runless.put(f.getAlignedFeatureId(), f);
+                });
+            }
+            if (!runless.isEmpty()) {
+                try (Stream<AlignedFeatures> owners = storage().findAllByPrimaryKeyStr(runless.keySet(), AlignedFeatures.class)) {
+                    owners.forEach(owner -> builder.add(FeatureIntensities.sourceGroup(owner), runless.get(owner.getAlignedFeatureId())));
+                }
+            }
+            maxima = builder.build();
+            runMaxima = maxima;
+        }
+        return maxima;
+    }
+
+    /**
+     * Features were written: derives the run maxima again and names the runs whose maximum moved. Every other
+     * feature of such a run carries a relative intensity in the index that no longer holds, see
+     * {@link #reindexRuns}. Empty when no maxima were known before, e.g. right after the project was opened.
+     */
+    private Set<String> refreshRunMaxima() {
+        FeatureIntensities.RunMaxima before = runMaxima;
+        runMaxima = null;
+        return before == null ? Set.of() : runMaxima().changedGroups(before);
+    }
+
+    /**
+     * Rewrites the index documents of every feature that has a run feature in one of {@code runs}, except the
+     * features in {@code alreadyWritten}, which the caller indexes itself with the fresh maxima.
+     */
+    @SneakyThrows
+    private void reindexRuns(@NotNull Set<String> groups, @Nullable Collection<Long> alreadyWritten) {
+        if (groups.isEmpty())
+            return;
+        Set<Long> skip = alreadyWritten == null ? Set.of() : new HashSet<>(alreadyWritten);
+        Set<Long> affected = new HashSet<>();
+        Set<Long> runless = new HashSet<>();
+        try (Stream<Feature> runFeatures = storage().findAllStr(Feature.class)) {
+            runFeatures.filter(f -> !skip.contains(f.getAlignedFeatureId())).forEach(f -> {
+                if (f.getRunId() == null)
+                    runless.add(f.getAlignedFeatureId());
+                else if (groups.contains(FeatureIntensities.runGroup(f.getRunId())))
+                    affected.add(f.getAlignedFeatureId());
+            });
+        }
+        if (!runless.isEmpty()) {
+            try (Stream<AlignedFeatures> owners = storage().findAllByPrimaryKeyStr(runless, AlignedFeatures.class)) {
+                owners.filter(owner -> groups.contains(FeatureIntensities.sourceGroup(owner)))
+                        .forEach(owner -> affected.add(owner.getAlignedFeatureId()));
+            }
+        }
+        feedFeaturesToIndex(affected, alfs -> searchService.updateDocuments(projectId, alfs));
     }
 
     /**
@@ -338,7 +411,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (searchService != null) {
             synchronized (searchIndexLock) {
                 //Handle FEATURES
+                // the new features may have moved the run maxima the relative intensities refer to: they are indexed
+                // with the fresh maxima, and the other features of a run whose maximum moved are rewritten afterwards
+                Set<String> runsWithMovedMaximum = refreshRunMaxima();
                 feedFeaturesToIndex(alignedFeaturesToUpdate, alfs -> searchService.addDocuments(projectId, alfs));
+                reindexRuns(runsWithMovedMaximum, alignedFeaturesToUpdate);
 
                 //Handle COMPOUNDS
                 //todo IMPLEMENT!
@@ -404,8 +481,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             synchronized (searchIndexLock) {
                 // Delete by id per POJO type. removeDocuments(beans) would infer the index type from
                 // the element type (Long) and thus target a bogus index, so we must use removeDocumentsById.
-                if (Utils.notNullOrEmpty(alignedFeaturesIds))
+                if (Utils.notNullOrEmpty(alignedFeaturesIds)) {
                     searchService.removeDocumentsById(projectId, alignedFeaturesIds, AlignedFeature.class);
+                    // deleting a run's most intense feature moves that run's maximum, and with it the relative
+                    // intensities of the run's remaining features
+                    reindexRuns(refreshRunMaxima(), alignedFeaturesIds);
+                }
                 if (Utils.notNullOrEmpty(compoundIds))
                     searchService.removeDocumentsById(projectId, compoundIds, Compound.class);
                 if (Utils.notNullOrEmpty(runIds))
@@ -1326,6 +1407,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
             MSData msData = FeatureImports.extractMsData(featureImport, profile);
             builder.msData(msData);
+            // there is no LC-MS trace to take an apex from, so the precursor peak in the MS1 is the feature's MS1 intensity
+            builder.apexIntensity(StorageUtils.precursorIntensityOf(msData.getMergedMs1Spectrum(),
+                    featureImport.getIonMass(), FeatureImports.ms1MassDeviation(profile).allowedMassDeviation));
             builder.hasMs1(msData.getMergedMs1Spectrum() != null);
             builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
 
@@ -1344,6 +1428,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     public AlignedFeature convertToApiFeature(AlignedFeatures feature, boolean msDataSearchPrepared, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        // the reported MS1 intensity is the highest raw apex over the run features (the aligned feature's own
+        // value is normalized per run and summed over runs, see FeatureIntensities), so they are needed here
+        if (feature.getFeatures().isEmpty())
+            project().fetchFeatures(feature);
+        FeatureIntensities.Intensities intensities = FeatureIntensities.of(feature, runMaxima());
         final String fid = String.valueOf(feature.getAlignedFeatureId());
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
                 .alignedFeatureId(fid)
@@ -1351,6 +1440,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .externalFeatureId(feature.getExternalFeatureId())
                 .compoundId(feature.getCompoundId() == null ? null : String.valueOf(feature.getCompoundId()))
                 .ionMass(feature.getAverageMass())
+                .intensityApex(intensities.apex())
+                .intensityAUC(intensities.auc())
+                .intensityApexRelative(intensities.apexRelative())
+                .intensityAUCRelative(intensities.aucRelative())
                 .quality(feature.getDataQuality() == null ? DataQuality.NOT_APPLICABLE : feature.getDataQuality())
                 .hasMs1(feature.isHasMs1())
                 .hasMsMs(feature.isHasMsMs())

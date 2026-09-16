@@ -72,4 +72,27 @@ public class FeatureFilterModelTest {
         assertFalse(FeatureFilterModel.isSupportedAdduct(PrecursorIonType.fromString("[2M + H]+")),
                 "multimeric adduct is not supported");
     }
+
+    @Test
+    public void testAbsoluteIntensityFilterAloneIsActive() {
+        FeatureFilterModel model = cleanSlate();
+        assertFalse(model.isActive(), "a minimum of zero, the default, filters nothing");
+
+        model.getIntensityFilter().setMinAbsolute(100_000);
+        assertTrue(model.isActive(), "a minimum above zero alone must mark the model active");
+        assertEquals("intensityApex:[100000 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    @Test
+    public void testRelativeIntensityFilterIsAPercentageInTheQuery() {
+        FeatureFilterModel model = cleanSlate();
+        model.getIntensityFilter().setMeasure(IntensityFilter.Measure.AUC);
+        model.getIntensityFilter().setMode(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX);
+        model.getIntensityFilter().setMinPercent(10);
+
+        // the index matches the percentage against the feature's intensity relative to its run maximum, so the
+        // model needs nothing about the project to be active
+        assertTrue(model.isActive());
+        assertEquals("intensityAUC:[10% TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
 }

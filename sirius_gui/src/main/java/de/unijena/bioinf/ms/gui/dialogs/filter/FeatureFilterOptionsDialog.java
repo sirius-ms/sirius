@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.IntensityFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.DbFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
@@ -85,6 +86,15 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
     final JCheckBox blankFilter;
     final JSpinner blankSpinner;
+
+    final JSpinner intensitySpinner;
+    // the unit of the minimum (absolute counts or percent of the run maximum) and the measure it applies to
+    final SegmentedChoice<IntensityFilter.Mode> intensityUnit;
+    final SegmentedChoice<IntensityFilter.Measure> intensityMeasure;
+    // The intensity spinner shows the threshold of one mode at a time; the other mode's value is kept here so
+    // switching the mode back and forth loses neither.
+    private double intensityMinAbsolute, intensityMinPercent;
+    private IntensityFilter.Mode shownIntensityMode;
 
     final FeatureFilterModel filterModel;
     final CompoundList compoundList;
@@ -191,6 +201,28 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 min.addNamed("Min RT (in sec)", minRtSpinner);
                 max.addNamed("Max RT (in sec)", maxRtSpinner);
                 ensureCompatibleBounds(minRtSpinner, maxRtSpinner);
+
+                // MS1 intensity: a minimum only, absolute or in percent of the run maximum, of either the peak
+                // height (apex) or the area under the peak - the measure is picked on the right
+                IntensityFilter filter = filterModel.getIntensityFilter();
+                intensityMinAbsolute = filter.getMinAbsolute();
+                intensityMinPercent = filter.getMinPercent();
+                intensitySpinner = makeSpinner(0, 0, Double.POSITIVE_INFINITY, 1000);
+                intensitySpinner.setToolTipText(GuiUtils.formatToolTip(INTENSITY_FILTER_TOOLTIP));
+                min.addNamed("Min intensity", intensitySpinner);
+
+                // the unit of the minimum and the measure it applies to, as segmented switches in the right-hand
+                // column - the same control the lipid and PFAS filters use
+                intensityUnit = new SegmentedChoice<>(List.of(IntensityFilter.Mode.values()), Object::toString, () -> INTENSITY_MODE_TOOLTIP);
+                intensityUnit.setSelected(filter.getMode());
+                showIntensityThresholdFor(filter.getMode());
+                intensityUnit.onChange(() -> showIntensityThresholdFor(intensityUnit.getSelected()));
+                max.addNamed("Intensity unit", hugging(intensityUnit));
+
+                intensityMeasure = new SegmentedChoice<>(List.of(IntensityFilter.Measure.values()), Object::toString, () -> INTENSITY_MEASURE_TOOLTIP);
+                intensityMeasure.setSelected(filter.getMeasure());
+                SegmentedChoice.alignSegmentWidths(intensityUnit, intensityMeasure); // one width, so the splits line up
+                max.addNamed("Intensity measure", hugging(intensityMeasure));
 
                 inputParameters.add(box);
             }
@@ -502,7 +534,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             return null;
         String base = facetId.contains(".") ? facetId.substring(0, facetId.indexOf('.')) : facetId;
         return switch (base) {
-            case "mz", "rt", "adducts" -> "Input";
+            case "mz", "rt", "adducts", "intensity" -> "Input";
             case "blank" -> "Fold Change";
             case "hasMs1", "hasMsMs", "quality" -> "Data Quality";
             case "confidence", "elements", "lipid", "pfas", "db" -> "Results";
@@ -543,6 +575,52 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 dispose();
             }
         });
+    }
+
+    static final String INTENSITY_FILTER_TOOLTIP =
+            "Aligned feature must reach this MS1 intensity in at least one of the runs it was detected in, in raw instrument "
+                    + "counts as in the quantification table. Zero means no intensity filter. Features without a known intensity do not pass.";
+
+    static final String INTENSITY_MODE_TOOLTIP =
+            "Whether the minimum is an intensity, or a percentage of the most intense feature of the same run. "
+                    + "A percentage goes into the query as written (e.g. intensityApex:[10% TO *]) and keeps the features that "
+                    + "reach that share of their run's maximum in at least one run.";
+
+    static final String INTENSITY_MEASURE_TOOLTIP =
+            "Which intensity the minimum applies to: the peak height at the apex of the chromatographic peak, or the area "
+                    + "under the peak. Data imported without an LC-MS trace (peak lists) only has a peak height.";
+
+    private IntensityFilter.Mode selectedIntensityMode() {
+        return intensityUnit.getSelected();
+    }
+
+    /** Shows the threshold of {@code mode} in the intensity spinner, keeping the other mode's value for a switch back. */
+    private void showIntensityThresholdFor(IntensityFilter.Mode mode) {
+        stashIntensityThreshold();
+        shownIntensityMode = mode;
+        intensitySpinner.setModel(mode == IntensityFilter.Mode.ABSOLUTE
+                ? new SpinnerNumberModel(intensityMinAbsolute, 0d, Double.POSITIVE_INFINITY, 1000d)
+                : new SpinnerNumberModel(intensityMinPercent, 0d, 100d, 1d));
+    }
+
+    /** Remembers the spinner value as the threshold of the mode it currently shows. */
+    private void stashIntensityThreshold() {
+        if (shownIntensityMode == null)
+            return;
+        double value = getDoubleValue(intensitySpinner);
+        if (shownIntensityMode == IntensityFilter.Mode.ABSOLUTE)
+            intensityMinAbsolute = value;
+        else
+            intensityMinPercent = value;
+    }
+
+    /** Puts the intensity widgets back to "no intensity filter" with the default thresholds. */
+    private void resetIntensityWidgets() {
+        intensityMeasure.setSelected(IntensityFilter.Measure.APEX);
+        intensityUnit.setSelected(IntensityFilter.Mode.ABSOLUTE); // its change listener re-shows the absolute threshold
+        intensityMinAbsolute = IntensityFilter.DEFAULT_MIN_ABSOLUTE;
+        intensityMinPercent = IntensityFilter.DEFAULT_MIN_PERCENT;
+        intensitySpinner.setValue(IntensityFilter.DEFAULT_MIN_ABSOLUTE);
     }
 
     private void saveChanges() {
@@ -594,6 +672,12 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
         filterModel.getSampleBlankFoldChange().setEnabled(blankFilter.isSelected());
         filterModel.getSampleBlankFoldChange().setCurrentMinFoldChange((Double) blankSpinner.getValue());
+
+        stashIntensityThreshold();
+        filterModel.getIntensityFilter().setMeasure(intensityMeasure.getSelected());
+        filterModel.getIntensityFilter().setMode(selectedIntensityMode());
+        filterModel.getIntensityFilter().setMinAbsolute(intensityMinAbsolute);
+        filterModel.getIntensityFilter().setMinPercent(intensityMinPercent);
     }
 
     /**
@@ -715,10 +799,12 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         // any added later, which suppressing around a particular one would not.
         Runnable coalescedRefresh = this::requestChipRefresh;
         for (JSpinner s : new JSpinner[]{minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner,
-                minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, blankSpinner})
+                minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, blankSpinner, intensitySpinner})
             s.addChangeListener(e -> refresh.run());
         for (JCheckBox c : new JCheckBox[]{hasMs1, hasMsMs, blankFilter})
             c.addActionListener(e -> refresh.run());
+        intensityUnit.onChange(refresh);
+        intensityMeasure.onChange(refresh);
         lipidFilter.onChange(refresh);
         pfasFilter.onChange(refresh);
         adductOptions.checkBoxList.addCheckBoxListener(e -> refresh.run());
@@ -860,6 +946,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             hasMsMs.setSelected(true); // default: require MS/MS
 
             blankFilter.setSelected(false);
+            resetIntensityWidgets();
 
             queryEditor.setInverted(false);
         } finally {
@@ -911,6 +998,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 blankFilter.setSelected(false);
                 blankSpinner.setValue(filterModel.getSampleBlankFoldChange().getMinFoldChange());
             }
+            case "intensity" -> resetIntensityWidgets();
             case "lipid" -> lipidFilter.setFilterState(null);
             case "pfas" -> pfasFilter.setFilterState(null);
             case "db" -> {

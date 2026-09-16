@@ -45,6 +45,42 @@
     "possibleValues" : null,
     "description" : "Mass-to-charge ratio (m/z) of the precursor ion of the feature."
   }, {
+    "name" : "intensityApex",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : "MS1 intensity of the feature as peak height, in raw instrument counts: the highest apex intensity over all runs the feature was detected in (as in the quantification table), or the height of the precursor peak in its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists). NULL if unknown. A search bound followed by % is relative to the run: intensityApex:[10% TO *] keeps the features that reach 10 % of the most intense feature in at least one of their runs. Data imported without runs (peak lists) is related to the most intense feature of the same source file instead."
+  }, {
+    "name" : "intensityAUC",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : "MS1 intensity of the feature as area under the chromatographic peak, in raw instrument counts: the highest area over all runs the feature was detected in. NULL for data without an LC-MS trace. A search bound followed by % is relative to the run, see intensityApex."
+  }, {
+    "name" : "intensityApexRelative",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : "Apex intensity in percent of the most intense feature of the same run, the highest such value over the runs the feature was detected in. This is what a % bound on intensityApex is matched against. Kept for the search index only and hidden from the API."
+  }, {
+    "name" : "intensityAUCRelative",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 1,
+    "possibleValues" : null,
+    "description" : "Area under curve in percent of the most intense feature of the same run, see intensityApexRelative. Kept for the search index only and hidden from the API."
+  }, {
     "name" : "charge",
     "fieldType" : "INTEGER",
     "fullTextSearch" : false,
