@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.middleware.model.features.FeatureIntensities.RunMaxi
 import de.unijena.bioinf.ms.persistence.model.core.DataSource;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -127,6 +128,24 @@ public class FeatureIntensitiesTest {
         AlignedFeatures emptyList = aligned(5_000_000d);
         emptyList.setFeatures(List.of());
         assertEquals(5_000_000d, FeatureIntensities.of(emptyList, maxima()).apex());
+    }
+
+    @Test
+    public void testNoRunFeaturesButAMergedTraceIsUnknown() {
+        // An LC-MS feature keeps no run feature when every run's segment was too narrow to pick one (12 of 14312
+        // aligned features in a real tomato project). Its own apexIntensity is then the merged trace's apex -
+        // normalized per run and summed over runs, so a dimensionless value near 1 rather than an intensity.
+        AlignedFeatures feature = AlignedFeatures.builder()
+                .apexIntensity(0.204)
+                .traceRef(new TraceRef(42L, 0, 1, 2, 3))
+                .build();
+        assertEquals(Intensities.UNKNOWN, FeatureIntensities.of(feature, maxima()),
+                "the merged value must not be reported as the feature's intensity");
+
+        AlignedFeatures emptyList = aligned(0.204);
+        emptyList.setTraceRef(new TraceRef(42L, 0, 1, 2, 3));
+        emptyList.setFeatures(List.of());
+        assertEquals(Intensities.UNKNOWN, FeatureIntensities.of(emptyList, maxima()));
     }
 
     @Test

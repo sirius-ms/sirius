@@ -138,9 +138,11 @@ public final class FeatureIntensities {
     /**
      * The intensities of {@code feature}: the maxima over its run features, raw and relative to each group's
      * maximum. Run features without a value are skipped; if run features exist but none has a value, the
-     * intensity is unknown (never the normalized merged value). Only a feature with no run features at all
-     * (imported over the API) reports its own apex value, which is then the MS1 precursor peak intensity
-     * written at import, and no relative value, since there is no group to relate it to.
+     * intensity is unknown (never the normalized merged value). An aligned feature with no run features at all
+     * reports its own apex value only when it has no merged trace either - it is then the MS1 precursor peak
+     * intensity written at import - and no relative value, since there is no group to relate it to. One that
+     * does have a merged trace reports nothing: every run's segment was too narrow to keep a run feature, and
+     * the aligned feature's own value is the merged one.
      *
      * @param feature an aligned feature whose run features have been fetched, if it has any
      * @param maxima  the group maxima of the project the feature belongs to
@@ -148,7 +150,12 @@ public final class FeatureIntensities {
     public static Intensities of(@NotNull AlignedFeatures feature, @NotNull RunMaxima maxima) {
         List<Feature> runFeatures = feature.getFeatures().orElse(null);
         if (runFeatures == null || runFeatures.isEmpty())
-            return new Intensities(feature.getApexIntensity(), null, null, null);
+            // With a merged trace the ALIGNED feature's own apexIntensity is that trace's apex - normalized per
+            // run and summed over runs - which is not comparable with the raw run values this returns. Without
+            // one it is the precursor peak height written at import, which is.
+            return feature.getTraceReference().isPresent()
+                    ? Intensities.UNKNOWN
+                    : new Intensities(feature.getApexIntensity(), null, null, null);
 
         Double apex = null, auc = null, apexRelative = null, aucRelative = null;
         for (Feature runFeature : runFeatures) {
