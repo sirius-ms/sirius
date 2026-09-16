@@ -116,20 +116,24 @@ public class AlignedFeature implements Taggable {
     protected Double ionMass;
 
     /**
-     * MS1 intensity of the feature as peak height, in raw instrument counts: the highest apex intensity over all
-     * runs the feature was detected in (as in the quantification table), or the height of the precursor peak in
-     * its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists). NULL if unknown.
+     * MS1 intensity of the feature as peak height, in the intensity unit of the input data: the highest apex
+     * intensity over all runs the feature was detected in (as in the quantification table), or the height of the
+     * precursor peak in its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists).
+     * NULL if unknown.
      * A search bound followed by {@code %} is relative to the run: {@code intensityApex:[10% TO *]} keeps the
      * features that reach 10 % of the most intense feature in at least one of their runs. Data imported without
-     * runs (peak lists) is related to the most intense feature of the same source file instead.
+     * runs (peak lists) is related to the most intense feature of the same source file instead. Features
+     * imported directly through the API (feature or compound import) have no source file and therefore no
+     * relative value.
      */
     @IndexField(sortable = true)
     @Schema(nullable = true)
     protected Double intensityApex;
 
     /**
-     * MS1 intensity of the feature as area under the chromatographic peak, in raw instrument counts: the highest
-     * area over all runs the feature was detected in. NULL for data without an LC-MS trace.
+     * MS1 intensity of the feature as area under the chromatographic peak, the trace intensity integrated over
+     * the retention time: the highest area over all runs the feature was detected in. NULL for data without an
+     * LC-MS trace.
      * A search bound followed by {@code %} is relative to the run, see {@code intensityApex}.
      */
     @IndexField(sortable = true)
@@ -137,8 +141,9 @@ public class AlignedFeature implements Taggable {
     protected Double intensityAUC;
 
     /**
-     * Apex intensity in percent of the most intense feature of the same run, the highest such value over the runs
-     * the feature was detected in. This is what a {@code %} bound on {@code intensityApex} is matched against.
+     * Apex intensity in percent of the most intense feature of the same run (or source file for data imported
+     * without runs), the highest such value over the runs the feature was detected in. This is what a
+     * {@code %} bound on {@code intensityApex} is matched against.
      * Kept for the search index only and hidden from the API.
      */
     @IndexField(sortable = true)
@@ -147,7 +152,8 @@ public class AlignedFeature implements Taggable {
     protected Double intensityApexRelative;
 
     /**
-     * Area under curve in percent of the most intense feature of the same run, see {@code intensityApexRelative}.
+     * Area under curve in percent of the most intense feature of the same run (or source file for data imported
+     * without runs), see {@code intensityApexRelative}.
      * Kept for the search index only and hidden from the API.
      */
     @IndexField(sortable = true)

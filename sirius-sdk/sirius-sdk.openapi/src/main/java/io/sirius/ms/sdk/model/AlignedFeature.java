@@ -297,7 +297,7 @@ public class AlignedFeature {
   }
 
   /**
-   * MS1 intensity of the feature as peak height, in raw instrument counts: the highest apex intensity over all  runs the feature was detected in (as in the quantification table), or the height of the precursor peak in  its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists). NULL if unknown.  A search bound followed by &lt;code&gt;%&lt;/code&gt; is relative to the run: &lt;code&gt;intensityApex:[10% TO *]&lt;/code&gt; keeps the  features that reach 10 % of the most intense feature in at least one of their runs. Data imported without  runs (peak lists) is related to the most intense feature of the same source file instead.
+   * MS1 intensity of the feature as peak height, in the intensity unit of the input data: the highest apex  intensity over all runs the feature was detected in (as in the quantification table), or the height of the  precursor peak in its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists).  NULL if unknown.  A search bound followed by &lt;code&gt;%&lt;/code&gt; is relative to the run: &lt;code&gt;intensityApex:[10% TO *]&lt;/code&gt; keeps the  features that reach 10 % of the most intense feature in at least one of their runs. Data imported without  runs (peak lists) is related to the most intense feature of the same source file instead. Features  imported directly through the API (feature or compound import) have no source file and therefore no  relative value.
    * @return intensityApex
    */
   @jakarta.annotation.Nullable
@@ -322,7 +322,7 @@ public class AlignedFeature {
   }
 
   /**
-   * MS1 intensity of the feature as area under the chromatographic peak, in raw instrument counts: the highest  area over all runs the feature was detected in. NULL for data without an LC-MS trace.  A search bound followed by &lt;code&gt;%&lt;/code&gt; is relative to the run, see &lt;code&gt;intensityApex&lt;/code&gt;.
+   * MS1 intensity of the feature as area under the chromatographic peak, the trace intensity integrated over  the retention time: the highest area over all runs the feature was detected in. NULL for data without an  LC-MS trace.  A search bound followed by &lt;code&gt;%&lt;/code&gt; is relative to the run, see &lt;code&gt;intensityApex&lt;/code&gt;.
    * @return intensityAUC
    */
   @jakarta.annotation.Nullable

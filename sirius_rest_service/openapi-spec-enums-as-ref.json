@@ -14941,13 +14941,13 @@
           },
           "intensityApex": {
             "type": "number",
-            "description": "MS1 intensity of the feature as peak height, in raw instrument counts: the highest apex intensity over all\n runs the feature was detected in (as in the quantification table), or the height of the precursor peak in\n its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists). NULL if unknown.\n A search bound followed by \u003ccode\u003e%\u003c/code\u003e is relative to the run: \u003ccode\u003eintensityApex:[10% TO *]\u003c/code\u003e keeps the\n features that reach 10 % of the most intense feature in at least one of their runs. Data imported without\n runs (peak lists) is related to the most intense feature of the same source file instead.",
+            "description": "MS1 intensity of the feature as peak height, in the intensity unit of the input data: the highest apex\n intensity over all runs the feature was detected in (as in the quantification table), or the height of the\n precursor peak in its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists).\n NULL if unknown.\n A search bound followed by \u003ccode\u003e%\u003c/code\u003e is relative to the run: \u003ccode\u003eintensityApex:[10% TO *]\u003c/code\u003e keeps the\n features that reach 10 % of the most intense feature in at least one of their runs. Data imported without\n runs (peak lists) is related to the most intense feature of the same source file instead. Features\n imported directly through the API (feature or compound import) have no source file and therefore no\n relative value.",
             "format": "double",
             "nullable": true
           },
           "intensityAUC": {
             "type": "number",
-            "description": "MS1 intensity of the feature as area under the chromatographic peak, in raw instrument counts: the highest\n area over all runs the feature was detected in. NULL for data without an LC-MS trace.\n A search bound followed by \u003ccode\u003e%\u003c/code\u003e is relative to the run, see \u003ccode\u003eintensityApex\u003c/code\u003e.",
+            "description": "MS1 intensity of the feature as area under the chromatographic peak, the trace intensity integrated over\n the retention time: the highest area over all runs the feature was detected in. NULL for data without an\n LC-MS trace.\n A search bound followed by \u003ccode\u003e%\u003c/code\u003e is relative to the run, see \u003ccode\u003eintensityApex\u003c/code\u003e.",
             "format": "double",
             "nullable": true
           },
