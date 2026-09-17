@@ -92,6 +92,24 @@ public class RunMaximumRefreshTest {
         return af.getAlignedFeatureId();
     }
 
+    /** The same, but belonging to a compound - the unit the compound delete removes. */
+    @SneakyThrows
+    private long addFeatureOfCompound(String name, double apexIntensity, long compoundId) {
+        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name(name).compoundId(compoundId).build();
+        ps.getStorage().insert(af);
+        ps.getStorage().insert(Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
+                .apexIntensity(apexIntensity).areaUnderCurve(apexIntensity).runId(runId).build());
+        return af.getAlignedFeatureId();
+    }
+
+    @SneakyThrows
+    private long addCompound(String name) {
+        de.unijena.bioinf.ms.persistence.model.core.Compound compound =
+                de.unijena.bioinf.ms.persistence.model.core.Compound.builder().name(name).build();
+        ps.getStorage().insert(compound);
+        return compound.getCompoundId();
+    }
+
     /** A peak-list feature: no run, and the source file of its aligned feature is what groups it. */
     @SneakyThrows
     private long addPeakListFeature(String name, String file, double apexIntensity) {
@@ -228,6 +246,43 @@ public class RunMaximumRefreshTest {
         assertEquals(List.of("middle", "strong"), namesMatching(second, "intensityApex:[50% TO *]"),
                 "the run maximum is untouched, so the remaining percentages are too");
         assertEquals(List.of("middle"), namesMatching(second, "intensityApex:{20% TO 99%}"));
+    }
+
+    /**
+     * The other two ways features are deleted reach the same place, and each has to announce what it is about
+     * to remove: deleting several at once, and deleting the compound they belong to.
+     */
+    @Test
+    @SneakyThrows
+    public void testDeletingSeveralFeaturesAtOnceRewritesTheRun() {
+        NoSQLProjectImpl first = session();
+        long strong = addFeature("strong", 1000d);
+        long alsoStrong = addFeature("alsoStrong", 900d);
+        long weak = addFeature("weak", 100d);
+        first.addToSearchIndex(List.of(String.valueOf(strong), String.valueOf(alsoStrong), String.valueOf(weak)), null);
+
+        NoSQLProjectImpl second = session();
+        second.deleteAlignedFeaturesByIds(List.of(String.valueOf(strong), String.valueOf(alsoStrong)));
+
+        assertEquals(List.of("weak"), namesMatching(second, "intensityApex:[50% TO *]"),
+                "'weak' is the run maximum now that both stronger features are gone");
+    }
+
+    @Test
+    @SneakyThrows
+    public void testDeletingTheCompoundOfTheStrongestFeatureRewritesTheRun() {
+        NoSQLProjectImpl first = session();
+        long compound = addCompound("the strong one");
+        long strong = addFeatureOfCompound("strong", 1000d, compound);
+        long weak = addFeature("weak", 100d);
+        first.addToSearchIndex(List.of(String.valueOf(strong), String.valueOf(weak)), null);
+        assertEquals(List.of("strong"), namesMatching(first, "intensityApex:[50% TO *]"));
+
+        NoSQLProjectImpl second = session();
+        second.deleteCompoundById(String.valueOf(compound));
+
+        assertEquals(List.of("weak"), namesMatching(second, "intensityApex:[50% TO *]"),
+                "the compound took the run maximum with it");
     }
 
     /** Nothing moved: a weaker feature leaves the maximum, and the other features' percentages, alone. */
