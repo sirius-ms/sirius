@@ -149,6 +149,44 @@ public class FeatureIntensitiesTest {
     }
 
     @Test
+    public void testFoldingLeavesTheMaximaItStartedFromAlone() {
+        RunMaxima before = maxima();
+        RunMaxima after = before.toBuilder().add(FeatureIntensities.runGroup(RUN_A), runFeature(RUN_A, 9_000_000d, 0d)).build();
+
+        assertEquals(Set.of(FeatureIntensities.runGroup(RUN_A)), after.changedGroups(before),
+                "only the run the feature was added to");
+        // the state before the write has to survive the fold, or there is nothing left to compare against
+        AlignedFeatures atOldMaximum = aligned(null, runFeature(RUN_A, 1_000_000d, 10_000_000d));
+        assertEquals(100d, FeatureIntensities.of(atOldMaximum, before).apexRelative(), 1e-9);
+        assertEquals(1_000_000d / 9_000_000d * 100d, FeatureIntensities.of(atOldMaximum, after).apexRelative(), 1e-9);
+    }
+
+    @Test
+    public void testAGroupIsHeldOnlyByAValueThatIsItsMaximum() {
+        RunMaxima maxima = maxima(); // A 1,000,000 / B 2,000,000 / C 500,000, areas ten times that
+        String a = FeatureIntensities.runGroup(RUN_A), b = FeatureIntensities.runGroup(RUN_B);
+
+        assertEquals(Set.of(a), maxima.groupsWhoseMaximumIsHeldBy(
+                        maximaOf(aligned(null, runFeature(RUN_A, 1_000_000d, 0d)))),
+                "exactly the run maximum, in peak height");
+        assertEquals(Set.of(a), maxima.groupsWhoseMaximumIsHeldBy(
+                        maximaOf(aligned(null, runFeature(RUN_A, 0d, 10_000_000d)))),
+                "exactly the run maximum, in area - either measure is enough");
+        assertEquals(Set.of(), maxima.groupsWhoseMaximumIsHeldBy(
+                        maximaOf(aligned(null, runFeature(RUN_A, 999_999d, 9_999_999d)))),
+                "just below it: deleting this cannot lower the maximum");
+        assertEquals(Set.of(a, b), maxima.groupsWhoseMaximumIsHeldBy(maximaOf(
+                        aligned(null, runFeature(RUN_A, 1_000_000d, 0d)),
+                        aligned(null, runFeature(RUN_B, 2_000_000d, 0d)))),
+                "one group per feature that holds one");
+        assertEquals(Set.of(), maxima.groupsWhoseMaximumIsHeldBy(RunMaxima.empty()),
+                "a deletion that takes no run feature with it holds nothing");
+        assertEquals(Set.of(), maxima.groupsWhoseMaximumIsHeldBy(
+                        maximaOf(aligned(null, runFeature(99L, 1_000_000d, 10_000_000d)))),
+                "a run these maxima never saw");
+    }
+
+    @Test
     public void testPeakListFeaturesAreGroupedByTheirSourceFile() {
         // two files, each one measurement: the brightest feature of each file is that file's 100 %
         AlignedFeatures lau = fromPeakList("laudanosine.mgf", 135_545_632d);

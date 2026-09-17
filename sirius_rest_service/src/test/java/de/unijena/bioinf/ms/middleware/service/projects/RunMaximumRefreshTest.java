@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.NoSqlProjectSearchContextProvider;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
+import de.unijena.bioinf.ms.persistence.model.core.DataSource;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
@@ -91,6 +92,17 @@ public class RunMaximumRefreshTest {
         return af.getAlignedFeatureId();
     }
 
+    /** A peak-list feature: no run, and the source file of its aligned feature is what groups it. */
+    @SneakyThrows
+    private long addPeakListFeature(String name, String file, double apexIntensity) {
+        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name(name)
+                .dataSource(DataSource.fromPath(file)).build();
+        ps.getStorage().insert(af);
+        ps.getStorage().insert(Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
+                .apexIntensity(apexIntensity).areaUnderCurve(apexIntensity).build());
+        return af.getAlignedFeatureId();
+    }
+
     private List<String> namesMatching(NoSQLProjectImpl project, String query) {
         return project.findAlignedFeatures(query, Pageable.unpaged(), false,
                         EnumSet.noneOf(AlignedFeature.OptField.class))
@@ -119,6 +131,63 @@ public class RunMaximumRefreshTest {
         assertEquals(List.of("strong"), namesMatching(second, "intensityApex:[50% TO *]"),
                 "'weak' is now 10 % of the run maximum and must have been rewritten");
         assertEquals(List.of("strong", "weak"), namesMatching(second, "intensityApex:[5% TO *]"));
+    }
+
+    /**
+     * The second write of a session does not derive the maxima again - it folds what it wrote into the ones it
+     * already has. That is the path an import takes from its second call onwards, and the one that has to keep
+     * naming the runs whose maximum moved.
+     */
+    @Test
+    @SneakyThrows
+    public void testASecondWriteInTheSameSessionStillRewritesTheRun() {
+        NoSQLProjectImpl session = session();
+        long weak = addFeature("weak", 100d);
+        session.addToSearchIndex(List.of(String.valueOf(weak)), null); // derives the maxima
+        assertEquals(List.of("weak"), namesMatching(session, "intensityApex:[50% TO *]"));
+
+        long strong = addFeature("strong", 1000d);
+        session.addToSearchIndex(List.of(String.valueOf(strong)), null); // folds into them
+
+        assertEquals(List.of("strong"), namesMatching(session, "intensityApex:[50% TO *]"),
+                "'weak' is 10 % of the new maximum and must have been rewritten");
+        assertEquals(List.of("strong", "weak"), namesMatching(session, "intensityApex:[5% TO *]"));
+    }
+
+    /** Folding must not move a maximum that the write did not raise. */
+    @Test
+    @SneakyThrows
+    public void testASecondWriteBelowTheMaximumChangesNothing() {
+        NoSQLProjectImpl session = session();
+        long strong = addFeature("strong", 1000d);
+        session.addToSearchIndex(List.of(String.valueOf(strong)), null);
+
+        long weak = addFeature("weak", 100d);
+        session.addToSearchIndex(List.of(String.valueOf(weak)), null);
+
+        assertEquals(List.of("strong"), namesMatching(session, "intensityApex:[50% TO *]"));
+        assertEquals(List.of("strong", "weak"), namesMatching(session, "intensityApex:[10% TO *]"));
+    }
+
+    /**
+     * Peak-list features belong to no run and are grouped by the file they came from, which only their aligned
+     * feature knows - so reading just the features of a write has to look their owner up as well.
+     */
+    @Test
+    @SneakyThrows
+    public void testFoldingGroupsFeaturesWithoutARunByTheirSourceFile() {
+        NoSQLProjectImpl session = session();
+        long weak = addPeakListFeature("weak", "one.mgf", 100d);
+        long other = addPeakListFeature("other", "two.mgf", 50d);
+        session.addToSearchIndex(List.of(String.valueOf(weak), String.valueOf(other)), null);
+        assertEquals(List.of("other", "weak"), namesMatching(session, "intensityApex:[99% TO *]"),
+                "each is the strongest feature of its own file");
+
+        long strong = addPeakListFeature("strong", "one.mgf", 1000d);
+        session.addToSearchIndex(List.of(String.valueOf(strong)), null);
+
+        assertEquals(List.of("other", "strong"), namesMatching(session, "intensityApex:[99% TO *]"),
+                "'weak' is now 10 % of its file's maximum, 'other' is untouched in its own file");
     }
 
     /**
