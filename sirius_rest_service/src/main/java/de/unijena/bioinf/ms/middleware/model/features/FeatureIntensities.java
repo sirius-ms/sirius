@@ -115,6 +115,33 @@ public final class FeatureIntensities {
             return changed;
         }
 
+        /**
+         * A builder holding these maxima, to fold further run features into them. Writing features can only
+         * raise a maximum, so the state after a write is the state before it plus what the write added - which
+         * is a handful of indexed lookups where deriving the maxima again is a read of every run feature there
+         * is.
+         */
+        public Builder toBuilder() {
+            Builder builder = new Builder();
+            maxima.forEach((group, max) -> builder.maxima.put(group, max.clone()));
+            return builder;
+        }
+
+        /**
+         * The groups whose maximum {@code removed} holds, in either measure - the only groups where deleting
+         * exactly those run features can lower it. Everywhere else the maximum is held by something that stays,
+         * so the relative intensities of that group are still what the index says.
+         */
+        public Set<String> groupsWhoseMaximumIsHeldBy(@NotNull RunMaxima removed) {
+            Set<String> held = new HashSet<>();
+            for (String group : removed.maxima.keySet()) {
+                if ((removed.apexMaximum(group) > 0 && removed.apexMaximum(group) == apexMaximum(group))
+                        || (removed.aucMaximum(group) > 0 && removed.aucMaximum(group) == aucMaximum(group)))
+                    held.add(group);
+            }
+            return held;
+        }
+
         public static final class Builder {
             private final Map<String, double[]> maxima = new HashMap<>();
 
