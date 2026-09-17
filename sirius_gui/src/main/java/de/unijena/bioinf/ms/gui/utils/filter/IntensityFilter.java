@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.utils.filter;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The minimum MS1 intensity a feature must reach, measured either as peak height (apex) or as area under the
@@ -35,9 +36,9 @@ public class IntensityFilter {
     /** Which intensity of the feature the threshold applies to. */
     public enum Measure {
         /** peak height at the apex of the chromatographic peak */
-        APEX("intensityApex", "apex"),
+        APEX("intensityApex", "peak height"),
         /** area under the chromatographic peak */
-        AUC("intensityAUC", "area");
+        AUC("intensityAUC", "peak area");
 
         /** the search index field holding this measure */
         private final String field;
@@ -62,7 +63,7 @@ public class IntensityFilter {
         /** the threshold is an intensity in raw counts */
         ABSOLUTE("absolute"),
         /** the threshold is a percentage of the most intense feature of the same run */
-        RELATIVE_TO_RUN_MAX("relative");
+        RELATIVE_TO_RUN_MAX("% of run max");
 
         private final String label;
 
@@ -74,6 +75,29 @@ public class IntensityFilter {
         public String toString() {
             return label;
         }
+    }
+
+    /**
+     * The sign that says a typed threshold is a percentage rather than an intensity. Reading it lets "10 %" be
+     * typed instead of picking {@link Mode#RELATIVE_TO_RUN_MAX} - a shortcut and never the only way there, since
+     * the unit is a choice of its own. It is consumed in the reading: the unit belongs to that choice, and a
+     * field that also carried it would state it twice.
+     */
+    public static final char PERCENT_SIGN = '%';
+
+    /** Whether {@code text} ends in a percent sign, i.e. names a percentage of the run maximum. */
+    public static boolean isPercentTyped(@Nullable String text) {
+        return text != null && text.strip().endsWith(String.valueOf(PERCENT_SIGN));
+    }
+
+    /** {@code text} without a trailing percent sign, so the rest can be read as a plain number. */
+    public static String stripPercent(@Nullable String text) {
+        if (text == null)
+            return "";
+        String stripped = text.strip();
+        if (stripped.endsWith(String.valueOf(PERCENT_SIGN)))
+            stripped = stripped.substring(0, stripped.length() - 1).strip();
+        return stripped;
     }
 
     public static final double DEFAULT_MIN_ABSOLUTE = 0d;
