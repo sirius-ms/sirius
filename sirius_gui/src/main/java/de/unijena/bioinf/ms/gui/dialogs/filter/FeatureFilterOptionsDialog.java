@@ -51,6 +51,11 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 
 import javax.swing.*;
+import java.text.ParseException;
+import java.text.ParsePosition;
+import java.text.NumberFormat;
+import javax.swing.text.NumberFormatter;
+import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -89,8 +94,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
     final JSpinner intensitySpinner;
     // the unit of the minimum (absolute counts or percent of the run maximum) and the measure it applies to
-    final SegmentedChoice<IntensityFilter.Mode> intensityUnit;
-    final SegmentedChoice<IntensityFilter.Measure> intensityMeasure;
+    final JComboBox<IntensityFilter.Mode> intensityUnit;
+    final JComboBox<IntensityFilter.Measure> intensityMeasure;
     // The intensity spinner shows the threshold of one mode at a time; the other mode's value is kept here so
     // switching the mode back and forth loses neither.
     private double intensityMinAbsolute, intensityMinPercent;
@@ -174,7 +179,13 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             centerTab.addTab("Input", inputParameters);
 
             inputParameters.add(Box.createVerticalStrut(3));
-            inputParameters.add(new JXTitledSeparator("Thresholds"));
+            // The thresholds sit centred between their own heading and the adducts: the section's rows defend
+            // their height and a glue above and below them takes equal shares of whatever the tab has to spare.
+            // Left to themselves the separator and the row block would absorb it, which puts all of it above.
+            JXTitledSeparator thresholdsSeparator = new JXTitledSeparator("Thresholds");
+            thresholdsSeparator.setMaximumSize(new Dimension(Integer.MAX_VALUE, thresholdsSeparator.getPreferredSize().height));
+            inputParameters.add(thresholdsSeparator);
+            inputParameters.add(Box.createVerticalGlue());
 
             {
                 TwoColumnPanel min = new TwoColumnPanel();
@@ -203,28 +214,71 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 ensureCompatibleBounds(minRtSpinner, maxRtSpinner);
 
                 // MS1 intensity: a minimum only, absolute or in percent of the run maximum, of either the peak
-                // height (apex) or the area under the peak - the measure is picked on the right
+                // height (apex) or the area under the peak
                 IntensityFilter filter = filterModel.getIntensityFilter();
                 intensityMinAbsolute = filter.getMinAbsolute();
                 intensityMinPercent = filter.getMinPercent();
                 intensitySpinner = makeSpinner(0, 0, Double.POSITIVE_INFINITY, 1000);
                 intensitySpinner.setToolTipText(GuiUtils.formatToolTip(INTENSITY_FILTER_TOOLTIP));
-                min.addNamed("Min intensity", intensitySpinner);
+                intensitySpinner.setMaximumSize(intensitySpinner.getPreferredSize()); // do not eat the row
 
-                // the unit of the minimum and the measure it applies to, as segmented switches in the right-hand
-                // column - the same control the lipid and PFAS filters use
-                intensityUnit = new SegmentedChoice<>(List.of(IntensityFilter.Mode.values()), Object::toString, () -> INTENSITY_MODE_TOOLTIP);
-                intensityUnit.setSelected(filter.getMode());
+                // What the threshold means, as plain drop-downs rather than the segmented switches the lipid and
+                // PFAS filters use: a filled capsule means "this filter is on" in this dialog, and neither of
+                // these is a filter state - they only say how to read the number next to them. A drop-down also
+                // has room to spell the unit out, which is how the percentage becomes findable at all.
+                intensityUnit = new JComboBox<>(IntensityFilter.Mode.values());
+                intensityUnit.setSelectedItem(filter.getMode());
+                intensityUnit.setToolTipText(GuiUtils.formatToolTip(INTENSITY_MODE_TOOLTIP));
                 showIntensityThresholdFor(filter.getMode());
-                intensityUnit.onChange(() -> showIntensityThresholdFor(intensityUnit.getSelected()));
-                max.addNamed("Intensity unit", hugging(intensityUnit));
+                intensityUnit.addActionListener(e -> showIntensityThresholdFor(selectedIntensityMode()));
 
-                intensityMeasure = new SegmentedChoice<>(List.of(IntensityFilter.Measure.values()), Object::toString, () -> INTENSITY_MEASURE_TOOLTIP);
-                intensityMeasure.setSelected(filter.getMeasure());
-                SegmentedChoice.alignSegmentWidths(intensityUnit, intensityMeasure); // one width, so the splits line up
-                max.addNamed("Intensity measure", hugging(intensityMeasure));
+                intensityMeasure = new JComboBox<>(IntensityFilter.Measure.values());
+                intensityMeasure.setSelectedItem(filter.getMeasure());
+                intensityMeasure.setToolTipText(GuiUtils.formatToolTip(INTENSITY_MEASURE_TOOLTIP));
 
+                for (JComboBox<?> choice : List.of(intensityUnit, intensityMeasure))
+                    choice.setMaximumSize(choice.getPreferredSize()); // keep their own width, see the row below
+
+                // A panel in a horizontal box is stretched past its preferred width, and the right-hand column
+                // grows with it - which made the m/z and RT fields 27px wider than the intensity field below
+                // them, since that one is not in a column that can stretch. Held to their preferred width, all
+                // three thresholds are the same width and end on the same edge, whatever the dialog's size.
+                min.setMaximumSize(min.getPreferredSize());
+                max.setMaximumSize(max.getPreferredSize());
+                box.setMaximumSize(new Dimension(Integer.MAX_VALUE, box.getPreferredSize().height));
                 inputParameters.add(box);
+
+                // The intensity threshold spans the whole width rather than joining the two columns above: the
+                // switches say what the number means and belong right after it, and a row that wide inside the
+                // left column would set that column's width and push the maxima off the dialog. Its label is
+                // built to look like one of theirs - right aligned, as wide as the widest of them, same insets -
+                // so the three thresholds still read as one list.
+                JLabel intensityLabel = new JLabel("Min intensity", SwingConstants.RIGHT);
+                intensityLabel.setPreferredSize(new JLabel("Min RT (in sec)").getPreferredSize());
+                intensityLabel.setMaximumSize(intensityLabel.getPreferredSize());
+                intensityLabel.setToolTipText(GuiUtils.formatToolTip(INTENSITY_FILTER_TOOLTIP));
+
+                Box intensityRow = Box.createHorizontalBox();
+                intensityRow.setBorder(BorderFactory.createEmptyBorder(0, 20, 5, 5)); // as TwoColumnPanel insets
+                intensityRow.add(intensityLabel);
+                intensityRow.add(Box.createHorizontalStrut(5)); // the gap TwoColumnPanel leaves after a label
+                intensityRow.add(intensitySpinner);
+                // Reads as a sentence: the threshold, the unit it is written in, and what it measures. The unit
+                // comes first because it belongs to the number and the field no longer carries it - a typed
+                // percent sign is consumed and shows up here instead.
+                // The gaps grow rather than the controls, and they grow together, so the row ends on the same
+                // edge as the max m/z and max RT fields above it with the spacing staying even.
+                intensityRow.add(growingGap());
+                intensityRow.add(new JLabel("in"));
+                intensityRow.add(growingGap());
+                intensityRow.add(intensityUnit);
+                intensityRow.add(growingGap());
+                intensityRow.add(new JLabel("as"));
+                intensityRow.add(growingGap());
+                intensityRow.add(intensityMeasure);
+                intensityRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, intensityRow.getPreferredSize().height));
+                inputParameters.add(intensityRow);
+                inputParameters.add(Box.createVerticalGlue()); // the other half of the section's spare height
             }
 
             // Adduct filter
@@ -264,6 +318,12 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 });
                 adductOptions.buttons.add(singleAdducts);
 
+                // Held to its own height, like the threshold rows above it. A JPanel's maximum height is
+                // unbounded, so left alone this panel takes almost everything the tab has to spare - measured
+                // on a 700px tab: 586px for a panel that wants 137 - and inside it the button strip takes the
+                // surplus, which is the empty band under "all/none/single". With both sections holding their
+                // height, the spare height goes to the glues that are there to hold it.
+                adductOptions.setMaximumSize(new Dimension(Integer.MAX_VALUE, adductOptions.getPreferredSize().height));
                 inputParameters.add(adductOptions);
             }
             inputParameters.add(Box.createVerticalGlue());
@@ -591,7 +651,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                     + "under the peak. Data imported without an LC-MS trace (peak lists) only has a peak height.";
 
     private IntensityFilter.Mode selectedIntensityMode() {
-        return intensityUnit.getSelected();
+        return (IntensityFilter.Mode) intensityUnit.getSelectedItem();
     }
 
     /** Shows the threshold of {@code mode} in the intensity spinner, keeping the other mode's value for a switch back. */
@@ -600,7 +660,78 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         shownIntensityMode = mode;
         intensitySpinner.setModel(mode == IntensityFilter.Mode.ABSOLUTE
                 ? new SpinnerNumberModel(intensityMinAbsolute, 0d, Double.POSITIVE_INFINITY, 1000d)
-                : new SpinnerNumberModel(intensityMinPercent, 0d, 100d, 1d));
+                : new SpinnerNumberModel(Math.min(intensityMinPercent, 100d), 0d, 100d, 1d));
+        installIntensityUnitFormatter(); // a new model brings a new editor, and with it a new formatter
+    }
+
+    /**
+     * Lets a percent sign typed into the threshold field set the unit, as an alternative to picking it from the
+     * drop-down next to it. The sign is consumed doing so - the field goes on showing a bare number like every
+     * other threshold in this dialog, and the drop-down moving is what says the sign was understood.
+     * <p>
+     * Wraps the editor's own formatter rather than replacing it, so the number keeps being read and written
+     * exactly as every other spinner here reads and writes one.
+     */
+    private void installIntensityUnitFormatter() {
+        JFormattedTextField field = ((JSpinner.DefaultEditor) intensitySpinner.getEditor()).getTextField();
+        JFormattedTextField.AbstractFormatter delegate = field.getFormatter();
+        if (delegate == null)
+            return;
+        field.setFormatterFactory(new DefaultFormatterFactory(new JFormattedTextField.AbstractFormatter() {
+            @Override
+            public String valueToString(Object value) throws ParseException {
+                return delegate.valueToString(value); // a bare number, whatever the unit - see above
+            }
+
+            @Override
+            public Object stringToValue(String text) throws ParseException {
+                IntensityFilter.Mode typedMode = IntensityFilter.isPercentTyped(text)
+                        ? IntensityFilter.Mode.RELATIVE_TO_RUN_MAX
+                        : IntensityFilter.Mode.ABSOLUTE;
+                String number = IntensityFilter.stripPercent(text);
+                if (typedMode == shownIntensityMode)
+                    return delegate.stringToValue(number);
+                // The number is meant for the other unit, and the delegate would measure it against this one's
+                // range - which is how a percentage's ceiling of 100 used to reject an absolute threshold that
+                // only dropped the sign. So read it plainly and leave the shown value alone; the switch below
+                // installs it under the unit it was typed for, with that unit's range.
+                switchIntensityUnitTo(typedMode, parseTypedNumber(delegate, number));
+                return intensitySpinner.getValue();
+            }
+        }));
+    }
+
+    /**
+     * Reads a number the way the threshold field reads one, but without a range to fail against: the value is
+     * about to move to another unit, whose range is not the one this editor guards.
+     */
+    private static double parseTypedNumber(@NotNull JFormattedTextField.AbstractFormatter delegate,
+                                           @NotNull String number) throws ParseException {
+        NumberFormat format = delegate instanceof NumberFormatter formatter && formatter.getFormat() instanceof NumberFormat numbers
+                ? numbers
+                : NumberFormat.getInstance();
+        ParsePosition position = new ParsePosition(0);
+        Number value = format.parse(number, position);
+        if (value == null || position.getIndex() != number.length())
+            throw new ParseException("Not a threshold: " + number, position.getErrorIndex());
+        return value.doubleValue();
+    }
+
+    /**
+     * Follows a unit the user typed rather than picked: takes the number over into that unit's threshold and
+     * moves the drop-down, which then shows it. Deferred because it runs while the field is committing the very
+     * value it is about to replace - and cleared first, so that value is not also stashed as the unit it was
+     * leaving.
+     */
+    private void switchIntensityUnitTo(@NotNull IntensityFilter.Mode mode, double typed) {
+        SwingUtilities.invokeLater(() -> {
+            shownIntensityMode = null;
+            if (mode == IntensityFilter.Mode.RELATIVE_TO_RUN_MAX)
+                intensityMinPercent = Math.min(typed, 100d);
+            else
+                intensityMinAbsolute = typed;
+            intensityUnit.setSelectedItem(mode);
+        });
     }
 
     /** Remembers the spinner value as the threshold of the mode it currently shows. */
@@ -616,8 +747,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
     /** Puts the intensity widgets back to "no intensity filter" with the default thresholds. */
     private void resetIntensityWidgets() {
-        intensityMeasure.setSelected(IntensityFilter.Measure.APEX);
-        intensityUnit.setSelected(IntensityFilter.Mode.ABSOLUTE); // its change listener re-shows the absolute threshold
+        intensityMeasure.setSelectedItem(IntensityFilter.Measure.APEX);
+        intensityUnit.setSelectedItem(IntensityFilter.Mode.ABSOLUTE); // its listener re-shows the absolute threshold
         intensityMinAbsolute = IntensityFilter.DEFAULT_MIN_ABSOLUTE;
         intensityMinPercent = IntensityFilter.DEFAULT_MIN_PERCENT;
         intensitySpinner.setValue(IntensityFilter.DEFAULT_MIN_ABSOLUTE);
@@ -674,7 +805,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         filterModel.getSampleBlankFoldChange().setCurrentMinFoldChange((Double) blankSpinner.getValue());
 
         stashIntensityThreshold();
-        filterModel.getIntensityFilter().setMeasure(intensityMeasure.getSelected());
+        filterModel.getIntensityFilter().setMeasure((IntensityFilter.Measure) intensityMeasure.getSelectedItem());
         filterModel.getIntensityFilter().setMode(selectedIntensityMode());
         filterModel.getIntensityFilter().setMinAbsolute(intensityMinAbsolute);
         filterModel.getIntensityFilter().setMinPercent(intensityMinPercent);
@@ -702,6 +833,12 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         row.add(control);
         row.add(Box.createHorizontalGlue());
         return row;
+    }
+
+    /** A gap of at least {@link GuiUtils#SMALL_GAP} that takes its share of whatever room a row has left. */
+    private static Component growingGap() {
+        return new Box.Filler(new Dimension(GuiUtils.SMALL_GAP, 0), new Dimension(GuiUtils.SMALL_GAP, 0),
+                new Dimension(Integer.MAX_VALUE, 0));
     }
 
     /** A name label that asks for its tooltip when shown, so it always matches its control's. */
@@ -803,8 +940,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             s.addChangeListener(e -> refresh.run());
         for (JCheckBox c : new JCheckBox[]{hasMs1, hasMsMs, blankFilter})
             c.addActionListener(e -> refresh.run());
-        intensityUnit.onChange(refresh);
-        intensityMeasure.onChange(refresh);
+        intensityUnit.addActionListener(e -> refresh.run());
+        intensityMeasure.addActionListener(e -> refresh.run());
         lipidFilter.onChange(refresh);
         pfasFilter.onChange(refresh);
         adductOptions.checkBoxList.addCheckBoxListener(e -> refresh.run());
