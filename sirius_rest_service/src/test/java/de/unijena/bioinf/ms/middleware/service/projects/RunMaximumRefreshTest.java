@@ -121,6 +121,46 @@ public class RunMaximumRefreshTest {
         assertEquals(List.of("strong", "weak"), namesMatching(second, "intensityApex:[5% TO *]"));
     }
 
+    /**
+     * Deleting the feature that set a run's maximum lowers it, so every other feature of that run is a larger
+     * share of it than the index says. Unlike a write, a deletion cannot be compared against a state derived
+     * afterwards - what it removed is gone - so the comparison has to be prepared before it happens.
+     */
+    @Test
+    @SneakyThrows
+    public void testDeletingTheStrongestFeatureRewritesTheRunsOtherFeatures() {
+        NoSQLProjectImpl first = session();
+        long strong = addFeature("strong", 1000d);
+        long weak = addFeature("weak", 100d);
+        first.addToSearchIndex(List.of(String.valueOf(strong), String.valueOf(weak)), null);
+        assertEquals(List.of("strong"), namesMatching(first, "intensityApex:[50% TO *]"),
+                "'weak' is 10 % of the run maximum while 'strong' is still there");
+
+        NoSQLProjectImpl second = session();
+        second.deleteAlignedFeaturesById(String.valueOf(strong));
+
+        assertEquals(List.of("weak"), namesMatching(second, "intensityApex:[50% TO *]"),
+                "'weak' is now the run maximum and must have been rewritten");
+    }
+
+    /** A deletion that does not touch a maximum leaves every other feature's percentage as it was. */
+    @Test
+    @SneakyThrows
+    public void testDeletingAWeakerFeatureLeavesTheOthersAlone() {
+        NoSQLProjectImpl first = session();
+        long strong = addFeature("strong", 1000d);
+        long middle = addFeature("middle", 500d);
+        long weak = addFeature("weak", 100d);
+        first.addToSearchIndex(List.of(String.valueOf(strong), String.valueOf(middle), String.valueOf(weak)), null);
+
+        NoSQLProjectImpl second = session();
+        second.deleteAlignedFeaturesById(String.valueOf(weak));
+
+        assertEquals(List.of("middle", "strong"), namesMatching(second, "intensityApex:[50% TO *]"),
+                "the run maximum is untouched, so the remaining percentages are too");
+        assertEquals(List.of("middle"), namesMatching(second, "intensityApex:{20% TO 99%}"));
+    }
+
     /** Nothing moved: a weaker feature leaves the maximum, and the other features' percentages, alone. */
     @Test
     @SneakyThrows

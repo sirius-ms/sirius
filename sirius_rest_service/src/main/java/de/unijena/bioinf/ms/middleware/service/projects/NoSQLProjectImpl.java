@@ -333,6 +333,33 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
     }
 
+    /**
+     * The same for the run features of {@code alignedFeatureIds} only. Resolved over the {@code alignedFeatureId}
+     * index rather than by reading every run feature there is, which is what makes a write cost what it wrote
+     * instead of what the project holds.
+     */
+    @SneakyThrows
+    private void forEachRunFeatureOf(@NotNull Collection<Long> alignedFeatureIds,
+                                     @NotNull BiConsumer<String, Feature> sink) {
+        if (alignedFeatureIds.isEmpty())
+            return;
+        Map<Long, Feature> runless = new HashMap<>();
+        try (Stream<Feature> runFeatures = storage()
+                .findAllByIndexedFieldStr("alignedFeatureId", alignedFeatureIds, Feature.class)) {
+            runFeatures.forEach(f -> {
+                if (f.getRunId() != null)
+                    sink.accept(FeatureIntensities.runGroup(f.getRunId()), f);
+                else
+                    runless.put(f.getAlignedFeatureId(), f);
+            });
+        }
+        if (!runless.isEmpty()) {
+            try (Stream<AlignedFeatures> owners = storage().findAllByPrimaryKeyStr(runless.keySet(), AlignedFeatures.class)) {
+                owners.forEach(owner -> sink.accept(FeatureIntensities.sourceGroup(owner), runless.get(owner.getAlignedFeatureId())));
+            }
+        }
+    }
+
     private FeatureIntensities.RunMaxima runMaxima() {
         FeatureIntensities.RunMaxima maxima = runMaxima;
         if (maxima == null) {
@@ -344,15 +371,41 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return maxima;
     }
 
+    // The maxima of the run features a deletion is about to remove, taken while they still exist. Null when no
+    // deletion is in flight, or when one was not announced - which is read as "no idea what went".
+    private volatile FeatureIntensities.RunMaxima maximaOfFeaturesBeingDeleted;
+
     /**
-     * Derives the run maxima, if they are not derived yet, while the features about to be deleted still exist.
+     * Prepares a deletion while the features it removes are still there to read: derives the run maxima if they
+     * are not derived yet, and remembers the highest value those features hold per group.
      * <p>
-     * Forcing the derivation is all this does - the name is what it is for. A write can reconstruct the state
-     * that preceded it by leaving its own features out of a later read (see {@link #refreshRunMaxima}); a
-     * deletion cannot, because what it removed is gone. So the state before it has to be taken before it.
+     * A write can reconstruct the state that preceded it by leaving its own features out of a later read (see
+     * {@link #refreshRunMaxima}); a deletion cannot, because what it removed is gone. What it can do is say
+     * beforehand whether it is about to take a maximum with it - and only then does anything have to be derived
+     * again afterwards.
      */
-    private void deriveRunMaximaBeforeDelete() {
+    private void deriveRunMaximaBeforeDelete(@NotNull Collection<Long> alignedFeatureIds) {
         runMaxima();
+        FeatureIntensities.RunMaxima.Builder going = FeatureIntensities.RunMaxima.builder();
+        forEachRunFeatureOf(alignedFeatureIds, going::add);
+        maximaOfFeaturesBeingDeleted = going.build();
+    }
+
+    /**
+     * The groups a deletion moved the maximum of. Deleting a feature can only lower one, and only in a group
+     * whose maximum that feature held - so a deletion that took none costs nothing, and one that did is the
+     * only case that reads the run features again.
+     */
+    private Set<String> refreshRunMaximaAfterDelete() {
+        FeatureIntensities.RunMaxima before = runMaxima;
+        FeatureIntensities.RunMaxima removed = maximaOfFeaturesBeingDeleted;
+        maximaOfFeaturesBeingDeleted = null;
+        if (before == null)
+            return Set.of(); // nothing was known before the deletion, so nothing can be said to have changed
+        if (removed != null && before.groupsWhoseMaximumIsHeldBy(removed).isEmpty())
+            return Set.of(); // every maximum is held by something that stayed
+        runMaxima = null;
+        return runMaxima().changedGroups(before);
     }
 
     /**
@@ -371,12 +424,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private Set<String> refreshRunMaxima(@Nullable Collection<Long> justWritten) {
         FeatureIntensities.RunMaxima before = runMaxima;
         runMaxima = null;
+        if (!Utils.notNullOrEmpty(justWritten))
+            return Set.of();
         if (before == null) {
-            if (!Utils.notNullOrEmpty(justWritten))
-                return Set.of();
-            // Both states from one read: what the project holds now, and what it held before this write, which
-            // is the same minus the features it added. Reading twice for that would double the only expensive
-            // step there is.
+            // Nothing to fold into. Both states then come from one read: what the project holds now, and what it
+            // held before this write, which is the same minus the features it added. Reading twice for that
+            // would double the only expensive step there is.
             Set<Long> written = new HashSet<>(justWritten);
             FeatureIntensities.RunMaxima.Builder now = FeatureIntensities.RunMaxima.builder();
             FeatureIntensities.RunMaxima.Builder beforeWrite = FeatureIntensities.RunMaxima.builder();
@@ -388,7 +441,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             runMaxima = now.build();
             return runMaxima.changedGroups(beforeWrite.build());
         }
-        return runMaxima().changedGroups(before);
+        // Written features can only raise a maximum, so folding them into the maxima already known gives the
+        // state after the write without reading anything but what was written.
+        FeatureIntensities.RunMaxima.Builder folded = before.toBuilder();
+        forEachRunFeatureOf(justWritten, folded::add);
+        FeatureIntensities.RunMaxima after = folded.build();
+        runMaxima = after;
+        return after.changedGroups(before);
     }
 
     /**
@@ -536,7 +595,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     searchService.removeDocumentsById(projectId, alignedFeaturesIds, AlignedFeature.class);
                     // deleting a run's most intense feature moves that run's maximum, and with it the relative
                     // intensities of the run's remaining features
-                    reindexRuns(refreshRunMaxima(null), alignedFeaturesIds);
+                    reindexRuns(refreshRunMaximaAfterDelete(), alignedFeaturesIds);
                 }
                 if (Utils.notNullOrEmpty(compoundIds))
                     searchService.removeDocumentsById(projectId, compoundIds, Compound.class);
@@ -2145,7 +2204,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 // compound does not exist -> nothing to remove from the index
             }
         }
-        deriveRunMaximaBeforeDelete();
+        if (affectedFeatureIds != null)
+            deriveRunMaximaBeforeDelete(affectedFeatureIds.stream().map(Long::parseLong).toList());
         project().cascadeDeleteCompound(Long.parseLong(compoundId));
         removeFromSearchIndex(affectedFeatureIds, null, null);
     }
@@ -2397,7 +2457,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public void deleteAlignedFeaturesById(String alignedFeatureId) {
-        deriveRunMaximaBeforeDelete();
+        deriveRunMaximaBeforeDelete(List.of(Long.parseLong(alignedFeatureId)));
         project().cascadeDeleteAlignedFeatures(Long.parseLong(alignedFeatureId));
         removeFromSearchIndex(List.of(alignedFeatureId), null, null);
     }
@@ -2405,8 +2465,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     @SneakyThrows
     public void deleteAlignedFeaturesByIds(List<String> alignedFeatureIds) {
-        deriveRunMaximaBeforeDelete();
-        project().cascadeDeleteAlignedFeatures(alignedFeatureIds.stream().map(Long::parseLong).sorted().toList());
+        List<Long> ids = alignedFeatureIds.stream().map(Long::parseLong).sorted().toList();
+        deriveRunMaximaBeforeDelete(ids);
+        project().cascadeDeleteAlignedFeatures(ids);
         removeFromSearchIndex(alignedFeatureIds, null, null);
     }
 
