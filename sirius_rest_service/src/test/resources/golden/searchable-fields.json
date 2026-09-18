@@ -63,24 +63,6 @@
     "possibleValues" : null,
     "description" : "MS1 intensity of the feature as area under the chromatographic peak, the trace intensity integrated over the retention time: the highest area over all runs the feature was detected in. NULL for data without an LC-MS trace. A search bound followed by % is relative to the run, see intensityApex."
   }, {
-    "name" : "intensityApexRelative",
-    "fieldType" : "DOUBLE",
-    "fullTextSearch" : false,
-    "sortable" : true,
-    "defaultSearchField" : false,
-    "significantSuffixLength" : 1,
-    "possibleValues" : null,
-    "description" : "Apex intensity in percent of the most intense feature of the same run (or source file for data imported without runs), the highest such value over the runs the feature was detected in. This is what a % bound on intensityApex is matched against. Kept for the search index only and hidden from the API."
-  }, {
-    "name" : "intensityAUCRelative",
-    "fieldType" : "DOUBLE",
-    "fullTextSearch" : false,
-    "sortable" : true,
-    "defaultSearchField" : false,
-    "significantSuffixLength" : 1,
-    "possibleValues" : null,
-    "description" : "Area under curve in percent of the most intense feature of the same run (or source file for data imported without runs), see intensityApexRelative. Kept for the search index only and hidden from the API."
-  }, {
     "name" : "charge",
     "fieldType" : "INTEGER",
     "fullTextSearch" : false,
