@@ -147,6 +147,7 @@ public class AlignedFeature implements Taggable {
      * Kept for the search index only and hidden from the API.
      */
     @IndexField(sortable = true)
+    @SearchableFieldDoc(hidden = true)
     @Schema(nullable = true, hidden = true)
     @JsonIgnore
     protected Double intensityApexRelative;
@@ -157,6 +158,7 @@ public class AlignedFeature implements Taggable {
      * Kept for the search index only and hidden from the API.
      */
     @IndexField(sortable = true)
+    @SearchableFieldDoc(hidden = true)
     @Schema(nullable = true, hidden = true)
     @JsonIgnore
     protected Double intensityAUCRelative;

@@ -89,6 +89,9 @@ public class SearchableFieldDescriber {
      */
     @Nullable
     private SearchableField describe(@NotNull FieldFacts facts) {
+        SearchableFieldDoc declared = facts.declaredBy().getAnnotation(SearchableFieldDoc.class);
+        if (declared != null && declared.hidden())
+            return null; // in the index to serve another field, not to be asked for
         SearchableField.FieldType fieldType = declaredTypeOf(facts);
         if (fieldType == null)
             fieldType = facts.javaType() != null

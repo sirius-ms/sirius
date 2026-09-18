@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils
 import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.projectspace.IndexField;
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
@@ -112,6 +113,11 @@ public class SearchableFieldsDescriptionTest {
         @IndexField
         public TestNested annotation;
 
+        /** In the index to serve {@code summedIntensity}, not to be asked for itself. */
+        @IndexField
+        @SearchableFieldDoc(hidden = true)
+        public Double summedIntensityRelative;
+
         // not annotated, must not be searchable
         public String comment;
     }
@@ -127,6 +133,8 @@ public class SearchableFieldsDescriptionTest {
         assertEquals(Set.of("id", "name", "adduct", "mz", "summedIntensity", "charge", "hasMs1", "quality",
                         "measuredAt", "detectedAdducts", "peakCounts.*", "annotation.score"),
                 fields.keySet());
+        assertFalse(fields.containsKey("summedIntensityRelative"),
+                "a field that serves another one is not offered as one to search by");
     }
 
     @Test
@@ -314,6 +322,21 @@ public class SearchableFieldsDescriptionTest {
      * Everything the query parser is configured with has to be described, and with the same flags. One walk
      * produces both now, so this guards the describer against silently dropping or relabelling a field.
      */
+    /** The fields of the schema whose java field says they are in the index to serve another one. */
+    private static Set<String> hiddenFieldsOf(IndexSchema schema) {
+        return schema.fields().stream()
+                .filter(facts -> {
+                    SearchableFieldDoc doc = facts.declaredBy().getAnnotation(SearchableFieldDoc.class);
+                    return doc != null && doc.hidden();
+                })
+                .map(de.unijena.bioinf.ms.middleware.service.search.mappers.FieldFacts::name)
+                .collect(Collectors.toSet());
+    }
+
+    private static Set<String> difference(Set<String> from, Set<String> without) {
+        return from.stream().filter(field -> !without.contains(field)).collect(Collectors.toSet());
+    }
+
     @Test
     public void testDescriptionIsConsistentWithQueryParserConfiguration() {
         for (Class<?> pojoClass : List.of(AlignedFeature.class, Run.class, TestPojo.class)) {
@@ -330,15 +353,24 @@ public class SearchableFieldsDescriptionTest {
             Set<String> configuredFields = new HashSet<>();
             configuredFields.addAll(pointsConfigMap.keySet());
             configuredFields.addAll(analyzerMap.keySet());
-            assertEquals(configuredFields, described.keySet(),
-                    "described fields diverge from query parser configuration for " + pojoClass.getSimpleName());
 
-            assertEquals(defaultSearchFields.stream().map(CharSequence::toString).collect(Collectors.toSet()),
+            // Every field the parser is configured for is described, except the ones declared as serving
+            // another field rather than being searched themselves - those are queryable but not offered. A
+            // description without a configuration behind it would be an offer nothing can answer.
+            Set<String> hidden = hiddenFieldsOf(schema);
+            assertTrue(configuredFields.containsAll(described.keySet()),
+                    "described fields the query parser does not know for " + pojoClass.getSimpleName() + ": "
+                            + difference(described.keySet(), configuredFields));
+            assertEquals(hidden, difference(configuredFields, described.keySet()),
+                    "configured fields that are neither described nor declared hidden for " + pojoClass.getSimpleName());
+
+            assertEquals(defaultSearchFields.stream().map(CharSequence::toString)
+                            .filter(field -> !hidden.contains(field)).collect(Collectors.toSet()),
                     described.values().stream().filter(SearchableField::isDefaultSearchField)
                             .map(SearchableField::getName).collect(Collectors.toSet()),
                     "default search fields diverge for " + pojoClass.getSimpleName());
 
-            assertEquals(sortTypes.keySet(),
+            assertEquals(sortTypes.keySet().stream().filter(field -> !hidden.contains(field)).collect(Collectors.toSet()),
                     described.values().stream().filter(SearchableField::isSortable)
                             .map(SearchableField::getName).collect(Collectors.toSet()),
                     "sortable fields diverge for " + pojoClass.getSimpleName());
