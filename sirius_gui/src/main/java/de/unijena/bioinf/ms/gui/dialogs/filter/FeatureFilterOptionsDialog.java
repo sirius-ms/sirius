@@ -19,6 +19,7 @@ package de.unijena.bioinf.ms.gui.dialogs.filter;
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+import com.formdev.flatlaf.FlatClientProperties;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -80,6 +81,9 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
      */
     QueryEditorPanel queryEditor;
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner;
+
+    // The narrowest a threshold field gets, in columns of its own font: about eleven digits.
+    private static final int THRESHOLD_FIELD_COLUMNS = 8;
 
     // Where the max m/z and max RT spinners land when stepped down from "Infinite" - above anything these
     // measure in practice, so arriving here excludes nothing that was not already excluded by leaving it.
@@ -176,9 +180,12 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         //input data filters
         {
             final Box inputParameters = Box.createVerticalBox();
+            // A TwoColumnPanel tab (Fold Change, Data Quality) puts its first heading 16px below the top;
+            // this one is a plain box and has to say so itself, or the heading jumps when you switch tabs.
+            inputParameters.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
             centerTab.addTab("Input", inputParameters);
 
-            inputParameters.add(Box.createVerticalStrut(3));
+            inputParameters.add(Box.createVerticalStrut(11));
             // The thresholds sit centred between their own heading and the adducts: the section's rows defend
             // their height and a glue above and below them takes equal shares of whatever the tab has to spare.
             // Left to themselves the separator and the row block would absorb it, which puts all of it above.
@@ -188,29 +195,25 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             inputParameters.add(Box.createVerticalGlue());
 
             {
-                TwoColumnPanel min = new TwoColumnPanel();
-                TwoColumnPanel max = new TwoColumnPanel();
-                Box box = Box.createHorizontalBox();
-
-                box.add(min);
-                box.add(Box.createHorizontalGlue());
-                box.add(max);
+                // One grid for the three thresholds, each under a heading of its own, so its fields are named
+                // "Min" and "Max" only. The two field columns are shared, which is what lines the rows up.
+                JPanel thresholds = new JPanel(new GridBagLayout());
+                thresholds.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
 
                 minMzSpinner = makeSpinner(filterModel.getCurrentMinMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
                 maxMzSpinner = makeSpinner(filterModel.getCurrentMaxMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10,
                         MZ_BELOW_INFINITE);
                 ((JSpinner.DefaultEditor) maxMzSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxMzSpinner.getModel(), filterModel.getMaxMz()));
-                min.addNamed("Min m/z", minMzSpinner);
-                max.addNamed("Max m/z", maxMzSpinner);
+                addThresholdHeading(thresholds, 0, "m/z", null);
+                addThresholdRow(thresholds, 1, "Min", minMzSpinner, "Max", maxMzSpinner, null);
                 ensureCompatibleBounds(minMzSpinner, maxMzSpinner);
 
                 minRtSpinner = makeSpinner(filterModel.getCurrentMinRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
                 maxRtSpinner = makeSpinner(filterModel.getCurrentMaxRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10,
                         RT_BELOW_INFINITE);
                 ((JSpinner.DefaultEditor) maxRtSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxRtSpinner.getModel(), filterModel.getMaxRt()));
-
-                min.addNamed("Min RT (in sec)", minRtSpinner);
-                max.addNamed("Max RT (in sec)", maxRtSpinner);
+                addThresholdHeading(thresholds, 2, "RT (in sec)", null);
+                addThresholdRow(thresholds, 3, "Min", minRtSpinner, "Max", maxRtSpinner, null);
                 ensureCompatibleBounds(minRtSpinner, maxRtSpinner);
 
                 // MS1 intensity: a minimum only, absolute or in percent of the run maximum, of either the peak
@@ -219,8 +222,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 intensityMinAbsolute = filter.getMinAbsolute();
                 intensityMinPercent = filter.getMinPercent();
                 intensitySpinner = makeSpinner(0, 0, Double.POSITIVE_INFINITY, 1000);
-                intensitySpinner.setToolTipText(GuiUtils.formatToolTip(INTENSITY_FILTER_TOOLTIP));
-                intensitySpinner.setMaximumSize(intensitySpinner.getPreferredSize()); // do not eat the row
 
                 // What the threshold means, as plain drop-downs rather than the segmented switches the lipid and
                 // PFAS filters use: a filled capsule means "this filter is on" in this dialog, and neither of
@@ -236,48 +237,45 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 intensityMeasure.setSelectedItem(filter.getMeasure());
                 intensityMeasure.setToolTipText(GuiUtils.formatToolTip(INTENSITY_MEASURE_TOOLTIP));
 
+                // The look and feel keeps 6px of air on either side of a drop-down's text, which reads as a gap
+                // between what is selected and the arrow. These two set the section's width, so it is trimmed.
                 for (JComboBox<?> choice : List.of(intensityUnit, intensityMeasure))
-                    choice.setMaximumSize(choice.getPreferredSize()); // keep their own width, see the row below
+                    choice.putClientProperty(FlatClientProperties.STYLE, "padding: 1,4,1,2");
 
-                // A panel in a horizontal box is stretched past its preferred width, and the right-hand column
-                // grows with it - which made the m/z and RT fields 27px wider than the intensity field below
-                // them, since that one is not in a column that can stretch. Held to their preferred width, all
-                // three thresholds are the same width and end on the same edge, whatever the dialog's size.
-                min.setMaximumSize(min.getPreferredSize());
-                max.setMaximumSize(max.getPreferredSize());
-                box.setMaximumSize(new Dimension(Integer.MAX_VALUE, box.getPreferredSize().height));
-                inputParameters.add(box);
+                // "in" names the two drop-downs the way "Max" names the field beside it, and "as" separates the
+                // unit the number is written in from what it measures.
+                Box intensityChoices = Box.createHorizontalBox();
+                intensityChoices.add(intensityUnit);
+                intensityChoices.add(Box.createHorizontalStrut(GuiUtils.SMALL_GAP));
+                intensityChoices.add(new JLabel("as"));
+                intensityChoices.add(Box.createHorizontalStrut(GuiUtils.SMALL_GAP));
+                intensityChoices.add(intensityMeasure);
+                String intensityToolTip = GuiUtils.formatToolTip(INTENSITY_FILTER_TOOLTIP);
+                addThresholdHeading(thresholds, 4, "Intensity", intensityToolTip);
+                addThresholdRow(thresholds, 5, "Min", intensitySpinner, "in", intensityChoices, intensityToolTip);
 
-                // The intensity threshold spans the whole width rather than joining the two columns above: the
-                // switches say what the number means and belong right after it, and a row that wide inside the
-                // left column would set that column's width and push the maxima off the dialog. Its label is
-                // built to look like one of theirs - right aligned, as wide as the widest of them, same insets -
-                // so the three thresholds still read as one list.
-                JLabel intensityLabel = new JLabel("Min intensity", SwingConstants.RIGHT);
-                intensityLabel.setPreferredSize(new JLabel("Min RT (in sec)").getPreferredSize());
-                intensityLabel.setMaximumSize(intensityLabel.getPreferredSize());
-                intensityLabel.setToolTipText(GuiUtils.formatToolTip(INTENSITY_FILTER_TOOLTIP));
+                // A drop-down asks for more height than a spinner, and that sets the height of its whole row.
+                // Held to the fields above it, the three rows keep one rhythm.
+                int fieldHeight = intensitySpinner.getPreferredSize().height;
+                for (JComboBox<?> choice : List.of(intensityUnit, intensityMeasure))
+                    choice.setPreferredSize(new Dimension(choice.getPreferredSize().width, fieldHeight));
 
-                Box intensityRow = Box.createHorizontalBox();
-                intensityRow.setBorder(BorderFactory.createEmptyBorder(0, 20, 5, 5)); // as TwoColumnPanel insets
-                intensityRow.add(intensityLabel);
-                intensityRow.add(Box.createHorizontalStrut(5)); // the gap TwoColumnPanel leaves after a label
-                intensityRow.add(intensitySpinner);
-                // Reads as a sentence: the threshold, the unit it is written in, and what it measures. The unit
-                // comes first because it belongs to the number and the field no longer carries it - a typed
-                // percent sign is consumed and shows up here instead.
-                // The gaps grow rather than the controls, and they grow together, so the row ends on the same
-                // edge as the max m/z and max RT fields above it with the spacing staying even.
-                intensityRow.add(growingGap());
-                intensityRow.add(new JLabel("in"));
-                intensityRow.add(growingGap());
-                intensityRow.add(intensityUnit);
-                intensityRow.add(growingGap());
-                intensityRow.add(new JLabel("as"));
-                intensityRow.add(growingGap());
-                intensityRow.add(intensityMeasure);
-                intensityRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, intensityRow.getPreferredSize().height));
-                inputParameters.add(intensityRow);
+                // Every field asks for the width of the two drop-downs together, so a "Max" field ends where
+                // "peak height" ends - they set the width because they are the ones with something to show,
+                // and makeSpinner's 200px is dropped. Below that width a field falls back to the width of a
+                // number, so a narrow tab squeezes an empty number field rather than a drop-down's text.
+                // The height stays makeSpinner's, the one the other tabs' spinners have too.
+                int fieldWidth = intensityChoices.getPreferredSize().width;
+                for (JSpinner field : List.of(minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, intensitySpinner)) {
+                    ((JSpinner.DefaultEditor) field.getEditor()).getTextField().setColumns(THRESHOLD_FIELD_COLUMNS);
+                    field.setPreferredSize(null); // drop the forced width, so the editor is asked again
+                    field.setMinimumSize(null);
+                    field.setMinimumSize(new Dimension(field.getPreferredSize().width, fieldHeight));
+                    field.setPreferredSize(new Dimension(fieldWidth, fieldHeight));
+                }
+
+                thresholds.setMaximumSize(new Dimension(Integer.MAX_VALUE, thresholds.getPreferredSize().height));
+                inputParameters.add(thresholds);
                 inputParameters.add(Box.createVerticalGlue()); // the other half of the section's spare height
             }
 
@@ -835,10 +833,64 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         return row;
     }
 
-    /** A gap of at least {@link GuiUtils#SMALL_GAP} that takes its share of whatever room a row has left. */
-    private static Component growingGap() {
-        return new Box.Filler(new Dimension(GuiUtils.SMALL_GAP, 0), new Dimension(GuiUtils.SMALL_GAP, 0),
-                new Dimension(Integer.MAX_VALUE, 0));
+    /**
+     * The heading of one threshold in the grid: what the row below it measures, over the full width of the
+     * grid, the way the tab's own sections are headed.
+     */
+    private static void addThresholdHeading(@NotNull JPanel grid, int row, @NotNull String name,
+                                            @Nullable String toolTip) {
+        JXTitledSeparator heading = new JXTitledSeparator(name);
+        if (toolTip != null)
+            heading.setToolTipText(toolTip);
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = row;
+        c.gridx = 0;
+        c.gridwidth = GridBagConstraints.REMAINDER;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1;
+        // air above every heading but the first, which has the section separator right above it
+        c.insets = new Insets(row == 0 ? 0 : GuiUtils.MEDIUM_GAP, 0, GuiUtils.SMALL_GAP, 0);
+        grid.add(heading, c);
+    }
+
+    /**
+     * One row of the threshold grid: a named field on each side. The columns are shared by every row, so
+     * the fields of the three thresholds line up under each other.
+     *
+     * @param maxName the name of the second field - "Max" for a range, or whatever else names what follows
+     * @param toolTip shown on the row's first field, or null for none
+     */
+    private static void addThresholdRow(@NotNull JPanel grid, int row,
+                                        @NotNull String minName, @NotNull JComponent minField,
+                                        @NotNull String maxName, @NotNull JComponent maxField,
+                                        @Nullable String toolTip) {
+        GridBagConstraints label = new GridBagConstraints();
+        label.gridy = row;
+        label.anchor = GridBagConstraints.EAST;
+        // indented, so a row starts inside its heading rather than under the first letter of it
+        label.insets = new Insets(0, GuiUtils.MEDIUM_GAP, GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP);
+
+        GridBagConstraints field = new GridBagConstraints();
+        field.gridy = row;
+        // The two field columns share what the tab has over or under what they asked for, in equal parts, so
+        // widening the dialog widens the fields (as it does the confidence ones) and both halves stay equal.
+        field.fill = GridBagConstraints.HORIZONTAL;
+        field.weightx = 1;
+        field.insets = new Insets(0, 0, GuiUtils.SMALL_GAP, 0);
+
+        if (toolTip != null)
+            minField.setToolTipText(toolTip);
+        label.gridx = 0;
+        grid.add(new JLabel(minName), label);
+        field.gridx = 1;
+        grid.add(minField, field);
+        // the two halves of a row are told apart by the air between them, not just by their names
+        label.gridx = 2;
+        label.insets = new Insets(0, GuiUtils.LARGE_GAP, GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP);
+        grid.add(new JLabel(maxName), label);
+        field.gridx = 3;
+        grid.add(maxField, field);
     }
 
     /** A name label that asks for its tooltip when shown, so it always matches its control's. */
