@@ -51,11 +51,4 @@ public @interface SearchableFieldDoc {
      * not declared here at all - it is handed to the description by whoever owns the project state.
      */
     Class<? extends FieldVocabulary> possibleValues() default FieldVocabulary.None.class;
-
-    /**
-     * Whether to keep this field out of the list clients are offered, for a field that is in the index to serve
-     * another one rather than to be searched itself. It stays queryable - the index holds it either way - it is
-     * just not proposed, so the list stays the set of things worth asking for.
-     */
-    boolean hidden() default false;
 }

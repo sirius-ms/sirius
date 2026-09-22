@@ -138,7 +138,7 @@ public class RunMaximumRefreshTest {
         NoSQLProjectImpl first = session();
         long weak = addFeature("weak", 100d);
         first.addToSearchIndex(List.of(String.valueOf(weak)), null);
-        assertEquals(List.of("weak"), namesMatching(first, "intensityApex:[50% TO *]"),
+        assertEquals(List.of("weak"), namesMatching(first, "intensityApexRelative:[50 TO *]"),
                 "the only feature of the run is its maximum");
 
         // a new session reads nothing, so it derives no maxima before the write
@@ -146,9 +146,9 @@ public class RunMaximumRefreshTest {
         long strong = addFeature("strong", 1000d);
         second.addToSearchIndex(List.of(String.valueOf(strong)), null);
 
-        assertEquals(List.of("strong"), namesMatching(second, "intensityApex:[50% TO *]"),
+        assertEquals(List.of("strong"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
                 "'weak' is now 10 % of the run maximum and must have been rewritten");
-        assertEquals(List.of("strong", "weak"), namesMatching(second, "intensityApex:[5% TO *]"));
+        assertEquals(List.of("strong", "weak"), namesMatching(second, "intensityApexRelative:[5 TO *]"));
     }
 
     /**
@@ -162,14 +162,14 @@ public class RunMaximumRefreshTest {
         NoSQLProjectImpl session = session();
         long weak = addFeature("weak", 100d);
         session.addToSearchIndex(List.of(String.valueOf(weak)), null); // derives the maxima
-        assertEquals(List.of("weak"), namesMatching(session, "intensityApex:[50% TO *]"));
+        assertEquals(List.of("weak"), namesMatching(session, "intensityApexRelative:[50 TO *]"));
 
         long strong = addFeature("strong", 1000d);
         session.addToSearchIndex(List.of(String.valueOf(strong)), null); // folds into them
 
-        assertEquals(List.of("strong"), namesMatching(session, "intensityApex:[50% TO *]"),
+        assertEquals(List.of("strong"), namesMatching(session, "intensityApexRelative:[50 TO *]"),
                 "'weak' is 10 % of the new maximum and must have been rewritten");
-        assertEquals(List.of("strong", "weak"), namesMatching(session, "intensityApex:[5% TO *]"));
+        assertEquals(List.of("strong", "weak"), namesMatching(session, "intensityApexRelative:[5 TO *]"));
     }
 
     /** Folding must not move a maximum that the write did not raise. */
@@ -183,8 +183,8 @@ public class RunMaximumRefreshTest {
         long weak = addFeature("weak", 100d);
         session.addToSearchIndex(List.of(String.valueOf(weak)), null);
 
-        assertEquals(List.of("strong"), namesMatching(session, "intensityApex:[50% TO *]"));
-        assertEquals(List.of("strong", "weak"), namesMatching(session, "intensityApex:[10% TO *]"));
+        assertEquals(List.of("strong"), namesMatching(session, "intensityApexRelative:[50 TO *]"));
+        assertEquals(List.of("strong", "weak"), namesMatching(session, "intensityApexRelative:[10 TO *]"));
     }
 
     /**
@@ -198,13 +198,13 @@ public class RunMaximumRefreshTest {
         long weak = addPeakListFeature("weak", "one.mgf", 100d);
         long other = addPeakListFeature("other", "two.mgf", 50d);
         session.addToSearchIndex(List.of(String.valueOf(weak), String.valueOf(other)), null);
-        assertEquals(List.of("other", "weak"), namesMatching(session, "intensityApex:[99% TO *]"),
+        assertEquals(List.of("other", "weak"), namesMatching(session, "intensityApexRelative:[99 TO *]"),
                 "each is the strongest feature of its own file");
 
         long strong = addPeakListFeature("strong", "one.mgf", 1000d);
         session.addToSearchIndex(List.of(String.valueOf(strong)), null);
 
-        assertEquals(List.of("other", "strong"), namesMatching(session, "intensityApex:[99% TO *]"),
+        assertEquals(List.of("other", "strong"), namesMatching(session, "intensityApexRelative:[99 TO *]"),
                 "'weak' is now 10 % of its file's maximum, 'other' is untouched in its own file");
     }
 
@@ -220,13 +220,13 @@ public class RunMaximumRefreshTest {
         long strong = addFeature("strong", 1000d);
         long weak = addFeature("weak", 100d);
         first.addToSearchIndex(List.of(String.valueOf(strong), String.valueOf(weak)), null);
-        assertEquals(List.of("strong"), namesMatching(first, "intensityApex:[50% TO *]"),
+        assertEquals(List.of("strong"), namesMatching(first, "intensityApexRelative:[50 TO *]"),
                 "'weak' is 10 % of the run maximum while 'strong' is still there");
 
         NoSQLProjectImpl second = session();
         second.deleteAlignedFeaturesById(String.valueOf(strong));
 
-        assertEquals(List.of("weak"), namesMatching(second, "intensityApex:[50% TO *]"),
+        assertEquals(List.of("weak"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
                 "'weak' is now the run maximum and must have been rewritten");
     }
 
@@ -243,9 +243,9 @@ public class RunMaximumRefreshTest {
         NoSQLProjectImpl second = session();
         second.deleteAlignedFeaturesById(String.valueOf(weak));
 
-        assertEquals(List.of("middle", "strong"), namesMatching(second, "intensityApex:[50% TO *]"),
+        assertEquals(List.of("middle", "strong"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
                 "the run maximum is untouched, so the remaining percentages are too");
-        assertEquals(List.of("middle"), namesMatching(second, "intensityApex:{20% TO 99%}"));
+        assertEquals(List.of("middle"), namesMatching(second, "intensityApexRelative:{20 TO 99}"));
     }
 
     /**
@@ -264,7 +264,7 @@ public class RunMaximumRefreshTest {
         NoSQLProjectImpl second = session();
         second.deleteAlignedFeaturesByIds(List.of(String.valueOf(strong), String.valueOf(alsoStrong)));
 
-        assertEquals(List.of("weak"), namesMatching(second, "intensityApex:[50% TO *]"),
+        assertEquals(List.of("weak"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
                 "'weak' is the run maximum now that both stronger features are gone");
     }
 
@@ -276,12 +276,12 @@ public class RunMaximumRefreshTest {
         long strong = addFeatureOfCompound("strong", 1000d, compound);
         long weak = addFeature("weak", 100d);
         first.addToSearchIndex(List.of(String.valueOf(strong), String.valueOf(weak)), null);
-        assertEquals(List.of("strong"), namesMatching(first, "intensityApex:[50% TO *]"));
+        assertEquals(List.of("strong"), namesMatching(first, "intensityApexRelative:[50 TO *]"));
 
         NoSQLProjectImpl second = session();
         second.deleteCompoundById(String.valueOf(compound));
 
-        assertEquals(List.of("weak"), namesMatching(second, "intensityApex:[50% TO *]"),
+        assertEquals(List.of("weak"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
                 "the compound took the run maximum with it");
     }
 
@@ -297,7 +297,7 @@ public class RunMaximumRefreshTest {
         long weak = addFeature("weak", 100d);
         second.addToSearchIndex(List.of(String.valueOf(weak)), null);
 
-        assertEquals(List.of("strong"), namesMatching(second, "intensityApex:[50% TO *]"));
-        assertEquals(List.of("strong", "weak"), namesMatching(second, "intensityApex:[10% TO *]"));
+        assertEquals(List.of("strong"), namesMatching(second, "intensityApexRelative:[50 TO *]"));
+        assertEquals(List.of("strong", "weak"), namesMatching(second, "intensityApexRelative:[10 TO *]"));
     }
 }
