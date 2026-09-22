@@ -217,7 +217,9 @@ public class NoSQLProjectTest {
         AlignedFeature f1 = features.getFirst();
         AlignedFeature f2 = features2.getFirst();
 
-        assertTrue(EqualsBuilder.reflectionEquals(f1, f2, "msData"));
+        // A listing is served from the search index, which stores the relative intensities; a feature
+        // converted for a response carries them only when it becomes an index document.
+        assertTrue(EqualsBuilder.reflectionEquals(f1, f2, "msData", "intensityApexRelative", "intensityAUCRelative"));
 
         MsData d1 = f1.getMsData();
         MsData d2 = f2.getMsData();

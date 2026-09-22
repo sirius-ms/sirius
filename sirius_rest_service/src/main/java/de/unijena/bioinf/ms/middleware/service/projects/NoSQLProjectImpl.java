@@ -1517,13 +1517,22 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
             MSData msData = FeatureImports.extractMsData(featureImport, profile);
             builder.msData(msData);
-            // there is no LC-MS trace to take an apex from, so the precursor peak in the MS1 is the feature's MS1 intensity
-            builder.apexIntensity(StorageUtils.precursorIntensityOf(msData.getMergedMs1Spectrum(),
-                    featureImport.getIonMass(), FeatureImports.ms1MassDeviation(profile).allowedMassDeviation));
             builder.hasMs1(msData.getMergedMs1Spectrum() != null);
             builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
 
-            builder.retentionTime(RetentionTime.of(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds(), featureImport.getRtApexSeconds()));
+            RetentionTime retentionTime = RetentionTime.of(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds(), featureImport.getRtApexSeconds());
+            builder.retentionTime(retentionTime);
+
+            // An import is one measurement of the feature, so it becomes one feature of its own, belonging to
+            // no run - the same shape a peak-list import has. There is no trace to take an apex from, so its
+            // MS1 intensity is the height of the precursor peak.
+            builder.features(List.of(Feature.builder()
+                    .averageMass(featureImport.getIonMass())
+                    .charge((byte) featureImport.getCharge())
+                    .retentionTime(retentionTime)
+                    .apexIntensity(StorageUtils.precursorIntensityOf(msData.getMergedMs1Spectrum(),
+                            featureImport.getIonMass(), FeatureImports.ms1MassDeviation(profile).allowedMassDeviation))
+                    .build()));
 
             return builder.build();
         } catch (IllegalArgumentException e) {
