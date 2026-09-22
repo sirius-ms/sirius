@@ -112,6 +112,26 @@ public class IntensityFilter {
         return stripped;
     }
 
+    /** The largest a percentage of a maximum can be - a threshold above this can only be an intensity. */
+    public static final double MAX_PERCENT = 100d;
+
+    /**
+     * The unit a typed threshold is in, given the unit currently shown.
+     * <p>
+     * A percent sign says it outright. A bare number keeps the unit that is shown, because dropping the sign is
+     * how a percentage is usually typed - except when it is larger than {@link #MAX_PERCENT}, which no share of
+     * a maximum can be, so it can only be an intensity.
+     *
+     * @param shown the unit the threshold is currently shown in, null while a switch is in flight
+     */
+    public static @Nullable Mode typedUnit(@Nullable String text, double value, @Nullable Mode shown) {
+        if (isPercentTyped(text))
+            return Mode.RELATIVE_TO_RUN_MAX;
+        if (shown == Mode.RELATIVE_TO_RUN_MAX && value > MAX_PERCENT)
+            return Mode.ABSOLUTE;
+        return shown;
+    }
+
     public static final double DEFAULT_MIN_ABSOLUTE = 0d;
     public static final double DEFAULT_MIN_PERCENT = 0d;
 
