@@ -120,11 +120,8 @@ public class AlignedFeature implements Taggable {
      * intensity over all runs the feature was detected in (as in the quantification table), or the height of the
      * precursor peak in its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists).
      * NULL if unknown.
-     * A search bound followed by {@code %} is relative to the run: {@code intensityApex:[10% TO *]} keeps the
-     * features that reach 10 % of the most intense feature in at least one of their runs. Data imported without
-     * runs (peak lists) is related to the most intense feature of the same source file instead. Features
-     * imported directly through the API (feature or compound import) have no source file and therefore no
-     * relative value.
+     * Search {@code intensityApexRelative} to hold a feature against its own run instead of against a fixed
+     * intensity.
      */
     @IndexField(sortable = true)
     @Schema(nullable = true)
@@ -134,31 +131,32 @@ public class AlignedFeature implements Taggable {
      * MS1 intensity of the feature as area under the chromatographic peak, the trace intensity integrated over
      * the retention time: the highest area over all runs the feature was detected in. NULL for data without an
      * LC-MS trace.
-     * A search bound followed by {@code %} is relative to the run, see {@code intensityApex}.
+     * Search {@code intensityAUCRelative} to hold a feature against its own run, see {@code intensityApex}.
      */
     @IndexField(sortable = true)
     @Schema(nullable = true)
     protected Double intensityAUC;
 
     /**
-     * Apex intensity in percent of the most intense feature of the same run (or source file for data imported
-     * without runs), the highest such value over the runs the feature was detected in. This is what a
-     * {@code %} bound on {@code intensityApex} is matched against.
-     * Kept for the search index only and hidden from the API.
+     * Apex intensity in percent of the most intense feature of the same run, the highest such value over the
+     * runs the feature was detected in: {@code intensityApexRelative:[10 TO *]} keeps the features that reach
+     * 10 % of their run's maximum in at least one run. Data imported without runs (peak lists) is held against
+     * the most intense feature of the same source file instead. Features imported directly through the API
+     * (feature or compound import) belong to neither and therefore have no relative intensity.
+     * Searchable and sortable, but not part of the feature itself: it says how a feature compares with the
+     * project it is in rather than what was measured.
      */
     @IndexField(sortable = true)
-    @SearchableFieldDoc(hidden = true)
     @Schema(nullable = true, hidden = true)
     @JsonIgnore
     protected Double intensityApexRelative;
 
     /**
-     * Area under curve in percent of the most intense feature of the same run (or source file for data imported
-     * without runs), see {@code intensityApexRelative}.
-     * Kept for the search index only and hidden from the API.
+     * Area under curve in percent of the most intense feature of the same run, see
+     * {@code intensityApexRelative}.
+     * Searchable and sortable, but not part of the feature itself.
      */
     @IndexField(sortable = true)
-    @SearchableFieldDoc(hidden = true)
     @Schema(nullable = true, hidden = true)
     @JsonIgnore
     protected Double intensityAUCRelative;

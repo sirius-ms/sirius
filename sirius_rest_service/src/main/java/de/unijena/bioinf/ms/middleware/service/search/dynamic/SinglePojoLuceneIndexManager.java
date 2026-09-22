@@ -27,7 +27,6 @@ import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
-import org.apache.lucene.queryparser.flexible.core.processors.QueryNodeProcessorPipeline;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
@@ -156,10 +155,6 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             // Initialize the query with  points config map and default search fields.
             queryParser.setMultiFields(defaultSearchFields.toArray(CharSequence[]::new));
             queryParser.setPointsConfigMap(pointsConfigMap);
-            // a numeric bound written as a percentage ("10%") is redirected to the field's relative form before the
-            // points processors parse the bounds, so it has to be the first processor in the pipeline
-            ((QueryNodeProcessorPipeline) queryParser.getQueryNodeProcessor())
-                    .add(0, new RelativeBoundQueryNodeProcessor(pointsConfigMap));
         } catch (IOException e) {
             throw new RuntimeException("IO Error when initializing Lucene index for " + pojoClass.getSimpleName(), e);
         }
