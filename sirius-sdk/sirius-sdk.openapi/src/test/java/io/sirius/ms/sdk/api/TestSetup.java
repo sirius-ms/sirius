@@ -139,7 +139,7 @@ public class TestSetup {
 
     public synchronized void deleteTestProject(ProjectInfo projectSpace) {
         try {
-            siriusClient.projects().closeProject(projectSpace.getProjectId(), false);
+            siriusClient.projects().closeProject(projectSpace.getProjectId(), false, false);
             Files.deleteIfExists(Paths.get(projectSpace.getLocation()));
         } catch (WebClientResponseException e) {
             log.warn("Could not delete test project", e);
