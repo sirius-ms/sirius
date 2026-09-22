@@ -49,4 +49,14 @@ public class IntensityFilterTest {
         assertEquals("% of run max", IntensityFilter.Mode.RELATIVE_TO_RUN_MAX.toString(),
                 "the drop-down is where the percentage says what it is a percentage of");
     }
+
+    @Test
+    public void testTheUnitPicksTheFieldRatherThanDecoratingTheNumber() {
+        for (IntensityFilter.Measure measure : IntensityFilter.Measure.values()) {
+            assertEquals(measure.getField(), measure.getField(IntensityFilter.Mode.ABSOLUTE));
+            assertEquals(measure.getRelativeField(), measure.getField(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX),
+                    "a threshold in percent is matched against the index field that holds percentages");
+            assertNotEquals(measure.getField(), measure.getRelativeField());
+        }
+    }
 }

@@ -26,9 +26,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The minimum MS1 intensity a feature must reach, measured either as peak height (apex) or as area under the
  * chromatographic peak. The threshold is an absolute value in raw instrument counts, or a percentage of the most
- * intense feature of the same run. A percentage goes into the query as written ({@code intensityApex:[10% TO *]});
- * the search index matches it against the feature's intensity relative to its run maximum, so it needs nothing
- * about the project here. Like the m/z and RT thresholds, the filter is active as soon as the minimum is above zero.
+ * intense feature of the same run; the two are separate fields of the search index, so the unit decides which
+ * field the clause names and nothing about the project is needed here. Like the m/z and RT thresholds, the filter
+ * is active as soon as the minimum is above zero.
  */
 @Getter
 public class IntensityFilter {
@@ -36,21 +36,33 @@ public class IntensityFilter {
     /** Which intensity of the feature the threshold applies to. */
     public enum Measure {
         /** peak height at the apex of the chromatographic peak */
-        APEX("intensityApex", "peak height"),
+        APEX("intensityApex", "intensityApexRelative", "peak height"),
         /** area under the chromatographic peak */
-        AUC("intensityAUC", "peak area");
+        AUC("intensityAUC", "intensityAUCRelative", "peak area");
 
-        /** the search index field holding this measure */
+        /** the search index field holding this measure, in the unit of the input data */
         private final String field;
+        /** the one holding it in percent of the run maximum - a field of its own, not a way of writing the above */
+        private final String relativeField;
         private final String label;
 
-        Measure(String field, String label) {
+        Measure(String field, String relativeField, String label) {
             this.field = field;
+            this.relativeField = relativeField;
             this.label = label;
         }
 
         public String getField() {
             return field;
+        }
+
+        public String getRelativeField() {
+            return relativeField;
+        }
+
+        /** The field a threshold of this measure is matched against, in the given unit. */
+        public String getField(@NotNull Mode mode) {
+            return mode == Mode.ABSOLUTE ? field : relativeField;
         }
 
         @Override

@@ -191,23 +191,24 @@ public class PanelQueryNodeFactoryTest {
     }
 
     @Test
-    public void testRelativeIntensityRendersAsAPercentageBound() {
+    public void testRelativeIntensityRendersAsABoundOnTheRelativeField() {
         FeatureFilterModel model = cleanSlate();
         model.getIntensityFilter().setMode(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX);
         model.getIntensityFilter().setMinPercent(10);
 
-        // the percentage is the index's to match (against the feature's share of its run maximum), so it is
-        // emitted as written and the chip reads "10%"
+        // the unit is the field, so the number is written plainly - the relative field holds percentages
         QueryClause intensity = onlyClause(nodes(model));
-        assertEquals(FeatureFilterModel.FIELD_INTENSITY_APEX, intensity.field());
+        assertEquals(FeatureFilterModel.FIELD_INTENSITY_APEX_RELATIVE, intensity.field());
         assertEquals(NumberOp.RANGE_INCLUSIVE, intensity.op());
-        assertEquals("10%", intensity.value1());
+        assertEquals("10", intensity.value1());
         assertEquals("", intensity.value2());
-        assertEquals("intensityApex:[10% TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow(),
-                "the percent sign must survive value escaping");
+        assertEquals("intensityApexRelative:[10 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
 
-        // the measure picks the field
+        // the measure picks the field, in the unit the mode asked for
         model.getIntensityFilter().setMeasure(IntensityFilter.Measure.AUC);
+        assertEquals(FeatureFilterModel.FIELD_INTENSITY_AUC_RELATIVE, onlyClause(nodes(model)).field());
+        model.getIntensityFilter().setMode(IntensityFilter.Mode.ABSOLUTE);
+        model.getIntensityFilter().setMinAbsolute(1000);
         assertEquals(FeatureFilterModel.FIELD_INTENSITY_AUC, onlyClause(nodes(model)).field());
     }
 

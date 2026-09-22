@@ -394,8 +394,8 @@ public class FeatureFilterModel implements SiriusPCS {
 
     /**
      * The intensity filter contributes a clause as soon as its minimum is above zero, like the other thresholds.
-     * A relative threshold is written as a percentage ({@code intensityApex:[10% TO *]}) that the search index
-     * matches against the feature's intensity relative to its run maximum, so nothing about the project is needed.
+     * Which unit the threshold is in decides which field the clause names: the absolute intensity, or the one
+     * the index holds in percent of the run maximum.
      */
     public boolean isIntensityFilterActive() {
         return intensityFilter.isActive();
@@ -609,6 +609,8 @@ public class FeatureFilterModel implements SiriusPCS {
     public static final String FIELD_MZ = "ionMass";
     public static final String FIELD_INTENSITY_APEX = IntensityFilter.Measure.APEX.getField();
     public static final String FIELD_INTENSITY_AUC = IntensityFilter.Measure.AUC.getField();
+    public static final String FIELD_INTENSITY_APEX_RELATIVE = IntensityFilter.Measure.APEX.getRelativeField();
+    public static final String FIELD_INTENSITY_AUC_RELATIVE = IntensityFilter.Measure.AUC.getRelativeField();
     public static final String FIELD_RT_START = "rtStartSeconds";
     public static final String FIELD_RT_APEX = "rtApexSeconds";
     public static final String FIELD_RT_END = "rtEndSeconds";

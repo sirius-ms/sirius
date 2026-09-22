@@ -84,15 +84,14 @@ public class FeatureFilterModelTest {
     }
 
     @Test
-    public void testRelativeIntensityFilterIsAPercentageInTheQuery() {
+    public void testRelativeIntensityFilterSearchesTheRelativeField() {
         FeatureFilterModel model = cleanSlate();
         model.getIntensityFilter().setMeasure(IntensityFilter.Measure.AUC);
         model.getIntensityFilter().setMode(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX);
         model.getIntensityFilter().setMinPercent(10);
 
-        // the index matches the percentage against the feature's intensity relative to its run maximum, so the
-        // model needs nothing about the project to be active
+        // the index holds the percentage as a field of its own, so the model needs nothing about the project
         assertTrue(model.isActive());
-        assertEquals("intensityAUC:[10% TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+        assertEquals("intensityAUCRelative:[10 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
     }
 }

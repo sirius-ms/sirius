@@ -73,7 +73,9 @@ public class PanelQueryNodeEquivalenceTest {
         for (String f : List.of(FeatureFilterModel.FIELD_MZ, FeatureFilterModel.FIELD_RT_START,
                 FeatureFilterModel.FIELD_RT_APEX, FeatureFilterModel.FIELD_RT_END,
                 FeatureFilterModel.FIELD_CONFIDENCE_APPROX, FeatureFilterModel.FIELD_CONFIDENCE_EXACT,
-                FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME, FeatureFilterModel.FIELD_INTENSITY_APEX, FeatureFilterModel.FIELD_INTENSITY_AUC))
+                FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME, FeatureFilterModel.FIELD_INTENSITY_APEX,
+                FeatureFilterModel.FIELD_INTENSITY_AUC, FeatureFilterModel.FIELD_INTENSITY_APEX_RELATIVE,
+                FeatureFilterModel.FIELD_INTENSITY_AUC_RELATIVE))
             map.put(f, dbl);
         PointsConfig integer = new PointsConfig(plainFormat(), Integer.class);
         for (String f : intFields)
