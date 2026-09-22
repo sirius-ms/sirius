@@ -119,15 +119,15 @@ public class FeatureIntensitiesTest {
     }
 
     @Test
-    public void testNoRunFeaturesFallsBackToTheAlignedFeaturesOwnApexWithoutARelativeValue() {
-        // an aligned feature imported over the API has no run features; its own value is the MS1 precursor peak
-        // intensity written at import, so it is in raw counts too - but there is no group to relate it to
+    public void testNoRunFeaturesIsUnknownWhateverTheAlignedFeatureItselfSays() {
+        // every import writes what it measured as a feature of its own, so an aligned feature without one has
+        // nothing to report - its own value belongs to a merged trace and is not an intensity in counts
         AlignedFeatures feature = AlignedFeatures.builder().apexIntensity(5_000_000d).build();
-        assertEquals(new Intensities(5_000_000d, null, null, null), FeatureIntensities.of(feature, maxima()));
+        assertEquals(Intensities.UNKNOWN, FeatureIntensities.of(feature, maxima()));
 
         AlignedFeatures emptyList = aligned(5_000_000d);
         emptyList.setFeatures(List.of());
-        assertEquals(5_000_000d, FeatureIntensities.of(emptyList, maxima()).apex());
+        assertEquals(Intensities.UNKNOWN, FeatureIntensities.of(emptyList, maxima()));
     }
 
     @Test
