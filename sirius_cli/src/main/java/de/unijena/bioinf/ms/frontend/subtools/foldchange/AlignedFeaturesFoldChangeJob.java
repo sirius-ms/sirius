@@ -49,6 +49,8 @@ public class AlignedFeaturesFoldChangeJob extends FoldChangeSubToolJJob<FoldChan
             Long2ObjectMap<List<Feature>> rightFeatures = new Long2ObjectOpenHashMap<>(rightRuns.size());
 
             project.findByFeatureId(af, Feature.class).forEach(f -> {
+                if (f.getRunId() == null)
+                    return; // a feature that belongs to no run belongs to neither side
                 if (leftRuns.contains((long) f.getRunId())) {
                     leftFeatures.put((long) f.getRunId(), List.of(f));
                 } else if (rightRuns.contains((long) f.getRunId())) {
