@@ -658,14 +658,16 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         shownIntensityMode = mode;
         intensitySpinner.setModel(mode == IntensityFilter.Mode.ABSOLUTE
                 ? new SpinnerNumberModel(intensityMinAbsolute, 0d, Double.POSITIVE_INFINITY, 1000d)
-                : new SpinnerNumberModel(Math.min(intensityMinPercent, 100d), 0d, 100d, 1d));
+                : new SpinnerNumberModel(Math.min(intensityMinPercent, IntensityFilter.MAX_PERCENT),
+                        0d, IntensityFilter.MAX_PERCENT, 1d));
         installIntensityUnitFormatter(); // a new model brings a new editor, and with it a new formatter
     }
 
     /**
-     * Lets a percent sign typed into the threshold field set the unit, as an alternative to picking it from the
-     * drop-down next to it. The sign is consumed doing so - the field goes on showing a bare number like every
-     * other threshold in this dialog, and the drop-down moving is what says the sign was understood.
+     * Lets what is typed into the threshold field set the unit, as an alternative to picking it from the
+     * drop-down next to it: a percent sign, or a number too large to be a percentage (see
+     * {@link IntensityFilter#typedUnit}). A sign is consumed doing so - the field goes on showing a bare number
+     * like every other threshold in this dialog, and the drop-down moving is what says it was understood.
      * <p>
      * Wraps the editor's own formatter rather than replacing it, so the number keeps being read and written
      * exactly as every other spinner here reads and writes one.
@@ -683,17 +685,17 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
             @Override
             public Object stringToValue(String text) throws ParseException {
-                IntensityFilter.Mode typedMode = IntensityFilter.isPercentTyped(text)
-                        ? IntensityFilter.Mode.RELATIVE_TO_RUN_MAX
-                        : IntensityFilter.Mode.ABSOLUTE;
+                // Read range-free first: which unit this is meant for depends on the number, and the delegate
+                // would measure it against the range of the unit currently shown - which is how a percentage's
+                // ceiling of 100 used to reject an absolute threshold that only dropped its sign.
                 String number = IntensityFilter.stripPercent(text);
+                double typed = parseTypedNumber(delegate, number);
+                IntensityFilter.Mode typedMode = IntensityFilter.typedUnit(text, typed, shownIntensityMode);
                 if (typedMode == shownIntensityMode)
                     return delegate.stringToValue(number);
-                // The number is meant for the other unit, and the delegate would measure it against this one's
-                // range - which is how a percentage's ceiling of 100 used to reject an absolute threshold that
-                // only dropped the sign. So read it plainly and leave the shown value alone; the switch below
-                // installs it under the unit it was typed for, with that unit's range.
-                switchIntensityUnitTo(typedMode, parseTypedNumber(delegate, number));
+                // Meant for the other unit: leave the shown value alone, the switch installs it under the unit
+                // it was typed for, with that unit's range.
+                switchIntensityUnitTo(typedMode, typed);
                 return intensitySpinner.getValue();
             }
         }));
@@ -725,7 +727,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         SwingUtilities.invokeLater(() -> {
             shownIntensityMode = null;
             if (mode == IntensityFilter.Mode.RELATIVE_TO_RUN_MAX)
-                intensityMinPercent = Math.min(typed, 100d);
+                intensityMinPercent = Math.min(typed, IntensityFilter.MAX_PERCENT);
             else
                 intensityMinAbsolute = typed;
             intensityUnit.setSelectedItem(mode);

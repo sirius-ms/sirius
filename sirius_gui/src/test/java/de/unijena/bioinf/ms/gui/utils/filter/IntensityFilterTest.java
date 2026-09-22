@@ -59,4 +59,45 @@ public class IntensityFilterTest {
             assertNotEquals(measure.getField(), measure.getRelativeField());
         }
     }
+
+    @Test
+    public void testAPercentSignPicksTheRelativeUnitWhateverIsShown() {
+        for (IntensityFilter.Mode shown : IntensityFilter.Mode.values()) {
+            assertEquals(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX, IntensityFilter.typedUnit("10 %", 10, shown));
+            assertEquals(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX, IntensityFilter.typedUnit("250 %", 250, shown),
+                    "a percentage above the ceiling is still a percentage - it is clamped, not reinterpreted");
+        }
+    }
+
+    @Test
+    public void testABareNumberKeepsTheUnitThatIsShown() {
+        assertEquals(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX,
+                IntensityFilter.typedUnit("50", 50, IntensityFilter.Mode.RELATIVE_TO_RUN_MAX),
+                "typing a percentage without its sign is how people write one");
+        assertEquals(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX,
+                IntensityFilter.typedUnit("100", IntensityFilter.MAX_PERCENT, IntensityFilter.Mode.RELATIVE_TO_RUN_MAX),
+                "the whole of the maximum is still a share of it");
+        assertEquals(IntensityFilter.Mode.ABSOLUTE,
+                IntensityFilter.typedUnit("1000", 1000, IntensityFilter.Mode.ABSOLUTE));
+    }
+
+    @Test
+    public void testANumberTooLargeForAPercentageIsAnIntensity() {
+        assertEquals(IntensityFilter.Mode.ABSOLUTE,
+                IntensityFilter.typedUnit("101", 101, IntensityFilter.Mode.RELATIVE_TO_RUN_MAX),
+                "no share of a maximum exceeds it, so this can only be an intensity");
+        assertEquals(IntensityFilter.Mode.ABSOLUTE,
+                IntensityFilter.typedUnit("2000000", 2_000_000, IntensityFilter.Mode.RELATIVE_TO_RUN_MAX));
+        assertEquals(IntensityFilter.Mode.ABSOLUTE,
+                IntensityFilter.typedUnit("2000000", 2_000_000, IntensityFilter.Mode.ABSOLUTE),
+                "and it stays one when that is what is shown");
+    }
+
+    @Test
+    public void testNoUnitIsChosenWhileASwitchIsInFlight() {
+        assertNull(IntensityFilter.typedUnit("50", 50, null),
+                "with no unit shown there is none to keep, and none to leave");
+        assertEquals(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX, IntensityFilter.typedUnit("50 %", 50, null),
+                "a sign says the unit outright, so it needs nothing shown");
+    }
 }
