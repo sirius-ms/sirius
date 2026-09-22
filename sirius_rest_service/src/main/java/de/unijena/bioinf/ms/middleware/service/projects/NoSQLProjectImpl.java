@@ -870,8 +870,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         AlignedFeatures feature = maybeFeature.get();
         storage.fetchAllChildren(feature, "alignedFeatureId", "features", Feature.class);
         project().fetchMsData(feature);
-        // only use features with LC/MS information
-        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x -> x.getApexIntensity() != null).toList();
+        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream)
+                .filter(x -> x.getTraceReference().isPresent()).toList();
 
         // get all samples in the project
         List<LCMSRun> allSamples = storage.findAllStr(LCMSRun.class, "runId", Database.SortOrder.ASCENDING).toList();
@@ -1322,7 +1322,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         List<String> labels = new ArrayList<>();
         Long fid = currentFeatureId.map(Long::valueOf).orElse(null);
         for (AlignedFeatures f : compound.getAdductFeatures().stream().flatMap(Collection::stream).toList()) {
-            if (f.getApexIntensity() == null) continue; // ignore features without lcms information
+            if (f.getTraceReference().isEmpty()) continue;
             String prefix = "[CORRELATED]";
             if (fid != null && fid == f.getAlignedFeatureId()) {
                 prefix = "[SELECTED]";
@@ -1340,7 +1340,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             storage.fetchAllChildren(f, "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
             allFeatures.add(f);
             labels.add(mainLabel + String.format(Locale.US, " (%.2f m/z) ", f.getAverageMass()));
-            List<AlignedIsotopicFeatures> isotopes = f.getIsotopicFeatures().orElse(new ArrayList<>()).stream().filter(x -> x.getApexIntensity() != null).sorted(Comparator.comparingDouble(AbstractFeature::getAverageMass)).toList();
+            List<AlignedIsotopicFeatures> isotopes = f.getIsotopicFeatures().orElse(new ArrayList<>()).stream().filter(x -> x.getTraceReference().isPresent()).sorted(Comparator.comparingDouble(AbstractFeature::getAverageMass)).toList();
             for (int k = 0; k < isotopes.size(); ++k) {
                 allFeatures.add(isotopes.get(k));
                 labels.add(mainLabel + String.format(Locale.US, " (%.2f m/z) ", isotopes.get(k).getAverageMass()) + (k + 1) + "-th isotope");
