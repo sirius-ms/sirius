@@ -176,12 +176,12 @@ public final class PanelQueryNodeFactory {
                     m -> m.getSampleBlankFoldChange().reset()));
 
         if (model.isIntensityFilterActive()) {
-            // a relative threshold stays a percentage in the query - the index matches it against the feature's
-            // intensity relative to its run maximum - so the chip shows the threshold as the user set it
+            // The unit is the field, not a suffix on the number: a threshold in percent of the run maximum is
+            // matched against the feature's own relative intensity, which the index holds as a field of its own.
             IntensityFilter filter = model.getIntensityFilter();
-            String threshold = filter.getMode() == IntensityFilter.Mode.RELATIVE_TO_RUN_MAX
-                    ? number(filter.getMinPercent()) + "%" : number(filter.getMinAbsolute());
-            facets.add(new Facet("intensity", QueryClause.numeric(filter.getMeasure().getField(), NumberOp.RANGE_INCLUSIVE, threshold, "", false), // [min TO *]
+            boolean relative = filter.getMode() == IntensityFilter.Mode.RELATIVE_TO_RUN_MAX;
+            String threshold = number(relative ? filter.getMinPercent() : filter.getMinAbsolute());
+            facets.add(new Facet("intensity", QueryClause.numeric(filter.getMeasure().getField(filter.getMode()), NumberOp.RANGE_INCLUSIVE, threshold, "", false), // [min TO *]
                     m -> m.getIntensityFilter().reset()));
         }
 

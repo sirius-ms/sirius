@@ -641,8 +641,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
     static final String INTENSITY_MODE_TOOLTIP =
             "Whether the minimum is an intensity, or a percentage of the most intense feature of the same run. "
-                    + "A percentage goes into the query as written (e.g. intensityApex:[10% TO *]) and keeps the features that "
-                    + "reach that share of their run's maximum in at least one run.";
+                    + "A percentage searches the relative intensity field (e.g. intensityApexRelative:[10 TO *]) and keeps "
+                    + "the features that reach that share of their run's maximum in at least one run.";
 
     static final String INTENSITY_MEASURE_TOOLTIP =
             "Which intensity the minimum applies to: the peak height at the apex of the chromatographic peak, or the area "
