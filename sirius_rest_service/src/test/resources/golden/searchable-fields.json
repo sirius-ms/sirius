@@ -70,7 +70,7 @@
     "defaultSearchField" : false,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : "Apex intensity in percent of the most intense feature of the same run, the highest such value over the runs the feature was detected in: intensityApexRelative:[10 TO *] keeps the features that reach 10 % of their run's maximum in at least one run. Data imported without runs (peak lists) is held against the most intense feature of the same source file instead. Features imported directly through the API (feature or compound import) belong to neither and therefore have no relative intensity. Searchable and sortable, but not part of the feature itself: it says how a feature compares with the project it is in rather than what was measured."
+    "description" : "Apex intensity in percent of the most intense feature of the same run, the highest such value over the runs the feature was detected in: intensityApexRelative:[10 TO *] keeps the features that reach 10 % of their run's maximum in at least one run. Data imported without runs (peak lists) is held against the most intense feature of the same source file instead, and features imported directly through the API (feature or compound import) have no source file and are held against each other. Searchable and sortable, but not part of the feature itself: it says how a feature compares with the project it is in rather than what was measured."
   }, {
     "name" : "intensityAUCRelative",
     "fieldType" : "DOUBLE",
