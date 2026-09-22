@@ -41,7 +41,7 @@ import java.util.Set;
  * <p>
  * The relative intensities put each run feature in proportion to the most intense feature of the same
  * {@linkplain #groupOf group} (100 = that group's strongest feature) and again take the maximum over the
- * groups, so a {@code %} bound compares a feature with the run it was measured in rather than with the project.
+ * groups, so a relative bound compares a feature with the run it was measured in rather than with the project.
  */
 public final class FeatureIntensities {
 
@@ -164,12 +164,9 @@ public final class FeatureIntensities {
 
     /**
      * The intensities of {@code feature}: the maxima over its run features, raw and relative to each group's
-     * maximum. Run features without a value are skipped; if run features exist but none has a value, the
-     * intensity is unknown (never the normalized merged value). An aligned feature with no run features at all
-     * reports its own apex value only when it has no merged trace either - it is then the MS1 precursor peak
-     * intensity written at import - and no relative value, since there is no group to relate it to. One that
-     * does have a merged trace reports nothing: every run's segment was too narrow to keep a run feature, and
-     * the aligned feature's own value is the merged one.
+     * maximum. Run features without a value are skipped, and if none of them has one the intensity is unknown.
+     * So it is for an aligned feature with no run features at all: an apex intensity of its own, where there
+     * is one, belongs to a merged trace and is not an intensity in counts.
      *
      * @param feature an aligned feature whose run features have been fetched, if it has any
      * @param maxima  the group maxima of the project the feature belongs to
@@ -177,12 +174,9 @@ public final class FeatureIntensities {
     public static Intensities of(@NotNull AlignedFeatures feature, @NotNull RunMaxima maxima) {
         List<Feature> runFeatures = feature.getFeatures().orElse(null);
         if (runFeatures == null || runFeatures.isEmpty())
-            // With a merged trace the ALIGNED feature's own apexIntensity is that trace's apex - normalized per
-            // run and summed over runs - which is not comparable with the raw run values this returns. Without
-            // one it is the precursor peak height written at import, which is.
-            return feature.getTraceReference().isPresent()
-                    ? Intensities.UNKNOWN
-                    : new Intensities(feature.getApexIntensity(), null, null, null);
+            // nothing measured to report; an apex intensity of its own, where there is one, is a merged
+            // trace's and not an intensity in counts
+            return Intensities.UNKNOWN;
 
         Double apex = null, auc = null, apexRelative = null, aucRelative = null;
         for (Feature runFeature : runFeatures) {
