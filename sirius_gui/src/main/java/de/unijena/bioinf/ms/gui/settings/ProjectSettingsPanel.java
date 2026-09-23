@@ -100,6 +100,16 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
 
     private void loadSize(ProjectInfo projectInfo) {
         long size = Optional.ofNullable(projectInfo.getNumOfBytes()).orElseThrow();
-        sizeField.setText(FileUtils.sizeToReadableString(size));
+        String readable = FileUtils.sizeToReadableString(size);
+        boolean compactionRecommended = Boolean.TRUE.equals(projectInfo.isCompactionRecommended());
+
+        sizeField.setText(compactionRecommended ? readable + "  (compacting is recommended)" : readable);
+        // cleared rather than left standing, so the hint disappears once the project has been compacted
+        sizeField.setToolTipText(compactionRecommended
+                ? "This project is stored in a layout an earlier SIRIUS version wrote, which takes markedly "
+                + "more space than it needs. Compacting rewrites it and reclaims that space.\n"
+                + "It reads and writes the whole project, so expect minutes for a large one, "
+                + "and free disk space for a second copy while it runs."
+                : null);
     }
 }
