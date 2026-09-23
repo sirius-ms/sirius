@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
 import de.unijena.bioinf.ms.gui.utils.filter.DbFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
@@ -50,7 +51,6 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -87,6 +87,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     final JSpinner blankSpinner;
 
     final FeatureFilterModel filterModel;
+    /** The working value the embedded chips render; the widgets push their state into it, Apply commits it. */
+    private final FilterSession session;
     final CompoundList compoundList;
 
     /** While true, live chip refreshes are skipped so a bulk widget update rebuilds the chips only once. */
@@ -128,6 +130,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         super(gui.getMainFrame(), "Filter configuration", true);
         this.gui = gui;
         this.filterModel = filterModel;
+        this.session = new FilterSession(filterModel); // this dialog's working value; disposed with it
         this.compoundList = compoundList;
         this.fieldsProvider = new SearchableFieldsProvider(gui.getSiriusClient(), gui.getProjectManager().getProjectId());
         setPreferredSize(GuiUtils.getPreferredSizeLimitedByScreenSize(new Dimension(700, 800)));
@@ -228,7 +231,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                         suppressChipRefresh = false;
                     }
                     if (queryEditor != null)
-                        queryEditor.rebuild();
+                        pushWidgetsToSession();
                 });
                 adductOptions.buttons.add(singleAdducts);
 
@@ -435,7 +438,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
         setMaximumSize(GuiUtils.getEffectiveScreenSize());
         wireLiveChipRefresh();          // widget edits -> live re-render of the panel chips
-        queryEditor.openSession(null);  // seed the user query from the shared doc + refresh autocomplete fields
+        queryEditor.openSession(null);  // working = applied, user query hydrated into chips, autocomplete fields refreshed
         refreshBlankFilterAvailability(); // whatever is known now; the fetch below settles it
         Jobs.runInBackground(() -> {
             fieldsProvider.refreshIfStale(); // shared with the editor's own refresh: cached, so at most one call
@@ -485,7 +488,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         if (foldChangeTab >= 0)
             centerTab.setToolTipTextAt(foldChangeTab, available ? null : NO_BLANK_FOLD_CHANGES_TOOLTIP);
 
-        queryEditor.rebuild(); // unticking programmatically does not fire the live-refresh listeners
+        pushWidgetsToSession(); // unticking programmatically does not fire the live-refresh listeners
     }
 
     /** The index of the tab with the given title, or -1 when there is none. */
@@ -545,42 +548,47 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         });
     }
 
+    @Override
+    public void dispose() {
+        session.dispose(); // stop following the applied filter; this dialog's session dies with it
+        queryEditor.dispose();
+        super.dispose();
+    }
+
     private void saveChanges() {
         if (deleteSelection.isSelected()) {
             deleteSelectedCompoundsAndResetFilter();
 
         } else {
-            applyToModel(filterModel);
-            queryEditor.commitToDocument(); // bake the user query into the shared doc as part of Apply
-            filterModel.fireUpdateCompleted();
+            pushWidgetsToSession(); // programmatic widget changes do not fire the live listeners
+            queryEditor.commitUserQuery();
+            session.commit(); // widgets, inversion, joint and query in one publish, one re-filter
         }
     }
 
-    private void applyToModel(@NotNull FeatureFilterModel filterModel) {
-        filterModel.setInverted(queryEditor.isInverted());
-        filterModel.setQueryJoin(queryEditor.getQueryJoin());
+    /** Writes the widgets' facet values into {@code target}; inversion, joint and user query are the editor's and stay as they are. */
+    private void applyWidgetsTo(@NotNull FeatureFilterModel target) {
+        target.setCurrentMinMz(getMinMz());
+        target.setCurrentMaxMz(getMaxMz());
+        target.setCurrentMinRt(getMinRt());
+        target.setCurrentMaxRt(getMaxRt());
+        target.setCurrentMinConfidence(getMinConfidence());
+        target.setCurrentMaxConfidence(getMaxConfidence());
+        target.setHasMs1(hasMs1.isSelected());
+        target.setHasMsMs(hasMsMs.isSelected());
+        target.setAdducts(new HashSet<>(adductOptions.checkBoxList.getCheckedItems()));
 
-        filterModel.setCurrentMinMz(getMinMz());
-        filterModel.setCurrentMaxMz(getMaxMz());
-        filterModel.setCurrentMinRt(getMinRt());
-        filterModel.setCurrentMaxRt(getMaxRt());
-        filterModel.setCurrentMinConfidence(getMinConfidence());
-        filterModel.setCurrentMaxConfidence(getMaxConfidence());
-        filterModel.setHasMs1(hasMs1.isSelected());
-        filterModel.setHasMsMs(hasMsMs.isSelected());
-        filterModel.setAdducts(new HashSet<>(adductOptions.checkBoxList.getCheckedItems()));
-
-        overallQualityPanel.updateModel(filterModel.getFeatureQualityFilter());
+        overallQualityPanel.updateModel(target.getFeatureQualityFilter());
 
         Iterator<QualityFilterPanel> qualityPanelIt = qualityPanels.iterator();
-        Iterator<QualityFilter> qualityFilterIt = filterModel.getCategorizedQualityFilters().iterator();
+        Iterator<QualityFilter> qualityFilterIt = target.getCategorizedQualityFilters().iterator();
         while (qualityPanelIt.hasNext() && qualityFilterIt.hasNext())
             qualityPanelIt.next().updateModel(qualityFilterIt.next());
 
-        filterModel.setLipidClassDetected(lipidFilter.getFilterState());
-        filterModel.setPfasDetected(pfasFilter.getFilterState());
+        target.setLipidClassDetected(lipidFilter.getFilterState());
+        target.setPfasDetected(pfasFilter.getFilterState());
 
-        filterModel.setElementFilter(new ElementFilter(
+        target.setElementFilter(new ElementFilter(
                         elementsField.getText() == null || elementsField.getText().isBlank()
                                 ? FormulaConstraints.empty()
                                 : FormulaConstraints.fromString(elementsField.getText()),
@@ -589,11 +597,11 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 )
         );
 
-        filterModel.setDbFilter(new DbFilter(searchDBList.checkBoxList.getCheckedItems(),
+        target.setDbFilter(new DbFilter(searchDBList.checkBoxList.getCheckedItems(),
                 ((SpinnerNumberModel) candidateSpinner.getModel()).getNumber().intValue()));
 
-        filterModel.getSampleBlankFoldChange().setEnabled(blankFilter.isSelected());
-        filterModel.getSampleBlankFoldChange().setCurrentMinFoldChange((Double) blankSpinner.getValue());
+        target.getSampleBlankFoldChange().setEnabled(blankFilter.isSelected());
+        target.getSampleBlankFoldChange().setCurrentMinFoldChange((Double) blankSpinner.getValue());
     }
 
     /**
@@ -637,9 +645,9 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     // --- embedded query editor (see queryEditor) ---
 
     /**
-     * Builds the embedded {@link QueryEditorPanel}. Its panel chips are rendered from a live snapshot
-     * of the dialog's own widget state ({@link #workingTerms()}), so they mirror the tabs without
-     * touching the real model until Apply; the host wires the dialog's transaction boundary
+     * Builds the embedded {@link QueryEditorPanel}. Its panel chips render the session's working value,
+     * into which the widgets push their state ({@link #pushWidgetsToSession()}), so they mirror the tabs
+     * without touching the applied filter until Apply; the host wires the dialog's transaction boundary
      * (Esc = Discard, Enter with nothing left to add = Apply) and turns a model-chip click into a
      * jump to its tab.
      */
@@ -682,33 +690,34 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         };
         // embedded: no in-editor funnel (the dialog has its own tabs); the clear button does a full
         // reset of every filter and the query (replacing the former separate Reset button)
-        return new QueryEditorPanel(filterModel, fieldsProvider, this::workingTerms, jumpToTab, renderState,
+        return new QueryEditorPanel(session, fieldsProvider,
+                () -> PanelFilterTerms.of(session, gui.getProperties().getConfidenceDisplayMode()), jumpToTab, renderState,
                 commit -> {}, () -> {}, host, true, null, this::resetFilter, this::resetFilterToDefaults);
     }
 
     /**
-     * The active panel facets of the dialog's CURRENT (uncommitted) widget state, as filter terms.
-     * Compiles the widgets into a throwaway model - exactly as the delete path does - so the chips
-     * reflect the working copy without mutating the real model. Defensive: a half-typed element
-     * formula (etc.) that cannot be parsed yields no chips rather than an error.
+     * Pushes the dialog's CURRENT (uncommitted) widget state into the session's working value, which the
+     * embedded chips render. One-directional for now: the widgets own the facets; the session carries them
+     * together with the editor-owned parts (inversion, block joint, user query). Defensive: a half-typed
+     * element formula (etc.) that cannot be parsed leaves the working value as it was rather than raising.
      */
-    private List<FilterTerm> workingTerms() {
+    private void pushWidgetsToSession() {
         try {
-            FeatureFilterModel working = new FeatureFilterModel();
-            applyToModel(working);
-            return PanelFilterTerms.of(working, gui.getProperties().getConfidenceDisplayMode());
+            FeatureFilterModel widgets = new FeatureFilterModel(filterModel.getContext());
+            widgets.set(session.working());
+            applyWidgetsTo(widgets);
+            session.set(widgets.get());
         } catch (Exception ex) {
-            log.debug("Could not build the working filter snapshot for the live chips", ex);
-            return List.of();
+            log.debug("Could not read the widget state into the working filter", ex);
         }
     }
 
-    /** Re-renders the panel chips whenever any filter widget changes, so they track the tabs live. */
+    /** Pushes the widget state into the session whenever any filter widget changes, so the chips track the tabs live. */
     private void wireLiveChipRefresh() {
         // The chip rebuild is not free (it recompiles a throwaway model). A bulk widget update (e.g. the
         // adduct "single" preset checks many boxes at once) sets suppressChipRefresh and rebuilds ONCE at
         // the end instead of once per box, so the preset does not lag.
-        Runnable refresh = () -> { if (!suppressChipRefresh) queryEditor.rebuild(); };
+        Runnable refresh = () -> { if (!suppressChipRefresh) pushWidgetsToSession(); };
         // The database buttons (all / none / bio) tick their boxes one at a time, so a click arrives as a
         // burst of events - and rebuilding per event would recompile the throwaway model a dozen times over.
         // Collapsing the burst into one rebuild at the end of the turn handles every such button, including
@@ -742,7 +751,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         SwingUtilities.invokeLater(() -> {
             chipRefreshPending = false;
             if (!suppressChipRefresh)
-                queryEditor.rebuild();
+                pushWidgetsToSession();
         });
     }
 
@@ -757,20 +766,11 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     private void deleteSelectedCompoundsAndResetFilter() {
         // Build the query for the features to DELETE: everything that does NOT match the current filter.
         // Flipping the filter's inversion turns the "keep" (visible) query into its complement.
-        FeatureFilterModel deleteMatcher = new FeatureFilterModel();
+        pushWidgetsToSession();
+        queryEditor.commitUserQuery(); // the working value now carries widgets, inversion, joint and query
+        FeatureFilterModel deleteMatcher = new FeatureFilterModel(filterModel.getContext());
         deleteMatcher.setExecutableQueryForm(filterModel.getExecutableQueryForm()); // same query, same anchoring
-        applyToModel(deleteMatcher);
-        // applyToModel copies only the widget facets + inversion; the search-bar (user) query lives in
-        // the editor and must be included, or the delete complement would not match the visible list
-        String userQuery = queryEditor.userQuery();
-        if (!userQuery.isBlank()) {
-            try {
-                deleteMatcher.getSearchTextDoc().insertString(0, userQuery, null);
-            } catch (BadLocationException e) {
-                log.error("Could not attach the search-bar query to the delete matcher", e);
-            }
-        }
-        deleteMatcher.setInverted(!deleteMatcher.isInverted());
+        deleteMatcher.set(session.working().withInverted(!session.working().inverted()));
         Optional<String> deleteQuery = deleteMatcher.toLuceneQuery(gui.getProperties().getConfidenceDisplayMode());
 
         // A blank/absent query means no filter is active -> everything matches -> nothing is "non-matching"
@@ -825,10 +825,11 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
         blankFilter.setSelected(false);
 
-        queryEditor.setInverted(false); // inversion lives in the editor now
-        // clear the user query and re-render the chips from the freshly-reset widget state (a
-        // programmatic checkbox reset does not fire the live-refresh listeners)
+        queryEditor.setInverted(false);
+        // clear the user query and push the freshly-reset widget state (a programmatic checkbox reset does
+        // not fire the live-refresh listeners)
         queryEditor.clearUserQuery();
+        pushWidgetsToSession();
     }
 
     /**
@@ -865,8 +866,9 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         } finally {
             suppressChipRefresh = false;
         }
-        // clear the user query and re-render the chips from the freshly-set widget state
+        // clear the user query and push the freshly-set widget state
         queryEditor.clearUserQuery();
+        pushWidgetsToSession();
     }
 
     private void resetSpinnerValues() {
@@ -921,8 +923,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 return; // unknown facet - nothing to reset, leave the chips untouched
             }
         }
-        // a programmatic checkbox / combo reset does not fire the live-refresh listeners, so re-render
-        queryEditor.rebuild();
+        // a programmatic checkbox / combo reset does not fire the live-refresh listeners, so push by hand
+        pushWidgetsToSession();
     }
 
     /** Resets the overall ("quality") or a categorized ("quality.&lt;id&gt;") quality filter panel. */

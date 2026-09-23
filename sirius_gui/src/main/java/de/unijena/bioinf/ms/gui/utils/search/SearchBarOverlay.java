@@ -20,7 +20,7 @@ package de.unijena.bioinf.ms.gui.utils.search;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
-import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +62,7 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
     private boolean focusEstablished = false;
 
     public SearchBarOverlay(@NotNull Window owner,
-                            @NotNull FeatureFilterModel filterModel,
+                            @NotNull FilterSession session,
                             @NotNull SearchableFieldsProvider fieldsProvider,
                             @NotNull Supplier<List<FilterTerm>> termSupplier,
                             @NotNull FilterEditorHost editorHost,
@@ -83,9 +83,8 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
         setModalityType(ModalityType.MODELESS);
         setFocusableWindowState(true);
 
-        editor = new QueryEditorPanel(filterModel, fieldsProvider, termSupplier, editorHost, renderState,
-                // no host clear action: the overlay's Clear stages the facet removals itself (see
-                // QueryEditorPanel#clearAll); restore defaults is dialog-only
+        // no widget hooks for Clear / Restore: the overlay's edits are the session's alone
+        editor = new QueryEditorPanel(session, fieldsProvider, termSupplier, editorHost, renderState,
                 onCommitted, refreshCollapsedBar, this, false, openFilterPanel, null, null);
         setContentPane(editor);
 
@@ -171,7 +170,7 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
      */
     public void close() {
         focusEstablished = false;
-        editor.revertToBaseline();
+        editor.revert();
         // Destroy the native peer, don't just hide it: on some (X)Wayland compositors an undecorated
         // heavyweight window's surface can linger after a plain hide - still grabbing mouse input at
         // its old location while painting nothing. That is what makes a "click on the collapsed bar"

@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.gui.dialogs.filter.FeatureFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
 import de.unijena.bioinf.ms.gui.utils.search.LuceneSearchBar;
 import de.unijena.bioinf.ms.gui.utils.search.PanelFilterTerms;
 import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
@@ -84,8 +85,11 @@ public class CompoundList {
         // autocompletion in an overlay expanding over the result view
         // the full filter dialog is now opened from an in-field funnel icon inside the search bar
         // (see LuceneSearchBar) instead of a separate "..." button next to it
-        searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel,
+        // the overlay's editing session over the applied filter: one per model, shared by every editor
+        FilterSession session = new FilterSession(filterModel);
+        searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel, session,
                 () -> PanelFilterTerms.of(filterModel, gui.getProperties().getConfidenceDisplayMode()),
+                () -> PanelFilterTerms.of(session, gui.getProperties().getConfidenceDisplayMode()),
                 term -> new FeatureFilterOptionsDialog(gui, filterModel, this, term.id()),
                 () -> new FeatureFilterOptionsDialog(gui, filterModel, this),
                 this::resetFilter,
