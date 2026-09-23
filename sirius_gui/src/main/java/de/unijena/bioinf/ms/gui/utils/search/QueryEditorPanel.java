@@ -30,7 +30,10 @@ import de.unijena.bioinf.ms.gui.configs.QueryModeIcon;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
+import de.unijena.bioinf.ms.gui.utils.filter.QuickFilterSwitch;
+import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,6 +181,12 @@ public class QueryEditorPanel extends JPanel {
     @Nullable
     private final Runnable restoreDefaults;
     /**
+     * The quick switches in the floating footer and their controls. A switch has no state of its own: its
+     * position is read from the working value on every {@link #rebuild}, flipping it is one edit on the
+     * session. Empty when the host offers none (the embedded dialog).
+     */
+    private final Map<QuickFilterSwitch, JToggleSwitch> switchControls = new LinkedHashMap<>();
+    /**
      * The overlay's funnel button, kept so its tint can track the active filter state; null when embedded.
      */
     @Nullable
@@ -263,7 +272,8 @@ public class QueryEditorPanel extends JPanel {
                             boolean embedded,
                             @Nullable Runnable openFilterPanel,
                             @Nullable Runnable clearFilter,
-                            @Nullable Runnable restoreDefaults) {
+                            @Nullable Runnable restoreDefaults,
+                            @NotNull List<QuickFilterSwitch> quickSwitches) {
         super(new BorderLayout());
         this.session = session;
         this.fieldsProvider = fieldsProvider;
@@ -465,6 +475,28 @@ public class QueryEditorPanel extends JPanel {
             footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Colors.Menu.FILTER_BUTTON));
             footer.add(copyBox, BorderLayout.WEST);
             footer.add(actions, BorderLayout.EAST);
+
+            // the quick switches between copy and the actions: shortcuts that relax the default filter's
+            // restrictions for a quick look, staged like every other edit (Apply/Enter commits, Esc reverts).
+            // They are seeded from the working value in rebuild() without firing, so only a click edits.
+            if (!quickSwitches.isEmpty()) {
+                JPanel switches = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+                switches.setOpaque(false);
+                for (QuickFilterSwitch quick : quickSwitches) {
+                    JToggleSwitch toggle = new JToggleSwitch();
+                    toggle.setPreferredSize(new Dimension(40, 28));
+                    toggle.setFocusable(false); // keep keyboard focus in the input
+                    String tooltip = GuiUtils.formatToolTip(quick.tooltip());
+                    toggle.setToolTipText(tooltip);
+                    toggle.addEventToggleSelected(on -> session.edit(f -> quick.apply(f, session.context(), on)));
+                    JLabel label = new JLabel(quick.label());
+                    label.setToolTipText(tooltip);
+                    switches.add(toggle);
+                    switches.add(label);
+                    switchControls.put(quick, toggle);
+                }
+                footer.add(switches, BorderLayout.CENTER);
+            }
             add(footer, BorderLayout.SOUTH);
         }
 
@@ -1148,6 +1180,10 @@ public class QueryEditorPanel extends JPanel {
             filterButton.setFilterActive(hasWorkingQuery(), isInverted());
         styleInvertToggle();
         styleQueryModeToggle();
+        // the quick switches read their position from the working value - seeded without firing, so a
+        // switch that follows a chip's remove or a restore does not edit anything back
+        FeatureFilter working = session.working();
+        switchControls.forEach((quick, toggle) -> toggle.setSelected(quick.isOn().test(working), false, false));
 
         // removeAll() detaches the (focused) input, which drops the keyboard focus; restore it
         // after the re-layout so typing continues seamlessly after choosing a suggestion
