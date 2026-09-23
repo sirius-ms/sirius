@@ -48,7 +48,7 @@ import de.unijena.bioinf.ms.gui.utils.query.LuceneQueryCompiler;
 import de.unijena.bioinf.ms.gui.utils.query.QueryContainer;
 import de.unijena.bioinf.ms.gui.utils.query.QueryNode;
 
-import static de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory.*;
+import static de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory.*;
 
 /**
  * This model stores the filter criteria for a compound list

@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.utils.filter;
 
-import de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory;
+import de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory;
 import io.sirius.ms.sdk.model.DataQuality;
 import lombok.Getter;
 import org.apache.commons.text.CaseUtils;
