@@ -69,8 +69,7 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
                             @NotNull SearchRenderState renderState,
                             @NotNull Consumer<QueryEditorPanel.Commit> onCommitted,
                             @NotNull Runnable refreshCollapsedBar,
-                            @NotNull Runnable openFilterPanel,
-                            @NotNull Runnable clearFilter) {
+                            @NotNull Runnable openFilterPanel) {
         super(owner);
 
         // A heavyweight top-level window so it floats above the native JxBrowser windows of the
@@ -85,7 +84,9 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
         setFocusableWindowState(true);
 
         editor = new QueryEditorPanel(filterModel, fieldsProvider, termSupplier, editorHost, renderState,
-                onCommitted, refreshCollapsedBar, this, false, openFilterPanel, clearFilter, null); // restore defaults is dialog-only
+                // no host clear action: the overlay's Clear stages the facet removals itself (see
+                // QueryEditorPanel#clearAll); restore defaults is dialog-only
+                onCommitted, refreshCollapsedBar, this, false, openFilterPanel, null, null);
         setContentPane(editor);
 
         // keep anchored while the main window is moved or resized (only while actually open - a

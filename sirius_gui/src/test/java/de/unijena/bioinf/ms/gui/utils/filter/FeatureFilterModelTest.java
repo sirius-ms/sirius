@@ -20,9 +20,12 @@ package de.unijena.bioinf.ms.gui.utils.filter;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
+import io.sirius.ms.sdk.model.DataQuality;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -71,5 +74,39 @@ public class FeatureFilterModelTest {
         // multimeric case can be exercised here; isSupportedAdduct still guards both conditions.
         assertFalse(FeatureFilterModel.isSupportedAdduct(PrecursorIonType.fromString("[2M + H]+")),
                 "multimeric adduct is not supported");
+    }
+
+    /**
+     * The committed "restore defaults" (the search bar's in-field button) must land on the same state a
+     * fresh model carries - MS/MS required, quality DECENT/GOOD, the supported detected adducts - and
+     * drop everything else: the user's query, the inversion and any range restriction.
+     */
+    @Test
+    public void testResetFilterToDefaultsRestoresTheDefaultConfiguration() throws Exception {
+        PrecursorIonType protonated = PrecursorIonType.fromString("[M + H]+");
+        PrecursorIonType dimer = PrecursorIonType.fromString("[2M + H]+"); // unsupported: multimeric
+
+        FeatureFilterModel model = cleanSlate();
+        model.updateAdducts(List.of(protonated, dimer));
+        // move every default-carrying facet away from its default, plus a query, inversion and a range
+        model.setAdducts(Set.of(protonated, dimer));
+        model.getSearchTextDoc().insertString(0, "formula:C6H12O6", null);
+        model.setInverted(true);
+        model.setCurrentMinMz(100d);
+
+        model.resetFilterToDefaults();
+
+        assertTrue(model.isHasMsMs(), "default: MS/MS required");
+        assertFalse(model.getFeatureQualityFilter().isQualitySelected(DataQuality.BAD), "default excludes BAD");
+        assertFalse(model.getFeatureQualityFilter().isQualitySelected(DataQuality.LOWEST), "default excludes LOWEST");
+        assertTrue(model.getFeatureQualityFilter().isQualitySelected(DataQuality.DECENT), "default keeps DECENT");
+        assertTrue(model.getFeatureQualityFilter().isQualitySelected(DataQuality.GOOD), "default keeps GOOD");
+        assertTrue(model.getSelectedAdducts().contains(protonated), "default selects the supported adducts");
+        assertFalse(model.getSelectedAdducts().contains(dimer), "default drops unsupported (multimeric) adducts");
+        assertTrue(model.getSelectedAdducts().stream().allMatch(FeatureFilterModel::isSupportedAdduct));
+        assertFalse(model.isSearchTextFilterActive(), "the search query is cleared");
+        assertFalse(model.isInverted(), "the inversion is dropped");
+        assertFalse(model.isMzFilterActive(), "range restrictions are dropped");
+        assertTrue(model.isActive(), "the default configuration is an active filter");
     }
 }
