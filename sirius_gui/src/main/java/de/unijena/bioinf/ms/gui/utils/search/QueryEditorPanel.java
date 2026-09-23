@@ -30,7 +30,7 @@ import de.unijena.bioinf.ms.gui.configs.QueryModeIcon;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
-import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -77,9 +75,10 @@ import java.util.function.Supplier;
  * quick full-text search. Tab never runs the search (it skips that row); Backspace on empty input
  * pops a stage.
  * <p>
- * The builder state compiles into the {@link FeatureFilterModel}'s shared search text document on
- * commit - the model itself needs no change and the filter dialog's fulltext field shows the
- * compiled query automatically.
+ * Every edit goes to the working value of a {@link FilterSession}: the facet chips render it; a chip's
+ * remove, Clear, Restore defaults, the invert toggle and the block joint stage {@code with…} edits on it;
+ * the user's own query is compiled into it. Commit publishes the working value, Cancel reverts it.
+ * Nothing is staged in the editor itself except the term being typed.
  */
 @Slf4j
 public class QueryEditorPanel extends JPanel {
@@ -146,8 +145,10 @@ public class QueryEditorPanel extends JPanel {
         }
     }
 
-    private final FeatureFilterModel filterModel;
+    /** The working value every edit goes to and every facet chip renders; commit publishes it (see the class doc). */
+    private final FilterSession session;
     private final SearchableFieldsProvider fieldsProvider;
+    /** The panel facets of the session's working value as terms, supplied by the host (which knows the pojo). */
     private final Supplier<List<FilterTerm>> termSupplier;
     private final FilterEditorHost editorHost;
     private final SearchRenderState renderState;
@@ -156,8 +157,9 @@ public class QueryEditorPanel extends JPanel {
     private final Host host;
     /**
      * Embedded (in the filter dialog) vs. floating (the overlay). Embedded drops its own commit
-     * controls, Esc binding and model-update listener - the dialog owns commit/dismissal - and
-     * renders model chips as read-only navigation targets (their value is edited via the widgets).
+     * controls and Esc binding - the dialog owns commit/dismissal - and routes a facet chip's remove
+     * through the host, because the dialog's widgets still own the facets (they push their state into
+     * the session; the session does not write them back yet).
      */
     private final boolean embedded;
     /**
@@ -167,15 +169,12 @@ public class QueryEditorPanel extends JPanel {
     @Nullable
     private final Runnable openFilterPanel;
     /**
-     * Full reset of every filter and the search query (the overlay's Clear button). When null the
-     * Clear button only clears the user's own query (the embedded dialog keeps its own Reset).
+     * Embedded only: resets the dialog's widgets when Clear is pressed, before the working value is
+     * cleared, so widgets and chips agree. Null for the overlay, whose Clear is the session's alone.
      */
     @Nullable
     private final Runnable clearFilter;
-    /**
-     * Restores the default filter configuration (SIRIUS's recommended starting filter). When null the
-     * restore button is hidden (e.g. the embedded dialog manages its own defaults).
-     */
+    /** Embedded only: seeds the dialog's widgets with the defaults when Restore is pressed (same pattern). */
     @Nullable
     private final Runnable restoreDefaults;
     /**
@@ -194,41 +193,17 @@ public class QueryEditorPanel extends JPanel {
     private QueryModeIcon queryModeIcon;
     private JButton queryModeToggle;
 
-    // --- builder state ---
+    // --- builder state: the term being built, and the user query as the tree its chips are built from ---
+    /**
+     * The user's own query as a tree - hydrated from the working value when a session opens or reverts,
+     * compiled back into it when a clause is accepted for commit. The inversion and the block joint are
+     * NOT editor state: they live on the working value and are read from there.
+     */
     private QueryContainer root = QueryContainer.empty();
     private int[] openPath = new int[0];
     private final TokenInputModel tokenModel = new TokenInputModel();
-    /** Whether the whole query is inverted ({@code *:* AND NOT (...)}); a model-level flag surfaced and
-     *  edited here (see the invert toggle), applied to the model at the host's commit point. */
-    private boolean inverted;
-    /**
-     * How the filter-panel block and the user's own query are joined - the "big" connector of
-     * {@code (facets) AND (query)}. A model-level flag like {@link #inverted}: surfaced here as the
-     * clickable chip between the two braced blocks, applied to the model on commit. AND by default,
-     * which is what it stays for everyone who never touches it.
-     */
-    private LogicOp queryJoin = LogicOp.AND;
-    /**
-     * The applied query the working state reverts to on Cancel: captured when the session opens and
-     * whenever a search is committed. Uncommitted edits made while open are discarded back to this.
-     */
-    private QueryContainer baselineRoot = QueryContainer.empty();
-    private String baselineFreeText = "";
-    private boolean baselineInverted;
-    private LogicOp baselineQueryJoin = LogicOp.AND;
-    /**
-     * The query string this editor last wrote into the shared search document. If the document
-     * differs on open, it was edited elsewhere (filter dialog) - the builder then degrades the
-     * document content into its free-text segment instead of trying to parse it back into chips.
-     */
-    private String lastCompiled = "";
-    /**
-     * Model-filter chip removals staged in the editor but not yet applied. Like the user's own
-     * clauses, they take effect only on commit (Search) and are discarded on Cancel - so the
-     * {@link FeatureFilterModel} is left untouched until the query is actually run. Keyed by chip
-     * label so {@link #rebuild} can hide a staged-removed chip without mutating the model.
-     */
-    private final LinkedHashMap<String, Runnable> pendingModelRemovals = new LinkedHashMap<>();
+    /** Releases this editor's subscription to the session (see the constructor). */
+    private final Runnable unsubscribe;
 
     // --- ui ---
     /**
@@ -277,7 +252,7 @@ public class QueryEditorPanel extends JPanel {
     @Nullable
     private Point hoverAnchor;
 
-    public QueryEditorPanel(@NotNull FeatureFilterModel filterModel,
+    public QueryEditorPanel(@NotNull FilterSession session,
                             @NotNull SearchableFieldsProvider fieldsProvider,
                             @NotNull Supplier<List<FilterTerm>> termSupplier,
                             @NotNull FilterEditorHost editorHost,
@@ -290,7 +265,7 @@ public class QueryEditorPanel extends JPanel {
                             @Nullable Runnable clearFilter,
                             @Nullable Runnable restoreDefaults) {
         super(new BorderLayout());
-        this.filterModel = filterModel;
+        this.session = session;
         this.fieldsProvider = fieldsProvider;
         this.termSupplier = termSupplier;
         this.editorHost = editorHost;
@@ -366,18 +341,14 @@ public class QueryEditorPanel extends JPanel {
         });
 
         // restore the default filter configuration (distinct from Clear, which removes all filters);
-        // only shown when the host provides the action (the embedded filter dialog; the search overlay
-        // passes null, so no restore button there)
-        JButton restore = null;
-        if (restoreDefaults != null) {
-            restore = Buttons.getRestoreDefaultsButton(ICON_SIZE, "Restore default filters", true);
-            restore.setFocusable(false); // must not grab focus (would auto-close the search overlay)
-            restore.setMargin(new Insets(0, 0, 0, 0));
-            restore.addActionListener(e -> {
-                restoreDefaultsAll();
-                input.requestFocusInWindow();
-            });
-        }
+        // staged on the working value like Clear, so both hosts offer it
+        JButton restore = Buttons.getRestoreDefaultsButton(ICON_SIZE, "Restore default filters", true);
+        restore.setFocusable(false); // must not grab focus (would auto-close the search overlay)
+        restore.setMargin(new Insets(0, 0, 0, 0));
+        restore.addActionListener(e -> {
+            restoreDefaultsAll();
+            input.requestFocusInWindow();
+        });
         if (openFilterPanel != null) {
 
             // hands off via the host so the overlay steps aside before the (modal) dialog opens
@@ -427,13 +398,12 @@ public class QueryEditorPanel extends JPanel {
         invertToggle = new ToolbarButton(invertIcon, null, true);
         invertToggle.setFocusable(false);
         invertToggle.setMargin(new Insets(0, 0, 0, 0));
-        invertToggle.addActionListener(e -> setInverted(!inverted));
+        invertToggle.addActionListener(e -> setInverted(!isInverted()));
 
         // order left-to-right: query-state actions (clear, restore, invert) then meta controls (query
         // mode, funnel)
         controls.add(clear);
-        if (restore != null)
-            controls.add(restore);
+        controls.add(restore);
         controls.add(invertToggle);
         controls.add(queryModeToggle);
         if (filterButton != null)
@@ -562,95 +532,67 @@ public class QueryEditorPanel extends JPanel {
                     host.editorCloseRequested();
                 }
             });
-
-            // Structured filters may change under the floating overlay (dialog, quick toggles).
-            // The embedded editor instead re-renders from the dialog's live widget state (see the
-            // widget listeners the dialog attaches) and would leak a listener per dialog open.
-            // The event can be fired off the EDT (background project reload), so marshal onto it.
-            filterModel.addUpdateCompleteListener(evt -> SwingUtilities.invokeLater(() -> {
-                if (isShowing())
-                    rebuild();
-            }));
         }
+
+        // every change of the working value re-renders: our own edits, the dialog's widgets pushing their
+        // state, or the applied filter changing under an unedited session (a project reload)
+        unsubscribe = session.subscribe(() -> {
+            if (isShowing())
+                rebuild();
+        });
+    }
+
+    /** Releases the session subscription; the host calls this when the editor goes away for good. */
+    public void dispose() {
+        unsubscribe.run();
     }
 
     /**
      * Clears the user's own query (typed clauses + free text); the filter-dialog filters are kept.
      */
     public void clearUserQuery() {
-        root = QueryContainer.empty();
-        openPath = new int[0];
-        tokenModel.reset();
-        input.setText("");
-        pendingModelRemovals.clear(); // restore any staged-removed chips
+        resetLocalQuery();
+        session.edit(f -> f.withUserQuery(""));
         rebuild();
     }
 
     /**
-     * Clear: reset every filter and the search query. The contract differs by host:
-     * <ul>
-     *   <li><b>Embedded dialog</b> - resets the backing widgets via {@link #clearFilter} and wipes the
-     *       working query. Staged like every dialog edit: applied on Apply, reverted by Discard/Esc.</li>
-     *   <li><b>Overlay</b> - stages a removal of every active facet and clears the working query, leaving
-     *       the baseline intact. Applied on Apply/Enter (commit), reverted on Esc/close; the model is not
-     *       touched on click.</li>
-     * </ul>
+     * Clear: nothing filtered, no query - staged on the working value (Apply/Enter commits, Esc/Discard
+     * reverts). The embedded dialog first resets its widgets through {@link #clearFilter}, so they agree
+     * with the chips.
      */
     public void clearAll() {
-        if (embedded) {
-            if (clearFilter != null)
-                clearFilter.run(); // reset the backing widgets (staged; the model is not touched now)
-            resetLocalQueryToEmptyBaseline();
-        } else {
-            // overlay: stage a removal of every active facet and clear the working query, leaving the
-            // baseline intact so Esc/close restores the applied filter and Apply/Enter applies the clear.
-            for (FilterTerm term : termSupplier.get())
-                pendingModelRemovals.put(term.id(), term::remove);
-            root = QueryContainer.empty();
-            openPath = new int[0];
-            tokenModel.reset();
-            input.setText("");
-            inverted = false; // a full clear also drops the inversion
-            rebuild();
-        }
+        if (clearFilter != null)
+            clearFilter.run();
+        resetLocalQuery();
+        session.clear();
+        rebuild();
     }
 
     /**
      * Restore the default filter configuration (SIRIUS's recommended starting filter) instead of clearing
-     * everything. Dialog-only and staged: {@link #restoreDefaults} resets the backing widgets to their
-     * defaults (applied on Apply, reverted by Discard/Esc), and the editor's own query state is reset to
-     * match.
+     * everything - staged on the working value like {@link #clearAll()}, so Esc/Discard puts the applied
+     * filter back. The embedded dialog first seeds its widgets through {@link #restoreDefaults}.
      */
     public void restoreDefaultsAll() {
         if (restoreDefaults != null)
             restoreDefaults.run();
-        resetLocalQueryToEmptyBaseline();
+        resetLocalQuery();
+        session.restoreDefaults();
+        rebuild();
     }
 
-    /**
-     * Resets the editor's own working query (chips + free text + inversion) to empty and adopts that as the
-     * new baseline, so a later Cancel/close does not resurrect the old query. Shared by the embedded Clear
-     * and the Restore-defaults action.
-     */
-    private void resetLocalQueryToEmptyBaseline() {
+    /** Drops the editor's own state: the user-query tree, the open group and whatever is being typed. */
+    private void resetLocalQuery() {
         root = QueryContainer.empty();
         openPath = new int[0];
         tokenModel.reset();
         input.setText("");
-        pendingModelRemovals.clear();
-        inverted = false;
-        queryJoin = LogicOp.AND;
-        baselineRoot = root;
-        baselineFreeText = "";
-        baselineInverted = false;
-        baselineQueryJoin = LogicOp.AND;
-        lastCompiled = Optional.ofNullable(filterModel.getSearchText()).orElse("");
-        rebuild();
     }
 
     /**
-     * Copies the whole query as currently shown - the panel facets (minus any staged removals) joined to
-     * the user's own query by the block joint, wrapped for inversion - to the system clipboard. Mirrors the executed-query
+     * Copies the whole query as currently shown - the working value's panel facets joined to the user's
+     * own query by the block joint, wrapped for inversion - to the system clipboard. Mirrors the executed-query
      * composition in {@link FeatureFilterModel} (facets AND free-text segment, {@code *:* AND NOT (...)}
      * when inverted), but from the live editor state rather than the committed model, so it reflects
      * unsaved edits.
@@ -658,8 +600,7 @@ public class QueryEditorPanel extends JPanel {
     private void copyQueryToClipboard() {
         List<QueryNode> facets = new ArrayList<>();
         for (FilterTerm term : termSupplier.get())
-            if (!pendingModelRemovals.containsKey(term.id()))
-                facets.add(term.toQueryNode());
+            facets.add(term.toQueryNode());
         List<LogicOp> ands = new ArrayList<>(Math.max(0, facets.size() - 1));
         for (int i = 1; i < facets.size(); i++)
             ands.add(LogicOp.AND);
@@ -667,28 +608,25 @@ public class QueryEditorPanel extends JPanel {
         // The facets are compiled as executed (incl. the match-all anchor for negation-only facets such
         // as "no lipid class"), so the copied query runs as-is; the user query stays verbatim.
         String userQuery = LuceneQueryCompiler.compile(root, freeTextForCommit());
-        String core = LuceneQueryCompiler.compileExecutable(new QueryContainer(facets, ands), userQuery, queryJoin);
-        String whole = inverted && !core.isBlank() ? "*:* AND NOT (" + core + ")" : core;
+        String core = LuceneQueryCompiler.compileExecutable(new QueryContainer(facets, ands), userQuery, getQueryJoin());
+        String whole = isInverted() && !core.isBlank() ? "*:* AND NOT (" + core + ")" : core;
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(whole), null);
     }
 
-    /** The working joint between the panel block and the user's query (applied to the model on commit). */
+    /** The working joint between the panel block and the user's query (published with the working value on commit). */
     @NotNull
     public LogicOp getQueryJoin() {
-        return queryJoin;
+        return session.working().queryJoin();
     }
 
-    /** Whether the working query is inverted (applied to the model at the host's commit point). */
+    /** Whether the working query is inverted. */
     public boolean isInverted() {
-        return inverted;
+        return session.working().inverted();
     }
 
-    /** Sets the working inversion and re-renders (the toggle tint and the inversion chip). */
+    /** Stages the inversion on the working value; the session's change re-renders (toggle tint, chips). */
     public void setInverted(boolean inverted) {
-        if (this.inverted == inverted)
-            return;
-        this.inverted = inverted;
-        rebuild();
+        session.edit(f -> f.withInverted(inverted));
     }
 
     /**
@@ -726,6 +664,7 @@ public class QueryEditorPanel extends JPanel {
      *  (blue) when active and not inverted, the inverted accent (red) when inverted. */
     private void styleInvertToggle() {
         // the filled half follows the state: left while the query reads as written, right once it is inverted
+        boolean inverted = isInverted();
         invertIcon.setInverted(inverted);
         invertIcon.setColor(hasWorkingQuery()
                 ? (inverted ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON)
@@ -739,7 +678,7 @@ public class QueryEditorPanel extends JPanel {
     /** The accent colour for the query chips/groups: the inverted tone while the query is inverted,
      *  the normal filter accent otherwise - so an inverted query reads red-ish rather than blue-ish. */
     private Color queryAccent() {
-        return inverted ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON;
+        return isInverted() ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON;
     }
 
     /** Whether the working query has anything to filter/invert: a user clause, free text, or a
@@ -751,37 +690,15 @@ public class QueryEditorPanel extends JPanel {
     // --- session lifecycle (driven by the host) ---
 
     /**
-     * Prepares the editor for a fresh editing session: degrades an externally-edited document into
-     * free text, captures the revert baseline, applies the optional type-ahead keystroke and kicks
-     * off a background refresh of the searchable fields. The host handles making itself visible and
-     * then calls {@link #focusInputAndRefresh()}.
+     * Prepares the editor for a fresh editing session: the working value starts as the applied filter,
+     * its user query is hydrated into chips, the optional type-ahead keystroke is applied and a background
+     * refresh of the searchable fields kicked off. The host handles making itself visible and then calls
+     * {@link #focusInputAndRefresh()}.
      */
     public void openSession(@Nullable String typeAhead) {
         hoverAnchor = pointerLocation(); // ignore hover-selection until the mouse really moves
-        String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
-        if (!docText.equals(lastCompiled)) {
-            openPath = new int[0];
-            tokenModel.reset();
-            // hydrate the existing query into editable chips; if it uses constructs we do not model
-            // (or is not valid lucene) fall back to showing its text in the input as a free-text edit
-            Optional<QueryContainer> parsed = QueryStringParser.parse(docText, fieldsProvider.getCached());
-            if (parsed.isPresent()) {
-                root = parsed.get();
-                input.setText("");
-            } else {
-                root = QueryContainer.empty();
-                input.setText(docText);
-            }
-            lastCompiled = docText;
-        }
-        // seed the working inversion and block joint from the applied model state each open
-        inverted = filterModel.isInverted();
-        queryJoin = filterModel.getQueryJoin();
-        // the applied query is the baseline Cancel reverts to (before any type-ahead edit)
-        baselineRoot = root;
-        baselineFreeText = input.getText();
-        baselineInverted = inverted;
-        baselineQueryJoin = queryJoin;
+        session.open();
+        hydrateUserQuery();
         if (typeAhead != null)
             input.setText(input.getText() + typeAhead);
 
@@ -819,18 +736,30 @@ public class QueryEditorPanel extends JPanel {
     }
 
     /**
-     * Discards any uncommitted edits: the working state reverts to the last applied query (the
-     * baseline). A commit updates the baseline first, so reverting right after committing keeps the
-     * applied query.
+     * Discards any uncommitted edits: the working value reverts to the applied filter and the editor
+     * re-hydrates from it. A commit publishes first, so reverting right after committing keeps the query.
      */
-    public void revertToBaseline() {
-        root = baselineRoot;
-        inverted = baselineInverted;
-        queryJoin = baselineQueryJoin;
+    public void revert() {
+        session.revert();
+        hydrateUserQuery();
+    }
+
+    /**
+     * Rebuilds the editor's user-query tree from the working value: parsed into editable chips, or - if it
+     * uses constructs we do not model (or is not valid lucene) - shown as text in the input as a free-text edit.
+     */
+    private void hydrateUserQuery() {
         openPath = new int[0];
         tokenModel.reset();
-        input.setText(baselineFreeText);
-        pendingModelRemovals.clear(); // discard staged model-filter removals -> model stays as applied
+        String text = session.working().userQuery();
+        Optional<QueryContainer> parsed = QueryStringParser.parse(text, fieldsProvider.getCached());
+        if (parsed.isPresent()) {
+            root = parsed.get();
+            input.setText("");
+        } else {
+            root = QueryContainer.empty();
+            input.setText(text);
+        }
     }
 
     // --- input wiring: suggestions, keyboard semantics ---
@@ -877,7 +806,7 @@ public class QueryEditorPanel extends JPanel {
                         // untouched input runs the search, everything else is added like Tab. With
                         // nothing left to add, Enter runs the search too - so typing a term and
                         // pressing Enter twice is the quick full-text search. Embedded, "run" is
-                        // the dialog's Apply (which bakes a terminal token via commitToDocument).
+                        // the dialog's Apply (which bakes a terminal token via commitUserQuery).
                         // ... except while the typed text is rejected (see inputRejected): there is
                         // nothing to add, and running the query would drop the text silently
                         if (!inputRejected() && (isRunActionSelected() || !acceptCurrentToken(false)))
@@ -958,12 +887,17 @@ public class QueryEditorPanel extends JPanel {
 
     /** The connector the event carries, applied to the block joint (see {@link #applyEvent}). */
     private void blockJoinPicked(TokenInputModel.Event event) {
+        LogicOp picked = null;
         if (event instanceof TokenInputModel.Event.ClauseCompleted completed)
-            queryJoin = completed.logic();
+            picked = completed.logic();
         else if (event instanceof TokenInputModel.Event.QueryParsed parsed)
-            queryJoin = parsed.logic();
+            picked = parsed.logic();
         else if (event instanceof TokenInputModel.Event.OpenGroup group)
-            queryJoin = group.logic();
+            picked = group.logic();
+        if (picked != null) {
+            LogicOp join = picked;
+            session.edit(f -> f.withQueryJoin(join));
+        }
     }
 
     /**
@@ -1007,9 +941,9 @@ public class QueryEditorPanel extends JPanel {
                 ? TokenInputModel.Join.PANEL_TERMS : TokenInputModel.Join.NOTHING;
     }
 
-    /** Whether any panel facet is showing, i.e. not staged for removal. */
+    /** Whether the working value has any panel facet. */
     private boolean hasPanelTerms() {
-        return termSupplier.get().stream().anyMatch(t -> !pendingModelRemovals.containsKey(t.id()));
+        return !termSupplier.get().isEmpty();
     }
 
     private void showSuggestions(List<TokenInputModel.Suggestion> suggestions) {
@@ -1172,34 +1106,23 @@ public class QueryEditorPanel extends JPanel {
     private void commitSearch() {
         String freeText = freeTextForCommit();
         tokenModel.reset(); // a half-built token is not part of the query
-        // now that the search is actually being run, apply the model-filter removals staged in the
-        // editor (Cancel would instead have discarded them in revertToBaseline())
-        pendingModelRemovals.values().forEach(Runnable::run);
-        pendingModelRemovals.clear();
         String compiled = LuceneQueryCompiler.compile(root, freeText);
-        writeDocument(compiled);
-        // the overlay applies the model-level flags here (the dialog does it in applyToModel)
-        filterModel.setInverted(inverted);
-        filterModel.setQueryJoin(queryJoin);
-        lastCompiled = compiled;
-        // the applied query becomes the new baseline, so the close below keeps it (no revert)
-        baselineRoot = root;
-        baselineFreeText = freeText;
-        baselineInverted = inverted;
-        baselineQueryJoin = queryJoin;
-        filterModel.fireUpdateCompleted();
+        // the user's query joins the facet edits staged on the working value; commit publishes them all and
+        // re-filters once (Cancel would instead have reverted them all, see revert()). The close below then
+        // reverts to what was just applied, i.e. keeps it.
+        session.edit(f -> f.withUserQuery(compiled));
+        session.commit();
         Commit commit = new Commit(root, freeText, compiled);
         host.editorCloseRequested();
         onCommitted.accept(commit);
     }
 
     /**
-     * Bakes the user's query into the shared search document WITHOUT firing an update or dismissing -
-     * for the embedded host (the filter dialog), whose Apply writes the widget model and this query
-     * together and then fires a single update. A half-built terminal token is accepted first, like
-     * {@link #runSearch()}.
+     * Compiles the user's query into the working value WITHOUT committing or dismissing - for the embedded
+     * host (the filter dialog), whose Apply commits the session once for widgets and query together. A
+     * half-built terminal token is accepted first, like {@link #runSearch()}.
      */
-    public void commitToDocument() {
+    public void commitUserQuery() {
         if (tokenModel.isTerminal(input.getText())) {
             if (tokenModel.acceptsFreeText())
                 applyEvent(tokenModel.completeFreeText(input.getText()));
@@ -1210,23 +1133,7 @@ public class QueryEditorPanel extends JPanel {
         String freeText = freeTextForCommit();
         tokenModel.reset();
         String compiled = LuceneQueryCompiler.compile(root, freeText);
-        writeDocument(compiled);
-        lastCompiled = compiled;
-        baselineRoot = root;
-        baselineFreeText = freeText;
-        // the dialog's applyToModel reads isInverted()/getQueryJoin() to apply them
-        baselineInverted = inverted;
-        baselineQueryJoin = queryJoin;
-    }
-
-    private void writeDocument(String text) {
-        Document doc = filterModel.getSearchTextDoc();
-        try {
-            doc.remove(0, doc.getLength());
-            doc.insertString(0, text, null);
-        } catch (BadLocationException e) {
-            log.error("Could not write search query into the filter document", e);
-        }
+        session.edit(f -> f.withUserQuery(compiled));
     }
 
     // --- rendering ---
@@ -1238,7 +1145,7 @@ public class QueryEditorPanel extends JPanel {
         // keep the funnel and invert toggle in sync with the WORKING filter state (grey / blue / red),
         // so they recolour live as the query is built/inverted - not only after the change is committed
         if (filterButton != null)
-            filterButton.setFilterActive(hasWorkingQuery(), inverted);
+            filterButton.setFilterActive(hasWorkingQuery(), isInverted());
         styleInvertToggle();
         styleQueryModeToggle();
 
@@ -1248,11 +1155,9 @@ public class QueryEditorPanel extends JPanel {
         chipsRow.removeAll();
 
         // --- upper zone: the finished terms as chips ---
-        // render only the model filters not staged for removal - a staged removal hides the chip but
-        // does not touch the model until the search is committed (Cancel discards it, see revertToBaseline())
-        List<FilterTerm> terms = termSupplier.get().stream()
-                .filter(t -> !pendingModelRemovals.containsKey(t.id()))
-                .toList();
+        // the panel facets of the WORKING value: a removed chip is an edit staged there, applied on commit
+        // and dropped on Cancel (see revert())
+        List<FilterTerm> terms = termSupplier.get();
         // both blocks present -> show the structure the executed query has: (facets) <join> (query),
         // with the joint the one thing about it the user can change. Braced only then: a single block
         // has no joint, and bracketing it alone would suggest one
@@ -1273,13 +1178,10 @@ public class QueryEditorPanel extends JPanel {
                     ChipComponent.Style.MODEL,
                     // hand off to the full editor (overlay: close + open dialog; embedded dialog: jump to the tab)
                     () -> host.editorHandoff(() -> term.openEditor(editorHost)),
-                    // remove the model filter: the embedded dialog resets the backing widget through the
-                    // host (its chips mirror widget state); the overlay stages a removal on its own
-                    // snapshot model (applied on commit, reverted on Cancel)
-                    embedded ? () -> editorHost.removeFilter(term) : () -> {
-                        pendingModelRemovals.put(term.id(), term::remove);
-                        rebuild();
-                    }).withAccent(queryAccent()));
+                    // remove the facet: an edit on the working value (applied on commit, reverted on Cancel).
+                    // The embedded dialog routes it through the host, because its widgets still own the
+                    // facets and have to be reset along with it
+                    embedded ? () -> editorHost.removeFilter(term) : term::remove).withAccent(queryAccent()));
         }
 
         if (bothBlocks) {
@@ -1500,16 +1402,16 @@ public class QueryEditorPanel extends JPanel {
      * spells out both what it means and what a click does.
      */
     private JComponent blockJoinChip() {
-        boolean and = queryJoin == LogicOp.AND;
-        return new JoinChip(queryJoin.toString(), queryAccent(), false, BLOCK_JOIN_FONT_DELTA,
+        LogicOp join = getQueryJoin();
+        boolean and = join == LogicOp.AND;
+        return new JoinChip(join.toString(), queryAccent(), false, BLOCK_JOIN_FONT_DELTA,
                 GuiUtils.formatToolTip(
                         and ? "The filter-panel filters narrow your query (AND)."
                                 : "Your query is an alternative to the filter-panel filters (OR):"
                                   + " features they exclude can still match.",
                         "Click to switch to " + (and ? "OR" : "AND") + "."),
                 () -> {
-                    queryJoin = and ? LogicOp.OR : LogicOp.AND;
-                    rebuild();
+                    session.edit(f -> f.withQueryJoin(and ? LogicOp.OR : LogicOp.AND)); // re-renders via the session
                     input.requestFocusInWindow();
                 });
     }

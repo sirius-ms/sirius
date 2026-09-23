@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import io.sirius.ms.sdk.SiriusClient;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +54,13 @@ import java.util.function.Supplier;
 public class LuceneSearchBar extends JPanel {
 
     private final FeatureFilterModel filterModel;
+    /** The editing session the overlay works on; this collapsed bar itself renders the applied filter. */
+    private final FilterSession session;
     private final SearchableFieldsProvider fieldsProvider;
+    /** The applied filter's facets as terms - what this bar renders. */
     private final Supplier<List<FilterTerm>> termSupplier;
+    /** The session's working facets as terms - what the overlay renders and edits. */
+    private final Supplier<List<FilterTerm>> workingTermSupplier;
     private final FilterEditorHost editorHost;
     private final SearchRenderState renderState;
     /** Opens the full filter dialog; triggered by the in-field funnel icon (see {@link #filterButton}). */
@@ -95,14 +101,18 @@ public class LuceneSearchBar extends JPanel {
 
     public LuceneSearchBar(@NotNull SiriusClient siriusClient, @NotNull String projectId,
                            @NotNull FeatureFilterModel filterModel,
+                           @NotNull FilterSession session,
                            @NotNull Supplier<List<FilterTerm>> termSupplier,
+                           @NotNull Supplier<List<FilterTerm>> workingTermSupplier,
                            @NotNull FilterEditorHost editorHost,
                            @NotNull Runnable openFilterPanel,
                            @NotNull Runnable clearFilter,
                            @NotNull Runnable restoreDefaultFilter) {
         super(new BorderLayout());
         this.filterModel = filterModel;
+        this.session = session;
         this.termSupplier = termSupplier;
+        this.workingTermSupplier = workingTermSupplier;
         this.editorHost = editorHost;
         this.openFilterPanel = openFilterPanel;
         this.clearFilter = clearFilter;
@@ -227,7 +237,7 @@ public class LuceneSearchBar extends JPanel {
             Window owner = SwingUtilities.getWindowAncestor(this);
             if (owner == null)
                 return;
-            overlay = new SearchBarOverlay(owner, filterModel, fieldsProvider, termSupplier, editorHost,
+            overlay = new SearchBarOverlay(owner, session, fieldsProvider, workingTermSupplier, editorHost,
                     renderState, commit -> refreshSummary(), this::refreshSummary, openFilterPanel);
         }
         // Reopen unconditionally. If we reach here the collapsed bar received the gesture, which means

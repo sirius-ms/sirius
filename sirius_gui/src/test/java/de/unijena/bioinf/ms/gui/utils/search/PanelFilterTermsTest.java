@@ -22,6 +22,7 @@ import de.unijena.bioinf.ms.gui.utils.query.*;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.PanelQueryNodeFactory;
 import de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory;
@@ -137,6 +138,22 @@ public class PanelFilterTermsTest {
         assertTrue(source.getPeakShapeQualityFilter().isEnabled(), "and leaves the source model alone");
         term.remove();
         assertFalse(source.getPeakShapeQualityFilter().isEnabled(), "remove() applies it to the term's own model");
+    }
+
+    /** A session-bound term stages its removal on the working value; the applied filter waits for commit. */
+    @Test
+    public void testSessionBoundTermsStageTheirRemoval() {
+        FeatureFilterModel model = cleanSlate();
+        model.setCurrentMinMz(300);
+        FilterSession session = new FilterSession(model);
+
+        byId(PanelFilterTerms.of(session, ConfidenceDisplayMode.EXACT), "mz").remove();
+
+        assertFalse(session.working().isMzFilterActive(session.context()), "removed from the working value");
+        assertTrue(model.isMzFilterActive(), "the applied filter is untouched until commit");
+        assertTrue(PanelFilterTerms.of(session, ConfidenceDisplayMode.EXACT).isEmpty());
+        session.commit();
+        assertFalse(model.isMzFilterActive());
     }
 
     private static Set<String> model2ids(FeatureFilterModel model) {
