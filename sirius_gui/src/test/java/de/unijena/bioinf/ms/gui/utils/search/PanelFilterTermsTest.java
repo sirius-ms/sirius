@@ -22,6 +22,10 @@ import de.unijena.bioinf.ms.gui.utils.query.*;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
+import de.unijena.bioinf.ms.gui.utils.filter.PanelQueryNodeFactory;
+import de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory;
+import io.sirius.ms.sdk.model.DataQuality;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -110,6 +114,29 @@ public class PanelFilterTermsTest {
         model.setAdducts(Set.of(PrecursorIonType.fromString("[M+H]+")));
         assertNull(byId(terms(model), "hasMs1").rangeEdit(), "a boolean facet is not range-editable");
         assertNull(byId(terms(model), "adducts").rangeEdit(), "a set facet is edited via the dialog, not inline");
+    }
+
+    /**
+     * A facet's reset is an operation on the VALUE, so it resets the category on whatever filter it is applied
+     * to - not on the model the facet was read from (the old closure-over-the-filter bug).
+     */
+    @Test
+    public void testCategorizedQualityResetAppliesToTheGivenFilter() {
+        FeatureFilterModel source = cleanSlate();
+        source.getPeakShapeQualityFilter().removeQuality(DataQuality.LOWEST);
+        FilterTerm term = byId(terms(source), "quality." + DefaultQualityCategory.PEAK_QUALITY.name());
+
+        FeatureFilterModel other = cleanSlate();
+        other.getPeakShapeQualityFilter().removeQuality(DataQuality.BAD);
+        FeatureFilter reset = PanelQueryNodeFactory.facets(other, ConfidenceDisplayMode.EXACT).stream()
+                .filter(f -> f.id().equals(term.id())).findFirst().orElseThrow()
+                .reset().apply(other.get());
+
+        assertEquals(FeatureFilter.ALL_QUALITIES, reset.categorizedQuality().get(DefaultQualityCategory.PEAK_QUALITY),
+                "the reset opens the category on the filter it is applied to");
+        assertTrue(source.getPeakShapeQualityFilter().isEnabled(), "and leaves the source model alone");
+        term.remove();
+        assertFalse(source.getPeakShapeQualityFilter().isEnabled(), "remove() applies it to the term's own model");
     }
 
     private static Set<String> model2ids(FeatureFilterModel model) {

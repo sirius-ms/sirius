@@ -44,7 +44,7 @@ public final class PanelFilterTerms {
                 .toList();
     }
 
-    /** A panel facet bound to its backing model; {@link #remove} resets exactly that facet. */
+    /** A panel facet bound to its backing model; {@link #remove} applies the facet's reset to the model's value. */
     private record PanelFilterTerm(@NotNull PanelQueryNodeFactory.Facet facet,
                                    @NotNull FeatureFilterModel model) implements FilterTerm {
         @Override
@@ -64,7 +64,7 @@ public final class PanelFilterTerms {
 
         @Override
         public void remove() {
-            facet.reset().accept(model); // caller fires the model-update event
+            model.update(facet.reset()); // caller fires the model-update event
         }
 
         @Override
@@ -73,8 +73,12 @@ public final class PanelFilterTerms {
         }
 
         @Override
-        public de.unijena.bioinf.ms.gui.utils.query.RangeEdit rangeEdit() {
-            return facet.range();
+        public RangeEdit rangeEdit() {
+            PanelQueryNodeFactory.RangeFacet range = facet.range();
+            if (range == null)
+                return null;
+            return new RangeEdit(range.currentMin(), range.currentMax(), range.lowerBound(), range.upperBound(),
+                    (min, max) -> model.update(f -> range.update().apply(f, min, max)));
         }
     }
 }
