@@ -59,6 +59,8 @@ public class LuceneSearchBar extends JPanel {
     private final SearchRenderState renderState;
     /** Opens the full filter dialog; triggered by the in-field funnel icon (see {@link #filterButton}). */
     private final Runnable openFilterPanel;
+    /** Removes every filter and the search query (see {@link #clearButton}); wired to the host, committed at once. */
+    private final Runnable clearFilter;
     /** Restores the default filters and clears the search query (see {@link #restoreDefaultsButton}); wired to the host. */
     private final Runnable restoreDefaultFilter;
 
@@ -66,9 +68,13 @@ public class LuceneSearchBar extends JPanel {
     /** In-field funnel button that opens the full filter dialog; tinted to the accent when a filter is active. */
     private final FilterButton filterButton = Buttons.getFilterButton(24,
             "Open the filter panel (" + GuiUtils.shortcut("Shift+F") + ")", true);
+    /** In-field button that removes every filter and the search query (the filter dialog's Clear, committed). */
+    private final JButton clearButton = Buttons.getBackspaceButton(24, "Clear all filters and the search query", true);
     /** In-field button that restores the default filters (the same action as the filter dialog's restore button). */
     private final JButton restoreDefaultsButton = Buttons.getRestoreDefaultsButton(24,
             "Restore default filters and clear the search query", true);
+    /** The in-field buttons (clear, restore, funnel) at the bar's right end; {@link #relayoutCells} keeps the chips off them. */
+    private final Box buttons = Box.createHorizontalBox();
     /** The full s  ummary cells in order; {@link #relayoutCells} decides how many fit. */
     private final List<JComponent> cells = new ArrayList<>();
 
@@ -92,12 +98,14 @@ public class LuceneSearchBar extends JPanel {
                            @NotNull Supplier<List<FilterTerm>> termSupplier,
                            @NotNull FilterEditorHost editorHost,
                            @NotNull Runnable openFilterPanel,
+                           @NotNull Runnable clearFilter,
                            @NotNull Runnable restoreDefaultFilter) {
         super(new BorderLayout());
         this.filterModel = filterModel;
         this.termSupplier = termSupplier;
         this.editorHost = editorHost;
         this.openFilterPanel = openFilterPanel;
+        this.clearFilter = clearFilter;
         this.restoreDefaultFilter = restoreDefaultFilter;
         this.fieldsProvider = new SearchableFieldsProvider(siriusClient, projectId);
         this.renderState = new SearchRenderState(fieldsProvider);
@@ -129,12 +137,16 @@ public class LuceneSearchBar extends JPanel {
         filterButton.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         filterButton.addActionListener(e -> openFilterPanel.run());
         filterButton.setMargin(new Insets(0, 0, 0, 0));
-        // in-field restore icon left of the funnel: restores the default filters (same icon and action
-        // as the filter dialog's restore button) rather than clearing everything; committed at once
+        // the two quick-access resets left of the funnel, both committed at once (the overlay and the
+        // dialog stage theirs): clear removes every filter, restore puts the default filters back. Same
+        // icons and wording as the filter dialog's Clear and Restore buttons.
+        for (JButton reset : new JButton[]{clearButton, restoreDefaultsButton}) {
+            reset.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            reset.setMargin(new Insets(0, 0, 0, 0));
+        }
+        clearButton.addActionListener(e -> clearFilter.run());
         restoreDefaultsButton.addActionListener(e -> restoreDefaultFilter.run());
-        restoreDefaultsButton.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        restoreDefaultsButton.setMargin(new Insets(0, 0, 0, 0));
-        Box buttons = Box.createHorizontalBox();
+        buttons.add(clearButton);
         buttons.add(restoreDefaultsButton);
         buttons.add(filterButton);
         add(buttons, BorderLayout.EAST);
@@ -312,9 +324,9 @@ public class LuceneSearchBar extends JPanel {
     private void relayoutCells() {
         chipStrip.removeAll();
         Insets in = getInsets();
-        // reserve the funnel button's width so summary chips (and the ellipsis) never run under it
-        int buttonSpace = filterButton == null ? 0
-                : (filterButton.getWidth() > 0 ? filterButton.getWidth() : filterButton.getPreferredSize().width);
+        // reserve the in-field buttons' width so summary chips (and the ellipsis) never run under them
+        int buttonSpace = buttons == null ? 0
+                : (buttons.getWidth() > 0 ? buttons.getWidth() : buttons.getPreferredSize().width);
         int available = getWidth() - in.left - in.right - buttonSpace - 6;
         int ellipsisWidth = ellipsisLabel().getPreferredSize().width + 6;
 

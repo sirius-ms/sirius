@@ -88,6 +88,7 @@ public class CompoundList {
                 () -> PanelFilterTerms.of(filterModel, gui.getProperties().getConfidenceDisplayMode()),
                 term -> new FeatureFilterOptionsDialog(gui, filterModel, this, term.id()),
                 () -> new FeatureFilterOptionsDialog(gui, filterModel, this),
+                this::resetFilter,
                 this::resetFilterToDefaults);
 
         observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
