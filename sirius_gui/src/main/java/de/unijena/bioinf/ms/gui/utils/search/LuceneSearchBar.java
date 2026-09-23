@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.gui.utils.query.*;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
+import de.unijena.bioinf.ms.gui.utils.filter.QuickFilterSwitch;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import io.sirius.ms.sdk.SiriusClient;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +62,8 @@ public class LuceneSearchBar extends JPanel {
     private final Supplier<List<FilterTerm>> termSupplier;
     /** The session's working facets as terms - what the overlay renders and edits. */
     private final Supplier<List<FilterTerm>> workingTermSupplier;
+    /** The quick switches the overlay's footer offers; defined by the host, which knows the pojo. */
+    private final List<QuickFilterSwitch> quickSwitches;
     private final FilterEditorHost editorHost;
     private final SearchRenderState renderState;
     /** Opens the full filter dialog; triggered by the in-field funnel icon (see {@link #filterButton}). */
@@ -104,6 +107,7 @@ public class LuceneSearchBar extends JPanel {
                            @NotNull FilterSession session,
                            @NotNull Supplier<List<FilterTerm>> termSupplier,
                            @NotNull Supplier<List<FilterTerm>> workingTermSupplier,
+                           @NotNull List<QuickFilterSwitch> quickSwitches,
                            @NotNull FilterEditorHost editorHost,
                            @NotNull Runnable openFilterPanel,
                            @NotNull Runnable clearFilter,
@@ -113,6 +117,7 @@ public class LuceneSearchBar extends JPanel {
         this.session = session;
         this.termSupplier = termSupplier;
         this.workingTermSupplier = workingTermSupplier;
+        this.quickSwitches = quickSwitches;
         this.editorHost = editorHost;
         this.openFilterPanel = openFilterPanel;
         this.clearFilter = clearFilter;
@@ -238,7 +243,7 @@ public class LuceneSearchBar extends JPanel {
             if (owner == null)
                 return;
             overlay = new SearchBarOverlay(owner, session, fieldsProvider, workingTermSupplier, editorHost,
-                    renderState, commit -> refreshSummary(), this::refreshSummary, openFilterPanel);
+                    renderState, commit -> refreshSummary(), this::refreshSummary, openFilterPanel, quickSwitches);
         }
         // Reopen unconditionally. If we reach here the collapsed bar received the gesture, which means
         // the overlay is NOT the active window - so a still-"open" overlay is a stale/stuck instance

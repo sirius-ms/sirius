@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
+import de.unijena.bioinf.ms.gui.utils.filter.QuickFilterSwitch;
 import de.unijena.bioinf.ms.gui.utils.search.LuceneSearchBar;
 import de.unijena.bioinf.ms.gui.utils.search.PanelFilterTerms;
 import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
@@ -90,6 +91,7 @@ public class CompoundList {
         searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel, session,
                 () -> PanelFilterTerms.of(filterModel, gui.getProperties().getConfidenceDisplayMode()),
                 () -> PanelFilterTerms.of(session, gui.getProperties().getConfidenceDisplayMode()),
+                QuickFilterSwitch.standard(),
                 term -> new FeatureFilterOptionsDialog(gui, filterModel, this, term.id()),
                 () -> new FeatureFilterOptionsDialog(gui, filterModel, this),
                 this::resetFilter,

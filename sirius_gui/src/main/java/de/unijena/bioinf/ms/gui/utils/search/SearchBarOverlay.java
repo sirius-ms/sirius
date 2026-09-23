@@ -21,6 +21,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
+import de.unijena.bioinf.ms.gui.utils.filter.QuickFilterSwitch;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +70,8 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
                             @NotNull SearchRenderState renderState,
                             @NotNull Consumer<QueryEditorPanel.Commit> onCommitted,
                             @NotNull Runnable refreshCollapsedBar,
-                            @NotNull Runnable openFilterPanel) {
+                            @NotNull Runnable openFilterPanel,
+                            @NotNull List<QuickFilterSwitch> quickSwitches) {
         super(owner);
 
         // A heavyweight top-level window so it floats above the native JxBrowser windows of the
@@ -85,7 +87,7 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
 
         // no widget hooks for Clear / Restore: the overlay's edits are the session's alone
         editor = new QueryEditorPanel(session, fieldsProvider, termSupplier, editorHost, renderState,
-                onCommitted, refreshCollapsedBar, this, false, openFilterPanel, null, null);
+                onCommitted, refreshCollapsedBar, this, false, openFilterPanel, null, null, quickSwitches);
         setContentPane(editor);
 
         // keep anchored while the main window is moved or resized (only while actually open - a

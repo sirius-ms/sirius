@@ -692,7 +692,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         // reset of every filter and the query (replacing the former separate Reset button)
         return new QueryEditorPanel(session, fieldsProvider,
                 () -> PanelFilterTerms.of(session, gui.getProperties().getConfidenceDisplayMode()), jumpToTab, renderState,
-                commit -> {}, () -> {}, host, true, null, this::resetFilter, this::resetFilterToDefaults);
+                commit -> {}, () -> {}, host, true, null, this::resetFilter, this::resetFilterToDefaults,
+                List.of()); // no quick switches: the dialog's tabs are the full editor
     }
 
     /**
