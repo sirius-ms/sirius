@@ -843,12 +843,12 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         // batch the widget updates into a single chip rebuild (see wireLiveChipRefresh)
         suppressChipRefresh = true;
         try {
+            // the defaults over THIS project's detected adducts, from the one definition (FeatureFilter.defaults)
+            FeatureFilterModel defaults = new FeatureFilterModel(filterModel.getContext());
             resetSpinnerValues();
             adductOptions.checkBoxList.uncheckAll();
-            adductOptions.checkBoxList.checkAll(filterModel.getPossibleAdducts().stream()
-                    .filter(FeatureFilterModel::isSupportedAdduct).toList());
-            // default overall quality keeps only DECENT/GOOD; a fresh model carries exactly that default
-            overallQualityPanel.setFromModel(new FeatureFilterModel().getFeatureQualityFilter());
+            adductOptions.checkBoxList.checkAll(defaults.getSelectedAdducts());
+            overallQualityPanel.setFromModel(defaults.getFeatureQualityFilter());
             qualityPanels.forEach(QualityFilterPanel::reset);
 
             lipidFilter.setFilterState(null);
@@ -856,8 +856,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             elementsField.setText(null);
             searchDBList.checkBoxList.uncheckAll();
             deleteSelection.setSelected(false);
-            hasMs1.setSelected(false);
-            hasMsMs.setSelected(true); // default: require MS/MS
+            hasMs1.setSelected(defaults.isHasMs1());
+            hasMsMs.setSelected(defaults.isHasMsMs()); // default: require MS/MS
 
             blankFilter.setSelected(false);
 

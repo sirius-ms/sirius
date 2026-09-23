@@ -1,29 +1,41 @@
 package de.unijena.bioinf.ms.gui.utils.filter;
 
-import lombok.Getter;
-import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
-
-@Getter
+/**
+ * A mutable view over the sample/blank fold-change facet of the {@link FeatureFilter} held by a
+ * {@link FeatureFilterModel}, for the widgets that edit it in place. Reads go to the current value, writes
+ * replace it.
+ */
 public class FoldChangeFilter {
-    private final double minFoldChange;
-    @Setter
-    private double currentMinFoldChange;
-    @Setter
-    private boolean enabled;
+    private final FeatureFilterModel model;
 
-    public FoldChangeFilter(double minFoldChange) {
-        this(minFoldChange, false);
+    FoldChangeFilter(@NotNull FeatureFilterModel model) {
+        this.model = model;
     }
 
-    public FoldChangeFilter(double minFoldChange, boolean enabled) {
-        this.minFoldChange = minFoldChange;
-        this.currentMinFoldChange = minFoldChange;
-        this.enabled = enabled;
+    /** The threshold the facet starts from (and resets to). */
+    public double getMinFoldChange() {
+        return FeatureFilter.DEFAULT_MIN_BLANK_FOLD_CHANGE;
+    }
+
+    public double getCurrentMinFoldChange() {
+        return model.get().minBlankFoldChange();
+    }
+
+    public void setCurrentMinFoldChange(double currentMinFoldChange) {
+        model.update(f -> f.withMinBlankFoldChange(currentMinFoldChange));
+    }
+
+    public boolean isEnabled() {
+        return model.get().blankFoldChangeEnabled();
+    }
+
+    public void setEnabled(boolean enabled) {
+        model.update(f -> f.withBlankFoldChangeEnabled(enabled));
     }
 
     public void reset() {
-        currentMinFoldChange = minFoldChange;
-        enabled = false;
+        model.update(f -> f.withBlankFoldChangeEnabled(false).withMinBlankFoldChange(getMinFoldChange()));
     }
 }
