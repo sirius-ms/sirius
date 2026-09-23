@@ -59,14 +59,16 @@ public class LuceneSearchBar extends JPanel {
     private final SearchRenderState renderState;
     /** Opens the full filter dialog; triggered by the in-field funnel icon (see {@link #filterButton}). */
     private final Runnable openFilterPanel;
-    /** Full reset of every filter and the search query (see {@link #clearButton}); wired to the host. */
-    private final Runnable clearFilter;
+    /** Restores the default filters and clears the search query (see {@link #restoreDefaultsButton}); wired to the host. */
+    private final Runnable restoreDefaultFilter;
 
     private final JPanel chipStrip;
     /** In-field funnel button that opens the full filter dialog; tinted to the accent when a filter is active. */
     private final FilterButton filterButton = Buttons.getFilterButton(24,
             "Open the filter panel (" + GuiUtils.shortcut("Shift+F") + ")", true);
-    private final JButton clearButton = Buttons.getBackspaceButton(24, "Clear all filters and the search query", true);
+    /** In-field button that restores the default filters (the same action as the filter dialog's restore button). */
+    private final JButton restoreDefaultsButton = Buttons.getRestoreDefaultsButton(24,
+            "Restore default filters and clear the search query", true);
     /** The full s  ummary cells in order; {@link #relayoutCells} decides how many fit. */
     private final List<JComponent> cells = new ArrayList<>();
 
@@ -90,13 +92,13 @@ public class LuceneSearchBar extends JPanel {
                            @NotNull Supplier<List<FilterTerm>> termSupplier,
                            @NotNull FilterEditorHost editorHost,
                            @NotNull Runnable openFilterPanel,
-                           @NotNull Runnable clearFilter) {
+                           @NotNull Runnable restoreDefaultFilter) {
         super(new BorderLayout());
         this.filterModel = filterModel;
         this.termSupplier = termSupplier;
         this.editorHost = editorHost;
         this.openFilterPanel = openFilterPanel;
-        this.clearFilter = clearFilter;
+        this.restoreDefaultFilter = restoreDefaultFilter;
         this.fieldsProvider = new SearchableFieldsProvider(siriusClient, projectId);
         this.renderState = new SearchRenderState(fieldsProvider);
 
@@ -127,11 +129,13 @@ public class LuceneSearchBar extends JPanel {
         filterButton.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         filterButton.addActionListener(e -> openFilterPanel.run());
         filterButton.setMargin(new Insets(0, 0, 0, 0));
-        clearButton.addActionListener(e -> clearFilter.run());
-        clearButton.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        clearButton.setMargin(new Insets(0, 0, 0, 0));
+        // in-field restore icon left of the funnel: restores the default filters (same icon and action
+        // as the filter dialog's restore button) rather than clearing everything; committed at once
+        restoreDefaultsButton.addActionListener(e -> restoreDefaultFilter.run());
+        restoreDefaultsButton.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        restoreDefaultsButton.setMargin(new Insets(0, 0, 0, 0));
         Box buttons = Box.createHorizontalBox();
-        buttons.add(clearButton);
+        buttons.add(restoreDefaultsButton);
         buttons.add(filterButton);
         add(buttons, BorderLayout.EAST);
 
@@ -212,7 +216,7 @@ public class LuceneSearchBar extends JPanel {
             if (owner == null)
                 return;
             overlay = new SearchBarOverlay(owner, filterModel, fieldsProvider, termSupplier, editorHost,
-                    renderState, commit -> refreshSummary(), this::refreshSummary, openFilterPanel, clearFilter);
+                    renderState, commit -> refreshSummary(), this::refreshSummary, openFilterPanel);
         }
         // Reopen unconditionally. If we reach here the collapsed bar received the gesture, which means
         // the overlay is NOT the active window - so a still-"open" overlay is a stale/stuck instance

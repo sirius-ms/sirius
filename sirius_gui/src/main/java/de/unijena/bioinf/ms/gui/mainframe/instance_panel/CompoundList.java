@@ -21,11 +21,6 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.*;
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.event.ListEventListener;
-import ca.odell.glazedlists.matchers.AbstractMatcherEditorListenerSupport;
-import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
-import ca.odell.glazedlists.matchers.Matcher;
-import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
@@ -47,8 +42,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Queue;
@@ -95,7 +88,7 @@ public class CompoundList {
                 () -> PanelFilterTerms.of(filterModel, gui.getProperties().getConfidenceDisplayMode()),
                 term -> new FeatureFilterOptionsDialog(gui, filterModel, this, term.id()),
                 () -> new FeatureFilterOptionsDialog(gui, filterModel, this),
-                this::resetFilter);
+                this::resetFilterToDefaults);
 
         observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(observableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
@@ -161,6 +154,16 @@ public class CompoundList {
         filterModel.resetFilter(); //also clears the shared search text document
         filterModel.fireUpdateCompleted(); // re-filter the list: resetFilter() only fires per-field events
         searchBar.refreshSummary(); // also re-tints the in-field funnel icon for the (now inactive) filter
+    }
+
+    /**
+     * Restores the default filter configuration (see {@link FeatureFilterModel#resetFilterToDefaults()})
+     * and clears the search query - the search bar's in-field restore button.
+     */
+    public void resetFilterToDefaults() {
+        filterModel.resetFilterToDefaults(); //also clears the shared search text document
+        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilterToDefaults() only fires per-field events
+        searchBar.refreshSummary(); // also re-tints the in-field funnel icon for the (now active) default filter
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {

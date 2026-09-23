@@ -505,6 +505,24 @@ public class FeatureFilterModel implements SiriusPCS {
         sampleBlankFoldChange.reset();
     }
 
+    /**
+     * Resets the filter to SIRIUS's recommended DEFAULT configuration instead of clearing it - the
+     * committed counterpart of the filter dialog's "Restore default filters": MS/MS present, feature
+     * quality restricted to DECENT/GOOD, the single-charged monomeric detected adducts selected,
+     * everything else off / at full range, and the search query cleared. Like {@link #resetFilter()}
+     * this only fires per-field events; the caller fires {@link #fireUpdateCompleted()} afterwards.
+     */
+    @Synchronized
+    public void resetFilterToDefaults() {
+        resetFilter();
+        // the same defaults a fresh model carries (see the constructor and the field initializers)
+        featureQualityFilter.removeQuality(DataQuality.LOWEST);
+        featureQualityFilter.removeQuality(DataQuality.BAD);
+        adducts = possibleAdducts.stream().filter(FeatureFilterModel::isSupportedAdduct)
+                .collect(Collectors.toCollection(HashSet::new));
+        setHasMsMs(true);
+    }
+
     private void clearSearchText() {
         try {
             searchTextDoc.remove(0, searchTextDoc.getLength()); // Clear existing content
