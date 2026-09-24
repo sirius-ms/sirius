@@ -29,6 +29,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -166,8 +167,9 @@ public class TokenInputModel {
         }
 
         /**
-         * Parse the typed text as a full lucene query and turn it into chips (for users who type a
-         * query directly rather than building it clause by clause).
+         * Parse the typed text as a full lucene query and ADD it to the user's query as chips (for users
+         * who type a query directly rather than building it clause by clause). Never absorbs facets: what
+         * the user typed stays the user's clauses.
          */
         record ParseQuerySuggestion(@NotNull String text) implements Suggestion {
             @Override
@@ -177,7 +179,25 @@ public class TokenInputModel {
 
             @Override
             public String description() {
-                return "parse as query";
+                return "add to query";
+            }
+        }
+
+        /**
+         * Make the typed text THE filter: the owner decodes it with its filter codec, so facet shapes become
+         * facet chips and the rest the user's query, replacing everything staged so far. {@code detail} is
+         * the owner's word on what will happen (how many facets it recognises), null when it has none.
+         */
+        record ReplaceQuerySuggestion(@NotNull String text, @Nullable String detail) implements Suggestion {
+            @Override
+            public String display() {
+                return text;
+            }
+
+            @Override
+            public String description() {
+                return detail == null ? "replace the whole filter with this query"
+                        : "replace the whole filter with this query - " + detail;
             }
         }
 
@@ -242,6 +262,10 @@ public class TokenInputModel {
         record QueryParsed(@NotNull QueryContainer container, @NotNull LogicOp logic) implements Event {
         }
 
+        /** The typed text is to become the whole filter (see {@link Suggestion.ReplaceQuerySuggestion}). */
+        record QueryReplaced(@NotNull String text) implements Event {
+        }
+
         record OpenGroup(boolean negated, @NotNull LogicOp logic) implements Event {
         }
 
@@ -262,6 +286,12 @@ public class TokenInputModel {
     private QueryMode mode = QueryMode.SIMPLE;
     @Nullable
     private RunAction runAction;
+    /**
+     * What the owner says a "replace the whole filter" pick will do with the typed text (e.g. how many facets
+     * it recognises); shown as the row's detail. Null: no detail.
+     */
+    @Nullable
+    private Function<String, String> replaceQueryDetail;
 
     // --- staged token state ---
     private Stage stage = Stage.FIELD;
@@ -315,6 +345,11 @@ public class TokenInputModel {
     /**
      * Sets (or clears) the owner's run action - the top row of an untouched input.
      */
+    /** See {@link #replaceQueryDetail}. */
+    public void setReplaceQueryDetail(@Nullable Function<String, String> replaceQueryDetail) {
+        this.replaceQueryDetail = replaceQueryDetail;
+    }
+
     public void setRunAction(@Nullable RunAction runAction) {
         this.runAction = runAction;
     }
@@ -425,8 +460,12 @@ public class TokenInputModel {
             candidates.add(new Suggestion.FreeTextSuggestion(rest));
             // ... and, when it reads as more than plain words (a field, operator, group or boolean),
             // it can be parsed as a whole query and turned into chips
-            if (parsesToStructuredQuery(rest))
+            if (parsesToStructuredQuery(rest)) {
                 candidates.add(new Suggestion.ParseQuerySuggestion(rest));
+                // ... or become the whole filter. Last, so "add" stays the pick a bare Enter would make
+                candidates.add(new Suggestion.ReplaceQuerySuggestion(rest,
+                        replaceQueryDetail == null ? null : replaceQueryDetail.apply(rest)));
+            }
         }
         return join(candidates, connectorsOffered(typed.logic()));
     }
@@ -454,8 +493,10 @@ public class TokenInputModel {
         boolean blockJoin = join == Join.PANEL_TERMS;
         List<Suggestion> joined = new ArrayList<>(candidates.size() * connectors.size());
         for (Suggestion candidate : candidates) {
-            // closing a group joins nothing - it ends the term before it
-            if (candidate instanceof Suggestion.TokenSuggestion token && token.token() == SpecialToken.CLOSE_GROUP) {
+            // closing a group joins nothing - it ends the term before it; replacing the whole filter
+            // joins nothing either - there is nothing left to join to
+            if (candidate instanceof Suggestion.TokenSuggestion token && token.token() == SpecialToken.CLOSE_GROUP
+                    || candidate instanceof Suggestion.ReplaceQuerySuggestion) {
                 joined.add(candidate);
                 continue;
             }
@@ -603,6 +644,10 @@ public class TokenInputModel {
                     .orElseGet(() -> new Event.ClauseCompleted(QueryClause.freeText(parse.text(), pendingNegated), effectiveLogic()));
             resetPending();
             return Optional.of(event);
+        }
+        if (suggestion instanceof Suggestion.ReplaceQuerySuggestion replace) {
+            resetPending();
+            return Optional.of(new Event.QueryReplaced(replace.text()));
         }
         // value suggestion
         return acceptValue(((Suggestion.ValueSuggestion) suggestion).value());
