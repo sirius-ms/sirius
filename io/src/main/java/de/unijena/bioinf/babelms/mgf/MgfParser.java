@@ -178,7 +178,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 if (spec.spectrum.getIonization() == null || spec.spectrum.getIonization().getCharge() != charge)
                     spec.spectrum.setIonization(new Charge(charge));
                 if (spec.ionType == null) spec.ionType = PrecursorIonType.unknown(charge);
-            } else if (keyword.startsWith("ION") || keyword.contains("ADDUCT")) {
+            } else if ((keyword.startsWith("ION") || keyword.contains("ADDUCT")) && !keyword.contains("SOURCE")) {
                 final PrecursorIonType ion;
                 final Matcher cm = CHARGE_PATTERN.matcher(value);
                 if (value.toLowerCase().startsWith("pos")) {

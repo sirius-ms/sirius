@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.babelms.mgf;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ParserTestUtils;
 import org.junit.jupiter.api.Test;
@@ -90,5 +91,17 @@ public class MgfParserTest {
         assertEquals(1, exp.getMs2Spectra().size());
         assertEquals(6, exp.getMs2Spectra().get(0).size());
         assertEquals(271.0601, exp.getIonMass(), 1e-6);
+    }
+
+    /**
+     * ION_SOURCE names the ionisation technique (ESI, APCI, ...), not the adduct. It starts with ION like
+     * IONMODE does, and used to be parsed as an ion type - failing the whole file on "Unknown ion 'ESI'"
+     * (GitHub issue #324).
+     */
+    @Test
+    public void ionSourceIsNotReadAsAdduct() throws IOException {
+        Ms2Experiment exp = ParserTestUtils.loadExperiment("mgf/ion_source_before_adduct.mgf");
+        assertEquals(PrecursorIonType.fromString("[M+H]+"), exp.getPrecursorIonType());
+        assertEquals(1, exp.getMs2Spectra().size());
     }
 }
