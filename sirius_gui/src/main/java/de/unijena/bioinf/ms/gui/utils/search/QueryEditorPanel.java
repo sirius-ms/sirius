@@ -486,14 +486,21 @@ public class QueryEditorPanel extends JPanel {
                 switches.setOpaque(false);
                 for (QuickFilterSwitch quick : quickSwitches) {
                     JToggleSwitch toggle = new JToggleSwitch();
-                    toggle.setPreferredSize(new Dimension(40, 28));
                     toggle.setFocusable(false); // keep keyboard focus in the input
                     String tooltip = GuiUtils.formatToolTip(quick.tooltip());
                     toggle.setToolTipText(tooltip);
                     toggle.addEventToggleSelected(on -> session.edit(f -> quick.apply(f, session.context(), on)));
+                    // the switch paints its knob between a 2 px top and an 8 px bottom shadow inset, so the visible
+                    // part sits 3 px above the centre of its own box; a fixed-size holder places it 3 px lower to
+                    // centre the knob on the labels and buttons (the clipped 3 px are the shadow's faint tail)
+                    JPanel holder = new JPanel(null);
+                    holder.setOpaque(false);
+                    holder.setPreferredSize(new Dimension(40, 28));
+                    toggle.setBounds(0, 3, 40, 28);
+                    holder.add(toggle);
                     JLabel label = new JLabel(quick.label());
                     label.setToolTipText(tooltip);
-                    switches.add(toggle);
+                    switches.add(holder);
                     switches.add(label);
                     switchControls.put(quick, toggle);
                 }
