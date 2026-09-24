@@ -149,7 +149,7 @@ public class ProjectsApi {
      * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
-     * @param compactFull if true, compact and always rewrite how the project&#39;s records are laid out on disk, even where that does not look necessary. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
+     * @param compactFull if true, compact and rewrite every storage page, even where that does not look necessary - for example to convert a project written in an older, space-wasting format. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec closeProjectRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact, @jakarta.annotation.Nullable Boolean compactFull) throws WebClientResponseException {
@@ -191,7 +191,7 @@ public class ProjectsApi {
      * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
-     * @param compactFull if true, compact and always rewrite how the project&#39;s records are laid out on disk, even where that does not look necessary. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
+     * @param compactFull if true, compact and rewrite every storage page, even where that does not look necessary - for example to convert a project written in an older, space-wasting format. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public void closeProject(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact, @jakarta.annotation.Nullable Boolean compactFull) throws WebClientResponseException {
@@ -208,7 +208,7 @@ public class ProjectsApi {
      * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
-     * @param compactFull if true, compact and always rewrite how the project&#39;s records are laid out on disk, even where that does not look necessary. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
+     * @param compactFull if true, compact and rewrite every storage page, even where that does not look necessary - for example to convert a project written in an older, space-wasting format. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ResponseEntity<Void> closeProjectWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact, @jakarta.annotation.Nullable Boolean compactFull) throws WebClientResponseException {
@@ -225,7 +225,7 @@ public class ProjectsApi {
      * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
-     * @param compactFull if true, compact and always rewrite how the project&#39;s records are laid out on disk, even where that does not look necessary. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
+     * @param compactFull if true, compact and rewrite every storage page, even where that does not look necessary - for example to convert a project written in an older, space-wasting format. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
