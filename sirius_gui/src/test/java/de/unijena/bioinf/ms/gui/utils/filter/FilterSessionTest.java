@@ -94,7 +94,7 @@ public class FilterSessionTest {
         assertEquals(working, model.get());
         assertEquals(1, refilters.get(), "a batch of edits re-filters the list once, on commit");
         assertFalse(session.isDirty());
-        assertEquals("name:caffeine", model.getSearchText(), "the shared document follows the committed value");
+        assertEquals("name:caffeine", model.get().userQuery(), "the shared document follows the committed value");
     }
 
     @Test

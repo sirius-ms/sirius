@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterContext;
 import de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
@@ -133,6 +134,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         this.gui = gui;
         this.filterModel = filterModel;
         this.session = new FilterSession(filterModel); // this dialog's working value; disposed with it
+        FilterContext ctx = filterModel.getContext(); // bounds and detected adducts the widgets are built for
         this.compoundList = compoundList;
         this.fieldsProvider = new SearchableFieldsProvider(gui.getSiriusClient(), gui.getProjectManager().getProjectId());
         setPreferredSize(GuiUtils.getPreferredSizeLimitedByScreenSize(new Dimension(700, 800)));
@@ -180,18 +182,18 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 box.add(Box.createHorizontalGlue());
                 box.add(max);
 
-                minMzSpinner = makeSpinner(filterModel.getCurrentMinMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
-                maxMzSpinner = makeSpinner(filterModel.getCurrentMaxMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10,
+                minMzSpinner = makeSpinner(ctx.minMz(), ctx.minMz(), ctx.maxMz(), 10);
+                maxMzSpinner = makeSpinner(ctx.maxMz(), ctx.minMz(), ctx.maxMz(), 10,
                         MZ_BELOW_INFINITE);
-                ((JSpinner.DefaultEditor) maxMzSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxMzSpinner.getModel(), filterModel.getMaxMz()));
+                ((JSpinner.DefaultEditor) maxMzSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxMzSpinner.getModel(), ctx.maxMz()));
                 min.addNamed("Min m/z", minMzSpinner);
                 max.addNamed("Max m/z", maxMzSpinner);
                 ensureCompatibleBounds(minMzSpinner, maxMzSpinner);
 
-                minRtSpinner = makeSpinner(filterModel.getCurrentMinRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
-                maxRtSpinner = makeSpinner(filterModel.getCurrentMaxRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10,
+                minRtSpinner = makeSpinner(ctx.minRt(), ctx.minRt(), ctx.maxRt(), 10);
+                maxRtSpinner = makeSpinner(ctx.maxRt(), ctx.minRt(), ctx.maxRt(), 10,
                         RT_BELOW_INFINITE);
-                ((JSpinner.DefaultEditor) maxRtSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxRtSpinner.getModel(), filterModel.getMaxRt()));
+                ((JSpinner.DefaultEditor) maxRtSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxRtSpinner.getModel(), ctx.maxRt()));
 
                 min.addNamed("Min RT (in sec)", minRtSpinner);
                 max.addNamed("Max RT (in sec)", maxRtSpinner);
@@ -207,14 +209,12 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
                 adductOptions.checkBoxList.setVisibleRowCount(5);
 
-                List<PrecursorIonType> ionizations = new ArrayList<>(filterModel.getPossibleAdducts());
+                List<PrecursorIonType> ionizations = new ArrayList<>(ctx.possibleAdducts());
                 Collections.sort(ionizations);
 
                 adductOptions.checkBoxList.replaceElements(ionizations);
                 adductOptions.checkBoxList.uncheckAll();
                 adductOptions.setEnabled(true);
-
-                adductOptions.checkBoxList.checkAll(filterModel.getSelectedAdducts());
 
                 // preset next to "all"/"none": select only the single-charged, monomeric adducts
                 JButton singleAdducts = new JButton("single");
@@ -241,12 +241,11 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             foldParameters.add(Box.createVerticalStrut(6));
             foldParameters.add(new JXTitledSeparator("Minimum Fold Change Filters"));
 
-            blankSpinner = makeSpinner(filterModel.getSampleBlankFoldChange().getCurrentMinFoldChange(), 0.1, Double.POSITIVE_INFINITY, 0.1);
+            blankSpinner = makeSpinner(FeatureFilter.DEFAULT_MIN_BLANK_FOLD_CHANGE, 0.1, Double.POSITIVE_INFINITY, 0.1);
 
             blankFilter = new JCheckBox("Filter Blanks");
-            blankFilter.setSelected(filterModel.getSampleBlankFoldChange().isEnabled());
             blankFilter.setToolTipText(BLANK_FILTER_TOOLTIP);
-            blankSpinner.setEnabled(filterModel.getSampleBlankFoldChange().isEnabled());
+            blankSpinner.setEnabled(false); // follows the check box (listener below) once the widgets are seeded
 
             blankFilter.addChangeListener((e) -> blankSpinner.setEnabled(blankFilter.isSelected() && blankFilter.isEnabled()));
 
@@ -264,10 +263,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 dataParameters.add(new JXTitledSeparator("MS Data Quality"));
                 hasMs1 = new JCheckBox("MS1");
                 hasMs1.setToolTipText("Feature must have at least one MS1 spectrum");
-                hasMs1.setSelected(filterModel.isHasMs1());
                 hasMsMs = new JCheckBox("MS/MS");
                 hasMsMs.setToolTipText("Feature must have at least one MS/MS spectrum");
-                hasMsMs.setSelected(filterModel.isHasMsMs());
 
                 Box box = Box.createHorizontalBox();
                 box.add(hasMs1);
@@ -281,12 +278,13 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             {
                 dataParameters.add(Box.createVerticalStrut(5));
                 dataParameters.add(new JXTitledSeparator("Feature Quality"));
-                overallQualityPanel = new QualityFilterPanel(filterModel.getFeatureQualityFilter());
+                overallQualityPanel = new QualityFilterPanel();
                 dataParameters.addNamed("<html><b>Overall quality</b></html>", overallQualityPanel);
                 dataParameters.add(Box.createVerticalStrut(5));
-                qualityPanels = filterModel.getCategorizedQualityFilters().stream().map(qf -> {
-                    QualityFilterPanel qfp = new QualityFilterPanel(qf);
-                    dataParameters.addNamed(qf.getName(), qfp);
+                // one slider per category, in category order - wireBindings() relies on that order
+                qualityPanels = Arrays.stream(DefaultQualityCategory.values()).map(category -> {
+                    QualityFilterPanel qfp = new QualityFilterPanel();
+                    dataParameters.addNamed(category.getDisplayName(), qfp);
                     return qfp;
                 }).toList();
             }
@@ -311,8 +309,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             box.add(Box.createHorizontalGlue());
             box.add(max);
 
-            minConfidenceSpinner = makeSpinner(filterModel.getCurrentMinConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
-            maxConfidenceSpinner = makeSpinner(filterModel.getCurrentMaxConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
+            minConfidenceSpinner = makeSpinner(ctx.minConfidence(), ctx.minConfidence(), ctx.maxConfidence(), .05);
+            maxConfidenceSpinner = makeSpinner(ctx.maxConfidence(), ctx.minConfidence(), ctx.maxConfidence(), .05);
             min.addNamed("Min confidence", minConfidenceSpinner);
             max.addNamed("Max confidence", maxConfidenceSpinner);
             ensureCompatibleBounds(minConfidenceSpinner, maxConfidenceSpinner);
@@ -330,8 +328,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             elementSelector.setLayout(new BoxLayout(elementSelector, BoxLayout.X_AXIS));
             JButton selectElements = new JButton("...");
             elementsField = new PlaceholderTextField(20);
-            if (filterModel.getElementFilter().isActive())
-                elementsField.setText(filterModel.getElementFilter().getConstraints().toString());
 
             selectElements.addActionListener(e -> {
                 FormulaConstraints elements = new ElementFilter(elementsField.getText()).getConstraints();
@@ -371,11 +367,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
             resultParameters.add(searchDBList);
             resultParameters.add(Box.createVerticalBox());
-
-            if (filterModel.isDbFilterEnabled()) { //null check
-                searchDBList.checkBoxList.checkAll(filterModel.getDbFilter().getDbs());
-                candidateSpinner.setValue(filterModel.getDbFilter().getNumOfCandidates());
-            }
         }
 
         // structure properties: two yes / no / do-not-filter criteria. Last block of the tab: below the
@@ -391,7 +382,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             lipidFilter = new SegmentedFilterToggle("any", "yes", "no",
                     fieldDescription(FeatureFilterModel.FIELD_LIPID,
                             "A lipid class was detected (El Gordo) for the top molecular formula of the feature."));
-            lipidFilter.setFilterState(filterModel.getLipidClassDetected());
             // the name shows the same tooltip as the control, so hovering either explains the filter
             classFilters.add(liveToolTipLabel("Lipid detected", lipidFilter::composeToolTip), hugging(lipidFilter));
 
@@ -399,7 +389,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                     fieldDescription(FeatureFilterModel.FIELD_PFAS,
                             "The feature carries a PFAS tag: SIRIUS found it in a PFAS homologous series, "
                                     + "or annotated a PFAS molecular formula or structure for it."));
-            pfasFilter.setFilterState(filterModel.getPfasDetected());
             classFilters.add(liveToolTipLabel("PFAS detected", pfasFilter::composeToolTip), hugging(pfasFilter),
                     MEDIUM_GAP, false); // the two control rows need air between them
 
@@ -429,6 +418,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
         setMaximumSize(GuiUtils.getEffectiveScreenSize());
         wireBindings();                 // widgets <-> working value, both ways
+        seedAll();                      // the widgets show the working value (= the applied filter) from the start
         queryEditor.openSession(null);  // working = applied, user query hydrated into chips, autocomplete fields refreshed
         refreshBlankFilterAvailability(); // whatever is known now; the fetch below settles it
         Jobs.runInBackground(() -> {
@@ -760,7 +750,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         pushAll(); // programmatic widget changes fire no listener
         queryEditor.commitUserQuery(); // the working value now carries widgets, inversion, joint and query
         FeatureFilterModel deleteMatcher = new FeatureFilterModel(filterModel.getContext());
-        deleteMatcher.setExecutableQueryForm(filterModel.getExecutableQueryForm()); // same query, same anchoring
         deleteMatcher.set(session.working().withInverted(!session.working().inverted()));
         Optional<String> deleteQuery = deleteMatcher.toLuceneQuery(gui.getProperties().getConfidenceDisplayMode());
 

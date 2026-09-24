@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.gui.configs.FilterButton;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
 import de.unijena.bioinf.ms.gui.utils.filter.QuickFilterSwitch;
@@ -47,9 +48,9 @@ import java.util.function.Supplier;
  * one perceived control that grows over the result view while editing and shrinks back on close.
  * A keystroke that triggered the expansion is forwarded, so typing "just continues" in the overlay.
  * <p>
- * The user part of the summary is rendered by parsing the shared search document back into query
+ * The user part of the summary is rendered by parsing the applied filter's user query back into query
  * chips ({@link QueryStringParser}), exactly like the query editor hydrates it - so the bar looks the
- * same no matter where the query was committed (overlay, filter dialog, reset). Only a document that
+ * same no matter where the query was committed (overlay, filter dialog, reset). Only a query that
  * cannot be represented as chips (unsupported lucene constructs) falls back to plain text.
  */
 public class LuceneSearchBar extends JPanel {
@@ -263,12 +264,13 @@ public class LuceneSearchBar extends JPanel {
         Runnable open = this::openOverlay;
         cells.clear();
 
-        // parse the shared document into chips - the same hydration the editor does, so the collapsed
+        // parse the applied user query into chips - the same hydration the editor does, so the collapsed
         // summary is consistent regardless of where the query was committed (overlay, filter dialog,
         // reset). Free text folds into the parsed tree as "..." clauses, rendered by QueryNodeRenderer
         // exactly like the editor renders them. Parsed up front, because whether the two blocks need
         // bracketing depends on both of them.
-        String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
+        FeatureFilter applied = filterModel.get();
+        String docText = applied.userQuery();
         Optional<QueryContainer> parsed = QueryStringParser.parse(docText, fieldsProvider.getCached());
         List<FilterTerm> terms = termSupplier.get();
         List<QueryNode> userItems = parsed.map(QueryContainer::items).orElse(List.of());
@@ -286,7 +288,7 @@ public class LuceneSearchBar extends JPanel {
         }
         if (bothBlocks) {
             cells.add(parenLabel(")"));
-            cells.add(joinLabel(filterModel.getQueryJoin()));
+            cells.add(joinLabel(applied.queryJoin()));
             cells.add(parenLabel("("));
         }
 
@@ -308,7 +310,7 @@ public class LuceneSearchBar extends JPanel {
 
         // an inverted query is shown by tinting its chips to the inverted (red-ish) accent rather than
         // the normal (blue-ish) one - mirroring the editor
-        if (filterModel.isInverted())
+        if (applied.inverted())
             cells.forEach(cell -> {
                 if (cell instanceof ChipComponent chip)
                     chip.withAccent(Colors.Menu.FILTER_BUTTON_INVERTED);
@@ -326,7 +328,7 @@ public class LuceneSearchBar extends JPanel {
                 : GuiUtils.formatToolTip("Current search query:", docText));
 
         // tint the funnel to the accent while a structured filter is active (orange when inverted)
-        filterButton.setFilterActive(filterModel.isActive(), filterModel.isInverted());
+        filterButton.setFilterActive(applied.isActive(filterModel.getContext()), applied.inverted());
 
         relayoutCells();
     }
@@ -422,7 +424,7 @@ public class LuceneSearchBar extends JPanel {
     private JLabel parenLabel(String paren) {
         JLabel label = new JLabel(paren);
         label.setFont(label.getFont().deriveFont(Font.BOLD, label.getFont().getSize2D() + 2));
-        label.setForeground(filterModel.isInverted()
+        label.setForeground(filterModel.get().inverted()
                 ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON);
         label.addMouseListener(opener);
         return label;

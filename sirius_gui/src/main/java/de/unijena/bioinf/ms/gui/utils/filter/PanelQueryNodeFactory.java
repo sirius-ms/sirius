@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.gui.utils.filter;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.query.QueryNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.UnaryOperator;
@@ -41,29 +40,12 @@ public final class PanelQueryNodeFactory {
     private PanelQueryNodeFactory() {
     }
 
-    /** Applies a new numeric range to the facet it belongs to. */
-    @FunctionalInterface
-    public interface RangeUpdate {
-        FeatureFilter apply(@NotNull FeatureFilter filter, double min, double max);
-    }
-
-    /** The inline-editable range of a numeric facet: its current values, the bounds, and how to apply new ones. */
-    public record RangeFacet(double currentMin, double currentMax, double lowerBound, double upperBound,
-                             @NotNull RangeUpdate update) {
-    }
-
     /**
      * One active filter-panel facet: its stable {@code id}, the faithful {@link QueryNode} it compiles
      * to (verified equal to the executed query), and how to {@code reset} exactly that facet - as an
      * operation on the value, so it can be applied to any filter (a working copy as much as the applied one).
      */
-    public record Facet(@NotNull String id, @NotNull QueryNode queryNode,
-                        @NotNull UnaryOperator<FeatureFilter> reset,
-                        @Nullable RangeFacet range) {
-        /** A facet with no inline range editing (set/complex facets edit via the dialog). */
-        public Facet(@NotNull String id, @NotNull QueryNode queryNode, @NotNull UnaryOperator<FeatureFilter> reset) {
-            this(id, queryNode, reset, null);
-        }
+    public record Facet(@NotNull String id, @NotNull QueryNode queryNode, @NotNull UnaryOperator<FeatureFilter> reset) {
     }
 
     /** The active panel facets of the model's applied filter as query nodes, AND-joined at the top level. */

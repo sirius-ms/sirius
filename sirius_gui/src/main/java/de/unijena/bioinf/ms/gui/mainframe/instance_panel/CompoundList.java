@@ -158,8 +158,8 @@ public class CompoundList {
 
     public void resetFilter() {
         //filtering consists of the text filter and the filter model
-        filterModel.resetFilter(); //also clears the shared search text document
-        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilter() only fires per-field events
+        filterModel.resetFilter(); // nothing filtered, no query
+        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilter() only fires the value change
         searchBar.refreshSummary(); // also re-tints the in-field funnel icon for the (now inactive) filter
     }
 
@@ -168,8 +168,8 @@ public class CompoundList {
      * and clears the search query - the search bar's in-field restore button.
      */
     public void resetFilterToDefaults() {
-        filterModel.resetFilterToDefaults(); //also clears the shared search text document
-        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilterToDefaults() only fires per-field events
+        filterModel.resetFilterToDefaults(); // the recommended starting filter, no query
+        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilterToDefaults() only fires the value change
         searchBar.refreshSummary(); // also re-tints the in-field funnel icon for the (now active) default filter
     }
 
