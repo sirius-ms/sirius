@@ -86,6 +86,15 @@ public class IndexSchemaFingerprintTest {
         double mass;
     }
 
+    public static class OtherDefaultSearchFields {
+        @IndexField(documentId = true)
+        String id;
+        @IndexField(fullTextSearch = true) // no longer a default search field ...
+        String name;
+        @IndexField(sortable = true, defaultSearchField = true) // ... and the mass is one now
+        double mass;
+    }
+
     @Test
     public void testTheSameSchemaAlwaysFingerprintsTheSame() {
         assertEquals(fingerprintOf(Base.class), fingerprintOf(Base.class));
@@ -108,6 +117,13 @@ public class IndexSchemaFingerprintTest {
     public void testAnAddedFieldChangesIt() {
         assertNotEquals(fingerprintOf(Base.class), fingerprintOf(WithExtraField.class),
                 "existing documents have nothing under the new field, so it would match nothing");
+    }
+
+    @Test
+    public void testWhichFieldsABareTermSearchesIsNotPartOfTheShape() {
+        // a default search field is a query-parser setting: the documents are written exactly the same, so an
+        // index built before the change answers the new queries as it is - rebuilding for that is waste
+        assertEquals(fingerprintOf(Base.class), fingerprintOf(OtherDefaultSearchFields.class));
     }
 
     @Test
