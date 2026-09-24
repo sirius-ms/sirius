@@ -23,10 +23,13 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.KeepOnlyLastCommitDeletionPolicy;
 import org.apache.lucene.index.SnapshotDeletionPolicy;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.flexible.core.processors.QueryNodeProcessorPipeline;
+import org.apache.lucene.queryparser.flexible.standard.processors.MultiFieldQueryNodeProcessor;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
+import org.apache.lucene.queryparser.flexible.standard.config.NumberDateFormat;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
@@ -152,12 +155,48 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             // Adds PointsConfig entries to the query parser.
             // Adds default search fields to query parser
             this.indexSchema = pojoMapper.detectAnalyzersAndPointConfigs(pointsConfigMap, fieldAnalyzers, defaultSearchFields, sortTypes, queryRewriters);
-            // Initialize the query with  points config map and default search fields.
-            queryParser.setMultiFields(defaultSearchFields.toArray(CharSequence[]::new));
+            // Initialize the query with the points config map and the default search fields: a bare term is
+            // expanded to the TEXT default fields by the parser; the NUMERIC default fields are searched for a bare
+            // number as a window by our own processor (a numeric field cannot take a text term at all).
             queryParser.setPointsConfigMap(pointsConfigMap);
+            installDefaultFieldSearch();
         } catch (IOException e) {
             throw new RuntimeException("IO Error when initializing Lucene index for " + pojoClass.getSimpleName(), e);
         }
+    }
+
+    /**
+     * Splits the default search fields by type. The text ones become the parser's multi-fields, which a bare term is
+     * expanded to. The numeric ones (the precursor m/z of a feature) are searched for a bare NUMBER as a window by
+     * {@link NumericFreeTextQueryNodeProcessor}; they must stay out of the multi-field expansion, since a text term
+     * expanded to a point field fails to parse and would reject the whole query. The processor has to see keyless
+     * terms, so it goes in front of the multi-field expansion in the pipeline; with no numeric default field nothing
+     * is installed.
+     */
+    private void installDefaultFieldSearch() {
+        List<String> numericDefaults = defaultSearchFields.stream().map(CharSequence::toString)
+                .filter(this::isNumericPointField).toList();
+        List<CharSequence> textDefaults = defaultSearchFields.stream()
+                .filter(f -> !numericDefaults.contains(f.toString())).toList();
+        queryParser.setMultiFields(textDefaults.toArray(CharSequence[]::new));
+        if (numericDefaults.isEmpty())
+            return;
+        if (!(queryParser.getQueryNodeProcessor() instanceof QueryNodeProcessorPipeline pipeline))
+            throw new IllegalStateException("the standard query parser is expected to run a processor pipeline");
+        int multiField = -1;
+        for (int i = 0; i < pipeline.size(); i++)
+            if (pipeline.get(i) instanceof MultiFieldQueryNodeProcessor)
+                multiField = i;
+        if (multiField < 0)
+            throw new IllegalStateException("the standard query parser pipeline is expected to expand keyless terms to the default fields");
+        pipeline.add(multiField, new NumericFreeTextQueryNodeProcessor(() -> numericDefaults, pointsConfigMap,
+                NumericFreeTextQueryNodeProcessor.DEFAULT_PPM));
+    }
+
+    /** A point field holding a number (not a date or time, whose points config formats as a date). */
+    private boolean isNumericPointField(@NotNull String field) {
+        PointsConfig config = pointsConfigMap.get(field);
+        return config != null && !(config.getNumberFormat() instanceof NumberDateFormat);
     }
 
     public boolean isEmpty() {

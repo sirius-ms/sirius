@@ -34,7 +34,11 @@ public @interface IndexField {
     boolean sortable() default false;
 
     /**
-     * Whether a field shall be used as fallback search field for queries that do not specify a field to search in. Simple fulltext search.
+     * Whether a field shall be used as fallback search field for queries that do not specify a field to search in.
+     * A text field is searched for the bare term (simple fulltext search). A numeric field is searched for a bare
+     * NUMBER within a window around it - half a unit of the number's last decimal, at least a few ppm - so a mass
+     * typed the way people type masses finds the feature it means; a bare term that is not a number does not reach
+     * a numeric field at all.
      */
     boolean defaultSearchField() default false;
 
