@@ -34,9 +34,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage>, Closeable, AutoCloseable {
-    public static final Metadata SIRIUS_PROJECT_METADATA = buildMetadata();
-
-    private static Metadata buildMetadata() {
+    public static Metadata buildMetadata() {
         Metadata metadata = Metadata.build();
         MsProjectDocumentDatabase.buildMetadata(metadata);
         NetworkingProjectDocumentDatabase.buildMetadata(metadata);

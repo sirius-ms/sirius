@@ -55,7 +55,9 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
     private final Metadata metadata;
 
     public NitriteSirirusProject(@NotNull Path location) throws IOException {
-        this(location, SIRIUS_PROJECT_METADATA, NitriteDatabase.MVStoreCompression.LZF);
+        // own metadata per project: updateSerializers() writes this project's fingerprint versions into the
+        // deserializers it holds, which must not leak into other open projects
+        this(location, buildMetadata(), NitriteDatabase.MVStoreCompression.LZF);
     }
 
     private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata, NitriteDatabase.MVStoreCompression compression) throws IOException {

@@ -5,6 +5,8 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -112,6 +114,27 @@ public class SiriusProjectDatabaseImplTest {
         });
     }
 
+
+    // issue sirius#326: opening a second project (here one without fingerprint data) must not reset
+    // the fingerprint versions the first project needs to read its predictions
+    @ParameterizedTest
+    @ValueSource(ints = {1, -1})
+    public void testFingerprintsReadableAfterOpeningOtherProject(int charge) {
+        withDb("/sirius-project-all-fp-data.sirius", withFp -> {
+            MaskedFingerprintVersion version = withFp.findFingerprintData(FingerIdData.class, charge).orElseThrow().getFingerprintVersion();
+            double[] probs = new double[version.size()];
+            Arrays.fill(probs, 0.5);
+            withFp.getStorage().insert(CsiPrediction.builder().alignedFeatureId(1).formulaId(1).charge(charge)
+                    .fingerprint(new ProbabilityFingerprint(version, probs)).build());
+
+            withDb(empty -> {
+                CsiPrediction read = withFp.getStorage().getByPrimaryKey(1L, CsiPrediction.class).orElseThrow();
+                assertNotNull(read.getFingerprint());
+                assertTrue(version.identical(read.getFingerprint().getFingerprintVersion()));
+                assertArrayEquals(probs, read.getFingerprint().toProbabilityArray());
+            });
+        });
+    }
 
     @ParameterizedTest
     @ValueSource(ints = {1, -1})
