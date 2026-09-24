@@ -111,7 +111,7 @@ public class AlignedFeature implements Taggable {
     /**
      * Mass-to-charge ratio (m/z) of the precursor ion of the feature.
      */
-    @IndexField(sortable = true)
+    @IndexField(sortable = true, defaultSearchField = true) // a bare number in a query is (also) an m/z
     protected Double ionMass;
 
     /**
