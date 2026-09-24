@@ -4,9 +4,13 @@ import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import eu.hansolo.rangeslider.RangeSlider;
 import org.jetbrains.annotations.NotNull;
 
+import io.sirius.ms.sdk.model.DataQuality;
+
 import javax.swing.*;
+import java.util.EnumSet;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Selects a range of data qualities, from the lowest to the highest that should still pass the filter.
@@ -65,6 +69,38 @@ class QualityFilterPanel extends JPanel {
         // still allows, e.g. from a typed query - is widened to the range it spans rather than silently
         // dropping the ends. An empty selection falls back to the full range.
         setRange(lower < 0 ? 0 : lower, upper < 0 ? lastIndex : upper);
+    }
+
+    /** The selected qualities as the slider shows them: the contiguous range between its two thumbs. */
+    public Set<DataQuality> getSelection() {
+        int lower = slider.getLowerValue();
+        int upper = lower + slider.getModel().getExtent(); // see updateModel for why the extent, not upperValue
+        EnumSet<DataQuality> selection = EnumSet.noneOf(DataQuality.class);
+        for (int i = lower; i <= upper && i <= lastIndex; i++)
+            selection.add(qualityAt(i));
+        return selection;
+    }
+
+    /**
+     * Shows a selection. A slider can only express a contiguous range: a selection with a gap is widened to
+     * the span it covers rather than dropping its ends; an empty selection falls back to the full range.
+     */
+    public void setSelection(@NotNull Set<DataQuality> selection) {
+        int lower = -1;
+        int upper = -1;
+        for (int i = 0; i <= lastIndex; i++) {
+            if (selection.contains(qualityAt(i))) {
+                if (lower < 0)
+                    lower = i;
+                upper = i;
+            }
+        }
+        setRange(lower < 0 ? 0 : lower, upper < 0 ? lastIndex : upper);
+    }
+
+    /** The quality at slider position {@code i}: the selectable qualities in order (NOT_APPLICABLE is never on the slider). */
+    private static DataQuality qualityAt(int i) {
+        return DataQuality.values()[i + 1];
     }
 
     public void updateModel(QualityFilter qualityFilter) {
