@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterQueryCodec;
 import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
 import de.unijena.bioinf.ms.gui.utils.filter.QuickFilterSwitch;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
@@ -289,6 +290,7 @@ public class QueryEditorPanel extends JPanel {
         this.restoreDefaults = restoreDefaults;
 
         // the top row of an untouched input: Enter runs the search (overlay) / applies the dialog
+        tokenModel.setReplaceQueryDetail(this::replaceQueryDetail);
         tokenModel.setRunAction(new TokenInputModel.RunAction("Search",
                 "Apply the filter and close",
                 "Type to add query terms"));
@@ -645,6 +647,24 @@ public class QueryEditorPanel extends JPanel {
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(whole), null);
     }
 
+    /**
+     * Makes a typed (or pasted) lucene query THE working filter - the "replace the whole filter" completion:
+     * recognised facet shapes become facets (chips), everything else the user's query (see
+     * {@link FilterQueryCodec#decode}). Staged like every other edit. The only place a query is read back
+     * into filter state; "add to query" keeps what the user typed as user clauses.
+     */
+    private void replaceFilterWith(@NotNull String query) {
+        FilterQueryCodec.Absorbed absorbed = FilterQueryCodec.decode(query, session.context(), fieldsProvider.getCached());
+        session.set(absorbed.toFilter(session.context()));
+        hydrateUserQuery();
+    }
+
+    /** The detail shown on the "replace the whole filter" row: what the codec makes of the typed text. */
+    private String replaceQueryDetail(@NotNull String query) {
+        int facets = FilterQueryCodec.decode(query, session.context(), fieldsProvider.getCached()).facetCount();
+        return facets == 0 ? "no filter chips recognised" : facets + (facets == 1 ? " filter chip" : " filter chips") + " recognised";
+    }
+
     /** The working joint between the panel block and the user's query (published with the working value on commit). */
     @NotNull
     public LogicOp getQueryJoin() {
@@ -909,6 +929,8 @@ public class QueryEditorPanel extends JPanel {
             openPath = result.path();
         } else if (event instanceof TokenInputModel.Event.RemoveLastNode) {
             removeLastNode();
+        } else if (event instanceof TokenInputModel.Event.QueryReplaced replaced) {
+            replaceFilterWith(replaced.text());
         }
     }
 

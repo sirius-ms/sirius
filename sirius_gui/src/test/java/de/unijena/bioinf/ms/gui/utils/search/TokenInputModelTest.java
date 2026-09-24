@@ -723,6 +723,39 @@ public class TokenInputModelTest {
     }
 
     @Test
+    public void testStructuredTextAlsoOffersReplaceTheWholeFilterAfterAdd() {
+        var suggestions = model.suggestions("ionMass:[100 TO 200]");
+        int add = -1, replace = -1;
+        for (int i = 0; i < suggestions.size(); i++) {
+            TokenInputModel.Suggestion s = suggestions.get(i);
+            if (s instanceof TokenInputModel.Suggestion.Joined joined)
+                s = joined.target();
+            if (s instanceof TokenInputModel.Suggestion.ParseQuerySuggestion && add < 0) add = i;
+            if (s instanceof TokenInputModel.Suggestion.ReplaceQuerySuggestion) replace = i;
+        }
+        assertTrue(add >= 0, "add to query is offered");
+        assertTrue(replace > add, "replace the whole filter is offered, and after add - it must never be the default pick");
+        assertFalse(model.suggestions("caffeine").stream().anyMatch(s -> s instanceof TokenInputModel.Suggestion.ReplaceQuerySuggestion),
+                "plain words are free text, not a filter to replace with");
+    }
+
+    @Test
+    public void testReplaceTheWholeFilterIsNeverJoinedByAConnectorAndCarriesTheOwnersDetail() {
+        model.setReplaceQueryDetail(text -> "2 filter chips recognised");
+        model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false); // terms to join to: the add row gets AND/OR variants
+        var suggestions = model.suggestions("ionMass:[100 TO 200]");
+        TokenInputModel.Suggestion replace = suggestions.stream()
+                .filter(s -> s instanceof TokenInputModel.Suggestion.ReplaceQuerySuggestion).findFirst().orElseThrow();
+        assertTrue(suggestions.stream().noneMatch(s -> s instanceof TokenInputModel.Suggestion.Joined j
+                && j.target() instanceof TokenInputModel.Suggestion.ReplaceQuerySuggestion), "no AND/OR variants of replace");
+        assertTrue(replace.description().endsWith("2 filter chips recognised"));
+
+        TokenInputModel.Event event = model.choose(replace).orElseThrow();
+        assertInstanceOf(TokenInputModel.Event.QueryReplaced.class, event);
+        assertEquals("ionMass:[100 TO 200]", ((TokenInputModel.Event.QueryReplaced) event).text());
+    }
+
+    @Test
     public void testChooseParseAsQueryEmitsParsedQuery() {
         TokenInputModel.Suggestion parse = model.suggestions("quality:GOOD OR quality:DECENT").stream()
                 .filter(s -> s instanceof TokenInputModel.Suggestion.ParseQuerySuggestion)
