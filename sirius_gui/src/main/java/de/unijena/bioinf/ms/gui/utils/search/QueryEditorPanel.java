@@ -161,9 +161,8 @@ public class QueryEditorPanel extends JPanel {
     private final Host host;
     /**
      * Embedded (in the filter dialog) vs. floating (the overlay). Embedded drops its own commit
-     * controls and Esc binding - the dialog owns commit/dismissal - and routes a facet chip's remove
-     * through the host, because the dialog's widgets still own the facets (they push their state into
-     * the session; the session does not write them back yet).
+     * controls and Esc binding - the dialog owns commit/dismissal - and words its chip tooltips for the
+     * tabs next to it. Editing is the same in both: every edit goes to the session's working value.
      */
     private final boolean embedded;
     /**
@@ -172,15 +171,6 @@ public class QueryEditorPanel extends JPanel {
      */
     @Nullable
     private final Runnable openFilterPanel;
-    /**
-     * Embedded only: resets the dialog's widgets when Clear is pressed, before the working value is
-     * cleared, so widgets and chips agree. Null for the overlay, whose Clear is the session's alone.
-     */
-    @Nullable
-    private final Runnable clearFilter;
-    /** Embedded only: seeds the dialog's widgets with the defaults when Restore is pressed (same pattern). */
-    @Nullable
-    private final Runnable restoreDefaults;
     /**
      * The quick switches in the floating footer and their controls. A switch has no state of its own: its
      * position is read from the working value on every {@link #rebuild}, flipping it is one edit on the
@@ -272,8 +262,6 @@ public class QueryEditorPanel extends JPanel {
                             @NotNull Host host,
                             boolean embedded,
                             @Nullable Runnable openFilterPanel,
-                            @Nullable Runnable clearFilter,
-                            @Nullable Runnable restoreDefaults,
                             @NotNull List<QuickFilterSwitch> quickSwitches) {
         super(new BorderLayout());
         this.session = session;
@@ -286,8 +274,6 @@ public class QueryEditorPanel extends JPanel {
         this.host = host;
         this.embedded = embedded;
         this.openFilterPanel = openFilterPanel;
-        this.clearFilter = clearFilter;
-        this.restoreDefaults = restoreDefaults;
 
         // the top row of an untouched input: Enter runs the search (overlay) / applies the dialog
         tokenModel.setReplaceQueryDetail(this::replaceQueryDetail);
@@ -589,22 +575,10 @@ public class QueryEditorPanel extends JPanel {
     }
 
     /**
-     * Clears the user's own query (typed clauses + free text); the filter-dialog filters are kept.
-     */
-    public void clearUserQuery() {
-        resetLocalQuery();
-        session.edit(f -> f.withUserQuery(""));
-        rebuild();
-    }
-
-    /**
      * Clear: nothing filtered, no query - staged on the working value (Apply/Enter commits, Esc/Discard
-     * reverts). The embedded dialog first resets its widgets through {@link #clearFilter}, so they agree
-     * with the chips.
+     * reverts). The dialog's widgets follow the working value like the chips do.
      */
     public void clearAll() {
-        if (clearFilter != null)
-            clearFilter.run();
         resetLocalQuery();
         session.clear();
         rebuild();
@@ -613,11 +587,9 @@ public class QueryEditorPanel extends JPanel {
     /**
      * Restore the default filter configuration (SIRIUS's recommended starting filter) instead of clearing
      * everything - staged on the working value like {@link #clearAll()}, so Esc/Discard puts the applied
-     * filter back. The embedded dialog first seeds its widgets through {@link #restoreDefaults}.
+     * filter back.
      */
     public void restoreDefaultsAll() {
-        if (restoreDefaults != null)
-            restoreDefaults.run();
         resetLocalQuery();
         session.restoreDefaults();
         rebuild();
@@ -1243,10 +1215,9 @@ public class QueryEditorPanel extends JPanel {
                     ChipComponent.Style.MODEL,
                     // hand off to the full editor (overlay: close + open dialog; embedded dialog: jump to the tab)
                     () -> host.editorHandoff(() -> term.openEditor(editorHost)),
-                    // remove the facet: an edit on the working value (applied on commit, reverted on Cancel).
-                    // The embedded dialog routes it through the host, because its widgets still own the
-                    // facets and have to be reset along with it
-                    embedded ? () -> editorHost.removeFilter(term) : term::remove).withAccent(queryAccent()));
+                    // remove the facet: an edit on the working value (applied on commit, reverted on Cancel);
+                    // in the dialog the widgets follow it, since they are views of the same value
+                    term::remove).withAccent(queryAccent()));
         }
 
         if (bothBlocks) {

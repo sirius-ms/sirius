@@ -85,9 +85,8 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
         setModalityType(ModalityType.MODELESS);
         setFocusableWindowState(true);
 
-        // no widget hooks for Clear / Restore: the overlay's edits are the session's alone
         editor = new QueryEditorPanel(session, fieldsProvider, termSupplier, editorHost, renderState,
-                onCommitted, refreshCollapsedBar, this, false, openFilterPanel, null, null, quickSwitches);
+                onCommitted, refreshCollapsedBar, this, false, openFilterPanel, quickSwitches);
         setContentPane(editor);
 
         // keep anchored while the main window is moved or resized (only while actually open - a

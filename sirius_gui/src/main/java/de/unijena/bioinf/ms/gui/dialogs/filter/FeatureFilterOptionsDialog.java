@@ -28,14 +28,13 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
-import de.unijena.bioinf.ms.gui.utils.filter.DbFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
-import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
+import de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import de.unijena.bioinf.ms.gui.utils.search.FilterEditorHost;
-import de.unijena.bioinf.ms.gui.utils.search.FilterTerm;
 import de.unijena.bioinf.ms.gui.utils.search.PanelFilterTerms;
 import de.unijena.bioinf.ms.gui.utils.search.QueryEditorPanel;
 import de.unijena.bioinf.ms.gui.utils.search.SearchRenderState;
@@ -87,15 +86,18 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     final JSpinner blankSpinner;
 
     final FeatureFilterModel filterModel;
-    /** The working value the embedded chips render; the widgets push their state into it, Apply commits it. */
+    /**
+     * The working value this dialog edits: the widgets and the embedded chips are both views of it (see
+     * {@link FilterWidgetBindings}), Apply commits it, Discard drops it.
+     */
     private final FilterSession session;
+    /** The widget groups as two-way views of the working value, see {@link #wireBindings()}. */
+    private final List<FilterWidgetBindings.WidgetBinding> bindings = new ArrayList<>();
+    /** Set while the widgets are being seeded from the working value, so their listeners do not echo it back. */
+    private boolean seeding = false;
+    /** The bindings whose widgets changed in this event turn; their edits are applied once at its end. */
+    private final Set<FilterWidgetBindings.WidgetBinding> pendingEdits = new LinkedHashSet<>();
     final CompoundList compoundList;
-
-    /** While true, live chip refreshes are skipped so a bulk widget update rebuilds the chips only once. */
-    private boolean suppressChipRefresh = false;
-
-    /** Set while a coalesced chip refresh is already queued for the end of this event turn. */
-    private boolean chipRefreshPending = false;
 
 
     final SegmentedFilterToggle lipidFilter, pfasFilter;
@@ -220,19 +222,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                         "Select only single-charged, monomeric adducts. SIRIUS can currently run its annotation " +
                                 "(molecular formula, structure and compound class identification) only on features with " +
                                 "such adducts, so this is the recommended selection."));
-                singleAdducts.addActionListener(e -> {
-                    // batch the (potentially many) check toggles into a single chip rebuild to avoid lag
-                    suppressChipRefresh = true;
-                    try {
-                        adductOptions.checkBoxList.uncheckAll();
-                        adductOptions.checkBoxList.checkAll(filterModel.getPossibleAdducts().stream()
-                                .filter(FeatureFilterModel::isSupportedAdduct).toList());
-                    } finally {
-                        suppressChipRefresh = false;
-                    }
-                    if (queryEditor != null)
-                        pushWidgetsToSession();
-                });
+                // one edit of the working value; the list follows it like every other widget
+                singleAdducts.addActionListener(e -> session.edit(f -> f.withAdducts(session.context().supportedPossibleAdducts())));
                 adductOptions.buttons.add(singleAdducts);
 
                 inputParameters.add(adductOptions);
@@ -415,7 +406,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             resultParameters.add(classFilters);
         }
 
-        // Reset lives in the embedded query editor now (its clear button, wired to resetFilter)
+        // Clear and Restore live in the embedded query editor (they edit the working value the widgets follow)
         discard = new JButton("Discard");
         discard.addActionListener(this);
         apply = new JButton("Apply");
@@ -437,7 +428,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         add(buttons, BorderLayout.SOUTH);
 
         setMaximumSize(GuiUtils.getEffectiveScreenSize());
-        wireLiveChipRefresh();          // widget edits -> live re-render of the panel chips
+        wireBindings();                 // widgets <-> working value, both ways
         queryEditor.openSession(null);  // working = applied, user query hydrated into chips, autocomplete fields refreshed
         refreshBlankFilterAvailability(); // whatever is known now; the fetch below settles it
         Jobs.runInBackground(() -> {
@@ -488,7 +479,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         if (foldChangeTab >= 0)
             centerTab.setToolTipTextAt(foldChangeTab, available ? null : NO_BLANK_FOLD_CHANGES_TOOLTIP);
 
-        pushWidgetsToSession(); // unticking programmatically does not fire the live-refresh listeners
+        pushAll(); // unticking programmatically does not fire the widget listeners
     }
 
     /** The index of the tab with the given title, or -1 when there is none. */
@@ -560,48 +551,10 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             deleteSelectedCompoundsAndResetFilter();
 
         } else {
-            pushWidgetsToSession(); // programmatic widget changes do not fire the live listeners
+            pushAll(); // programmatic widget changes do not fire the widget listeners
             queryEditor.commitUserQuery();
             session.commit(); // widgets, inversion, joint and query in one publish, one re-filter
         }
-    }
-
-    /** Writes the widgets' facet values into {@code target}; inversion, joint and user query are the editor's and stay as they are. */
-    private void applyWidgetsTo(@NotNull FeatureFilterModel target) {
-        target.setCurrentMinMz(getMinMz());
-        target.setCurrentMaxMz(getMaxMz());
-        target.setCurrentMinRt(getMinRt());
-        target.setCurrentMaxRt(getMaxRt());
-        target.setCurrentMinConfidence(getMinConfidence());
-        target.setCurrentMaxConfidence(getMaxConfidence());
-        target.setHasMs1(hasMs1.isSelected());
-        target.setHasMsMs(hasMsMs.isSelected());
-        target.setAdducts(new HashSet<>(adductOptions.checkBoxList.getCheckedItems()));
-
-        overallQualityPanel.updateModel(target.getFeatureQualityFilter());
-
-        Iterator<QualityFilterPanel> qualityPanelIt = qualityPanels.iterator();
-        Iterator<QualityFilter> qualityFilterIt = target.getCategorizedQualityFilters().iterator();
-        while (qualityPanelIt.hasNext() && qualityFilterIt.hasNext())
-            qualityPanelIt.next().updateModel(qualityFilterIt.next());
-
-        target.setLipidClassDetected(lipidFilter.getFilterState());
-        target.setPfasDetected(pfasFilter.getFilterState());
-
-        target.setElementFilter(new ElementFilter(
-                        elementsField.getText() == null || elementsField.getText().isBlank()
-                                ? FormulaConstraints.empty()
-                                : FormulaConstraints.fromString(elementsField.getText()),
-//                        elementsMatchFormula.isSelected(), elementsMatchPrecursorFormula.isSelected()
-                        true, false
-                )
-        );
-
-        target.setDbFilter(new DbFilter(searchDBList.checkBoxList.getCheckedItems(),
-                ((SpinnerNumberModel) candidateSpinner.getModel()).getNumber().intValue()));
-
-        target.getSampleBlankFoldChange().setEnabled(blankFilter.isSelected());
-        target.getSampleBlankFoldChange().setCurrentMinFoldChange((Double) blankSpinner.getValue());
     }
 
     /**
@@ -646,24 +599,14 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
     /**
      * Builds the embedded {@link QueryEditorPanel}. Its panel chips render the session's working value,
-     * into which the widgets push their state ({@link #pushWidgetsToSession()}), so they mirror the tabs
-     * without touching the applied filter until Apply; the host wires the dialog's transaction boundary
+     * of which the widgets are views too ({@link #wireBindings()}), so chips and tabs always agree and the
+     * applied filter is untouched until Apply; the host wires the dialog's transaction boundary
      * (Esc = Discard, Enter with nothing left to add = Apply) and turns a model-chip click into a
      * jump to its tab.
      */
     private QueryEditorPanel buildQueryEditor() {
         SearchRenderState renderState = new SearchRenderState(fieldsProvider);
-        FilterEditorHost jumpToTab = new FilterEditorHost() {
-            @Override
-            public void openEditorFor(@NotNull FilterTerm term) {
-                selectTabForFacet(term.id()); // a model chip was clicked -> jump to its control
-            }
-
-            @Override
-            public void removeFilter(@NotNull FilterTerm term) {
-                resetFacet(term.id()); // the chip's x -> reset the backing widget (like every edit: until Apply)
-            }
-        };
+        FilterEditorHost jumpToTab = term -> selectTabForFacet(term.id()); // a model chip was clicked -> jump to its control
         QueryEditorPanel.Host host = new QueryEditorPanel.Host() {
             @Override
             public void editorContentChanged() {
@@ -688,71 +631,118 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 openFullEditor.run(); // a model chip was clicked -> just jump to its tab, don't close
             }
         };
-        // embedded: no in-editor funnel (the dialog has its own tabs); the clear button does a full
-        // reset of every filter and the query (replacing the former separate Reset button)
+        // embedded: no in-editor funnel (the dialog has its own tabs) and no quick switches (the tabs are
+        // the full editor); Clear and Restore edit the working value, which the widgets follow
         return new QueryEditorPanel(session, fieldsProvider,
                 () -> PanelFilterTerms.of(session, gui.getProperties().getConfidenceDisplayMode()), jumpToTab, renderState,
-                commit -> {}, () -> {}, host, true, null, this::resetFilter, this::resetFilterToDefaults,
-                List.of()); // no quick switches: the dialog's tabs are the full editor
+                commit -> {}, () -> {}, host, true, null, List.of());
     }
 
+    // --- widgets <-> working value ---
+
     /**
-     * Pushes the dialog's CURRENT (uncommitted) widget state into the session's working value, which the
-     * embedded chips render. One-directional for now: the widgets own the facets; the session carries them
-     * together with the editor-owned parts (inversion, block joint, user query). Defensive: a half-typed
-     * element formula (etc.) that cannot be parsed leaves the working value as it was rather than raising.
+     * Makes every widget group a two-way view of the session's working value: a widget change is applied to
+     * the working value through its binding's {@code read}, and every change of the working value (from a
+     * widget, a chip's remove, Clear, Restore, an import) is written into all widgets through {@code seed}.
+     * Seeding never echoes back: the listeners are muted while it runs, and each seed writes only what
+     * differs. Check-box lists fire one event per box, so their edits are coalesced to one per event turn.
      */
-    private void pushWidgetsToSession() {
+    private void wireBindings() {
+        var mz = FilterWidgetBindings.range("mz", minMzSpinner, maxMzSpinner, FeatureFilter::mz, FeatureFilter::withMz);
+        var rt = FilterWidgetBindings.range("rt", minRtSpinner, maxRtSpinner, FeatureFilter::rt, FeatureFilter::withRt);
+        var confidence = FilterWidgetBindings.range("confidence", minConfidenceSpinner, maxConfidenceSpinner,
+                FeatureFilter::confidence, FeatureFilter::withConfidence);
+        var ms1 = FilterWidgetBindings.flag("hasMs1", hasMs1, FeatureFilter::hasMs1, FeatureFilter::withHasMs1);
+        var msms = FilterWidgetBindings.flag("hasMsMs", hasMsMs, FeatureFilter::hasMsMs, FeatureFilter::withHasMsMs);
+        var adducts = FilterWidgetBindings.adducts(adductOptions.checkBoxList);
+        var quality = FilterWidgetBindings.quality("quality", overallQualityPanel, FeatureFilter::featureQuality, FeatureFilter::withFeatureQuality);
+        var elements = FilterWidgetBindings.elements(elementsField);
+        var dbs = FilterWidgetBindings.databases(searchDBList.checkBoxList, candidateSpinner);
+        var blank = FilterWidgetBindings.blankFoldChange(blankFilter, blankSpinner);
+        var lipid = FilterWidgetBindings.tristate("lipid", lipidFilter, FeatureFilter::lipidClassDetected, FeatureFilter::withLipidClassDetected);
+        var pfas = FilterWidgetBindings.tristate("pfas", pfasFilter, FeatureFilter::pfasDetected, FeatureFilter::withPfasDetected);
+        bindings.addAll(List.of(mz, rt, confidence, ms1, msms, adducts, quality));
+        // the categorized quality panels were built in category order (see the constructor)
+        DefaultQualityCategory[] categories = DefaultQualityCategory.values();
+        for (int i = 0; i < qualityPanels.size(); i++) {
+            DefaultQualityCategory category = categories[i];
+            var categorized = FilterWidgetBindings.quality("quality." + category.name(), qualityPanels.get(i),
+                    f -> f.categorizedQuality().get(category), (f, selection) -> f.withCategorizedQuality(category, selection));
+            bindings.add(categorized);
+            qualityPanels.get(i).onChange(() -> edit(categorized));
+        }
+        bindings.addAll(List.of(elements, dbs, blank, lipid, pfas));
+
+        // widgets -> working value
+        for (JSpinner spinner : new JSpinner[]{minMzSpinner, maxMzSpinner})
+            spinner.addChangeListener(e -> edit(mz));
+        for (JSpinner spinner : new JSpinner[]{minRtSpinner, maxRtSpinner})
+            spinner.addChangeListener(e -> edit(rt));
+        for (JSpinner spinner : new JSpinner[]{minConfidenceSpinner, maxConfidenceSpinner})
+            spinner.addChangeListener(e -> edit(confidence));
+        hasMs1.addActionListener(e -> edit(ms1));
+        hasMsMs.addActionListener(e -> edit(msms));
+        adductOptions.checkBoxList.addCheckBoxListener(e -> editLater(adducts)); // all / none / single tick many boxes at once
+        overallQualityPanel.onChange(() -> edit(quality));
+        elementsField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { edit(elements); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { edit(elements); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { edit(elements); }
+        });
+        searchDBList.checkBoxList.addCheckBoxListener(e -> editLater(dbs)); // all / none / bio tick many boxes at once
+        candidateSpinner.addChangeListener(e -> edit(dbs));
+        blankFilter.addActionListener(e -> edit(blank));
+        blankSpinner.addChangeListener(e -> edit(blank));
+        lipidFilter.onChange(() -> edit(lipid));
+        pfasFilter.onChange(() -> edit(pfas));
+
+        // working value -> widgets
+        session.subscribe(this::seedAll);
+    }
+
+    /** Applies one widget group's state to the working value - unless the widgets are just being seeded from it. */
+    private void edit(@NotNull FilterWidgetBindings.WidgetBinding binding) {
+        if (seeding)
+            return;
+        session.edit(binding.read());
+    }
+
+    /** {@link #edit} once at the end of this event turn, however many events the widget fires until then. */
+    private void editLater(@NotNull FilterWidgetBindings.WidgetBinding binding) {
+        if (seeding)
+            return;
+        boolean first = pendingEdits.isEmpty();
+        pendingEdits.add(binding);
+        if (first)
+            SwingUtilities.invokeLater(() -> {
+                List<FilterWidgetBindings.WidgetBinding> due = new ArrayList<>(pendingEdits);
+                pendingEdits.clear();
+                due.forEach(this::edit);
+            });
+    }
+
+    /** Writes the working value into every widget group, with the widget listeners muted. */
+    private void seedAll() {
+        if (seeding)
+            return;
+        seeding = true;
         try {
-            FeatureFilterModel widgets = new FeatureFilterModel(filterModel.getContext());
-            widgets.set(session.working());
-            applyWidgetsTo(widgets);
-            session.set(widgets.get());
-        } catch (Exception ex) {
-            log.debug("Could not read the widget state into the working filter", ex);
+            FeatureFilter working = session.working();
+            bindings.forEach(binding -> binding.seed().accept(working));
+        } finally {
+            seeding = false;
         }
     }
 
-    /** Pushes the widget state into the session whenever any filter widget changes, so the chips track the tabs live. */
-    private void wireLiveChipRefresh() {
-        // The chip rebuild is not free (it recompiles a throwaway model). A bulk widget update (e.g. the
-        // adduct "single" preset checks many boxes at once) sets suppressChipRefresh and rebuilds ONCE at
-        // the end instead of once per box, so the preset does not lag.
-        Runnable refresh = () -> { if (!suppressChipRefresh) pushWidgetsToSession(); };
-        // The database buttons (all / none / bio) tick their boxes one at a time, so a click arrives as a
-        // burst of events - and rebuilding per event would recompile the throwaway model a dozen times over.
-        // Collapsing the burst into one rebuild at the end of the turn handles every such button, including
-        // any added later, which suppressing around a particular one would not.
-        Runnable coalescedRefresh = this::requestChipRefresh;
-        for (JSpinner s : new JSpinner[]{minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner,
-                minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, blankSpinner})
-            s.addChangeListener(e -> refresh.run());
-        for (JCheckBox c : new JCheckBox[]{hasMs1, hasMsMs, blankFilter})
-            c.addActionListener(e -> refresh.run());
-        lipidFilter.onChange(refresh);
-        pfasFilter.onChange(refresh);
-        adductOptions.checkBoxList.addCheckBoxListener(e -> refresh.run());
-        searchDBList.checkBoxList.addCheckBoxListener(e -> coalescedRefresh.run());
-        overallQualityPanel.onChange(refresh);
-        qualityPanels.forEach(p -> p.onChange(refresh));
-        elementsField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { refresh.run(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { refresh.run(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { refresh.run(); }
-        });
-    }
-
     /**
-     * Asks for a chip rebuild once this event turn is done, however many times it is asked in the meantime.
+     * Applies every widget group to the working value at once - the safety net before a commit, for widget
+     * changes made programmatically (which fire no listener).
      */
-    private void requestChipRefresh() {
-        if (suppressChipRefresh || chipRefreshPending)
-            return;
-        chipRefreshPending = true;
-        SwingUtilities.invokeLater(() -> {
-            chipRefreshPending = false;
-            if (!suppressChipRefresh)
-                pushWidgetsToSession();
+    private void pushAll() {
+        session.edit(f -> {
+            for (FilterWidgetBindings.WidgetBinding binding : bindings)
+                f = binding.read().apply(f);
+            return f;
         });
     }
 
@@ -767,7 +757,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     private void deleteSelectedCompoundsAndResetFilter() {
         // Build the query for the features to DELETE: everything that does NOT match the current filter.
         // Flipping the filter's inversion turns the "keep" (visible) query into its complement.
-        pushWidgetsToSession();
+        pushAll(); // programmatic widget changes fire no listener
         queryEditor.commitUserQuery(); // the working value now carries widgets, inversion, joint and query
         FeatureFilterModel deleteMatcher = new FeatureFilterModel(filterModel.getContext());
         deleteMatcher.setExecutableQueryForm(filterModel.getExecutableQueryForm()); // same query, same anchoring
@@ -783,9 +773,9 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 return; // aborted: leave the filter untouched; the dialog is disposed by the caller
         }
 
-        // reset global filter and close
-        resetFilter();
-        saveChanges();
+        // reset the filter (nothing filtered, no query) and close
+        queryEditor.clearAll();
+        session.commit();
         dispose();
 
         // clear selection to prevent unnecessary updates during deletions
@@ -805,178 +795,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 return true;
             }
         });
-    }
-
-    /**
-     * only reset values in the dialog, not the actual filter model
-     */
-    private void resetFilter() {
-        resetSpinnerValues();
-        adductOptions.checkBoxList.uncheckAll();
-        overallQualityPanel.reset();
-        qualityPanels.forEach(QualityFilterPanel::reset);
-
-        lipidFilter.setFilterState(null);
-        pfasFilter.setFilterState(null);
-        elementsField.setText(null);
-        searchDBList.checkBoxList.uncheckAll();
-        deleteSelection.setSelected(false);
-        hasMs1.setSelected(false);
-        hasMsMs.setSelected(false);
-
-        blankFilter.setSelected(false);
-
-        queryEditor.setInverted(false);
-        // clear the user query and push the freshly-reset widget state (a programmatic checkbox reset does
-        // not fire the live-refresh listeners)
-        queryEditor.clearUserQuery();
-        pushWidgetsToSession();
-    }
-
-    /**
-     * only reset values in the dialog, not the actual filter model.
-     * <p>
-     * Restores the DEFAULT filter configuration (SIRIUS's recommended starting filter) into the dialog
-     * widgets instead of clearing them: MS/MS present, feature quality restricted to DECENT/GOOD, the
-     * single-charged monomeric detected adducts selected, everything else off / at full range. Like every
-     * edit here it is staged - it takes effect on Apply and is reverted by Discard/Esc.
-     */
-    private void resetFilterToDefaults() {
-        // batch the widget updates into a single chip rebuild (see wireLiveChipRefresh)
-        suppressChipRefresh = true;
-        try {
-            // the defaults over THIS project's detected adducts, from the one definition (FeatureFilter.defaults)
-            FeatureFilterModel defaults = new FeatureFilterModel(filterModel.getContext());
-            resetSpinnerValues();
-            adductOptions.checkBoxList.uncheckAll();
-            adductOptions.checkBoxList.checkAll(defaults.getSelectedAdducts());
-            overallQualityPanel.setFromModel(defaults.getFeatureQualityFilter());
-            qualityPanels.forEach(QualityFilterPanel::reset);
-
-            lipidFilter.setFilterState(null);
-            pfasFilter.setFilterState(null);
-            elementsField.setText(null);
-            searchDBList.checkBoxList.uncheckAll();
-            deleteSelection.setSelected(false);
-            hasMs1.setSelected(defaults.isHasMs1());
-            hasMsMs.setSelected(defaults.isHasMsMs()); // default: require MS/MS
-
-            blankFilter.setSelected(false);
-
-            queryEditor.setInverted(false);
-        } finally {
-            suppressChipRefresh = false;
-        }
-        // clear the user query and push the freshly-set widget state
-        queryEditor.clearUserQuery();
-        pushWidgetsToSession();
-    }
-
-    private void resetSpinnerValues() {
-        minMzSpinner.setValue(filterModel.getMinMz());
-        maxMzSpinner.setValue(filterModel.getMaxMz());
-        minRtSpinner.setValue(filterModel.getMinRt());
-        maxRtSpinner.setValue(filterModel.getMaxRt());
-        minConfidenceSpinner.setValue(filterModel.getMinConfidence());
-        maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
-        candidateSpinner.setValue(1);
-        blankSpinner.setValue(filterModel.getSampleBlankFoldChange().getMinFoldChange());
-    }
-
-    /**
-     * Resets the single filter facet backing an embedded query-editor chip to its inactive state,
-     * invoked when the chip's remove (x) is clicked. It only touches the dialog widgets - like any
-     * other edit here, it takes effect on Apply and is reverted by Discard/Esc. The facet ids match
-     * {@link de.unijena.bioinf.ms.gui.utils.filter.PanelQueryNodeFactory}; the base before any '.' is
-     * the widget group (categorized quality is "quality.&lt;id&gt;").
-     */
-    private void resetFacet(@NotNull String facetId) {
-        String base = facetId.contains(".") ? facetId.substring(0, facetId.indexOf('.')) : facetId;
-        switch (base) {
-            case "mz" -> {
-                minMzSpinner.setValue(filterModel.getMinMz());
-                maxMzSpinner.setValue(filterModel.getMaxMz());
-            }
-            case "rt" -> {
-                minRtSpinner.setValue(filterModel.getMinRt());
-                maxRtSpinner.setValue(filterModel.getMaxRt());
-            }
-            case "confidence" -> {
-                minConfidenceSpinner.setValue(filterModel.getMinConfidence());
-                maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
-            }
-            case "hasMs1" -> hasMs1.setSelected(false);
-            case "hasMsMs" -> hasMsMs.setSelected(false);
-            case "adducts" -> adductOptions.checkBoxList.uncheckAll();
-            case "quality" -> resetQualityFacet(facetId);
-            case "elements" -> elementsField.setText(null);
-            case "blank" -> {
-                blankFilter.setSelected(false);
-                blankSpinner.setValue(filterModel.getSampleBlankFoldChange().getMinFoldChange());
-            }
-            case "lipid" -> lipidFilter.setFilterState(null);
-            case "pfas" -> pfasFilter.setFilterState(null);
-            case "db" -> {
-                searchDBList.checkBoxList.uncheckAll();
-                candidateSpinner.setValue(1);
-            }
-            default -> {
-                return; // unknown facet - nothing to reset, leave the chips untouched
-            }
-        }
-        // a programmatic checkbox / combo reset does not fire the live-refresh listeners, so push by hand
-        pushWidgetsToSession();
-    }
-
-    /** Resets the overall ("quality") or a categorized ("quality.&lt;id&gt;") quality filter panel. */
-    private void resetQualityFacet(@NotNull String facetId) {
-        if (facetId.equals("quality")) {
-            overallQualityPanel.reset();
-            return;
-        }
-        String filterId = facetId.substring(facetId.indexOf('.') + 1);
-        Iterator<QualityFilterPanel> panelIt = qualityPanels.iterator();
-        Iterator<QualityFilter> filterIt = filterModel.getCategorizedQualityFilters().iterator();
-        while (panelIt.hasNext() && filterIt.hasNext()) {
-            QualityFilterPanel panel = panelIt.next();
-            if (filterIt.next().getId().equals(filterId)) {
-                panel.reset();
-                return;
-            }
-        }
-    }
-
-    public double getMinMz() {
-        return getDoubleValue(minMzSpinner);
-    }
-
-    public double getMaxMz() {
-        return getDoubleValue(maxMzSpinner);
-    }
-
-    public double getMinRt() {
-        return getDoubleValue(minRtSpinner);
-    }
-
-    public double getMaxRt() {
-        return getDoubleValue(maxRtSpinner);
-    }
-
-    public double getMinConfidence() {
-        return getDoubleValue(minConfidenceSpinner);
-    }
-
-    public double getMaxConfidence() {
-        return getDoubleValue(maxConfidenceSpinner);
-    }
-
-
-    public double getDoubleValue(JSpinner spinner) {
-        return ((SpinnerNumberModel) spinner.getModel()).getNumber().doubleValue();
-    }
-
-    public int getIntValue(JSpinner spinner) {
-        return ((SpinnerNumberModel) spinner.getModel()).getNumber().intValue();
     }
 
     private void ensureCompatibleBounds(JSpinner minSpinner, JSpinner maxSpinner) {
