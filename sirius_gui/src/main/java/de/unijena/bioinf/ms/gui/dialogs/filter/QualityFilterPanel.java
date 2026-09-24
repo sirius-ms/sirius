@@ -1,36 +1,37 @@
 package de.unijena.bioinf.ms.gui.dialogs.filter;
 
-import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import eu.hansolo.rangeslider.RangeSlider;
+import io.sirius.ms.sdk.model.DataQuality;
+import org.apache.commons.text.CaseUtils;
 import org.jetbrains.annotations.NotNull;
 
-import io.sirius.ms.sdk.model.DataQuality;
-
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Selects a range of data qualities, from the lowest to the highest that should still pass the filter.
- * <p>
- * Quality is an ordered scale, so a range says what a set of check boxes could only imply: everything from here
- * to there. The scale shown is the one the user can reason about - Lowest to Good; the NOT_APPLICABLE state is
- * deliberately absent, since it does not mean bad quality but that there was nothing to judge. Features in that
- * state always pass, which the query builder takes care of by adding the term unconditionally.
+ * A range slider over the selectable data qualities (LOWEST to GOOD; NOT_APPLICABLE is never on the slider),
+ * editing one quality selection of a {@link de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter} as a
+ * contiguous range. The dialog binds it to the working value through {@link #getSelection()} and
+ * {@link #setSelection(Set)}, see {@link FilterWidgetBindings#quality}.
  */
-class QualityFilterPanel extends JPanel {
+public class QualityFilterPanel extends JPanel {
+
+    /** The selectable qualities in slider order: everything but NOT_APPLICABLE. */
+    private static final List<DataQuality> QUALITIES = Arrays.asList(DataQuality.values()).subList(1, DataQuality.values().length);
 
     private final RangeSlider slider;
     private final int lastIndex;
 
-    public QualityFilterPanel(@NotNull QualityFilter qualityFilterModel) {
+    /** A slider spanning the whole scale (not filtering). */
+    public QualityFilterPanel() {
         super();
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
-        List<String> qualities = qualityFilterModel.getPossibleQualities();
-        lastIndex = qualities.size() - 1;
+        lastIndex = QUALITIES.size() - 1;
 
         slider = new RangeSlider(0, lastIndex);
         slider.setSnapToTicks(true);
@@ -40,10 +41,10 @@ class QualityFilterPanel extends JPanel {
 
         Hashtable<Integer, JComponent> labels = new Hashtable<>();
         for (int i = 0; i <= lastIndex; i++)
-            labels.put(i, new JLabel(qualities.get(i)));
+            labels.put(i, new JLabel(CaseUtils.toCamelCase(QUALITIES.get(i).name(), true, '_', ' ', '\t')));
         slider.setLabelTable(labels);
 
-        setFromModel(qualityFilterModel);
+        reset();
 
         add(Box.createHorizontalStrut(10));
         add(slider);
@@ -54,62 +55,34 @@ class QualityFilterPanel extends JPanel {
         setRange(0, lastIndex);
     }
 
-    /** Sets the slider from the given quality filter's selection (mirrors the constructor). */
-    public void setFromModel(@NotNull QualityFilter qualityFilter) {
-        int lower = -1;
-        int upper = -1;
-        for (int i = 0; i <= lastIndex; i++) {
-            if (qualityFilter.isQualitySelected(i)) {
-                if (lower < 0)
-                    lower = i;
-                upper = i;
-            }
-        }
-        // A slider can only express a contiguous range. A selection that is not contiguous - which the model
-        // still allows, e.g. from a typed query - is widened to the range it spans rather than silently
-        // dropping the ends. An empty selection falls back to the full range.
-        setRange(lower < 0 ? 0 : lower, upper < 0 ? lastIndex : upper);
-    }
-
     /** The selected qualities as the slider shows them: the contiguous range between its two thumbs. */
     public Set<DataQuality> getSelection() {
         int lower = slider.getLowerValue();
-        int upper = lower + slider.getModel().getExtent(); // see updateModel for why the extent, not upperValue
+        // the upper thumb is read through the extent, as FilterRangeSlider does: RangeSlider only refreshes its
+        // upperValue field in setUpperValue, so it goes stale once the user drags the slider
+        int upper = lower + slider.getModel().getExtent();
         EnumSet<DataQuality> selection = EnumSet.noneOf(DataQuality.class);
         for (int i = lower; i <= upper && i <= lastIndex; i++)
-            selection.add(qualityAt(i));
+            selection.add(QUALITIES.get(i));
         return selection;
     }
 
     /**
-     * Shows a selection. A slider can only express a contiguous range: a selection with a gap is widened to
-     * the span it covers rather than dropping its ends; an empty selection falls back to the full range.
+     * Shows a selection. A slider can only express a contiguous range: a selection with a gap - which the
+     * filter still allows, e.g. from a typed query - is widened to the span it covers rather than silently
+     * dropping the ends. An empty selection falls back to the full range.
      */
     public void setSelection(@NotNull Set<DataQuality> selection) {
         int lower = -1;
         int upper = -1;
         for (int i = 0; i <= lastIndex; i++) {
-            if (selection.contains(qualityAt(i))) {
+            if (selection.contains(QUALITIES.get(i))) {
                 if (lower < 0)
                     lower = i;
                 upper = i;
             }
         }
         setRange(lower < 0 ? 0 : lower, upper < 0 ? lastIndex : upper);
-    }
-
-    /** The quality at slider position {@code i}: the selectable qualities in order (NOT_APPLICABLE is never on the slider). */
-    private static DataQuality qualityAt(int i) {
-        return DataQuality.values()[i + 1];
-    }
-
-    public void updateModel(QualityFilter qualityFilter) {
-        int lower = slider.getLowerValue();
-        // the upper thumb is read through the extent, as FilterRangeSlider does: RangeSlider only refreshes its
-        // upperValue field in setUpperValue, so it goes stale once the user drags the slider
-        int upper = lower + slider.getModel().getExtent();
-        for (int i = 0; i <= lastIndex; i++)
-            qualityFilter.setQualitySelected(i, i >= lower && i <= upper);
     }
 
     /** Runs {@code onChange} whenever the selected quality range changes. */

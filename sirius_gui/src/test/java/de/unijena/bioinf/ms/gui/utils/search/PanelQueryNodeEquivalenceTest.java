@@ -21,6 +21,10 @@ import de.unijena.bioinf.ms.gui.utils.query.*;
 import de.unijena.bioinf.ms.gui.utils.filter.PanelQueryNodeFactory;
 
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
+import de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory;
+import io.sirius.ms.sdk.model.DataQuality;
+import java.util.Set;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.index.MultiReader;
@@ -118,97 +122,97 @@ public class PanelQueryNodeEquivalenceTest {
 
     private static FeatureFilterModel cleanSlate() {
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setHasMsMs(false);
-        model.getFeatureQualityFilter().reset();
+        model.update(f -> f.withHasMsMs(false));
+        model.update(f -> f.withFeatureQuality(FeatureFilter.ALL_QUALITIES));
         return model;
     }
 
     @Test
     public void testMz() {
         FeatureFilterModel model = cleanSlate();
-        model.setCurrentMinMz(300);
-        model.setCurrentMaxMz(400);
+        model.update(f -> f.withMz(300, f.mz().max()));
+        model.update(f -> f.withMz(f.mz().min(), 400));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testMzOpenUpper() {
         FeatureFilterModel model = cleanSlate();
-        model.setCurrentMinMz(300); // upper stays at absolute max
+        model.update(f -> f.withMz(300, f.mz().max())); // upper stays at absolute max
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testRt() {
         FeatureFilterModel model = cleanSlate();
-        model.setCurrentMinRt(10);
-        model.setCurrentMaxRt(120);
+        model.update(f -> f.withRt(10, f.rt().max()));
+        model.update(f -> f.withRt(f.rt().min(), 120));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testConfidenceExact() {
         FeatureFilterModel model = cleanSlate();
-        model.setCurrentMinConfidence(0.5);
+        model.update(f -> f.withConfidence(0.5, f.confidence().max()));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testConfidenceApproximate() {
         FeatureFilterModel model = cleanSlate();
-        model.setCurrentMinConfidence(0.5);
+        model.update(f -> f.withConfidence(0.5, f.confidence().max()));
         assertEquivalent(model, ConfidenceDisplayMode.APPROXIMATE);
     }
 
     @Test
     public void testHasMs1AndMsMs() {
         FeatureFilterModel model = cleanSlate();
-        model.setHasMs1(true);
-        model.setHasMsMs(true);
+        model.update(f -> f.withHasMs1(true));
+        model.update(f -> f.withHasMsMs(true));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testAdducts() {
         FeatureFilterModel model = cleanSlate();
-        model.setAdducts(java.util.Set.of(
+        model.update(f -> f.withAdducts(java.util.Set.of(
                 de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType.fromString("[M+H]+"),
-                de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType.fromString("[M+Na]+")));
+                de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType.fromString("[M+Na]+"))));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testLipidAny() {
         FeatureFilterModel model = cleanSlate();
-        model.setLipidClassDetected(true);
+        model.update(f -> f.withLipidClassDetected(true));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testLipidNo() {
         FeatureFilterModel model = cleanSlate();
-        model.setLipidClassDetected(false);
+        model.update(f -> f.withLipidClassDetected(false));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testPfasTagged() {
         FeatureFilterModel model = cleanSlate();
-        model.setPfasDetected(true);
+        model.update(f -> f.withPfasDetected(true));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testNoPfasTag() {
         FeatureFilterModel model = cleanSlate();
-        model.setPfasDetected(false);
+        model.update(f -> f.withPfasDetected(false));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
     @Test
     public void testElements() {
         FeatureFilterModel model = cleanSlate();
-        model.setElementFilter(new de.unijena.bioinf.ms.gui.utils.filter.ElementFilter("CHNOPS"));
+        model.update(f -> f.withElementFilter(new de.unijena.bioinf.ms.gui.utils.filter.ElementFilter("CHNOPS")));
         String p = FeatureFilterModel.PREFIX_ELEMENT;
         assertEquivalent(model, ConfidenceDisplayMode.EXACT,
                 p + "C", p + "H", p + "N", p + "O", p + "P", p + "S");
@@ -217,15 +221,15 @@ public class PanelQueryNodeEquivalenceTest {
     @Test
     public void testDbHit() {
         FeatureFilterModel model = cleanSlate();
-        model.setDbFilter(new de.unijena.bioinf.ms.gui.utils.filter.DbFilter(
-                java.util.List.of(new io.sirius.ms.sdk.model.SearchableDatabase().databaseId("PubChem")), 5));
+        model.update(f -> f.withDbFilter(new de.unijena.bioinf.ms.gui.utils.filter.DbFilter(
+                java.util.List.of(new io.sirius.ms.sdk.model.SearchableDatabase().databaseId("PubChem")), 5)));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT, FeatureFilterModel.PREFIX_DB + "PubChem");
     }
 
     @Test
     public void testBlankFoldChange() {
         FeatureFilterModel model = cleanSlate();
-        model.getSampleBlankFoldChange().setEnabled(true);
+        model.update(f -> f.withBlankFoldChangeEnabled(true));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
@@ -233,7 +237,7 @@ public class PanelQueryNodeEquivalenceTest {
     public void testOverallQualityDefault() {
         // fresh model WITHOUT resetting the feature quality filter -> enabled by default
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setHasMsMs(false);
+        model.update(f -> f.withHasMsMs(false));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
@@ -241,8 +245,7 @@ public class PanelQueryNodeEquivalenceTest {
     public void testCategorizedQuality() {
         FeatureFilterModel model = cleanSlate();
         // enable one categorized quality filter by narrowing its selection (isEnabled = strict subset)
-        var categorized = model.getCategorizedQualityFilters().get(0);
-        categorized.removeQuality(0);
+        model.update(f -> f.withCategorizedQuality(DefaultQualityCategory.PEAK_QUALITY, Set.of(DataQuality.BAD, DataQuality.DECENT, DataQuality.GOOD)));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
@@ -252,9 +255,9 @@ public class PanelQueryNodeEquivalenceTest {
         // mechanism applies around the compiled core, exactly as the model does. Verify the wrapper
         // reproduces the model's inverted query.
         FeatureFilterModel model = cleanSlate();
-        model.setCurrentMinMz(300);
-        model.setAdducts(java.util.Set.of(de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType.fromString("[M+H]+")));
-        model.setInverted(true);
+        model.update(f -> f.withMz(300, f.mz().max()));
+        model.update(f -> f.withAdducts(java.util.Set.of(de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType.fromString("[M+H]+"))));
+        model.update(f -> f.withInverted(true));
 
         String reference = model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow();
         String candidate = "*:* AND NOT (" + compileCore(model, ConfidenceDisplayMode.EXACT) + ")";
@@ -264,10 +267,10 @@ public class PanelQueryNodeEquivalenceTest {
     @Test
     public void testCombination() {
         FeatureFilterModel model = new FeatureFilterModel(); // keep default quality + msms active too
-        model.setCurrentMinMz(300);
-        model.setCurrentMinRt(10);
-        model.setAdducts(java.util.Set.of(de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType.fromString("[M+H]+")));
-        model.setLipidClassDetected(false);
+        model.update(f -> f.withMz(300, f.mz().max()));
+        model.update(f -> f.withRt(10, f.rt().max()));
+        model.update(f -> f.withAdducts(java.util.Set.of(de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType.fromString("[M+H]+"))));
+        model.update(f -> f.withLipidClassDetected(false));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 
@@ -276,11 +279,11 @@ public class PanelQueryNodeEquivalenceTest {
     @Test
     public void testInvertedQueryIsTheComplementOfTheCore() {
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setHasMsMs(true);
+        model.update(f -> f.withHasMsMs(true));
         String core = model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow();
         assertFalse(core.startsWith("*:*"), "a non-inverted query is the core as-is");
 
-        model.setInverted(true);
+        model.update(f -> f.withInverted(true));
         assertEquals("*:* AND NOT (" + core + ")", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
     }
 }

@@ -24,7 +24,6 @@ import de.unijena.bioinf.ms.gui.utils.SegmentedFilterToggle;
 import de.unijena.bioinf.ms.gui.utils.filter.DbFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
-import de.unijena.bioinf.ms.gui.utils.filter.PanelQueryNodeFactory;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import io.sirius.ms.sdk.model.DataQuality;
 import io.sirius.ms.sdk.model.SearchableDatabase;
@@ -60,13 +59,19 @@ final class FilterWidgetBindings {
     private FilterWidgetBindings() {
     }
 
+    /** Applies a new numeric range to the facet it belongs to. */
+    @FunctionalInterface
+    interface RangeUpdate {
+        FeatureFilter apply(@NotNull FeatureFilter filter, double min, double max);
+    }
+
     /** One widget group over one facet: seed writes the widgets from a filter, read applies them to one. */
     record WidgetBinding(@NotNull String name, @NotNull Consumer<FeatureFilter> seed, @NotNull UnaryOperator<FeatureFilter> read) {
     }
 
     /** A min/max spinner pair over a {@link FeatureFilter.Range}. */
     static WidgetBinding range(@NotNull String name, @NotNull JSpinner min, @NotNull JSpinner max,
-                               @NotNull Function<FeatureFilter, FeatureFilter.Range> get, @NotNull PanelQueryNodeFactory.RangeUpdate set) {
+                               @NotNull Function<FeatureFilter, FeatureFilter.Range> get, @NotNull RangeUpdate set) {
         return new WidgetBinding(name,
                 f -> {
                     FeatureFilter.Range range = get.apply(f);

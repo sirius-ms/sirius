@@ -26,7 +26,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.filter.PanelQueryNodeFactory.Facet;
-import de.unijena.bioinf.ms.gui.utils.filter.PanelQueryNodeFactory.RangeFacet;
 import de.unijena.bioinf.ms.gui.utils.query.LogicOp;
 import de.unijena.bioinf.ms.gui.utils.query.NumberOp;
 import de.unijena.bioinf.ms.gui.utils.query.QueryClause;
@@ -106,8 +105,7 @@ public final class FacetCodecs {
         codecs.add(new Codec("mz",
                 (f, ctx, mode) -> !f.isMzFilterActive(ctx) ? Optional.empty() : Optional.of(new Facet("mz",
                         range(FIELD_MZ, f.mz().min(), f.mz().max()),
-                        x -> x.withMz(ctx.minMz(), ctx.maxMz()),
-                        new RangeFacet(f.mz().min(), f.mz().max(), ctx.minMz(), ctx.maxMz(), FeatureFilter::withMz))),
+                        x -> x.withMz(ctx.minMz(), ctx.maxMz()))),
                 (node, ctx) -> singleClause(node).flatMap(c -> bounds(c, FIELD_MZ, ctx.minMz(), ctx.maxMz()))
                         .map(b -> x -> x.withMz(b[0], b[1]))));
 
@@ -118,8 +116,7 @@ public final class FacetCodecs {
                                 range(FIELD_RT_START, f.rt().min(), f.rt().max()),
                                 range(FIELD_RT_APEX, f.rt().min(), f.rt().max()),
                                 range(FIELD_RT_END, f.rt().min(), f.rt().max()))),
-                        x -> x.withRt(ctx.minRt(), ctx.maxRt()),
-                        new RangeFacet(f.rt().min(), f.rt().max(), ctx.minRt(), ctx.maxRt(), FeatureFilter::withRt))),
+                        x -> x.withRt(ctx.minRt(), ctx.maxRt()))),
                 (node, ctx) -> clauses(node, LogicOp.OR).flatMap(cs -> {
                     if (cs.size() != 3)
                         return Optional.empty();
@@ -146,9 +143,7 @@ public final class FacetCodecs {
                         return Optional.empty();
                     String field = mode == ConfidenceDisplayMode.APPROXIMATE ? FIELD_CONFIDENCE_APPROX : FIELD_CONFIDENCE_EXACT;
                     return Optional.of(new Facet("confidence", range(field, f.confidence().min(), f.confidence().max()),
-                            x -> x.withConfidence(ctx.minConfidence(), ctx.maxConfidence()),
-                            new RangeFacet(f.confidence().min(), f.confidence().max(), ctx.minConfidence(), ctx.maxConfidence(),
-                                    FeatureFilter::withConfidence)));
+                            x -> x.withConfidence(ctx.minConfidence(), ctx.maxConfidence())));
                 },
                 // either confidence field: which one was queried depends on the display mode at the time
                 (node, ctx) -> singleClause(node).flatMap(c -> bounds(c, FIELD_CONFIDENCE_EXACT, ctx.minConfidence(), ctx.maxConfidence())

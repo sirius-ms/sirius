@@ -89,14 +89,5 @@ public final class PanelFilterTerms {
         public void openEditor(@NotNull FilterEditorHost host) {
             host.openEditorFor(this);
         }
-
-        @Override
-        public RangeEdit rangeEdit() {
-            PanelQueryNodeFactory.RangeFacet range = facet.range();
-            if (range == null)
-                return null;
-            return new RangeEdit(range.currentMin(), range.currentMax(), range.lowerBound(), range.upperBound(),
-                    (min, max) -> apply.accept(f -> range.update().apply(f, min, max)));
-        }
     }
 }
