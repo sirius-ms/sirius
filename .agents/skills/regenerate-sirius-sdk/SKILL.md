@@ -102,9 +102,11 @@ line, which names the SDK type the missing member belongs to.
 
 ## The other two spec variants
 
-Three specs are generated, and **step 1 only refreshes the first**. Regenerate the variant
-your change affects — each is `finalizedBy generateOpenApiDocs`, so it also refreshes the
-ref-based spec:
+Three specs are generated, and **step 1 only refreshes the first**. Regenerate every variant your
+change affects, each with its own invocation — a variant task carries no action of its own: it
+rewrites the shared `openApi` extension in `doFirst` and hands the work to `generateOpenApiDocs` as
+its finalizer. So running a variant redirects that one run to the variant's output and leaves the
+ref-based spec untouched, even though the log shows `generateOpenApiDocs` running:
 
 | Task (`:sirius_rest_service:…`) | Output spec | Consumer |
 |---|---|---|
@@ -114,6 +116,9 @@ ref-based spec:
 
 Only the first two are checked in. The advanced variant is generated on demand for the monorepo, so
 expect it to be absent or stale in a fresh clone — and do not try to commit it.
+
+Check the file timestamps rather than the task list: a half-refreshed pair of specs is the failure
+mode here, and it looks like success.
 
 ## If the change must reach the React views
 
@@ -146,6 +151,10 @@ their silence as success.
   `:sirius_rest_service` task at all, so breakage there is invisible at that step. It does cover the
   SDK's own tests, so a green run there is not worthless — just not evidence about consumers.
 * **Port 8888 must be free**, or spec generation hangs/fails.
+* **Spec generation can lose a race with itself.** The plugin waits `waitTimeInSeconds` (30) for the
+  forked server; on a loaded machine the run fails with `Unable to connect to
+  http://localhost:8888/v3/api-docs` although the server came up and served the spec moments later.
+  Retry before looking for a cause.
 * **Commit the spec, the regenerated SDK sources and the `:sirius_gui` fixes together with the REST
   change** — all four are one change. A spec that disagrees with the controllers, or an SDK the GUI
   cannot compile against, leaves the next person unable to tell which side is authoritative.
