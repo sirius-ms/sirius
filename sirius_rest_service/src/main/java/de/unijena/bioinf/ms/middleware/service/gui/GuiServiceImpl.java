@@ -96,18 +96,15 @@ public class GuiServiceImpl implements GuiService {
                                 closingDialogPanel.add(new JLabel("You are about to close the last SIRIUS GUI Window. Do you wish to shutdown SIRIUS?"));
                                 closingDialogPanel.add(Box.createVerticalStrut(GuiUtils.MEDIUM_GAP));
                                 JCheckBox compactCheckbox = new JCheckBox("Compact project");
-                                compactCheckbox.setToolTipText("Compacting the project tries to reduce the projects file size. May take some time for large projects.");
+                                compactCheckbox.setToolTipText("Reclaims space the project no longer needs. May take some time for large projects.");
                                 closingDialogPanel.add(compactCheckbox);
-                                // Left unchecked on purpose: this is true for every project an earlier version
-                                // wrote, and a repair nobody asked for reads as a hang on shutdown.
+                                // Left unchecked on purpose: a compaction nobody asked for reads as a hang on shutdown.
                                 if (compactionRecommended(gui)) {
                                     closingDialogPanel.add(Box.createVerticalStrut(GuiUtils.SMALL_GAP));
-                                    closingDialogPanel.add(new JLabel("<html>This project is stored in a layout an "
-                                            + "earlier SIRIUS version wrote. Compacting rewrites it<br>"
-                                            + "and reclaims space - how much depends on the version it was written "
-                                            + "with.<br>It reads and writes the whole project, so expect minutes for "
-                                            + "a large one,<br>and free disk space for a second copy while it "
-                                            + "runs.</html>"));
+                                    closingDialogPanel.add(new JLabel("<html>Compacting this project is expected to reclaim "
+                                            + "significant space.<br>It reads and writes the whole "
+                                            + "project, so expect minutes for a large one,<br>and free disk space "
+                                            + "for a second copy while it runs.</html>"));
                                 }
 
                                 closeSirius = JOptionPane.showConfirmDialog(gui.getMainFrame(), closingDialogPanel, null, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;

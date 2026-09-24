@@ -49,7 +49,7 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
         loadSize();
 
         JButton compactButton = new JButton("Compact");
-        compactButton.setToolTipText("Compacting the project tries to reduce the project's file size. May take some time for large projects.");
+        compactButton.setToolTipText("Reclaims space the project no longer needs. May take some time for large projects.");
         addNamed("", compactButton);
 
         compactButton.addActionListener(e -> {
@@ -60,9 +60,9 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
         });
 
         JButton compactFullButton = new JButton("Full Compact");
-        compactFullButton.setToolTipText("Compacts the project and rewrites how its records are stored, even where "
-                + "that does not look necessary. Reclaims space that plain compacting cannot, for projects written "
-                + "by older versions. Reads and writes every record, so it takes considerably longer.");
+        compactFullButton.setToolTipText("Compacts the project and rewrites every storage page, even where that "
+                + "does not look necessary - for example to convert a project written in an older, space-wasting "
+                + "format. Reads and writes the whole project, so it takes considerably longer than compacting.");
         addNamed("", compactFullButton);
 
         compactFullButton.addActionListener(e -> {
@@ -106,8 +106,7 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
         sizeField.setText(compactionRecommended ? readable + "  (compacting is recommended)" : readable);
         // cleared rather than left standing, so the hint disappears once the project has been compacted
         sizeField.setToolTipText(compactionRecommended
-                ? "This project is stored in a layout an earlier SIRIUS version wrote, which takes markedly "
-                + "more space than it needs. Compacting rewrites it and reclaims that space.\n"
+                ? "Compacting this project is expected to reclaim significant space.\n"
                 + "It reads and writes the whole project, so expect minutes for a large one, "
                 + "and free disk space for a second copy while it runs."
                 : null);

@@ -359,7 +359,7 @@
           {
             "name": "compactFull",
             "in": "query",
-            "description": "if true, compact and always rewrite how the project\u0027s records are laid out on disk, even where that does not look necessary. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.",
+            "description": "if true, compact and rewrite every storage page, even where that does not look necessary - for example to convert a project written in an older, space-wasting format. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.",
             "required": false,
             "deprecated": true,
             "schema": {
@@ -13108,7 +13108,7 @@
           },
           "compactionRecommended": {
             "type": "boolean",
-            "description": "Whether compacting this project would make it markedly smaller than the size above, because it is stored\n in a layout an earlier SIRIUS version wrote. Projects written before 6.6.0 hold a single record per storage\n page, which an ordinary compaction cannot undo; compacting such a project rewrites it and can reclaim\n a large part of its size. If NULL, the information has not been requested (See OptField \u0027sizeInformation\u0027).",
+            "description": "Whether compacting this project would reclaim markedly more space than an ordinary compaction does, so\n that it is worth offering. What makes it worthwhile varies - a project written in an older, space-wasting\n storage format, or a large amount of data removed from it.\n If NULL, the information has not been requested (See OptField \u0027sizeInformation\u0027).",
             "nullable": true
           },
           "detectedAdducts": {

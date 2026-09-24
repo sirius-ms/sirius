@@ -19,15 +19,15 @@ import java.util.concurrent.ExecutionException;
 @CommandLine.Command(name = "project", description = "<STANDALONE> Project space management.%n%n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
 public class ProjectOptions implements StandaloneTool<Workflow> {
 
-    @CommandLine.Option(names = "--compact", description = "Compact project to reduce projects file size. "
-            + "Reclaims unused space, and rewrites how records are laid out on disk if the project was "
-            + "written by a version that laid them out wastefully.")
+    @CommandLine.Option(names = "--compact", description = "Compact project to reduce its file size. "
+            + "Reclaims space the project no longer needs, and rewrites how records are laid out on disk "
+            + "where that is what wastes it.")
     boolean compact;
 
-    @CommandLine.Option(names = "--compact-full", description = "Compact project and always rewrite how its "
-            + "records are laid out on disk, even if that does not look necessary. Reads and writes the whole "
-            + "project and needs free disk space for a second copy of it, so it takes considerably longer than "
-            + "--compact. For projects whose waste --compact cannot detect.")
+    @CommandLine.Option(names = "--compact-full", description = "Compact project and rewrite every storage "
+            + "page, even where that does not look necessary - for example to convert a project written in an "
+            + "older, space-wasting format. Reads and writes the whole project and needs free disk space for a "
+            + "second copy of it, so it takes considerably longer than --compact.")
     boolean compactFull;
 
     @Override
