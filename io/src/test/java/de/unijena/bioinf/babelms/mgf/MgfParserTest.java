@@ -30,6 +30,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The feature id of an {@link Ms2Experiment} becomes the external feature id of the aligned feature
@@ -103,5 +104,42 @@ public class MgfParserTest {
         Ms2Experiment exp = ParserTestUtils.loadExperiment("mgf/ion_source_before_adduct.mgf");
         assertEquals(PrecursorIonType.fromString("[M+H]+"), exp.getPrecursorIonType());
         assertEquals(1, exp.getMs2Spectra().size());
+    }
+
+    /**
+     * Some exporters write the MS level as a name instead of a number. Names must map to the same level as
+     * the number would, including MSn levels above 2, which SIRIUS treats as MS/MS spectra.
+     */
+    @Test
+    public void msLevelNamesAreParsedLikeNumbers() throws IOException {
+        List<Ms2Experiment> experiments = ParserTestUtils.loadExperiments("mgf/ms_level_names.mgf");
+        assertEquals(2, experiments.size());
+
+        Ms2Experiment f1 = experiments.get(0);
+        assertEquals(1, f1.getMs1Spectra().size());
+        assertEquals(2, f1.getMs2Spectra().size());
+        assertEquals(2, f1.getMs2Spectra().get(0).getMsLevel());
+        assertEquals(3, f1.getMs2Spectra().get(1).getMsLevel());
+
+        Ms2Experiment f2 = experiments.get(1);
+        assertEquals(0, f2.getMs1Spectra().size());
+        assertEquals(1, f2.getMs2Spectra().size());
+        assertEquals(2, f2.getMs2Spectra().get(0).getMsLevel());
+    }
+
+    /**
+     * Any keyword starting with ION is read as an ion type, but MGF is not standardised and such a field can
+     * hold something else entirely. As long as another field defines the ion type, the compound is kept.
+     */
+    @Test
+    public void unparsableIonFieldIsIgnoredWhenChargeIsGiven() throws IOException {
+        Ms2Experiment exp = ParserTestUtils.loadExperiment("mgf/unparsable_ion_field_with_charge.mgf");
+        assertEquals(PrecursorIonType.unknownPositive(), exp.getPrecursorIonType());
+        assertEquals(1, exp.getMs2Spectra().size());
+    }
+
+    @Test
+    public void unparsableIonFieldIsStillAnErrorWhenNothingElseDefinesTheIonType() throws IOException {
+        assertTrue(ParserTestUtils.loadExperiments("mgf/unparsable_ion_field_only.mgf").isEmpty());
     }
 }
