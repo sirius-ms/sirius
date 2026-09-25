@@ -57,7 +57,7 @@ public class CollisionEnergy implements Serializable {
         this.minEnergy = Double.NaN;
         this.maxEnergy = Double.NaN;
         this.minEnergySource = minSource;
-        this.maxEnergySource = minSource;
+        this.maxEnergySource = maxSource;
     }
 
     public CollisionEnergy(CollisionEnergy ce){

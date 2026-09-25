@@ -22,37 +22,42 @@ package de.unijena.bioinf.babelms.json;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.gnps.GnpsJsonParser;
 import de.unijena.bioinf.babelms.gnps.GnpsSpectrumParser;
 import de.unijena.bioinf.babelms.mona.MonaJsonParser;
+import de.unijena.bioinf.babelms.mzmine.MzmineJsonParser;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.ArrayDeque;
 import java.util.List;
-import java.util.Queue;
 
+/**
+ * Reads the records of a json file one at a time, so files larger than memory can be parsed. A file can hold a
+ * single record, an array of records, or records one after another (e.g. one per line, as mzmine writes them).
+ */
 @Slf4j
 public class JsonExperimentParserDispatcher implements Parser<Ms2Experiment> {
+    private static final ObjectReader JSON_NODES = new ObjectMapper().readerFor(JsonNode.class);
 
     private final List<JsonExperimentParser> parsers;
-    private Queue<JsonNode> nextRoots;
-
+    private MappingIterator<JsonNode> roots;
     private Object consumedSource;
-
 
     public JsonExperimentParserDispatcher() {
         this.parsers = List.of(
                 new MonaJsonParser(),
                 new GnpsJsonParser(),
-                new GnpsSpectrumParser());
+                new GnpsSpectrumParser(),
+                new MzmineJsonParser()); // most general format, keep it last
     }
 
     @Override
@@ -66,35 +71,23 @@ public class JsonExperimentParserDispatcher implements Parser<Ms2Experiment> {
     }
 
     public Ms2Experiment parseTypeless(Object input, URI source) throws IOException {
-        if (input == consumedSource) {
-            if (nextRoots == null || nextRoots.isEmpty()) {
-                return null;
-            } else {
-                return parseNextRoot(source);
-            }
+        if (input != consumedSource) {
+            // a root array is iterated element by element, anything else root value by root value
+            if (input instanceof InputStream is)
+                roots = JSON_NODES.readValues(is);
+            else if (input instanceof BufferedReader br)
+                roots = JSON_NODES.readValues(br);
+            else
+                throw new IllegalArgumentException("Only InputStream and BufferedReader are supported");
+            consumedSource = input;
         }
 
-        JsonNode root;
-        if (input instanceof InputStream is)
-            root = new ObjectMapper().readTree(is);
-        else if (input instanceof BufferedReader br)
-            root = new ObjectMapper().readTree(br);
-        else
-            throw new IllegalArgumentException("Only InputStream and BufferedReader are supported");
-
-        consumedSource = input;
-
-        if (root.isArray()) {
-            nextRoots = new ArrayDeque<>();
-            root.forEach(nextRoots::add);
-            return parseNextRoot(source);
+        while (roots.hasNextValue()) {
+            Ms2Experiment experiment = parseRoot(roots.nextValue(), source);
+            if (experiment != null)
+                return experiment;
         }
-        return parseRoot(root, source);
-    }
-
-    private Ms2Experiment parseNextRoot(URI source) throws JsonProcessingException {
-        JsonNode root = nextRoots.remove();
-        return parseRoot(root, source);
+        return null;
     }
 
     public Ms2Experiment parseRoot(JsonNode root, URI source) throws JsonProcessingException {
