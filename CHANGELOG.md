@@ -1,6 +1,14 @@
 # Changelog
 
 ## SIRIUS 6
+### 6.6.0
+- change: the BioTransformer option to additionally look up known biotransformations in the online
+  HMDB database is now disabled by default on all interfaces. It was enabled by default over the API
+  and in the SDK, which sent the InChIKey of every input structure and of every predicted
+  intermediate metabolite to a third-party server without the user asking for it. The option is
+  still available, now describes what enabling it transmits, and can be switched on in the GUI
+  (GUI, CLI and API)
+
 ### 6.5.4 (2026-08-25)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,
   which is the basis for the new query and filter capabilities:
