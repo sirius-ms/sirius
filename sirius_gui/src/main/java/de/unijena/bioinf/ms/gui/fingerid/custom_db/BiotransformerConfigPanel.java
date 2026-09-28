@@ -72,6 +72,9 @@ public class BiotransformerConfigPanel extends SubToolConfigPanel<BioTransformer
         multiTransPanel.setEnabled(false);
         multiTransPanel.setVisible(false);
 
+        //off by default: enabling it sends structure InChIKeys to an external server (see option description)
+        settings.addNamed("", makeGenericOptionCheckBox("Look up biotransformations in online HMDB", "useDB"));
+
 
         transformationModes.addItemListener(evt -> {
             if (evt.getStateChange() == SELECTED) {
