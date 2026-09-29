@@ -40,6 +40,35 @@ public final class RepackBioTransformer {
     private static final String SHADOW = "io/siriusms/shadow/bt/cdk/";
     private static final String CDK = "org/openscience/cdk/";
 
+    /**
+     * Libraries the jar bundles that the SIRIUS classpath already provides - 3825 duplicate classes
+     * in all, almost none of them the same build. Which copy wins is decided by classpath order,
+     * which the launch scripts leave to a {@code lib/*} wildcard, so it can differ between machines.
+     * <p>
+     * This is not hypothetical: CDK 2.12's {@code CDKToBeam} calls {@code GraphBuilder.atomStereo},
+     * which exists in the beam on the classpath but not in the older copy inside the jar. With the
+     * bundled beam winning, generating SMILES for any molecule with a stereo centre dies with a
+     * {@code NoSuchMethodError} inside CDK itself.
+     * <p>
+     * Every one of these is a transitive dependency of CDK or unreachable from BioTransformer's own
+     * code, so the classpath copy is the one that should be used. Weka, Ambit2, Jena, Jackson 1 and
+     * HttpClient are deliberately not in this list: nothing on the SIRIUS classpath provides them.
+     */
+    private static final List<String> PROVIDED_BY_SIRIUS = List.of(
+            "uk/ac/ebi/beam/",                      // beam-core/beam-func - CDK's SMILES backend
+            "com/google/common/", "com/google/thirdparty/",   // guava
+            "org/apache/commons/math/",             // commons-math 2
+            "org/xmlcml/",                          // cmlxom, euclid, stml
+            "nu/xom/",                              // xom
+            "org/joda/",                            // joda-time
+            "org/freehep/",                         // freehep graphics
+            "javax/vecmath/",                       // vecmath
+            "signature/",                           // signatures
+            "org/ccil/",                            // tagsoup
+            "Jama/",                                // jama
+            "blogspot/software_and_algorithms/",    // stern library, ships with euclid
+            "javax/xml/", "org/w3c/", "org/xml/");  // xml-apis, also owned by the java.xml module
+
     /** CDK's own resources. CDK 2.12 ships its own copies; keeping these would shadow them. */
     private static final Set<String> DROPPED_RESOURCES = Set.of(
             "build.props",                  // cdk-core - declares the CDK version, would report 2.7.1
@@ -59,6 +88,18 @@ public final class RepackBioTransformer {
             "(IILorg/openscience/cdk/interfaces/IBond$Order;Lorg/openscience/cdk/interfaces/IBond$Display;)V";
     private static final String ADD_BOND_DELEGATE =
             "(IILorg/openscience/cdk/interfaces/IBond$Order;)V";
+
+    /**
+     * {@code InChIGeneratorFactory.getInChIGenerator(IAtomContainer)} was an instance method in CDK
+     * 2.7.1 and is static in 2.12. The compiled call sites use {@code invokevirtual} and would fail
+     * with {@code IncompatibleClassChangeError}, so they are rewritten to {@code invokestatic}.
+     * The factory instance they push is discarded; it is a singleton and fetching it has no effect
+     * beyond the exception {@code getInstance()} may throw, which still happens.
+     */
+    private static final String INCHI_FACTORY = "org/openscience/cdk/inchi/InChIGeneratorFactory";
+    private static final String GET_INCHI_GENERATOR = "getInChIGenerator";
+    private static final String GET_INCHI_GENERATOR_DESC =
+            "(Lorg/openscience/cdk/interfaces/IAtomContainer;)Lorg/openscience/cdk/inchi/InChIGenerator;";
 
     /** Fixed timestamp so repeated runs produce an identical jar. */
     private static final long FIXED_TIME = 0L;
@@ -83,7 +124,7 @@ public final class RepackBioTransformer {
         }
     };
 
-    private int copied, droppedCdk, droppedResources, remapped;
+    private int copied, droppedCdk, droppedResources, remapped, staticCallsFixed, droppedProvided;
     private boolean patchApplied;
 
     public static void main(String[] args) throws Exception {
@@ -123,6 +164,10 @@ public final class RepackBioTransformer {
                     droppedResources++;
                     continue;
                 }
+                if (PROVIDED_BY_SIRIUS.stream().anyMatch(name::startsWith)) {
+                    droppedProvided++;
+                    continue;
+                }
 
                 byte[] bytes;
                 try (InputStream is = source.getInputStream(entry)) {
@@ -144,8 +189,9 @@ public final class RepackBioTransformer {
         }
 
         System.out.printf("repacked: %d classes rewritten, %d resources copied, "
-                        + "%d bundled-CDK entries dropped, %d colliding CDK resources dropped%n",
-                remapped, copied, droppedCdk, droppedResources);
+                        + "%d bundled-CDK entries dropped, %d colliding CDK resources dropped, "
+                        + "%d static call sites fixed, %d entries dropped as provided by SIRIUS%n",
+                remapped, copied, droppedCdk, droppedResources, staticCallsFixed, droppedProvided);
         if (!patchApplied)
             throw new IllegalStateException("Expected to patch " + PATCHED_CLASS + " but never saw it");
     }
@@ -156,11 +202,45 @@ public final class RepackBioTransformer {
         // which still holds the shadow package names. Maxs are copied from the input unchanged,
         // and the one method we synthesise declares its own.
         ClassWriter writer = new ClassWriter(0);
-        ClassVisitor visitor = new ClassRemapper(writer, remapper);
+        // The static-call fix sits downstream of the remapper so it matches the final CDK names.
+        ClassVisitor visitor = new ClassRemapper(new FixStaticCdkCalls(writer), remapper);
         if (PATCHED_CLASS.equals(reader.getClassName()))
             visitor = new AddMissingAddBond(visitor);
         reader.accept(visitor, 0);
         return writer.toByteArray();
+    }
+
+    /** Rewrites calls to CDK methods that turned static between 2.7.1 and 2.12. */
+    private final class FixStaticCdkCalls extends ClassVisitor {
+        FixStaticCdkCalls(ClassVisitor delegate) {
+            super(Opcodes.ASM9, delegate);
+        }
+
+        @Override
+        public MethodVisitor visitMethod(int access, String name, String descriptor,
+                                         String signature, String[] exceptions) {
+            MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+            if (mv == null)
+                return null;
+            return new MethodVisitor(Opcodes.ASM9, mv) {
+                @Override
+                public void visitMethodInsn(int opcode, String owner, String name,
+                                            String descriptor, boolean isInterface) {
+                    if (opcode == Opcodes.INVOKEVIRTUAL
+                            && INCHI_FACTORY.equals(owner)
+                            && GET_INCHI_GENERATOR.equals(name)
+                            && GET_INCHI_GENERATOR_DESC.equals(descriptor)) {
+                        // stack: factory, container -> container
+                        super.visitInsn(Opcodes.SWAP);
+                        super.visitInsn(Opcodes.POP);
+                        super.visitMethodInsn(Opcodes.INVOKESTATIC, owner, name, descriptor, false);
+                        staticCallsFixed++;
+                        return;
+                    }
+                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+                }
+            };
+        }
     }
 
     /** Adds {@code addBond(int,int,Order,Display)} delegating to the three-argument form. */
