@@ -29,6 +29,8 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
+import de.unijena.bioinf.babelms.utils.ParserUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,6 +40,7 @@ import java.net.URI;
 
 import static de.unijena.bioinf.babelms.massbank.MassbankFormat.*;
 
+@Slf4j
 public class MassbankExperimentParser extends MassbankSpectralParser implements Parser<Ms2Experiment> {
     private final boolean clearSpectrum;
 
@@ -62,10 +65,30 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
     }
 
 
+    /**
+     * A record that cannot be read is reported and skipped - the next one starts after its '//'.
+     */
     @Override
     public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
-        SpectrumWithAdditionalFields<Peak> spectrum = parseSpectrum(reader);
-        return specToExp(spectrum, source);
+        while (true) {
+            final SpectrumWithAdditionalFields<Peak> spectrum;
+            try {
+                spectrum = parseSpectrum(reader);
+            } catch (MalformedRecordException e) {
+                ParserUtils.logIgnoredRecord(log, e.accession, e, e.getCause() == null || isDataProblem(e.getCause()));
+                continue;
+            }
+            try {
+                return specToExp(spectrum, source);
+            } catch (RuntimeException e) { // the record has been read completely, the next one follows
+                ParserUtils.logIgnoredRecord(log, spectrum.additionalFields().getField(ACCESSION.k()).orElse(null), e, isDataProblem(e));
+            }
+        }
+    }
+
+    /** Unparsable numbers and values (e.g. ion types) - not a defect of the parser. */
+    private static boolean isDataProblem(Throwable e) {
+        return e instanceof IllegalArgumentException || ParserUtils.isDataProblem(e);
     }
 
     private Ms2Experiment specToExp(SpectrumWithAdditionalFields<Peak> spectrum, URI source) {
