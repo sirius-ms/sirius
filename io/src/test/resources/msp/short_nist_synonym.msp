@@ -1,0 +1,12 @@
+Name: Quercetin
+Precursor_type: [M+H]+
+Spectrum_type: MS2
+PrecursorMZ: 303.0499
+Ion_mode: P
+SMILES: O=C1C(O)=C(Oc2cc(O)cc(O)c12)c1ccc(O)c(O)c1
+Synon: $:0
+Num Peaks: 3
+137.0233 9120
+153.0182 41003
+303.0499 87550
+

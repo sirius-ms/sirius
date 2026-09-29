@@ -149,9 +149,10 @@ public class ProjectsApi {
      * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
+     * @param compactFull if true, compact and rewrite every storage page, even where that does not look necessary - for example to convert a project written in an older, space-wasting format. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec closeProjectRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact) throws WebClientResponseException {
+    private ResponseSpec closeProjectRequestCreation(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact, @jakarta.annotation.Nullable Boolean compactFull) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -168,6 +169,7 @@ public class ProjectsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "compact", compact));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "compactFull", compactFull));
 
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
@@ -189,11 +191,12 @@ public class ProjectsApi {
      * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
+     * @param compactFull if true, compact and rewrite every storage page, even where that does not look necessary - for example to convert a project written in an older, space-wasting format. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void closeProject(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact) throws WebClientResponseException {
+    public void closeProject(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact, @jakarta.annotation.Nullable Boolean compactFull) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        closeProjectRequestCreation(projectId, compact).bodyToMono(localVarReturnType).block();
+        closeProjectRequestCreation(projectId, compact, compactFull).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -205,11 +208,12 @@ public class ProjectsApi {
      * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
+     * @param compactFull if true, compact and rewrite every storage page, even where that does not look necessary - for example to convert a project written in an older, space-wasting format. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> closeProjectWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact) throws WebClientResponseException {
+    public ResponseEntity<Void> closeProjectWithHttpInfo(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact, @jakarta.annotation.Nullable Boolean compactFull) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return closeProjectRequestCreation(projectId, compact).toEntity(localVarReturnType).block();
+        return closeProjectRequestCreation(projectId, compact, compactFull).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -221,11 +225,12 @@ public class ProjectsApi {
      * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param projectId unique name/identifier of the project-space to be closed.
      * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
+     * @param compactFull if true, compact and rewrite every storage page, even where that does not look necessary - for example to convert a project written in an older, space-wasting format. Implies compact. Reads and writes the whole project and needs free disk space for a second copy of it, so it takes considerably longer than compact. DEPRECATED: acts on the local filesystem, like compact.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec closeProjectWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact) throws WebClientResponseException {
-        return closeProjectRequestCreation(projectId, compact);
+    public ResponseSpec closeProjectWithResponseSpec(@jakarta.annotation.Nonnull String projectId, @jakarta.annotation.Nullable Boolean compact, @jakarta.annotation.Nullable Boolean compactFull) throws WebClientResponseException {
+        return closeProjectRequestCreation(projectId, compact, compactFull);
     }
 
     /**
