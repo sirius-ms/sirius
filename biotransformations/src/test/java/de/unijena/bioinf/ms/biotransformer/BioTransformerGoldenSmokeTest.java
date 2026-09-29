@@ -11,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Fast per-commit gate: SIRIUS must reproduce the upstream BioTransformer reference on a small,
  * representative subset. Runs in a few seconds.
  * <p>
- * Every cell here is achiral and avoids the human-gut transformer, because both are affected by
- * known defects — see {@link BioTransformerStereoDefectTest} and {@link BioTransformerGutDefectTest}.
- * The full matrix lives in {@code BioTransformerGoldenAcceptanceTest} and is run manually.
+ * The cells avoid the human-gut transformer, which still disagrees with the reference - see
+ * {@link BioTransformerGutDefectTest}. The full matrix lives in
+ * {@code BioTransformerGoldenAcceptanceTest} and is run manually.
  */
 class BioTransformerGoldenSmokeTest {
 
@@ -35,6 +35,14 @@ class BioTransformerGoldenSmokeTest {
             "benzoic_acid, ecbased_s1",
             "benzoic_acid, phaseII_s1_pm1",
             "caffeine, cyp450_s1_cm1",
+            // Stereochemistry: these failed outright while BioTransformer carried its own CDK, so
+            // they are the regression guard for the jar sharing ours.
+            "ibuprofen_S, cyp450_s1_cm1",
+            "naproxen_S, cyp450_s1_cm1",
+            "nicotine_S, cyp450_s1_cm1",
+            "epicatechin, ecbased_s1",
+            "tryptophan_L, ecbased_s1",
+            "phenyl_glucuronide, ecbased_s1",
             // substrates the reference leaves untransformed: these pin down "correctly produces nothing"
             "caffeine, ecbased_s1",
             "warfarin, ecbased_s1",

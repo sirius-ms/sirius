@@ -30,10 +30,27 @@ reference ran and produced nothing — that is a recorded result, not a gap.
 
 | Test | Task | Scope |
 |---|---|---|
-| `BioTransformerGoldenSmokeTest` | `test` | ~18 cells, seconds; the per-commit gate |
-| `BioTransformerStereoDefectTest` | `test` | pins the known stereo `AbstractMethodError` |
+| `BioTransformerGoldenSmokeTest` | `test` | 24 cells, ~11s; the per-commit gate |
 | `BioTransformerGutDefectTest` | `test` | pins the known human-gut divergence |
-| `BioTransformerGoldenAcceptanceTest` | `acceptanceTest` | the full matrix; expected to fail until the CDK work lands |
+| `BioTransformerGoldenAcceptanceTest` | `acceptanceTest` | the full matrix; **still fails**, see below |
+
+## Where the matrix stands
+
+Removing BioTransformer's bundled CDK (`tools/repack-biotransformer`) took the matrix from
+**182/308 to 278/308** cells agreeing with the reference. 98 of the 126 disagreements went away and
+the stereochemistry failure is gone entirely.
+
+30 cells still differ, in three groups. None of them is a crash; all are chemistry:
+
+| cells | pattern | status |
+|---|---|---|
+| 22 | human gut: SIRIUS reports **more** products than the reference (e.g. quercetin 8 vs 3, thymol 1 vs 0) | pre-existing, unchanged by the CDK work |
+| 5 | morphine: SIRIUS reports **fewer** products (CYP450 10 vs 11, allHuman 111 vs 125, sequence 266 vs 313) | pre-existing |
+| 4 | phase II in `COMBINED_RULES` mode: SIRIUS reports exactly **one extra** conjugate (warfarin, tryptophan, estradiol, quercetin) | 2 of these are new since the CDK change |
+
+The baseline has deliberately **not** been re-recorded to make these pass. It is the only evidence
+that the CDK migration was safe, and re-recording would destroy it. Deciding whether the reference
+or SIRIUS is right for these 30 cells is a scientific question for the maintainers.
 
 ## Re-recording it
 
