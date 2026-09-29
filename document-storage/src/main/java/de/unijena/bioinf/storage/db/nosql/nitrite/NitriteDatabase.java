@@ -298,9 +298,12 @@ public class NitriteDatabase implements Database<Document> {
         // rewriting a healthy store against that smaller budget would make the file bigger, not smaller.
         if (recorded < effective) {
             this.layoutOutdated = true;
-            log.warn("'{}' was written with a {} byte page budget, where this version uses {} bytes: its pages "
+            // Stated without a remedy: this is the storage layer, which does not know whether whoever opened
+            // the store offers a compaction for it - projects do, custom databases do not (#990). The owner
+            // reads isCompactionRecommended() and tells the user what to do.
+            log.info("'{}' was written with a {} byte page budget, where this version uses {} bytes: its pages "
                             + "hold fewer records than they could, which can make the file several times larger "
-                            + "than needed. Compacting it rewrites the layout and reclaims that space.",
+                            + "than needed. Rewriting the layout would reclaim that space.",
                     file, recorded, effective);
         } else {
             // The marker is only as good as the builds that wrote the pages after it: releases that predate
@@ -309,9 +312,9 @@ public class NitriteDatabase implements Database<Document> {
             // trust a repaired project to have stayed repaired.
             this.layoutOutdated = PageLayout.pagesWereWrittenUnderASmallerBudget(store, effective);
             if (this.layoutOutdated)
-                log.warn("'{}' records a {} byte page budget but its pages hold several times fewer records "
+                log.info("'{}' records a {} byte page budget but its pages hold several times fewer records "
                                 + "than that allows, so something wrote to it under a smaller one - an older "
-                                + "SIRIUS release, most likely. Compacting it rewrites the layout.",
+                                + "SIRIUS release, most likely. Rewriting the layout would reclaim that space.",
                         file, recorded);
         }
         return effective;
