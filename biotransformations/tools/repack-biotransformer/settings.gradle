@@ -1,0 +1,3 @@
+// Stand-alone on purpose: this tool rebuilds a third-party artifact and must not take part in the
+// SIRIUS build. Run it with the root wrapper:  ./gradlew -p biotransformations/tools/repack-biotransformer repack
+rootProject.name = 'repack-biotransformer'
