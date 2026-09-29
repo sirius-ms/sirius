@@ -42,14 +42,9 @@ public class MySqlSchemeDriver implements Driver {
         try {
             DriverManager.registerDriver(new MySqlSchemeDriver());
         } catch (SQLException e) {
-            LoggerHolder.log.error("Could not register the MySQL-scheme JDBC driver. "
+            log.error("Could not register the MySQL-scheme JDBC driver. "
                     + "BioTransformer's HMDB lookup will not be able to connect.", e);
         }
-    }
-
-    /** Lombok's logger is an instance field on the class; registration happens before that exists. */
-    private static final class LoggerHolder {
-        static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MySqlSchemeDriver.class);
     }
 
     /**
