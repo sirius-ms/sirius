@@ -11,29 +11,22 @@ import java.util.*;
 import java.util.zip.*;
 
 /**
- * Rebuilds the BioTransformer jar so it uses the project's CDK instead of the copy it bundles.
+ * Builds the BioTransformer jar {@code :biotransformations} depends on.
  * <p>
- * The jar we get from upstream carries CDK 2.7.1 relocated to {@code io.siriusms.shadow.bt.cdk},
- * while leaving {@code org.openscience.cdk.interfaces} and {@code .tools} unrelocated so molecules
- * can cross the boundary. That mixes two CDK versions in one object graph: the relocated 2.7.1
- * implementation classes end up bound to the project's 2.12 interfaces, and anything the interface
- * gained since 2.7.1 is simply absent. {@code IStereoElement.updateCarriers} is the one that bites -
- * every substrate with a stereo centre dies with an {@link AbstractMethodError}.
+ * Its input is {@code biotransformer-sirius-mod-relocated-min-no-envi-path}, one of our own earlier
+ * repackagings of BioTransformer 3.0, which carries CDK 2.7.1 relocated to
+ * {@code io.siriusms.shadow.bt.cdk} while leaving {@code org.openscience.cdk.interfaces} and
+ * {@code .tools} unrelocated. That puts two CDK versions in one object graph: relocated 2.7.1
+ * implementation classes bound to the project's 2.12 interfaces, missing everything those
+ * interfaces gained since - {@code IStereoElement.updateCarriers} above all, so any substrate with
+ * a stereo centre fails with an {@link AbstractMethodError}.
  * <p>
- * This tool removes the split by dropping the bundled CDK entirely and pointing every reference at
- * {@code org.openscience.cdk}, so exactly one CDK is on the classpath.
- *
- * <h2>What it does</h2>
- * <ol>
- *   <li>drops every {@code io/siriusms/shadow/bt/cdk/**} entry - CDK 2.12 provides all but six of
- *       those classes, and nothing outside the shadow package references those six</li>
- *   <li>rewrites all remaining references (types, descriptors, signatures and string constants)
- *       from the shadow package back to {@code org.openscience.cdk}</li>
- *   <li>drops the CDK resources that would otherwise collide with cdk-core/ioformats/qsar</li>
- *   <li>adds the one interface method the CDK upgrade leaves missing (see {@link #PATCHED_CLASS})</li>
- * </ol>
- * Everything else - BioTransformer itself, Ambit2, Weka and the knowledge base - is copied through
- * byte for byte.
+ * The output carries no CDK at all and refers to {@code org.openscience.cdk} throughout, so exactly
+ * one CDK is on the classpath. See the README beside this file for the full list of changes, the
+ * published coordinates and how to publish them.
+ * <p>
+ * BioTransformer itself, Ambit2, Weka, the knowledge base and the models are copied byte for byte,
+ * and repeated runs produce an identical jar.
  */
 public final class RepackBioTransformer {
 
@@ -102,12 +95,12 @@ public final class RepackBioTransformer {
             "(Lorg/openscience/cdk/interfaces/IAtomContainer;)Lorg/openscience/cdk/inchi/InChIGenerator;";
 
     /**
-     * The EnviPath-derived knowledge base was already removed from the upstream jar we build on -
-     * its data is CC BY-NC-SA licensed, unlike the LGPL library itself - but {@code config.json}
-     * still declares the ENVMICRO biosystem and points it at the {@code btkb/ENVMICRO} directory
-     * that is no longer there. Nothing loads it today, because biosystems are read on demand and
-     * SIRIUS has the environmental-microbial transformation commented out. Removing the declaration
-     * keeps the configuration honest about what the jar actually contains.
+     * The input jar carries no EnviPath-derived knowledge base - that data is CC BY-NC-SA licensed,
+     * unlike the LGPL library itself - yet its {@code config.json} still declares the ENVMICRO
+     * biosystem and points it at a {@code btkb/ENVMICRO} directory that is not there. Nothing reads
+     * it, since biosystems are loaded on demand and SIRIUS has the environmental-microbial
+     * transformation disabled, so removing the declaration only makes the configuration describe
+     * what the jar actually contains.
      */
     private static final String CONFIG_JSON = "biotransformer-config/config.json";
     private static final String ENVIPATH_BIOSYSTEM = "ENVMICRO";

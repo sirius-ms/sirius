@@ -7,18 +7,19 @@ plugins {
 //   cdk-shared      the bundled CDK is gone; BioTransformer uses the one the rest of SIRIUS uses
 //   min             minimised, as the variant this is built from already was
 //   no-envi-path    the EnviPath derived knowledge base is absent (its data is CC BY-NC-SA, not LGPL)
-//   -siriusN        our fork counter on top of the upstream version, so the fork can be versioned
-//                   without pretending to be an upstream release
+//   -siriusN        our fork counter, so our builds are versioned without claiming to be
+//                   releases by the BioTransformer authors
 group = 'wishartlab.openscience.biotransformer'
 version = '3.0.1-sirius1'
 def artifactName = 'biotransformer-sirius-cdk-shared-min-no-envi-path'
 
-def upstream = 'wishartlab.openscience.biotransformer:biotransformer-sirius-mod-relocated-min-no-envi-path:3.0.0'
+// the jar this one is built from: an earlier repackaging of BioTransformer 3.0, also ours
+def inputArtifact = 'wishartlab.openscience.biotransformer:biotransformer-sirius-mod-relocated-min-no-envi-path:3.0.0'
 
 repositories {
     mavenLocal()
     mavenCentral()
-    // Same public package repository the SIRIUS build resolves the upstream jar from.
+    // Same public package repository the SIRIUS build resolves the input jar from.
     maven {
         url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
         name 'BG GitLab Common Public'
@@ -33,7 +34,7 @@ configurations {
 dependencies {
     implementation 'org.ow2.asm:asm:9.8'
     implementation 'org.ow2.asm:asm-commons:9.8'
-    sourceJar "${upstream}@jar"
+    sourceJar "${inputArtifact}@jar"
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
@@ -44,7 +45,7 @@ tasks.register('repack', JavaExec) {
     group = 'build'
     description = 'Rebuilds the BioTransformer jar against the project CDK instead of its bundled copy.'
 
-    // -Pinput=<path> overrides the resolved upstream jar, for trying a different build.
+    // -Pinput=<path> overrides the resolved input jar, for trying a different build.
     def input = providers.gradleProperty('input')
             .map { file(it) }
             .orElse(providers.provider { configurations.sourceJar.singleFile })
@@ -59,7 +60,7 @@ tasks.register('repack', JavaExec) {
 
 publishing {
     repositories {
-        // The same public registry the upstream jar comes from:
+        // The same public registry the input jar comes from:
         // https://gitlab.com/bright-giant/registry-public/-/packages/
         maven {
             name = 'GitLabCommonPublic'
@@ -90,7 +91,7 @@ publishing {
             pom.withXml {
                 asNode().appendNode('description',
                         'BioTransformer 3.0 repacked for SIRIUS: bundled CDK 2.7.1 removed so it uses ' +
-                        'the CDK on the classpath. Rebuilt from ' + upstream + '.')
+                        'the CDK on the classpath. Built from ' + inputArtifact + '.')
             }
         }
     }
