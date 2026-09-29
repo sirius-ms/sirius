@@ -49,11 +49,24 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
         loadSize();
 
         JButton compactButton = new JButton("Compact");
-        compactButton.setToolTipText("Compacting the project tries to reduce the project's file size. May take some time for large projects.");
+        compactButton.setToolTipText("Reclaims space the project no longer needs. May take some time for large projects.");
         addNamed("", compactButton);
 
         compactButton.addActionListener(e -> {
             ProjectInfo projectInfo = gui.getProjectManager().compactWithLoading(parent);
+            if (projectInfo != null) {
+                loadSize(projectInfo);
+            }
+        });
+
+        JButton compactFullButton = new JButton("Full Compact");
+        compactFullButton.setToolTipText("Compacts the project and rewrites every storage page, even where that "
+                + "does not look necessary - for example to convert a project written in an older, space-wasting "
+                + "format. Reads and writes the whole project, so it takes considerably longer than compacting.");
+        addNamed("", compactFullButton);
+
+        compactFullButton.addActionListener(e -> {
+            ProjectInfo projectInfo = gui.getProjectManager().compactWithLoading(parent, true);
             if (projectInfo != null) {
                 loadSize(projectInfo);
             }
@@ -87,6 +100,15 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
 
     private void loadSize(ProjectInfo projectInfo) {
         long size = Optional.ofNullable(projectInfo.getNumOfBytes()).orElseThrow();
-        sizeField.setText(FileUtils.sizeToReadableString(size));
+        String readable = FileUtils.sizeToReadableString(size);
+        boolean compactionRecommended = Boolean.TRUE.equals(projectInfo.isCompactionRecommended());
+
+        sizeField.setText(compactionRecommended ? readable + "  (compacting is recommended)" : readable);
+        // cleared rather than left standing, so the hint disappears once the project has been compacted
+        sizeField.setToolTipText(compactionRecommended
+                ? "Compacting this project is expected to reclaim significant space.\n"
+                + "It reads and writes the whole project, so expect minutes for a large one, "
+                + "and free disk space for a second copy while it runs."
+                : null);
     }
 }

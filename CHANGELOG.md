@@ -1,7 +1,21 @@
 # Changelog
 
 ## SIRIUS 6
-### 6.6.0
+### 6.6.0 (unreleased)
+- fix: projects took up to three times more disk space than they need, and grew further with every
+  recompute. Every project written by an earlier SIRIUS version is affected, as is every custom
+  structure and spectral database: the storage engine's default put a single record on each storage
+  page. New and recomputed data takes much less space again, and parts of large projects open faster.
+  **Compacting an affected project now repairs it**: on a measured project that took it from 1011 to
+  298 MiB, where a plain compaction had reclaimed nothing. So compact your projects once after
+  upgrading - SIRIUS says so in the log when it opens one that would benefit. A repair reads and
+  writes the whole project, so it takes considerably longer than an ordinary compaction and needs
+  free disk space for a second copy while it runs. Going back to an older SIRIUS afterwards and
+  continuing to work in a repaired project undoes part of the repair, since older versions store the
+  data the old way again - SIRIUS notices that on the next open and says so, so compact it once more
+  (GUI, CLI and API)
+- improvement: the project info endpoint reports whether compacting a project is recommended, as part
+  of its size information (API)
 - fix: BioTransformer produced no transformation products at all for structures with
   stereochemistry, which is most drug-like and natural product input. The bundled BioTransformer
   library carried its own copy of CDK that was incompatible with the one SIRIUS uses, so every
