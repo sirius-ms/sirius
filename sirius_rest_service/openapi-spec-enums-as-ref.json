@@ -16075,8 +16075,8 @@
           },
           "useDB": {
             "type": "boolean",
-            "description": "Specify whether structures should additionally be retrieved from the HMDB database.",
-            "default": true
+            "description": "Additionally look up known biotransformations in the online HMDB database (a third-party MySQL server\n operated by the BioTransformer authors), instead of relying on rule-based prediction alone.\n \u003cp\u003e\n WARNING: when enabled, the first block of the InChIKey (the 2D skeleton) of every input structure and\n of every predicted intermediate metabolite is sent to that external server over the internet. Do not\n enable this for confidential structures. Requires internet access; the lookup fails without it.\n Disabled by default.",
+            "default": false
           },
           "bioTransformerSequenceSteps": {
             "type": "array",

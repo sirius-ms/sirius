@@ -28,8 +28,12 @@ public class BioTransformerOptions {
             COMBINED_RULES: PhaseII predictor + BioTransformer""", defaultValue = "BT_RULE_BASED", order = 315)
     private P2Mode p2Mode;
 
-    //todo should we make some hack in biotransformer to remove dependency on hmdb mysql online db. We disable ist for now per default
-    @CommandLine.Option(names = "--useDB", description = "Retrieving from HMDB.", defaultValue = "false", order = 313)
+    @CommandLine.Option(names = "--useDB", description = """
+            Additionally look up known biotransformations in the online HMDB database (a third-party MySQL
+            server operated by the BioTransformer authors), instead of relying on rule-based prediction alone.
+            WARNING: when enabled, the first block of the InChIKey (the 2D skeleton) of every input structure
+            and of every predicted intermediate metabolite is sent to that external server over the internet.
+            Do not enable this for confidential structures. Requires internet access.""", defaultValue = "false", order = 313)
     private boolean useDB;
 
     @CommandLine.Option(names = "--useSubstructure", description = "Please specify if you want to use 2D structures (first 14 characters of InChIKey) when retrieving from the database.", defaultValue = "true", hidden = true, order = 314)

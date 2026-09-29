@@ -1,0 +1,148 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+// Coordinates of the jar produced here.
+//   cdk-shared      the bundled CDK is gone; BioTransformer uses the one the rest of SIRIUS uses
+//   min             minimised, as the variant this is built from already was
+//   no-envi-path    the EnviPath derived knowledge base is absent (its data is CC BY-NC-SA, not LGPL)
+//   -siriusN        our fork counter, so our builds are versioned without claiming to be
+//                   releases by the BioTransformer authors
+group = 'wishartlab.openscience.biotransformer'
+version = '3.0.1-sirius3'
+def artifactName = 'biotransformer-sirius-cdk-shared-min-no-envi-path'
+
+// the jar this one is built from: an earlier repackaging of BioTransformer 3.0, also ours
+def inputArtifact = 'wishartlab.openscience.biotransformer:biotransformer-sirius-mod-relocated-min-no-envi-path:3.0.0'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    // Same public package repository the SIRIUS build resolves the input jar from.
+    maven {
+        url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+        name 'BG GitLab Common Public'
+    }
+}
+
+configurations {
+    // the jar being rebuilt, resolved rather than pointed at by path
+    sourceJar
+    // what the repacked jar needs at runtime; published as the POM's dependencies
+    jarRuntime
+}
+
+dependencies {
+    implementation 'org.ow2.asm:asm:9.8'
+    implementation 'org.ow2.asm:asm-commons:9.8'
+    sourceJar "${inputArtifact}@jar"
+
+    // Everything the jar references but no longer contains, derived from its bytecode: every type
+    // it uses that is neither inside the jar nor part of the JDK. Weka, Ambit2, Jena, Jackson 1 and
+    // HttpClient are absent on purpose - those are still bundled.
+    jarRuntime 'org.openscience.cdk:cdk-bundle:2.12'          // aggregator over the CDK modules
+    jarRuntime 'com.google.guava:guava:33.4.8-jre'
+    jarRuntime 'joda-time:joda-time:2.14.0'
+    jarRuntime 'jgrapht:jgrapht:0.6.0'
+    jarRuntime 'javax.vecmath:vecmath:1.5.2'
+    jarRuntime 'org.slf4j:slf4j-api:2.0.18'
+    jarRuntime 'com.fasterxml.jackson.core:jackson-databind:2.21.4'
+    jarRuntime 'org.apache.commons:commons-lang3:3.20.0'
+    jarRuntime 'org.apache.commons:commons-math3:3.6.1'
+    jarRuntime 'commons-codec:commons-codec:1.19.0'
+    jarRuntime 'commons-io:commons-io:2.21.0'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+def repackedJar = layout.buildDirectory.file("libs/${artifactName}-${version}.jar")
+
+tasks.register('repack', JavaExec) {
+    group = 'build'
+    description = 'Rebuilds the BioTransformer jar against the project CDK instead of its bundled copy.'
+
+    // -Pinput=<path> overrides the resolved input jar, for trying a different build.
+    def input = providers.gradleProperty('input')
+            .map { file(it) }
+            .orElse(providers.provider { configurations.sourceJar.singleFile })
+
+    inputs.file(input)
+    outputs.file(repackedJar)
+
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'io.sirius.ms.tools.biotransformer.RepackBioTransformer'
+    argumentProviders.add({ [input.get().absolutePath, repackedJar.get().asFile.absolutePath] } as CommandLineArgumentProvider)
+}
+
+publishing {
+    publications {
+        repacked(MavenPublication) {
+            groupId = project.group
+            artifactId = artifactName
+            version = project.version
+            artifact(repackedJar) { builtBy tasks.named('repack') }
+
+            pom {
+                name = artifactName
+                description = 'BioTransformer 3.0 for SIRIUS, without a CDK of its own so it uses the ' +
+                        'CDK on the classpath. Built from ' + inputArtifact + '.'
+                licenses {
+                    license {
+                        name = 'GNU Lesser General Public License, Version 3.0'
+                        url = 'https://www.gnu.org/licenses/lgpl-3.0.txt'
+                    }
+                }
+                withXml {
+                    // The publication is a bare jar rather than a java component, so its dependencies
+                    // are written from the jarRuntime configuration instead of being inferred.
+                    def deps = asNode().appendNode('dependencies')
+                    configurations.jarRuntime.allDependencies.sort { "$it.group:$it.name" }.each { d ->
+                        def dep = deps.appendNode('dependency')
+                        dep.appendNode('groupId', d.group)
+                        dep.appendNode('artifactId', d.name)
+                        dep.appendNode('version', d.version)
+                        dep.appendNode('scope', 'runtime')
+                    }
+                }
+            }
+        }
+    }
+
+    // Same shape as :sirius-sdk, so it reads the credentials already configured for this project.
+    repositories {
+        maven {
+            name = "GitLabPublic"
+            if (System.getenv("CI_JOB_TOKEN") != null) {
+                url = System.getenv('PUBLIC_REGISTRY_URL')
+                credentials(HttpHeaderCredentials) {
+                    name = "Job-Token"
+                    value = System.getenv("CI_JOB_TOKEN")
+                }
+                authentication {
+                    header(HttpHeaderAuthentication)
+                }
+            } else {
+                url = project.findProperty("io.sirius-ms.build.artifactory.public.url") as String
+                if (project.findProperty("io.sirius-ms.build.artifactory.public.username") != null
+                        && project.findProperty("io.sirius-ms.build.artifactory.public.token") != null
+                ) {
+                    credentials(PasswordCredentials) {
+                        username = project.findProperty("io.sirius-ms.build.artifactory.public.username") as String
+                        password = project.findProperty("io.sirius-ms.build.artifactory.public.token") as String
+                    }
+                } else {
+                    credentials(PasswordCredentials) {
+                        username = project.findProperty("io.sirius-ms.build.artifactory.username") as String
+                        password = project.findProperty("io.sirius-ms.build.artifactory.token") as String
+                    }
+                }
+                authentication {
+                    basic(BasicAuthentication)
+                }
+            }
+        }
+    }
+}
+
+tasks.named('publishToMavenLocal') { dependsOn tasks.named('repack') }

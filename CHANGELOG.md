@@ -16,6 +16,20 @@
   (GUI, CLI and API)
 - improvement: the project info endpoint reports whether compacting a project is recommended, as part
   of its size information (API)
+- fix: BioTransformer produced no transformation products at all for structures with
+  stereochemistry, which is most drug-like and natural product input. The bundled BioTransformer
+  library carried its own copy of CDK that was incompatible with the one SIRIUS uses, so every
+  chiral structure failed and was skipped during custom database import, reporting only a warning in
+  the log. BioTransformer now uses the same CDK as the rest of SIRIUS (GUI, CLI and API)
+- change: the MySQL database driver used by BioTransformer's HMDB lookup was replaced with the
+  MariaDB client, which speaks the same protocol and is not licensed under the GPL. This removes the
+  only GPL licensed library from the SIRIUS classpath
+- change: the BioTransformer option to additionally look up known biotransformations in the online
+  HMDB database is now disabled by default on all interfaces. It was enabled by default over the API
+  and in the SDK, which sent the InChIKey of every input structure and of every predicted
+  intermediate metabolite to a third-party server without the user asking for it. The option is
+  still available, now describes what enabling it transmits, and can be switched on in the GUI
+  (GUI, CLI and API)
 
 ### 6.5.4 (2026-08-25)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,
