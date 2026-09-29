@@ -47,7 +47,9 @@ public class MySqlSchemeDriver implements Driver {
     static {
         try {
             DriverManager.registerDriver(new MySqlSchemeDriver());
-        } catch (SQLException e) {
+        } catch (Throwable e) {
+            // Not just SQLException: constructing the delegate fails with NoClassDefFoundError if
+            // the MariaDB driver is missing, and DriverManager swallows whatever escapes here.
             log.error("Could not register the MySQL-scheme JDBC driver. "
                     + "BioTransformer's HMDB lookup will not be able to connect.", e);
         }

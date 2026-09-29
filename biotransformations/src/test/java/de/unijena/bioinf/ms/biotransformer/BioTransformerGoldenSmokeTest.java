@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * representative subset. Runs in a few seconds.
  * <p>
  * The cells avoid the human-gut transformer, which still disagrees with the reference - see
- * {@link BioTransformerGutDefectTest}. The full matrix lives in
+ * {@link BioTransformerReferenceDivergenceTest}. The full matrix lives in
  * {@code BioTransformerGoldenAcceptanceTest} and is run manually.
  */
 class BioTransformerGoldenSmokeTest {

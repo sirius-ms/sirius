@@ -8,7 +8,7 @@ the SIRIUS build and is run by hand when its input changes.
 | | |
 |---|---|
 | input | `wishartlab.openscience.biotransformer:biotransformer-sirius-mod-relocated-min-no-envi-path:3.0.0` |
-| output | `wishartlab.openscience.biotransformer:biotransformer-sirius-cdk-shared-min-no-envi-path:3.0.1-sirius2` |
+| output | `wishartlab.openscience.biotransformer:biotransformer-sirius-cdk-shared-min-no-envi-path:3.0.1-sirius3` |
 
 Both are our own builds, not releases by the BioTransformer authors. Upstream BioTransformer is
 <https://bitbucket.org/wishartlab/biotransformer3.0jar> (LGPL-3), which ships a single fat jar; the
@@ -22,7 +22,7 @@ The output name records what the jar contains:
 | `cdk-shared` | no CDK inside; BioTransformer uses the CDK on the SIRIUS classpath |
 | `min` | minimised, as its input already was |
 | `no-envi-path` | no EnviPath derived knowledge base (that data is CC BY-NC-SA, not LGPL) |
-| `-sirius1` | fork counter, so our builds are versioned without claiming to be upstream releases |
+| `-siriusN` | fork counter, so our builds are versioned without claiming to be upstream releases |
 
 Result: 58 MB in, 34 MB out.
 

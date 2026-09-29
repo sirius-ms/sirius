@@ -16,7 +16,7 @@ baseline is the evidence for whether removing that relocation changes the scienc
 | Data | that repository's `btkb/` and `supportfiles/` folders, same commit |
 | CDK | 2.7.1, as bundled in the reference jar |
 | HMDB lookup | **off** (`-useDB false`) — the baseline is offline and contacts no server |
-| Recorded | 28 substrates x 11 configurations, 331 runs, 9648 product rows |
+| Recorded | 28 substrates x 11 configurations, 308 runs, 9648 product rows |
 
 Substrates are in `substrates.tsv` and cover the cases that actually break this code: tetrahedral
 and double-bond stereochemistry, permanent cations, pre-existing conjugates (glucuronide, sulfate),

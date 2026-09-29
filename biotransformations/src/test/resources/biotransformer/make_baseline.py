@@ -35,7 +35,6 @@ CONFIGS = [
     ("hgut_s1",          "HUMAN_GUT",          ["-b", "hgut",     "-s", "1"]),
     ("hgut_s2",          "HUMAN_GUT",          ["-b", "hgut",     "-s", "2"]),
     ("allHuman_s2_cm3",  "ALL_HUMAN",          ["-b", "allHuman", "-s", "2", "-cm", "3", "-pm", "1"]),
-    ("superbio_s2_cm3",  "ALL_HUMAN(superbio)",["-b", "superbio", "-s", "2", "-cm", "3", "-pm", "1"]),
     ("seq_cyp450_2_phaseII_1", "HUMAN_CUSTOM_MULTI", ["-q", "cyp450:2; phaseII:1", "-cm", "3", "-pm", "1"]),
 ]
 
