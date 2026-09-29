@@ -62,6 +62,35 @@ public final class RepackBioTransformer {
             "blogspot/software_and_algorithms/",    // stern library, ships with euclid
             "javax/xml/", "org/w3c/", "org/xml/");  // xml-apis, also owned by the java.xml module
 
+    /**
+     * Bundled libraries that nothing in the jar reaches from SIRIUS. Each was measured by walking
+     * the reference graph from {@code :biotransformations}' own classes through the jar: every one
+     * of these has zero reachable classes.
+     * <p>
+     * Weka's GUI and Jena are deliberately not here. {@code weka.core.Utils} references
+     * {@code weka.gui}, and Weka loads classes reflectively while deserialising its models, so
+     * static reachability understates what it needs. Jena keeps seven classes alive through
+     * {@code ChemStructureFingerprinter}'s use of {@code jena.util.FileUtils}.
+     */
+    private static final List<String> UNREACHABLE = List.of(
+            "org/apache/xerces/", "org/apache/xalan/", "org/apache/xml/", "org/apache/xpath/",
+            "org/apache/bcel/", "org/apache/html/", "org/apache/wml/", "com/sun/xml/",
+            "org/apache/regexp/", "org/apache/xmlcommons/",   // XML stack; the JDK's JAXP is used
+            "com/google/protobuf/", "google/protobuf/",
+            "org/netlib/", "com/github/fommil/", "no/uib/cipr/",   // linear algebra
+            "org/junit/", "junit/", "org/hamcrest/",               // a test framework in a runtime jar
+            "com/opencsv/", "org/apache/commons/cli/", "org/j_paine/",
+            "executable/",                                         // BioTransformer's own CLI entry points
+            "randomThings/", "compareDataset/", "ForUNC/",          // scratch classes left in the build
+            "biotransformer/BioTransformerTest", "biotransformer/EnvMicroBTTest");
+
+    /** Build and IDE leftovers, plus logging configuration for a framework that is not present. */
+    private static final Set<String> JUNK = Set.of(
+            ".classpath", ".project", "CypReact.iml", "cyProduct.iml", "pom.xml", "manifest.txt",
+            "log4j.properties", "jena-log4j.properties", "Log4j-charsets.properties",
+            "Log4j-config.xsd", "Log4j-events.dtd", "Log4j-events.xsd", "Log4j-levels.xsd",
+            "opencsv.properties", "opencsv_de.properties");
+
     /** CDK's own resources. CDK 2.12 ships its own copies; keeping these would shadow them. */
     private static final Set<String> DROPPED_RESOURCES = Set.of(
             "build.props",                  // cdk-core - declares the CDK version, would report 2.7.1
@@ -129,7 +158,7 @@ public final class RepackBioTransformer {
     };
 
     private int copied, droppedCdk, droppedResources, remapped, staticCallsFixed, droppedProvided;
-    private int enviPathDeclarationsRemoved;
+    private int enviPathDeclarationsRemoved, droppedUnreachable;
     private boolean patchApplied;
 
     public static void main(String[] args) throws Exception {
@@ -173,6 +202,10 @@ public final class RepackBioTransformer {
                     droppedProvided++;
                     continue;
                 }
+                if (UNREACHABLE.stream().anyMatch(name::startsWith) || JUNK.contains(name)) {
+                    droppedUnreachable++;
+                    continue;
+                }
 
                 byte[] bytes;
                 try (InputStream is = source.getInputStream(entry)) {
@@ -198,9 +231,9 @@ public final class RepackBioTransformer {
         System.out.printf("repacked: %d classes rewritten, %d resources copied, "
                         + "%d bundled-CDK entries dropped, %d colliding CDK resources dropped, "
                         + "%d static call sites fixed, %d entries dropped as provided by SIRIUS, "
-                        + "%d EnviPath biosystem declarations removed%n",
+                        + "%d EnviPath biosystem declarations removed, %d unreachable entries dropped%n",
                 remapped, copied, droppedCdk, droppedResources, staticCallsFixed, droppedProvided,
-                enviPathDeclarationsRemoved);
+                enviPathDeclarationsRemoved, droppedUnreachable);
         if (!patchApplied)
             throw new IllegalStateException("Expected to patch " + PATCHED_CLASS + " but never saw it");
         if (enviPathDeclarationsRemoved == 0)

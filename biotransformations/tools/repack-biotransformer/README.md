@@ -8,7 +8,7 @@ the SIRIUS build and is run by hand when its input changes.
 | | |
 |---|---|
 | input | `wishartlab.openscience.biotransformer:biotransformer-sirius-mod-relocated-min-no-envi-path:3.0.0` |
-| output | `wishartlab.openscience.biotransformer:biotransformer-sirius-cdk-shared-min-no-envi-path:3.0.1-sirius1` |
+| output | `wishartlab.openscience.biotransformer:biotransformer-sirius-cdk-shared-min-no-envi-path:3.0.1-sirius2` |
 
 Both are our own builds, not releases by the BioTransformer authors. Upstream BioTransformer is
 <https://bitbucket.org/wishartlab/biotransformer3.0jar> (LGPL-3), which ships a single fat jar; the
@@ -24,7 +24,7 @@ The output name records what the jar contains:
 | `no-envi-path` | no EnviPath derived knowledge base (that data is CC BY-NC-SA, not LGPL) |
 | `-sirius1` | fork counter, so our builds are versioned without claiming to be upstream releases |
 
-Result: 58 MB in, 44 MB out.
+Result: 58 MB in, 34 MB out.
 
 ## What it does
 
@@ -48,6 +48,13 @@ Result: 58 MB in, 44 MB out.
    class in the jar with such a gap.
 7. **Removes the `ENVMICRO` biosystem** from `biotransformer-config/config.json`. Its knowledge base
    is not in the jar, so the declaration pointed at a directory that does not exist.
+8. **Drops what nothing reaches** — measured by walking the reference graph from
+   `:biotransformations` through the jar, these have zero reachable classes: the Xerces/Xalan/BCEL
+   XML stack (the JDK's JAXP is used), netlib and MTJ, protobuf, JUnit 4 and hamcrest, opencsv,
+   commons-cli, j_paine, BioTransformer's own `executable/` entry points, and the `randomThings/`,
+   `compareDataset/` and `ForUNC/` scratch classes. Also the IDE and build leftovers (`.classpath`,
+   `.project`, the `.iml` files, `pom.xml`, `manifest.txt`) and log4j configuration for a framework
+   that is not on the classpath - including a root `log4j.properties` setting `rootLogger=OFF`.
 
 Everything else — BioTransformer, Ambit2, Weka, the knowledge base and the models — is copied byte
 for byte, and repeated runs produce an identical jar.
@@ -87,9 +94,16 @@ compares the full matrix against results recorded from upstream BioTransformer. 
 
 ## Still bundled
 
-Weka 3.8.1 — its `*.model` files are serialized Weka objects, so relocating it would break them —
-Ambit2, and a tail that nothing on the SIRIUS classpath collides with: Jena, Jackson 1, HttpClient 4,
-Xerces/Xalan, protobuf and JUnit 4. Trimming those is independent of the CDK work.
+Weka 3.8.1 (including its GUI), Ambit2, Jena, Jackson 1, HttpClient 4 and unirest, `org.json`,
+commons-csv and the CYP/UGT/SULF models.
+
+Two of those look droppable by name but are not:
+
+- **Weka's GUI** (4.7 MB). `weka.core.Utils`, `LogHandler` and `WekaPackageManager` all reference
+  `weka.gui`, and Weka loads classes reflectively while deserialising models, so static reachability
+  understates what it needs.
+- **Jena** (1.5 MB). Seven of its classes stay alive through `ChemStructureFingerprinter`'s use of
+  `jena.util.FileUtils`, and the fingerprinter is live code.
 
 The POM declares what the jar needs at runtime - CDK, guava, joda-time, jgrapht, vecmath, slf4j,
 Jackson 2 and the commons libraries - so `:biotransformations` does not repeat them. The list is
