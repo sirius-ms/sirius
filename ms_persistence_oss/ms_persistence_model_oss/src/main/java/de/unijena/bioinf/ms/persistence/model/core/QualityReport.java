@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.persistence.model.core;
 
+import de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;

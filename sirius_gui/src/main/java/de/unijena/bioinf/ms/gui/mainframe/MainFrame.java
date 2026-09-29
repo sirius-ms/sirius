@@ -193,8 +193,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         //build left sidepane
         compoundListView = new CompoundListView(gui, compoundList);
         filterableCompoundListPanel = new FilterableCompoundListPanel(compoundListView);
-        filterableCompoundListPanel.setPreferredSize(new Dimension(228, (int) filterableCompoundListPanel.getPreferredSize().getHeight()));
-        mainPanel.setDividerLocation(232);
+        // wide enough for the search bar's three in-field buttons (clear, restore, funnel) plus a few chips
+        filterableCompoundListPanel.setPreferredSize(new Dimension(256, (int) filterableCompoundListPanel.getPreferredSize().getHeight()));
+        mainPanel.setDividerLocation(260);
 
         //BUILD the MainFrame (GUI)
         mainPanel.setLeftComponent(filterableCompoundListPanel);

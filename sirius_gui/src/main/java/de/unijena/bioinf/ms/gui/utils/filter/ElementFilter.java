@@ -1,9 +1,16 @@
 package de.unijena.bioinf.ms.gui.utils.filter;
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/** An element-constraint facet; a value (two filters with the same constraints and flags are equal). */
+@Getter
+@EqualsAndHashCode
+@ToString
 public class ElementFilter {
     @NotNull
     final FormulaConstraints constraints;
@@ -33,18 +40,6 @@ public class ElementFilter {
 
     public boolean isActive() {
         return !constraints.equals(FormulaConstraints.empty()) && (matchFormula || matchPrecursorFormula);
-    }
-
-    public FormulaConstraints getConstraints() {
-        return constraints;
-    }
-
-    public boolean isMatchFormula() {
-        return matchFormula;
-    }
-
-    public boolean isMatchPrecursorFormula() {
-        return matchPrecursorFormula;
     }
 
     public static final ElementFilter DISABLED = new ElementFilter(FormulaConstraints.empty(), true, true);

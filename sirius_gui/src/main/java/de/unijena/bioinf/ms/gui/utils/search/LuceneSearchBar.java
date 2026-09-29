@@ -23,7 +23,10 @@ import de.unijena.bioinf.ms.gui.configs.FilterButton;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
+import de.unijena.bioinf.ms.gui.utils.filter.QuickFilterSwitch;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import io.sirius.ms.sdk.SiriusClient;
 import org.jetbrains.annotations.NotNull;
@@ -45,28 +48,43 @@ import java.util.function.Supplier;
  * one perceived control that grows over the result view while editing and shrinks back on close.
  * A keystroke that triggered the expansion is forwarded, so typing "just continues" in the overlay.
  * <p>
- * The user part of the summary is rendered by parsing the shared search document back into query
+ * The user part of the summary is rendered by parsing the applied filter's user query back into query
  * chips ({@link QueryStringParser}), exactly like the query editor hydrates it - so the bar looks the
- * same no matter where the query was committed (overlay, filter dialog, reset). Only a document that
+ * same no matter where the query was committed (overlay, filter dialog, reset). Only a query that
  * cannot be represented as chips (unsupported lucene constructs) falls back to plain text.
  */
 public class LuceneSearchBar extends JPanel {
 
     private final FeatureFilterModel filterModel;
+    /** The editing session the overlay works on; this collapsed bar itself renders the applied filter. */
+    private final FilterSession session;
     private final SearchableFieldsProvider fieldsProvider;
+    /** The applied filter's facets as terms - what this bar renders. */
     private final Supplier<List<FilterTerm>> termSupplier;
+    /** The session's working facets as terms - what the overlay renders and edits. */
+    private final Supplier<List<FilterTerm>> workingTermSupplier;
+    /** The quick switches the overlay's footer offers; defined by the host, which knows the pojo. */
+    private final List<QuickFilterSwitch> quickSwitches;
     private final FilterEditorHost editorHost;
     private final SearchRenderState renderState;
     /** Opens the full filter dialog; triggered by the in-field funnel icon (see {@link #filterButton}). */
     private final Runnable openFilterPanel;
-    /** Full reset of every filter and the search query (see {@link #clearButton}); wired to the host. */
+    /** Removes every filter and the search query (see {@link #clearButton}); wired to the host, committed at once. */
     private final Runnable clearFilter;
+    /** Restores the default filters and clears the search query (see {@link #restoreDefaultsButton}); wired to the host. */
+    private final Runnable restoreDefaultFilter;
 
     private final JPanel chipStrip;
     /** In-field funnel button that opens the full filter dialog; tinted to the accent when a filter is active. */
     private final FilterButton filterButton = Buttons.getFilterButton(24,
             "Open the filter panel (" + GuiUtils.shortcut("Shift+F") + ")", true);
+    /** In-field button that removes every filter and the search query (the filter dialog's Clear, committed). */
     private final JButton clearButton = Buttons.getBackspaceButton(24, "Clear all filters and the search query", true);
+    /** In-field button that restores the default filters (the same action as the filter dialog's restore button). */
+    private final JButton restoreDefaultsButton = Buttons.getRestoreDefaultsButton(24,
+            "Restore default filters and clear the search query", true);
+    /** The in-field buttons (clear, restore, funnel) at the bar's right end; {@link #relayoutCells} keeps the chips off them. */
+    private final Box buttons = Box.createHorizontalBox();
     /** The full s  ummary cells in order; {@link #relayoutCells} decides how many fit. */
     private final List<JComponent> cells = new ArrayList<>();
 
@@ -87,16 +105,24 @@ public class LuceneSearchBar extends JPanel {
 
     public LuceneSearchBar(@NotNull SiriusClient siriusClient, @NotNull String projectId,
                            @NotNull FeatureFilterModel filterModel,
+                           @NotNull FilterSession session,
                            @NotNull Supplier<List<FilterTerm>> termSupplier,
+                           @NotNull Supplier<List<FilterTerm>> workingTermSupplier,
+                           @NotNull List<QuickFilterSwitch> quickSwitches,
                            @NotNull FilterEditorHost editorHost,
                            @NotNull Runnable openFilterPanel,
-                           @NotNull Runnable clearFilter) {
+                           @NotNull Runnable clearFilter,
+                           @NotNull Runnable restoreDefaultFilter) {
         super(new BorderLayout());
         this.filterModel = filterModel;
+        this.session = session;
         this.termSupplier = termSupplier;
+        this.workingTermSupplier = workingTermSupplier;
+        this.quickSwitches = quickSwitches;
         this.editorHost = editorHost;
         this.openFilterPanel = openFilterPanel;
         this.clearFilter = clearFilter;
+        this.restoreDefaultFilter = restoreDefaultFilter;
         this.fieldsProvider = new SearchableFieldsProvider(siriusClient, projectId);
         this.renderState = new SearchRenderState(fieldsProvider);
 
@@ -127,11 +153,17 @@ public class LuceneSearchBar extends JPanel {
         filterButton.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         filterButton.addActionListener(e -> openFilterPanel.run());
         filterButton.setMargin(new Insets(0, 0, 0, 0));
+        // the two quick-access resets left of the funnel, both committed at once (the overlay and the
+        // dialog stage theirs): clear removes every filter, restore puts the default filters back. Same
+        // icons and wording as the filter dialog's Clear and Restore buttons.
+        for (JButton reset : new JButton[]{clearButton, restoreDefaultsButton}) {
+            reset.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            reset.setMargin(new Insets(0, 0, 0, 0));
+        }
         clearButton.addActionListener(e -> clearFilter.run());
-        clearButton.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        clearButton.setMargin(new Insets(0, 0, 0, 0));
-        Box buttons = Box.createHorizontalBox();
+        restoreDefaultsButton.addActionListener(e -> restoreDefaultFilter.run());
         buttons.add(clearButton);
+        buttons.add(restoreDefaultsButton);
         buttons.add(filterButton);
         add(buttons, BorderLayout.EAST);
 
@@ -211,8 +243,8 @@ public class LuceneSearchBar extends JPanel {
             Window owner = SwingUtilities.getWindowAncestor(this);
             if (owner == null)
                 return;
-            overlay = new SearchBarOverlay(owner, filterModel, fieldsProvider, termSupplier, editorHost,
-                    renderState, commit -> refreshSummary(), this::refreshSummary, openFilterPanel, clearFilter);
+            overlay = new SearchBarOverlay(owner, session, fieldsProvider, workingTermSupplier, editorHost,
+                    renderState, commit -> refreshSummary(), this::refreshSummary, openFilterPanel, quickSwitches);
         }
         // Reopen unconditionally. If we reach here the collapsed bar received the gesture, which means
         // the overlay is NOT the active window - so a still-"open" overlay is a stale/stuck instance
@@ -232,12 +264,13 @@ public class LuceneSearchBar extends JPanel {
         Runnable open = this::openOverlay;
         cells.clear();
 
-        // parse the shared document into chips - the same hydration the editor does, so the collapsed
+        // parse the applied user query into chips - the same hydration the editor does, so the collapsed
         // summary is consistent regardless of where the query was committed (overlay, filter dialog,
         // reset). Free text folds into the parsed tree as "..." clauses, rendered by QueryNodeRenderer
         // exactly like the editor renders them. Parsed up front, because whether the two blocks need
         // bracketing depends on both of them.
-        String docText = Optional.ofNullable(filterModel.getSearchText()).orElse("");
+        FeatureFilter applied = filterModel.get();
+        String docText = applied.userQuery();
         Optional<QueryContainer> parsed = QueryStringParser.parse(docText, fieldsProvider.getCached());
         List<FilterTerm> terms = termSupplier.get();
         List<QueryNode> userItems = parsed.map(QueryContainer::items).orElse(List.of());
@@ -255,7 +288,7 @@ public class LuceneSearchBar extends JPanel {
         }
         if (bothBlocks) {
             cells.add(parenLabel(")"));
-            cells.add(joinLabel(filterModel.getQueryJoin()));
+            cells.add(joinLabel(applied.queryJoin()));
             cells.add(parenLabel("("));
         }
 
@@ -277,7 +310,7 @@ public class LuceneSearchBar extends JPanel {
 
         // an inverted query is shown by tinting its chips to the inverted (red-ish) accent rather than
         // the normal (blue-ish) one - mirroring the editor
-        if (filterModel.isInverted())
+        if (applied.inverted())
             cells.forEach(cell -> {
                 if (cell instanceof ChipComponent chip)
                     chip.withAccent(Colors.Menu.FILTER_BUTTON_INVERTED);
@@ -295,7 +328,7 @@ public class LuceneSearchBar extends JPanel {
                 : GuiUtils.formatToolTip("Current search query:", docText));
 
         // tint the funnel to the accent while a structured filter is active (orange when inverted)
-        filterButton.setFilterActive(filterModel.isActive(), filterModel.isInverted());
+        filterButton.setFilterActive(applied.isActive(filterModel.getContext()), applied.inverted());
 
         relayoutCells();
     }
@@ -308,9 +341,9 @@ public class LuceneSearchBar extends JPanel {
     private void relayoutCells() {
         chipStrip.removeAll();
         Insets in = getInsets();
-        // reserve the funnel button's width so summary chips (and the ellipsis) never run under it
-        int buttonSpace = filterButton == null ? 0
-                : (filterButton.getWidth() > 0 ? filterButton.getWidth() : filterButton.getPreferredSize().width);
+        // reserve the in-field buttons' width so summary chips (and the ellipsis) never run under them
+        int buttonSpace = buttons == null ? 0
+                : (buttons.getWidth() > 0 ? buttons.getWidth() : buttons.getPreferredSize().width);
         int available = getWidth() - in.left - in.right - buttonSpace - 6;
         int ellipsisWidth = ellipsisLabel().getPreferredSize().width + 6;
 
@@ -391,7 +424,7 @@ public class LuceneSearchBar extends JPanel {
     private JLabel parenLabel(String paren) {
         JLabel label = new JLabel(paren);
         label.setFont(label.getFont().deriveFont(Font.BOLD, label.getFont().getSize2D() + 2));
-        label.setForeground(filterModel.isInverted()
+        label.setForeground(filterModel.get().inverted()
                 ? Colors.Menu.FILTER_BUTTON_INVERTED : Colors.Menu.FILTER_BUTTON);
         label.addMouseListener(opener);
         return label;
