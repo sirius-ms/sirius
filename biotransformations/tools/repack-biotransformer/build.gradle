@@ -29,12 +29,32 @@ repositories {
 configurations {
     // the jar being rebuilt, resolved rather than pointed at by path
     sourceJar
+    // what the repacked jar needs at runtime; published as the POM's dependencies
+    jarRuntime
 }
 
 dependencies {
     implementation 'org.ow2.asm:asm:9.8'
     implementation 'org.ow2.asm:asm-commons:9.8'
     sourceJar "${inputArtifact}@jar"
+
+    // Everything the jar references but no longer contains, derived from its bytecode: every type
+    // it uses that is neither inside the jar nor part of the JDK. Weka, Ambit2, Jena, Jackson 1 and
+    // HttpClient are absent on purpose - those are still bundled.
+    jarRuntime 'org.openscience.cdk:cdk-bundle:2.12'          // aggregator over the CDK modules
+    jarRuntime 'com.google.guava:guava:33.4.8-jre'
+    jarRuntime 'joda-time:joda-time:2.14.0'
+    jarRuntime 'jgrapht:jgrapht:0.6.0'
+    jarRuntime 'javax.vecmath:vecmath:1.5.2'
+    jarRuntime 'org.slf4j:slf4j-api:2.0.18'
+    jarRuntime 'com.fasterxml.jackson.core:jackson-databind:2.21.4'
+    jarRuntime 'org.apache.commons:commons-lang3:3.20.0'
+    jarRuntime 'org.apache.commons:commons-text:1.12.0'
+    jarRuntime 'org.apache.commons:commons-math3:3.6.1'
+    jarRuntime 'commons-beanutils:commons-beanutils:1.9.4'
+    jarRuntime 'commons-codec:commons-codec:1.19.0'
+    jarRuntime 'commons-collections:commons-collections:3.2.2'   // v3, not collections4
+    jarRuntime 'commons-io:commons-io:2.21.0'
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
@@ -59,28 +79,6 @@ tasks.register('repack', JavaExec) {
 }
 
 publishing {
-    repositories {
-        // The same public registry the input jar comes from:
-        // https://gitlab.com/bright-giant/registry-public/-/packages/
-        maven {
-            name = 'GitLabCommonPublic'
-            url = 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
-            credentials(HttpHeaderCredentials) {
-                if (System.getenv('CI_JOB_TOKEN') != null) {
-                    name = 'Job-Token'
-                    value = System.getenv('CI_JOB_TOKEN')
-                } else {
-                    name = 'Private-Token'
-                    // put bgGitLabToken in $GRADLE_USER_HOME/gradle.properties, never in the repo
-                    value = project.findProperty('bgGitLabToken') as String
-                }
-            }
-            authentication {
-                header(HttpHeaderAuthentication)
-            }
-        }
-    }
-
     publications {
         repacked(MavenPublication) {
             groupId = project.group
@@ -88,16 +86,66 @@ publishing {
             version = project.version
             artifact(repackedJar) { builtBy tasks.named('repack') }
 
-            pom.withXml {
-                asNode().appendNode('description',
-                        'BioTransformer 3.0 repacked for SIRIUS: bundled CDK 2.7.1 removed so it uses ' +
-                        'the CDK on the classpath. Built from ' + inputArtifact + '.')
+            pom {
+                name = artifactName
+                description = 'BioTransformer 3.0 for SIRIUS, without a CDK of its own so it uses the ' +
+                        'CDK on the classpath. Built from ' + inputArtifact + '.'
+                licenses {
+                    license {
+                        name = 'GNU Lesser General Public License, Version 3.0'
+                        url = 'https://www.gnu.org/licenses/lgpl-3.0.txt'
+                    }
+                }
+                withXml {
+                    // The publication is a bare jar rather than a java component, so its dependencies
+                    // are written from the jarRuntime configuration instead of being inferred.
+                    def deps = asNode().appendNode('dependencies')
+                    configurations.jarRuntime.allDependencies.sort { "$it.group:$it.name" }.each { d ->
+                        def dep = deps.appendNode('dependency')
+                        dep.appendNode('groupId', d.group)
+                        dep.appendNode('artifactId', d.name)
+                        dep.appendNode('version', d.version)
+                        dep.appendNode('scope', 'runtime')
+                    }
+                }
+            }
+        }
+    }
+
+    // Same shape as :sirius-sdk, so it reads the credentials already configured for this project.
+    repositories {
+        maven {
+            name = "GitLabPublic"
+            if (System.getenv("CI_JOB_TOKEN") != null) {
+                url = System.getenv('PUBLIC_REGISTRY_URL')
+                credentials(HttpHeaderCredentials) {
+                    name = "Job-Token"
+                    value = System.getenv("CI_JOB_TOKEN")
+                }
+                authentication {
+                    header(HttpHeaderAuthentication)
+                }
+            } else {
+                url = project.findProperty("io.sirius-ms.build.artifactory.public.url") as String
+                if (project.findProperty("io.sirius-ms.build.artifactory.public.username") != null
+                        && project.findProperty("io.sirius-ms.build.artifactory.public.token") != null
+                ) {
+                    credentials(PasswordCredentials) {
+                        username = project.findProperty("io.sirius-ms.build.artifactory.public.username") as String
+                        password = project.findProperty("io.sirius-ms.build.artifactory.public.token") as String
+                    }
+                } else {
+                    credentials(PasswordCredentials) {
+                        username = project.findProperty("io.sirius-ms.build.artifactory.username") as String
+                        password = project.findProperty("io.sirius-ms.build.artifactory.token") as String
+                    }
+                }
+                authentication {
+                    basic(BasicAuthentication)
+                }
             }
         }
     }
 }
 
-// The runtime dependencies stay declared in :biotransformations for now; this publication carries
-// the jar only. Giving it a POM that declares CDK, Weka and the rest is worth doing once the
-// artifact moves off mavenLocal into a real repository.
 tasks.named('publishToMavenLocal') { dependsOn tasks.named('repack') }

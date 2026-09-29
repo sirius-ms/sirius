@@ -1,21 +1,12 @@
 version = siriusVersion
 
 dependencies {
+    // The jar's own POM declares what it needs (CDK, guava, the commons libraries, ...), so those
+    // are not repeated here.
     implementation libs.biotransformerSirius
     api project(":chemical_db_oss:chemdb_utils_oss")
 
-    // Dependencies from biotransformer jar
-    implementation libs.jna
     // BioTransformer's HMDB lookup opens jdbc:mysql: connections; MySqlSchemeDriver routes
     // them to the MariaDB client, which speaks the same protocol under a non-GPL licence.
     implementation libs.mariadbClient
-    implementation libs.commonsText
-    implementation libs.commonsBeanutils
-    implementation libs.commonsCodec
-    implementation libs.commonsCollections4
 }
-
-
-
-
-

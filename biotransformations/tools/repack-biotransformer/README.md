@@ -71,12 +71,13 @@ To publish for everyone, into the registry the input jar also comes from
 
 ```bash
 ./gradlew -p biotransformations/tools/repack-biotransformer \
-          publishRepackedPublicationToGitLabCommonPublicRepository -PbgGitLabToken=<token>
+          publishRepackedPublicationToGitLabPublicRepository
 ```
 
-The token is a GitLab personal or deploy token with `write_package_registry`; keep it in
-`$GRADLE_USER_HOME/gradle.properties` as `bgGitLabToken`, never in the repository. In CI,
-`CI_JOB_TOKEN` is used instead and no property is needed.
+Credentials come from the same properties the rest of the build uses, so nothing extra is needed:
+`io.sirius-ms.build.artifactory.public.url` for the target, and the `public.username`/`public.token`
+pair if set, otherwise `io.sirius-ms.build.artifactory.username`/`.token`. In CI, `CI_JOB_TOKEN` and
+`PUBLIC_REGISTRY_URL` are used instead.
 
 ## Verifying a rebuild
 
@@ -90,10 +91,11 @@ Weka 3.8.1 — its `*.model` files are serialized Weka objects, so relocating it
 Ambit2, and a tail that nothing on the SIRIUS classpath collides with: Jena, Jackson 1, HttpClient 4,
 Xerces/Xalan, protobuf and JUnit 4. Trimming those is independent of the CDK work.
 
-## Open items
+The POM declares what the jar needs at runtime - CDK, guava, joda-time, jgrapht, vecmath, slf4j,
+Jackson 2 and the commons libraries - so `:biotransformations` does not repeat them. The list is
+derived from the jar's bytecode: every type it references that is neither inside it nor in the JDK.
+Weka, Ambit2, Jena, Jackson 1 and HttpClient are absent from it because they are still bundled.
 
-- **Publish the artifact.** It currently exists only in the `~/.m2` of whoever ran this last, so the
-  SIRIUS build does not resolve for anyone else.
-- **Give the publication a real POM.** It carries the jar alone; the runtime dependencies (CDK, Weka,
-  commons-csv, the Jackson 1 and HttpClient stack) are declared by hand in
-  `biotransformations/build.gradle`.
+One thing the POM cannot express: the jar does **not** contain
+`biotransformer.btransformers.Biotransformer`. That class is maintained as source in
+`:biotransformations`, so the jar only works with that module on the classpath.
