@@ -195,7 +195,7 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
 
     /**
      * Compacts the project, rewriting how its records are laid out on disk whether or not the storage
-     * thinks that is needed - see {@code NitriteDatabase#compactRewritingLayout()} for when that is
+     * thinks that is needed - see {@code NitriteDatabase#compactByRewriting()} for when that is
      * worth asking for. Falls back to an ordinary compaction for a storage that has no layout to
      * rewrite.
      */
