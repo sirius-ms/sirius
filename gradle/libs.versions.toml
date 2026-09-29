@@ -129,8 +129,7 @@ springDataJpa = { group = "org.springframework.data", name = "spring-data-jpa" }
 springDataMongodb = { group = "org.springframework.data", name = "spring-data-mongodb" }
 springBootStarterWebflux = { group = "org.springframework.boot", name = "spring-boot-starter-webflux" }
 jna = { group = "net.java.dev.jna", name = "jna", version.ref = "jna" }
-mysqlConnector = { group = "com.mysql", name = "mysql-connector-j" }
-# version managed by the Spring Boot BOM, like the MySQL connector it replaces
+# version managed by the Spring Boot BOM, as the MySQL connector it replaces was
 mariadbClient = { group = "org.mariadb.jdbc", name = "mariadb-java-client" }
 scribejavaApis = { group = "com.github.scribejava", name = "scribejava-apis", version.ref = "scribejava" }
 scribejavaHttpclientOkhttp = { group = "com.github.scribejava", name = "scribejava-httpclient-okhttp", version.ref = "scribejava" }

@@ -65,4 +65,3 @@ hs_err_pid*
 /.claude/skills
 # Claude Code's auto-maintained, per-developer permission allowlist.
 /.claude/settings.local.json
-biotransformations/tools/repack-biotransformer/build/
