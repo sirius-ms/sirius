@@ -10,15 +10,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * The full golden matrix: every substrate against every recorded configuration.
  * <p>
- * Excluded from the default {@code test} task by the {@code *AcceptanceTest} suffix; run it
- * manually as the final gate, in particular before and after the CDK relocation work:
+ * Excluded from the default {@code test} task by the {@code *AcceptanceTest} suffix; run it by hand
+ * as the final gate, in particular after changing the BioTransformer jar or the CDK version:
  * <pre>./gradlew :biotransformations:acceptanceTest -q</pre>
- * Expect tens of minutes.
+ * Expect around 20 minutes.
  * <p>
- * It is expected to FAIL today. The stereo and human-gut defects pinned by
- * {@link BioTransformerStereoDefectTest} and {@link BioTransformerGutDefectTest} affect a large part
- * of the matrix. The report printed below is the point of this test: it lists exactly which cells
- * disagree and how, so progress can be measured cell by cell.
+ * It currently FAILS, at 278 of 308 cells. The 30 that differ are understood and pinned by
+ * {@link BioTransformerReferenceDivergenceTest}; the resources README explains both causes. The
+ * report printed below is the point of this test: it names every cell that disagrees and by how
+ * much, so a change can be judged cell by cell rather than pass/fail.
  */
 class BioTransformerGoldenAcceptanceTest {
 
@@ -41,7 +41,7 @@ class BioTransformerGoldenAcceptanceTest {
         for (String substrate : substrates) {
             for (String config : configs) {
                 total++;
-                int[] tally = perConfig.computeIfAbsent(config, k -> new int[2]);
+                int[] tally = perConfig.computeIfAbsent(config, ignored -> new int[2]);
                 Set<String> expected = GoldenBaseline.expectedKeys(substrate, config);
                 Set<String> actual;
                 String note = "";
