@@ -79,10 +79,12 @@ Requests and identifiers both drop the qualifier — `BasicSpectrum`, `DatabaseS
   regeneration order, `add-rest-endpoint` the endpoint conventions and what makes one public.
 * **Third-party libraries:** do not introduce heavy third-party mathematical or bioinformatics libraries
   unless asked.
-* **License headers:** SIRIUS frontend is AGPL; a new file gets the Affero header with the current
-  year. The copyright owner follows the committing git user's email domain: `bright-giant.com` gets
-  Bright Giant GmbH, `uni-jena.de` gets the Chair of Bioinformatics text. Never change the header of
-  a file you did not create.
+* **License headers:** the repository is not under one license. The applications — `sirius_cli`,
+  `sirius_gui`, `sirius_rest_service` — are AGPL; the libraries under them and `sirius-sdk` are LGPL,
+  which is also what the SDK's published POM declares. A new file takes the license of its module,
+  the header most of the module's files carry, with the current year. The copyright owner follows
+  the committing git user's email domain: `bright-giant.com` gets Bright Giant GmbH, `uni-jena.de`
+  gets the Chair of Bioinformatics text. Never change the header of a file you did not create.
 
 ## 4. Testing & Validation
 Scientific edge cases are where this code actually breaks, and they are not obvious from the source.
