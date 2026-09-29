@@ -29,6 +29,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.ToIntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -102,6 +103,17 @@ public class TokenInputModel {
         @Nullable
         String description();
 
+        /**
+         * The action a row stands for when its text alone does not say: the rows made of the typed text
+         * (search it as text, add it to the query, replace the filter with it) all show the same text, so
+         * the label is what tells them apart - it is drawn first. Null for every row whose text is the
+         * thing it adds (a field, a value, an operator).
+         */
+        @Nullable
+        default String actionLabel() {
+            return null;
+        }
+
         record FieldSuggestion(@NotNull SearchableField field) implements Suggestion {
             @Override
             public String display() {
@@ -163,11 +175,17 @@ public class TokenInputModel {
             public String description() {
                 return "full-text search";
             }
+
+            @Override
+            public String actionLabel() {
+                return "Search text";
+            }
         }
 
         /**
-         * Parse the typed text as a full lucene query and turn it into chips (for users who type a
-         * query directly rather than building it clause by clause).
+         * Parse the typed text as a full lucene query and ADD it to the user's query as chips (for users
+         * who type a query directly rather than building it clause by clause). Never absorbs facets: what
+         * the user typed stays the user's clauses.
          */
         record ParseQuerySuggestion(@NotNull String text) implements Suggestion {
             @Override
@@ -177,7 +195,38 @@ public class TokenInputModel {
 
             @Override
             public String description() {
-                return "parse as query";
+                return "the clauses join the current query as chips";
+            }
+
+            @Override
+            public String actionLabel() {
+                return "Add to query";
+            }
+        }
+
+        /**
+         * Make the typed text THE filter: the owner decodes it with its filter codec, so facet shapes become
+         * facet chips and the rest the user's query, replacing everything staged so far.
+         * {@code recognisedFacets} is the owner's word on what will happen (how many facet chips it
+         * recognises in the text), null when the owner has no codec.
+         */
+        record ReplaceQuerySuggestion(@NotNull String text, @Nullable Integer recognisedFacets) implements Suggestion {
+            @Override
+            public String display() {
+                return text;
+            }
+
+            @Override
+            public String description() {
+                if (recognisedFacets == null)
+                    return null;
+                return recognisedFacets == 0 ? "no filter chips recognised"
+                        : recognisedFacets + (recognisedFacets == 1 ? " filter chip" : " filter chips") + " recognised";
+            }
+
+            @Override
+            public String actionLabel() {
+                return "Replace filter";
             }
         }
 
@@ -199,6 +248,11 @@ public class TokenInputModel {
             @Override
             public String description() {
                 return target.description();
+            }
+
+            @Override
+            public String actionLabel() {
+                return target.actionLabel();
             }
         }
 
@@ -242,6 +296,10 @@ public class TokenInputModel {
         record QueryParsed(@NotNull QueryContainer container, @NotNull LogicOp logic) implements Event {
         }
 
+        /** The typed text is to become the whole filter (see {@link Suggestion.ReplaceQuerySuggestion}). */
+        record QueryReplaced(@NotNull String text) implements Event {
+        }
+
         record OpenGroup(boolean negated, @NotNull LogicOp logic) implements Event {
         }
 
@@ -262,6 +320,13 @@ public class TokenInputModel {
     private QueryMode mode = QueryMode.SIMPLE;
     @Nullable
     private RunAction runAction;
+    /**
+     * How many facet chips the owner's filter codec recognises in typed text - what a "replace the whole
+     * filter" pick will make of it. Shown as that row's detail, and a text with recognised chips is offered
+     * for replacing first (see {@link #entrySuggestions}). Null: the owner has no codec.
+     */
+    @Nullable
+    private ToIntFunction<String> recognisedFacets;
 
     // --- staged token state ---
     private Stage stage = Stage.FIELD;
@@ -315,6 +380,11 @@ public class TokenInputModel {
     /**
      * Sets (or clears) the owner's run action - the top row of an untouched input.
      */
+    /** See {@link #recognisedFacets}. */
+    public void setRecognisedFacets(@Nullable ToIntFunction<String> recognisedFacets) {
+        this.recognisedFacets = recognisedFacets;
+    }
+
     public void setRunAction(@Nullable RunAction runAction) {
         this.runAction = runAction;
     }
@@ -421,14 +491,37 @@ public class TokenInputModel {
         // stays the default pick. A paren the mode will not open is the exception: nobody searches for
         // a literal "(", so offering it as a term would be a nonsense row where inputProblem already
         // says what the problem is
-        if (!rest.isEmpty() && !(rest.startsWith("(") && !nestingAllowed())) {
-            candidates.add(new Suggestion.FreeTextSuggestion(rest));
-            // ... and, when it reads as more than plain words (a field, operator, group or boolean),
-            // it can be parsed as a whole query and turned into chips
-            if (parsesToStructuredQuery(rest))
-                candidates.add(new Suggestion.ParseQuerySuggestion(rest));
-        }
+        if (!rest.isEmpty() && !(rest.startsWith("(") && !nestingAllowed()))
+            candidates.addAll(typedTextRows(rest));
         return join(candidates, connectorsOffered(typed.logic()));
+    }
+
+    /**
+     * The rows made of the typed text itself, in the order of what the text most likely is. A single word
+     * is a full-text search and nothing else. Anything the parser makes more of can also be parsed and
+     * added to the query as chips, or become the whole filter. Which row leads: a text the owner's codec
+     * recognises filter chips in is a filter pasted back, so replacing is the default pick. Failing that,
+     * text with query syntax (a field, a group, a negation) is a query, so adding leads and a full-text
+     * search for a query string goes last. Several plain words are still words: full-text search leads.
+     */
+    private List<Suggestion> typedTextRows(String text) {
+        Suggestion freeText = new Suggestion.FreeTextSuggestion(text);
+        Optional<QueryContainer> parsed = QueryStringParser.parse(text, fields)
+                .filter(c -> !c.isEmpty() && !isSingleFreeText(c));
+        if (parsed.isEmpty())
+            return List.of(freeText);
+        Integer facets = recognisedFacets == null ? null : recognisedFacets.applyAsInt(text);
+        Suggestion add = new Suggestion.ParseQuerySuggestion(text);
+        Suggestion replace = new Suggestion.ReplaceQuerySuggestion(text, facets);
+        if (facets != null && facets > 0)
+            return List.of(replace, add, freeText);
+        return hasQuerySyntax(parsed.get()) ? List.of(add, replace, freeText) : List.of(freeText, add, replace);
+    }
+
+    /** Whether {@code container} holds more than plain words: a fielded clause, a group or a negation. */
+    private static boolean hasQuerySyntax(QueryContainer container) {
+        return container.items().stream()
+                .anyMatch(item -> !(item instanceof QueryClause clause && clause.isFreeText() && !clause.negated()));
     }
 
     /**
@@ -454,8 +547,10 @@ public class TokenInputModel {
         boolean blockJoin = join == Join.PANEL_TERMS;
         List<Suggestion> joined = new ArrayList<>(candidates.size() * connectors.size());
         for (Suggestion candidate : candidates) {
-            // closing a group joins nothing - it ends the term before it
-            if (candidate instanceof Suggestion.TokenSuggestion token && token.token() == SpecialToken.CLOSE_GROUP) {
+            // closing a group joins nothing - it ends the term before it; replacing the whole filter
+            // joins nothing either - there is nothing left to join to
+            if (candidate instanceof Suggestion.TokenSuggestion token && token.token() == SpecialToken.CLOSE_GROUP
+                    || candidate instanceof Suggestion.ReplaceQuerySuggestion) {
                 joined.add(candidate);
                 continue;
             }
@@ -511,12 +606,6 @@ public class TokenInputModel {
 
     /** True when {@code text} parses to a query richer than a single free-text clause (which the
      *  free-text suggestion already covers), so offering "parse as query" is not redundant. */
-    private boolean parsesToStructuredQuery(String text) {
-        return QueryStringParser.parse(text, fields)
-                .filter(c -> !c.isEmpty() && !isSingleFreeText(c))
-                .isPresent();
-    }
-
     private static boolean isSingleFreeText(QueryContainer container) {
         return container.items().size() == 1
                 && container.items().get(0) instanceof QueryClause clause && clause.isFreeText();
@@ -603,6 +692,10 @@ public class TokenInputModel {
                     .orElseGet(() -> new Event.ClauseCompleted(QueryClause.freeText(parse.text(), pendingNegated), effectiveLogic()));
             resetPending();
             return Optional.of(event);
+        }
+        if (suggestion instanceof Suggestion.ReplaceQuerySuggestion replace) {
+            resetPending();
+            return Optional.of(new Event.QueryReplaced(replace.text()));
         }
         // value suggestion
         return acceptValue(((Suggestion.ValueSuggestion) suggestion).value());

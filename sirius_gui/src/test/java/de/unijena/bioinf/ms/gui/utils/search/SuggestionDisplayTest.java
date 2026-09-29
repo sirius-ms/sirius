@@ -163,6 +163,60 @@ public class SuggestionDisplayTest {
         assertNull(row.dimmed());
     }
 
+    // --- rows made of the typed text: the label first, the text shortened ---
+
+    @Test
+    public void testTypedTextRowsLeadWithTheirActionLabel() {
+        SuggestionDisplay.Row add = SuggestionDisplay.of(
+                new TokenInputModel.Suggestion.ParseQuerySuggestion("ionMass:[100 TO 200]"), FieldDisplay.Mode.COMPACT);
+        assertEquals("Add to query", add.label());
+        assertEquals("ionMass:[100 TO 200]", add.display());
+
+        SuggestionDisplay.Row replace = SuggestionDisplay.of(
+                new TokenInputModel.Suggestion.ReplaceQuerySuggestion("ionMass:[100 TO 200]", 1), FieldDisplay.Mode.COMPACT);
+        assertEquals("Replace filter", replace.label());
+        assertEquals("1 filter chip recognised", replace.dimmed());
+
+        SuggestionDisplay.Row text = SuggestionDisplay.of(
+                new TokenInputModel.Suggestion.FreeTextSuggestion("ionMass:[100 TO 200]"), FieldDisplay.Mode.COMPACT);
+        assertEquals("Search text", text.label());
+        assertEquals("\"ionMass:[100 TO 200]\"", text.display());
+
+        assertNull(SuggestionDisplay.of(suggestion(field("ionMass", null, 1)), FieldDisplay.Mode.COMPACT).label());
+    }
+
+    @Test
+    public void testALongTypedTextIsShortenedInTheMiddleAndKeptWholeInTheTooltip() {
+        String pasted = "hasMsMs:true AND (detectedAdducts:\"[M + H]+\" OR detectedAdducts:\"[M + Na]+\" OR detectedAdducts:\"[M + K]+\")"
+                + " AND (quality:DECENT OR quality:GOOD OR quality:NOT_APPLICABLE)";
+        SuggestionDisplay.Row row = SuggestionDisplay.of(
+                new TokenInputModel.Suggestion.ReplaceQuerySuggestion(pasted, 3), FieldDisplay.Mode.COMPACT);
+
+        assertEquals(SuggestionDisplay.TYPED_TEXT_LIMIT, row.display().length());
+        assertTrue(row.display().startsWith("hasMsMs:true AND"), "the start stays");
+        assertTrue(row.display().endsWith("NOT_APPLICABLE)"), "the end stays");
+        assertTrue(row.display().contains("\u2026"));
+        assertTrue(row.tooltip().contains("detectedAdducts:\"[M + Na]+\""), "the middle is in the tooltip");
+        assertTrue(row.tooltip().contains("3 filter chips recognised"));
+    }
+
+    @Test
+    public void testShortenMiddleLeavesFittingTextAlone() {
+        assertEquals("ionMass:[100 TO 200]", SuggestionDisplay.shortenMiddle("ionMass:[100 TO 200]", 20));
+        assertEquals("abcd\u2026wxyz", SuggestionDisplay.shortenMiddle("abcdefghijklmnopqrstuvwxyz", 9));
+    }
+
+    @Test
+    public void testAJoinedTypedTextRowKeepsTheLabelBehindTheConnector() {
+        SuggestionDisplay.Row row = SuggestionDisplay.of(
+                new TokenInputModel.Suggestion.Joined(LogicOp.AND,
+                        new TokenInputModel.Suggestion.ParseQuerySuggestion("ionMass:[100 TO 200]"), false),
+                FieldDisplay.Mode.COMPACT);
+        assertEquals("AND", row.connector());
+        assertEquals("Add to query", row.label());
+        assertEquals("ionMass:[100 TO 200]", row.display());
+    }
+
     // --- non-field rows ---
 
     @Test

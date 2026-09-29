@@ -23,10 +23,10 @@ import de.unijena.bioinf.ms.gui.utils.filter.PanelQueryNodeFactory;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import org.junit.jupiter.api.Test;
 
-import javax.swing.text.BadLocationException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -75,25 +75,25 @@ public class PanelQueryApiEquivalenceTest {
                 "set sirius.api.base/project (system property or SIRIUS_API_BASE/SIRIUS_API_PROJECT env) to run live");
 
         List<State> states = List.of(
-                new State("mz", m -> m.setCurrentMinMz(300)),
-                new State("mz-range", m -> { m.setCurrentMinMz(300); m.setCurrentMaxMz(400); }),
-                new State("rt", m -> { m.setCurrentMinRt(10); m.setCurrentMaxRt(120); }),
-                new State("confidence", m -> m.setCurrentMinConfidence(0.5)),
-                new State("hasMs1", m -> m.setHasMs1(true)),
-                new State("hasMsMs", m -> m.setHasMsMs(true)),
-                new State("adducts", m -> m.setAdducts(Set.of(
-                        PrecursorIonType.fromString("[M+H]+"), PrecursorIonType.fromString("[M+Na]+")))),
+                new State("mz", m -> m.update(f -> f.withMz(300, f.mz().max()))),
+                new State("mz-range", m -> { m.update(f -> f.withMz(300, f.mz().max())); m.update(f -> f.withMz(f.mz().min(), 400)); }),
+                new State("rt", m -> { m.update(f -> f.withRt(10, f.rt().max())); m.update(f -> f.withRt(f.rt().min(), 120)); }),
+                new State("confidence", m -> m.update(f -> f.withConfidence(0.5, f.confidence().max()))),
+                new State("hasMs1", m -> m.update(f -> f.withHasMs1(true))),
+                new State("hasMsMs", m -> m.update(f -> f.withHasMsMs(true))),
+                new State("adducts", m -> m.update(f -> f.withAdducts(Set.of(
+                        PrecursorIonType.fromString("[M+H]+"), PrecursorIonType.fromString("[M+Na]+"))))),
                 new State("default-quality", m -> { /* fresh model keeps the default feature-quality filter */ }),
-                new State("elements", m -> m.setElementFilter(new ElementFilter("CHNOPS"))),
-                new State("blank", m -> m.getSampleBlankFoldChange().setEnabled(true)),
-                new State("lipid-any", m -> m.setLipidClassDetected(true)),
-                new State("lipid-no", m -> m.setLipidClassDetected(false)),
-                new State("pfas-tagged", m -> m.setPfasDetected(true)),
-                new State("pfas-none", m -> m.setPfasDetected(false)),
-                new State("mz+hasMsMs", m -> { m.setCurrentMinMz(300); m.setHasMsMs(true); }),
-                new State("inverted-mz", m -> { m.setCurrentMinMz(300); m.setInverted(true); }),
+                new State("elements", m -> m.update(f -> f.withElementFilter(new ElementFilter("CHNOPS")))),
+                new State("blank", m -> m.update(f -> f.withBlankFoldChangeEnabled(true))),
+                new State("lipid-any", m -> m.update(f -> f.withLipidClassDetected(true))),
+                new State("lipid-no", m -> m.update(f -> f.withLipidClassDetected(false))),
+                new State("pfas-tagged", m -> m.update(f -> f.withPfasDetected(true))),
+                new State("pfas-none", m -> m.update(f -> f.withPfasDetected(false))),
+                new State("mz+hasMsMs", m -> { m.update(f -> f.withMz(300, f.mz().max())); m.update(f -> f.withHasMsMs(true)); }),
+                new State("inverted-mz", m -> { m.update(f -> f.withMz(300, f.mz().max())); m.update(f -> f.withInverted(true)); }),
                 new State("freetext-only", m -> setSearchText(m, "name:caffeine")),
-                new State("mz+freetext", m -> { m.setCurrentMinMz(300); setSearchText(m, "hasMsMs:true"); }),
+                new State("mz+freetext", m -> { m.update(f -> f.withMz(300, f.mz().max())); setSearchText(m, "hasMsMs:true"); }),
                 new State("quality+freetext", m -> setSearchText(m, "ionMass:[300 TO 400]"))
         );
 
@@ -102,7 +102,7 @@ public class PanelQueryApiEquivalenceTest {
             FeatureFilterModel model = freshCleanModel();
             // "default-quality" and the freetext quality case keep the default quality filter enabled
             if (!state.name().equals("default-quality") && !state.name().equals("quality+freetext"))
-                model.getFeatureQualityFilter().reset();
+                model.update(f -> f.withFeatureQuality(FeatureFilter.ALL_QUALITIES));
             state.setup().accept(model);
 
             String reference = model.toLuceneQuery(MODE).orElse(null);
@@ -124,25 +124,21 @@ public class PanelQueryApiEquivalenceTest {
         List<LogicOp> ands = new ArrayList<>();
         for (int i = 1; i < nodes.size(); i++)
             ands.add(LogicOp.AND);
-        String freeText = model.getSearchText() == null ? "" : model.getSearchText().trim();
+        String freeText = model.get().userQuery() == null ? "" : model.get().userQuery().trim();
         String core = LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), freeText);
         if (core.isBlank())
             return null;
-        return model.isInverted() ? "*:* AND NOT (" + core + ")" : core;
+        return model.get().inverted() ? "*:* AND NOT (" + core + ")" : core;
     }
 
     private static FeatureFilterModel freshCleanModel() {
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setHasMsMs(false);
+        model.update(f -> f.withHasMsMs(false));
         return model;
     }
 
     private static void setSearchText(FeatureFilterModel model, String text) {
-        try {
-            model.getSearchTextDoc().insertString(0, text, null);
-        } catch (BadLocationException e) {
-            throw new RuntimeException(e);
-        }
+        model.update(f -> f.withUserQuery(text));
     }
 
     private static long count(String searchQuery) {
