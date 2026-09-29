@@ -276,7 +276,7 @@ public class QueryEditorPanel extends JPanel {
         this.openFilterPanel = openFilterPanel;
 
         // the top row of an untouched input: Enter runs the search (overlay) / applies the dialog
-        tokenModel.setReplaceQueryDetail(this::replaceQueryDetail);
+        tokenModel.setRecognisedFacets(this::recognisedFacets);
         tokenModel.setRunAction(new TokenInputModel.RunAction("Search",
                 "Apply the filter and close",
                 "Type to add query terms"));
@@ -627,10 +627,10 @@ public class QueryEditorPanel extends JPanel {
     }
 
     /**
-     * Makes a typed (or pasted) lucene query THE working filter - the "replace the whole filter" completion:
+     * Makes a typed (or pasted) lucene query THE working filter - the "Replace filter" completion:
      * recognised facet shapes become facets (chips), everything else the user's query (see
      * {@link FilterQueryCodec#decode}). Staged like every other edit. The only place a query is read back
-     * into filter state; "add to query" keeps what the user typed as user clauses.
+     * into filter state; "Add to query" keeps what the user typed as user clauses.
      */
     private void replaceFilterWith(@NotNull String query) {
         FilterQueryCodec.Absorbed absorbed = FilterQueryCodec.decode(query, session.context(), fieldsProvider.getCached());
@@ -638,10 +638,9 @@ public class QueryEditorPanel extends JPanel {
         hydrateUserQuery();
     }
 
-    /** The detail shown on the "replace the whole filter" row: what the codec makes of the typed text. */
-    private String replaceQueryDetail(@NotNull String query) {
-        int facets = FilterQueryCodec.decode(query, session.context(), fieldsProvider.getCached()).facetCount();
-        return facets == 0 ? "no filter chips recognised" : facets + (facets == 1 ? " filter chip" : " filter chips") + " recognised";
+    /** How many facet chips the codec recognises in typed text: the detail (and the rank) of the "replace filter" row. */
+    private int recognisedFacets(@NotNull String query) {
+        return FilterQueryCodec.decode(query, session.context(), fieldsProvider.getCached()).facetCount();
     }
 
     /** The working joint between the panel block and the user's query (published with the working value on commit). */
@@ -1763,9 +1762,12 @@ public class QueryEditorPanel extends JPanel {
     }
 
     /**
-     * Renders a suggestion row: the connector, the name, and the dimmed text behind it, all composed by
-     * {@link SuggestionDisplay} (the description wins that spot; the fully-qualified name lives in the
-     * row's tooltip). Only the dimmed text is truncated here, so the row stays one line.
+     * Renders a suggestion row: the connector, the action label, the name, and the dimmed text behind it,
+     * all composed by {@link SuggestionDisplay} (the description wins that spot; the fully-qualified name
+     * lives in the row's tooltip). Only the dimmed text is truncated here, so the row stays one line.
+     * <p>
+     * A row with an action label is one made of the typed text - the same text on each such row - so
+     * there the label carries the weight and the text is plain (and already shortened by the display).
      * <p>
      * The connector is drawn like the implicit-AND label of the chips zone - a size smaller, italic and
      * dimmed ({@link ChipComponent#implicitAndLabel()}) - so it reads as the joint between the terms
@@ -1780,8 +1782,9 @@ public class QueryEditorPanel extends JPanel {
 
             // the name carries the weight; the connector before it and the description behind it are
             // dimmed, so the eye lands on what the row actually adds
-            String name = row.dimmed() == null ? escape(row.display()) : "<b>" + escape(row.display()) + "</b>";
-            String text = row.connector() == null && row.dimmed() == null
+            String name = row.label() != null ? "<b>" + escape(row.label()) + "</b>&nbsp;&nbsp;" + escape(row.display())
+                    : row.dimmed() == null ? escape(row.display()) : "<b>" + escape(row.display()) + "</b>";
+            String text = row.connector() == null && row.dimmed() == null && row.label() == null
                     ? escape(row.display())
                     : "<html>" + connectorMarkup(row.connector()) + name
                       + (row.dimmed() == null ? ""

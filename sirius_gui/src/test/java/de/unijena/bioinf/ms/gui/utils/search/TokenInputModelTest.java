@@ -573,6 +573,20 @@ public class TokenInputModelTest {
     }
 
     @Test
+    public void testSeveralPlainWordsKeepTheFullTextSearchInFront() {
+        // the parser makes two AND-joined clauses of two words, so they can be added as chips too - but
+        // words are words: the full-text search stays the default pick, the query rows follow
+        var suggestions = model.suggestions("caffeine metabolite");
+        assertEquals(0, indexOf(suggestions, TokenInputModel.Suggestion.FreeTextSuggestion.class));
+        assertTrue(indexOf(suggestions, TokenInputModel.Suggestion.ParseQuerySuggestion.class) > 0);
+        // a negation or a field is query syntax: the full-text search moves to the back
+        var negated = model.suggestions("NOT caffeine");
+        assertEquals(negated.size() - 1, indexOf(negated, TokenInputModel.Suggestion.FreeTextSuggestion.class));
+        var fielded = model.suggestions("name:caffeine metabolite");
+        assertEquals(fielded.size() - 1, indexOf(fielded, TokenInputModel.Suggestion.FreeTextSuggestion.class));
+    }
+
+    @Test
     public void testChoosingFreeTextCompletesAKeylessClause() {
         TokenInputModel.Suggestion freeText = model.suggestions("caffeine metabolite").get(0);
         TokenInputModel.Event.ClauseCompleted completed = (TokenInputModel.Event.ClauseCompleted)
@@ -722,33 +736,72 @@ public class TokenInputModelTest {
                 "plain words are just free text - parse-as-query would be redundant");
     }
 
-    @Test
-    public void testStructuredTextAlsoOffersReplaceTheWholeFilterAfterAdd() {
-        var suggestions = model.suggestions("ionMass:[100 TO 200]");
-        int add = -1, replace = -1;
+    /** The index of the first row of {@code type}, looking through the connector wrapper; -1 when absent. */
+    private static int indexOf(List<TokenInputModel.Suggestion> suggestions, Class<? extends TokenInputModel.Suggestion> type) {
         for (int i = 0; i < suggestions.size(); i++) {
             TokenInputModel.Suggestion s = suggestions.get(i);
             if (s instanceof TokenInputModel.Suggestion.Joined joined)
                 s = joined.target();
-            if (s instanceof TokenInputModel.Suggestion.ParseQuerySuggestion && add < 0) add = i;
-            if (s instanceof TokenInputModel.Suggestion.ReplaceQuerySuggestion) replace = i;
+            if (type.isInstance(s))
+                return i;
         }
+        return -1;
+    }
+
+    @Test
+    public void testStructuredTextAlsoOffersReplaceTheWholeFilterAfterAddWhenNoChipsAreRecognised() {
+        var suggestions = model.suggestions("ionMass:[100 TO 200]");
+        int add = indexOf(suggestions, TokenInputModel.Suggestion.ParseQuerySuggestion.class);
+        int replace = indexOf(suggestions, TokenInputModel.Suggestion.ReplaceQuerySuggestion.class);
+        int freeText = indexOf(suggestions, TokenInputModel.Suggestion.FreeTextSuggestion.class);
         assertTrue(add >= 0, "add to query is offered");
-        assertTrue(replace > add, "replace the whole filter is offered, and after add - it must never be the default pick");
+        assertTrue(replace > add, "replace the whole filter is offered after add: without recognised chips, add is the pick");
+        assertTrue(freeText > replace, "a full-text search for a query string is the least likely wish - last");
         assertFalse(model.suggestions("caffeine").stream().anyMatch(s -> s instanceof TokenInputModel.Suggestion.ReplaceQuerySuggestion),
                 "plain words are free text, not a filter to replace with");
     }
 
     @Test
+    public void testAPastedFilterWithRecognisedChipsOffersReplaceFirst() {
+        // the owner's codec recognises filter chips in the text: it is a whole filter pasted back, and
+        // replacing it is the default pick - the reviewer of !502 could not tell the rows apart and picked
+        // "add", which keeps the chips as plain query groups
+        model.setRecognisedFacets(text -> 2);
+        var suggestions = model.suggestions("hasMsMs:true AND (quality:GOOD OR quality:DECENT)");
+        assertEquals(0, indexOf(suggestions, TokenInputModel.Suggestion.ReplaceQuerySuggestion.class));
+        assertEquals(1, indexOf(suggestions, TokenInputModel.Suggestion.ParseQuerySuggestion.class));
+        assertEquals(suggestions.size() - 1, indexOf(suggestions, TokenInputModel.Suggestion.FreeTextSuggestion.class));
+
+        // recognising nothing keeps add in front
+        model.setRecognisedFacets(text -> 0);
+        var none = model.suggestions("hasMsMs:true AND (quality:GOOD OR quality:DECENT)");
+        assertTrue(indexOf(none, TokenInputModel.Suggestion.ParseQuerySuggestion.class)
+                < indexOf(none, TokenInputModel.Suggestion.ReplaceQuerySuggestion.class));
+    }
+
+    @Test
+    public void testTypedTextRowsCarryTheirActionLabelAndTheReplaceRowTheOwnersCount() {
+        model.setRecognisedFacets(text -> 1);
+        var suggestions = model.suggestions("ionMass:[100 TO 200]");
+        assertEquals("Replace filter", suggestions.get(indexOf(suggestions, TokenInputModel.Suggestion.ReplaceQuerySuggestion.class)).actionLabel());
+        assertEquals("Add to query", suggestions.get(indexOf(suggestions, TokenInputModel.Suggestion.ParseQuerySuggestion.class)).actionLabel());
+        assertEquals("Search text", suggestions.get(indexOf(suggestions, TokenInputModel.Suggestion.FreeTextSuggestion.class)).actionLabel());
+        assertEquals("1 filter chip recognised", new TokenInputModel.Suggestion.ReplaceQuerySuggestion("x:1", 1).description());
+        assertEquals("no filter chips recognised", new TokenInputModel.Suggestion.ReplaceQuerySuggestion("x:1", 0).description());
+        assertNull(new TokenInputModel.Suggestion.ReplaceQuerySuggestion("x:1", null).description(), "no codec, no claim");
+        assertNull(model.suggestions("ion").get(0).actionLabel(), "a field row is what its text says");
+    }
+
+    @Test
     public void testReplaceTheWholeFilterIsNeverJoinedByAConnectorAndCarriesTheOwnersDetail() {
-        model.setReplaceQueryDetail(text -> "2 filter chips recognised");
+        model.setRecognisedFacets(text -> 2);
         model.updateContext(FIELDS, TokenInputModel.Join.USER_TERMS, false); // terms to join to: the add row gets AND/OR variants
         var suggestions = model.suggestions("ionMass:[100 TO 200]");
         TokenInputModel.Suggestion replace = suggestions.stream()
                 .filter(s -> s instanceof TokenInputModel.Suggestion.ReplaceQuerySuggestion).findFirst().orElseThrow();
         assertTrue(suggestions.stream().noneMatch(s -> s instanceof TokenInputModel.Suggestion.Joined j
                 && j.target() instanceof TokenInputModel.Suggestion.ReplaceQuerySuggestion), "no AND/OR variants of replace");
-        assertTrue(replace.description().endsWith("2 filter chips recognised"));
+        assertEquals("2 filter chips recognised", replace.description());
 
         TokenInputModel.Event event = model.choose(replace).orElseThrow();
         assertInstanceOf(TokenInputModel.Event.QueryReplaced.class, event);
