@@ -20,6 +20,12 @@ import java.util.logging.Logger;
  * <p>
  * These connections happen only when the BioTransformer "useDB" option is switched on, which is off
  * by default on every interface.
+ * <p>
+ * Verified against the HMDB server BioTransformer ships with: it is MariaDB 10.3.10, so the MariaDB
+ * client authenticates without trouble. Note that the session comes back with an empty
+ * {@code Ssl_cipher}, i.e. it is not encrypted. PathBank is not reachable this way - BioTransformer
+ * passes an empty user name for it and the client substitutes the OS user - but nothing in SIRIUS
+ * selects PathBank; every connection goes to HMDB.
  */
 @Slf4j
 public class MySqlSchemeDriver implements Driver {
