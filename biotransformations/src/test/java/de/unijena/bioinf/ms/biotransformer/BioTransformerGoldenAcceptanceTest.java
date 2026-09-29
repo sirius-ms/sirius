@@ -42,13 +42,15 @@ class BioTransformerGoldenAcceptanceTest {
             for (String config : configs) {
                 total++;
                 int[] tally = perConfig.computeIfAbsent(config, ignored -> new int[2]);
-                Set<String> expected = GoldenBaseline.expectedKeys(substrate, config);
-                Set<String> actual;
+                // Reading the baseline is inside the try as well: an unrecorded or failed cell is
+                // one line of the report, not the end of a twenty minute run.
+                Set<String> expected = Set.of();
+                Set<String> actual = Set.of();
                 String note = "";
                 try {
+                    expected = GoldenBaseline.expectedKeys(substrate, config);
                     actual = GoldenBaseline.run(substrate, config);
                 } catch (Throwable t) {
-                    actual = Set.of();
                     note = t.getClass().getSimpleName() + ": " + t.getMessage();
                 }
                 if (note.isEmpty() && expected.equals(actual)) {

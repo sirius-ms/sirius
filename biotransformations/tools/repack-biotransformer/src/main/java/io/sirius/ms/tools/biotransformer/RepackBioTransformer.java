@@ -82,7 +82,17 @@ public final class RepackBioTransformer {
             "com/opencsv/", "org/apache/commons/cli/", "org/j_paine/",
             "executable/",                                         // BioTransformer's own CLI entry points
             "randomThings/", "compareDataset/", "ForUNC/",          // scratch classes left in the build
-            "biotransformer/BioTransformerTest", "biotransformer/EnvMicroBTTest");
+            // The library's own unit tests. They reference JUnit, which is dropped above, so they
+            // would otherwise ship as dead weight with dangling references. Named individually:
+            // weka/datagenerators/Test, org/apache/jena/iri/impl/Test and the jena vocabulary
+            // classes also end in "Test" but are real code.
+            "biotransformer/BioTransformerTest", "biotransformer/EnvMicroBTTest",
+            "biotransformer/BiotransformerSequenceTest", "biotransformer/CYP450BTTest",
+            "biotransformer/ChemStructureTest", "biotransformer/ECBasedBTTest",
+            "biotransformer/HGutBTTest", "biotransformer/MetaboliteFinderTest",
+            "biotransformer/Phase2BTTest", "phase2filter/BiotransformerAPITest",
+            "phase2filter/P2FilterTest", "reactantpredictor/AppTest",
+            "reactantpredictor/BioTransformerAPITest");
 
     /** Build and IDE leftovers, plus logging configuration for a framework that is not present. */
     private static final Set<String> JUNK = Set.of(
@@ -273,7 +283,8 @@ public final class RepackBioTransformer {
             if (lastInObject)
                 for (int j = i - 1; j >= 0; j--) {
                     String prev = lines.get(j);
-                    if (prev.isBlank()) continue;
+                    // blank lines and // comments are not the preceding sibling
+                    if (prev.isBlank() || prev.stripLeading().startsWith("//")) continue;
                     if (prev.stripTrailing().endsWith(","))
                         lines.set(j, prev.stripTrailing().substring(0, prev.stripTrailing().length() - 1));
                     break;
@@ -387,7 +398,11 @@ public final class RepackBioTransformer {
         }
     }
 
-    /** Fails the build if any trace of the bundled CDK survived. */
+    /**
+     * Fails the build if any trace of the bundled CDK survived. Every entry is checked, not just
+     * classes, and in both spellings: the remapper rewrites the dotted form in string constants as
+     * well, and a resource naming the old package would fail at runtime rather than here.
+     */
     private void verify(Path jar) throws IOException {
         List<String> offenders = new ArrayList<>();
         try (ZipFile zip = new ZipFile(jar.toFile())) {
@@ -397,8 +412,6 @@ public final class RepackBioTransformer {
                     offenders.add("entry " + entry.getName());
                     continue;
                 }
-                if (!entry.getName().endsWith(".class"))
-                    continue;
                 byte[] bytes;
                 try (InputStream is = zip.getInputStream(entry)) {
                     bytes = is.readAllBytes();
@@ -416,11 +429,15 @@ public final class RepackBioTransformer {
     }
 
     private static boolean containsShadowReference(byte[] bytes) {
-        byte[] needle = SHADOW.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return contains(bytes, SHADOW) || contains(bytes, SHADOW.replace('/', '.'));
+    }
+
+    private static boolean contains(byte[] haystack, String text) {
+        byte[] needle = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         outer:
-        for (int i = 0; i <= bytes.length - needle.length; i++) {
+        for (int i = 0; i <= haystack.length - needle.length; i++) {
             for (int j = 0; j < needle.length; j++)
-                if (bytes[i + j] != needle[j]) continue outer;
+                if (haystack[i + j] != needle[j]) continue outer;
             return true;
         }
         return false;

@@ -10,7 +10,7 @@ plugins {
 //   -siriusN        our fork counter, so our builds are versioned without claiming to be
 //                   releases by the BioTransformer authors
 group = 'wishartlab.openscience.biotransformer'
-version = '3.0.1-sirius2'
+version = '3.0.1-sirius3'
 def artifactName = 'biotransformer-sirius-cdk-shared-min-no-envi-path'
 
 // the jar this one is built from: an earlier repackaging of BioTransformer 3.0, also ours
