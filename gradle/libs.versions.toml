@@ -88,7 +88,7 @@ mavenArtifact = "3.5.0"
 openapiGenerator = "7.17.0"
 cpdetector = "1.0.10"
 batikSwing = "1.6-1"
-biotransformerSirius = "3.0.0"
+biotransformerSirius = "3.0.1-sirius3"
 cmlxom = "3.1"
 grappa = "1.2"
 lucene = "10.4.0" #10.3.2
@@ -137,7 +137,8 @@ springDataJpa = { group = "org.springframework.data", name = "spring-data-jpa" }
 springDataMongodb = { group = "org.springframework.data", name = "spring-data-mongodb" }
 springBootStarterWebflux = { group = "org.springframework.boot", name = "spring-boot-starter-webflux" }
 jna = { group = "net.java.dev.jna", name = "jna", version.ref = "jna" }
-mysqlConnector = { group = "com.mysql", name = "mysql-connector-j" }
+# version managed by the Spring Boot BOM, as the MySQL connector it replaces was
+mariadbClient = { group = "org.mariadb.jdbc", name = "mariadb-java-client" }
 scribejavaApis = { group = "com.github.scribejava", name = "scribejava-apis", version.ref = "scribejava" }
 scribejavaHttpclientOkhttp = { group = "com.github.scribejava", name = "scribejava-httpclient-okhttp", version.ref = "scribejava" }
 ejmlFdense = { group = "org.ejml", name = "ejml-fdense", version.ref = "ejml" }
@@ -223,7 +224,7 @@ jdbi3Core = { group = "org.jdbi", name = "jdbi3-core", version.ref = "jdbi" }
 jdbi3Sqlobject = { group = "org.jdbi", name = "jdbi3-sqlobject", version.ref = "jdbi" }
 cpdetector = { group = "com.github.jiangxincode", name = "cpdetector", version.ref = "cpdetector" }
 batikSwing = { group = "batik", name = "batik-swing", version.ref = "batikSwing" }
-biotransformerSirius = { group = "wishartlab.openscience.biotransformer", name = "biotransformer-sirius-mod-relocated-min-no-envi-path", version.ref = "biotransformerSirius" }
+biotransformerSirius = { group = "wishartlab.openscience.biotransformer", name = "biotransformer-sirius-cdk-shared-min-no-envi-path", version.ref = "biotransformerSirius" }
 luceneQueryparser = { group = "org.apache.lucene", name = "lucene-queryparser", version.ref = "lucene" }
 luceneAnalysisCommon = { group = "org.apache.lucene", name = "lucene-analysis-common", version.ref = "lucene" }
 luceneCore = { group = "org.apache.lucene", name = "lucene-core", version.ref = "lucene" }
