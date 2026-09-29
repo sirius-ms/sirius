@@ -61,7 +61,7 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, candidateTable, substructurePanel);
         major.setDividerLocation(250);
-        loadablePanel = new LoadablePanel(major);
+        loadablePanel = LoadablePanel.overlaying(major);
         add(loadablePanel, BorderLayout.CENTER);
         structureList.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
     }
