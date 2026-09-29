@@ -23,13 +23,13 @@ package de.unijena.bioinf.babelms.msp;
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
-import de.unijena.bioinf.ChemistryBase.exceptions.MultimereException;
-import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.Parser;
+import de.unijena.bioinf.babelms.utils.ParserUtils;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -42,6 +42,8 @@ import java.util.Optional;
 public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2Experiment> {
     private final boolean clearSpectrum;
     private SpectrumWithAdditionalFields<Peak> spectrum = null;
+    /** The reader {@link #spectrum} was read from. */
+    private BufferedReader spectrumReader = null;
 
     public MSPExperimentParser() {
         this(false); //todo which is the correct default here
@@ -63,97 +65,125 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
         return parse(lastReader, source);
     }
 
+    /**
+     * A record is only complete once the next spectrum has been read (MS-DIAL .mat records hold several spectra), so
+     * the experiment of the previous record is still pending while the next spectrum is parsed. A spectrum that cannot
+     * be read belongs to the record being read, not to the pending one - unless it is part of that record.
+     */
     @Override
     public synchronized Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
-        boolean errorOccurred = false;
-        AdditionalFields fields = null;
+        if (reader != spectrumReader) { // the spectrum read ahead belongs to another input
+            spectrum = null;
+            spectrumReader = reader;
+        }
         MutableMs2Experiment exp = null;
+        AdditionalFields fields = null;
+        boolean expBroken = false;
+        boolean discardAdditionalSpectra = false; // additional spectra of a record that was dropped are dropped as well
         while (true) {
-            try {
-                if (spectrum == null)
-                    spectrum = parseSpectrum(reader, fields);
-
-                if (spectrum == null) // stream end
-                    if (errorOccurred)
-                        return null;
-                    else
-                        return exp;
-
-                final boolean additionalSpec = spectrum.additionalFields().containsKey("MAT_ADDITIONAL_SPEC");
-                if (fields != null && !additionalSpec) {
-                    if (errorOccurred) {
-                        errorOccurred = false;
-                        fields = null;
-                        exp = null;
+            if (spectrum == null) {
+                try {
+                    // after a broken record, its additional spectra must still be recognised as such, to drop them too
+                    spectrum = parseSpectrum(reader, discardAdditionalSpectra ? new AdditionalFields(false) : fields);
+                } catch (MalformedRecordException e) {
+                    if (e.ofPreviousSpectrum && discardAdditionalSpectra) {
+                        // part of a record that was already dropped
+                    } else if (e.ofPreviousSpectrum && exp != null) {
+                        if (!expBroken)
+                            logIgnored(exp.getName(), e);
+                        expBroken = true;
                     } else {
-                        return exp;
+                        logIgnored(e.recordName, e);
+                        discardAdditionalSpectra = true;
                     }
+                    continue;
                 }
-
-                if (fields == null)
-                    exp = new MutableMs2Experiment();
-                fields = spectrum.additionalFields();
-
-                if (spectrum instanceof Ms2Spectrum) {
-                    exp.getMs2Spectra().add((MutableMs2Spectrum) spectrum);
-                } else {
-                    exp.getMs1Spectra().add((SimpleSpectrum) spectrum);
-                }
-
-                //set metadata
-                    if (!additionalSpec) {
-                        final AdditionalFields finFields = fields;
-                        // mandatory
-                        exp.setSource(new SpectrumFileSource(source));
-                        MSP.parseName(fields).ifPresent(exp::setName);
-                        MSP.parseFeatureId(fields).ifPresent(exp::setFeatureId);
-                        fields.getField(MSP.FORMULA)
-                                .filter(s -> !"null".equalsIgnoreCase(s))
-                                .filter(s -> !s.isBlank())
-                                .map(MolecularFormula::parseOrThrow)
-                                .filter(m -> !m.isEmpty()).ifPresent(exp::setMolecularFormula);
-                        MSP.parsePrecursorIonType(fields)
-                                .ifPresent(exp::setPrecursorIonType);
-                        MSP.parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
-                        //optional
-                        fields.getField(MSP.INCHI)
-                                .filter(InChIs::isInchi)
-                                .map(inchi -> MSP.getWithSynonyms(finFields, MSP.INCHI_KEY).filter(InChIs::isInchiKey).map(key -> InChIs.newInChI(key, inchi)).
-                                        orElse(InChIs.newInChI(inchi))).ifPresent(exp::annotate);
-                        fields.getField(MSP.SMILES)
-                                .filter(s -> !"null".equalsIgnoreCase(s))
-                                .filter(s -> !s.isBlank())
-                                .map(Smiles::new).ifPresent(exp::annotate);
-                        fields.getField(MSP.SPLASH)
-                                .filter(s -> !"null".equalsIgnoreCase(s))
-                                .filter(s -> !s.isBlank())
-                                .map(Splash::new).ifPresent(exp::annotate);
-                        MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
-                        MSP.parseRetentionTime(fields).ifPresent(exp::annotate);
-
-                        Optional<String> instrument_type = MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE);
-                        Optional<String> instrument = MSP.getWithSynonyms(fields, MSP.INSTRUMENT);
-                        Optional<String> ce = MSP.getWithSynonyms(fields, MSP.COL_ENERGY);
-
-                        if (instrument_type.isPresent()) fields.put("instrument_type", instrument_type.get());
-                        if (instrument.isPresent()) fields.put("instrument", instrument.get());
-                        if (ce.isPresent()) fields.put("ce", ce.get());
-                    }
-
-                if (clearSpectrum)
-                    spectrum.setAdditionalFields(new AdditionalFields());
-
-                spectrum = null; //critically, might produce infinity loop otherwise
-            } catch (RuntimeException e) {
-                if (e instanceof MultipleChargeException || e instanceof MultimereException) {
-                    LoggerFactory.getLogger(this.getClass()).warn("Compound '" + Optional.ofNullable(exp).map(Ms2Experiment::getFeatureId).orElse("N/A") + "' ignored because of: " + e.getMessage());
-                } else {
-                    LoggerFactory.getLogger(this.getClass()).error("Compound '" + Optional.ofNullable(exp).map(Ms2Experiment::getFeatureId).orElse("N/A") + "' ignored because of unexpected parsing error.", e);
-                }
-                //skipping exp
-                errorOccurred = true;
-                spectrum = null; //critically, might produce infinity loop otherwise
+                if (spectrum == null) // stream end
+                    return expBroken ? null : exp;
             }
+
+            final boolean additionalSpec = spectrum.additionalFields().containsKey("MAT_ADDITIONAL_SPEC");
+            if (additionalSpec && discardAdditionalSpectra) {
+                spectrum = null; // belongs to a record that was dropped
+                continue;
+            }
+            discardAdditionalSpectra = false;
+
+            if (exp != null && !additionalSpec) {
+                if (!expBroken)
+                    return exp; // the spectrum starts the next record and is kept for the next call
+                exp = null;
+                expBroken = false;
+            }
+
+            if (exp == null)
+                exp = new MutableMs2Experiment();
+            fields = spectrum.additionalFields();
+
+            try {
+                addSpectrum(exp, spectrum, source, additionalSpec);
+            } catch (RuntimeException e) {
+                logIgnored(exp.getName(), e);
+                expBroken = true;
+            }
+
+            if (clearSpectrum)
+                spectrum.setAdditionalFields(new AdditionalFields());
+
+            spectrum = null; //critically, might produce infinity loop otherwise
+        }
+    }
+
+    private void logIgnored(@Nullable String name, RuntimeException e) {
+        ParserUtils.logIgnoredRecord(LoggerFactory.getLogger(this.getClass()), name, e,
+                (e instanceof MalformedRecordException && e.getCause() == null) || ParserUtils.isDataProblem(e));
+    }
+
+    private static void addSpectrum(MutableMs2Experiment exp, SpectrumWithAdditionalFields<Peak> spectrum, URI source, boolean additionalSpec) {
+        final AdditionalFields fields = spectrum.additionalFields();
+        if (spectrum instanceof Ms2Spectrum) {
+            exp.getMs2Spectra().add((MutableMs2Spectrum) spectrum);
+        } else {
+            exp.getMs1Spectra().add((SimpleSpectrum) spectrum);
+        }
+
+        //set metadata
+        if (!additionalSpec) {
+            // mandatory
+            exp.setSource(new SpectrumFileSource(source));
+            MSP.parseName(fields).ifPresent(exp::setName);
+            MSP.parseFeatureId(fields).ifPresent(exp::setFeatureId);
+            fields.getField(MSP.FORMULA)
+                    .filter(s -> !"null".equalsIgnoreCase(s))
+                    .filter(s -> !s.isBlank())
+                    .map(MolecularFormula::parseOrThrow)
+                    .filter(m -> !m.isEmpty()).ifPresent(exp::setMolecularFormula);
+            MSP.parsePrecursorIonType(fields, true) // once per record
+                    .ifPresent(exp::setPrecursorIonType);
+            MSP.parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
+            //optional
+            fields.getField(MSP.INCHI)
+                    .filter(InChIs::isInchi)
+                    .map(inchi -> MSP.getWithSynonyms(fields, MSP.INCHI_KEY).filter(InChIs::isInchiKey).map(key -> InChIs.newInChI(key, inchi)).
+                            orElse(InChIs.newInChI(inchi))).ifPresent(exp::annotate);
+            fields.getField(MSP.SMILES)
+                    .filter(s -> !"null".equalsIgnoreCase(s))
+                    .filter(s -> !s.isBlank())
+                    .map(Smiles::new).ifPresent(exp::annotate);
+            fields.getField(MSP.SPLASH)
+                    .filter(s -> !"null".equalsIgnoreCase(s))
+                    .filter(s -> !s.isBlank())
+                    .map(Splash::new).ifPresent(exp::annotate);
+            MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
+            MSP.parseRetentionTime(fields).ifPresent(exp::annotate);
+
+            Optional<String> instrument_type = MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE);
+            Optional<String> instrument = MSP.getWithSynonyms(fields, MSP.INSTRUMENT);
+            Optional<String> ce = MSP.getWithSynonyms(fields, MSP.COL_ENERGY);
+
+            if (instrument_type.isPresent()) fields.put("instrument_type", instrument_type.get());
+            if (instrument.isPresent()) fields.put("instrument", instrument.get());
+            if (ce.isPresent()) fields.put("ce", ce.get());
         }
     }
 }
