@@ -34,6 +34,13 @@ classes from the classpath.
    the three-argument form. That class implements `IAtomContainer` directly rather than extending
    CDK's `AtomContainer`, so it does not inherit methods added to the interface later. It is the
    only class in the jar with such a gap.
+5. Rewrites the 95 call sites of `InChIGeneratorFactory.getInChIGenerator(IAtomContainer)`, which
+   was an instance method in CDK 2.7.1 and is static in 2.12, from `invokevirtual` to `invokestatic`.
+6. Drops the libraries the SIRIUS classpath already provides - 3825 duplicate classes, whichever
+   copy wins decided by classpath order. This is what broke CDK's own `CDKToBeam` before.
+7. Removes the `ENVMICRO` biosystem from `biotransformer-config/config.json`. The EnviPath derived
+   knowledge base was already absent from the jar this is built from (its data is CC BY-NC-SA, not
+   LGPL), but the configuration still declared it and pointed at a directory that is not there.
 
 Everything else - BioTransformer, Ambit2, Weka, the knowledge base and the models - is copied byte
 for byte. The tool fails if any reference to the shadow package survives.
@@ -49,12 +56,30 @@ The upstream jar is resolved as a dependency (`-Pinput=<path>` overrides it). Th
 published as:
 
 ```
-wishartlab.openscience.biotransformer:biotransformer-sirius-cdk-shared:3.0.1
+wishartlab.openscience.biotransformer:biotransformer-sirius-cdk-shared-min-no-envi-path:3.0.1-sirius1
 ```
 
-`cdk-shared` rather than `relocated`, because nothing is relocated any more - BioTransformer shares
-the CDK the rest of SIRIUS uses. The version catalog points at these coordinates and `mavenLocal()`
-is first in the SIRIUS repository list, so a local publish is picked up.
+| part | meaning |
+|---|---|
+| `cdk-shared` | nothing is relocated any more; BioTransformer uses the CDK the rest of SIRIUS uses |
+| `min` | minimised, as the variant this is built from already was |
+| `no-envi-path` | the EnviPath derived knowledge base is absent |
+| `-sirius1` | our fork counter on top of the upstream version, so the fork is versioned without claiming to be an upstream release |
+
+The version catalog points at these coordinates, and `mavenLocal()` is first in the SIRIUS
+repository list, so a local publish is picked up while testing.
+
+To publish it for everyone, into the same public registry the upstream jar comes from
+(<https://gitlab.com/bright-giant/registry-public/-/packages/>):
+
+```bash
+./gradlew -p biotransformations/tools/repack-biotransformer \
+          publishRepackedPublicationToGitLabCommonPublicRepository -PbgGitLabToken=<token>
+```
+
+The token is a GitLab personal or deploy token with `write_package_registry`; keep it in
+`$GRADLE_USER_HOME/gradle.properties` as `bgGitLabToken`, never in the repository. In CI,
+`CI_JOB_TOKEN` is used instead and no property is needed.
 
 ## Before this is more than a local spike
 

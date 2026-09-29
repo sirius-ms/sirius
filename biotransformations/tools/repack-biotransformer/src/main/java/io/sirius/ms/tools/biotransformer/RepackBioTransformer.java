@@ -101,6 +101,17 @@ public final class RepackBioTransformer {
     private static final String GET_INCHI_GENERATOR_DESC =
             "(Lorg/openscience/cdk/interfaces/IAtomContainer;)Lorg/openscience/cdk/inchi/InChIGenerator;";
 
+    /**
+     * The EnviPath-derived knowledge base was already removed from the upstream jar we build on -
+     * its data is CC BY-NC-SA licensed, unlike the LGPL library itself - but {@code config.json}
+     * still declares the ENVMICRO biosystem and points it at the {@code btkb/ENVMICRO} directory
+     * that is no longer there. Nothing loads it today, because biosystems are read on demand and
+     * SIRIUS has the environmental-microbial transformation commented out. Removing the declaration
+     * keeps the configuration honest about what the jar actually contains.
+     */
+    private static final String CONFIG_JSON = "biotransformer-config/config.json";
+    private static final String ENVIPATH_BIOSYSTEM = "ENVMICRO";
+
     /** Fixed timestamp so repeated runs produce an identical jar. */
     private static final long FIXED_TIME = 0L;
 
@@ -125,6 +136,7 @@ public final class RepackBioTransformer {
     };
 
     private int copied, droppedCdk, droppedResources, remapped, staticCallsFixed, droppedProvided;
+    private int enviPathDeclarationsRemoved;
     private boolean patchApplied;
 
     public static void main(String[] args) throws Exception {
@@ -177,6 +189,8 @@ public final class RepackBioTransformer {
                     bytes = transform(bytes);
                     remapped++;
                 } else {
+                    if (CONFIG_JSON.equals(name))
+                        bytes = removeEnviPathBiosystem(bytes);
                     copied++;
                 }
 
@@ -190,10 +204,65 @@ public final class RepackBioTransformer {
 
         System.out.printf("repacked: %d classes rewritten, %d resources copied, "
                         + "%d bundled-CDK entries dropped, %d colliding CDK resources dropped, "
-                        + "%d static call sites fixed, %d entries dropped as provided by SIRIUS%n",
-                remapped, copied, droppedCdk, droppedResources, staticCallsFixed, droppedProvided);
+                        + "%d static call sites fixed, %d entries dropped as provided by SIRIUS, "
+                        + "%d EnviPath biosystem declarations removed%n",
+                remapped, copied, droppedCdk, droppedResources, staticCallsFixed, droppedProvided,
+                enviPathDeclarationsRemoved);
         if (!patchApplied)
             throw new IllegalStateException("Expected to patch " + PATCHED_CLASS + " but never saw it");
+        if (enviPathDeclarationsRemoved == 0)
+            throw new IllegalStateException("Expected to find " + ENVIPATH_BIOSYSTEM + " declarations in "
+                    + CONFIG_JSON + " but found none");
+    }
+
+    /**
+     * Drops every {@code "ENVMICRO": { ... }} object from the configuration, together with the comma
+     * that separated it from its sibling. The file carries {@code //} comments and is read with
+     * Jackson's ALLOW_COMMENTS, so it is edited as text rather than reformatted by a JSON writer.
+     */
+    private byte[] removeEnviPathBiosystem(byte[] bytes) {
+        List<String> lines = new ArrayList<>(Arrays.asList(
+                new String(bytes, java.nio.charset.StandardCharsets.UTF_8).split("\n", -1)));
+        for (int i = 0; i < lines.size(); ) {
+            if (!lines.get(i).trim().startsWith('"' + ENVIPATH_BIOSYSTEM + '"')) {
+                i++;
+                continue;
+            }
+            int end = i, depth = 0;
+            boolean sawBrace = false;
+            while (end < lines.size()) {
+                for (char c : lines.get(end).toCharArray()) {
+                    if (c == '{') { depth++; sawBrace = true; }
+                    else if (c == '}') depth--;
+                }
+                if (sawBrace && depth == 0) break;
+                end++;
+            }
+            if (!sawBrace || depth != 0)
+                throw new IllegalStateException("Unbalanced " + ENVIPATH_BIOSYSTEM + " block in " + CONFIG_JSON);
+
+            // this entry was the last one, so the sibling before it must lose its trailing comma
+            boolean lastInObject = lines.get(end).trim().equals("}");
+            lines.subList(i, end + 1).clear();
+            if (lastInObject)
+                for (int j = i - 1; j >= 0; j--) {
+                    String prev = lines.get(j);
+                    if (prev.isBlank()) continue;
+                    if (prev.stripTrailing().endsWith(","))
+                        lines.set(j, prev.stripTrailing().substring(0, prev.stripTrailing().length() - 1));
+                    break;
+                }
+            enviPathDeclarationsRemoved++;
+        }
+        String out = String.join("\n", lines);
+        if (out.contains(ENVIPATH_BIOSYSTEM))
+            throw new IllegalStateException(ENVIPATH_BIOSYSTEM + " survived in " + CONFIG_JSON);
+        long open = out.chars().filter(c -> c == '{').count();
+        long close = out.chars().filter(c -> c == '}').count();
+        if (open != close)
+            throw new IllegalStateException("Braces no longer balance in " + CONFIG_JSON
+                    + " after removing " + ENVIPATH_BIOSYSTEM + " (" + open + " vs " + close + ")");
+        return out.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
     private byte[] transform(byte[] bytes) {

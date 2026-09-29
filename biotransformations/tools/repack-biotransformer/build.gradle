@@ -3,11 +3,15 @@ plugins {
     id 'maven-publish'
 }
 
-// Coordinates of the jar produced here. "cdk-shared" rather than "relocated": the whole point is
-// that the CDK inside is gone and BioTransformer shares the CDK the rest of SIRIUS uses.
+// Coordinates of the jar produced here.
+//   cdk-shared      the bundled CDK is gone; BioTransformer uses the one the rest of SIRIUS uses
+//   min             minimised, as the variant this is built from already was
+//   no-envi-path    the EnviPath derived knowledge base is absent (its data is CC BY-NC-SA, not LGPL)
+//   -siriusN        our fork counter on top of the upstream version, so the fork can be versioned
+//                   without pretending to be an upstream release
 group = 'wishartlab.openscience.biotransformer'
-version = '3.0.1'
-def artifactName = 'biotransformer-sirius-cdk-shared'
+version = '3.0.1-sirius1'
+def artifactName = 'biotransformer-sirius-cdk-shared-min-no-envi-path'
 
 def upstream = 'wishartlab.openscience.biotransformer:biotransformer-sirius-mod-relocated-min-no-envi-path:3.0.0'
 
@@ -54,6 +58,28 @@ tasks.register('repack', JavaExec) {
 }
 
 publishing {
+    repositories {
+        // The same public registry the upstream jar comes from:
+        // https://gitlab.com/bright-giant/registry-public/-/packages/
+        maven {
+            name = 'GitLabCommonPublic'
+            url = 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+            credentials(HttpHeaderCredentials) {
+                if (System.getenv('CI_JOB_TOKEN') != null) {
+                    name = 'Job-Token'
+                    value = System.getenv('CI_JOB_TOKEN')
+                } else {
+                    name = 'Private-Token'
+                    // put bgGitLabToken in $GRADLE_USER_HOME/gradle.properties, never in the repo
+                    value = project.findProperty('bgGitLabToken') as String
+                }
+            }
+            authentication {
+                header(HttpHeaderAuthentication)
+            }
+        }
+    }
+
     publications {
         repacked(MavenPublication) {
             groupId = project.group
