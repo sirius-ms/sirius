@@ -6,7 +6,9 @@ dependencies {
 
     // Dependencies from biotransformer jar
     implementation libs.jna
-    implementation libs.mysqlConnector
+    // BioTransformer's HMDB lookup opens jdbc:mysql: connections; MySqlSchemeDriver routes
+    // them to the MariaDB client, which speaks the same protocol under a non-GPL licence.
+    implementation libs.mariadbClient
     implementation libs.commonsText
     implementation libs.commonsBeanutils
     implementation libs.commonsCodec
