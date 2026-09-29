@@ -38,6 +38,7 @@ import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.dizitart.no2.collection.Document;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +49,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 
+@Slf4j
 public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteDatabase> {
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -66,6 +68,14 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
         super(new NitriteDatabase(location, metadata, compression, cacheSizeMiB, commitBufferKiB, false));
         this.metadata = metadata;
         updateSerializers();
+        // Said here rather than in the storage, because a project is what has a compaction to offer -
+        // a custom database opened through the same storage does not (#990).
+        if (getStorage().isCompactionRecommended())
+            log.warn("Project '{}' is stored in a layout that holds fewer records per page than it could, which "
+                            + "can make the file several times larger than needed. Compact it once to rewrite the "
+                            + "layout and reclaim that space - in the GUI's project settings, with "
+                            + "'sirius project --compact' on the command line, or over the API.",
+                    location);
     }
 
     private void updateSerializers() {
