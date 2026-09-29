@@ -23,9 +23,8 @@ package de.unijena.bioinf.babelms.msp;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import de.unijena.bioinf.babelms.utils.ParserUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,35 +158,100 @@ public class MSP {
 
     public static String COMMENT_SEPARATOR = ";:|:;";
 
-    public static Optional<PrecursorIonType> parsePrecursorIonType(Map<String, String> metaInfo) {
-        String value = getWithSynonyms(metaInfo, PRECURSOR_ION_TYPE).orElse(null);
-        if (value != null && !value.isBlank())
-            return Optional.of(PrecursorIonType.fromString(value));
-
-        value = metaInfo.get(SYN_PRECURSOR_ION_TYPE);
-        if (value != null && !value.isBlank())
-            return Optional.of(PrecursorIonType.fromString(value));
-
-        value = getWithSynonyms(metaInfo, CHARGE).orElse(null);
-        if (value != null && !value.isBlank()) {
-            return Optional.of(value.toLowerCase().charAt(0) == 'n' ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
+    /**
+     * The adduct - from the precursor type, else from the NIST synonym $:03 - or else an unknown ion type from the ion
+     * mode. An adduct that cannot be parsed falls back to the ion mode as well - but then the ion mode has to be given,
+     * otherwise the charge is unknown and the record invalid.
+     *
+     * @param warnOnFallback log a warning when an unparsable adduct is replaced by the ion mode
+     * @throws ParserUtils.InvalidValueException if the adduct cannot be parsed and the ion mode gives no charge
+     * @throws IllegalArgumentException if the adduct is multiply charged or a multimere (see {@link ParserUtils#isUnsupportedIonType})
+     */
+    public static Optional<PrecursorIonType> parsePrecursorIonType(Map<String, String> metaInfo, boolean warnOnFallback) {
+        String unparsable = null;
+        RuntimeException parseError = null;
+        for (String adduct : new String[]{getWithSynonyms(metaInfo, PRECURSOR_ION_TYPE).orElse(null), metaInfo.get(SYN_PRECURSOR_ION_TYPE)}) {
+            if (adduct == null || adduct.isBlank())
+                continue;
+            try {
+                return Optional.of(PrecursorIonType.fromString(adduct));
+            } catch (RuntimeException e) {
+                if (ParserUtils.isUnsupportedIonType(e))
+                    throw e; // parsed, but not supported - the precursor m/z would be misread
+                if (parseError == null) {
+                    unparsable = adduct;
+                    parseError = e;
+                }
+            }
         }
 
+        final Optional<PrecursorIonType> fromIonMode = parseIonMode(metaInfo);
+        if (parseError == null)
+            return fromIonMode; // no adduct given
+        if (fromIonMode.isEmpty())
+            throw new ParserUtils.InvalidValueException("Cannot parse adduct '" + unparsable + "' and the ion mode gives no charge", parseError);
+        if (warnOnFallback)
+            log.warn("Cannot parse adduct '{}', using the ion mode instead.", unparsable);
+        return fromIonMode;
+    }
+
+    /**
+     * @return an unknown ion type with the charge sign of the ion mode (P/Positive/+ or N/Negative/-), empty if the ion
+     * mode is missing or gives no charge
+     */
+    private static Optional<PrecursorIonType> parseIonMode(Map<String, String> metaInfo) {
+        final String ionMode = getWithSynonyms(metaInfo, CHARGE).map(String::strip).filter(v -> !v.isEmpty()).orElse(null);
+        if (ionMode == null)
+            return Optional.empty();
+        final char sign = Character.toLowerCase(ionMode.charAt(0));
+        if (sign == 'n' || sign == '-')
+            return Optional.of(PrecursorIonType.unknownNegative());
+        if (sign == 'p' || sign == '+')
+            return Optional.of(PrecursorIonType.unknownPositive());
         return Optional.empty();
     }
 
+    /**
+     * The precursor m/z - the first of the precursor keys that can be parsed - or else the ExactMass.
+     */
     public static Optional<Double> parsePrecursorMZ(Map<String, String> metaInfo) {
-        String[] precursorMZKeys = ArrayUtils.addAll(PRECURSOR_MZ, SYN_PRECURSOR_MZ, EXACT_MASS);
-        return getWithSynonyms(metaInfo, precursorMZKeys)
-                .map(s -> {
-                    String[] arr = s.split("/");
-                    try {
-                        return Utils.parseDoubleWithUnknownDezSep(arr[arr.length - 1]);
-                    } catch (Exception e) {
-                        log.warn("Invalid precursor M/Z: {}, skipping.", s);
-                        return null;
-                    }
-                });
+        final Optional<Double> precursorMz = parseGivenPrecursorMz(metaInfo);
+        if (precursorMz.isPresent())
+            return precursorMz;
+        return getWithSynonyms(metaInfo, EXACT_MASS).flatMap(MSP::parseMass);
+    }
+
+    /**
+     * @return the precursor m/z as given - PrecursorMZ, else the NIST synonym $:04 - empty if none is a usable m/z
+     */
+    static Optional<Double> parseGivenPrecursorMz(Map<String, String> metaInfo) {
+        // the PRECURSOR_MZ spellings are one entry in the case-insensitive header, so try each value once
+        for (String value : new LinkedHashSet<>(Arrays.asList(getWithSynonyms(metaInfo, PRECURSOR_MZ).orElse(null), metaInfo.get(SYN_PRECURSOR_MZ)))) {
+            if (value == null)
+                continue;
+            final Optional<Double> precursorMz = parseMass(value);
+            if (precursorMz.isPresent())
+                return precursorMz;
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * @return the mass, empty if it cannot be parsed or is not positive (a mass of 0 means none is known)
+     */
+    private static Optional<Double> parseMass(String value) {
+        final String[] parts = value.split("/");
+        final Optional<Double> mass = parts.length == 0 ? Optional.empty() : ParserUtils.parsePositiveMass(parts[parts.length - 1]);
+        if (mass.isEmpty())
+            log.debug("Invalid mass: {}, skipping.", value); // reported with the record if no other mass can be used
+        return mass;
+    }
+
+    /**
+     * @return the precursor m/z field as given, whether usable or not
+     */
+    static Optional<String> getGivenPrecursorMzField(Map<String, String> metaInfo) {
+        return getWithSynonyms(metaInfo, PRECURSOR_MZ).or(() -> Optional.ofNullable(metaInfo.get(SYN_PRECURSOR_MZ))).filter(v -> !v.isBlank());
     }
 
     public static Optional<CollisionEnergy> parseCollisionEnergy(Map<String, String> metaInfo) {
@@ -207,7 +271,7 @@ public class MSP {
     public static Optional<List<String>> extractComments(Map<String, String> metaInfo) {
         String value = getWithSynonyms(metaInfo, COMMENTS).orElse(null);
         if (value != null && !value.isBlank())
-            return Optional.of(List.of(value.split(COMMENT_SEPARATOR)));
+            return Optional.of(List.of(value.split(Pattern.quote(COMMENT_SEPARATOR))));
         return Optional.empty();
     }
 
@@ -221,7 +285,8 @@ public class MSP {
 
         if (comments != null && !comments.isEmpty()){
             return comments.stream().filter(Objects::nonNull).flatMap(s -> Arrays.stream(s.split("\\s*\\|\\s*")))
-                    .filter(s -> s.startsWith(MSP.FEATURE_ID)).map(s -> s.split("\\s*=\\s*")[1]).findFirst();
+                    .filter(s -> s.startsWith(MSP.FEATURE_ID)).map(s -> s.split("\\s*=\\s*", 2))
+                    .filter(kv -> kv.length == 2 && !kv[1].isBlank()).map(kv -> kv[1]).findFirst();
         }
         return Optional.empty();
     }
@@ -263,7 +328,11 @@ public class MSP {
                 m = Pattern.compile("\"rtinseconds=([^\"]+)").matcher(comments);
                 if (m.find()) {
                     String rtValue = m.group(1);
-                    return Optional.of(new RetentionTime(Double.parseDouble(rtValue)));
+                    final double seconds = ParserUtils.parseDecimal(rtValue.strip());
+                    if (Double.isFinite(seconds) && seconds >= 0)
+                        return Optional.of(new RetentionTime(seconds));
+                    log.warn("Cannot parse retention time '{}', skipping it.", rtValue);
+                    return Optional.empty();
                 }
             }
         }
