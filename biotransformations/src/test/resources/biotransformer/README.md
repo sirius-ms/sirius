@@ -31,7 +31,7 @@ reference ran and produced nothing — that is a recorded result, not a gap.
 | Test | Task | Scope |
 |---|---|---|
 | `BioTransformerGoldenSmokeTest` | `test` | 24 cells, ~11s; the per-commit gate |
-| `BioTransformerGutDefectTest` | `test` | pins the known human-gut divergence |
+| `BioTransformerReferenceDivergenceTest` | `test` | pins the places SIRIUS deliberately differs |
 | `BioTransformerGoldenAcceptanceTest` | `acceptanceTest` | the full matrix; **still fails**, see below |
 
 ## Where the matrix stands
@@ -40,17 +40,37 @@ Removing BioTransformer's bundled CDK (`tools/repack-biotransformer`) took the m
 **182/308 to 278/308** cells agreeing with the reference. 98 of the 126 disagreements went away and
 the stereochemistry failure is gone entirely.
 
-30 cells still differ, in three groups. None of them is a crash; all are chemistry:
+30 cells still differ. None is a crash, and both causes are understood - in each case SIRIUS is the
+more correct of the two:
 
-| cells | pattern | status |
-|---|---|---|
-| 22 | human gut: SIRIUS reports **more** products than the reference (e.g. quercetin 8 vs 3, thymol 1 vs 0) | pre-existing, unchanged by the CDK work |
-| 5 | morphine: SIRIUS reports **fewer** products (CYP450 10 vs 11, allHuman 111 vs 125, sequence 266 vs 313) | pre-existing |
-| 4 | phase II in `COMBINED_RULES` mode: SIRIUS reports exactly **one extra** conjugate (warfarin, tryptophan, estradiol, quercetin) | 2 of these are new since the CDK change |
+**26 cells: reactions the reference never evaluates.** Upstream BioTransformer computes
+`score >= scoreThreshold` without a null check, and the score is null whenever a reaction has no
+entry in the biosystem's occurrence ratios. The NullPointerException aborts the reaction loop, so
+every reaction after the first null score is lost. The reference CLI shows it plainly:
 
-The baseline has deliberately **not** been re-recorded to make these pass. It is the only evidence
-that the CDK migration was safe, and re-recording would destroy it. Deciding whether the reference
-or SIRIUS is right for these 30 cells is a scientific question for the maintainers.
+```
+$ java -jar BioTransformer3.0_20230525.jar -k pred -b hgut -ismi "CC(=O)OC1=CC=CC=C1C(O)=O" -s 1
+Cannot invoke "java.lang.Double.doubleValue()" because "score" is null
+Unique Biotransformations: 1
+```
+
+Our patched `biotransformer.btransformers.Biotransformer` guards that null and carries on, so it
+finds what the reference skipped - for aspirin, the ester hydrolysis giving salicylic and acetic
+acid. This covers the 22 human-gut cells and the 4 phase II `COMBINED_RULES` cells.
+
+**5 cells: stereo duplicates the reference emits.** For morphine SIRIUS reports fewer products, and
+its products are a strict subset of the reference's. The extras are stereo-undefined duplicates of
+metabolites SIRIUS already reports - same InChIKey skeleton, `UHFFFAOYSA` stereo layer - which CDK
+2.7.1 produced because it perceived stereo inconsistently. CDK 2.12 does not.
+
+The baseline is deliberately **not** re-recorded to make these pass. It is the evidence that the CDK
+migration was safe, and it keeps both differences visible; `BioTransformerReferenceDivergenceTest`
+pins them so they cannot drift.
+
+Three explanations were tested and ruled out before landing on these: differing call parameters (the
+score threshold is 0.5 and the call descriptors are identical on both sides), SIRIUS' own result
+handling, and the library's own CSV export path (`selectUniqueBiotransformations` plus
+`extractProductsFromBiotransformations` returns the same counts SIRIUS gets).
 
 ## Re-recording it
 
