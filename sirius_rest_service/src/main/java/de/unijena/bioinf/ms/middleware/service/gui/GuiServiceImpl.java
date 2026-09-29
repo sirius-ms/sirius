@@ -32,7 +32,9 @@ import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import io.sirius.ms.gui.webView.jxbrowser.JxBrowserPanelProvider;
 import io.sirius.ms.sdk.SiriusClient;
+import io.sirius.ms.sdk.model.ProjectInfoOptField;
 import it.unimi.dsi.fastutil.Pair;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.boot.web.server.context.WebServerApplicationContext;
@@ -48,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 public class GuiServiceImpl implements GuiService {
 
     protected final Map<String, SiriusGui> siriusGuiInstances = new ConcurrentHashMap<>();
@@ -93,8 +96,16 @@ public class GuiServiceImpl implements GuiService {
                                 closingDialogPanel.add(new JLabel("You are about to close the last SIRIUS GUI Window. Do you wish to shutdown SIRIUS?"));
                                 closingDialogPanel.add(Box.createVerticalStrut(GuiUtils.MEDIUM_GAP));
                                 JCheckBox compactCheckbox = new JCheckBox("Compact project");
-                                compactCheckbox.setToolTipText("Compacting the project tries to reduce the projects file size. May take some time for large projects.");
+                                compactCheckbox.setToolTipText("Reclaims space the project no longer needs. May take some time for large projects.");
                                 closingDialogPanel.add(compactCheckbox);
+                                // Left unchecked on purpose: a compaction nobody asked for reads as a hang on shutdown.
+                                if (compactionRecommended(gui)) {
+                                    closingDialogPanel.add(Box.createVerticalStrut(GuiUtils.SMALL_GAP));
+                                    closingDialogPanel.add(new JLabel("<html>Compacting this project is expected to reclaim "
+                                            + "significant space.<br>It reads and writes the whole "
+                                            + "project, so expect minutes for a large one,<br>and free disk space "
+                                            + "for a second copy while it runs.</html>"));
+                                }
 
                                 closeSirius = JOptionPane.showConfirmDialog(gui.getMainFrame(), closingDialogPanel, null, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
                                 if (closeSirius) { //todo me might want yes, no and cancel instead. cancel closes GUI window but keeps service running
@@ -194,6 +205,17 @@ public class GuiServiceImpl implements GuiService {
             siriusGuiInstances.forEach((k, v) -> v.shutdown());
             if (guiFactory != null)
                 guiFactory.shutdowm();
+        }
+    }
+
+    /** Whether the project would reclaim markedly more than the usual garbage, or false if that cannot be asked. */
+    private static boolean compactionRecommended(SiriusGui gui) {
+        try {
+            return Boolean.TRUE.equals(gui.getProjectManager()
+                    .getProjectInfo(List.of(ProjectInfoOptField.SIZE_INFORMATION)).isCompactionRecommended());
+        } catch (Exception e) {
+            log.debug("Could not ask whether compacting is recommended; not offering it as such.", e);
+            return false;
         }
     }
 }

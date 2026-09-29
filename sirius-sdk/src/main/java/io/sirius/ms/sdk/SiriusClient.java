@@ -76,7 +76,7 @@ public class SiriusClient implements AutoCloseable {
 
     protected final LoginAndAccountApi account;
 
-    protected final ProjectsApi projects;
+    protected final ProjectsApiCompat projects;
 
     protected final RunsApi runs;
 
@@ -113,7 +113,7 @@ public class SiriusClient implements AutoCloseable {
         jobs = new JobsApiCompat(apiClient);
         gui = new GuiApi(apiClient);
         account = new LoginAndAccountApi(apiClient);
-        projects = new ProjectsApi(apiClient);
+        projects = new ProjectsApiCompat(apiClient);
         runs = new RunsApi(apiClient);
         databases = new SearchableDatabasesApi(apiClient);
         tags = new TagsApi(apiClient);
@@ -285,7 +285,7 @@ public class SiriusClient implements AutoCloseable {
         return account;
     }
 
-    public ProjectsApi projects() {
+    public ProjectsApiCompat projects() {
         return projects;
     }
 

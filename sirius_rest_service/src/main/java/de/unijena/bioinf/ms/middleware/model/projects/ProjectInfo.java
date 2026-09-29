@@ -87,6 +87,14 @@ public final class ProjectInfo {
      */
     @Schema(nullable = true)
     public final @Nullable Long numOfBytes;
+    /**
+     * Whether compacting this project would reclaim markedly more space than an ordinary compaction does, so
+     * that it is worth offering. What makes it worthwhile varies - a project written in an older, space-wasting
+     * storage format, or a large amount of data removed from it.
+     * If NULL, the information has not been requested (See OptField 'sizeInformation').
+     */
+    @Schema(nullable = true)
+    public final @Nullable Boolean compactionRecommended;
 
     /**
      * Set of all detected adducts available in this project.

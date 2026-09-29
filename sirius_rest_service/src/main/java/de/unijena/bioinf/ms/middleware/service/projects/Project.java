@@ -44,7 +44,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
@@ -379,5 +382,13 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     default void close(boolean compact) throws IOException {
         close();
+    }
+
+    /**
+     * @param rewriteLayout compact and rewrite how the records are laid out on disk even if that does not
+     *                      look necessary. Implies {@code compact}.
+     */
+    default void close(boolean compact, boolean rewriteLayout) throws IOException {
+        close(compact || rewriteLayout);
     }
 }
