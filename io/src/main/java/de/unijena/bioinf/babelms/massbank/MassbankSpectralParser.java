@@ -169,7 +169,7 @@ public class MassbankSpectralParser extends SpectralParser {
                     final int msLevel = ParserUtils.inferMsLevel(metaInfo.get(AC_MASS_SPECTROMETRY_MS_TYPE.k()), precursorField,
                             () -> parsePrecursorMZ(metaInfo).isPresent(), log, accession);
                     if (msLevel > 1) { // we have MSn
-                        final double precursorMz = parsePrecursorMZ(metaInfo).orElseThrow(() -> new MalformedRecordException("Could not parse '" + MS_FOCUSED_ION_PRECURSOR_MZ.k() + "':'" + metaInfo.get(MS_FOCUSED_ION_PRECURSOR_MZ.k()) + "' OR '" + CH_EXACT_MASS.k() + "':'" + metaInfo.get(CH_EXACT_MASS.k()) + "'.", null, null));
+                        final double precursorMz = parsePrecursorMZ(metaInfo).orElseThrow(() -> new MalformedRecordException("Could not parse '" + MS_FOCUSED_ION_PRECURSOR_MZ.k() + "':'" + metaInfo.get(MS_FOCUSED_ION_PRECURSOR_MZ.k()) + "' OR '" + CH_EXACT_MASS.k() + "':'" + metaInfo.get(CH_EXACT_MASS.k()) + "' with a known adduct.", null, null));
                         spectrum = new MutableMs2SpectrumWithAdditionalFields(
                                 spectrum,
                                 precursorMz,

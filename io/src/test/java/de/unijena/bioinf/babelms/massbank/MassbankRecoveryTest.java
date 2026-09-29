@@ -21,6 +21,7 @@ package de.unijena.bioinf.babelms.massbank;
 
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.babelms.ParserTestUtils;
 import de.unijena.bioinf.babelms.txt.TxtExperimentParser;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.UnaryOperator;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,6 +59,8 @@ public class MassbankRecoveryTest {
 
     static Stream<Arguments> brokenRecords() {
         return Stream.of(
+                Arguments.of("no precursor m/z and only an ion mode", (UnaryOperator<String>) r -> r
+                        .replaceAll("MS\\$FOCUSED_ION: PRECURSOR_M/Z .*\\n", "").replaceAll("MS\\$FOCUSED_ION: PRECURSOR_TYPE .*\\n", "")),
                 Arguments.of("unsupported adduct", (UnaryOperator<String>) r -> r.replace("PRECURSOR_TYPE [M+H]+", "PRECURSOR_TYPE [M+2H]2+")),
                 Arguments.of("malformed peak line", (UnaryOperator<String>) r -> r.replace("  59.049 2330.9 661", "  59.049 abc 661")),
                 Arguments.of("peak with thousands separators", (UnaryOperator<String>) r -> r.replace("  59.049 2330.9 661", "  59.049 1,234,567 661")),
@@ -102,6 +108,18 @@ public class MassbankRecoveryTest {
         assertEquals(1, experiments.get(1).getMs1Spectra().size());
         assertTrue(experiments.get(1).getMs2Spectra().isEmpty());
         assertIntact(List.of(experiments.get(0), experiments.get(2)), "A", "C");
+    }
+
+    /**
+     * Without MS_TYPE, a record with a precursor field is MS2 if its precursor m/z can be determined in any way - here
+     * from the exact mass and the adduct, as the given value is 0.
+     */
+    @Test
+    void unusablePrecursorMzWithExactMassWithoutMsTypeIsMs2() throws IOException {
+        List<Ms2Experiment> experiments = parse(record("A", r -> r
+                .replaceAll("AC\\$MASS_SPECTROMETRY: MS_TYPE .*\\n", "").replace("PRECURSOR_M/Z 165.1121", "PRECURSOR_M/Z 0")));
+        assertEquals(1, experiments.get(0).getMs2Spectra().size());
+        assertEquals(PrecursorIonType.fromString("[M+H]+").neutralMassToPrecursorMass(164.1049), experiments.get(0).getMs2Spectra().get(0).getPrecursorMz(), 1e-9);
     }
 
     /**
@@ -170,6 +188,46 @@ public class MassbankRecoveryTest {
     void peaksWithDecimalComma() throws IOException {
         List<Ms2Experiment> experiments = parse(record("A", r -> r.replace("  59.049 2330.9 661", "  59,049 2330,9 661")));
         assertEquals(59.049, experiments.get(0).getMs2Spectra().get(0).getMzAt(0), 1e-9);
+    }
+
+    /**
+     * A precursor m/z computed from the exact mass is reported once per record - for MS2 and MS1 records.
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("recordsWithUnusablePrecursorMz")
+    void precursorWarningOncePerRecord(String kind, UnaryOperator<String> change) throws IOException {
+        List<String> warnings = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                if (record.getLevel() == Level.WARNING && String.valueOf(record.getMessage()).contains("computed from the exact mass"))
+                    warnings.add(record.getMessage());
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+        java.util.logging.Logger root = java.util.logging.Logger.getLogger("");
+        root.addHandler(handler);
+        try {
+            List<Ms2Experiment> experiments = parse(record("A", change));
+            assertEquals(1, experiments.size());
+            assertEquals(PrecursorIonType.fromString("[M+H]+").neutralMassToPrecursorMass(164.1049), experiments.get(0).getIonMass(), 1e-9);
+            assertEquals(1, warnings.size(), warnings.toString());
+        } finally {
+            root.removeHandler(handler);
+        }
+    }
+
+    static Stream<Arguments> recordsWithUnusablePrecursorMz() {
+        return Stream.of(
+                Arguments.of("MS2", (UnaryOperator<String>) r -> r.replace("PRECURSOR_M/Z 165.1121", "PRECURSOR_M/Z 0")),
+                Arguments.of("MS1", (UnaryOperator<String>) r -> r.replace("PRECURSOR_M/Z 165.1121", "PRECURSOR_M/Z 0").replace("MS_TYPE MS2", "MS_TYPE MS1")));
     }
 
     private static void assertIntact(List<Ms2Experiment> experiments, String... expectedIds) {

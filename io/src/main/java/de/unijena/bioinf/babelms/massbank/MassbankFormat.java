@@ -172,13 +172,21 @@ public enum MassbankFormat {
     }
 
     /**
-     * The precursor m/z, or else CH$EXACT_MASS. A mass of 0 or below means none is known.
+     * The precursor m/z, or else computed from the neutral CH$EXACT_MASS and the adduct - only if the adduct is known.
+     * A mass of 0 or below means none is known.
+     *
+     * @throws IllegalArgumentException from {@link #parsePrecursorIonType} if the exact mass has to be used, but the
+     *                                  adduct cannot be parsed or is not supported
      */
     public static Optional<Double> parsePrecursorMZ(Map<String, String> metaInfo) {
         final Optional<Double> precursorMz = parseGivenPrecursorMz(metaInfo);
         if (precursorMz.isPresent())
             return precursorMz;
-        return ParserUtils.parsePositiveMass(metaInfo.get(CH_EXACT_MASS.k()));
+
+        final Optional<Double> exactMass = ParserUtils.parsePositiveMass(metaInfo.get(CH_EXACT_MASS.k()));
+        if (exactMass.isEmpty())
+            return Optional.empty();
+        return ParserUtils.precursorMzFromExactMass(exactMass.get(), parsePrecursorIonType(metaInfo).orElse(null));
     }
 
     /**
