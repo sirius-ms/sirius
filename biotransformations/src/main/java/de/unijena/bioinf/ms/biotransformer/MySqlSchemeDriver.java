@@ -17,8 +17,9 @@ import java.util.logging.Logger;
  * This driver claims {@code jdbc:mysql:} URLs, rewrites them and hands them to the MariaDB driver.
  * It is registered through {@code META-INF/services/java.sql.Driver}, and it is the only thing in
  * SIRIUS that uses JDBC - nothing else here talks to a relational database.
- *
- * @see BioTransformerSettings#isUseDB() the option that triggers these connections, off by default
+ * <p>
+ * These connections happen only when the BioTransformer "useDB" option is switched on, which is off
+ * by default on every interface.
  */
 @Slf4j
 public class MySqlSchemeDriver implements Driver {
