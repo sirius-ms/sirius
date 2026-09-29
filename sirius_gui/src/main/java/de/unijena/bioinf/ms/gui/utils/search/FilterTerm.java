@@ -20,7 +20,6 @@ package de.unijena.bioinf.ms.gui.utils.search;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * One editable unit of the combined query, over which the pojo-agnostic renderer/editor engine works
@@ -28,8 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * rendering, and knows how to remove itself and open its full editor - without the engine knowing
  * anything about the concrete backing model.
  * <p>
- * P1 surface: rendering + removal + open-editor. P2 adds inline numeric-range editing via
- * {@link #rangeEdit()}; set/complex facets return null there and are edited through the dialog.
+ * Surface: rendering, removal and open-editor.
  */
 public interface FilterTerm {
 
@@ -50,16 +48,6 @@ public interface FilterTerm {
      */
     void remove();
 
-    /** Opens the full editor for this term (for facets that are not edited inline). */
+    /** Opens the full editor for this term (a facet's value is edited in the dialog, not on the chip). */
     void openEditor(@NotNull FilterEditorHost host);
-
-    /**
-     * The inline-editable numeric range of this term, or {@code null} when it is not a range facet
-     * (booleans, sets and complex facets are edited via {@link #openEditor}). Applying the range's
-     * setter mutates the backing model; the caller fires the update on commit.
-     */
-    @Nullable
-    default RangeEdit rangeEdit() {
-        return null;
-    }
 }

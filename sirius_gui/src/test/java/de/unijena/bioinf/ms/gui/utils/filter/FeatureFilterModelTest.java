@@ -42,24 +42,25 @@ public class FeatureFilterModelTest {
      */
     private static FeatureFilterModel cleanSlate() {
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setHasMsMs(false);
-        model.getFeatureQualityFilter().reset();
+        model.update(f -> f.withHasMsMs(false));
+        model.update(f -> f.withFeatureQuality(FeatureFilter.ALL_QUALITIES));
         return model;
     }
 
     @Test
     public void testCleanSlateIsInactive() {
-        assertFalse(cleanSlate().isActive());
+        FeatureFilterModel model = cleanSlate();
+        assertFalse(model.get().isActive(model.getContext()));
     }
 
     @Test
     public void testBlankFoldChangeAloneIsActive() {
         FeatureFilterModel model = cleanSlate();
-        model.getSampleBlankFoldChange().setEnabled(true);
+        model.update(f -> f.withBlankFoldChangeEnabled(true));
 
         // the blank fold-change filter contributes a range clause to the lucene query, so a model
         // with only this filter enabled must be considered active
-        assertTrue(model.isActive(), "blank fold-change filter alone must mark the model active");
+        assertTrue(model.get().isActive(model.getContext()), "blank fold-change filter alone must mark the model active");
 
         // ... and the compiled query must therefore be present (isActive() gates toLuceneQuery)
         Optional<String> query = model.toLuceneQuery(ConfidenceDisplayMode.EXACT);
@@ -68,11 +69,11 @@ public class FeatureFilterModelTest {
 
     @Test
     public void testIsSupportedAdduct() {
-        assertTrue(FeatureFilterModel.isSupportedAdduct(PrecursorIonType.fromString("[M + H]+")),
+        assertTrue(FeatureFilter.isSupportedAdduct(PrecursorIonType.fromString("[M + H]+")),
                 "single-charged monomeric adduct is supported");
         // multiply-charged adducts are not constructible yet (MultipleChargeException), so only the
         // multimeric case can be exercised here; isSupportedAdduct still guards both conditions.
-        assertFalse(FeatureFilterModel.isSupportedAdduct(PrecursorIonType.fromString("[2M + H]+")),
+        assertFalse(FeatureFilter.isSupportedAdduct(PrecursorIonType.fromString("[2M + H]+")),
                 "multimeric adduct is not supported");
     }
 
@@ -89,24 +90,24 @@ public class FeatureFilterModelTest {
         FeatureFilterModel model = cleanSlate();
         model.updateAdducts(List.of(protonated, dimer));
         // move every default-carrying facet away from its default, plus a query, inversion and a range
-        model.setAdducts(Set.of(protonated, dimer));
-        model.getSearchTextDoc().insertString(0, "formula:C6H12O6", null);
-        model.setInverted(true);
-        model.setCurrentMinMz(100d);
+        model.update(f -> f.withAdducts(Set.of(protonated, dimer)));
+        model.update(f -> f.withUserQuery("formula:C6H12O6"));
+        model.update(f -> f.withInverted(true));
+        model.update(f -> f.withMz(100d, f.mz().max()));
 
         model.resetFilterToDefaults();
 
-        assertTrue(model.isHasMsMs(), "default: MS/MS required");
-        assertFalse(model.getFeatureQualityFilter().isQualitySelected(DataQuality.BAD), "default excludes BAD");
-        assertFalse(model.getFeatureQualityFilter().isQualitySelected(DataQuality.LOWEST), "default excludes LOWEST");
-        assertTrue(model.getFeatureQualityFilter().isQualitySelected(DataQuality.DECENT), "default keeps DECENT");
-        assertTrue(model.getFeatureQualityFilter().isQualitySelected(DataQuality.GOOD), "default keeps GOOD");
-        assertTrue(model.getSelectedAdducts().contains(protonated), "default selects the supported adducts");
-        assertFalse(model.getSelectedAdducts().contains(dimer), "default drops unsupported (multimeric) adducts");
-        assertTrue(model.getSelectedAdducts().stream().allMatch(FeatureFilterModel::isSupportedAdduct));
-        assertFalse(model.isSearchTextFilterActive(), "the search query is cleared");
-        assertFalse(model.isInverted(), "the inversion is dropped");
-        assertFalse(model.isMzFilterActive(), "range restrictions are dropped");
-        assertTrue(model.isActive(), "the default configuration is an active filter");
+        assertTrue(model.get().hasMsMs(), "default: MS/MS required");
+        assertFalse(model.get().featureQuality().contains(DataQuality.BAD), "default excludes BAD");
+        assertFalse(model.get().featureQuality().contains(DataQuality.LOWEST), "default excludes LOWEST");
+        assertTrue(model.get().featureQuality().contains(DataQuality.DECENT), "default keeps DECENT");
+        assertTrue(model.get().featureQuality().contains(DataQuality.GOOD), "default keeps GOOD");
+        assertTrue(model.get().adducts().contains(protonated), "default selects the supported adducts");
+        assertFalse(model.get().adducts().contains(dimer), "default drops unsupported (multimeric) adducts");
+        assertTrue(model.get().adducts().stream().allMatch(FeatureFilter::isSupportedAdduct));
+        assertFalse(model.get().isUserQueryActive(), "the search query is cleared");
+        assertFalse(model.get().inverted(), "the inversion is dropped");
+        assertFalse(model.get().isMzFilterActive(model.getContext()), "range restrictions are dropped");
+        assertTrue(model.get().isActive(model.getContext()), "the default configuration is an active filter");
     }
 }

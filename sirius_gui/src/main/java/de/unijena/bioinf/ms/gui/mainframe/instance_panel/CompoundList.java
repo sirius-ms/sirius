@@ -30,6 +30,8 @@ import de.unijena.bioinf.ms.gui.dialogs.filter.FeatureFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
+import de.unijena.bioinf.ms.gui.utils.filter.QuickFilterSwitch;
 import de.unijena.bioinf.ms.gui.utils.search.LuceneSearchBar;
 import de.unijena.bioinf.ms.gui.utils.search.PanelFilterTerms;
 import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
@@ -84,8 +86,12 @@ public class CompoundList {
         // autocompletion in an overlay expanding over the result view
         // the full filter dialog is now opened from an in-field funnel icon inside the search bar
         // (see LuceneSearchBar) instead of a separate "..." button next to it
-        searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel,
+        // the overlay's editing session over the applied filter: one per model, shared by every editor
+        FilterSession session = new FilterSession(filterModel);
+        searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel, session,
                 () -> PanelFilterTerms.of(filterModel, gui.getProperties().getConfidenceDisplayMode()),
+                () -> PanelFilterTerms.of(session, gui.getProperties().getConfidenceDisplayMode()),
+                QuickFilterSwitch.standard(),
                 term -> new FeatureFilterOptionsDialog(gui, filterModel, this, term.id()),
                 () -> new FeatureFilterOptionsDialog(gui, filterModel, this),
                 this::resetFilter,
@@ -152,8 +158,8 @@ public class CompoundList {
 
     public void resetFilter() {
         //filtering consists of the text filter and the filter model
-        filterModel.resetFilter(); //also clears the shared search text document
-        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilter() only fires per-field events
+        filterModel.resetFilter(); // nothing filtered, no query
+        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilter() only fires the value change
         searchBar.refreshSummary(); // also re-tints the in-field funnel icon for the (now inactive) filter
     }
 
@@ -162,8 +168,8 @@ public class CompoundList {
      * and clears the search query - the search bar's in-field restore button.
      */
     public void resetFilterToDefaults() {
-        filterModel.resetFilterToDefaults(); //also clears the shared search text document
-        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilterToDefaults() only fires per-field events
+        filterModel.resetFilterToDefaults(); // the recommended starting filter, no query
+        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilterToDefaults() only fires the value change
         searchBar.refreshSummary(); // also re-tints the in-field funnel icon for the (now active) default filter
     }
 

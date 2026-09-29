@@ -20,7 +20,8 @@ package de.unijena.bioinf.ms.gui.utils.search;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.query.*;
 
-import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
+import de.unijena.bioinf.ms.gui.utils.filter.QuickFilterSwitch;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,14 +63,15 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
     private boolean focusEstablished = false;
 
     public SearchBarOverlay(@NotNull Window owner,
-                            @NotNull FeatureFilterModel filterModel,
+                            @NotNull FilterSession session,
                             @NotNull SearchableFieldsProvider fieldsProvider,
                             @NotNull Supplier<List<FilterTerm>> termSupplier,
                             @NotNull FilterEditorHost editorHost,
                             @NotNull SearchRenderState renderState,
                             @NotNull Consumer<QueryEditorPanel.Commit> onCommitted,
                             @NotNull Runnable refreshCollapsedBar,
-                            @NotNull Runnable openFilterPanel) {
+                            @NotNull Runnable openFilterPanel,
+                            @NotNull List<QuickFilterSwitch> quickSwitches) {
         super(owner);
 
         // A heavyweight top-level window so it floats above the native JxBrowser windows of the
@@ -83,10 +85,8 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
         setModalityType(ModalityType.MODELESS);
         setFocusableWindowState(true);
 
-        editor = new QueryEditorPanel(filterModel, fieldsProvider, termSupplier, editorHost, renderState,
-                // no host clear action: the overlay's Clear stages the facet removals itself (see
-                // QueryEditorPanel#clearAll); restore defaults is dialog-only
-                onCommitted, refreshCollapsedBar, this, false, openFilterPanel, null, null);
+        editor = new QueryEditorPanel(session, fieldsProvider, termSupplier, editorHost, renderState,
+                onCommitted, refreshCollapsedBar, this, false, openFilterPanel, quickSwitches);
         setContentPane(editor);
 
         // keep anchored while the main window is moved or resized (only while actually open - a
@@ -171,7 +171,7 @@ public class SearchBarOverlay extends JDialog implements QueryEditorPanel.Host {
      */
     public void close() {
         focusEstablished = false;
-        editor.revertToBaseline();
+        editor.revert();
         // Destroy the native peer, don't just hide it: on some (X)Wayland compositors an undecorated
         // heavyweight window's surface can linger after a plain hide - still grabbing mouse input at
         // its old location while painting nothing. That is what makes a "click on the collapsed bar"

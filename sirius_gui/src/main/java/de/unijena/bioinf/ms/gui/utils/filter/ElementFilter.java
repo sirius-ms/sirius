@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.gui.utils.filter;
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /** An element-constraint facet; a value (two filters with the same constraints and flags are equal). */
 @Getter
 @EqualsAndHashCode
+@ToString
 public class ElementFilter {
     @NotNull
     final FormulaConstraints constraints;

@@ -46,16 +46,29 @@ public final class SuggestionDisplay {
     }
 
     /**
-     * One rendered row: the connector in front of it (null = none), the name as shown, the dimmed text
-     * behind it (null = nothing) and the hover tooltip (null = none).
+     * One rendered row: the connector in front of it (null = none), the action label after that (null =
+     * none), the name as shown, the dimmed text behind it (null = nothing) and the hover tooltip (null =
+     * none).
      * <p>
      * The connector is kept apart from the name rather than pasted in front of it, so the renderer can
      * set it apart the way the chips zone does - small, italic, dimmed - and the name still reads as the
-     * one thing the row is about.
+     * one thing the row is about. The label is kept apart for the opposite reason: on the rows that carry
+     * one, the name is the typed text, the same on each of them, and the label is what the row is about.
      */
-    public record Row(@Nullable String connector, @NotNull String display, @Nullable String dimmed,
-                      @Nullable String tooltip) {
+    public record Row(@Nullable String connector, @Nullable String label, @NotNull String display,
+                      @Nullable String dimmed, @Nullable String tooltip) {
+        public Row(@Nullable String connector, @NotNull String display, @Nullable String dimmed,
+                   @Nullable String tooltip) {
+            this(connector, null, display, dimmed, tooltip);
+        }
     }
+
+    /**
+     * How much of the typed text a labelled row shows. The label must stay in view, and the row is one
+     * line: a pasted filter runs to hundreds of characters, so the text is shortened in the middle -
+     * both ends stay, which is what tells one pasted filter from another - and kept in full in the tooltip.
+     */
+    static final int TYPED_TEXT_LIMIT = 64;
 
     /**
      * Composes the row for {@code suggestion}; field names are shortened per {@code mode} (using the
@@ -69,14 +82,30 @@ public final class SuggestionDisplay {
             Row target = of(joined.target(), mode);
             // the joint between the two blocks opens the user's block, so the row shows that brace: it
             // says the connector is the big one, not a connector inside the query
-            return new Row(joined.logic() + (joined.blockJoin() ? " (" : ""),
+            return new Row(joined.logic() + (joined.blockJoin() ? " (" : ""), target.label(),
                     target.display(), target.dimmed(), target.tooltip());
         }
         if (suggestion instanceof TokenInputModel.Suggestion.FieldSuggestion fieldSuggestion)
             return fieldRow(fieldSuggestion.field(), mode);
 
         String description = blankToNull(suggestion.description());
+        String label = suggestion.actionLabel();
+        if (label != null) {
+            // the text is the typed text, shortened to leave the label room; the tooltip keeps it whole
+            String text = suggestion.display();
+            return new Row(null, label, shortenMiddle(text, TYPED_TEXT_LIMIT), description,
+                    tooltip(text, description));
+        }
         return new Row(null, suggestion.display(), description, tooltip(description));
+    }
+
+    /** {@code text} cut to {@code limit} characters by an ellipsis in the middle; unchanged when it fits. */
+    static String shortenMiddle(@NotNull String text, int limit) {
+        if (text.length() <= limit)
+            return text;
+        int head = (limit - 1) / 2;
+        int tail = limit - 1 - head;
+        return text.substring(0, head) + "\u2026" + text.substring(text.length() - tail);
     }
 
     private static Row fieldRow(@NotNull SearchableField field, @NotNull FieldDisplay.Mode mode) {

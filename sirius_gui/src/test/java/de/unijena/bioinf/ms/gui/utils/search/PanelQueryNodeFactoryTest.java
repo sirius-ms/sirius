@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.filter.DbFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import org.junit.jupiter.api.Test;
@@ -45,8 +46,8 @@ public class PanelQueryNodeFactoryTest {
     /** Neutralizes the default-active filters (MS/MS present, feature quality) for a clean slate. */
     private static FeatureFilterModel cleanSlate() {
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setHasMsMs(false);
-        model.getFeatureQualityFilter().reset();
+        model.update(f -> f.withHasMsMs(false));
+        model.update(f -> f.withFeatureQuality(FeatureFilter.ALL_QUALITIES));
         return model;
     }
 
@@ -69,7 +70,7 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testMzRendersAsRealFieldRange() {
         FeatureFilterModel model = cleanSlate();
-        model.setCurrentMinMz(300); // interior lower; the upper end stays unbounded
+        model.update(f -> f.withMz(300, f.mz().max())); // interior lower; the upper end stays unbounded
 
         QueryClause mz = onlyClause(nodes(model));
         assertEquals("ionMass", mz.field());
@@ -82,7 +83,7 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testRtRendersAsOrGroupOverTheThreeRtFields() {
         FeatureFilterModel model = cleanSlate();
-        model.setCurrentMinRt(10);
+        model.update(f -> f.withRt(10, f.rt().max()));
 
         QueryGroup rt = onlyGroup(nodes(model));
         assertEquals(3, rt.items().size());
@@ -94,7 +95,7 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testConfidenceFieldFollowsTheDisplayMode() {
         FeatureFilterModel model = cleanSlate();
-        model.setCurrentMinConfidence(0.5);
+        model.update(f -> f.withConfidence(0.5, f.confidence().max()));
 
         assertEquals("topAnnotations.confidenceExactMatch",
                 ((QueryClause) PanelQueryNodeFactory.nodesFor(model, ConfidenceDisplayMode.EXACT).get(0)).field());
@@ -105,7 +106,7 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testHasMsMsRendersAsBooleanTerm() {
         FeatureFilterModel model = cleanSlate();
-        model.setHasMsMs(true);
+        model.update(f -> f.withHasMsMs(true));
 
         QueryClause msms = onlyClause(nodes(model));
         assertEquals("hasMsMs", msms.field());
@@ -116,7 +117,7 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testAdductsRenderAsOrGroupOfRealFieldClauses() {
         FeatureFilterModel model = cleanSlate();
-        model.setAdducts(Set.of(PrecursorIonType.fromString("[M+H]+"), PrecursorIonType.fromString("[M+Na]+")));
+        model.update(f -> f.withAdducts(Set.of(PrecursorIonType.fromString("[M+H]+"), PrecursorIonType.fromString("[M+Na]+"))));
 
         QueryGroup group = onlyGroup(nodes(model));
         assertEquals(2, group.items().size());
@@ -128,7 +129,7 @@ public class PanelQueryNodeFactoryTest {
     public void testOverallQualityRendersAsQualityFieldGroup() {
         // fresh model WITHOUT resetting the feature quality filter -> it is enabled by default
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setHasMsMs(false);
+        model.update(f -> f.withHasMsMs(false));
 
         List<QueryNode> nodes = nodes(model);
         assertEquals(1, nodes.size());
@@ -141,7 +142,7 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testElementsRenderAsAndGroupOfPerElementRanges() {
         FeatureFilterModel model = cleanSlate();
-        model.setElementFilter(new ElementFilter("CHNOPS"));
+        model.update(f -> f.withElementFilter(new ElementFilter("CHNOPS")));
 
         QueryGroup group = onlyGroup(nodes(model));
         assertEquals(List.of(LogicOp.AND), group.logics().stream().distinct().toList(),
@@ -156,7 +157,7 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testDbHitRendersWithCandidateCountRange() {
         FeatureFilterModel model = cleanSlate();
-        model.setDbFilter(new DbFilter(List.of(new SearchableDatabase().databaseId("PubChem")), 5));
+        model.update(f -> f.withDbFilter(new DbFilter(List.of(new SearchableDatabase().databaseId("PubChem")), 5)));
 
         // a single DB collapses the OR group to a plain clause
         QueryClause db = onlyClause(nodes(model));
@@ -169,7 +170,7 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testBlankFoldChangeRendersAsOpenEndedRange() {
         FeatureFilterModel model = cleanSlate();
-        model.getSampleBlankFoldChange().setEnabled(true); // default currentMinFoldChange = 2.0
+        model.update(f -> f.withBlankFoldChangeEnabled(true)); // default currentMinFoldChange = 2.0
 
         QueryClause blank = onlyClause(nodes(model));
         assertEquals(FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME, blank.field());
@@ -180,11 +181,11 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testNoLipidIsNegatedClauseAndAnyLipidIsPlain() {
         FeatureFilterModel noLipid = cleanSlate();
-        noLipid.setLipidClassDetected(false);
+        noLipid.update(f -> f.withLipidClassDetected(false));
         assertTrue(onlyClause(nodes(noLipid)).negated(), "'no lipid class' must be a NOT clause");
 
         FeatureFilterModel anyLipid = cleanSlate();
-        anyLipid.setLipidClassDetected(true);
+        anyLipid.update(f -> f.withLipidClassDetected(true));
         assertFalse(onlyClause(nodes(anyLipid)).negated(), "'a lipid class' must be a plain clause");
     }
 
@@ -198,7 +199,7 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testPfasTaggedIsAnOpenRangeOnTheTagField() {
         FeatureFilterModel model = cleanSlate();
-        model.setPfasDetected(true);
+        model.update(f -> f.withPfasDetected(true));
 
         QueryClause pfas = onlyClause(nodes(model));
         assertEquals(FeatureFilterModel.FIELD_PFAS, pfas.field());
@@ -211,7 +212,7 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testNoPfasIsTheNegatedRangeAndNeedsTheAnchor() {
         FeatureFilterModel model = cleanSlate();
-        model.setPfasDetected(false);
+        model.update(f -> f.withPfasDetected(false));
 
         assertTrue(onlyClause(nodes(model)).negated(), "'no pfas' must be a NOT clause");
         assertEquals("*:* AND NOT tags.pfas:[* TO *]",
@@ -221,7 +222,7 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testUnsetPfasFilterYieldsNoFacet() {
         FeatureFilterModel model = cleanSlate();
-        model.setPfasDetected(null);
+        model.update(f -> f.withPfasDetected(null));
         assertTrue(nodes(model).isEmpty());
     }
 
@@ -230,25 +231,14 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testTheUserQueryIsAnchoredWhereLuceneNeedsIt() throws Exception {
         FeatureFilterModel model = cleanSlate();
-        model.setExecutableQueryForm(QueryStringParser::executableForm);
         searchText(model, "NOT computedTools.zodiac:true");
         assertEquals("*:* AND NOT computedTools.zodiac:true",
                 model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow(),
                 "a query that only excludes matches nothing without the anchor");
 
         // with facets, the anchor has to stay INSIDE the user block: (facets) AND (NOT x) matches nothing
-        model.setPfasDetected(true);
+        model.update(f -> f.withPfasDetected(true));
         assertEquals("(tags.pfas:[* TO *]) AND (*:* AND NOT computedTools.zodiac:true)",
-                model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
-    }
-
-    @Test
-    public void testWithoutTheStrategyTheQueryRunsAsWritten() throws Exception {
-        // the rule lives in the search package and is handed in (GuiProjectManager does it); a model that was
-        // never given it must not silently rewrite anything
-        FeatureFilterModel model = cleanSlate();
-        searchText(model, "NOT computedTools.zodiac:true");
-        assertEquals("NOT computedTools.zodiac:true",
                 model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
     }
 
@@ -261,11 +251,11 @@ public class PanelQueryNodeFactoryTest {
 
         // a feature whose adduct could not be determined is indexed as [M+?]+, so leaving it out of the
         // list would drop those features from every default-filtered view
-        assertTrue(model.getPossibleAdducts().contains(PrecursorIonType.unknownPositive()));
-        assertTrue(model.getSelectedAdducts().contains(PrecursorIonType.unknownPositive()),
+        assertTrue(model.getContext().possibleAdducts().contains(PrecursorIonType.unknownPositive()));
+        assertTrue(model.get().adducts().contains(PrecursorIonType.unknownPositive()),
                 "and it has to be selected by default, or the default filter still drops them");
         // the polarity follows the project - nothing negative was detected here
-        assertFalse(model.getPossibleAdducts().contains(PrecursorIonType.unknownNegative()));
+        assertFalse(model.getContext().possibleAdducts().contains(PrecursorIonType.unknownNegative()));
     }
 
     @Test
@@ -274,7 +264,7 @@ public class PanelQueryNodeFactoryTest {
         model.updateAdducts(List.of());
         // nothing to infer the polarity from (a project that was never preprocessed for adducts), and the
         // one that does not occur matches nothing anyway
-        assertTrue(model.getSelectedAdducts().containsAll(
+        assertTrue(model.get().adducts().containsAll(
                 Set.of(PrecursorIonType.unknownPositive(), PrecursorIonType.unknownNegative())));
     }
 
@@ -291,13 +281,13 @@ public class PanelQueryNodeFactoryTest {
     // --- the joint between the panel facets and the user's own query ---
 
     private static void searchText(FeatureFilterModel model, String text) throws Exception {
-        model.getSearchTextDoc().insertString(0, text, null);
+        model.update(f -> f.withUserQuery(text));
     }
 
     @Test
     public void testTheFacetsNarrowTheUserQueryByDefault() throws Exception {
         FeatureFilterModel model = cleanSlate();
-        model.setPfasDetected(true);
+        model.update(f -> f.withPfasDetected(true));
         searchText(model, "name:caffeine");
         assertEquals("(tags.pfas:[* TO *]) AND (name:caffeine)",
                 model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
@@ -306,15 +296,15 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testTheUserQueryCanBeAnAlternativeToTheFacets() throws Exception {
         FeatureFilterModel model = cleanSlate();
-        model.setPfasDetected(true);
+        model.update(f -> f.withPfasDetected(true));
         searchText(model, "name:caffeine");
-        model.setQueryJoin(LogicOp.OR);
+        model.update(f -> f.withQueryJoin(LogicOp.OR));
         // the panel facets stop narrowing: a feature matching the query alone passes too
         assertEquals("(tags.pfas:[* TO *]) OR (name:caffeine)",
                 model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
 
         // inversion still wraps the whole thing, joint included
-        model.setInverted(true);
+        model.update(f -> f.withInverted(true));
         assertEquals("*:* AND NOT ((tags.pfas:[* TO *]) OR (name:caffeine))",
                 model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
     }
@@ -322,8 +312,8 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testTheJointIsMootWithoutAUserQuery() {
         FeatureFilterModel model = cleanSlate();
-        model.setPfasDetected(true);
-        model.setQueryJoin(LogicOp.OR);
+        model.update(f -> f.withPfasDetected(true));
+        model.update(f -> f.withQueryJoin(LogicOp.OR));
         assertEquals("tags.pfas:[* TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow(),
                 "an OR with nothing on the other side is not an alternative");
     }
@@ -331,24 +321,24 @@ public class PanelQueryNodeFactoryTest {
     @Test
     public void testResetRestoresTheDefaultJoint() {
         FeatureFilterModel model = cleanSlate();
-        model.setQueryJoin(LogicOp.OR);
+        model.update(f -> f.withQueryJoin(LogicOp.OR));
         model.resetFilter();
-        assertEquals(LogicOp.AND, model.getQueryJoin());
+        assertEquals(LogicOp.AND, model.get().queryJoin());
     }
 
     @Test
     public void testUsedFieldNamesOccurInTheModelsCompiledQuery() {
         // activate a broad set of facets together (feature quality stays enabled by default)
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setHasMsMs(false);
-        model.setCurrentMinMz(300);
-        model.setCurrentMinRt(10);
-        model.setCurrentMinConfidence(0.5);
-        model.setAdducts(Set.of(PrecursorIonType.fromString("[M+H]+")));
-        model.setElementFilter(new ElementFilter("CHNOPS"));
-        model.setDbFilter(new DbFilter(List.of(new SearchableDatabase().databaseId("PubChem")), 5));
-        model.getSampleBlankFoldChange().setEnabled(true);
-        model.setLipidClassDetected(false);
+        model.update(f -> f.withHasMsMs(false));
+        model.update(f -> f.withMz(300, f.mz().max()));
+        model.update(f -> f.withRt(10, f.rt().max()));
+        model.update(f -> f.withConfidence(0.5, f.confidence().max()));
+        model.update(f -> f.withAdducts(Set.of(PrecursorIonType.fromString("[M+H]+"))));
+        model.update(f -> f.withElementFilter(new ElementFilter("CHNOPS")));
+        model.update(f -> f.withDbFilter(new DbFilter(List.of(new SearchableDatabase().databaseId("PubChem")), 5)));
+        model.update(f -> f.withBlankFoldChangeEnabled(true));
+        model.update(f -> f.withLipidClassDetected(false));
 
         String compiled = model.toLuceneQuery(ConfidenceDisplayMode.EXACT)
                 .orElseThrow(() -> new AssertionError("model with active filters must compile to a query"));
