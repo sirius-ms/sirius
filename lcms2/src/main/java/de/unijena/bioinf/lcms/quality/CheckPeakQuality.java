@@ -2,7 +2,7 @@ package de.unijena.bioinf.lcms.quality;
 
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.lcms.adducts.TraceProvider;
-import de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory;
+import de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;

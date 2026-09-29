@@ -1,7 +1,23 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2024 Bright Giant GmbH
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.gui.dialogs.filter;
 
-import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
-import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import io.sirius.ms.sdk.model.DataQuality;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,8 +31,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
- * The quality slider has to show exactly the selection it was given. Getting this wrong is easy to miss, because
- * a wrong range still looks plausible - it just quietly widens the filter.
+ * The quality slider must read back exactly the selection it was given - both thumbs, at both ends of the
+ * scale. Reading the upper thumb from the wrong field made a wrong range still look plausible; it just
+ * quietly widened the filter.
  */
 public class QualityFilterPanelTest {
 
@@ -28,22 +45,15 @@ public class QualityFilterPanelTest {
         assumeFalse(GraphicsEnvironment.isHeadless(), "needs a display: RangeSlider cannot be built headless");
     }
 
-    private static QualityFilter filterWith(DataQuality... selected) {
-        QualityFilter filter = new QualityFilter("quality", "Quality", new FeatureFilterModel());
-        Set<DataQuality> keep = selected.length == 0 ? EnumSet.noneOf(DataQuality.class) : EnumSet.copyOf(List.of(selected));
-        for (DataQuality quality : DataQuality.values())
-            if (quality != DataQuality.NOT_APPLICABLE)
-                filter.setQualitySelected(quality.ordinal() - 1, keep.contains(quality));
-        return filter;
+    private static Set<DataQuality> selection(DataQuality... selected) {
+        return selected.length == 0 ? EnumSet.noneOf(DataQuality.class) : EnumSet.copyOf(List.of(selected));
     }
 
-    /** Round trip: build a panel from a selection, read it back, and expect the same selection. */
+    /** Round trip: show a selection on a panel and read it back, expecting the same selection. */
     private static Set<DataQuality> roundTrip(DataQuality... selected) {
-        QualityFilter source = filterWith(selected);
-        QualityFilterPanel panel = new QualityFilterPanel(source);
-        QualityFilter target = filterWith();
-        panel.updateModel(target);
-        return target.getDataQualities();
+        QualityFilterPanel panel = new QualityFilterPanel();
+        panel.setSelection(selection(selected));
+        return panel.getSelection();
     }
 
     @Test
@@ -72,23 +82,20 @@ public class QualityFilterPanelTest {
     }
 
     @Test
-    public void setFromModelAppliesLaterChangesToo() {
-        // the dialog reuses one panel: it is built once and re-filled whenever the model changes
-        QualityFilterPanel panel = new QualityFilterPanel(filterWith(DataQuality.LOWEST, DataQuality.BAD));
-        panel.setFromModel(filterWith(DataQuality.DECENT, DataQuality.GOOD));
-        QualityFilter target = filterWith();
-        panel.updateModel(target);
-        assertEquals(EnumSet.of(DataQuality.DECENT, DataQuality.GOOD), target.getDataQualities());
+    public void setSelectionAppliesLaterChangesToo() {
+        // the dialog reuses one panel: it is built once and re-seeded whenever the working value changes
+        QualityFilterPanel panel = new QualityFilterPanel();
+        panel.setSelection(selection(DataQuality.LOWEST, DataQuality.BAD));
+        panel.setSelection(selection(DataQuality.DECENT, DataQuality.GOOD));
+        assertEquals(EnumSet.of(DataQuality.DECENT, DataQuality.GOOD), panel.getSelection());
     }
 
     @Test
     public void resetSelectsTheWholeScale() {
-        QualityFilterPanel panel = new QualityFilterPanel(filterWith(DataQuality.GOOD));
+        QualityFilterPanel panel = new QualityFilterPanel();
+        panel.setSelection(selection(DataQuality.GOOD));
         panel.reset();
-        QualityFilter target = filterWith();
-        panel.updateModel(target);
-        assertEquals(EnumSet.of(DataQuality.LOWEST, DataQuality.BAD, DataQuality.DECENT, DataQuality.GOOD),
-                target.getDataQualities());
+        assertEquals(EnumSet.of(DataQuality.LOWEST, DataQuality.BAD, DataQuality.DECENT, DataQuality.GOOD), panel.getSelection());
     }
 
     @Test
@@ -96,5 +103,10 @@ public class QualityFilterPanelTest {
         // a slider cannot express a gap; widening is the safe direction, dropping the ends is not
         assertEquals(EnumSet.of(DataQuality.LOWEST, DataQuality.BAD, DataQuality.DECENT, DataQuality.GOOD),
                 roundTrip(DataQuality.LOWEST, DataQuality.GOOD));
+    }
+
+    @Test
+    public void anEmptySelectionFallsBackToTheFullRange() {
+        assertEquals(EnumSet.of(DataQuality.LOWEST, DataQuality.BAD, DataQuality.DECENT, DataQuality.GOOD), roundTrip());
     }
 }
