@@ -160,7 +160,11 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
                     .filter(m -> !m.isEmpty()).ifPresent(exp::setMolecularFormula);
             MSP.parsePrecursorIonType(fields, true) // once per record
                     .ifPresent(exp::setPrecursorIonType);
-            MSP.parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
+            final Optional<Double> precursorMz = MSP.parsePrecursorMZ(fields);
+            precursorMz.ifPresent(exp::setIonMass);
+            // once per record, not for each of its spectra
+            ParserUtils.warnPrecursorMzFromExactMass(MSP.getGivenPrecursorMzField(fields).orElse(null), MSP.parseGivenPrecursorMz(fields).isPresent(),
+                    precursorMz.isPresent(), LoggerFactory.getLogger(MSPExperimentParser.class), () -> MSP.parseName(fields).orElse("N/A"));
             //optional
             fields.getField(MSP.INCHI)
                     .filter(InChIs::isInchi)

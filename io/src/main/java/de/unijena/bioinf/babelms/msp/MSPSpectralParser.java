@@ -355,7 +355,7 @@ public class MSPSpectralParser extends SpectralParser {
                     MSP.getGivenPrecursorMzField(metaInfo).orElse(null), () -> MSP.parsePrecursorMZ(metaInfo).isPresent(),
                     LoggerFactory.getLogger(getClass()), () -> Optional.ofNullable(recordName(metaInfo, comments)).orElse("N/A"));
             if (msLevel > 1) { // we have MSn
-                final double precursorMz = MSP.parsePrecursorMZ(metaInfo).orElseThrow(() -> new MalformedRecordException("Could neither parse '" + Arrays.toString(PRECURSOR_MZ) + "', '" + SYN_PRECURSOR_MZ + "' nor '" + EXACT_MASS + "'", metaInfo, comments, additional));
+                final double precursorMz = MSP.parsePrecursorMZ(metaInfo).orElseThrow(() -> new MalformedRecordException("Could neither parse '" + Arrays.toString(PRECURSOR_MZ) + "', '" + SYN_PRECURSOR_MZ + "' nor '" + EXACT_MASS + "' with a known adduct", metaInfo, comments, additional));
                 spectrum = new MutableMs2SpectrumWithAdditionalFields(
                         spectrum,
                         precursorMz,

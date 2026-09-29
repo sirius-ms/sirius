@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.util.Optional;
 
 import static de.unijena.bioinf.babelms.massbank.MassbankFormat.*;
 
@@ -114,7 +115,11 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
         parseName(fields).ifPresent(exp::setName);
         fields.getField(CH_FORMULA.k()).map(MolecularFormula::parseOrThrow).ifPresent(exp::setMolecularFormula);
         parsePrecursorIonType(fields).ifPresent(exp::setPrecursorIonType);
-        parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
+        final Optional<Double> precursorMz = parsePrecursorMZ(fields);
+        precursorMz.ifPresent(exp::setIonMass);
+        // once per record, for MS1 and MS2 records, as in the MSP parser
+        ParserUtils.warnPrecursorMzFromExactMass(getGivenPrecursorMzField(fields).orElse(null), parseGivenPrecursorMz(fields).isPresent(), precursorMz.isPresent(),
+                log, () -> fields.getField(ACCESSION.k()).orElse("N/A"));
         // optional
         CompoundMetaData b = CompoundMetaData.builder()
                 .compoundName(fields.getField(CH_NAME.k()).orElse(null))

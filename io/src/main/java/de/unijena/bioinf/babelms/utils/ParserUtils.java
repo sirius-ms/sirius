@@ -20,7 +20,9 @@
 
 package de.unijena.bioinf.babelms.utils;
 
+import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultimereException;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
@@ -93,6 +95,18 @@ public class ParserUtils {
     }
 
     /**
+     * Warns that the given precursor m/z of a record cannot be used, so the one computed from the exact mass is taken.
+     *
+     * @param precursorField the precursor m/z as given, null if there is none
+     * @param givenUsable    whether the given precursor m/z can be used
+     * @param computed       whether a precursor m/z was computed from the exact mass instead
+     */
+    public static void warnPrecursorMzFromExactMass(@Nullable String precursorField, boolean givenUsable, boolean computed, Logger log, Supplier<String> recordName) {
+        if (precursorField != null && !givenUsable && computed)
+            log.warn("Precursor m/z '{}' of record '{}' cannot be used, computed from the exact mass instead.", precursorField, recordName.get());
+    }
+
+    /**
      * A value of the record that SIRIUS needs cannot be used - a data problem, not a parser failure.
      */
     public static class InvalidValueException extends IllegalArgumentException {
@@ -162,6 +176,21 @@ public class ParserUtils {
         } catch (NumberFormatException e) {
             return Double.NaN;
         }
+    }
+
+    /**
+     * The precursor m/z from the exact mass of a record, which is the neutral mass - except for intrinsically charged
+     * compounds, where it is the mass of the charged formula (see {@link PrecursorIonType}): their m/z only lacks the
+     * electrons.
+     *
+     * @return empty if the ion type is unknown - a neutral mass is no m/z
+     */
+    public static Optional<Double> precursorMzFromExactMass(double exactMass, @Nullable PrecursorIonType ionType) {
+        if (ionType == null || ionType.isIonizationUnknown())
+            return Optional.empty();
+        if (ionType.isIntrinsicalCharged())
+            return Optional.of(new Charge(ionType.getCharge()).addToMass(exactMass));
+        return Optional.of(ionType.neutralMassToPrecursorMass(exactMass));
     }
 
     public static void checkMolecularFormula(MutableMs2Experiment exp){

@@ -212,13 +212,21 @@ public class MSP {
     }
 
     /**
-     * The precursor m/z - the first of the precursor keys that can be parsed - or else the ExactMass.
+     * The precursor m/z - the first of the precursor keys that can be parsed - or else computed from the neutral
+     * ExactMass and the adduct, only if the adduct is known.
+     *
+     * @throws IllegalArgumentException from {@link #parsePrecursorIonType} if the exact mass has to be used, but the
+     *                                  adduct is not supported or cannot be parsed without an ion mode
      */
     public static Optional<Double> parsePrecursorMZ(Map<String, String> metaInfo) {
         final Optional<Double> precursorMz = parseGivenPrecursorMz(metaInfo);
         if (precursorMz.isPresent())
             return precursorMz;
-        return getWithSynonyms(metaInfo, EXACT_MASS).flatMap(MSP::parseMass);
+
+        final Optional<Double> exactMass = getWithSynonyms(metaInfo, EXACT_MASS).flatMap(MSP::parseMass);
+        if (exactMass.isEmpty())
+            return Optional.empty();
+        return ParserUtils.precursorMzFromExactMass(exactMass.get(), parsePrecursorIonType(metaInfo, false).orElse(null));
     }
 
     /**

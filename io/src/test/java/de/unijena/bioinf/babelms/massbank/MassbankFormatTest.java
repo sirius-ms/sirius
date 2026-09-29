@@ -1,16 +1,28 @@
 package de.unijena.bioinf.babelms.massbank;
 
+import de.unijena.bioinf.ChemistryBase.chem.Charge;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.babelms.ParserTestUtils;
+import de.unijena.bioinf.babelms.txt.TxtExperimentParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.file.Files;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MassbankFormatTest {
@@ -20,6 +32,7 @@ public class MassbankFormatTest {
     private static final String PRECURSOR_MZ = MassbankFormat.MS_FOCUSED_ION_PRECURSOR_MZ.k();
     private static final String PRECURSOR_TYPE = MassbankFormat.MS_FOCUSED_ION_PRECURSOR_TYPE.k();
     private static final String EXACT_MASS = MassbankFormat.CH_EXACT_MASS.k();
+    private static final String ION_MODE = MassbankFormat.AC_MASS_SPECTROMETRY_ION_MODE.k();
 
     @ParameterizedTest
     @MethodSource
@@ -79,4 +92,60 @@ public class MassbankFormatTest {
         assertEquals(165.1121, MassbankFormat.parsePrecursorMZ(Map.of(PRECURSOR_MZ, "165.1121", EXACT_MASS, "164.1049", PRECURSOR_TYPE, "[M+H]+")).orElseThrow(), 1e-9);
     }
 
+    /**
+     * CH$EXACT_MASS is the neutral mass - without a precursor m/z, the m/z is computed from it and the adduct.
+     */
+    @Test
+    public void precursorMzIsComputedFromExactMassAndAdduct() {
+        double expected = PrecursorIonType.fromString("[M+H]+").neutralMassToPrecursorMass(164.1049);
+        assertEquals(expected, MassbankFormat.parsePrecursorMZ(Map.of(EXACT_MASS, "164.1049", PRECURSOR_TYPE, "[M+H]+")).orElseThrow(), 1e-9);
+    }
+
+    /**
+     * Without a known adduct, the neutral mass gives no m/z.
+     */
+    @Test
+    public void exactMassWithoutKnownAdductGivesNoPrecursorMz() {
+        assertTrue(MassbankFormat.parsePrecursorMZ(Map.of(EXACT_MASS, "164.1049", ION_MODE, "POSITIVE")).isEmpty());
+        assertTrue(MassbankFormat.parsePrecursorMZ(Map.of(EXACT_MASS, "164.1049")).isEmpty());
+    }
+
+    /**
+     * For intrinsically charged compounds, CH$EXACT_MASS is the mass of the charged formula (e.g. [C12H18NO3]+) - the
+     * m/z only lacks the electron, no proton is added.
+     */
+    @Test
+    public void exactMassOfIntrinsicallyChargedCompoundIsTheIonMass() {
+        assertEquals(224.12867 - Charge.ELECTRON_MASS, MassbankFormat.parsePrecursorMZ(Map.of(EXACT_MASS, "224.12867", PRECURSOR_TYPE, "[M]+")).orElseThrow(), 1e-9);
+    }
+
+    @Test
+    public void exactMassWithUnsupportedAdductReportsTheAdduct() {
+        assertThrows(IllegalArgumentException.class, () -> MassbankFormat.parsePrecursorMZ(Map.of(EXACT_MASS, "164.1049", PRECURSOR_TYPE, "[M+2H]2+")));
+    }
+
+    @Test
+    public void zeroPrecursorMzFallsBackToExactMass() {
+        double expected = PrecursorIonType.fromString("[M+H]+").neutralMassToPrecursorMass(164.1049);
+        assertEquals(expected, MassbankFormat.parsePrecursorMZ(Map.of(PRECURSOR_MZ, "0", EXACT_MASS, "164.1049", PRECURSOR_TYPE, "[M+H]+")).orElseThrow(), 1e-9);
+    }
+
+    @Test
+    public void unusablePrecursorMzFallsBackToExactMass() {
+        double expected = PrecursorIonType.fromString("[M+H]+").neutralMassToPrecursorMass(164.1049);
+        for (String precursorMz : new String[]{"Infinity", "NaN", "/", "-1"})
+            assertEquals(expected, MassbankFormat.parsePrecursorMZ(Map.of(PRECURSOR_MZ, precursorMz, EXACT_MASS, "164.1049", PRECURSOR_TYPE, "[M+H]+")).orElseThrow(), 1e-9, precursorMz);
+        assertTrue(MassbankFormat.parsePrecursorMZ(Map.of(EXACT_MASS, "NaN", PRECURSOR_TYPE, "[M+H]+")).isEmpty());
+    }
+
+    @Test
+    public void recordWithoutPrecursorMzGetsItFromExactMass() throws IOException {
+        File original = ParserTestUtils.getTestFile("massbank/MSBNK-UFZ-UP000040.txt");
+        String withoutPrecursorMz = Files.readAllLines(original.toPath()).stream()
+                .filter(l -> !l.startsWith(PRECURSOR_MZ)).collect(Collectors.joining("\n", "", "\n"));
+        Ms2Experiment experiment = new TxtExperimentParser().parse(new BufferedReader(new StringReader(withoutPrecursorMz)), original.toURI());
+        double expected = PrecursorIonType.fromString("[M+H]+").neutralMassToPrecursorMass(164.1049);
+        assertEquals(expected, experiment.getIonMass(), 1e-9);
+        assertEquals(expected, experiment.getMs2Spectra().get(0).getPrecursorMz(), 1e-9);
+    }
 }

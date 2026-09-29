@@ -19,6 +19,7 @@
  */
 package de.unijena.bioinf.babelms.msp;
 
+import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
@@ -40,10 +41,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.babelms.ParserTestUtils.loadExperiment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MSPExperimentParserTest {
@@ -201,6 +206,18 @@ class MSPExperimentParserTest {
                         Comments: PEAKID=
                         Num Peaks: 5
                         153.0182 30120
+
+                        """),
+                Arguments.of("only the neutral exact mass and no known adduct", """
+                        Name: Broken
+                        Precursor_type: ESI
+                        Ion_mode: P
+                        Spectrum_type: MS2
+                        ExactMass: 286.0477
+                        Num Peaks: 3
+                        153.0182 30120
+                        165.0546 8712
+                        287.0550 64100
 
                         """),
                 Arguments.of("no precursor m/z", """
@@ -445,6 +462,36 @@ class MSPExperimentParserTest {
     }
 
     /**
+     * ExactMass is the neutral mass - without a PrecursorMZ, the precursor m/z is computed from it and the adduct.
+     */
+    @Test
+    void precursorMzIsComputedFromExactMassAndAdduct() throws IOException {
+        List<Ms2Experiment> experiments = parse(QUERCETIN.replace("PrecursorMZ: 303.0499", "ExactMass: 302.042653") + CAFFEINE);
+        assertEquals(List.of("Quercetin", "Caffeine"), names(experiments));
+        final double expected = PrecursorIonType.fromString("[M+H]+").neutralMassToPrecursorMass(302.042653);
+        assertEquals(expected, experiments.get(0).getIonMass(), 1e-9);
+        assertEquals(expected, experiments.get(0).getMs2Spectra().get(0).getPrecursorMz(), 1e-9);
+        assertIntact(experiments.subList(1, 2), "Caffeine");
+    }
+
+    /**
+     * The fallback to ExactMass must not hide why the adduct cannot be used - an unsupported ion type is reported as such.
+     */
+    @Test
+    void exactMassWithUnsupportedAdductReportsTheAdduct() {
+        assertThrows(IllegalArgumentException.class, () -> MSP.parsePrecursorMZ(Map.of("ExactMass", "302.042653", "Precursor_type", "[M+2H]2+")));
+    }
+
+    /**
+     * A precursor m/z of 0 is no precursor m/z - the exact mass is used instead.
+     */
+    @Test
+    void zeroPrecursorMzFallsBackToExactMass() throws IOException {
+        List<Ms2Experiment> experiments = parse(QUERCETIN.replace("PrecursorMZ: 303.0499", "PrecursorMZ: 0\nExactMass: 302.042653"));
+        assertEquals(PrecursorIonType.fromString("[M+H]+").neutralMassToPrecursorMass(302.042653), experiments.get(0).getIonMass(), 1e-9);
+    }
+
+    /**
      * Without a spectrum type, a precursor m/z of 0 is none - the spectrum is MS1, not a broken MS2 spectrum.
      */
     @Test
@@ -453,6 +500,18 @@ class MSPExperimentParserTest {
         assertEquals(List.of("Quercetin", "Caffeine"), names(experiments));
         assertEquals(1, experiments.get(0).getMs1Spectra().size());
         assertIntact(experiments.subList(1, 2), "Caffeine");
+    }
+
+    /**
+     * Without a spectrum type, a record with a precursor field is MS2 if its precursor m/z can be determined in any way -
+     * here from the exact mass and the adduct, as the given value is 0.
+     */
+    @Test
+    void unusablePrecursorMzWithExactMassWithoutSpectrumTypeIsMs2() throws IOException {
+        List<Ms2Experiment> experiments = parse(QUERCETIN.replace("Spectrum_type: MS2\n", "").replace("PrecursorMZ: 303.0499", "PrecursorMZ: 0\nExactMass: 302.042653"));
+        assertTrue(experiments.get(0).getMs1Spectra().isEmpty());
+        assertEquals(1, experiments.get(0).getMs2Spectra().size());
+        assertEquals(PrecursorIonType.fromString("[M+H]+").neutralMassToPrecursorMass(302.042653), experiments.get(0).getMs2Spectra().get(0).getPrecursorMz(), 1e-9);
     }
 
     /**
@@ -466,6 +525,17 @@ class MSPExperimentParserTest {
     }
 
     /**
+     * For intrinsically charged compounds, ExactMass is the mass of the charged formula - the m/z only lacks the
+     * electron, no proton is added.
+     */
+    @Test
+    void exactMassOfIntrinsicallyChargedCompoundIsTheIonMass() throws IOException {
+        List<Ms2Experiment> experiments = parse(QUERCETIN.replace("[M+H]+", "[M]+").replace("PrecursorMZ: 303.0499", "ExactMass: 224.12867"));
+        assertEquals(224.12867 - Charge.ELECTRON_MASS, experiments.get(0).getIonMass(), 1e-9);
+        assertEquals(224.12867 - Charge.ELECTRON_MASS, experiments.get(0).getMs2Spectra().get(0).getPrecursorMz(), 1e-9);
+    }
+
+    /**
      * Comments of a record are joined with a separator that contains regex characters - splitting them again must not
      * leave parts of the separator behind (they became the name of records without one).
      */
@@ -473,6 +543,41 @@ class MSPExperimentParserTest {
     void nameFromCommentsOfRecordWithoutName() throws IOException {
         List<Ms2Experiment> experiments = parse(QUERCETIN.replace("Name: Quercetin\n", "Comments: acquired on QTOF\nComments: second comment here\n"));
         assertEquals(List.of("acquired on QTOF"), names(experiments));
+    }
+
+    /**
+     * A record-level warning is reported once per record, not once for each spectrum of an MS-DIAL .mat record.
+     */
+    @Test
+    void precursorWarningOncePerMatRecord() throws IOException {
+        List<String> warnings = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                if (record.getLevel() == Level.WARNING && String.valueOf(record.getMessage()).contains("computed from the exact mass"))
+                    warnings.add(record.getMessage());
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+        java.util.logging.Logger root = java.util.logging.Logger.getLogger("");
+        root.addHandler(handler);
+        try {
+            // one MS1 and two MS2 spectra, all with the record's unusable precursor m/z
+            List<Ms2Experiment> experiments = parse(matRecord("A", "0", "3").replace("PRECURSORTYPE:", "ExactMass: 302.042653\nPRECURSORTYPE:")
+                    + "MSTYPE: MS2\nNum Peaks: 1\n153,0182\t41003\n");
+            assertEquals(1, experiments.size());
+            assertEquals(2, experiments.get(0).getMs2Spectra().size());
+            assertEquals(1, warnings.size(), warnings.toString());
+        } finally {
+            root.removeHandler(handler);
+        }
     }
 
     /**
