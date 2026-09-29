@@ -90,7 +90,7 @@ public class ProjectSaveAction extends ProjectOpenAction {
                     gui.getSiriusClient().gui().openGui(projectId);
                     gui.close();
                 } else {
-                    gui.getSiriusClient().projects().closeProject(projectId, false);
+                    gui.getSiriusClient().projects().closeProject(projectId, false, false);
                 }
             });
     }
