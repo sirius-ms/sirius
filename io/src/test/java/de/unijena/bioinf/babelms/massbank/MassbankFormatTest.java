@@ -17,6 +17,9 @@ public class MassbankFormatTest {
 
     private static final String RETENTION = MassbankFormat.AC_CHROMATOGRAPHY_RETENTION_TIME.k();
     private static final String TITLE = MassbankFormat.RECORD_TITLE.k();
+    private static final String PRECURSOR_MZ = MassbankFormat.MS_FOCUSED_ION_PRECURSOR_MZ.k();
+    private static final String PRECURSOR_TYPE = MassbankFormat.MS_FOCUSED_ION_PRECURSOR_TYPE.k();
+    private static final String EXACT_MASS = MassbankFormat.CH_EXACT_MASS.k();
 
     @ParameterizedTest
     @MethodSource
@@ -60,4 +63,20 @@ public class MassbankFormatTest {
         assertEquals(18, retentionTime.getEndTime(), 1e-9);
         assertEquals(12, retentionTime.getMiddleTime(), 1e-9);
     }
+
+    /**
+     * A list of values or thousands separators is no single m/z - it must not be read as one.
+     */
+    @Test
+    public void precursorMzWithTwoSeparatorsIsUnusable() {
+        assertTrue(MassbankFormat.parseGivenPrecursorMz(Map.of(PRECURSOR_MZ, "165.1121,166.1150")).isEmpty());
+        assertTrue(MassbankFormat.parseGivenPrecursorMz(Map.of(PRECURSOR_MZ, "165.1121.3")).isEmpty());
+        assertEquals(165.1121, MassbankFormat.parseGivenPrecursorMz(Map.of(PRECURSOR_MZ, "165,1121")).orElseThrow(), 1e-9);
+    }
+
+    @Test
+    public void precursorMzIsTakenAsGiven() {
+        assertEquals(165.1121, MassbankFormat.parsePrecursorMZ(Map.of(PRECURSOR_MZ, "165.1121", EXACT_MASS, "164.1049", PRECURSOR_TYPE, "[M+H]+")).orElseThrow(), 1e-9);
+    }
+
 }
