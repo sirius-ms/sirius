@@ -1,6 +1,8 @@
 package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
+import de.unijena.bioinf.ms.biotransformer.Cyp450Mode;
+import de.unijena.bioinf.ms.biotransformer.P2Mode;
 import de.unijena.bioinf.ms.middleware.model.annotations.CompoundClasses;
 import de.unijena.bioinf.ms.middleware.model.databases.BioTransformerParameters;
 import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
@@ -70,13 +72,20 @@ class JacksonConfigurationTest {
     }
 
     @Test
-    void omittedOptionalPrimitiveKeepsItsDocumentedDefault() throws IOException {
-        // useDB is documented as optional with default true, so omitting it must be accepted and
-        // must yield the documented value (field binding via the no-arg constructor).
+    void omittedOptionalPropertyKeepsItsDocumentedDefault() throws IOException {
+        // cyp450Mode and p2Mode are documented as optional with a default, so omitting them must be
+        // accepted and must yield the documented value (field binding via the no-arg constructor).
+        // Constructor binding would deliver null here instead.
+        //
+        // useDB used to be the subject, but its default is now false, which is also what an unbound
+        // primitive boolean would be - the assertion would hold even if binding were broken.
         runnerWithShippedProperties().run(context -> {
             tools.jackson.databind.ObjectMapper mapper = context.getBean(tools.jackson.databind.ObjectMapper.class);
             BioTransformerParameters params = mapper.readValue("{}", BioTransformerParameters.class);
-            assertTrue(params.isUseDB(), "omitting an optional primitive must keep its documented default");
+            assertEquals(Cyp450Mode.COMBINED, params.getCyp450Mode(),
+                    "omitting an optional property must keep its documented default");
+            assertEquals(P2Mode.BT_RULE_BASED, params.getP2Mode(),
+                    "omitting an optional property must keep its documented default");
         });
     }
 
