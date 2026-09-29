@@ -2,6 +2,11 @@
 
 ## SIRIUS 6
 ### 6.6.0
+- fix: BioTransformer produced no transformation products at all for structures with
+  stereochemistry, which is most drug-like and natural product input. The bundled BioTransformer
+  library carried its own copy of CDK that was incompatible with the one SIRIUS uses, so every
+  chiral structure failed and was skipped during custom database import, reporting only a warning in
+  the log. BioTransformer now uses the same CDK as the rest of SIRIUS (GUI, CLI and API)
 - change: the BioTransformer option to additionally look up known biotransformations in the online
   HMDB database is now disabled by default on all interfaces. It was enabled by default over the API
   and in the SDK, which sent the InChIKey of every input structure and of every predicted
