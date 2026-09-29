@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+// Coordinates of the jar produced here. "cdk-shared" rather than "relocated": the whole point is
+// that the CDK inside is gone and BioTransformer shares the CDK the rest of SIRIUS uses.
+group = 'wishartlab.openscience.biotransformer'
+version = '3.0.1'
+def artifactName = 'biotransformer-sirius-cdk-shared'
+
+def upstream = 'wishartlab.openscience.biotransformer:biotransformer-sirius-mod-relocated-min-no-envi-path:3.0.0'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    // Same public package repository the SIRIUS build resolves the upstream jar from.
+    maven {
+        url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+        name 'BG GitLab Common Public'
+    }
+}
+
+configurations {
+    // the jar being rebuilt, resolved rather than pointed at by path
+    sourceJar
+}
+
+dependencies {
+    implementation 'org.ow2.asm:asm:9.8'
+    implementation 'org.ow2.asm:asm-commons:9.8'
+    sourceJar "${upstream}@jar"
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+def repackedJar = layout.buildDirectory.file("libs/${artifactName}-${version}.jar")
+
+tasks.register('repack', JavaExec) {
+    group = 'build'
+    description = 'Rebuilds the BioTransformer jar against the project CDK instead of its bundled copy.'
+
+    // -Pinput=<path> overrides the resolved upstream jar, for trying a different build.
+    def input = providers.gradleProperty('input')
+            .map { file(it) }
+            .orElse(providers.provider { configurations.sourceJar.singleFile })
+
+    inputs.file(input)
+    outputs.file(repackedJar)
+
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'io.sirius.ms.tools.biotransformer.RepackBioTransformer'
+    argumentProviders.add({ [input.get().absolutePath, repackedJar.get().asFile.absolutePath] } as CommandLineArgumentProvider)
+}
+
+publishing {
+    publications {
+        repacked(MavenPublication) {
+            groupId = project.group
+            artifactId = artifactName
+            version = project.version
+            artifact(repackedJar) { builtBy tasks.named('repack') }
+
+            pom.withXml {
+                asNode().appendNode('description',
+                        'BioTransformer 3.0 repacked for SIRIUS: bundled CDK 2.7.1 removed so it uses ' +
+                        'the CDK on the classpath. Rebuilt from ' + upstream + '.')
+            }
+        }
+    }
+}
+
+// The runtime dependencies stay declared in :biotransformations for now; this publication carries
+// the jar only. Giving it a POM that declares CDK, Weka and the rest is worth doing once the
+// artifact moves off mavenLocal into a real repository.
+tasks.named('publishToMavenLocal') { dependsOn tasks.named('repack') }
