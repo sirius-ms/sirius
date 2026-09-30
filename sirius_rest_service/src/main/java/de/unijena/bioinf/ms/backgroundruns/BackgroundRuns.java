@@ -432,35 +432,39 @@ public final class BackgroundRuns {
                 computation.run();
 
                 logInfo("Assign computed affected ids...");
-                updateProgress(-1, "Updating search index...");
+                updateProgress(-1, "Postprocessing...");
                 if (instances != null) {
-                    logInfo("Updating search-index after Computation...");
                     ArrayList<String> affIds = new ArrayList<>();
                     instances.forEach(i -> affIds.add(i.getId()));
                     try {
                         if (!affIds.isEmpty()){
                             affectedFeatureIds = affIds;
-                            if (reindexInstances)
+                            if (reindexInstances) {
+                                logInfo("Updating search-index after Computation...");
                                 submitJob(() -> project.updateSearchIndex(affectedFeatureIds), JobType.IO).awaitResult();
+                            }
                         }
-                        logInfo("Unlocking Instances after Computation...");
                     } finally {
+                        logInfo("Unlocking Instances after Computation...");
                         withWriteLock(() -> affectedFeatureIds.forEach(computingInstances::remove));
                     }
                     logInfo("All Instances unlocked!");
                 } else if (computation instanceof ImportPeaksFomResourceWorkflow peakImport) {
                     logInfo("Collecting imported compounds...");
                     extractIds(peakImport.getImportedInstances());
-                    if (affectedFeatureIds != null)
+                    if (affectedFeatureIds != null){
+                        logInfo("Updating search-index after Import...");
                         submitJob(() -> project.addToSearchIndex(affectedFeatureIds, null), JobType.IO).awaitResult();
+                    }
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ImportMsFromResourceWorkflow msImport) {
                     logInfo("Collecting imported compounds...");
                     affectedFeatureIds = msImport.getImportedFeatureIds().longStream().mapToObj(String::valueOf).toList();
                     affectedCompoundIds = msImport.getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
-                    if (affectedFeatureIds != null) // MS data import is once from scratch anyway. so rebuilding index is straightforward and fast
+                    if (affectedFeatureIds != null){ // MS data import is once from scratch anyway. so rebuilding index is straightforward and fast
+                        logInfo("Rebuilding search-index after Import...");
                         submitJob(() -> project.createSearchIndex(true), JobType.IO).awaitResult();
-
+                    }
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ToolChainWorkflow) {
                     logWarn("ToolChainWorkflow without instances? Should no happen! Job name: " + getName());
