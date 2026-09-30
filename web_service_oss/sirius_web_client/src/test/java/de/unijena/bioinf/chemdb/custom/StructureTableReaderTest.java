@@ -36,11 +36,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * tables with a header row, e.g. the files written by the custom database TSV export - the current
  * layout (SMILES, id, name, ...) as well as the one of older versions (name, SMILES, ...).
  */
-public class StructureTableParsingTest {
+public class StructureTableReaderTest {
 
     private static List<List<String>> parse(String table) throws IOException {
         List<List<String>> rows = new ArrayList<>();
-        CustomDatabaseImporter.readStructureTable(new BufferedReader(new StringReader(table)),
+        StructureTableReader.read(new BufferedReader(new StringReader(table)),
                 (structure, id, name) -> rows.add(Arrays.asList(structure, id, name)));
         return rows;
     }
