@@ -48,7 +48,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
     private DefaultListModel<File> fileListModel;
 
 
-    private final FileFilter supportedStructureFiles = new FileNameExtensionFilter("Structure files (.tsv, .csv, .sdf)", "tsv", "csv", "sdf");
+    private final FileFilter supportedStructureFiles = new FileNameExtensionFilter("Structure files (tab-separated .tsv/.csv, .sdf)", "tsv", "csv", "sdf");
 
     private final FileFilter supportedSpectraFiles = new FileFilter() {
         @Override
