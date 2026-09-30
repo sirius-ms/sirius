@@ -99,6 +99,34 @@ public class StructureTableReaderTest {
     }
 
     @Test
+    public void synonymsFromOtherToolsAreRecognized() throws IOException {
+        // ChEMBL style
+        assertEquals(List.of(Arrays.asList("CCO", "CHEMBL545", "ETHANOL")),
+                parse("chembl_id\tpref_name\tcanonical_smiles\nCHEMBL545\tETHANOL\tCCO\n"));
+        // CompTox style
+        assertEquals(List.of(Arrays.asList("CCO", "DTXSID9020584", "Ethanol")),
+                parse("DTXSID\tPREFERRED_NAME\tSMILES\nDTXSID9020584\tEthanol\tCCO\n"));
+        // spaces, dashes and case do not matter
+        assertEquals(List.of(Arrays.asList("CCO", "ID1", "Ethanol")),
+                parse("Compound ID\tCompound-Name\tIsomeric SMILES\nID1\tEthanol\tCCO\n"));
+        assertEquals(List.of(Arrays.asList("InChI=1S/CH4O/c1-2/h2H,1H3", null, "Methanol")),
+                parse("Title\tStandard_InChI\nMethanol\tInChI=1S/CH4O/c1-2/h2H,1H3\n"));
+    }
+
+    @Test
+    public void canonicalColumnNameWinsOverSynonym() throws IOException {
+        assertEquals(List.of(Arrays.asList("CCO", "ID1", "Ethanol")),
+                parse("IUPAC name\tcanonical_smiles\tcompound_id\tname\tSMILES\tid\n"
+                        + "ethanol\tXXX\tOTHER\tEthanol\tCCO\tID1\n"));
+    }
+
+    @Test
+    public void smilesColumnWinsOverInchiColumn() throws IOException {
+        assertEquals(List.of(Arrays.asList("CCO", null, null)),
+                parse("standard_inchi\tcanonical_smiles\nInChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3\tCCO\n"));
+    }
+
+    @Test
     public void rowsWithoutStructureAreSkipped() throws IOException {
         assertEquals(List.of(Arrays.asList("CCO", null, "Ethanol")),
                 parse("name\tSMILES\nNoStructure\t\nEthanol\tCCO\nShortRow\n"));
