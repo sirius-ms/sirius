@@ -79,7 +79,7 @@ Requests and identifiers both drop the qualifier — `BasicSpectrum`, `DatabaseS
   regeneration order, `add-rest-endpoint` the endpoint conventions and what makes one public.
 * **Third-party libraries:** do not introduce heavy third-party mathematical or bioinformatics libraries
   unless asked.
-* **License headers:** the repository is not under one license. The applications — `sirius_cli`,
+* **License headers:** SIRIUS's own code is under two licenses. The applications — `sirius_cli`,
   `sirius_gui`, `sirius_rest_service` — are AGPL; the libraries under them and `sirius-sdk` are LGPL,
   which is also what the SDK's published POM declares. A new file takes the license of its module,
   the header most of the module's files carry, with the current year. The copyright owner follows
