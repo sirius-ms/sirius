@@ -316,74 +316,10 @@ public class CustomDatabaseImporter {
     public void importStructuresFromSmileAndInChis(InputStream stream) throws IOException {
         throwIfShutdown();
         // checkConnectionToUrl for SMILES and InChI formats
-        readStructureTable(new BufferedReader(new InputStreamReader(stream)), (structure, id, name) -> {
+        StructureTableReader.read(new BufferedReader(new InputStreamReader(stream)), (structure, id, name) -> {
             checkCancellation();
             importStructuresFromSmileAndInChis(structure, id, name);
         });
-    }
-
-    /** Receives one row of a structure table: the SMILES or InChI plus the optional id and name. */
-    @FunctionalInterface
-    interface StructureRowConsumer {
-        void accept(@NotNull String structure, @Nullable String id, @Nullable String name);
-    }
-
-    /**
-     * Reads a tab separated structure table row by row. The first non-empty line decides the layout:
-     * a header row naming a SMILES or InChI column (case-insensitive; optional "id" and "name" columns,
-     * any order) maps the columns by name - e.g. the files written by the custom database TSV export.
-     * Without such a header the table is positional (structure, id, name) and the first line is a data
-     * row like any other. Rows without a structure are skipped, blank id and name cells are passed on
-     * as null.
-     */
-    static void readStructureTable(@NotNull BufferedReader reader, @NotNull StructureRowConsumer rows) throws IOException {
-        StructureColumns columns = null;
-        String line;
-        while ((line = reader.readLine()) != null) {
-            //skip empty lines
-            if (line.isBlank())
-                continue;
-            String[] parts = line.split("\t");
-            if (columns == null) {
-                columns = StructureColumns.fromHeader(parts);
-                if (columns != null)
-                    continue; //header row, no data
-                columns = StructureColumns.POSITIONAL;
-            }
-            final String structure = columns.cell(parts, columns.structure());
-            if (structure == null)
-                continue;
-            rows.accept(structure.trim(), columns.cell(parts, columns.id()), columns.cell(parts, columns.name()));
-        }
-    }
-
-    /** Column indices of a structure table; -1 marks an absent column. */
-    record StructureColumns(int structure, int id, int name) {
-        static final StructureColumns POSITIONAL = new StructureColumns(0, 1, 2);
-
-        /** The columns named by the given header cells, or null if the cells are not a header row. */
-        @Nullable
-        static StructureColumns fromHeader(String[] cells) {
-            int smiles = -1, inchi = -1, id = -1, name = -1;
-            for (int i = 0; i < cells.length; i++) {
-                switch (cells[i].trim().toLowerCase(Locale.ROOT)) {
-                    case "smiles" -> smiles = i;
-                    case "inchi" -> inchi = i;
-                    case "id" -> id = i;
-                    case "name" -> name = i;
-                    default -> { }
-                }
-            }
-            if (smiles < 0 && inchi < 0)
-                return null;
-            return new StructureColumns(smiles >= 0 ? smiles : inchi, id, name);
-        }
-
-        /** The cell at the given index, or null if the column is absent or the cell is blank. */
-        @Nullable
-        String cell(String[] parts, int index) {
-            return index >= 0 && index < parts.length && !parts[index].isBlank() ? parts[index] : null;
-        }
     }
 
     public void importStructuresFromResources(List<InputResource<?>> structureFiles) throws IOException {
