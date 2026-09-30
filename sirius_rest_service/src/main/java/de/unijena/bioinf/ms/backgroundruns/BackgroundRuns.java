@@ -291,9 +291,10 @@ public final class BackgroundRuns {
         final WorkflowBuilder wfBuilder = new WorkflowBuilder(new ComputeRootOption(instances), configOptionLoader, null, false);
         final Run computation = new Run(wfBuilder, false);
         CommandLine.ParseResult pr = computation.parseArgs(command.toArray(String[]::new));
+        final Workflow workflow = computation.makeWorkflow(bufferfactory);
 
-        return new BackgroundRunJob(
-                computation.makeWorkflow(bufferfactory),
+        BackgroundRunJob run = new BackgroundRunJob(
+                workflow,
                 instances,
                 RUN_COUNTER.incrementAndGet(),
                 command.stream().collect(Collectors.joining(" ")),
@@ -301,6 +302,10 @@ public final class BackgroundRuns {
                 "Computation",
                 JobEffect.COMPUTATION
         );
+        // Of the commands, only a tool chain changes the instances it runs on. A standalone tool reads them (e.g.
+        // writing summaries, which still needs them locked) or does not touch them at all (e.g. a custom database import).
+        run.reindexInstances = workflow instanceof ToolChainWorkflow;
+        return run;
     }
 
     private BackgroundRunJob submitRunAndLockInstances(final BackgroundRunJob runToSubmit) {
@@ -349,6 +354,13 @@ public final class BackgroundRuns {
 
         @Nullable
         private Iterable<? extends Instance> instances;
+
+        /**
+         * Whether the instances are re-indexed when the run finishes; they are locked while it runs either way.
+         * On by default: a run other than a command relies on it - a fold change run, for one, would otherwise
+         * leave the fold changes it removed in the index.
+         */
+        private boolean reindexInstances = true;
 
         @Nullable
         private List<String> affectedFeatureIds = null;
@@ -428,7 +440,8 @@ public final class BackgroundRuns {
                     try {
                         if (!affIds.isEmpty()){
                             affectedFeatureIds = affIds;
-                            submitJob(() -> project.updateSearchIndex(affectedFeatureIds), JobType.IO).awaitResult();
+                            if (reindexInstances)
+                                submitJob(() -> project.updateSearchIndex(affectedFeatureIds), JobType.IO).awaitResult();
                         }
                         logInfo("Unlocking Instances after Computation...");
                     } finally {
