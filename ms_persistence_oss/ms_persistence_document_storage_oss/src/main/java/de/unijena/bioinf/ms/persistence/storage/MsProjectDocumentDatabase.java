@@ -250,6 +250,14 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
         }
 
         getStorage().insertAll(features);
+        featuresWritten(features);
+    }
+
+    /**
+     * Called with every batch of {@code Feature} rows once they are stored - the one place all of them pass
+     * through, whatever writes them. A project keeps what it derives from them current here.
+     */
+    default void featuresWritten(@NotNull List<Feature> features) throws IOException {
     }
 
     private <T> void importOptionals(Optional<List<T>> optionals, long parentId, IOFunctions.BiIOConsumer<List<T>, Long> importer) throws IOException {
