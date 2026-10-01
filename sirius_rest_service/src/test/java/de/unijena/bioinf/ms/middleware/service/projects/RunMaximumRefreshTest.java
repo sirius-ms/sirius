@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
@@ -242,5 +243,35 @@ public class RunMaximumRefreshTest {
         assertEquals(List.of("feature"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
                 "the index is still served");
         assertTrue(ps.findProjectMaximumIntensities().isEmpty(), "opening and reading must not derive the maxima");
+    }
+
+    private static Feature measured(@Nullable Long runId, double apex) {
+        return Feature.builder().runId(runId).apexIntensity(apex).areaUnderCurve(apex * 20).build();
+    }
+
+    /** A run the index has never seen has no documents to rewrite but the ones being written. */
+    @Test
+    public void testANewRunRewritesNothing() {
+        ProjectMaximumIntensities indexed = new ProjectMaximumIntensities();
+        indexed.fold(List.of(measured(1L, 1.0e5)));
+        ProjectMaximumIntensities now = indexed.copy();
+        now.fold(List.of(measured(2L, 5.0e5), measured(1L, 2.0e5)));
+
+        NoSQLProjectImpl.RaisedMaxima raised = NoSQLProjectImpl.raisedSince(indexed, now);
+        assertEquals(java.util.Set.of(1L), raised.runs(), "run 1 rose and has documents; run 2 is new");
+        assertFalse(raised.global(), "nothing without a run refers to the global maximum yet");
+    }
+
+    /** The global maximum matters to the index once it holds features without a run - and then it always does. */
+    @Test
+    public void testTheGlobalMaximumMattersOnceThereAreFeaturesWithoutARun() {
+        ProjectMaximumIntensities indexed = new ProjectMaximumIntensities();
+        indexed.fold(List.of(measured(null, 1.0e5)));
+        ProjectMaximumIntensities now = indexed.copy();
+        now.fold(List.of(measured(1L, 5.0e5))); // a run feature raises the global maximum
+
+        NoSQLProjectImpl.RaisedMaxima raised = NoSQLProjectImpl.raisedSince(indexed, now);
+        assertTrue(raised.global(), "the peak-list feature is now held against 5.0e5");
+        assertEquals(java.util.Set.of(), raised.runs(), "run 1 is new");
     }
 }
