@@ -20,9 +20,12 @@ package de.unijena.bioinf.ms.gui.utils.filter;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
+import io.sirius.ms.sdk.model.DataQuality;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,24 +42,25 @@ public class FeatureFilterModelTest {
      */
     private static FeatureFilterModel cleanSlate() {
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setHasMsMs(false);
-        model.getFeatureQualityFilter().reset();
+        model.update(f -> f.withHasMsMs(false));
+        model.update(f -> f.withFeatureQuality(FeatureFilter.ALL_QUALITIES));
         return model;
     }
 
     @Test
     public void testCleanSlateIsInactive() {
-        assertFalse(cleanSlate().isActive());
+        FeatureFilterModel model = cleanSlate();
+        assertFalse(model.get().isActive(model.getContext()));
     }
 
     @Test
     public void testBlankFoldChangeAloneIsActive() {
         FeatureFilterModel model = cleanSlate();
-        model.getSampleBlankFoldChange().setEnabled(true);
+        model.update(f -> f.withBlankFoldChangeEnabled(true));
 
         // the blank fold-change filter contributes a range clause to the lucene query, so a model
         // with only this filter enabled must be considered active
-        assertTrue(model.isActive(), "blank fold-change filter alone must mark the model active");
+        assertTrue(model.get().isActive(model.getContext()), "blank fold-change filter alone must mark the model active");
 
         // ... and the compiled query must therefore be present (isActive() gates toLuceneQuery)
         Optional<String> query = model.toLuceneQuery(ConfidenceDisplayMode.EXACT);
@@ -65,33 +69,67 @@ public class FeatureFilterModelTest {
 
     @Test
     public void testIsSupportedAdduct() {
-        assertTrue(FeatureFilterModel.isSupportedAdduct(PrecursorIonType.fromString("[M + H]+")),
+        assertTrue(FeatureFilter.isSupportedAdduct(PrecursorIonType.fromString("[M + H]+")),
                 "single-charged monomeric adduct is supported");
         // multiply-charged adducts are not constructible yet (MultipleChargeException), so only the
         // multimeric case can be exercised here; isSupportedAdduct still guards both conditions.
-        assertFalse(FeatureFilterModel.isSupportedAdduct(PrecursorIonType.fromString("[2M + H]+")),
+        assertFalse(FeatureFilter.isSupportedAdduct(PrecursorIonType.fromString("[2M + H]+")),
                 "multimeric adduct is not supported");
     }
 
     @Test
     public void testAbsoluteIntensityFilterAloneIsActive() {
         FeatureFilterModel model = cleanSlate();
-        assertFalse(model.isActive(), "a minimum of zero, the default, filters nothing");
+        assertFalse(model.get().isActive(model.getContext()), "a minimum of zero, the default, filters nothing");
 
-        model.getIntensityFilter().setMinAbsolute(100_000);
-        assertTrue(model.isActive(), "a minimum above zero alone must mark the model active");
+        model.update(f -> f.withIntensity(f.intensity().withMinAbsolute(100_000)));
+        assertTrue(model.get().isActive(model.getContext()), "a minimum above zero alone must mark the model active");
         assertEquals("intensityApex:[100000 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
     }
 
     @Test
     public void testRelativeIntensityFilterSearchesTheRelativeField() {
         FeatureFilterModel model = cleanSlate();
-        model.getIntensityFilter().setMeasure(IntensityFilter.Measure.AUC);
-        model.getIntensityFilter().setMode(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX);
-        model.getIntensityFilter().setMinPercent(10);
+        model.update(f -> f.withIntensity(f.intensity().withMeasure(IntensityFilter.Measure.AUC)));
+        model.update(f -> f.withIntensity(f.intensity().withMode(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX)));
+        model.update(f -> f.withIntensity(f.intensity().withMinPercent(10)));
 
         // the index holds the percentage as a field of its own, so the model needs nothing about the project
-        assertTrue(model.isActive());
+        assertTrue(model.get().isActive(model.getContext()));
         assertEquals("intensityAUCRelative:[10 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    /**
+     * The committed "restore defaults" (the search bar's in-field button) must land on the same state a
+     * fresh model carries - MS/MS required, quality DECENT/GOOD, the supported detected adducts - and
+     * drop everything else: the user's query, the inversion and any range restriction.
+     */
+    @Test
+    public void testResetFilterToDefaultsRestoresTheDefaultConfiguration() throws Exception {
+        PrecursorIonType protonated = PrecursorIonType.fromString("[M + H]+");
+        PrecursorIonType dimer = PrecursorIonType.fromString("[2M + H]+"); // unsupported: multimeric
+
+        FeatureFilterModel model = cleanSlate();
+        model.updateAdducts(List.of(protonated, dimer));
+        // move every default-carrying facet away from its default, plus a query, inversion and a range
+        model.update(f -> f.withAdducts(Set.of(protonated, dimer)));
+        model.update(f -> f.withUserQuery("formula:C6H12O6"));
+        model.update(f -> f.withInverted(true));
+        model.update(f -> f.withMz(100d, f.mz().max()));
+
+        model.resetFilterToDefaults();
+
+        assertTrue(model.get().hasMsMs(), "default: MS/MS required");
+        assertFalse(model.get().featureQuality().contains(DataQuality.BAD), "default excludes BAD");
+        assertFalse(model.get().featureQuality().contains(DataQuality.LOWEST), "default excludes LOWEST");
+        assertTrue(model.get().featureQuality().contains(DataQuality.DECENT), "default keeps DECENT");
+        assertTrue(model.get().featureQuality().contains(DataQuality.GOOD), "default keeps GOOD");
+        assertTrue(model.get().adducts().contains(protonated), "default selects the supported adducts");
+        assertFalse(model.get().adducts().contains(dimer), "default drops unsupported (multimeric) adducts");
+        assertTrue(model.get().adducts().stream().allMatch(FeatureFilter::isSupportedAdduct));
+        assertFalse(model.get().isUserQueryActive(), "the search query is cleared");
+        assertFalse(model.get().inverted(), "the inversion is dropped");
+        assertFalse(model.get().isMzFilterActive(model.getContext()), "range restrictions are dropped");
+        assertTrue(model.get().isActive(model.getContext()), "the default configuration is an active filter");
     }
 }

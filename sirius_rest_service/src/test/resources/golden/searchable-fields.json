@@ -40,10 +40,10 @@
     "fieldType" : "DOUBLE",
     "fullTextSearch" : false,
     "sortable" : true,
-    "defaultSearchField" : false,
+    "defaultSearchField" : true,
     "significantSuffixLength" : 1,
     "possibleValues" : null,
-    "description" : "Mass-to-charge ratio (m/z) of the precursor ion of the feature."
+    "description" : "Mass-to-charge ratio (m/z) of the precursor ion of the feature. A bare number in the query (no field) also matches this field within a window around it: half a unit of the number's last decimal, at least 10 ppm - so 301.14 finds [301.135 TO 301.145], 301 finds [300.5 TO 301.5]."
   }, {
     "name" : "intensityApex",
     "fieldType" : "DOUBLE",

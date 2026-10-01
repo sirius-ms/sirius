@@ -316,20 +316,10 @@ public class CustomDatabaseImporter {
     public void importStructuresFromSmileAndInChis(InputStream stream) throws IOException {
         throwIfShutdown();
         // checkConnectionToUrl for SMILES and InChI formats
-        final BufferedReader br = new BufferedReader(new InputStreamReader(stream));
-        String line;
-        while ((line = br.readLine()) != null) {
+        StructureTableReader.read(new BufferedReader(new InputStreamReader(stream)), (structure, id, name) -> {
             checkCancellation();
-            //skip empty lines
-            if (!line.isBlank()) {
-                String[] parts = line.split("\t");
-                final String structure = parts[0].trim();
-
-                final String id = parts.length > 1 ? parts[1] : null;
-                final String name = parts.length > 2 ? parts[2] : null;
-                importStructuresFromSmileAndInChis(structure, id, name);
-            }
-        }
+            importStructuresFromSmileAndInChis(structure, id, name);
+        });
     }
 
     public void importStructuresFromResources(List<InputResource<?>> structureFiles) throws IOException {

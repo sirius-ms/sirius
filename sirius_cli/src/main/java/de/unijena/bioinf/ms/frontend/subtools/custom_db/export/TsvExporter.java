@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.frontend.subtools.custom_db.export;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.ms.frontend.subtools.summaries.TsvTableWriter;
 import de.unijena.bioinf.ms.frontend.utils.DatabaseLinkUtil;
@@ -24,7 +25,9 @@ public class TsvExporter extends DbExporter {
         this.api = api;
         this.withLinks = withLinks;
         tsvWriter = new TsvTableWriter(writer, false);
-        List<String> columns = new ArrayList<>(List.of("name", "SMILES", "InChIkey2D", "InChI", "formula", "mass"));
+        // structure, id and name come first: the custom database import reads exactly these columns
+        // positionally, so an exported database can be imported again
+        List<String> columns = new ArrayList<>(List.of("SMILES", "id", "name", "InChIkey2D", "InChI", "formula", "mass"));
         if (withLinks) {
             columns.add("links");
         }
@@ -40,8 +43,9 @@ public class TsvExporter extends DbExporter {
         CompoundCandidate c = cw.getCandidate(null, null);
 
         List<Object> values = new ArrayList<>(List.of(
-                Optional.ofNullable(c.getName()).orElse(""),
                 c.getSmiles(),
+                customDbId(c),
+                Optional.ofNullable(c.getName()).orElse(""),
                 c.getInchiKey2D(),
                 c.getInchi().in2D,
                 cw.getFormula(),
@@ -66,6 +70,20 @@ public class TsvExporter extends DbExporter {
         }
 
         return values;
+    }
+
+    /**
+     * The custom database id of the entry: custom databases store the imported ids as links without a
+     * database name. Empty if the entry was imported without id.
+     */
+    private static String customDbId(CompoundCandidate c) {
+        if (c.getLinks() == null)
+            return "";
+        return c.getLinks().stream()
+                .filter(l -> l.getName() == null || l.getName().isBlank())
+                .map(DBLink::getId)
+                .filter(id -> id != null && !id.isBlank())
+                .findFirst().orElse("");
     }
 
     @Override

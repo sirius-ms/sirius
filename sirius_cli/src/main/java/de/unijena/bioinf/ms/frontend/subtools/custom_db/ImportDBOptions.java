@@ -25,7 +25,8 @@ public class ImportDBOptions implements StandaloneTool<Workflow> {
     @CommandLine.Parameters(arity = "1..*", description = {
             "Files or directories to import into the database.",
             "Supported formats: " + MsExperimentParser.DESCRIPTION,
-            "Structures without spectra can be passed as a tab-separated (.tsv) file with fields [SMILES, id (optional), name (optional)].",
+            "Structures without spectra can be passed as a tab-separated file (.tsv or .csv, other separators are not supported) with fields [SMILES or InChI, id (optional), name (optional)].",
+            "If the first line is a header naming a SMILES or InChI column, the columns are read by name instead, in any order and next to other columns. Common names are recognized, e.g. 'canonical_smiles', 'standard_inchi', 'compound_id', 'compound_name'.",
             "Directories will be recursively expanded."
     })
     public List<Path> input;

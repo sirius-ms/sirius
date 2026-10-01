@@ -25,6 +25,7 @@ import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.FieldFacts;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.NumericFreeTextQueryNodeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,8 +105,27 @@ public class SearchableFieldDescriber {
                 .sortable(facts.sortable())
                 .defaultSearchField(facts.defaultSearchField())
                 .possibleValues(possibleValuesOf(facts))
-                .description(facts.javaType() != null ? descriptions.apply(facts.declaredBy()) : null)
+                .description(describe(facts, descriptions))
                 .build();
+    }
+
+    /**
+     * The field's declared description, plus - for a numeric default search field - one sentence saying what a bare
+     * number does there, since {@code defaultSearchField} alone reads as "searched for the term" to a client.
+     */
+    @Nullable
+    private static String describe(@NotNull FieldFacts facts, @NotNull Function<Field, String> descriptions) {
+        String description = facts.javaType() != null ? descriptions.apply(facts.declaredBy()) : null;
+        boolean numeric = switch (facts.kind()) {
+            case INTEGER, LONG, DOUBLE, FLOAT -> true;
+            default -> false;
+        };
+        if (!facts.defaultSearchField() || !numeric)
+            return description;
+        String bareNumber = "A bare number in the query (no field) also matches this field within a window around it: "
+                + "half a unit of the number's last decimal, at least " + (int) NumericFreeTextQueryNodeProcessor.DEFAULT_PPM
+                + " ppm - so 301.14 finds [301.135 TO 301.145], 301 finds [300.5 TO 301.5].";
+        return description == null || description.isBlank() ? bareNumber : description.trim() + " " + bareNumber;
     }
 
     /**

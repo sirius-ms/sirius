@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -82,6 +82,10 @@ public interface ProjectsProvider<P extends Project> extends DisposableBean {
 
     default void closeProjectSpace(String projectId, boolean compact) throws IOException {
         closeProjectSpace(projectId);
+    }
+
+    default void closeProjectSpace(String projectId, boolean compact, boolean rewriteLayout) throws IOException {
+        closeProjectSpace(projectId, compact || rewriteLayout);
     }
 
     @Deprecated

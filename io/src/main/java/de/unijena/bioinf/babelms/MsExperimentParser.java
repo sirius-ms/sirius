@@ -53,7 +53,7 @@ public class MsExperimentParser {
     protected static final Set<String> LCMS_ENDINGS = Set.of(".mzml", ".mzxml");
 
     // there is no good solution without writing the endings here explicitly (otherwise DESCRIPTION can not be used in annotations)
-    public static final String DESCRIPTION = ".ms, .mgf, .mzxml, .mzml, .cef, .msp, .mat, .mb, .mblib, .txt (MassBank), .json (GNPS, MoNA), .zip";
+    public static final String DESCRIPTION = ".ms, .mgf, .mzxml, .mzml, .cef, .msp, .mat, .mb, .mblib, .txt (MassBank), .json (GNPS, MoNA, mzmine), .zip";
 
     /**
      * This postprocessor annotates Parameter configs to the {@link Ms2Experiment}. If {@link InputFileConfig} is given
