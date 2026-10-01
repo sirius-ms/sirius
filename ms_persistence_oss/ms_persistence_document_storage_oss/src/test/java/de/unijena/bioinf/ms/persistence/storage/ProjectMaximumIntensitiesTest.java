@@ -85,6 +85,7 @@ public class ProjectMaximumIntensitiesTest {
         assertEquals(1.2e6, stored().run(RUN_A).getApex());
         assertEquals(3.4e7, stored().run(RUN_A).getAuc());
         assertEquals(1.2e6, stored().getGlobal().getApex());
+        assertFalse(stored().isFeaturesWithoutRun());
     }
 
     @Test
@@ -118,6 +119,7 @@ public class ProjectMaximumIntensitiesTest {
         assertEquals(1.2e6, stored().run(RUN_A).getApex(), "it belongs to no run");
         assertEquals(2.5e6, stored().getGlobal().getApex());
         assertEquals(3.4e7, stored().getGlobal().getAuc(), "an area only comes from run features");
+        assertTrue(stored().isFeaturesWithoutRun(), "the global maximum now has something to refer to");
     }
 
     @Test

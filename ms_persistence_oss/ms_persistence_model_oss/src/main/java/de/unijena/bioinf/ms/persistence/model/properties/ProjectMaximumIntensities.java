@@ -92,6 +92,12 @@ public class ProjectMaximumIntensities {
     /** Over every feature, with or without a run. */
     private Maximum global = new Maximum();
 
+    /**
+     * Whether any feature without a run has been written - the only features held against the global maximum,
+     * so a rise of it means nothing to a project that has none.
+     */
+    private boolean featuresWithoutRun;
+
     /** The maximum a feature is held against: that of its run, or the global one when it belongs to no run. */
     public @NotNull Maximum of(@NotNull Feature feature) {
         return feature.getRunId() != null ? run(feature.getRunId()) : global;
@@ -107,8 +113,12 @@ public class ProjectMaximumIntensities {
     public boolean fold(@NotNull Collection<Feature> features) {
         boolean raised = false;
         for (Feature feature : features) {
-            if (feature.getRunId() != null)
+            if (feature.getRunId() != null) {
                 raised |= runs.computeIfAbsent(feature.getRunId(), id -> new Maximum()).fold(feature);
+            } else if (!featuresWithoutRun) {
+                featuresWithoutRun = true;
+                raised = true;
+            }
             raised |= global.fold(feature);
         }
         return raised;
@@ -134,6 +144,7 @@ public class ProjectMaximumIntensities {
         ProjectMaximumIntensities copy = new ProjectMaximumIntensities();
         runs.forEach((runId, maximum) -> copy.runs.put(runId, maximum.copy()));
         copy.global = global.copy();
+        copy.featuresWithoutRun = featuresWithoutRun;
         return copy;
     }
 }

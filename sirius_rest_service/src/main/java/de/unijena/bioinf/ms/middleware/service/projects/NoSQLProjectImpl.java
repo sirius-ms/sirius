@@ -301,7 +301,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private static final ProjectMaximumIntensities NO_MAXIMA = new ProjectMaximumIntensities();
 
     /** The runs whose maximum rose, and whether the global maximum, which the features without a run refer to, did. */
-    private record RaisedMaxima(@NotNull Set<Long> runs, boolean global) {
+    record RaisedMaxima(@NotNull Set<Long> runs, boolean global) {
         static final RaisedMaxima NONE = new RaisedMaxima(Set.of(), false);
 
         boolean isEmpty() {
@@ -328,7 +328,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             // session; what it was written against is unknown, and the index rebuilds once anyway when its
             // schema fingerprint changes with this release.
             return RaisedMaxima.NONE;
-        return new RaisedMaxima(now.runsRaisedSince(before), now.globalRaisedSince(before));
+        return raisedSince(before, now);
+    }
+
+    /**
+     * The maxima that rose between what the index was written against and now, as far as they matter to a
+     * document it holds. Only what the index already holds can be out of date: a run it has no maximum for has
+     * no documents yet but the ones being written, and before the first feature without a run nothing refers
+     * to the global maximum.
+     */
+    static RaisedMaxima raisedSince(@NotNull ProjectMaximumIntensities indexed, @NotNull ProjectMaximumIntensities now) {
+        Set<Long> runs = new HashSet<>(now.runsRaisedSince(indexed));
+        runs.retainAll(indexed.getRuns().keySet());
+        return new RaisedMaxima(runs, indexed.isFeaturesWithoutRun() && now.globalRaisedSince(indexed));
     }
 
     /**
@@ -340,14 +352,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private void reindexRuns(@NotNull RaisedMaxima raised, @Nullable Collection<Long> alreadyWritten) {
         if (raised.isEmpty())
             return;
-        Set<Long> skip = alreadyWritten == null ? Set.of() : new HashSet<>(alreadyWritten);
         Set<Long> affected = new HashSet<>();
-        try (Stream<Feature> runFeatures = storage().findAllStr(Feature.class)) {
-            runFeatures.filter(f -> !skip.contains(f.getAlignedFeatureId())).forEach(f -> {
-                if (f.getRunId() == null ? raised.global() : raised.runs().contains(f.getRunId()))
-                    affected.add(f.getAlignedFeatureId());
-            });
+        // over the runId index: a run's features, not every feature of the project
+        for (Long runId : raised.runs()) {
+            try (Stream<Feature> runFeatures = storage().findStr(Filter.where("runId").eq(runId), Feature.class)) {
+                runFeatures.forEach(f -> affected.add(f.getAlignedFeatureId()));
+            }
         }
+        // the features without a run are what the global maximum is for: in a peak-list project all of them
+        if (raised.global()) {
+            try (Stream<Feature> runFeatures = storage().findAllStr(Feature.class)) {
+                runFeatures.filter(f -> f.getRunId() == null).forEach(f -> affected.add(f.getAlignedFeatureId()));
+            }
+        }
+        if (alreadyWritten != null)
+            alreadyWritten.forEach(affected::remove);
         feedFeaturesToIndex(affected, alfs -> searchService.updateDocuments(projectId, alfs));
     }
 
