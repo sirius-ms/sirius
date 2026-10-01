@@ -19,25 +19,25 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.NoSqlProjectSearchContextProvider;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.SearchServiceImpl;
-import de.unijena.bioinf.ms.persistence.model.core.DataSource;
+import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import lombok.SneakyThrows;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -46,10 +46,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * A feature's relative intensity is a percentage of the most intense feature of its run, so writing a stronger
- * feature invalidates what the index holds for every other feature of that run. The run maxima that decide this
- * are derived from the run features when they are first needed - a session that only reads never derives them -
- * so a write may find none cached and still has to know which maxima it moved.
+ * A feature's relative intensity is a percentage of the most intense feature its run has held, so writing a
+ * stronger feature invalidates what the index holds for every other feature of that run. The maxima are stored
+ * by the project and rise as features are written; the index rewrites the runs whose maximum rose past what its
+ * documents were written against. A deletion lowers no maximum and rewrites nothing.
  */
 public class RunMaximumRefreshTest {
 
@@ -78,47 +78,45 @@ public class RunMaximumRefreshTest {
         ps.close();
     }
 
-    /** A fresh session on the same project: its run maxima are not derived yet. */
+    /** A fresh session on the same project. */
     private NoSQLProjectImpl session() {
         return new NoSQLProjectImpl("test", new NoSQLProjectSpaceManager(ps), searchService, (a, b) -> false);
     }
 
+    /**
+     * Imports one aligned feature with one run feature the way every import does, through the project - which is
+     * what folds it into the stored maxima. {@code runId} null makes it a peak-list feature.
+     */
     @SneakyThrows
-    private long addFeature(String name, double apexIntensity) {
-        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name(name).build();
-        ps.getStorage().insert(af);
-        ps.getStorage().insert(Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
-                .apexIntensity(apexIntensity).areaUnderCurve(apexIntensity).runId(runId).build());
+    private long importFeature(String name, @Nullable Long runId, double apexIntensity, @Nullable Long compoundId) {
+        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name(name)
+                .features(List.of(Feature.builder().apexIntensity(apexIntensity).areaUnderCurve(apexIntensity * 20)
+                        .runId(runId).build()))
+                .build();
+        if (compoundId == null)
+            ps.importAlignedFeatures(List.of(af));
+        else
+            ps.importAlignedFeatures(List.of(af), compoundId);
         return af.getAlignedFeatureId();
     }
 
-    /** The same, but belonging to a compound - the unit the compound delete removes. */
-    @SneakyThrows
-    private long addFeatureOfCompound(String name, double apexIntensity, long compoundId) {
-        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name(name).compoundId(compoundId).build();
-        ps.getStorage().insert(af);
-        ps.getStorage().insert(Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
-                .apexIntensity(apexIntensity).areaUnderCurve(apexIntensity).runId(runId).build());
-        return af.getAlignedFeatureId();
+    private long addFeature(String name, double apexIntensity) {
+        return importFeature(name, runId, apexIntensity, null);
+    }
+
+    private long addPeakListFeature(String name, double apexIntensity) {
+        return importFeature(name, null, apexIntensity, null);
     }
 
     @SneakyThrows
     private long addCompound(String name) {
-        de.unijena.bioinf.ms.persistence.model.core.Compound compound =
-                de.unijena.bioinf.ms.persistence.model.core.Compound.builder().name(name).build();
+        Compound compound = Compound.builder().name(name).build();
         ps.getStorage().insert(compound);
         return compound.getCompoundId();
     }
 
-    /** A peak-list feature: no run, and the source file of its aligned feature is what groups it. */
-    @SneakyThrows
-    private long addPeakListFeature(String name, String file, double apexIntensity) {
-        AlignedFeatures af = AlignedFeatures.builder().charge((byte) 1).name(name)
-                .dataSource(DataSource.fromPath(file)).build();
-        ps.getStorage().insert(af);
-        ps.getStorage().insert(Feature.builder().alignedFeatureId(af.getAlignedFeatureId())
-                .apexIntensity(apexIntensity).areaUnderCurve(apexIntensity).build());
-        return af.getAlignedFeatureId();
+    private static List<String> ids(long... ids) {
+        return java.util.Arrays.stream(ids).mapToObj(String::valueOf).toList();
     }
 
     private List<String> namesMatching(NoSQLProjectImpl project, String query) {
@@ -127,177 +125,122 @@ public class RunMaximumRefreshTest {
                 .getContent().stream().map(AlignedFeature::getName).sorted().toList();
     }
 
-    /**
-     * The write that raises a run's maximum happens in a session that has not derived the maxima yet - the
-     * state the index was written against is then the one without the features this write added, which is what
-     * makes the comparison possible at all.
-     */
+    /** The stronger feature arrives in a later session, which knows what the index holds from the project. */
     @Test
-    @SneakyThrows
     public void testAStrongerFeatureRewritesTheRunsOtherFeatures() {
         NoSQLProjectImpl first = session();
-        long weak = addFeature("weak", 100d);
-        first.addToSearchIndex(List.of(String.valueOf(weak)), null);
+        long weak = addFeature("weak", 1.0e5);
+        first.addToSearchIndex(ids(weak), null);
         assertEquals(List.of("weak"), namesMatching(first, "intensityApexRelative:[50 TO *]"),
                 "the only feature of the run is its maximum");
 
-        // a new session reads nothing, so it derives no maxima before the write
         NoSQLProjectImpl second = session();
-        long strong = addFeature("strong", 1000d);
-        second.addToSearchIndex(List.of(String.valueOf(strong)), null);
+        long strong = addFeature("strong", 1.0e6);
+        second.addToSearchIndex(ids(strong), null);
 
         assertEquals(List.of("strong"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
                 "'weak' is now 10 % of the run maximum and must have been rewritten");
         assertEquals(List.of("strong", "weak"), namesMatching(second, "intensityApexRelative:[5 TO *]"));
     }
 
-    /**
-     * The second write of a session does not derive the maxima again - it folds what it wrote into the ones it
-     * already has. That is the path an import takes from its second call onwards, and the one that has to keep
-     * naming the runs whose maximum moved.
-     */
     @Test
-    @SneakyThrows
     public void testASecondWriteInTheSameSessionStillRewritesTheRun() {
         NoSQLProjectImpl session = session();
-        long weak = addFeature("weak", 100d);
-        session.addToSearchIndex(List.of(String.valueOf(weak)), null); // derives the maxima
+        long weak = addFeature("weak", 1.0e5);
+        session.addToSearchIndex(ids(weak), null);
         assertEquals(List.of("weak"), namesMatching(session, "intensityApexRelative:[50 TO *]"));
 
-        long strong = addFeature("strong", 1000d);
-        session.addToSearchIndex(List.of(String.valueOf(strong)), null); // folds into them
+        long strong = addFeature("strong", 1.0e6);
+        session.addToSearchIndex(ids(strong), null);
 
         assertEquals(List.of("strong"), namesMatching(session, "intensityApexRelative:[50 TO *]"),
                 "'weak' is 10 % of the new maximum and must have been rewritten");
         assertEquals(List.of("strong", "weak"), namesMatching(session, "intensityApexRelative:[5 TO *]"));
     }
 
-    /** Folding must not move a maximum that the write did not raise. */
     @Test
-    @SneakyThrows
-    public void testASecondWriteBelowTheMaximumChangesNothing() {
-        NoSQLProjectImpl session = session();
-        long strong = addFeature("strong", 1000d);
-        session.addToSearchIndex(List.of(String.valueOf(strong)), null);
-
-        long weak = addFeature("weak", 100d);
-        session.addToSearchIndex(List.of(String.valueOf(weak)), null);
-
-        assertEquals(List.of("strong"), namesMatching(session, "intensityApexRelative:[50 TO *]"));
-        assertEquals(List.of("strong", "weak"), namesMatching(session, "intensityApexRelative:[10 TO *]"));
-    }
-
-    /**
-     * Peak-list features belong to no run and are grouped by the file they came from, which only their aligned
-     * feature knows - so reading just the features of a write has to look their owner up as well.
-     */
-    @Test
-    @SneakyThrows
-    public void testFoldingGroupsFeaturesWithoutARunByTheirSourceFile() {
-        NoSQLProjectImpl session = session();
-        long weak = addPeakListFeature("weak", "one.mgf", 100d);
-        long other = addPeakListFeature("other", "two.mgf", 50d);
-        session.addToSearchIndex(List.of(String.valueOf(weak), String.valueOf(other)), null);
-        assertEquals(List.of("other", "weak"), namesMatching(session, "intensityApexRelative:[99 TO *]"),
-                "each is the strongest feature of its own file");
-
-        long strong = addPeakListFeature("strong", "one.mgf", 1000d);
-        session.addToSearchIndex(List.of(String.valueOf(strong)), null);
-
-        assertEquals(List.of("other", "strong"), namesMatching(session, "intensityApexRelative:[99 TO *]"),
-                "'weak' is now 10 % of its file's maximum, 'other' is untouched in its own file");
-    }
-
-    /**
-     * Deleting the feature that set a run's maximum lowers it, so every other feature of that run is a larger
-     * share of it than the index says. Unlike a write, a deletion cannot be compared against a state derived
-     * afterwards - what it removed is gone - so the comparison has to be prepared before it happens.
-     */
-    @Test
-    @SneakyThrows
-    public void testDeletingTheStrongestFeatureRewritesTheRunsOtherFeatures() {
+    public void testAWeakerFeatureDoesNotChangeTheOthers() {
         NoSQLProjectImpl first = session();
-        long strong = addFeature("strong", 1000d);
-        long weak = addFeature("weak", 100d);
-        first.addToSearchIndex(List.of(String.valueOf(strong), String.valueOf(weak)), null);
-        assertEquals(List.of("strong"), namesMatching(first, "intensityApexRelative:[50 TO *]"),
-                "'weak' is 10 % of the run maximum while 'strong' is still there");
+        long strong = addFeature("strong", 1.0e6);
+        first.addToSearchIndex(ids(strong), null);
+
+        NoSQLProjectImpl second = session();
+        long weak = addFeature("weak", 1.0e5);
+        second.addToSearchIndex(ids(weak), null);
+
+        assertEquals(List.of("strong"), namesMatching(second, "intensityApexRelative:[50 TO *]"));
+        assertEquals(List.of("strong", "weak"), namesMatching(second, "intensityApexRelative:[10 TO *]"));
+    }
+
+    /** Peak-list features belong to no run; they are held against the strongest feature of the project. */
+    @Test
+    public void testFeaturesWithoutARunAreHeldAgainstTheGlobalMaximum() {
+        NoSQLProjectImpl session = session();
+        long weak = addPeakListFeature("weak", 1.0e5);
+        long other = addPeakListFeature("other", 5.0e4);
+        session.addToSearchIndex(ids(weak, other), null);
+        assertEquals(List.of("weak"), namesMatching(session, "intensityApexRelative:[99 TO *]"));
+        assertEquals(List.of("other"), namesMatching(session, "intensityApexRelative:[49 TO 51]"));
+
+        long strong = addPeakListFeature("strong", 1.0e6);
+        session.addToSearchIndex(ids(strong), null);
+
+        assertEquals(List.of("strong"), namesMatching(session, "intensityApexRelative:[99 TO *]"));
+        assertEquals(List.of("weak"), namesMatching(session, "intensityApexRelative:[9 TO 11]"),
+                "'weak' is now 10 % of the global maximum and must have been rewritten");
+        assertEquals(List.of("other"), namesMatching(session, "intensityApexRelative:[4 TO 6]"));
+    }
+
+    /**
+     * A maximum only ever rises: after the strongest feature is deleted the others keep the share of it they
+     * had, and nothing is rewritten.
+     */
+    @Test
+    public void testDeletingTheStrongestFeatureLeavesTheOthersAsTheyWere() {
+        NoSQLProjectImpl first = session();
+        long strong = addFeature("strong", 1.0e6);
+        long weak = addFeature("weak", 1.0e5);
+        first.addToSearchIndex(ids(strong, weak), null);
 
         NoSQLProjectImpl second = session();
         second.deleteAlignedFeaturesById(String.valueOf(strong));
 
-        assertEquals(List.of("weak"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
-                "'weak' is now the run maximum and must have been rewritten");
+        assertEquals(List.of(), namesMatching(second, "intensityApexRelative:[50 TO *]"),
+                "the reference is the maximum the run has held, not the one it holds");
+        assertEquals(List.of("weak"), namesMatching(second, "intensityApexRelative:[9 TO 11]"));
     }
 
-    /** A deletion that does not touch a maximum leaves every other feature's percentage as it was. */
+    /** The other two ways features are deleted reach the same place. */
     @Test
-    @SneakyThrows
-    public void testDeletingAWeakerFeatureLeavesTheOthersAlone() {
-        NoSQLProjectImpl first = session();
-        long strong = addFeature("strong", 1000d);
-        long middle = addFeature("middle", 500d);
-        long weak = addFeature("weak", 100d);
-        first.addToSearchIndex(List.of(String.valueOf(strong), String.valueOf(middle), String.valueOf(weak)), null);
-
-        NoSQLProjectImpl second = session();
-        second.deleteAlignedFeaturesById(String.valueOf(weak));
-
-        assertEquals(List.of("middle", "strong"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
-                "the run maximum is untouched, so the remaining percentages are too");
-        assertEquals(List.of("middle"), namesMatching(second, "intensityApexRelative:{20 TO 99}"));
-    }
-
-    /**
-     * The other two ways features are deleted reach the same place, and each has to announce what it is about
-     * to remove: deleting several at once, and deleting the compound they belong to.
-     */
-    @Test
-    @SneakyThrows
-    public void testDeletingSeveralFeaturesAtOnceRewritesTheRun() {
-        NoSQLProjectImpl first = session();
-        long strong = addFeature("strong", 1000d);
-        long alsoStrong = addFeature("alsoStrong", 900d);
-        long weak = addFeature("weak", 100d);
-        first.addToSearchIndex(List.of(String.valueOf(strong), String.valueOf(alsoStrong), String.valueOf(weak)), null);
-
-        NoSQLProjectImpl second = session();
-        second.deleteAlignedFeaturesByIds(List.of(String.valueOf(strong), String.valueOf(alsoStrong)));
-
-        assertEquals(List.of("weak"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
-                "'weak' is the run maximum now that both stronger features are gone");
-    }
-
-    @Test
-    @SneakyThrows
-    public void testDeletingTheCompoundOfTheStrongestFeatureRewritesTheRun() {
-        NoSQLProjectImpl first = session();
+    public void testDeletingSeveralFeaturesOrTheirCompoundLeavesTheOthersAsTheyWere() {
+        NoSQLProjectImpl session = session();
         long compound = addCompound("the strong one");
-        long strong = addFeatureOfCompound("strong", 1000d, compound);
-        long weak = addFeature("weak", 100d);
-        first.addToSearchIndex(List.of(String.valueOf(strong), String.valueOf(weak)), null);
-        assertEquals(List.of("strong"), namesMatching(first, "intensityApexRelative:[50 TO *]"));
+        long strong = importFeature("strong", runId, 1.0e6, compound);
+        long alsoStrong = addFeature("alsoStrong", 9.0e5);
+        long middle = addFeature("middle", 5.0e5);
+        long weak = addFeature("weak", 1.0e5);
+        session.addToSearchIndex(ids(strong, alsoStrong, middle, weak), null);
 
-        NoSQLProjectImpl second = session();
-        second.deleteCompoundById(String.valueOf(compound));
+        session.deleteCompoundById(String.valueOf(compound));
+        session.deleteAlignedFeaturesByIds(ids(alsoStrong, middle));
 
-        assertEquals(List.of("weak"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
-                "the compound took the run maximum with it");
+        assertEquals(List.of("weak"), namesMatching(session, "intensityApexRelative:[9 TO 11]"));
+        assertEquals(List.of("weak"), namesMatching(session, "intensityApexRelative:[0 TO *]"));
     }
 
-    /** Nothing moved: a weaker feature leaves the maximum, and the other features' percentages, alone. */
+    /** Opening a project whose index is complete reads the stored maxima at most - it never derives them. */
     @Test
     @SneakyThrows
-    public void testAWeakerFeatureDoesNotChangeTheOthers() {
+    public void testOpeningAProjectWithACompleteIndexDerivesNothing() {
         NoSQLProjectImpl first = session();
-        long strong = addFeature("strong", 1000d);
-        first.addToSearchIndex(List.of(String.valueOf(strong)), null);
+        long feature = addFeature("feature", 1.0e5);
+        first.addToSearchIndex(ids(feature), null);
+        // as if the project had been written before the maxima were stored
+        ps.removeProjectProperty(SiriusProjectDocumentDatabase.PROJECT_MAXIMUM_INTENSITIES_KEY);
 
         NoSQLProjectImpl second = session();
-        long weak = addFeature("weak", 100d);
-        second.addToSearchIndex(List.of(String.valueOf(weak)), null);
-
-        assertEquals(List.of("strong"), namesMatching(second, "intensityApexRelative:[50 TO *]"));
-        assertEquals(List.of("strong", "weak"), namesMatching(second, "intensityApexRelative:[10 TO *]"));
+        assertEquals(List.of("feature"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
+                "the index is still served");
+        assertTrue(ps.findProjectMaximumIntensities().isEmpty(), "opening and reading must not derive the maxima");
     }
 }
