@@ -166,7 +166,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
                 if (specs.hasNext()) return fillLibrary(specs.next());
                 else throw new ChemicalDatabaseException("No spectrum with uuid " + uuid + " found.");
             } else if (type == SpectrumType.MERGED_SPECTRUM) {
-                Iterator<MergedReferenceSpectrum> specs = this.storage.find(Filter.where("uuid").eq(uuid), MergedReferenceSpectrum.class).iterator();
+                Iterator<MergedReferenceSpectrum> specs = this.storage.find(Filter.where("uuid").eq(uuid), MergedReferenceSpectrum.class, SEARCH_PREPARED).iterator();
                 if (specs.hasNext()) return fillLibrary(specs.next());
                 else throw new ChemicalDatabaseException("No spectrum with uuid " + uuid + " found.");
             } else throw new ChemicalDatabaseException("Unknown spectrum type: " + type);
@@ -429,6 +429,6 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
     @Override
     public void forEachMergedSpectrum(Consumer<MergedReferenceSpectrum> consumer) throws IOException {
-        this.storage.findAllStr(MergedReferenceSpectrum.class).map(this::fillLibrary).forEach(consumer);
+        this.storage.findAllStr(MergedReferenceSpectrum.class, SEARCH_PREPARED).map(this::fillLibrary).forEach(consumer);
     }
 }

@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bionf.fastcosine.FastCosine;
 import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import org.junit.jupiter.api.BeforeAll;
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -136,5 +138,26 @@ public class SpectralNoSQLOptionalFieldsTest {
 
         assertNotNull(merged);
         assertNotNull(merged.getSearchPreparedSpectrum(), "withSpectrum=true must load the spectrum");
+    }
+
+    /**
+     * The analogue search scores every merged spectrum it gets from here, so it needs the prepared spectrum.
+     */
+    @Test
+    public void mergedIterationLoadsTheSpectrum() throws IOException {
+        List<MergedReferenceSpectrum> read = new ArrayList<>();
+        db.forEachMergedSpectrum(read::add);
+
+        assertEquals(1, read.size());
+        assertNotNull(read.getFirst().getSearchPreparedSpectrum(), "the analogue search scores against it");
+    }
+
+    @Test
+    public void mergedReadByUuidLoadsTheSpectrum() throws IOException {
+        long uuid = db.getMergedReferenceSpectrum(INCHI_KEY, ION_TYPE, false).getUuid();
+
+        ReferenceSpectrum merged = db.getReferenceSpectrum(uuid, SpectrumType.MERGED_SPECTRUM);
+
+        assertNotNull(merged.getSearchPreparedSpectrum(), "the match view shows it as the reference spectrum");
     }
 }
