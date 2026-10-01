@@ -222,7 +222,7 @@ public class SearchableDatabaseController {
      * <p>
      * Structures can be imported from tab- or comma-separated files with a SMILES column and optional id and
      * name columns, and from directories or .zip archives of SDF files. Reference spectra and their structures can be imported from
-     * .ms, .mgf, .msp, .mat, .txt (MassBank), .mb and .json (GNPS, MoNA); they must be centroided and annotated
+     * .ms, .mgf, .msp, .mat, .txt (MassBank), .mb and .json (GNPS, MoNA, mzmine); they must be centroided and annotated
      * with a structure. Any imported spectral library also acts as a structure database.
      * <p>
      * SIRIUS computes a molecular fingerprint for every imported structure. Fingerprints of structures already

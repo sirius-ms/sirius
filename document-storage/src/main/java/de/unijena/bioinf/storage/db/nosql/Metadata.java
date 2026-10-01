@@ -22,7 +22,6 @@ package de.unijena.bioinf.storage.db.nosql;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
-import lombok.Getter;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,9 +32,6 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public class Metadata {
-
-    @Getter
-    private int schemaVersion = 1;
 
     final public Map<Class<?>, JsonSerializer<?>> serializers = new HashMap<>();
 
@@ -65,10 +61,6 @@ public class Metadata {
         return new Metadata();
     }
 
-    public Metadata schemaVersion(int schemaVersion){
-        this.schemaVersion = schemaVersion;
-        return this;
-    }
 
     public <T> Metadata addRepository(
             Class<T> clazz,

@@ -72,6 +72,9 @@ public class BiotransformerConfigPanel extends SubToolConfigPanel<BioTransformer
         multiTransPanel.setEnabled(false);
         multiTransPanel.setVisible(false);
 
+        //off by default: enabling it sends structure InChIKeys to an external server (see option description)
+        settings.addNamed("", makeGenericOptionCheckBox("Look up biotransformations in online HMDB", "useDB"));
+
 
         transformationModes.addItemListener(evt -> {
             if (evt.getStateChange() == SELECTED) {
@@ -180,6 +183,9 @@ public class BiotransformerConfigPanel extends SubToolConfigPanel<BioTransformer
             return null;
 
         BioTransformerParameters params = new BioTransformerParameters();
+        // The checkbox lives in the parameter bindings, which only asParameterList() reads; without
+        // this the typed model would always report the SDK default however the box is set.
+        params.useDB(getParameterBinding().getAsBoolean("useDB"));
         if (cypModeBox.getSelectedItem() != null && cypModeBox.getSelectedItem() != Cyp450ModeWrapper.NONE)
             params.cyp450Mode(io.sirius.ms.sdk.model.Cyp450Mode.fromValue(((Cyp450ModeWrapper)cypModeBox.getSelectedItem()).cyp450Mode.name()));
 

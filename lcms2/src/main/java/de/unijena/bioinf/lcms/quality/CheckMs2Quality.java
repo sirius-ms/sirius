@@ -7,7 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.lcms.adducts.TraceProvider;
 import de.unijena.bioinf.lcms.utils.MultipleCharges;
-import de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory;
+import de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;

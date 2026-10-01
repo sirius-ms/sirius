@@ -63,7 +63,7 @@ public class ProjectsApiTest {
             ProjectInfo pid = instance.getProject(projectId, null);
             assertNotNull(pid);
 
-            instance.closeProject(projectId, false);
+            instance.closeProject(projectId, false, false);
             WebClientResponseException ex = assertThrows(WebClientResponseException.class, () -> instance.getProject(projectId, null));
             assertEquals(404, ex.getStatusCode().value());
         } catch (WebClientResponseException e) {
@@ -134,7 +134,7 @@ public class ProjectsApiTest {
             assertNotNull(projectInfo);
             assertEquals(projectId, projectInfo.getProjectId());
 
-            instance.closeProject(projectId, false);
+            instance.closeProject(projectId, false, false);
         } catch (Exception e) {
             fail("API exception occurred: " + e.getMessage());
         }
@@ -152,7 +152,7 @@ public class ProjectsApiTest {
         } catch (Exception e) {
             fail("API exception occurred: " + e.getMessage());
         }finally {
-           instance.closeProject(projectId, false);
+           instance.closeProject(projectId, false, false);
         }
     }
 
@@ -192,9 +192,9 @@ public class ProjectsApiTest {
         List<String> allFeatureIds = featureApiInstance.getAlignedFeatures(projectId, false, null).stream().map(AlignedFeature::getAlignedFeatureId).toList();
         featureApiInstance.deleteAlignedFeatures(projectId, allFeatureIds);
 
-        instance.closeProject(projectId, false);
+        instance.closeProject(projectId, false, false);
         ProjectInfo beforeCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZE_INFORMATION));
-        instance.closeProject(projectId, true);
+        instance.closeProject(projectId, true, false);
         ProjectInfo afterCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZE_INFORMATION));
 
         assertTrue(Objects.requireNonNull(afterCompacting.getNumOfBytes()) < Objects.requireNonNull(beforeCompacting.getNumOfBytes()));

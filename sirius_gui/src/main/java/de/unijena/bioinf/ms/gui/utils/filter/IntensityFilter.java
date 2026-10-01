@@ -18,10 +18,10 @@
 
 package de.unijena.bioinf.ms.gui.utils.filter;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * The minimum MS1 intensity a feature must reach, measured either as peak height (apex) or as area under the
@@ -29,9 +29,14 @@ import org.jetbrains.annotations.Nullable;
  * intense feature of the same run; the two are separate fields of the search index, so the unit decides which
  * field the clause names and nothing about the project is needed here. Like the m/z and RT thresholds, the filter
  * is active as soon as the minimum is above zero.
+ * <p>
+ * A value, like the {@link FeatureFilter} it is part of. It keeps the threshold of both units, so switching the
+ * unit back and forth loses neither.
+ *
+ * @param minAbsolute the threshold in {@link Mode#ABSOLUTE}: an intensity in raw counts
+ * @param minPercent  the threshold in {@link Mode#RELATIVE_TO_RUN_MAX}: percent of the run maximum
  */
-@Getter
-public class IntensityFilter {
+public record IntensityFilter(@NotNull Measure measure, @NotNull Mode mode, double minAbsolute, double minPercent) {
 
     /** Which intensity of the feature the threshold applies to. */
     public enum Measure {
@@ -135,28 +140,53 @@ public class IntensityFilter {
     public static final double DEFAULT_MIN_ABSOLUTE = 0d;
     public static final double DEFAULT_MIN_PERCENT = 0d;
 
-    @Setter
-    @NotNull
-    private Measure measure = Measure.APEX;
-    @Setter
-    @NotNull
-    private Mode mode = Mode.ABSOLUTE;
-    /** the threshold in {@link Mode#ABSOLUTE}: an intensity in raw counts */
-    @Setter
-    private double minAbsolute = DEFAULT_MIN_ABSOLUTE;
-    /** the threshold in {@link Mode#RELATIVE_TO_RUN_MAX}: percent of the run maximum */
-    @Setter
-    private double minPercent = DEFAULT_MIN_PERCENT;
+    /** No intensity filter: peak height, absolute, both thresholds at zero. */
+    public static final IntensityFilter DEFAULT =
+            new IntensityFilter(Measure.APEX, Mode.ABSOLUTE, DEFAULT_MIN_ABSOLUTE, DEFAULT_MIN_PERCENT);
+
+    public IntensityFilter {
+        Objects.requireNonNull(measure);
+        Objects.requireNonNull(mode);
+    }
 
     /** Whether the filter narrows anything: the minimum of the selected mode is above zero. */
     public boolean isActive() {
-        return mode == Mode.ABSOLUTE ? minAbsolute > 0 : minPercent > 0;
+        return min() > 0;
     }
 
-    public void reset() {
-        measure = Measure.APEX;
-        mode = Mode.ABSOLUTE;
-        minAbsolute = DEFAULT_MIN_ABSOLUTE;
-        minPercent = DEFAULT_MIN_PERCENT;
+    /** The threshold of the selected mode. */
+    public double min() {
+        return min(mode);
+    }
+
+    /** The threshold kept for {@code mode}, selected or not. */
+    public double min(@NotNull Mode mode) {
+        return mode == Mode.ABSOLUTE ? minAbsolute : minPercent;
+    }
+
+    /** The search index field the threshold is matched against. */
+    public String field() {
+        return measure.getField(mode);
+    }
+
+    public IntensityFilter withMeasure(@NotNull Measure measure) {
+        return new IntensityFilter(measure, mode, minAbsolute, minPercent);
+    }
+
+    public IntensityFilter withMode(@NotNull Mode mode) {
+        return new IntensityFilter(measure, mode, minAbsolute, minPercent);
+    }
+
+    public IntensityFilter withMinAbsolute(double minAbsolute) {
+        return new IntensityFilter(measure, mode, minAbsolute, minPercent);
+    }
+
+    public IntensityFilter withMinPercent(double minPercent) {
+        return new IntensityFilter(measure, mode, minAbsolute, minPercent);
+    }
+
+    /** The filter with the threshold of {@code mode} replaced, the other one kept. */
+    public IntensityFilter withMin(@NotNull Mode mode, double min) {
+        return mode == Mode.ABSOLUTE ? withMinAbsolute(min) : withMinPercent(min);
     }
 }

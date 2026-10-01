@@ -20,8 +20,14 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
+import de.unijena.bioinf.ms.middleware.model.compute.JobProgress;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectEventType;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
@@ -29,17 +35,8 @@ import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.ms.middleware.model.compute.Job;
-import de.unijena.bioinf.ms.middleware.model.compute.JobProgress;
+import de.unijena.bioinf.projectspace.*;
 import lombok.Getter;
-import de.unijena.bioinf.jjobs.JobProgressEvent;
-import de.unijena.bioinf.jjobs.JobProgressEventListener;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.dizitart.no2.exceptions.NitriteIOException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,8 +111,12 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
                 .projectId(projectId)
                 .location(psm.getLocation())
                 .type(psm.getType().orElse(null));
-        if (optFields.contains(ProjectInfo.OptField.sizeInformation))
+        if (optFields.contains(ProjectInfo.OptField.sizeInformation)) {
             b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countAllFeatures()).numOfCompounds(psm.countAllCompounds());
+            // only a storage with a page layout can have an outdated one, so this is not asked of every project space
+            if (psm instanceof NoSQLProjectSpaceManager nsql)
+                b.compactionRecommended(nsql.isCompactionRecommended());
+        }
         if (optFields.contains(ProjectInfo.OptField.compatibilityInfo))
             b.compatible(psm.isCompatibleWithBackendDataUnchecked(ApplicationCore.WEB_API()));
         if (optFields.contains(ProjectInfo.OptField.detectedAdducts))
@@ -396,13 +397,18 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
 
     @Override
     public void closeProjectSpace(String projectId, boolean compact) throws IOException {
+        closeProjectSpace(projectId, compact, false);
+    }
+
+    @Override
+    public void closeProjectSpace(String projectId, boolean compact, boolean rewriteLayout) throws IOException {
         projectSpaceLock.writeLock().lock();
         try {
             final P project = projectSpaces.get(projectId);
             if (project == null)
                 throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Project space with name '" + projectId + "' not found!");
 
-            project.close(compact);
+            project.close(compact, rewriteLayout);
             projectSpaces.remove(projectId);
         } finally {
             projectSpaceLock.writeLock().unlock();

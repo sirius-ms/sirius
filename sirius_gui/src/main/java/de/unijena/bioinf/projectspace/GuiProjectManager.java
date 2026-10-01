@@ -34,7 +34,6 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListP
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.EventLists;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
-import de.unijena.bioinf.ms.gui.utils.search.QueryStringParser;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -148,9 +147,6 @@ public class GuiProjectManager implements Closeable {
         this.siriusGui = siriusGui;
 
         this.featureFilterModel = new FeatureFilterModel();
-        // the model holds the query as the user wrote it; how it has to be written to RUN (the match-all
-        // anchor a query with only negations needs) is the search package's rule, handed in here
-        this.featureFilterModel.setExecutableQueryForm(QueryStringParser::executableForm);
 
         this.INSTANCE_LIST = new BasicEventList<>();
 
@@ -602,12 +598,31 @@ public class GuiProjectManager implements Closeable {
     }
 
     public ProjectInfo compactWithLoading(Window parent) {
+        return compactWithLoading(parent, false);
+    }
+
+    /**
+     * @param rewriteLayout rewrite how the project's records are laid out on disk even where that does not
+     *                      look necessary. Reads and writes every record, so it takes considerably longer
+     *                      than an ordinary compaction - about twenty seconds per gigabyte, measured on
+     *                      projects of 1 and 48 GiB.
+     */
+    public ProjectInfo compactWithLoading(Window parent, boolean rewriteLayout) {
         if (siriusClient.jobs().hasJobs(projectId, false)) {
             if (JOptionPane.showConfirmDialog(parent, "There are running jobs. They will be canceled before compacting.", null, JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
                 return null;
             }
         }
-        LoadingBackroundTask<ProjectInfo> loadingDialog = Jobs.runInBackgroundAndLoad(parent, "Compacting...", this::compact);
+        if (rewriteLayout && JOptionPane.showConfirmDialog(parent,
+                "<html>Full compacting reads and writes every record in the project. That takes roughly<br>"
+                        + "twenty seconds per gigabyte - a quarter of an hour for a 48 GB project - and it needs<br>"
+                        + "as much free disk space as the project currently uses.<br>Continue?</html>",
+                null, JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
+            return null;
+        }
+        LoadingBackroundTask<ProjectInfo> loadingDialog = Jobs.runInBackgroundAndLoad(parent,
+                rewriteLayout ? "Compacting (full)..." : "Compacting...",
+                () -> rewriteLayout ? compactRewritingLayout() : compact());
         if (loadingDialog.isCanceled()) {
             JOptionPane.showMessageDialog(parent, "<html>Compacting will continue in the background.<br>In the meantime, the project is closed and will have to be opened manually.</html>", null, JOptionPane.WARNING_MESSAGE);
             return null;
@@ -616,8 +631,23 @@ public class GuiProjectManager implements Closeable {
     }
 
     public ProjectInfo compact() {
+        return closeAndReopen(true, false);
+    }
+
+    /**
+     * Compacts and rewrites how the project's records are laid out on disk, for waste an ordinary
+     * compaction leaves behind. Reads and writes every record.
+     * <p>
+     * Deliberately not an overload of {@link #compact()}: that one is passed as a method reference, which
+     * an overload would make ambiguous.
+     */
+    public ProjectInfo compactRewritingLayout() {
+        return closeAndReopen(false, true);
+    }
+
+    private ProjectInfo closeAndReopen(boolean compact, boolean rewriteLayout) {
         String location = getProjectLocation();
-        siriusClient.projects().closeProject(projectId, true);
+        siriusClient.projects().closeProject(projectId, compact, rewriteLayout);
         return siriusClient.projects().openProject(projectId, location, List.of(ProjectInfoOptField.SIZE_INFORMATION));
     }
 

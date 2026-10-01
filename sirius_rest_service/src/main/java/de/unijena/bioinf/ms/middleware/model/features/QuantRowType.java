@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 
+import java.lang.reflect.Field;
+
 @Getter
 @Schema
 public enum QuantRowType {
@@ -33,8 +35,20 @@ public enum QuantRowType {
         this.apiTargetClass = apiTargetClass;
         this.projectTargetClass = projectTargetClass;
         this.projectFoldChangeClass = projectFoldChangeClass;
-        this.targetIdFieldName = projectTargetClass != null
-                ? SiriusProjectDatabaseImpl.SIRIUS_PROJECT_METADATA.pkFields.get(projectTargetClass).getName()
-                : null;
+        this.targetIdFieldName = resolvePkFieldName(projectTargetClass);
+    }
+
+    /**
+     * Resolves the primary key field name from a freshly built project metadata instead of the {@code @Id} annotation,
+     * since a repository may register its primary key by name. The metadata is not retained.
+     */
+    @Nullable
+    private static String resolvePkFieldName(@Nullable Class<?> projectTargetClass) {
+        if (projectTargetClass == null)
+            return null;
+        Field pkField = SiriusProjectDatabaseImpl.buildMetadata().pkFields.get(projectTargetClass);
+        if (pkField == null)
+            throw new IllegalStateException(projectTargetClass + " is not registered as repository in the project metadata.");
+        return pkField.getName();
     }
 }

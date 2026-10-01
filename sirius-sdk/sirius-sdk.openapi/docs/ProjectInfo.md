@@ -15,6 +15,7 @@
 |**numOfFeatures** | **Integer** | Number of features (aligned over runs) in this project. If NULL, information has not been requested (See OptField &#39;sizeInformation&#39;). |  [optional] |
 |**numOfCompounds** | **Integer** | Number of compounds (group of ion identities) in this project. If NULL, information has not been requested (See OptField &#39;sizeInformation&#39;) or might be unavailable for this project type. |  [optional] |
 |**numOfBytes** | **Long** | Size in bytes this project consumes on disk. If NULL, information has not been requested (See OptField &#39;sizeInformation&#39;). |  [optional] |
+|**compactionRecommended** | **Boolean** | Whether compacting this project would reclaim markedly more space than an ordinary compaction does, so  that it is worth offering. What makes it worthwhile varies - a project written in an older, space-wasting  storage format, or a large amount of data removed from it.  If NULL, the information has not been requested (See OptField &#39;sizeInformation&#39;). |  [optional] |
 |**detectedAdducts** | **Set&lt;String&gt;** | Set of all detected adducts available in this project. |  [optional] |
 
 

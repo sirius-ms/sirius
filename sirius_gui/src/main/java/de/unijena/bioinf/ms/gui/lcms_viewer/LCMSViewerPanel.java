@@ -30,7 +30,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         // set content
         setLayout(new BorderLayout());
         this.lcmsWebview = gui.getBrowserPanelProvider().makeReactPanel("/lcms", gui.getProjectManager().getProjectId());
-        this.loadable = new LoadablePanel(lcmsWebview);
+        this.loadable = LoadablePanel.overlaying(lcmsWebview);
         this.add(loadable, BorderLayout.CENTER);
 
         summaryPanel = new LCMSCompoundSummaryPanel();

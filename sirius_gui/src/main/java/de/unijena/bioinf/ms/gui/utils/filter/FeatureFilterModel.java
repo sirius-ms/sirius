@@ -21,188 +21,102 @@ package de.unijena.bioinf.ms.gui.utils.filter;/*
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
+import de.unijena.bioinf.ms.gui.utils.query.LogicOp;
+import de.unijena.bioinf.ms.gui.utils.query.LuceneQueryCompiler;
+import de.unijena.bioinf.ms.gui.utils.query.QueryContainer;
+import de.unijena.bioinf.ms.gui.utils.query.QueryNode;
+import de.unijena.bioinf.ms.gui.utils.search.QueryStringParser;
 import de.unijena.bioinf.ms.persistence.model.core.tags.Groups;
 import io.sirius.ms.sdk.model.AggregationType;
-import io.sirius.ms.sdk.model.DataQuality;
 import io.sirius.ms.sdk.model.QuantMeasure;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
-import lombok.Synchronized;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.custom.CustomAnalyzer;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.PlainDocument;
 import java.beans.PropertyChangeListener;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.UnaryOperator;
-import de.unijena.bioinf.ms.gui.utils.query.LogicOp;
-import de.unijena.bioinf.ms.gui.utils.query.LuceneQueryCompiler;
-import de.unijena.bioinf.ms.gui.utils.query.QueryContainer;
-import de.unijena.bioinf.ms.gui.utils.query.QueryNode;
-
-import static de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory.*;
+import java.util.stream.Collectors;
 
 /**
- * This model stores the filter criteria for a compound list
+ * Holds the <b>applied</b> filter of the compound list - a {@link FeatureFilter} value - together with the
+ * {@link FilterContext} it is interpreted against, publishes changes to it, and compiles it to the lucene
+ * query the list is loaded with. The value is replaced whole ({@link #set}); the only state of its own is the
+ * context, which follows the project. Editing happens on a {@link FilterSession}'s working value and lands
+ * here through {@link FilterSession#commit()}.
  */
 public class FeatureFilterModel implements SiriusPCS {
+    /** Fired with the previous and the new {@link FeatureFilter} whenever the applied value changes. */
+    public static final String FILTER_CHANGED = "filterChanged";
+
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
     private final Analyzer analyzer;
-    /*
-    currently selected values
-     */
-    @Getter
-    private boolean inverted;
+    private final QueryParser textFieldParser;
 
-    /**
-     * How the filter-panel facets and the user's own query are combined: AND (the facets narrow the
-     * search, the default) or OR (the query is an alternative to them). A property of the whole filter
-     * like {@link #inverted}, surfaced and edited in the search bar's query builder.
-     */
-    @Getter
-    private LogicOp queryJoin = LogicOp.AND;
+    private FilterContext context;
+    private FeatureFilter value;
 
-    @Getter
-    private final Document searchTextDoc;
-
-    /**
-     * How the user's own query text is turned into the form that is EXECUTED - the match-all anchor a lucene
-     * query needs when it only excludes ({@code NOT lipid:true} matches nothing as written). The rule lives
-     * where queries are compiled and needs the query as a tree, so it is handed in rather than reached for:
-     * the search package supplies it (see {@code QueryStringParser#executableForm}), and until it does the
-     * query runs exactly as written.
-     */
-    @Getter
-    @Setter
-    @NotNull
-    private UnaryOperator<String> executableQueryForm = UnaryOperator.identity();
-
-    @Getter
-    private double currentMinMz;
-    @Getter
-    private double currentMaxMz;
-    @Getter
-    private double currentMinRt;
-    @Getter
-    private double currentMaxRt;
-
-    @Getter
-    private double currentMinConfidence;
-    @Getter
-    private double currentMaxConfidence;
-
-
-    @Getter
-    private final QualityFilter featureQualityFilter = new QualityFilter(null, "Feature Quality", this);
-    @Getter
-    private final QualityFilter peakShapeQualityFilter = new QualityFilter(PEAK_QUALITY, this);
-    @Getter
-    private final QualityFilter alignmentQuality = new QualityFilter(ALIGNMENT_QUALITY, this);
-    @Getter
-    private final QualityFilter isotopePatternQuality = new QualityFilter(ISOTOPE_QUALITY, this);
-    @Getter
-    private final QualityFilter fragmentationPatternQuality = new QualityFilter(MS2_QUALITY, this);
-    @Getter
-    private final QualityFilter adductAssignmentQuality = new QualityFilter(ADDUCT_QUALITY, this);
-    @Getter
-    private final List<QualityFilter> categorizedQualityFilters = List.of(peakShapeQualityFilter, alignmentQuality, isotopePatternQuality, fragmentationPatternQuality, adductAssignmentQuality);
-
-    // MSData filter
-    @Getter
-    private boolean hasMs1 = false;
-    @Getter
-    private boolean hasMsMs = true;
-
-    private Set<PrecursorIonType> possibleAdducts = new HashSet<>();
-    @Setter
-    private Set<PrecursorIonType> adducts = new HashSet<>();
-
-    /** null = no lipid filter, TRUE = a lipid class must be detected, FALSE = none may be. */
-    @Getter
-    private @Nullable Boolean lipidClassDetected = null;
-
-    /** null = no pfas filter, TRUE = the feature must carry a pfas tag, FALSE = it must not. */
-    @Getter
-    private @Nullable Boolean pfasDetected = null;
-
-    @NotNull
-    private ElementFilter elementFilter = ElementFilter.disabled();
-
-    @Nullable
-    private DbFilter dbFilter;
-
-    @Getter
-    private final FoldChangeFilter sampleBlankFoldChange;
-
-    @Getter
-    private final IntensityFilter intensityFilter = new IntensityFilter();
-    /*
-    min/max possible values
-     */
-    @Getter
-    private final double minMz;
-    @Getter
-    private final double maxMz;
-    @Getter
-    private final double minRt;
-    @Getter
-    private final double maxRt;
-
-    @Getter
-    private final double minConfidence;
-    @Getter
-    private final double maxConfidence;
-
-
+    /** The default filter over an empty project context (no detected adducts yet). */
     public FeatureFilterModel() {
-        // m/z and retention time have no upper end: whatever number were put here would be a cap, and a cap
-        // silently drops the features beyond it - a three-hour gradient runs past any plausible guess at one.
-        // Confidence really does stop at 1.
-        this(0, Double.POSITIVE_INFINITY, 0, Double.POSITIVE_INFINITY, 0, 1d);
+        this(FilterContext.EMPTY);
     }
 
-
-    /**
-     * the filter model is initialized with the min / max possible values
-     * MAX VALUES SHOULD BE USED FOR DISPLAY ONLY. AND IF SELECTED VALUES EQUAL THE MAXIMUM, INFINITY SHOULD BE ASSUMED, see is[...]Active() methods.
-     */
+    /** The default filter ({@link FeatureFilter#defaults}) over the given context. */
     @SneakyThrows
-    private FeatureFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
-        this.inverted = false;
-        //this querybuilder is just to create the query string.
-        // Therefore, we need to ensure values are not lowercased as in the default builder.
+    public FeatureFilterModel(@NotNull FilterContext context) {
+        this.context = context;
+        this.value = FeatureFilter.defaults(context);
+        // only to check whether the user's text is a lucene query at all; values must not be lowercased
+        // as in the default builder
         this.analyzer = CustomAnalyzer.builder()
                 .withTokenizer("standard")
                 .build();
         this.textFieldParser = new QueryParser(FAKE_FIELD, analyzer);
+    }
 
-        this.searchTextDoc = new PlainDocument();
+    // --- the value ---
 
-        this.sampleBlankFoldChange = new FoldChangeFilter(2.0);
-        this.featureQualityFilter.getDataQualities().remove(DataQuality.BAD);
-        this.featureQualityFilter.getDataQualities().remove(DataQuality.LOWEST);
-        this.currentMinMz = minMz;
-        this.currentMaxMz = maxMz;
-        this.currentMinRt = minRt;
-        this.currentMaxRt = maxRt;
-        this.currentMinConfidence = minConfidence;
-        this.currentMaxConfidence = maxConfidence;
+    /** The applied filter. */
+    public synchronized FeatureFilter get() {
+        return value;
+    }
 
+    /** The project context the applied filter is interpreted against. */
+    public synchronized FilterContext getContext() {
+        return context;
+    }
 
-        this.minMz = minMz;
-        this.maxMz = maxMz;
-        this.minRt = minRt;
-        this.maxRt = maxRt;
-        this.minConfidence = minConfidence;
-        this.maxConfidence = maxConfidence;
+    /**
+     * Replaces the applied filter and fires {@link #FILTER_CHANGED}. Does NOT fire
+     * {@link #fireUpdateCompleted()} - the caller decides when the list is re-filtered, so a batch of edits
+     * fires once.
+     */
+    public void set(@NotNull FeatureFilter newValue) {
+        FeatureFilter old;
+        synchronized (this) {
+            old = value;
+            value = newValue;
+        }
+        pcs.firePropertyChange(FILTER_CHANGED, old, newValue);
+    }
+
+    /** {@link #set}s the result of applying {@code edit} to the current value. */
+    public void update(@NotNull UnaryOperator<FeatureFilter> edit) {
+        FeatureFilter old, updated;
+        synchronized (this) {
+            old = value;
+            updated = edit.apply(old);
+            value = updated;
+        }
+        pcs.firePropertyChange(FILTER_CHANGED, old, updated);
     }
 
     public void fireUpdateCompleted() {
@@ -210,214 +124,53 @@ public class FeatureFilterModel implements SiriusPCS {
         pcs.firePropertyChange("filterUpdateCompleted", null, this);
     }
 
-
-    public boolean isLipidFilterEnabled() {
-        return lipidClassDetected != null;
+    @Override
+    public MutableHiddenChangeSupport pcs() {
+        return pcs;
     }
 
-    public void setLipidClassDetected(@Nullable Boolean value) {
-        Boolean oldValue = lipidClassDetected;
-        lipidClassDetected = value;
-        pcs.firePropertyChange("setLipidClassDetected", oldValue, value);
+    public void addUpdateCompleteListener(PropertyChangeListener listener) {
+        addPropertyChangeListener("filterUpdateCompleted", listener);
     }
 
-    public boolean isPfasFilterEnabled() {
-        return pfasDetected != null;
-    }
+    // --- resets ---
 
-    public void setPfasDetected(@Nullable Boolean value) {
-        Boolean oldValue = pfasDetected;
-        pfasDetected = value;
-        pcs.firePropertyChange("setPfasDetected", oldValue, value);
-    }
-
-    public void setDbFilter(@Nullable DbFilter dbFilter) {
-        this.dbFilter = dbFilter;
-    }
-
-    @Nullable
-    public DbFilter getDbFilter() {
-        return dbFilter;
-    }
-
-    public boolean isDbFilterEnabled() {
-        return dbFilter != null && !dbFilter.dbs.isEmpty();
-    }
-
-    public boolean isElementFilterEnabled() {
-        return elementFilter.isActive();
-    }
-
-    @NotNull
-    public ElementFilter getElementFilter() {
-        return elementFilter;
-    }
-
-    public void setElementFilter(@NotNull ElementFilter value) {
-        ElementFilter oldValue = elementFilter;
-        elementFilter = value;
-        pcs.firePropertyChange("setElementFilter", oldValue, value);
-    }
-
-    public void setHasMs1(boolean hasMs1) {
-        boolean old = this.hasMs1;
-        this.hasMs1 = hasMs1;
-        pcs.firePropertyChange("setHasMs1", old, hasMs1);
-    }
-
-    public void setHasMsMs(boolean hasMsMs) {
-        boolean old = this.hasMsMs;
-        this.hasMsMs = hasMsMs;
-        pcs.firePropertyChange("setHasMsMs", old, hasMsMs);
-    }
-
-    public void setInverted(boolean inverted) {
-        boolean old = this.inverted;
-        this.inverted = inverted;
-        pcs.firePropertyChange("setInverted", old, inverted);
-    }
-
-    public void setQueryJoin(@NotNull LogicOp queryJoin) {
-        LogicOp old = this.queryJoin;
-        this.queryJoin = queryJoin;
-        pcs.firePropertyChange("setQueryJoin", old, queryJoin);
-    }
-
-    public void setCurrentMinMz(double currentMinMz) {
-        if (currentMinMz < minMz) throw new IllegalArgumentException("current value out of range: " + currentMinMz);
-        double oldValue = this.currentMinMz;
-        this.currentMinMz = currentMinMz;
-        pcs.firePropertyChange("setMinMz", oldValue, currentMinMz);
-    }
-
-    public void setCurrentMaxMz(double currentMaxMz) {
-        if (currentMaxMz > maxMz) throw new IllegalArgumentException("current value out of range: " + currentMaxMz);
-        double oldValue = this.currentMaxMz;
-        this.currentMaxMz = currentMaxMz;
-        pcs.firePropertyChange("setMaxMz", oldValue, currentMaxMz);
-    }
-
-    public void setCurrentMinRt(double currentMinRt) {
-        if (currentMinRt < minRt) throw new IllegalArgumentException("current value out of range: " + currentMinRt);
-        double oldValue = this.currentMinRt;
-        this.currentMinRt = currentMinRt;
-        pcs.firePropertyChange("setMinRt", oldValue, currentMinRt);
-
-    }
-
-    public void setCurrentMaxRt(double currentMaxRt) {
-        if (currentMaxRt > maxRt) throw new IllegalArgumentException("current value out of range: " + currentMaxRt);
-        double oldValue = this.currentMaxRt;
-        this.currentMaxRt = currentMaxRt;
-        pcs.firePropertyChange("setMaxRt", oldValue, currentMaxRt);
-
-    }
-
-    public void setCurrentMaxConfidence(double currentMaxConfidence) {
-        if (currentMaxConfidence > maxConfidence)
-            throw new IllegalArgumentException("current value out of range: " + currentMaxConfidence);
-        double oldValue = this.currentMaxConfidence;
-        this.currentMaxConfidence = currentMaxConfidence;
-        pcs.firePropertyChange("setMaxConfidence", oldValue, currentMaxConfidence);
-
-    }
-
-    public void setCurrentMinConfidence(double currentMinConfidence) {
-        if (currentMinConfidence < minConfidence)
-            throw new IllegalArgumentException("current value out of range: " + currentMinConfidence);
-        double oldValue = this.currentMinConfidence;
-        this.currentMinConfidence = currentMinConfidence;
-        pcs.firePropertyChange("setMinConfidence", oldValue, currentMinConfidence);
-
+    /** Everything off, query cleared. Fires {@link #FILTER_CHANGED} only; the caller fires {@link #fireUpdateCompleted()}. */
+    public void resetFilter() {
+        set(FeatureFilter.empty(getContext()));
     }
 
     /**
-     * filter options are active. that means selected values differ from absolute min/max
-     *
-     * @return true if active and false if not.
+     * Resets the filter to SIRIUS's recommended DEFAULT configuration instead of clearing it - the committed
+     * counterpart of the filter dialog's "Restore default filters", see {@link FeatureFilter#defaults}. Fires
+     * {@link #FILTER_CHANGED} only; the caller fires {@link #fireUpdateCompleted()} afterwards.
      */
-    public boolean isActive() {
-        if (hasMs1 || hasMsMs)
-            return true;
-        if (searchTextDoc.getLength() > 0)
-            return true;
-        if (currentMinMz != minMz || currentMaxMz != maxMz ||
-                currentMinRt != minRt || currentMaxRt != maxRt ||
-                currentMinConfidence != minConfidence || currentMaxConfidence != maxConfidence
-        ) return true;
-        if (!adducts.isEmpty()) return true;
-
-        if (getCategorizedQualityFilters().stream().anyMatch(QualityFilter::isEnabled) || getFeatureQualityFilter().isEnabled() || isLipidFilterEnabled() || isPfasFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled())
-            return true;
-
-        if (getSampleBlankFoldChange().isEnabled()) // contributes a range clause to toLuceneQuery
-            return true;
-
-        if (isIntensityFilterActive())
-            return true;
-
-        return false;
+    public void resetFilterToDefaults() {
+        set(FeatureFilter.defaults(getContext()));
     }
 
-    public boolean isMaxMzFilterActive() {
-        return currentMaxMz != maxMz;
-    }
-
-    public boolean isMinMzFilterActive() {
-        return currentMinMz != minMz;
-    }
-
-    public boolean isMzFilterActive() {
-        return isMinMzFilterActive() || isMaxMzFilterActive();
-    }
-
-    public boolean isMaxRtFilterActive() {
-        return currentMaxRt != maxRt;
-    }
-
-    public boolean isMinRtFilterActive() {
-        return currentMinRt != minRt;
-    }
-
-    public boolean isRtFilterActive() {
-        return isMinRtFilterActive() || isMaxRtFilterActive();
-    }
-
-
-    public boolean isMaxConfidenceFilterActive() {
-        return currentMaxConfidence != maxConfidence;
-    }
-
-    public boolean isMinConfidenceFilterActive() {
-        return currentMinConfidence != minConfidence;
-    }
+    // --- adducts: the one place the context changes ---
 
     /**
-     * The intensity filter contributes a clause as soon as its minimum is above zero, like the other thresholds.
-     * Which unit the threshold is in decides which field the clause names: the absolute intensity, or the one
-     * the index holds in percent of the run maximum.
+     * The project's detected adducts changed: the context follows, and the selection is reconciled
+     * ({@link FeatureFilter#withAdductsReconciled}). Re-filters when that changed an active adduct filter.
      */
-    public boolean isIntensityFilterActive() {
-        return intensityFilter.isActive();
-    }
-
-    @Synchronized
     public void updateAdducts(Collection<PrecursorIonType> detectedAdductsInProject) {
-        Set<PrecursorIonType> oldAdducts = new HashSet<>(this.adducts);
-
         Set<PrecursorIonType> listAdducts = new HashSet<>(detectedAdductsInProject);
         listAdducts.addAll(unknownAdductsOf(detectedAdductsInProject));
 
-        Set<PrecursorIonType> newAdducts = new HashSet<>(listAdducts);
-        newAdducts.removeAll(possibleAdducts);
-        possibleAdducts.retainAll(listAdducts);
-        adducts.retainAll(listAdducts);
-        possibleAdducts.addAll(newAdducts);
-        adducts.addAll(newAdducts.stream().filter(FeatureFilterModel::isSupportedAdduct).collect(Collectors.toSet()));
-
-        if (isAdductFilterActive() && !oldAdducts.equals(adducts)) { // if list of adducts in the actual filter changed, we have to refilter.
+        FeatureFilter old, updated;
+        synchronized (this) {
+            old = value;
+            Set<PrecursorIonType> previouslyPossible = context.possibleAdducts();
+            context = context.withPossibleAdducts(listAdducts);
+            updated = old.withAdductsReconciled(previouslyPossible, context);
+            value = updated;
+        }
+        pcs.firePropertyChange(FILTER_CHANGED, old, updated);
+        if (updated.isAdductFilterActive() && !old.adducts().equals(updated.adducts())) { // if list of adducts in the actual filter changed, we have to refilter.
             fireUpdateCompleted();
-        }else {
+        } else {
             pcs.firePropertyChange("possibleAdductsUpdated", null, this); // just notify gui components that the available adductes have changed.
         }
     }
@@ -441,157 +194,60 @@ public class FeatureFilterModel implements SiriusPCS {
                 : unknown;
     }
 
-    @Synchronized
-    public Set<PrecursorIonType> getPossibleAdducts() {
-        return Collections.unmodifiableSet(possibleAdducts);
-    }
-
-    @Synchronized
-    public Set<PrecursorIonType> getSelectedAdducts() {
-        return Collections.unmodifiableSet(adducts);
-    }
-
-    @Synchronized
-    public boolean isAdductFilterActive() {
-        return adducts != null && !adducts.isEmpty();
-    }
-
-    /**
-     * A "supported" adduct: single-charged and monomeric. SIRIUS can only run its annotation (molecular
-     * formula, structure and compound-class identification) on features with such adducts, so they are
-     * the default adduct selection.
-     */
-    public static boolean isSupportedAdduct(@NotNull PrecursorIonType ion) {
-        return !ion.isMultimere() && !ion.isMultipleCharged();
-    }
-
-    @Synchronized
-    public boolean isMultiAdductsAllowed() {
-        return !isAdductFilterActive() || adducts.stream().anyMatch(p -> !isSupportedAdduct(p));
-    }
-
-    @Synchronized
-    public void removeMultiAdducts() {
-        adducts = adducts.stream().filter(FeatureFilterModel::isSupportedAdduct).collect(Collectors.toSet());
-        if (adducts.isEmpty())
-            adducts = possibleAdducts.stream().filter(FeatureFilterModel::isSupportedAdduct).collect(Collectors.toSet());
-    }
-
-    @Synchronized
-    public void addMultiAdducts() {
-        if (!isAdductFilterActive())
-            return;
-
-        possibleAdducts.stream().filter(p -> !isSupportedAdduct(p)).forEach(adducts::add);
-    }
-
-
-    @Override
-    public MutableHiddenChangeSupport pcs() {
-        return pcs;
-    }
-
-    public void addUpdateCompleteListener(PropertyChangeListener listener) {
-        addPropertyChangeListener("filterUpdateCompleted", listener);
-    }
-
-    public void resetFilter() {
-        setInverted(false);
-        setQueryJoin(LogicOp.AND);
-
-        clearSearchText();
-
-        //trigger events
-        setCurrentMinMz(minMz);
-        setCurrentMaxMz(maxMz);
-        setCurrentMinRt(minRt);
-        setCurrentMaxRt(maxRt);
-        setCurrentMaxConfidence(maxConfidence);
-        setCurrentMinConfidence(minConfidence);
-        getFeatureQualityFilter().reset();
-        getPeakShapeQualityFilter().reset();
-        setLipidClassDetected(null);
-        setPfasDetected(null);
-        setDbFilter(null);
-        setElementFilter(ElementFilter.disabled());
-        adducts = Set.of();
-        setHasMs1(false);
-        setHasMsMs(false);
-        sampleBlankFoldChange.reset();
-        intensityFilter.reset();
-    }
-
-    private void clearSearchText() {
-        try {
-            searchTextDoc.remove(0, searchTextDoc.getLength()); // Clear existing content
-        } catch (BadLocationException e) {
-            //ignored
-        }
-    }
-
-    public boolean isSearchTextFilterActive() {
-        return searchTextDoc.getLength() > 0;
-    }
-
-    public String getSearchText() {
-        int l = searchTextDoc.getLength();
-        if (l > 0) {
-            try {
-                return searchTextDoc.getText(0, l);
-            } catch (BadLocationException e) {
-                return null;
-            }
-        }
-        return null;
-    }
-
+    // --- compilation ---
 
     private static final String FAKE_FIELD = "__FAKE_FIELD__";
-    private final QueryParser textFieldParser;
 
     /**
      * The executed lucene query, or empty when no filter is active. Derived from the SAME facet nodes
      * the search bar renders ({@link PanelQueryNodeFactory}) compiled via {@link LuceneQueryCompiler},
-     * combined (AND) with the free-text segment, and wrapped for inversion - so the executed query and
-     * the chips share one definition (see the equivalence tests, incl. the live-backend one).
+     * combined with the user's query by the block joint, and wrapped for inversion - so the executed query
+     * and the chips share one definition (see the equivalence tests, incl. the live-backend one).
      */
     public Optional<String> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode) {
-        if (!isActive())
+        FeatureFilter filter;
+        FilterContext ctx;
+        synchronized (this) {
+            filter = value;
+            ctx = context;
+        }
+        if (!filter.isActive(ctx))
             return Optional.empty();
-        String core = compileCore(confidenceMode);
+        String core = compileCore(filter, ctx, confidenceMode);
         if (core.isBlank())
             return Optional.empty();
         // inversion: a pure-negative query matches nothing, so anchor with match-all and exclude
-        return Optional.of(isInverted() ? "*:* AND NOT (" + core + ")" : core);
+        return Optional.of(filter.inverted() ? "*:* AND NOT (" + core + ")" : core);
     }
 
     /**
-     * The active structured facets (as query nodes) joined with the free-text segment - by AND, or by OR
-     * when {@link #getQueryJoin()} says so - compiled to lucene as it
-     * is EXECUTED - facets that are pure negations (no lipid class, no pfas tag) get the match-all anchor
-     * they need to match anything at all, see {@link LuceneQueryCompiler#compileExecutable}.
+     * The active structured facets (as query nodes) joined with the user's query - by AND, or by OR when
+     * {@link FeatureFilter#queryJoin()} says so - compiled to lucene as it is EXECUTED: facets that are pure
+     * negations (no lipid class, no pfas tag) get the match-all anchor they need to match anything at all,
+     * see {@link LuceneQueryCompiler#compileExecutable}.
      */
-    private String compileCore(@NotNull ConfidenceDisplayMode confidenceMode) {
-        List<QueryNode> nodes = PanelQueryNodeFactory.nodesFor(this, confidenceMode);
+    private String compileCore(@NotNull FeatureFilter filter, @NotNull FilterContext ctx, @NotNull ConfidenceDisplayMode confidenceMode) {
+        List<QueryNode> nodes = PanelQueryNodeFactory.nodesFor(filter, ctx, confidenceMode);
         List<LogicOp> ands = new ArrayList<>(Math.max(0, nodes.size() - 1));
         for (int i = 1; i < nodes.size(); i++)
             ands.add(LogicOp.AND);
-        return LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), freeTextQuery(), queryJoin);
+        return LuceneQueryCompiler.compileExecutable(new QueryContainer(nodes, ands), userQueryToRun(filter.userQuery()), filter.queryJoin());
     }
 
     /**
-     * The full-text segment: the user's search text in its executable form when it parses as a lucene query
-     * (see {@link #getExecutableQueryForm()}), otherwise quoted as a phrase so malformed input still runs
-     * (against the default search fields) instead of failing the whole query.
+     * The user's query as it has to be RUN: in its executable form when it is a lucene query (the match-all
+     * anchor a query with only negations needs, see {@link QueryStringParser#executableForm}), otherwise
+     * quoted as a phrase so malformed input still runs (against the default search fields) instead of failing
+     * the whole query.
      */
-    private String freeTextQuery() {
-        if (!isSearchTextFilterActive())
+    private String userQueryToRun(@NotNull String text) {
+        if (text.isEmpty())
             return "";
-        String text = getSearchText();
         try {
-            textFieldParser.parse(text);
-            // it is a query - so run the form that a query with only negations needs to match anything
-            return executableQueryForm.apply(text);
+            synchronized (textFieldParser) { // lucene's classic parser is not thread-safe
+                textFieldParser.parse(text);
+            }
+            return QueryStringParser.executableForm(text);
         } catch (ParseException e) {
             return "\"" + text.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
         }
@@ -604,8 +260,8 @@ public class FeatureFilterModel implements SiriusPCS {
             "." + AggregationType.AVG;
 
     // Canonical lucene index field names of the structured filter facets - the single GUI-side source
-    // of truth, used both to build the executed query (below) and to render the facets as query chips
-    // (PanelQueryNodeFactory). Must match the backend @IndexField names.
+    // of truth, used both to build the executed query (above) and to render the facets as query chips
+    // (PanelQueryNodeFactory / FacetCodecs). Must match the backend @IndexField names.
     public static final String FIELD_MZ = "ionMass";
     public static final String FIELD_INTENSITY_APEX = IntensityFilter.Measure.APEX.getField();
     public static final String FIELD_INTENSITY_AUC = IntensityFilter.Measure.AUC.getField();

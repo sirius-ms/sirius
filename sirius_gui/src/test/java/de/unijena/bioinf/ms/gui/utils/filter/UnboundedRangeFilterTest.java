@@ -33,8 +33,8 @@ public class UnboundedRangeFilterTest {
     public void testAFullyOpenRangeIsNotAFilter() {
         FeatureFilterModel model = new FeatureFilterModel();
 
-        assertFalse(model.isMzFilterActive(), "0 to infinity is no m/z filter");
-        assertFalse(model.isRtFilterActive(), "0 to infinity is no retention time filter");
+        assertFalse(model.get().isMzFilterActive(model.getContext()), "0 to infinity is no m/z filter");
+        assertFalse(model.get().isRtFilterActive(model.getContext()), "0 to infinity is no retention time filter");
     }
 
     /**
@@ -43,9 +43,9 @@ public class UnboundedRangeFilterTest {
     @Test
     public void testALowerBoundOnlyLeavesTheRangeOpenUpwards() {
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setCurrentMinMz(200);
+        model.update(f -> f.withMz(200, f.mz().max()));
 
-        assertTrue(model.isMzFilterActive());
+        assertTrue(model.get().isMzFilterActive(model.getContext()));
         assertTrue(queryOf(model).contains("[200 TO *]"),
                 "an unbounded upper end belongs in the query as an open one: " + queryOf(model));
     }
@@ -57,7 +57,7 @@ public class UnboundedRangeFilterTest {
     @Test
     public void testARetentionTimeFilterIsNotCappedAtTheOldMaximum() {
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setCurrentMinRt(60);
+        model.update(f -> f.withRt(60, f.rt().max()));
         String query = queryOf(model);
 
         assertFalse(query.contains("10000"), "no invented upper end: " + query);
@@ -71,10 +71,10 @@ public class UnboundedRangeFilterTest {
     @Test
     public void testAnUpperBoundThatWasAskedForIsKept() {
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setCurrentMinMz(200);
-        model.setCurrentMaxMz(6000);
+        model.update(f -> f.withMz(200, f.mz().max()));
+        model.update(f -> f.withMz(f.mz().min(), 6000));
 
-        assertTrue(model.isMaxMzFilterActive());
+        assertTrue(model.get().mz().isMaxActive(model.getContext().maxMz()));
         assertTrue(queryOf(model).contains("[200 TO 6000]"), queryOf(model));
     }
 
@@ -84,9 +84,9 @@ public class UnboundedRangeFilterTest {
     @Test
     public void testConfidenceKeepsItsRealUpperEnd() {
         FeatureFilterModel model = new FeatureFilterModel();
-        model.setCurrentMinConfidence(0.5);
+        model.update(f -> f.withConfidence(0.5, f.confidence().max()));
 
-        assertEquals(1d, model.getMaxConfidence());
+        assertEquals(1d, model.getContext().maxConfidence());
         assertFalse(queryOf(model).contains("TO *]"), "confidence has a real maximum: " + queryOf(model));
     }
 }

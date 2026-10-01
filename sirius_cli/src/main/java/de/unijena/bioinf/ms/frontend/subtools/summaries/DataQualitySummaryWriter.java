@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
-import de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory;
+import de.unijena.bioinf.ChemistryBase.utils.DefaultQualityCategory;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 

@@ -690,6 +690,35 @@ public class NoSQLProjectTest {
     }
 
     /**
+     * A recompute that computes nothing for a feature must not leave the feature's old fold change in the index.
+     * The run removes the fold changes of the comparison from the project first and merges into the index only
+     * the ones it computes; what drops the rest from the index is the background run re-indexing all features
+     * once the fold change run returns. A group without runs is the plainest case: the run returns right after
+     * the removal.
+     */
+    @Test
+    @SneakyThrows
+    public void testRecomputingWithoutBlankRunsDropsTheOldFoldChangeFromTheIndex() {
+        Feature inSample = sampleAndBlankWithOneFeature(4.0, 1.0);
+
+        runSampleOverBlankFoldChange();
+        assertEquals(1, featuresWithFoldChangeBetween(3.5, 4.5), "indexed after the first run");
+
+        // no run is a blank any more, so the recompute has nothing to replace the old fold change with
+        String blankRunId = project.findRunsByGroup("blank", Pageable.unpaged(), EnumSet.noneOf(Run.OptField.class))
+                .getContent().getFirst().getRunId();
+        project.removeTagsFromObject(Run.class, blankRunId, List.of("sample"));
+        assertTrue(project.findRunsByGroup("blank", Pageable.unpaged(), EnumSet.noneOf(Run.OptField.class)).isEmpty());
+
+        runSampleOverBlankFoldChange();
+
+        assertTrue(project.getFoldChanges(QuantRowType.FEATURES, Long.toString(inSample.getAlignedFeatureId())).isEmpty(),
+                "the recompute removed the fold change from the project");
+        assertEquals(0, featuresWithFoldChangeBetween(3.5, 4.5),
+                "so the index must not still answer with it");
+    }
+
+    /**
      * The index is also written from scratch, and that path has to carry the fold changes too. It is not a
      * corner: it runs after every lc-ms data import, and on opening a project whose persisted index was
      * discarded. Rebuilding without them leaves a project whose fold changes are all in place and whose blank
