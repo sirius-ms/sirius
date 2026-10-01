@@ -225,8 +225,10 @@ public class NoSQLInstance implements Instance {
             return Optional.empty();
         AlignedFeatures feature = maybeFeature.get();
         storage.fetchAllChildren(feature, "alignedFeatureId", "features", Feature.class);
-        // only use features with LC/MS information
-        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x -> x.getApexIntensity() != null).toList();
+        // only use features with LC/MS information: a feature without a run (peak list or API import) can carry
+        // an intensity as well, its precursor peak height, but has no run to be listed under
+        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream)
+                .filter(x -> x.getTraceReference().isPresent() && x.getApexIntensity() != null).toList();
         List<LCMSRun> samples = new ArrayList<>();
         for (Feature value : features) {
             samples.add(storage.getByPrimaryKey(value.getRunId(), LCMSRun.class).orElse(null));
