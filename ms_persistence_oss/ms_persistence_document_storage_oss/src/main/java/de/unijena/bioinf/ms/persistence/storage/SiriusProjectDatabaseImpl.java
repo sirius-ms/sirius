@@ -21,10 +21,14 @@ package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -32,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage>, Closeable, AutoCloseable {
     public static Metadata buildMetadata() {
@@ -59,6 +64,77 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
     @Override
     public void close() throws IOException {
         storage.close();
+    }
+
+    // Deriving the maximum intensities and folding written features into them read the stored value, change it
+    // and write it back. Both run under this lock, or two writers would each fold into the same old value and
+    // the second write would erase the first one's increase.
+    private final Object maximaLock = new Object();
+    // The stored maxima, read once; null while they have not been derived. Replaced, never changed in place,
+    // so a reader holding one never sees it change.
+    private volatile ProjectMaximumIntensities maxima;
+    // Guarded by maximaLock: whether the stored state has been read into the field above.
+    private boolean maximaRead;
+    // Guarded by maximaLock: the project had features before it tracked its maxima, so a write cannot start
+    // them - it would leave out everything written earlier. They wait for getMaximumIntensities to be derived.
+    private boolean maximaAwaitDerivation;
+
+    private ProjectMaximumIntensities readMaximaLocked() {
+        if (!maximaRead) {
+            maxima = findProjectMaximumIntensities().orElse(null);
+            maximaRead = true;
+        }
+        return maxima;
+    }
+
+    @Override
+    public void featuresWritten(@NotNull List<Feature> features) throws IOException {
+        if (features.isEmpty())
+            return;
+        synchronized (maximaLock) {
+            ProjectMaximumIntensities current = readMaximaLocked();
+            if (current == null) {
+                if (maximaAwaitDerivation)
+                    return;
+                // Not tracked yet. A project whose only features are these is a new one, and starts tracking
+                // with them - otherwise its first reader would pay the scan an old project pays.
+                if (getStorage().countAll(Feature.class) != features.size()) {
+                    maximaAwaitDerivation = true;
+                    return;
+                }
+                current = new ProjectMaximumIntensities();
+                current.fold(features);
+                upsertProjectMaximumIntensities(current);
+                maxima = current;
+                return;
+            }
+            ProjectMaximumIntensities next = current.copy();
+            if (next.fold(features)) {
+                upsertProjectMaximumIntensities(next);
+                maxima = next;
+            }
+        }
+    }
+
+    @SneakyThrows
+    @Override
+    public @NotNull ProjectMaximumIntensities getMaximumIntensities() {
+        ProjectMaximumIntensities known = maxima;
+        if (known != null)
+            return known;
+        synchronized (maximaLock) {
+            known = readMaximaLocked();
+            if (known != null)
+                return known;
+            ProjectMaximumIntensities derived = new ProjectMaximumIntensities();
+            try (Stream<Feature> features = getStorage().findAllStr(Feature.class)) {
+                features.forEach(f -> derived.fold(List.of(f)));
+            }
+            upsertProjectMaximumIntensities(derived);
+            maxima = derived;
+            maximaAwaitDerivation = false;
+            return derived;
+        }
     }
 
     private Set<Class<?>> getRelatedToAF() {
