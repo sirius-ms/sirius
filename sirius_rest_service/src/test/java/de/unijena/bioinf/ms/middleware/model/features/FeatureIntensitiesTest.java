@@ -19,11 +19,10 @@
 package de.unijena.bioinf.ms.middleware.model.features;
 
 import de.unijena.bioinf.ms.middleware.model.features.FeatureIntensities.Intensities;
-import de.unijena.bioinf.ms.middleware.model.features.FeatureIntensities.RunMaxima;
-import de.unijena.bioinf.ms.persistence.model.core.DataSource;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -36,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * The intensities the API reports for an aligned feature are the maxima of the RAW per-run values - never the
  * aligned feature's own {@code apexIntensity}, which comes from the merged trace and is normalized per run and
  * summed over runs. The relative intensities put each run feature in proportion to the most intense feature of
- * its own run (or, without runs, its own source file) and take the best run.
+ * its own run (or, without a run, of the whole project) and take the best run.
  */
 public class FeatureIntensitiesTest {
 
@@ -53,22 +52,20 @@ public class FeatureIntensitiesTest {
                 .build();
     }
 
-    /** A peak-list feature: one run feature without a run, the aligned feature knows the file it came from. */
-    private static AlignedFeatures fromPeakList(String file, double apexIntensity) {
-        AlignedFeatures feature = aligned(apexIntensity, Feature.builder().apexIntensity(apexIntensity).build());
-        feature.setDataSource(DataSource.fromPath(file));
-        return feature;
+    /** A peak-list feature: one run feature without a run, holding the precursor peak height. */
+    private static AlignedFeatures fromPeakList(double apexIntensity) {
+        return aligned(apexIntensity, Feature.builder().apexIntensity(apexIntensity).build());
     }
 
-    private static RunMaxima maximaOf(AlignedFeatures... features) {
-        RunMaxima.Builder builder = RunMaxima.builder();
+    private static ProjectMaximumIntensities maximaOf(AlignedFeatures... features) {
+        ProjectMaximumIntensities maxima = new ProjectMaximumIntensities();
         for (AlignedFeatures feature : features)
-            feature.getFeatures().orElse(List.of()).forEach(f -> builder.add(FeatureIntensities.groupOf(f, feature), f));
-        return builder.build();
+            maxima.fold(feature.getFeatures().orElse(List.of()));
+        return maxima;
     }
 
     /** Run maxima of the worked example: A 1,000,000 / B 2,000,000 / C 500,000 (areas ten times that). */
-    private static RunMaxima maxima() {
+    private static ProjectMaximumIntensities maxima() {
         return maximaOf(
                 aligned(null, runFeature(RUN_A, 1_000_000d, 10_000_000d)),
                 aligned(null, runFeature(RUN_B, 2_000_000d, 20_000_000d)),
@@ -149,68 +146,43 @@ public class FeatureIntensitiesTest {
     }
 
     @Test
-    public void testFoldingLeavesTheMaximaItStartedFromAlone() {
-        RunMaxima before = maxima();
-        RunMaxima after = before.toBuilder().add(FeatureIntensities.runGroup(RUN_A), runFeature(RUN_A, 9_000_000d, 0d)).build();
+    public void testFoldingIntoACopyLeavesTheMaximaItStartedFromAlone() {
+        ProjectMaximumIntensities before = maxima();
+        ProjectMaximumIntensities after = before.copy();
+        assertTrue(after.fold(List.of(runFeature(RUN_A, 9_000_000d, 0d))));
 
-        assertEquals(Set.of(FeatureIntensities.runGroup(RUN_A)), after.changedGroups(before),
-                "only the run the feature was added to");
-        // the state before the write has to survive the fold, or there is nothing left to compare against
+        assertEquals(Set.of(RUN_A), after.runsRaisedSince(before), "only the run the feature was added to");
+        assertTrue(after.globalRaisedSince(before), "9,000,000 is also the strongest feature of the project");
         AlignedFeatures atOldMaximum = aligned(null, runFeature(RUN_A, 1_000_000d, 10_000_000d));
         assertEquals(100d, FeatureIntensities.of(atOldMaximum, before).apexRelative(), 1e-9);
         assertEquals(1_000_000d / 9_000_000d * 100d, FeatureIntensities.of(atOldMaximum, after).apexRelative(), 1e-9);
     }
 
     @Test
-    public void testAGroupIsHeldOnlyByAValueThatIsItsMaximum() {
-        RunMaxima maxima = maxima(); // A 1,000,000 / B 2,000,000 / C 500,000, areas ten times that
-        String a = FeatureIntensities.runGroup(RUN_A), b = FeatureIntensities.runGroup(RUN_B);
-
-        assertEquals(Set.of(a), maxima.groupsWhoseMaximumIsHeldBy(
-                        maximaOf(aligned(null, runFeature(RUN_A, 1_000_000d, 0d)))),
-                "exactly the run maximum, in peak height");
-        assertEquals(Set.of(a), maxima.groupsWhoseMaximumIsHeldBy(
-                        maximaOf(aligned(null, runFeature(RUN_A, 0d, 10_000_000d)))),
-                "exactly the run maximum, in area - either measure is enough");
-        assertEquals(Set.of(), maxima.groupsWhoseMaximumIsHeldBy(
-                        maximaOf(aligned(null, runFeature(RUN_A, 999_999d, 9_999_999d)))),
-                "just below it: deleting this cannot lower the maximum");
-        assertEquals(Set.of(a, b), maxima.groupsWhoseMaximumIsHeldBy(maximaOf(
-                        aligned(null, runFeature(RUN_A, 1_000_000d, 0d)),
-                        aligned(null, runFeature(RUN_B, 2_000_000d, 0d)))),
-                "one group per feature that holds one");
-        assertEquals(Set.of(), maxima.groupsWhoseMaximumIsHeldBy(RunMaxima.empty()),
-                "a deletion that takes no run feature with it holds nothing");
-        assertEquals(Set.of(), maxima.groupsWhoseMaximumIsHeldBy(
-                        maximaOf(aligned(null, runFeature(99L, 1_000_000d, 10_000_000d)))),
-                "a run these maxima never saw");
-    }
-
-    @Test
-    public void testPeakListFeaturesAreGroupedByTheirSourceFile() {
-        // two files, each one measurement: the brightest feature of each file is that file's 100 %
-        AlignedFeatures lau = fromPeakList("laudanosine.mgf", 135_545_632d);
-        AlignedFeatures bicuculline = fromPeakList("bicuculline.ms", 74_298_448d);
-        AlignedFeatures weakInSameFile = fromPeakList("bicuculline.ms", 7_429_845d);
-        RunMaxima maxima = maximaOf(lau, bicuculline, weakInSameFile);
+    public void testPeakListFeaturesAreHeldAgainstTheProjectMaximum() {
+        // a peak list is no measurement of its own: every feature without a run shares one reference, the
+        // strongest feature of the project
+        AlignedFeatures lau = fromPeakList(135_545_632d);
+        AlignedFeatures bicuculline = fromPeakList(74_298_448d);
+        AlignedFeatures weak = fromPeakList(13_554_563.2);
+        ProjectMaximumIntensities maxima = maximaOf(lau, bicuculline, weak);
 
         assertEquals(100d, FeatureIntensities.of(lau, maxima).apexRelative(), 1e-9);
-        assertEquals(100d, FeatureIntensities.of(bicuculline, maxima).apexRelative(), 1e-9,
-                "the file's strongest feature, however weak compared with another file");
-        assertEquals(10d, FeatureIntensities.of(weakInSameFile, maxima).apexRelative(), 1e-6);
+        assertEquals(74_298_448d / 135_545_632d * 100d, FeatureIntensities.of(bicuculline, maxima).apexRelative(), 1e-9);
+        assertEquals(10d, FeatureIntensities.of(weak, maxima).apexRelative(), 1e-6);
+        assertNull(FeatureIntensities.of(lau, maxima).aucRelative(), "a peak list has no area");
     }
 
     @Test
-    public void testChangedGroupsAreThoseWhoseMaximumMoved() {
-        RunMaxima before = maxima();
-        // run B's strongest feature is gone, run C gained a brighter one, A is unchanged, D is new
-        RunMaxima after = maximaOf(
-                aligned(null, runFeature(RUN_A, 1_000_000d, 10_000_000d)),
-                aligned(null, runFeature(RUN_B, 800_000d, 8_000_000d)),
-                aligned(null, runFeature(RUN_C, 900_000d, 5_000_000d)),
-                aligned(null, runFeature(4, 50_000d, 500_000d)));
-        assertEquals(Set.of(FeatureIntensities.runGroup(RUN_B), FeatureIntensities.runGroup(RUN_C), FeatureIntensities.runGroup(4)),
-                after.changedGroups(before));
-        assertEquals(Set.of(), before.changedGroups(maxima()));
+    public void testRaisedRunsAreThoseWhoseMaximumRose() {
+        ProjectMaximumIntensities before = maxima();
+        ProjectMaximumIntensities after = before.copy();
+        // run C gains a brighter feature, run D is new, A and B are folded below their maximum
+        after.fold(List.of(runFeature(RUN_C, 900_000d, 5_000_000d), runFeature(4, 50_000d, 500_000d),
+                runFeature(RUN_A, 10d, 10d), runFeature(RUN_B, 1_999_999d, 0d)));
+
+        assertEquals(Set.of(RUN_C, 4L), after.runsRaisedSince(before));
+        assertFalse(after.globalRaisedSince(before), "run B's 2,000,000 is still the strongest");
+        assertEquals(Set.of(), before.runsRaisedSince(maxima()));
     }
 }
