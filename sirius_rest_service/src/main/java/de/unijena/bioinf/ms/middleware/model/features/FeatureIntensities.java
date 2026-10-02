@@ -18,13 +18,12 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Derives the MS1 intensities the API reports for an aligned feature.
@@ -48,29 +47,27 @@ public final class FeatureIntensities {
     }
 
     /**
-     * The intensities of one aligned feature. {@code apex} and {@code auc} are raw instrument counts, the relative
-     * values are percent of the run maximum (the project maximum without a run); each is null when unknown.
+     * What an aligned feature with no intensity reports: an object with every value null rather than none, so
+     * that a caller can tell "known to be unknown" from "not loaded yet".
      */
-    public record Intensities(@Nullable Double apex, @Nullable Double auc,
-                              @Nullable Double apexRelative, @Nullable Double aucRelative) {
-        public static final Intensities UNKNOWN = new Intensities(null, null, null, null);
+    public static Intensity unknown() {
+        return new Intensity();
     }
 
     /**
-     * The intensities of {@code feature}: the maxima over its run features, raw and relative to the maximum
-     * each is held against. Run features without a value are skipped, and if none of them has one the intensity is unknown.
-     * So it is for an aligned feature with no run features at all: an apex intensity of its own, where there
-     * is one, belongs to a merged trace and is not an intensity in counts.
+     * The intensity of an aligned feature: the maxima over its run features, raw and in percent of the maximum
+     * each is held against. Run features without a value are skipped, and if none of them has one the intensity
+     * is unknown. So it is for an aligned feature with no run features at all: an apex intensity of its own,
+     * where there is one, belongs to a merged trace and is not an intensity in counts.
      *
-     * @param feature an aligned feature whose run features have been fetched, if it has any
-     * @param maxima  the maximum intensities of the project the feature belongs to
+     * @param runFeatures the run features of an aligned feature - never the aligned feature itself
+     * @param maxima      the maximum intensities of the project the feature belongs to
      */
-    public static Intensities of(@NotNull AlignedFeatures feature, @NotNull ProjectMaximumIntensities maxima) {
-        List<Feature> runFeatures = feature.getFeatures().orElse(null);
-        if (runFeatures == null || runFeatures.isEmpty())
-            // nothing measured to report; an apex intensity of its own, where there is one, is a merged
-            // trace's and not an intensity in counts
-            return Intensities.UNKNOWN;
+    public static Intensity of(@NotNull Collection<Feature> runFeatures, @NotNull ProjectMaximumIntensities maxima) {
+        if (runFeatures.isEmpty())
+            // nothing measured to report; an apex intensity of the aligned feature, where there is one, is a
+            // merged trace's and not an intensity in counts
+            return unknown();
 
         Double apex = null, auc = null, apexRelative = null, aucRelative = null;
         for (Feature runFeature : runFeatures) {
@@ -86,7 +83,7 @@ public final class FeatureIntensities {
                 aucRelative = max(aucRelative, percentOf(runAuc, maximum.getAuc()));
             }
         }
-        return new Intensities(apex, auc, apexRelative, aucRelative);
+        return new Intensity(apex, auc, apexRelative, aucRelative);
     }
 
     private static @Nullable Double percentOf(double value, double maximum) {

@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.middleware.model.features;
 
 import de.unijena.bioinf.projectspace.FieldVocabulary;
 import de.unijena.bioinf.projectspace.SearchableFieldDoc;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
@@ -59,6 +58,7 @@ public class AlignedFeature implements Taggable {
     // topAnnotationsSummary are the indext summary field that can be retrieved very fast and are needed for quick gui loading.
     @Schema(name = "AlignedFeatureOptField", nullable = true)
     public enum OptField {none, msData, topAnnotationsSummary, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags,
+        intensities,
         //hidden from API via SwaggerConfig.java
         statistics}
 
@@ -77,7 +77,7 @@ public class AlignedFeature implements Taggable {
      */
     public static final EnumSet<OptField> INDEXED_OPT_FIELDS =  EnumSet.of(
             OptField.tags, OptField.computedTools, OptField.topAnnotationsSummary, OptField.qualities,
-            OptField.statistics);
+            OptField.intensities, OptField.statistics);
 
     // identifier
     /**
@@ -116,50 +116,15 @@ public class AlignedFeature implements Taggable {
     protected Double ionMass;
 
     /**
-     * MS1 intensity of the feature as peak height, in the intensity unit of the input data: the highest apex
-     * intensity over all runs the feature was detected in (as in the quantification table), or the height of the
-     * precursor peak in its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists).
-     * NULL if unknown.
-     * Search {@code intensityApexRelative} to hold a feature against its own run instead of against a fixed
-     * intensity.
+     * MS1 intensity of the feature: peak height and area under the peak, in raw instrument counts and in percent
+     * of the strongest feature it is compared with. Searchable as {@code intensity.apex}, {@code intensity.auc},
+     * {@code intensity.apexPercent} and {@code intensity.aucPercent}.
+     * <p>
+     * Optional field: only filled when the opt field {@code intensities} is requested.
      */
-    @IndexField(sortable = true)
+    @IndexField
     @Schema(nullable = true)
-    protected Double intensityApex;
-
-    /**
-     * MS1 intensity of the feature as area under the chromatographic peak, the trace intensity integrated over
-     * the retention time: the highest area over all runs the feature was detected in. NULL for data without an
-     * LC-MS trace.
-     * Search {@code intensityAUCRelative} to hold a feature against its own run, see {@code intensityApex}.
-     */
-    @IndexField(sortable = true)
-    @Schema(nullable = true)
-    protected Double intensityAUC;
-
-    /**
-     * Apex intensity in percent of the most intense feature of the same run, the highest such value over the
-     * runs the feature was detected in: {@code intensityApexRelative:[10 TO *]} keeps the features that reach
-     * 10 % of their run's maximum in at least one run. Data imported without runs (peak lists) is held against
-     * the most intense feature of the same source file instead, and features imported directly through the
-     * API (feature or compound import) have no source file and are held against each other.
-     * Searchable and sortable, but not part of the feature itself: it says how a feature compares with the
-     * project it is in rather than what was measured.
-     */
-    @IndexField(sortable = true)
-    @Schema(nullable = true, hidden = true)
-    @JsonIgnore
-    protected Double intensityApexRelative;
-
-    /**
-     * Area under curve in percent of the most intense feature of the same run, see
-     * {@code intensityApexRelative}.
-     * Searchable and sortable, but not part of the feature itself.
-     */
-    @IndexField(sortable = true)
-    @Schema(nullable = true, hidden = true)
-    @JsonIgnore
-    protected Double intensityAUCRelative;
+    protected Intensity intensity;
 
     /**
      * Ion mode (charge) the feature has been measured in.

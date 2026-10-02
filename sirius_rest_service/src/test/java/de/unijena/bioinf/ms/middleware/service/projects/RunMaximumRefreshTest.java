@@ -132,16 +132,16 @@ public class RunMaximumRefreshTest {
         NoSQLProjectImpl first = session();
         long weak = addFeature("weak", 1.0e5);
         first.addToSearchIndex(ids(weak), null);
-        assertEquals(List.of("weak"), namesMatching(first, "intensityApexRelative:[50 TO *]"),
+        assertEquals(List.of("weak"), namesMatching(first, "intensity.apexPercent:[50 TO *]"),
                 "the only feature of the run is its maximum");
 
         NoSQLProjectImpl second = session();
         long strong = addFeature("strong", 1.0e6);
         second.addToSearchIndex(ids(strong), null);
 
-        assertEquals(List.of("strong"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
+        assertEquals(List.of("strong"), namesMatching(second, "intensity.apexPercent:[50 TO *]"),
                 "'weak' is now 10 % of the run maximum and must have been rewritten");
-        assertEquals(List.of("strong", "weak"), namesMatching(second, "intensityApexRelative:[5 TO *]"));
+        assertEquals(List.of("strong", "weak"), namesMatching(second, "intensity.apexPercent:[5 TO *]"));
     }
 
     @Test
@@ -149,14 +149,14 @@ public class RunMaximumRefreshTest {
         NoSQLProjectImpl session = session();
         long weak = addFeature("weak", 1.0e5);
         session.addToSearchIndex(ids(weak), null);
-        assertEquals(List.of("weak"), namesMatching(session, "intensityApexRelative:[50 TO *]"));
+        assertEquals(List.of("weak"), namesMatching(session, "intensity.apexPercent:[50 TO *]"));
 
         long strong = addFeature("strong", 1.0e6);
         session.addToSearchIndex(ids(strong), null);
 
-        assertEquals(List.of("strong"), namesMatching(session, "intensityApexRelative:[50 TO *]"),
+        assertEquals(List.of("strong"), namesMatching(session, "intensity.apexPercent:[50 TO *]"),
                 "'weak' is 10 % of the new maximum and must have been rewritten");
-        assertEquals(List.of("strong", "weak"), namesMatching(session, "intensityApexRelative:[5 TO *]"));
+        assertEquals(List.of("strong", "weak"), namesMatching(session, "intensity.apexPercent:[5 TO *]"));
     }
 
     @Test
@@ -169,8 +169,8 @@ public class RunMaximumRefreshTest {
         long weak = addFeature("weak", 1.0e5);
         second.addToSearchIndex(ids(weak), null);
 
-        assertEquals(List.of("strong"), namesMatching(second, "intensityApexRelative:[50 TO *]"));
-        assertEquals(List.of("strong", "weak"), namesMatching(second, "intensityApexRelative:[10 TO *]"));
+        assertEquals(List.of("strong"), namesMatching(second, "intensity.apexPercent:[50 TO *]"));
+        assertEquals(List.of("strong", "weak"), namesMatching(second, "intensity.apexPercent:[10 TO *]"));
     }
 
     /** Peak-list features belong to no run; they are held against the strongest feature of the project. */
@@ -180,16 +180,16 @@ public class RunMaximumRefreshTest {
         long weak = addPeakListFeature("weak", 1.0e5);
         long other = addPeakListFeature("other", 5.0e4);
         session.addToSearchIndex(ids(weak, other), null);
-        assertEquals(List.of("weak"), namesMatching(session, "intensityApexRelative:[99 TO *]"));
-        assertEquals(List.of("other"), namesMatching(session, "intensityApexRelative:[49 TO 51]"));
+        assertEquals(List.of("weak"), namesMatching(session, "intensity.apexPercent:[99 TO *]"));
+        assertEquals(List.of("other"), namesMatching(session, "intensity.apexPercent:[49 TO 51]"));
 
         long strong = addPeakListFeature("strong", 1.0e6);
         session.addToSearchIndex(ids(strong), null);
 
-        assertEquals(List.of("strong"), namesMatching(session, "intensityApexRelative:[99 TO *]"));
-        assertEquals(List.of("weak"), namesMatching(session, "intensityApexRelative:[9 TO 11]"),
+        assertEquals(List.of("strong"), namesMatching(session, "intensity.apexPercent:[99 TO *]"));
+        assertEquals(List.of("weak"), namesMatching(session, "intensity.apexPercent:[9 TO 11]"),
                 "'weak' is now 10 % of the global maximum and must have been rewritten");
-        assertEquals(List.of("other"), namesMatching(session, "intensityApexRelative:[4 TO 6]"));
+        assertEquals(List.of("other"), namesMatching(session, "intensity.apexPercent:[4 TO 6]"));
     }
 
     /**
@@ -206,9 +206,9 @@ public class RunMaximumRefreshTest {
         NoSQLProjectImpl second = session();
         second.deleteAlignedFeaturesById(String.valueOf(strong));
 
-        assertEquals(List.of(), namesMatching(second, "intensityApexRelative:[50 TO *]"),
+        assertEquals(List.of(), namesMatching(second, "intensity.apexPercent:[50 TO *]"),
                 "the reference is the maximum the run has held, not the one it holds");
-        assertEquals(List.of("weak"), namesMatching(second, "intensityApexRelative:[9 TO 11]"));
+        assertEquals(List.of("weak"), namesMatching(second, "intensity.apexPercent:[9 TO 11]"));
     }
 
     /** The other two ways features are deleted reach the same place. */
@@ -225,8 +225,8 @@ public class RunMaximumRefreshTest {
         session.deleteCompoundById(String.valueOf(compound));
         session.deleteAlignedFeaturesByIds(ids(alsoStrong, middle));
 
-        assertEquals(List.of("weak"), namesMatching(session, "intensityApexRelative:[9 TO 11]"));
-        assertEquals(List.of("weak"), namesMatching(session, "intensityApexRelative:[0 TO *]"));
+        assertEquals(List.of("weak"), namesMatching(session, "intensity.apexPercent:[9 TO 11]"));
+        assertEquals(List.of("weak"), namesMatching(session, "intensity.apexPercent:[0 TO *]"));
     }
 
     /** Opening a project whose index is complete reads the stored maxima at most - it never derives them. */
@@ -240,7 +240,7 @@ public class RunMaximumRefreshTest {
         ps.removeProjectProperty(SiriusProjectDocumentDatabase.PROJECT_MAXIMUM_INTENSITIES_KEY);
 
         NoSQLProjectImpl second = session();
-        assertEquals(List.of("feature"), namesMatching(second, "intensityApexRelative:[50 TO *]"),
+        assertEquals(List.of("feature"), namesMatching(second, "intensity.apexPercent:[50 TO *]"),
                 "the index is still served");
         assertTrue(ps.findProjectMaximumIntensities().isEmpty(), "opening and reading must not derive the maxima");
     }

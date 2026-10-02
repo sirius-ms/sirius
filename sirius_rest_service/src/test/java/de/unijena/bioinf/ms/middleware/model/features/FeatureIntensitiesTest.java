@@ -18,7 +18,6 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
-import de.unijena.bioinf.ms.middleware.model.features.FeatureIntensities.Intensities;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
@@ -57,6 +56,10 @@ public class FeatureIntensitiesTest {
         return aligned(apexIntensity, Feature.builder().apexIntensity(apexIntensity).build());
     }
 
+    private static List<Feature> runFeaturesOf(AlignedFeatures feature) {
+        return feature.getFeatures().orElse(List.of());
+    }
+
     private static ProjectMaximumIntensities maximaOf(AlignedFeatures... features) {
         ProjectMaximumIntensities maxima = new ProjectMaximumIntensities();
         for (AlignedFeatures feature : features)
@@ -77,9 +80,9 @@ public class FeatureIntensitiesTest {
         // 0.4 + 0.4 + 0.4 of the runs' normalization constants is what the merged trace stores
         AlignedFeatures feature = aligned(1.2,
                 runFeature(RUN_A, 400_000d, 4_000_000d), runFeature(RUN_B, 800_000d, 8_000_000d), runFeature(RUN_C, 200_000d, 2_000_000d));
-        Intensities intensities = FeatureIntensities.of(feature, maxima());
-        assertEquals(800_000d, intensities.apex());
-        assertEquals(8_000_000d, intensities.auc());
+        Intensity intensities = FeatureIntensities.of(runFeaturesOf(feature), maxima());
+        assertEquals(800_000d, intensities.getApex());
+        assertEquals(8_000_000d, intensities.getAuc());
     }
 
     @Test
@@ -87,32 +90,32 @@ public class FeatureIntensitiesTest {
         // 40 % of A, 40 % of B, 40 % of C: the feature is at 40 % of its run maximum everywhere
         AlignedFeatures even = aligned(1.2,
                 runFeature(RUN_A, 400_000d, 4_000_000d), runFeature(RUN_B, 800_000d, 8_000_000d), runFeature(RUN_C, 200_000d, 2_000_000d));
-        assertEquals(40d, FeatureIntensities.of(even, maxima()).apexRelative(), 1e-9);
-        assertEquals(40d, FeatureIntensities.of(even, maxima()).aucRelative(), 1e-9);
+        assertEquals(40d, FeatureIntensities.of(runFeaturesOf(even), maxima()).getApexPercent(), 1e-9);
+        assertEquals(40d, FeatureIntensities.of(runFeaturesOf(even), maxima()).getAucPercent(), 1e-9);
 
         // weak everywhere in counts, but 60 % of run C's maximum: the best run decides
         AlignedFeatures strongInC = aligned(0.9, runFeature(RUN_A, 100_000d, 1_000_000d), runFeature(RUN_C, 300_000d, 3_000_000d));
-        Intensities intensities = FeatureIntensities.of(strongInC, maxima());
-        assertEquals(300_000d, intensities.apex());
-        assertEquals(60d, intensities.apexRelative(), 1e-9);
+        Intensity intensities = FeatureIntensities.of(runFeaturesOf(strongInC), maxima());
+        assertEquals(300_000d, intensities.getApex());
+        assertEquals(60d, intensities.getApexPercent(), 1e-9);
 
         // the run's most intense feature is at 100 %
-        assertEquals(100d, FeatureIntensities.of(aligned(1.5, runFeature(RUN_B, 2_000_000d, 20_000_000d)), maxima()).apexRelative(), 1e-9);
+        assertEquals(100d, FeatureIntensities.of(runFeaturesOf(aligned(1.5, runFeature(RUN_B, 2_000_000d, 20_000_000d))), maxima()).getApexPercent(), 1e-9);
     }
 
     @Test
     public void testRunFeaturesWithoutAValueAreSkipped() {
         AlignedFeatures feature = aligned(1.5, runFeature(RUN_A, null, 0d), runFeature(RUN_B, 2_000_000d, 0d));
-        Intensities intensities = FeatureIntensities.of(feature, maxima());
-        assertEquals(2_000_000d, intensities.apex());
-        assertNull(intensities.auc(), "an area of zero means no area was measured");
-        assertNull(intensities.aucRelative());
+        Intensity intensities = FeatureIntensities.of(runFeaturesOf(feature), maxima());
+        assertEquals(2_000_000d, intensities.getApex());
+        assertNull(intensities.getAuc(), "an area of zero means no area was measured");
+        assertNull(intensities.getAucPercent());
     }
 
     @Test
     public void testRunFeaturesPresentButNoneWithAValueIsUnknownNotTheMergedValue() {
         AlignedFeatures feature = aligned(1.8, runFeature(RUN_A, null, 0d), runFeature(RUN_B, null, 0d));
-        assertEquals(Intensities.UNKNOWN, FeatureIntensities.of(feature, maxima()));
+        assertEquals(FeatureIntensities.unknown(), FeatureIntensities.of(runFeaturesOf(feature), maxima()));
     }
 
     @Test
@@ -120,11 +123,11 @@ public class FeatureIntensitiesTest {
         // every import writes what it measured as a feature of its own, so an aligned feature without one has
         // nothing to report - its own value belongs to a merged trace and is not an intensity in counts
         AlignedFeatures feature = AlignedFeatures.builder().apexIntensity(5_000_000d).build();
-        assertEquals(Intensities.UNKNOWN, FeatureIntensities.of(feature, maxima()));
+        assertEquals(FeatureIntensities.unknown(), FeatureIntensities.of(runFeaturesOf(feature), maxima()));
 
         AlignedFeatures emptyList = aligned(5_000_000d);
         emptyList.setFeatures(List.of());
-        assertEquals(Intensities.UNKNOWN, FeatureIntensities.of(emptyList, maxima()));
+        assertEquals(FeatureIntensities.unknown(), FeatureIntensities.of(runFeaturesOf(emptyList), maxima()));
     }
 
     @Test
@@ -136,13 +139,13 @@ public class FeatureIntensitiesTest {
                 .apexIntensity(0.204)
                 .traceRef(new TraceRef(42L, 0, 1, 2, 3))
                 .build();
-        assertEquals(Intensities.UNKNOWN, FeatureIntensities.of(feature, maxima()),
+        assertEquals(FeatureIntensities.unknown(), FeatureIntensities.of(runFeaturesOf(feature), maxima()),
                 "the merged value must not be reported as the feature's intensity");
 
         AlignedFeatures emptyList = aligned(0.204);
         emptyList.setTraceRef(new TraceRef(42L, 0, 1, 2, 3));
         emptyList.setFeatures(List.of());
-        assertEquals(Intensities.UNKNOWN, FeatureIntensities.of(emptyList, maxima()));
+        assertEquals(FeatureIntensities.unknown(), FeatureIntensities.of(runFeaturesOf(emptyList), maxima()));
     }
 
     @Test
@@ -154,8 +157,8 @@ public class FeatureIntensitiesTest {
         assertEquals(Set.of(RUN_A), after.runsRaisedSince(before), "only the run the feature was added to");
         assertTrue(after.globalRaisedSince(before), "9,000,000 is also the strongest feature of the project");
         AlignedFeatures atOldMaximum = aligned(null, runFeature(RUN_A, 1_000_000d, 10_000_000d));
-        assertEquals(100d, FeatureIntensities.of(atOldMaximum, before).apexRelative(), 1e-9);
-        assertEquals(1_000_000d / 9_000_000d * 100d, FeatureIntensities.of(atOldMaximum, after).apexRelative(), 1e-9);
+        assertEquals(100d, FeatureIntensities.of(runFeaturesOf(atOldMaximum), before).getApexPercent(), 1e-9);
+        assertEquals(1_000_000d / 9_000_000d * 100d, FeatureIntensities.of(runFeaturesOf(atOldMaximum), after).getApexPercent(), 1e-9);
     }
 
     @Test
@@ -167,10 +170,10 @@ public class FeatureIntensitiesTest {
         AlignedFeatures weak = fromPeakList(13_554_563.2);
         ProjectMaximumIntensities maxima = maximaOf(lau, bicuculline, weak);
 
-        assertEquals(100d, FeatureIntensities.of(lau, maxima).apexRelative(), 1e-9);
-        assertEquals(74_298_448d / 135_545_632d * 100d, FeatureIntensities.of(bicuculline, maxima).apexRelative(), 1e-9);
-        assertEquals(10d, FeatureIntensities.of(weak, maxima).apexRelative(), 1e-6);
-        assertNull(FeatureIntensities.of(lau, maxima).aucRelative(), "a peak list has no area");
+        assertEquals(100d, FeatureIntensities.of(runFeaturesOf(lau), maxima).getApexPercent(), 1e-9);
+        assertEquals(74_298_448d / 135_545_632d * 100d, FeatureIntensities.of(runFeaturesOf(bicuculline), maxima).getApexPercent(), 1e-9);
+        assertEquals(10d, FeatureIntensities.of(runFeaturesOf(weak), maxima).getApexPercent(), 1e-6);
+        assertNull(FeatureIntensities.of(runFeaturesOf(lau), maxima).getAucPercent(), "a peak list has no area");
     }
 
     @Test

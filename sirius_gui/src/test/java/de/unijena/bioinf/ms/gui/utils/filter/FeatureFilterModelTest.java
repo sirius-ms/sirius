@@ -84,7 +84,7 @@ public class FeatureFilterModelTest {
 
         model.update(f -> f.withIntensity(f.intensity().withMinAbsolute(100_000)));
         assertTrue(model.get().isActive(model.getContext()), "a minimum above zero alone must mark the model active");
-        assertEquals("intensityApex:[100000 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+        assertEquals("intensity.apex:[100000 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
     }
 
     @Test
@@ -96,7 +96,7 @@ public class FeatureFilterModelTest {
 
         // the index holds the percentage as a field of its own, so the model needs nothing about the project
         assertTrue(model.get().isActive(model.getContext()));
-        assertEquals("intensityAUCRelative:[10 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+        assertEquals("intensity.aucPercent:[10 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
     }
 
     /**

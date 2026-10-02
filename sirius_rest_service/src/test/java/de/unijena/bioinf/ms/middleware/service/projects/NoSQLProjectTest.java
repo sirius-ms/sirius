@@ -207,8 +207,9 @@ public class NoSQLProjectTest {
                 .ms2Spectra(List.of(ms2, ms2))
                 .build());
 
-        List<AlignedFeature> features = project.addAlignedFeatures(imports, null, EnumSet.of(AlignedFeature.OptField.msData));
-        List<AlignedFeature> features2 = project.findAlignedFeatures(null, Pageable.unpaged(), false, EnumSet.of(AlignedFeature.OptField.msData)).getContent();
+        EnumSet<AlignedFeature.OptField> requested = EnumSet.of(AlignedFeature.OptField.msData, AlignedFeature.OptField.intensities);
+        List<AlignedFeature> features = project.addAlignedFeatures(imports, null, requested);
+        List<AlignedFeature> features2 = project.findAlignedFeatures(null, Pageable.unpaged(), false, requested).getContent();
 
 
         assertEquals(1, features.size());
@@ -217,9 +218,11 @@ public class NoSQLProjectTest {
         AlignedFeature f1 = features.getFirst();
         AlignedFeature f2 = features2.getFirst();
 
-        // A listing is served from the search index, which stores the relative intensities; a feature
-        // converted for a response carries them only when it becomes an index document.
-        assertTrue(EqualsBuilder.reflectionEquals(f1, f2, "msData", "intensityApexRelative", "intensityAUCRelative"));
+        // the imported feature is converted from the database, the listing is served from the search index:
+        // both have to say the same, intensities included
+        assertNotNull(f1.getIntensity());
+        assertEquals(f1.getIntensity(), f2.getIntensity());
+        assertTrue(EqualsBuilder.reflectionEquals(f1, f2, "msData"));
 
         MsData d1 = f1.getMsData();
         MsData d2 = f2.getMsData();

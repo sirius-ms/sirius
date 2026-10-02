@@ -34,6 +34,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Pageable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -92,7 +93,7 @@ public class FeatureImportIntensityTest {
                 .rtEndSeconds(12d)
                 .mergedMs1(ms1)
                 .ms2Spectra(List.of(ms2))
-                .build()), null, EnumSet.noneOf(AlignedFeature.OptField.class), "test").getFirst();
+                .build()), null, EnumSet.of(AlignedFeature.OptField.intensities), "test").getFirst();
     }
 
     @Test
@@ -119,6 +120,31 @@ public class FeatureImportIntensityTest {
 
     @Test
     public void testTheReportedIntensityIsThePrecursorHeight() {
-        assertEquals(PRECURSOR_INTENSITY, importFeature().getIntensityApex());
+        assertEquals(PRECURSOR_INTENSITY, importFeature().getIntensity().getApex());
+    }
+
+    /**
+     * The intensities are an opt field: whoever does not ask gets none, whether the feature comes from the
+     * database or from a search index document, which holds them either way.
+     */
+    @Test
+    public void testTheIntensityIsOnlyThereWhenAskedFor() {
+        String id = importFeature().getAlignedFeatureId();
+        EnumSet<AlignedFeature.OptField> none = EnumSet.noneOf(AlignedFeature.OptField.class);
+        EnumSet<AlignedFeature.OptField> asked = EnumSet.of(AlignedFeature.OptField.intensities);
+
+        assertNull(project.findAlignedFeaturesById(id, false, none).getIntensity(), "by id, from the database");
+        assertNull(project.findAlignedFeatures(null, Pageable.unpaged(), false, none).getContent().getFirst().getIntensity(),
+                "from the search index");
+        assertNull(project.findAlignedFeatures(Pageable.unpaged(), false, none).getContent().getFirst().getIntensity(),
+                "a page from the database");
+
+        assertEquals(PRECURSOR_INTENSITY, project.findAlignedFeaturesById(id, false, asked).getIntensity().getApex());
+        assertEquals(PRECURSOR_INTENSITY, project.findAlignedFeatures(null, Pageable.unpaged(), false, asked)
+                .getContent().getFirst().getIntensity().getApex());
+        assertEquals(PRECURSOR_INTENSITY, project.findAlignedFeatures(Pageable.unpaged(), false, asked)
+                .getContent().getFirst().getIntensity().getApex());
+        assertEquals(100d, project.findAlignedFeaturesById(id, false, asked).getIntensity().getApexPercent(), 1e-9,
+                "the only feature is the strongest the project has held");
     }
 }

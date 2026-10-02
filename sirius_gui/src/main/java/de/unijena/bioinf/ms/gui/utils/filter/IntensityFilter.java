@@ -41,9 +41,9 @@ public record IntensityFilter(@NotNull Measure measure, @NotNull Mode mode, doub
     /** Which intensity of the feature the threshold applies to. */
     public enum Measure {
         /** peak height at the apex of the chromatographic peak */
-        APEX("intensityApex", "intensityApexRelative", "peak height"),
+        APEX("intensity.apex", "intensity.apexPercent", "peak height"),
         /** area under the chromatographic peak */
-        AUC("intensityAUC", "intensityAUCRelative", "peak area");
+        AUC("intensity.auc", "intensity.aucPercent", "peak area");
 
         /** the search index field holding this measure, in the unit of the input data */
         private final String field;

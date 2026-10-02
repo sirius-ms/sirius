@@ -297,9 +297,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     // documents carry a relative intensity that no longer holds. Null until the index is built or opened.
     private volatile ProjectMaximumIntensities indexedMaxima;
 
-    /** What a feature built for a client is held against: nothing, the relative intensities are the index's alone. */
-    private static final ProjectMaximumIntensities NO_MAXIMA = new ProjectMaximumIntensities();
-
     /** The runs whose maximum rose, and whether the global maximum, which the features without a run refer to, did. */
     record RaisedMaxima(@NotNull Set<Long> runs, boolean global) {
         static final RaisedMaxima NONE = new RaisedMaxima(Set.of(), false);
@@ -1435,39 +1432,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return convertToApiFeature(feature, msDataAsCosineQuery, EnumSet.noneOf(AlignedFeature.OptField.class));
     }
 
-    /**
-     * Whether a feature assembled with these opt fields becomes a search index document rather than a response.
-     * <p>
-     * The index is written from {@link AlignedFeature#INDEXED_OPT_FIELDS} and nothing else does - the two paths
-     * that feed it both name that set and neither takes it as a parameter - so asking for all of them is what
-     * tells the two apart.
-     */
-    private static boolean buildsSearchIndexDocument(@NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        return optFields.containsAll(AlignedFeature.INDEXED_OPT_FIELDS);
-    }
-
     public AlignedFeature convertToApiFeature(AlignedFeatures feature, boolean msDataSearchPrepared, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        return convertToApiFeature(feature, msDataSearchPrepared, optFields, buildsSearchIndexDocument(optFields));
-    }
-
-    /**
-     * @param forSearchIndex whether this feature becomes an index document, which is the only reader of the
-     *                       relative intensities and therefore the only caller that pays for the run maxima.
-     *                       Passed separately because {@link #annotateApiFeatures} applies the opt fields
-     *                       itself and hands none of them down.
-     */
-    private AlignedFeature convertToApiFeature(AlignedFeatures feature, boolean msDataSearchPrepared,
-                                               @NotNull EnumSet<AlignedFeature.OptField> optFields, boolean forSearchIndex) {
-        // the reported MS1 intensity is the highest raw apex over the run features (the aligned feature's own
-        // value is normalized per run and summed over runs, see FeatureIntensities), so they are needed here
-        if (feature.getFeatures().isEmpty())
-            project().fetchFeatures(feature);
-        // The relative intensities are the only thing here that needs the run maxima, and they exist for the
-        // search index alone - they are hidden from the api, so a feature built for a client carries them only
-        // to drop them again. Deriving them reads every run feature of the project, which is why only the index
-        // asks for it: it would otherwise be a caller waiting on a whole-project read for a field it cannot see.
-        FeatureIntensities.Intensities intensities = FeatureIntensities.of(feature,
-                forSearchIndex ? maxima() : NO_MAXIMA);
         final String fid = String.valueOf(feature.getAlignedFeatureId());
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
                 .alignedFeatureId(fid)
@@ -1475,10 +1440,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .externalFeatureId(feature.getExternalFeatureId())
                 .compoundId(feature.getCompoundId() == null ? null : String.valueOf(feature.getCompoundId()))
                 .ionMass(feature.getAverageMass())
-                .intensityApex(intensities.apex())
-                .intensityAUC(intensities.auc())
-                .intensityApexRelative(intensities.apexRelative())
-                .intensityAUCRelative(intensities.aucRelative())
                 .quality(feature.getDataQuality() == null ? DataQuality.NOT_APPLICABLE : feature.getDataQuality())
                 .hasMs1(feature.isHasMs1())
                 .hasMsMs(feature.isHasMsMs())
@@ -1509,7 +1470,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 builder.rtEndSeconds(rt.getMiddleTime());
             }
         }
-        return annotateApiFeature(feature.getAlignedFeatureId(), builder.build(), msDataSearchPrepared, optFields);
+        AlignedFeature apiFeature = builder.build();
+        // run features that are already at hand - a feature that has just been imported - spare annotateApiFeature
+        // the query it would make for them
+        if (optFields.contains(AlignedFeature.OptField.intensities) && feature.getFeatures().isPresent())
+            apiFeature.setIntensity(FeatureIntensities.of(feature.getFeatures().get(), maxima()));
+        return annotateApiFeature(feature.getAlignedFeatureId(), apiFeature, msDataSearchPrepared, optFields);
     }
 
     @SneakyThrows
@@ -1569,6 +1535,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                         .collect(Collectors.toMap(Tag::getTagName, Function.identity())));
         } else {
             feature.setTags(null);
+        }
+
+        // what was measured lives on the run features: the aligned feature's own apex is a merged trace's, see
+        // FeatureIntensities
+        if (optFields.contains(AlignedFeature.OptField.intensities)) {
+            if (feature.getIntensity() == null)
+                feature.setIntensity(FeatureIntensities.of(
+                        storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), Feature.class).toList(),
+                        maxima()));
+        } else {
+            feature.setIntensity(null);
         }
 
         // Dropped like every other field nobody asked for - but, unlike them, never loaded here. Fold changes
@@ -2263,10 +2240,25 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             });
         }
 
+        TinyBackgroundJJob<Long2ObjectOpenHashMap<Intensity>> intensityJob = null;
+        if (optFields.contains(AlignedFeature.OptField.intensities)) {
+            List<Long> intensityIds = Arrays.asList(ids);
+            intensityJob = SiriusJobs.runInBackground(() -> {
+                Long2ObjectOpenHashMap<List<Feature>> runFeatures = new Long2ObjectOpenHashMap<>();
+                storage().findAllByIndexedFieldStr("alignedFeatureId", intensityIds, Feature.class)
+                        .forEach(f -> runFeatures.computeIfAbsent(f.getAlignedFeatureId(), id -> new ArrayList<>()).add(f));
+                ProjectMaximumIntensities maxima = maxima();
+                Long2ObjectOpenHashMap<Intensity> intensities = new Long2ObjectOpenHashMap<>(runFeatures.size());
+                runFeatures.long2ObjectEntrySet().forEach(e -> intensities.put(e.getLongKey(), FeatureIntensities.of(e.getValue(), maxima)));
+                return intensities;
+            });
+        }
+
         @NotNull Long2ObjectOpenHashMap<QualityReport> quality = qualJob != null ? qualJob.getResult() : new Long2ObjectOpenHashMap<>();
         @NotNull Long2ObjectOpenHashMap<ComputedSubtools> computed = compJob != null ? compJob.getResult() : new Long2ObjectOpenHashMap<>();
         @NotNull Long2ObjectOpenHashMap<Map<String, Tag>> tags = tagJob != null ? tagJob.getResult() : new Long2ObjectOpenHashMap<>();
         @NotNull Long2ObjectOpenHashMap<List<Statistics>> stats = statJob != null ? statJob.getResult() : new Long2ObjectOpenHashMap<>();
+        @NotNull Long2ObjectOpenHashMap<Intensity> intensities = intensityJob != null ? intensityJob.getResult() : new Long2ObjectOpenHashMap<>();
 
 
         TinyBackgroundJJob<Long2ObjectOpenHashMap<CsiStructureSearchResult>> csiJob = null;
@@ -2288,7 +2280,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(alf -> {
                     long fid = alf.getAlignedFeatureId();
                     AlignedFeature apiFeture = convertToApiFeature(alf, msDataAsCosineQuery,
-                            EnumSet.noneOf(AlignedFeature.OptField.class), buildsSearchIndexDocument(optFields));
+                            EnumSet.noneOf(AlignedFeature.OptField.class));
                     // Empty rather than null for whatever the bulk query did not find, because null is what
                     // annotateApiFeature below reads as "not fetched yet" and answers with a query per feature -
                     // over exactly the features the bulk query has just established have nothing. These are the
@@ -2304,6 +2296,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     apiFeture.setTags(bulkResult(optFields, AlignedFeature.OptField.tags, tags, fid, HashMap::new));
                     apiFeture.setStats(bulkResult(optFields, AlignedFeature.OptField.statistics,
                             stats, fid, ArrayList::new));
+                    apiFeture.setIntensity(bulkResult(optFields, AlignedFeature.OptField.intensities,
+                            intensities, fid, FeatureIntensities::unknown));
                     if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
                         apiFeture.setTopAnnotations(extractSearchIndexTopAnnotations(fid, csires.get(fid)));
                     //add additional anotations that are not yes covered by bulk retrieval.

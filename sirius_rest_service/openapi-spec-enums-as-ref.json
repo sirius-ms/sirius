@@ -14924,7 +14924,8 @@
           "topAnnotationsDeNovo",
           "computedTools",
           "qualities",
-          "tags"
+          "tags",
+          "intensities"
         ]
       },
       "AlignedFeature": {
@@ -14955,17 +14956,8 @@
             "description": "Mass-to-charge ratio (m/z) of the precursor ion of the feature.",
             "format": "double"
           },
-          "intensityApex": {
-            "type": "number",
-            "description": "MS1 intensity of the feature as peak height, in the intensity unit of the input data: the highest apex\n intensity over all runs the feature was detected in (as in the quantification table), or the height of the\n precursor peak in its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists).\n NULL if unknown.\n Search \u003ccode\u003eintensityApexRelative\u003c/code\u003e to hold a feature against its own run instead of against a fixed\n intensity.",
-            "format": "double",
-            "nullable": true
-          },
-          "intensityAUC": {
-            "type": "number",
-            "description": "MS1 intensity of the feature as area under the chromatographic peak, the trace intensity integrated over\n the retention time: the highest area over all runs the feature was detected in. NULL for data without an\n LC-MS trace.\n Search \u003ccode\u003eintensityAUCRelative\u003c/code\u003e to hold a feature against its own run, see \u003ccode\u003eintensityApex\u003c/code\u003e.",
-            "format": "double",
-            "nullable": true
+          "intensity": {
+            "$ref": "#/components/schemas/Intensity"
           },
           "charge": {
             "type": "integer",
@@ -15664,6 +15656,37 @@
           }
         },
         "description": "Simple and easy serializable fragmentation tree model with annotated fragments/nodes and losses/edges\n Root fragment has index 0;\n Molecular formula and adduct are identical to the ones of the corresponding molecular formula candidate and SpectrumAnnotation",
+        "nullable": true
+      },
+      "Intensity": {
+        "type": "object",
+        "properties": {
+          "apex": {
+            "type": "number",
+            "description": "Peak height: the highest apex intensity over the runs the feature was detected in, or the precursor peak\n height for data without an LC-MS trace. In raw instrument counts.",
+            "format": "double",
+            "nullable": true
+          },
+          "auc": {
+            "type": "number",
+            "description": "Area under the chromatographic peak: the highest over the runs the feature was detected in. In raw\n instrument counts. Null for data without an LC-MS trace.",
+            "format": "double",
+            "nullable": true
+          },
+          "apexPercent": {
+            "type": "number",
+            "description": "Peak height in percent of the highest peak height its run has held, the best over its runs:\n \u003ccode\u003eintensity.apexPercent:[10 TO *]\u003c/code\u003e keeps the features that reach 10 % of that in at least one run.\n A feature without a run is compared with the highest peak height the project has held.",
+            "format": "double",
+            "nullable": true
+          },
+          "aucPercent": {
+            "type": "number",
+            "description": "Area under the peak in percent of the highest area its run has held, the best over its runs.\n Null for data without an LC-MS trace.",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "description": "The MS1 intensity of a feature (aligned over runs), as peak height and as area under the chromatographic\n peak, each in raw instrument counts and in percent of the strongest feature it is compared with.\n \u003cp\u003e\n The values in counts are the highest over the runs the feature was detected in, as in the quantification\n table. Data imported without an LC-MS trace (peak lists, features imported through the API) has the height\n of the precursor peak in its MS1 spectrum and no area.\n \u003cp\u003e\n The percentages compare the feature with the strongest feature its run has held - or, for a feature without\n a run, with the strongest feature the project has held - and take the best run. The reference only ever\n rises: after the strongest feature of a run is deleted, the remaining ones keep the percentage they had, so\n none of them reaches 100.\n \u003cp\u003e\n Each value is null when it is unknown.",
         "nullable": true
       },
       "IsotopePatternAnnotation": {
