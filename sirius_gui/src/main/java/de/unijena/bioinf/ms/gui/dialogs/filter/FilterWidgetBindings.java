@@ -42,7 +42,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -194,15 +193,13 @@ final class FilterWidgetBindings {
     }
 
     /**
-     * The intensity threshold spinner and its unit and measure drop-downs over the intensity facet. The spinner
-     * shows the threshold of one unit at a time, with that unit's range, so a change of unit is a change of the
-     * spinner's model, which only the dialog can make: {@code showUnit} installs it for the unit and value of a
-     * filter, and {@code shownUnit} says which unit the spinner currently shows (null while a switch is in flight).
-     * The threshold of the unit not shown stays what the filter holds, so switching back and forth loses neither.
+     * The intensity threshold over the intensity facet: one spinner per unit, each with that unit's range - a
+     * percentage cannot be more than {@link IntensityFilter#MAX_PERCENT} - and the unit and measure drop-downs.
+     * Which spinner is visible follows the unit drop-down; the threshold of the unit not shown stays what the
+     * filter holds, so switching back and forth loses neither.
      */
     static WidgetBinding intensity(@NotNull JComboBox<IntensityFilter.Measure> measure, @NotNull JComboBox<IntensityFilter.Mode> unit,
-                                   @NotNull JSpinner min, @NotNull Supplier<IntensityFilter.Mode> shownUnit,
-                                   @NotNull Consumer<IntensityFilter> showUnit) {
+                                   @NotNull JSpinner absolute, @NotNull JSpinner percent) {
         return new WidgetBinding("intensity",
                 f -> {
                     IntensityFilter target = f.intensity();
@@ -210,18 +207,13 @@ final class FilterWidgetBindings {
                         measure.setSelectedItem(target.measure());
                     if (unit.getSelectedItem() != target.mode())
                         unit.setSelectedItem(target.mode());
-                    if (shownUnit.get() != target.mode())
-                        showUnit.accept(target);
-                    else
-                        setIfDiffers(min, target.min());
+                    setIfDiffers(absolute, target.minAbsolute());
+                    setIfDiffers(percent, Math.min(target.minPercent(), IntensityFilter.MAX_PERCENT));
                 },
-                f -> {
-                    IntensityFilter read = f.intensity()
-                            .withMeasure((IntensityFilter.Measure) Objects.requireNonNull(measure.getSelectedItem()))
-                            .withMode((IntensityFilter.Mode) Objects.requireNonNull(unit.getSelectedItem()));
-                    IntensityFilter.Mode shown = shownUnit.get();
-                    return f.withIntensity(shown == null ? read : read.withMin(shown, value(min)));
-                });
+                f -> f.withIntensity(new IntensityFilter(
+                        (IntensityFilter.Measure) Objects.requireNonNull(measure.getSelectedItem()),
+                        (IntensityFilter.Mode) Objects.requireNonNull(unit.getSelectedItem()),
+                        value(absolute), value(percent))));
     }
 
     /** A yes / no / any toggle over a nullable-boolean facet (lipid, PFAS). */
