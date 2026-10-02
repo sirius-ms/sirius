@@ -349,7 +349,7 @@ public class ProjectSchemaMigratorTest {
 
     /** A project at the schema before the fold changes were turned, so the conversion has something to do. */
     private static void atTheSchemaBeforeTheFoldChangesWereTurned(NitriteSirirusProject db) throws Exception {
-        db.upsertProjectSchemaVersion(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION - 1);
+        db.upsertProjectSchemaVersion(2); // version 3 turned them
     }
 
 
@@ -617,7 +617,8 @@ public class ProjectSchemaMigratorTest {
                 ProjectSchemaMigrator.migrateIfNeeded(db, ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE,
                         ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE_LIMIT, events::add);
 
-                long total = db.getStorage().countAll(AlignedFeatures.class)
+                // the feature keys are walked twice: once to fill in the pre-index fields, once for the intensities
+                long total = 2 * db.getStorage().countAll(AlignedFeatures.class)
                         + db.getStorage().countAll(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
                 java.util.List<de.unijena.bioinf.jjobs.JobProgressEvent> determined = events.stream()
                         .filter(de.unijena.bioinf.jjobs.JobProgressEvent::isDetermined).toList();
@@ -662,7 +663,8 @@ public class ProjectSchemaMigratorTest {
                 ProjectSchemaMigrator.migrateIfNeeded(db, ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE,
                         ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE_LIMIT, events::add);
 
-                long total = db.getStorage().countAll(AlignedFeatures.class)
+                // the feature keys are walked twice: once to fill in the pre-index fields, once for the intensities
+                long total = 2 * db.getStorage().countAll(AlignedFeatures.class)
                         + db.getStorage().countAll(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
                 long distinctCounts = events.stream()
                         .filter(de.unijena.bioinf.jjobs.JobProgressEvent::isDetermined)
