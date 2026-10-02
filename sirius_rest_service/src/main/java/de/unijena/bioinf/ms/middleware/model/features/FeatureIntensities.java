@@ -20,6 +20,8 @@ package de.unijena.bioinf.ms.middleware.model.features;
 
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +66,18 @@ public final class FeatureIntensities {
      * @param maxima      the maximum intensities of the project the feature belongs to
      */
     public static Intensity of(@NotNull Collection<Feature> runFeatures, @NotNull ProjectMaximumIntensities maxima) {
+        return of(runFeatures, maxima, LongSets.emptySet());
+    }
+
+    /**
+     * The same, leaving out what was measured in a blank run: a blank says what the background holds, not what
+     * the sample does, so a feature seen only in blank runs reports no intensity at all. The maxima do count
+     * blank runs - see {@link ProjectMaximumIntensities} - so tagging a run moves no reference.
+     *
+     * @param blankRuns the ids of the LC-MS runs tagged as blank
+     */
+    public static Intensity of(@NotNull Collection<Feature> runFeatures, @NotNull ProjectMaximumIntensities maxima,
+                               @NotNull LongSet blankRuns) {
         if (runFeatures.isEmpty())
             // nothing measured to report; an apex intensity of the aligned feature, where there is one, is a
             // merged trace's and not an intensity in counts
@@ -71,6 +85,8 @@ public final class FeatureIntensities {
 
         Double apex = null, auc = null, apexRelative = null, aucRelative = null;
         for (Feature runFeature : runFeatures) {
+            if (runFeature.getRunId() != null && blankRuns.contains(runFeature.getRunId().longValue()))
+                continue;
             ProjectMaximumIntensities.Maximum maximum = maxima.of(runFeature);
             Double runApex = runFeature.getApexIntensity();
             if (runApex != null && runApex > 0) {
