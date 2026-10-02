@@ -105,8 +105,15 @@ public class SearchableFieldDescriber {
                 .sortable(facts.sortable())
                 .defaultSearchField(facts.defaultSearchField())
                 .possibleValues(possibleValuesOf(facts))
+                .significantSuffixLength(significantSuffixLengthOf(facts))
                 .description(describe(facts, descriptions))
                 .build();
+    }
+
+    /** As declared on the field, one segment where nothing is declared. */
+    private static int significantSuffixLengthOf(@NotNull FieldFacts facts) {
+        SearchableFieldDoc doc = facts.javaType() != null ? facts.declaredBy().getAnnotation(SearchableFieldDoc.class) : null;
+        return doc != null ? doc.significantSuffixLength() : 1;
     }
 
     /**
