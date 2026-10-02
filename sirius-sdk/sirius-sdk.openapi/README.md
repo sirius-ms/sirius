@@ -268,6 +268,7 @@ Class | Method | HTTP request | Description
  - [ImportResult](docs/ImportResult.md)
  - [Info](docs/Info.md)
  - [InstrumentProfile](docs/InstrumentProfile.md)
+ - [Intensity](docs/Intensity.md)
  - [IsotopeMs2Strategy](docs/IsotopeMs2Strategy.md)
  - [IsotopePatternAnnotation](docs/IsotopePatternAnnotation.md)
  - [Job](docs/Job.md)

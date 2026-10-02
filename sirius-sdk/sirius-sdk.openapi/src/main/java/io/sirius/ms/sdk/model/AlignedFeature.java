@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.sirius.ms.sdk.model.ComputedSubtools;
 import io.sirius.ms.sdk.model.DataQuality;
 import io.sirius.ms.sdk.model.FeatureAnnotations;
+import io.sirius.ms.sdk.model.Intensity;
 import io.sirius.ms.sdk.model.MsData;
 import io.sirius.ms.sdk.model.Tag;
 import java.util.Arrays;
@@ -54,8 +55,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_NAME,
   AlignedFeature.JSON_PROPERTY_EXTERNAL_FEATURE_ID,
   AlignedFeature.JSON_PROPERTY_ION_MASS,
-  AlignedFeature.JSON_PROPERTY_INTENSITY_APEX,
-  AlignedFeature.JSON_PROPERTY_INTENSITY_A_U_C,
+  AlignedFeature.JSON_PROPERTY_INTENSITY,
   AlignedFeature.JSON_PROPERTY_CHARGE,
   AlignedFeature.JSON_PROPERTY_DETECTED_ADDUCTS,
   AlignedFeature.JSON_PROPERTY_RT_START_SECONDS,
@@ -94,13 +94,9 @@ public class AlignedFeature {
   @jakarta.annotation.Nullable
   private Double ionMass;
 
-  public static final String JSON_PROPERTY_INTENSITY_APEX = "intensityApex";
+  public static final String JSON_PROPERTY_INTENSITY = "intensity";
   @jakarta.annotation.Nullable
-  private Double intensityApex;
-
-  public static final String JSON_PROPERTY_INTENSITY_A_U_C = "intensityAUC";
-  @jakarta.annotation.Nullable
-  private Double intensityAUC;
+  private Intensity intensity;
 
   public static final String JSON_PROPERTY_CHARGE = "charge";
   @jakarta.annotation.Nonnull
@@ -290,54 +286,29 @@ public class AlignedFeature {
     this.ionMass = ionMass;
   }
 
-  public AlignedFeature intensityApex(@jakarta.annotation.Nullable Double intensityApex) {
+  public AlignedFeature intensity(@jakarta.annotation.Nullable Intensity intensity) {
     
-    this.intensityApex = intensityApex;
+    this.intensity = intensity;
     return this;
   }
 
   /**
-   * MS1 intensity of the feature as peak height, in the intensity unit of the input data: the highest apex  intensity over all runs the feature was detected in (as in the quantification table), or the height of the  precursor peak in its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists).  NULL if unknown.  Search &lt;code&gt;intensityApexRelative&lt;/code&gt; to hold a feature against its own run instead of against a fixed  intensity.
-   * @return intensityApex
+   * Get intensity
+   * @return intensity
    */
   @jakarta.annotation.Nullable
-  @JsonProperty(value = JSON_PROPERTY_INTENSITY_APEX, required = false)
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Double getIntensityApex() {
-    return intensityApex;
+  public Intensity getIntensity() {
+    return intensity;
   }
 
 
-  @JsonProperty(value = JSON_PROPERTY_INTENSITY_APEX, required = false)
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIntensityApex(@jakarta.annotation.Nullable Double intensityApex) {
-    this.intensityApex = intensityApex;
-  }
-
-  public AlignedFeature intensityAUC(@jakarta.annotation.Nullable Double intensityAUC) {
-    
-    this.intensityAUC = intensityAUC;
-    return this;
-  }
-
-  /**
-   * MS1 intensity of the feature as area under the chromatographic peak, the trace intensity integrated over  the retention time: the highest area over all runs the feature was detected in. NULL for data without an  LC-MS trace.  Search &lt;code&gt;intensityAUCRelative&lt;/code&gt; to hold a feature against its own run, see &lt;code&gt;intensityApex&lt;/code&gt;.
-   * @return intensityAUC
-   */
-  @jakarta.annotation.Nullable
-  @JsonProperty(value = JSON_PROPERTY_INTENSITY_A_U_C, required = false)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Double getIntensityAUC() {
-    return intensityAUC;
-  }
-
-
-  @JsonProperty(value = JSON_PROPERTY_INTENSITY_A_U_C, required = false)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIntensityAUC(@jakarta.annotation.Nullable Double intensityAUC) {
-    this.intensityAUC = intensityAUC;
+  public void setIntensity(@jakarta.annotation.Nullable Intensity intensity) {
+    this.intensity = intensity;
   }
 
   public AlignedFeature charge(@jakarta.annotation.Nonnull Integer charge) {
@@ -755,8 +726,7 @@ public class AlignedFeature {
         Objects.equals(this.name, alignedFeature.name) &&
         Objects.equals(this.externalFeatureId, alignedFeature.externalFeatureId) &&
         Objects.equals(this.ionMass, alignedFeature.ionMass) &&
-        Objects.equals(this.intensityApex, alignedFeature.intensityApex) &&
-        Objects.equals(this.intensityAUC, alignedFeature.intensityAUC) &&
+        Objects.equals(this.intensity, alignedFeature.intensity) &&
         Objects.equals(this.charge, alignedFeature.charge) &&
         Objects.equals(this.detectedAdducts, alignedFeature.detectedAdducts) &&
         Objects.equals(this.rtStartSeconds, alignedFeature.rtStartSeconds) &&
@@ -776,7 +746,7 @@ public class AlignedFeature {
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, intensityApex, intensityAUC, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing, computedTools, qualities, tags);
+    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, intensity, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing, computedTools, qualities, tags);
   }
 
   @Override
@@ -788,8 +758,7 @@ public class AlignedFeature {
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    externalFeatureId: ").append(toIndentedString(externalFeatureId)).append("\n");
     sb.append("    ionMass: ").append(toIndentedString(ionMass)).append("\n");
-    sb.append("    intensityApex: ").append(toIndentedString(intensityApex)).append("\n");
-    sb.append("    intensityAUC: ").append(toIndentedString(intensityAUC)).append("\n");
+    sb.append("    intensity: ").append(toIndentedString(intensity)).append("\n");
     sb.append("    charge: ").append(toIndentedString(charge)).append("\n");
     sb.append("    detectedAdducts: ").append(toIndentedString(detectedAdducts)).append("\n");
     sb.append("    rtStartSeconds: ").append(toIndentedString(rtStartSeconds)).append("\n");

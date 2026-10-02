@@ -203,7 +203,7 @@ public class PanelQueryNodeFactoryTest {
         assertEquals(NumberOp.RANGE_INCLUSIVE, intensity.op());
         assertEquals("10", intensity.value1());
         assertEquals("", intensity.value2());
-        assertEquals("intensityApexRelative:[10 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+        assertEquals("intensity.apexPercent:[10 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
 
         // the measure picks the field, in the unit the mode asked for
         model.update(f -> f.withIntensity(f.intensity().withMeasure(IntensityFilter.Measure.AUC)));

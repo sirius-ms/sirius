@@ -188,10 +188,10 @@ public class FilterQueryCodecTest {
         // an adduct that is not one
         assertEquals(0, FilterQueryCodec.decode("detectedAdducts:banana", CTX, List.of()).facetCount());
         // intensity thresholds the filter cannot hold: none at all, a closed range, more than a percentage
-        assertEquals(0, FilterQueryCodec.decode("intensityApex:[0 TO *]", CTX, List.of()).facetCount());
-        assertEquals(0, FilterQueryCodec.decode("intensityApex:[1000 TO 5000]", CTX, List.of()).facetCount());
-        assertEquals(0, FilterQueryCodec.decode("intensityApexRelative:[150 TO *]", CTX, List.of()).facetCount());
-        assertEquals(1, FilterQueryCodec.decode("intensityAUC:[150 TO *]", CTX, List.of()).facetCount(),
+        assertEquals(0, FilterQueryCodec.decode("intensity.apex:[0 TO *]", CTX, List.of()).facetCount());
+        assertEquals(0, FilterQueryCodec.decode("intensity.apex:[1000 TO 5000]", CTX, List.of()).facetCount());
+        assertEquals(0, FilterQueryCodec.decode("intensity.apexPercent:[150 TO *]", CTX, List.of()).facetCount());
+        assertEquals(1, FilterQueryCodec.decode("intensity.auc:[150 TO *]", CTX, List.of()).facetCount(),
                 "an absolute threshold has no ceiling");
     }
 

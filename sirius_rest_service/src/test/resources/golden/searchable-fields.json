@@ -45,41 +45,41 @@
     "possibleValues" : null,
     "description" : "Mass-to-charge ratio (m/z) of the precursor ion of the feature. A bare number in the query (no field) also matches this field within a window around it: half a unit of the number's last decimal, at least 10 ppm - so 301.14 finds [301.135 TO 301.145], 301 finds [300.5 TO 301.5]."
   }, {
-    "name" : "intensityApex",
+    "name" : "intensity.apex",
     "fieldType" : "DOUBLE",
     "fullTextSearch" : false,
     "sortable" : true,
     "defaultSearchField" : false,
-    "significantSuffixLength" : 1,
+    "significantSuffixLength" : 2,
     "possibleValues" : null,
-    "description" : "MS1 intensity of the feature as peak height, in the intensity unit of the input data: the highest apex intensity over all runs the feature was detected in (as in the quantification table), or the height of the precursor peak in its MS1 spectrum for data imported without an LC-MS trace (e.g. from peak lists). NULL if unknown. Search intensityApexRelative to hold a feature against its own run instead of against a fixed intensity."
+    "description" : "Peak height: the highest apex intensity over the runs the feature was detected in, or the precursor peak height for data without an LC-MS trace. In raw instrument counts."
   }, {
-    "name" : "intensityAUC",
+    "name" : "intensity.auc",
     "fieldType" : "DOUBLE",
     "fullTextSearch" : false,
     "sortable" : true,
     "defaultSearchField" : false,
-    "significantSuffixLength" : 1,
+    "significantSuffixLength" : 2,
     "possibleValues" : null,
-    "description" : "MS1 intensity of the feature as area under the chromatographic peak, the trace intensity integrated over the retention time: the highest area over all runs the feature was detected in. NULL for data without an LC-MS trace. Search intensityAUCRelative to hold a feature against its own run, see intensityApex."
+    "description" : "Area under the chromatographic peak: the highest over the runs the feature was detected in. In raw instrument counts. Null for data without an LC-MS trace."
   }, {
-    "name" : "intensityApexRelative",
+    "name" : "intensity.apexPercent",
     "fieldType" : "DOUBLE",
     "fullTextSearch" : false,
     "sortable" : true,
     "defaultSearchField" : false,
-    "significantSuffixLength" : 1,
+    "significantSuffixLength" : 2,
     "possibleValues" : null,
-    "description" : "Apex intensity in percent of the most intense feature of the same run, the highest such value over the runs the feature was detected in: intensityApexRelative:[10 TO *] keeps the features that reach 10 % of their run's maximum in at least one run. Data imported without runs (peak lists) is held against the most intense feature of the same source file instead, and features imported directly through the API (feature or compound import) have no source file and are held against each other. Searchable and sortable, but not part of the feature itself: it says how a feature compares with the project it is in rather than what was measured."
+    "description" : "Peak height in percent of the highest peak height its run has held, the best over its runs: intensity.apexPercent:[10 TO *] keeps the features that reach 10 % of that in at least one run. A feature without a run is compared with the highest peak height the project has held."
   }, {
-    "name" : "intensityAUCRelative",
+    "name" : "intensity.aucPercent",
     "fieldType" : "DOUBLE",
     "fullTextSearch" : false,
     "sortable" : true,
     "defaultSearchField" : false,
-    "significantSuffixLength" : 1,
+    "significantSuffixLength" : 2,
     "possibleValues" : null,
-    "description" : "Area under curve in percent of the most intense feature of the same run, see intensityApexRelative. Searchable and sortable, but not part of the feature itself."
+    "description" : "Area under the peak in percent of the highest area its run has held, the best over its runs. Null for data without an LC-MS trace."
   }, {
     "name" : "charge",
     "fieldType" : "INTEGER",
