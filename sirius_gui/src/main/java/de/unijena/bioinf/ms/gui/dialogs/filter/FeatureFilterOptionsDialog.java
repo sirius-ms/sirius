@@ -96,13 +96,12 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     final JCheckBox blankFilter;
     final JSpinner blankSpinner;
 
-    final JSpinner intensitySpinner;
+    // the intensity threshold, one spinner per unit with that unit's range; the unit drop-down shows one of them
+    final JSpinner intensityAbsoluteSpinner, intensityPercentSpinner;
+    final JPanel intensityThreshold;
     // the unit of the minimum (absolute counts or percent of the run maximum) and the measure it applies to
     final JComboBox<IntensityFilter.Mode> intensityUnit;
     final JComboBox<IntensityFilter.Measure> intensityMeasure;
-    // The unit whose threshold the intensity spinner shows, with that unit's range; the other unit's threshold
-    // stays in the working value, so switching back and forth loses neither. Null while a typed switch is in flight.
-    private @Nullable IntensityFilter.Mode shownIntensityMode;
 
     final FeatureFilterModel filterModel;
     /**
@@ -224,8 +223,15 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
                 // MS1 intensity: a minimum only, absolute or in percent of the run maximum, of either the peak
                 // height (apex) or the area under the peak
-                // The spinner shows the threshold of one unit at a time; seedAll() puts the working value's in.
-                intensitySpinner = makeSpinner(0, 0, Double.POSITIVE_INFINITY, 1000);
+                // One spinner per unit, so each keeps its own range; seedAll() puts the working value's in.
+                intensityAbsoluteSpinner = makeSpinner(0, 0, Double.POSITIVE_INFINITY, 1000);
+                intensityPercentSpinner = makeSpinner(0, 0, IntensityFilter.MAX_PERCENT, 1);
+                installIntensityUnitFormatter(intensityAbsoluteSpinner, IntensityFilter.Mode.ABSOLUTE);
+                installIntensityUnitFormatter(intensityPercentSpinner, IntensityFilter.Mode.RELATIVE_TO_RUN_MAX);
+                CardLayout intensityCards = new CardLayout();
+                intensityThreshold = new JPanel(intensityCards);
+                intensityThreshold.add(intensityAbsoluteSpinner, IntensityFilter.Mode.ABSOLUTE.name());
+                intensityThreshold.add(intensityPercentSpinner, IntensityFilter.Mode.RELATIVE_TO_RUN_MAX.name());
 
                 // What the threshold means, as plain drop-downs rather than the segmented switches the lipid and
                 // PFAS filters use: a filled capsule means "this filter is on" in this dialog, and neither of
@@ -234,7 +240,9 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 intensityUnit = new JComboBox<>(IntensityFilter.Mode.values());
                 intensityUnit.setSelectedItem(IntensityFilter.DEFAULT.mode());
                 intensityUnit.setToolTipText(GuiUtils.formatToolTip(INTENSITY_MODE_TOOLTIP));
-                showIntensityThresholdFor(IntensityFilter.DEFAULT); // before the sizing below measures the field
+                // the visible threshold follows the unit - a view of the drop-down, not an edit of the filter
+                intensityUnit.addActionListener(e -> intensityCards.show(intensityThreshold,
+                        ((IntensityFilter.Mode) Objects.requireNonNull(intensityUnit.getSelectedItem())).name()));
 
                 intensityMeasure = new JComboBox<>(IntensityFilter.Measure.values());
                 intensityMeasure.setSelectedItem(IntensityFilter.DEFAULT.measure());
@@ -255,11 +263,13 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 intensityChoices.add(intensityMeasure);
                 String intensityToolTip = GuiUtils.formatToolTip(INTENSITY_FILTER_TOOLTIP);
                 addThresholdHeading(thresholds, 4, "Intensity", intensityToolTip);
-                addThresholdRow(thresholds, 5, "Min", intensitySpinner, "in", intensityChoices, intensityToolTip);
+                intensityAbsoluteSpinner.setToolTipText(intensityToolTip);
+                intensityPercentSpinner.setToolTipText(intensityToolTip);
+                addThresholdRow(thresholds, 5, "Min", intensityThreshold, "in", intensityChoices, intensityToolTip);
 
                 // A drop-down asks for more height than a spinner, and that sets the height of its whole row.
                 // Held to the fields above it, the three rows keep one rhythm.
-                int fieldHeight = intensitySpinner.getPreferredSize().height;
+                int fieldHeight = intensityAbsoluteSpinner.getPreferredSize().height;
                 for (JComboBox<?> choice : List.of(intensityUnit, intensityMeasure))
                     choice.setPreferredSize(new Dimension(choice.getPreferredSize().width, fieldHeight));
 
@@ -269,7 +279,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 // number, so a narrow tab squeezes an empty number field rather than a drop-down's text.
                 // The height stays makeSpinner's, the one the other tabs' spinners have too.
                 int fieldWidth = intensityChoices.getPreferredSize().width;
-                for (JSpinner field : List.of(minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, intensitySpinner)) {
+                for (JSpinner field : List.of(minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner,
+                        intensityAbsoluteSpinner, intensityPercentSpinner)) {
                     ((JSpinner.DefaultEditor) field.getEditor()).getTextField().setColumns(THRESHOLD_FIELD_COLUMNS);
                     field.setPreferredSize(null); // drop the forced width, so the editor is asked again
                     field.setMinimumSize(null);
@@ -629,20 +640,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                     + "under the peak. Data imported without an LC-MS trace (peak lists) only has a peak height.";
 
     /**
-     * Shows the threshold of {@code filter}'s unit in the intensity spinner, with that unit's range - a percentage
-     * cannot be more than {@link IntensityFilter#MAX_PERCENT}.
-     */
-    private void showIntensityThresholdFor(@NotNull IntensityFilter filter) {
-        IntensityFilter.Mode mode = filter.mode();
-        shownIntensityMode = mode;
-        intensitySpinner.setModel(mode == IntensityFilter.Mode.ABSOLUTE
-                ? new SpinnerNumberModel(filter.min(mode), 0d, Double.POSITIVE_INFINITY, 1000d)
-                : new SpinnerNumberModel(Math.min(filter.min(mode), IntensityFilter.MAX_PERCENT),
-                        0d, IntensityFilter.MAX_PERCENT, 1d));
-        installIntensityUnitFormatter(); // a new model brings a new editor, and with it a new formatter
-    }
-
-    /**
      * Lets what is typed into the threshold field set the unit, as an alternative to picking it from the
      * drop-down next to it: a percent sign, or a number too large to be a percentage (see
      * {@link IntensityFilter#typedUnit}). A sign is consumed doing so - the field goes on showing a bare number
@@ -651,8 +648,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
      * Wraps the editor's own formatter rather than replacing it, so the number keeps being read and written
      * exactly as every other spinner here reads and writes one.
      */
-    private void installIntensityUnitFormatter() {
-        JFormattedTextField field = ((JSpinner.DefaultEditor) intensitySpinner.getEditor()).getTextField();
+    private void installIntensityUnitFormatter(@NotNull JSpinner spinner, @NotNull IntensityFilter.Mode unit) {
+        JFormattedTextField field = ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField();
         JFormattedTextField.AbstractFormatter delegate = field.getFormatter();
         if (delegate == null)
             return;
@@ -669,13 +666,13 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
                 // ceiling of 100 used to reject an absolute threshold that only dropped its sign.
                 String number = IntensityFilter.stripPercent(text);
                 double typed = parseTypedNumber(delegate, number);
-                IntensityFilter.Mode typedMode = IntensityFilter.typedUnit(text, typed, shownIntensityMode);
-                if (typedMode == shownIntensityMode)
+                IntensityFilter.Mode typedMode = IntensityFilter.typedUnit(text, typed, unit);
+                if (typedMode == unit)
                     return delegate.stringToValue(number);
-                // Meant for the other unit: leave the shown value alone, the switch installs it under the unit
-                // it was typed for, with that unit's range.
+                // Meant for the other unit: leave this spinner's value alone, the switch puts it into the other
+                // one, with that unit's range.
                 switchIntensityUnitTo(typedMode, typed);
-                return intensitySpinner.getValue();
+                return spinner.getValue();
             }
         }));
     }
@@ -698,8 +695,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
     /**
      * Follows a unit the user typed rather than picked: an edit of the working value that selects the unit and
-     * sets its threshold, which the seed then shows by moving the drop-down and the spinner. Deferred because it
-     * runs while the field is committing the very value it is about to replace.
+     * sets its threshold, which the seed then shows by moving the drop-down - and with it the visible spinner.
+     * Deferred because it runs while the field is committing the very value it is about to replace.
      */
     private void switchIntensityUnitTo(@NotNull IntensityFilter.Mode mode, double typed) {
         double threshold = mode == IntensityFilter.Mode.RELATIVE_TO_RUN_MAX ? Math.min(typed, IntensityFilter.MAX_PERCENT) : typed;
@@ -886,8 +883,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         var elements = FilterWidgetBindings.elements(elementsField);
         var dbs = FilterWidgetBindings.databases(searchDBList.checkBoxList, candidateSpinner);
         var blank = FilterWidgetBindings.blankFoldChange(blankFilter, blankSpinner);
-        var intensity = FilterWidgetBindings.intensity(intensityMeasure, intensityUnit, intensitySpinner,
-                () -> shownIntensityMode, this::showIntensityThresholdFor);
+        var intensity = FilterWidgetBindings.intensity(intensityMeasure, intensityUnit,
+                intensityAbsoluteSpinner, intensityPercentSpinner);
         var lipid = FilterWidgetBindings.tristate("lipid", lipidFilter, FeatureFilter::lipidClassDetected, FeatureFilter::withLipidClassDetected);
         var pfas = FilterWidgetBindings.tristate("pfas", pfasFilter, FeatureFilter::pfasDetected, FeatureFilter::withPfasDetected);
         bindings.addAll(List.of(mz, rt, intensity, confidence, ms1, msms, adducts, quality));
@@ -909,8 +906,9 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             spinner.addChangeListener(e -> edit(rt));
         for (JSpinner spinner : new JSpinner[]{minConfidenceSpinner, maxConfidenceSpinner})
             spinner.addChangeListener(e -> edit(confidence));
-        intensitySpinner.addChangeListener(e -> edit(intensity)); // a JSpinner keeps its listeners across a new model
-        intensityUnit.addActionListener(e -> edit(intensity));      // the seed then shows the new unit's threshold
+        intensityAbsoluteSpinner.addChangeListener(e -> edit(intensity));
+        intensityPercentSpinner.addChangeListener(e -> edit(intensity));
+        intensityUnit.addActionListener(e -> edit(intensity));
         intensityMeasure.addActionListener(e -> edit(intensity));
         hasMs1.addActionListener(e -> edit(ms1));
         hasMsMs.addActionListener(e -> edit(msms));
