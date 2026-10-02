@@ -76,6 +76,7 @@ import de.unijena.bioinf.ms.persistence.model.core.tags.ValueFormatter;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
@@ -312,6 +313,51 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     /**
+     * The LC-MS runs tagged as blank, whose features do not count towards the intensity an aligned feature
+     * reports. Derived on every use rather than kept: the tag changes through the API, and the LC-MS import
+     * writes it straight to storage. The query reads the tags of runs only - the leading fields of the tag index.
+     */
+    @SneakyThrows
+    private LongSet blankRuns() {
+        LongOpenHashSet blank = new LongOpenHashSet();
+        try (Stream<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> runTypes = storage().findStr(Filter.and(
+                Filter.where("taggedObjectClass").eq(LCMSRun.class.getName()),
+                Filter.where("tagName").eq(TagDefinitions.SAMPLE_TYPE.getTagName())
+        ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)) {
+            runTypes.filter(tag -> TagDefinitions.SAMPLE_TYPE_BLANK.equals(tag.getValue()))
+                    .forEach(tag -> blank.add(tag.getTaggedObjectId()));
+        }
+        return blank;
+    }
+
+    /** The aligned features with a run feature in one of {@code runIds}, over the runId index. */
+    @SneakyThrows
+    private Set<Long> alignedFeaturesOfRuns(@NotNull Collection<Long> runIds) {
+        Set<Long> alignedFeatures = new HashSet<>();
+        for (Long runId : runIds) {
+            try (Stream<Feature> runFeatures = storage().findStr(Filter.where("runId").eq(runId), Feature.class)) {
+                runFeatures.forEach(f -> alignedFeatures.add(f.getAlignedFeatureId()));
+            }
+        }
+        return alignedFeatures;
+    }
+
+    /**
+     * A run's type changed: whether it is a blank decides whether its features count towards the intensities
+     * its aligned features report, so their documents are rewritten. The maxima count every run whatever its
+     * type, so nothing else moves.
+     */
+    @SneakyThrows
+    private void reindexFeaturesOfRuns(@NotNull Collection<Long> runIds) {
+        if (searchService == null || runIds.isEmpty())
+            return;
+        synchronized (searchIndexLock) {
+            feedFeaturesToIndex(alignedFeaturesOfRuns(runIds), alfs -> searchService.updateDocuments(projectId, alfs));
+            searchService.makeWritesSearchable(projectId, AlignedFeature.class);
+        }
+    }
+
+    /**
      * The maxima that rose since the index was last written against them, and the current maxima taken as what
      * it is written against from now on. Every other feature of a run that rose carries a relative intensity in
      * the index that no longer holds, see {@link #reindexRuns}.
@@ -349,13 +395,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private void reindexRuns(@NotNull RaisedMaxima raised, @Nullable Collection<Long> alreadyWritten) {
         if (raised.isEmpty())
             return;
-        Set<Long> affected = new HashSet<>();
         // over the runId index: a run's features, not every feature of the project
-        for (Long runId : raised.runs()) {
-            try (Stream<Feature> runFeatures = storage().findStr(Filter.where("runId").eq(runId), Feature.class)) {
-                runFeatures.forEach(f -> affected.add(f.getAlignedFeatureId()));
-            }
-        }
+        Set<Long> affected = alignedFeaturesOfRuns(raised.runs());
         // the features without a run are what the global maximum is for: in a peak-list project all of them
         if (raised.global()) {
             try (Stream<Feature> runFeatures = storage().findAllStr(Feature.class)) {
@@ -1474,7 +1515,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         // run features that are already at hand - a feature that has just been imported - spare annotateApiFeature
         // the query it would make for them
         if (optFields.contains(AlignedFeature.OptField.intensities) && feature.getFeatures().isPresent())
-            apiFeature.setIntensity(FeatureIntensities.of(feature.getFeatures().get(), maxima()));
+            apiFeature.setIntensity(FeatureIntensities.of(feature.getFeatures().get(), maxima(), blankRuns()));
         return annotateApiFeature(feature.getAlignedFeatureId(), apiFeature, msDataSearchPrepared, optFields);
     }
 
@@ -1543,7 +1584,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             if (feature.getIntensity() == null)
                 feature.setIntensity(FeatureIntensities.of(
                         storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), Feature.class).toList(),
-                        maxima()));
+                        maxima(), blankRuns()));
         } else {
             feature.setIntensity(null);
         }
@@ -2248,8 +2289,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 storage().findAllByIndexedFieldStr("alignedFeatureId", intensityIds, Feature.class)
                         .forEach(f -> runFeatures.computeIfAbsent(f.getAlignedFeatureId(), id -> new ArrayList<>()).add(f));
                 ProjectMaximumIntensities maxima = maxima();
+                LongSet blankRuns = blankRuns();
                 Long2ObjectOpenHashMap<Intensity> intensities = new Long2ObjectOpenHashMap<>(runFeatures.size());
-                runFeatures.long2ObjectEntrySet().forEach(e -> intensities.put(e.getLongKey(), FeatureIntensities.of(e.getValue(), maxima)));
+                runFeatures.long2ObjectEntrySet().forEach(e -> intensities.put(e.getLongKey(), FeatureIntensities.of(e.getValue(), maxima, blankRuns)));
                 return intensities;
             });
         }
@@ -2527,6 +2569,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
             if (searchService != null)
                 searchService.addTagsToDocuments(projectId, objectToTags, taggedObjectClass);
+
+            if (taggedObjectClass.equals(Run.class))
+                reindexFeaturesOfRuns(objectToTags.entrySet().stream()
+                        .filter(e -> e.getValue().stream().anyMatch(tag -> TagDefinitions.SAMPLE_TYPE.getTagName().equals(tag.getTagName())))
+                        .map(e -> Long.parseLong(e.getKey())).toList());
         } catch (IOException e) {
             log.error("Error when assigning tags to Object", e);
             throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
@@ -2545,6 +2592,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         //todo optimize performance / find better solution
         if (searchService != null)
             searchService.removeTagsFromDocument(projectId, taggedObjectId, tagNames, (Class<? extends Taggable>) taggedOobjectClass);
+
+        if (taggedOobjectClass.equals(Run.class) && tagNames.contains(TagDefinitions.SAMPLE_TYPE.getTagName()))
+            reindexFeaturesOfRuns(List.of(Long.parseLong(taggedObjectId)));
     }
 
     @SneakyThrows
