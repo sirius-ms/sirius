@@ -88,6 +88,8 @@ import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.NoSQLInstance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -122,6 +124,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.LARGE_BATCH_SIZE;
 import static de.unijena.bioinf.ms.middleware.Pages.*;
@@ -492,18 +495,82 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public void updateSearchIndex(Collection<String> alignedFeaturesToUpdate) {
         updateSearchIndexLongIds(alignedFeaturesToUpdate.stream().filter(Objects::nonNull).map(Long::parseLong).toList());
-
     }
 
+    /**
+     * Reindexes a computation's result: merges {@code computedTools} and, when asked, {@code topAnnotationsSummary}
+     * onto the documents the index already holds for {@code alignedFeaturesToUpdate}, instead of
+     * {@link #feedFeaturesToIndex}'s full {@link AlignedFeature#INDEXED_OPT_FIELDS} read-and-replace - a
+     * computation cannot change a feature's intensity, so there is nothing to gain from rederiving it. A caller
+     * with only ids, not knowing which subtools ran, always asks for both.
+     */
     @SneakyThrows
     public void updateSearchIndexLongIds(Collection<Long> alignedFeaturesToUpdate) {
-        if (searchService != null) {
-            synchronized (searchIndexLock) {
-                // request results from db.
-                feedFeaturesToIndex(alignedFeaturesToUpdate, alfs -> searchService.updateDocuments(projectId, alfs));
-            }
-        }
+        if (searchService == null || Utils.isNullOrEmpty(alignedFeaturesToUpdate))
+            return;
+        for (List<Long> ids : Partition.ofSize(alignedFeaturesToUpdate.stream().sorted().toList(), LARGE_BATCH_SIZE))
+            mergeComputedFieldsIntoIndex(storage().findAllByPrimaryKeyStr(ids, AlignedFeatures.class).toList(), true);
+    }
 
+    /**
+     * The same reindex as {@link #updateSearchIndexLongIds}, but for a caller that already holds the
+     * {@link AlignedFeatures} of the instances it just computed over - sparing the database lookup
+     * {@link #updateSearchIndexLongIds} needs to re-fetch them by id.
+     *
+     * @param reindexTopAnnotations whether the computation could have changed {@code topAnnotationsSummary} -
+     *                              the caller's call, since it knows which subtools ran and this method does not.
+     */
+    @SneakyThrows
+    public void updateSearchIndex(Iterable<? extends Instance> instances, boolean reindexTopAnnotations) {
+        if (searchService == null || instances == null)
+            return;
+        List<AlignedFeatures> alignedFeatures = StreamSupport.stream(instances.spliterator(), false)
+                .filter(NoSQLInstance.class::isInstance).map(NoSQLInstance.class::cast)
+                .map(NoSQLInstance::getAlignedFeatures)
+                .toList();
+        if (alignedFeatures.isEmpty())
+            return;
+
+        for (List<AlignedFeatures> batch : Partition.ofSize(alignedFeatures, LARGE_BATCH_SIZE))
+            mergeComputedFieldsIntoIndex(batch, reindexTopAnnotations);
+    }
+
+    /**
+     * Merges the opt fields worth refreshing after a computation onto the documents already in the index, via
+     * {@link SearchService#updateDocumentsFields}, which reads the current indexed document and leaves every
+     * field the modifier does not touch - intensity above all - as already indexed. A feature with no document
+     * in the index yet (not reachable from a computation in practice - a feature is indexed at import time,
+     * before anything can compute over it - but kept correct for any other caller) falls back to the same full
+     * add {@link #feedFeaturesToIndex} does.
+     */
+    @SneakyThrows
+    private void mergeComputedFieldsIntoIndex(@NotNull List<AlignedFeatures> alignedFeatures, boolean reindexTopAnnotations) {
+        if (alignedFeatures.isEmpty())
+            return;
+        synchronized (searchIndexLock) {
+            // computedTools always needs a refresh - every subtool marks itself done there; whether
+            // topAnnotationsSummary also needs one is the caller's call (BackgroundRuns knows which subtools
+            // ran), not something to bake into a shared constant.
+            EnumSet<AlignedFeature.OptField> optFields = EnumSet.of(AlignedFeature.OptField.computedTools);
+            if (reindexTopAnnotations)
+                optFields.add(AlignedFeature.OptField.topAnnotationsSummary);
+
+            Map<String, AlignedFeature> fresh = annotateApiFeatures(alignedFeatures.stream(), false, optFields)
+                    .stream().collect(Collectors.toMap(AlignedFeature::getAlignedFeatureId, Function.identity()));
+
+            Set<String> merged = new HashSet<>();
+            searchService.updateDocumentsFields(projectId, fresh.keySet(), (AlignedFeature existing) -> {
+                AlignedFeature f = fresh.get(existing.getAlignedFeatureId());
+                existing.setComputedTools(f.getComputedTools());
+                if (reindexTopAnnotations)
+                    existing.setTopAnnotations(f.getTopAnnotations());
+                merged.add(existing.getAlignedFeatureId());
+            }, AlignedFeature.class);
+
+            List<Long> missing = fresh.keySet().stream().filter(id -> !merged.contains(id)).map(Long::parseLong).toList();
+            if (!missing.isEmpty())
+                feedFeaturesToIndex(missing, alfs -> searchService.updateDocuments(projectId, alfs));
+        }
     }
 
     @Override

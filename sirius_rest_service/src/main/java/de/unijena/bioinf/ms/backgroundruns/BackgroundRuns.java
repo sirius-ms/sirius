@@ -25,7 +25,11 @@ import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.Run;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
+import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workflow.ToolChainWorkflow;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
@@ -441,7 +445,23 @@ public final class BackgroundRuns {
                             affectedFeatureIds = affIds;
                             if (reindexInstances) {
                                 logInfo("Updating search-index after Computation...");
-                                submitJob(() -> project.updateSearchIndex(affectedFeatureIds), JobType.IO).awaitResult();
+                                // topAnnotationsSummary is drawn from the top formula candidate, the structure
+                                // search result and the compound class prediction - only Sirius/Zodiac (they can
+                                // change which formula ranks top), Fingerblast and Canopus can change any of
+                                // that. Fingerprint, MsNovelist, Passatutto and SpectraSearch only ever change
+                                // computedTools, which the reindex always refreshes.
+                                boolean reindexTopAnnotations = computation instanceof ToolChainWorkflow tcw
+                                        && tcw.getToolchainOptions().stream().anyMatch(o ->
+                                                o instanceof SiriusOptions || o instanceof ZodiacOptions
+                                                        || o instanceof FingerblastOptions || o instanceof CanopusOptions);
+                                submitJob(() -> {
+                                    // the instances already hold the AlignedFeatures they were computed over,
+                                    // sparing NoSQLProjectImpl the database lookup updateSearchIndex(ids) needs
+                                    if (project instanceof NoSQLProjectImpl noSqlProject)
+                                        noSqlProject.updateSearchIndex(instances, reindexTopAnnotations);
+                                    else
+                                        project.updateSearchIndex(affectedFeatureIds);
+                                }, JobType.IO).awaitResult();
                             }
                         }
                     } finally {
