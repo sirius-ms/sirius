@@ -71,12 +71,12 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueFormatter;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
-import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
@@ -249,13 +249,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     // Mark incomplete for the duration of the (re)build so an interrupted build is not
                     // persisted and gets rebuilt on the next open (M5).
                     searchService.setIndexComplete(projectId, AlignedFeature.class, false);
-                    indexedMaxima = maxima(); // what the documents about to be written are held against
+                    upsertIndexedMaxima(maxima()); // what the documents about to be written are held against
                     feedAllFeaturesToIndex(alfs -> searchService.addDocuments(projectId, alfs));
                     searchService.setIndexComplete(projectId, AlignedFeature.class, true);
-                } else if (indexedMaxima == null) {
-                    // A kept index was written against the maxima the project stores. Read, not derived: opening
-                    // a project whose index is complete must not read its features.
-                    indexedMaxima = project().findProjectMaximumIntensities().orElse(null);
                 }
 
                 //load Run index in pages to have content memory consumption
@@ -298,8 +294,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     // The maxima the documents in the search index were written against. The stored maxima rise as features are
     // written - the storage layer folds every feature it writes into them - so comparing the two says which runs'
-    // documents carry a relative intensity that no longer holds. Null until the index is built or opened.
-    private volatile ProjectMaximumIntensities indexedMaxima;
+    // documents carry a relative intensity that no longer holds. Kept as its own project property rather than
+    // an in-memory field: the project's own maxima property is already overwritten by the write that triggers a
+    // reindex, so it cannot also serve as the "before" the diff needs, and a dedicated key survives a project
+    // close/reopen exactly instead of being inferred.
+    private static final String INDEXED_MAXIMA_PROPERTY_KEY = "indexedMaximumIntensities";
+
+    private Optional<ProjectMaximumIntensities> findIndexedMaxima() {
+        return project().findJsonProjectProperty(INDEXED_MAXIMA_PROPERTY_KEY, ProjectMaximumIntensities.class);
+    }
+
+    private void upsertIndexedMaxima(@NotNull ProjectMaximumIntensities maxima) {
+        project().upsertJsonProjectProperty(INDEXED_MAXIMA_PROPERTY_KEY, maxima);
+    }
 
     /** The runs whose maximum rose, and whether the global maximum, which the features without a run refer to, did. */
     record RaisedMaxima(@NotNull Set<Long> runs, boolean global) {
@@ -366,12 +373,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * the index that no longer holds, see {@link #reindexRuns}.
      */
     private RaisedMaxima refreshIndexedMaxima() {
-        ProjectMaximumIntensities before = indexedMaxima;
+        ProjectMaximumIntensities before = findIndexedMaxima().orElse(null);
         ProjectMaximumIntensities now = maxima();
-        indexedMaxima = now;
+        upsertIndexedMaxima(now);
         if (before == null)
-            // An index opened with no maxima recorded for it was written by a version that derived them per
-            // session; what it was written against is unknown, and the index rebuilds once anyway when its
+            // No indexed-maxima property yet: an index built by a SIRIUS version before this bookkeeping
+            // existed. What it was written against is unknown, and the index rebuilds once anyway when its
             // schema fingerprint changes with this release.
             return RaisedMaxima.NONE;
         return raisedSince(before, now);
