@@ -120,6 +120,7 @@ import java.net.URI;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.stream.Collectors;
@@ -421,40 +422,104 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     /**
-     * Reads the given features as the documents the index is defined to hold and hands them over batch by batch.
+     * Below this many ids, splitting into per-core batches and submitting sub-jobs for them costs more than it
+     * saves - handled inline instead, as a single batch on the calling thread. Covers the common case of a
+     * single compound or feature added through the REST API, which would otherwise pay job-submission overhead
+     * for a "batch" of one.
+     */
+    private static final int MIN_IDS_TO_PARALLELIZE = 64;
+
+    /** Overridable so a benchmark can ask what the right number is - mirrors {@code ConversionJob.workerCount}. */
+    static int workerCount = 0;
+
+    private static int workers() {
+        return workerCount > 0 ? workerCount : SiriusJobs.getGlobalJobManager().getCPUThreads();
+    }
+
+    /**
+     * Reads the given ids as the documents the index is defined to hold and hands them over batch by batch, one
+     * {@code JobType.CPU} sub-job per batch so the read-and-annotate work of one batch overlaps the next's
+     * instead of waiting for it - the batches write disjoint ids, so nothing about doing it out of order changes
+     * what ends up indexed. The batch size is not fixed: {@code ids} is split into as many equally-sized batches
+     * as there are cores, so a run of 300 features and a full-project rebuild of 300,000 both spread evenly
+     * across the available parallelism instead of one being too fine-grained and the other too coarse for a
+     * single {@link Utils#LARGE_BATCH_SIZE}-style constant to suit both. {@code CPU}, not {@code IO}:
+     * {@code JobType.IO} shares a process-wide semaphore capped at {@code min(cpuThreads, 3)} with no
+     * re-entrancy, and the calls that reach this already run inside an IO-category job ({@code BackgroundRuns}),
+     * so IO sub-jobs here could deadlock once enough of those are in flight at once. {@code CPU} jobs run on a
+     * ForkJoinPool-backed executor with no such limit - the same reason {@code ProjectSchemaMigrator.ConversionJob}
+     * uses it for its own per-batch workers.
      * <p>
      * Which fields that is, is deliberately not the caller's to choose. A document written with fewer fields
      * than {@link AlignedFeature#INDEXED_OPT_FIELDS} is missing them until something rewrites it, and
      * {@link #findAlignedFeatures(String, Pageable, boolean, EnumSet)} serves a request for exactly those
      * fields straight from the index - so a field that was never written comes back absent instead of being
-     * re-read from the database. Every path that feeds features to the index therefore goes through here or
-     * through {@link #feedAllFeaturesToIndex(Consumer)}, and neither has an opt-field parameter to disagree
-     * about.
+     * re-read from the database. {@link #feedFeaturesToIndex} and {@link #feedAllFeaturesToIndex} are the only
+     * two sources of {@code ids} - an explicit collection, or every primary key of the project - and neither
+     * has an opt-field parameter to disagree about.
      *
-     * @param batchConsumer what to do with each batch: add the documents, or replace the existing ones
+     * @param batchConsumer what to do with each batch: add the documents, or replace the existing ones. Called
+     *                      from whichever sub-job's batch finished reading and annotating first, so it must be
+     *                      safe to call from several threads at once - {@code searchService.*Documents} already
+     *                      is, each POJO type's Lucene writer serializes on its own instance.
      */
+    private void feedIdsToIndex(@NotNull List<Long> ids, @NotNull Consumer<List<AlignedFeature>> batchConsumer)
+            throws IOException {
+        if (ids.isEmpty())
+            return;
+        if (ids.size() < MIN_IDS_TO_PARALLELIZE) {
+            batchConsumer.accept(findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS));
+            return;
+        }
+
+        int cores = Math.clamp(workers(), 1, ids.size());
+        int batchSize = (ids.size() + cores - 1) / cores; // ceil: as many batches as cores, evenly loaded
+        Partition<Long> partition = Partition.ofSize(ids, batchSize);
+        try {
+            SiriusJobs.getGlobalJobManager().submitJob(new BasicMasterJJob<Boolean>(JJob.JobType.CPU) {
+                @Override
+                protected Boolean compute() throws Exception {
+                    List<BasicJJob<Boolean>> running = new ArrayList<>();
+                    for (List<Long> batch : partition)
+                        running.add(submitSubJob(new BasicJJob<>(JobType.CPU) {
+                            @Override
+                            protected Boolean compute() throws Exception {
+                                checkForInterruption();
+                                batchConsumer.accept(findAlignedFeaturesByIds(batch, false, AlignedFeature.INDEXED_OPT_FIELDS));
+                                return Boolean.TRUE;
+                            }
+                        }));
+                    for (BasicJJob<Boolean> job : running)
+                        job.awaitResult();
+                    return Boolean.TRUE;
+                }
+            }).awaitResult();
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof IOException io)
+                throw io;
+            throw new IOException("Could not feed features to the search index.", e.getCause());
+        }
+    }
+
     private void feedFeaturesToIndex(@Nullable Collection<Long> featureIds,
                                      @NotNull Consumer<List<AlignedFeature>> batchConsumer) throws IOException {
         if (!Utils.notNullOrEmpty(featureIds))
             return;
-        Partition<Long> partition = Partition.ofSize(featureIds.stream().sorted().toList(), LARGE_BATCH_SIZE);
-        for (List<Long> ids : partition)
-            batchConsumer.accept(findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS));
+        feedIdsToIndex(featureIds.stream().sorted().toList(), batchConsumer);
     }
 
     /**
      * The same for every feature in the project, for building the index from scratch rather than adding to it.
      * <p>
-     * Pages rather than taking a list of ids: a rebuild spans the whole project, and what bounds what it holds
-     * is one page of assembled features at a time. It is a sibling of {@link #feedFeaturesToIndex} rather than a
-     * caller of it for that reason alone - what matters is that the two agree on the fields, which they do by
-     * both naming {@link AlignedFeature#INDEXED_OPT_FIELDS} and neither taking it as a parameter.
+     * Primary keys rather than a page cursor: reading a collection's keys off its primary-key index costs a few
+     * microseconds each against about fifty to walk the documents (see {@code Database#primaryKeys}), and a key
+     * is a unit of work {@link #feedIdsToIndex} can hand to any worker - the same reason
+     * {@code ProjectSchemaMigrator.ConversionJob} reads keys up front instead of paging.
      */
-    private void feedAllFeaturesToIndex(@NotNull Consumer<List<AlignedFeature>> batchConsumer) {
-        Pages.forEach(
-                pageable -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS),
-                page -> batchConsumer.accept(page.getContent())
-        );
+    private void feedAllFeaturesToIndex(@NotNull Consumer<List<AlignedFeature>> batchConsumer) throws IOException {
+        List<Long> ids = storage().primaryKeys(AlignedFeatures.class).stream()
+                .map(id -> ((Number) id).longValue()).sorted().toList();
+        feedIdsToIndex(ids, batchConsumer);
     }
 
     @SneakyThrows
