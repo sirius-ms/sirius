@@ -28,7 +28,9 @@ import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
+import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
@@ -269,6 +271,16 @@ public class ProjectSchemaMigrator {
         // project with none needs no repair, and the pass over an empty collection is free.
         if (recorded < 3)
             needed.add(ConversionJob.Pass.BLANK_REMOVAL_REPAIR);
+        // There is no legitimate reason for a feature to carry a null compoundId, or for a project to hold
+        // more compounds than features - every real compound has at least one, so either means this project
+        // carries the LC/MS-align bug's zombies. Checked every open, not gated by version: a version bump
+        // only catches a project the first time it's opened after the fix ships, not a recurrence of either
+        // condition from some other cause. Both checks are cheap - the counts are each a collection size, and
+        // the null-compoundId lookup takes the same indexed path a non-null eq would, Nitrite's EqualsFilter
+        // mapping a null value onto the index's own null sentinel rather than falling back to a scan.
+        if (storage.countAll(Compound.class) > storage.countAll(AlignedFeatures.class)
+                || storage.count(Filter.where("compoundId").eq(null), AlignedFeatures.class) > 0)
+            needed.add(ConversionJob.Pass.COMPOUND_LINKING);
         return needed;
     }
 
@@ -293,7 +305,14 @@ public class ProjectSchemaMigrator {
             /** Over the formula-candidate keys: lipid annotations, off each candidate's fragmentation tree. */
             FORMULA_CANDIDATES,
             /** Over the fold changes: the blank removal ones are dropped, to be recomputed from the tags. */
-            BLANK_REMOVAL_REPAIR
+            BLANK_REMOVAL_REPAIR,
+            /**
+             * Over the compound keys: removes every one no feature references - every zombie the LC/MS-align
+             * bug left behind, since none of them was ever referenced to begin with. Over the feature keys
+             * that leaves: compounds every feature the bug left unlinked, each into a fresh singleton exactly
+             * as a current import would.
+             */
+            COMPOUND_LINKING
         }
 
         /** How many workers a pass uses. Overridable so a benchmark can ask what the right number is. */
@@ -333,6 +352,10 @@ public class ProjectSchemaMigrator {
         private final AtomicInteger formulaCandidatesFilled = new AtomicInteger();
         @Getter
         private final AtomicInteger blankRemovalFoldChangesDropped = new AtomicInteger();
+        @Getter
+        private final AtomicInteger compoundsLinked = new AtomicInteger();
+        @Getter
+        private final AtomicInteger orphanedCompoundsDeleted = new AtomicInteger();
 
         /**
          * Progress is one count over the whole conversion - a unit of work is one primary key handled, and the
@@ -374,6 +397,10 @@ public class ProjectSchemaMigrator {
                 work += storage.countAll(FormulaCandidate.class);
             // The blank removal repair is not counted: it does not walk keys one at a time, it reads the fold
             // changes once and deletes in one go, so it has no per-key progress to contribute.
+            if (passes.contains(Pass.COMPOUND_LINKING)) {
+                work += storage.countAll(AlignedFeatures.class);
+                work += storage.countAll(Compound.class);
+            }
             return work;
         }
 
@@ -440,6 +467,19 @@ public class ProjectSchemaMigrator {
                 dropBlankRemovalFoldChanges();
             }
 
+            if (passes.contains(Pass.COMPOUND_LINKING)) {
+                // Orphans removed before anything is linked, not after: linking a feature never reuses an
+                // existing compound, only ever inserts a fresh one, so nothing this pass is about to link
+                // could possibly be the compound a not-yet-run deletion would wrongly take down - and
+                // deleting first means that walk's primary keys are read before linking inserts a single new
+                // row, so it never has to look at (and dismiss) compounds that were only ever going to be
+                // trivially non-orphaned, just created and immediately referenced.
+                overPrimaryKeysOf(Compound.class, "Removing orphaned compounds...", List.of(),
+                        this::deleteOrphanedCompound);
+                overPrimaryKeysOf(AlignedFeatures.class, "Linking features to compounds...",
+                        List.of(AlignedFeatures.class), this::linkOrphanedAlignedFeatures);
+            }
+
             // Stamped last: a pass that threw leaves the version behind, so the next open converts again.
             if (stampVersion)
                 project.upsertProjectSchemaVersion(MIGRATES_TO_SCHEMA_VERSION);
@@ -448,10 +488,10 @@ public class ProjectSchemaMigrator {
 
             log.info("Converted project '{}' to schema version {} in {} ms ({} features, {} structure-search "
                             + "results, {} formula candidates, {} blank removal fold changes dropped for "
-                            + "recomputation).",
+                            + "recomputation, {} compounds linked, {} orphaned compounds removed).",
                     storage.location(), MIGRATES_TO_SCHEMA_VERSION, millisSince(start), featuresFilled.get(),
                     structureResultsFilled.get(), formulaCandidatesFilled.get(),
-                    blankRemovalFoldChangesDropped.get());
+                    blankRemovalFoldChangesDropped.get(), compoundsLinked.get(), orphanedCompoundsDeleted.get());
             return rewroteAnything();
         }
 
@@ -465,7 +505,8 @@ public class ProjectSchemaMigrator {
          */
         boolean rewroteAnything() {
             return featuresFilled.get() > 0 || structureResultsFilled.get() > 0
-                    || formulaCandidatesFilled.get() > 0 || blankRemovalFoldChangesDropped.get() > 0;
+                    || formulaCandidatesFilled.get() > 0 || blankRemovalFoldChangesDropped.get() > 0
+                    || compoundsLinked.get() > 0 || orphanedCompoundsDeleted.get() > 0;
         }
 
 
@@ -694,6 +735,46 @@ public class ProjectSchemaMigrator {
                     && TagDefinitions.SAMPLE_TYPE_BLANK.equals(foldChange.getRightGroup()))
                     || (TagDefinitions.SAMPLE_TYPE_BLANK.equals(foldChange.getLeftGroup())
                     && TagDefinitions.SAMPLE_TYPE_SAMPLE.equals(foldChange.getRightGroup()));
+        }
+
+        /**
+         * The feature's own fresh compound, if the LC/MS-align bug left it without one.
+         * <p>
+         * A null compoundId never means "not yet linked" for any other reason: every correct import path sets
+         * it before the feature is ever stored (see MsProjectDocumentDatabase#importAlignedFeatures). What
+         * this creates is field-for-field what the bug's own Compound.singleton call would have created at
+         * import time - the old zombie it bypassed never carried anything else, Compound#adductFeatures being
+         * the only other thing on it and never persisted - so recreating it loses nothing. The old zombie was
+         * already swept up by the pass over Compound keys above, which runs first precisely so it never has
+         * to consider the fresh compound this creates.
+         */
+        private void linkOrphanedAlignedFeatures(Object alignedFeatureId, WriteBuffer buffer) throws Exception {
+            AlignedFeatures feature = storage.getByPrimaryKey(alignedFeatureId, AlignedFeatures.class).orElse(null);
+            if (feature == null || feature.getCompoundId() != null)
+                return;
+            Compound c = Compound.singleton(feature);
+            storage.insert(c);
+            feature.setCompoundId(c.getCompoundId());
+            compoundsLinked.incrementAndGet();
+            buffer.add(feature);
+        }
+
+        /**
+         * Deletes one compound if no feature references it any more - every zombie the LC/MS-align bug left,
+         * since none of them was ever referenced in the first place.
+         * <p>
+         * Only AlignedFeatures.compoundId is checked. CorrelatedIonPair also carries a compoundId field; its
+         * pairs for this compound are removed here too (a correlation has no meaning once its compound is
+         * gone), but whether a stray one can exist at all currently depends on nothing live writing
+         * CorrelatedIonPair.compoundId outside AdductNetwork#assign, which is dead code (commented out). If
+         * that ever changes, this still removes them correctly - it just means the case stops being rare.
+         */
+        private void deleteOrphanedCompound(Object compoundId, WriteBuffer buffer) throws Exception {
+            if (storage.count(Filter.where("compoundId").eq(compoundId), AlignedFeatures.class) == 0) {
+                storage.removeAll(Filter.where("compoundId").eq(compoundId), CorrelatedIonPair.class);
+                storage.removeByPrimaryKey(compoundId, Compound.class);
+                orphanedCompoundsDeleted.incrementAndGet();
+            }
         }
 
         /**
