@@ -240,6 +240,45 @@ public class NoSQLProjectTest {
 
     }
 
+    /**
+     * A second, more intense run-less feature raises the project's global maximum, and
+     * {@code NoSQLProjectImpl.reindexRuns}'s {@code raised.global()} branch has to find and rewrite the
+     * first feature's now-stale relative intensity - not just index the newly imported one. Exercises the
+     * {@code Filter.where("runId").eq(null)} query over the {@code Feature} collection that branch runs,
+     * rather than the {@code ProjectMaximumIntensities}-only unit tests in {@code FeatureIntensitiesTest}.
+     */
+    @Test
+    @SneakyThrows
+    public void testRaisingTheGlobalMaximumReindexesEarlierRunlessFeatures() {
+        EnumSet<AlignedFeature.OptField> withIntensities = EnumSet.of(AlignedFeature.OptField.intensities);
+
+        BasicSpectrum ms1Low = new BasicSpectrum(new double[]{42}, new double[]{100});
+        FeatureImport low = FeatureImport.builder()
+                .name("low").externalFeatureId("low").ionMass(42d).charge((byte) 1)
+                .rtStartSeconds(6d).rtApexSeconds(9d).rtEndSeconds(12d)
+                .mergedMs1(ms1Low).ms1Spectra(List.of(ms1Low))
+                .build();
+        AlignedFeature lowImported = project.addAlignedFeatures(List.of(low), null, withIntensities).getFirst();
+        assertNotNull(lowImported.getIntensity(), "the only feature so far must report an intensity");
+        assertEquals(100.0, lowImported.getIntensity().getApexPercent(), 0.001,
+                "the only feature so far is 100% of the (so far) global maximum");
+
+        BasicSpectrum ms1High = new BasicSpectrum(new double[]{99}, new double[]{500});
+        FeatureImport high = FeatureImport.builder()
+                .name("high").externalFeatureId("high").ionMass(99d).charge((byte) 1)
+                .rtStartSeconds(6d).rtApexSeconds(9d).rtEndSeconds(12d)
+                .mergedMs1(ms1High).ms1Spectra(List.of(ms1High))
+                .build();
+        project.addAlignedFeatures(List.of(high), null, EnumSet.noneOf(AlignedFeature.OptField.class));
+
+        AlignedFeature lowReindexed = project.findAlignedFeatures(null, Pageable.unpaged(), false, withIntensities)
+                .getContent().stream()
+                .filter(f -> f.getAlignedFeatureId().equals(lowImported.getAlignedFeatureId()))
+                .findFirst().orElseThrow();
+        assertEquals(20.0, lowReindexed.getIntensity().getApexPercent(), 0.001,
+                "100 against a new global maximum of 500 is 20%");
+    }
+
     @Test
     @SneakyThrows
     public void testFeaturesAreSingleCompounds() {

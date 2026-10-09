@@ -407,10 +407,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             return;
         // over the runId index: a run's features, not every feature of the project
         Set<Long> affected = alignedFeaturesOfRuns(raised.runs());
-        // the features without a run are what the global maximum is for: in a peak-list project all of them
+        // the features without a run are what the global maximum is for: in a peak-list project all of them.
+        // Filter.eq(null) over the runId index instead of a full scan filtered client-side - Nitrite's
+        // EqualsFilter treats a null value as "field is null or absent" on both the indexed and scan paths.
         if (raised.global()) {
-            try (Stream<Feature> runFeatures = storage().findAllStr(Feature.class)) {
-                runFeatures.filter(f -> f.getRunId() == null).forEach(f -> affected.add(f.getAlignedFeatureId()));
+            try (Stream<Feature> runFeatures = storage().findStr(Filter.where("runId").eq(null), Feature.class)) {
+                runFeatures.forEach(f -> affected.add(f.getAlignedFeatureId()));
             }
         }
         if (alreadyWritten != null)
