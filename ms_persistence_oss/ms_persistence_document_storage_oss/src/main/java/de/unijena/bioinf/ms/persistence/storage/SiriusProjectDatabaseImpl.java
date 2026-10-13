@@ -21,9 +21,12 @@ package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
+import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 import java.io.Closeable;
@@ -70,6 +73,29 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
         return relatedToAF;
     }
 
+    /**
+     * Deletes the compound if the delete that just happened left it with no feature to reference it any more,
+     * taking its CorrelatedIonPairs down with it - a correlation has no meaning once its compound is gone.
+     * Folds both counts into the result.
+     */
+    private long deleteIfOrphaned(long compoundId) throws IOException {
+        if (getStorage().count(Filter.where("compoundId").eq(compoundId), AlignedFeatures.class) == 0) {
+            long count = getStorage().removeAll(Filter.where("compoundId").eq(compoundId), CorrelatedIonPair.class);
+            return count + getStorage().removeByPrimaryKey(compoundId, Compound.class);
+        }
+        return 0;
+    }
+
+    /**
+     * Deletes the CorrelatedIonPairs naming this feature on either side. Two indexed point deletes, not one
+     * `or` filter: an `or` is what forces Nitrite off the indexed path (see the comment on the batch overload
+     * of cascadeDeleteAlignedFeatures below).
+     */
+    private long deleteCorrelatedIonPairsOf(long alignedFeatureId) throws IOException {
+        long count = getStorage().removeAll(Filter.where("alignedFeatureId1").eq(alignedFeatureId), CorrelatedIonPair.class);
+        return count + getStorage().removeAll(Filter.where("alignedFeatureId2").eq(alignedFeatureId), CorrelatedIonPair.class);
+    }
+
     @Override
     public long cascadeDeleteCompound(long compoundId) throws IOException {
         long total = this.getStorage().write(() -> {
@@ -79,6 +105,9 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
             }
             return count;
         });
+        // Still needed even though deleteIfOrphaned above already deletes the compound once its last feature
+        // goes: a compound with no features to begin with never drives that check, so it needs its own cleanup.
+        total += getStorage().removeAll(Filter.where("compoundId").eq(compoundId), CorrelatedIonPair.class);
         total += getStorage().removeAll(Filter.where("compoundId").eq(compoundId), Compound.class);
         return total;
     }
@@ -86,10 +115,15 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
     @Override
     public long cascadeDeleteAlignedFeatures(long alignedFeatureId) throws IOException {
         return this.getStorage().write(() -> {
-            long count = 0;
+            // Read before the delete loop removes the feature's own row and takes compoundId down with it.
+            Long compoundId = getStorage().getByPrimaryKey(alignedFeatureId, AlignedFeatures.class)
+                    .map(AlignedFeatures::getCompoundId).orElse(null);
+            long count = deleteCorrelatedIonPairsOf(alignedFeatureId);
             for (Class<?> clazz : getRelatedToAF()) {
                 count += getStorage().removeAll(Filter.where("alignedFeatureId").eq(alignedFeatureId), clazz);
             }
+            if (compoundId != null)
+                count += deleteIfOrphaned(compoundId);
             return count;
         });
     }
@@ -116,10 +150,22 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
         return this.getStorage().write(() -> {
             long count = 0;
             try {
+                // Read every feature's compoundId before the delete loop below removes the feature rows that
+                // carry it - a primitive long set, not boxed, since this scales with the input, not a constant.
+                LongOpenHashSet compoundIds = new LongOpenHashSet();
+                for (Long afid : ascendingIds) {
+                    getStorage().getByPrimaryKey(afid, AlignedFeatures.class)
+                            .map(AlignedFeatures::getCompoundId)
+                            .ifPresent(compoundIds::add);
+                    count += deleteCorrelatedIonPairsOf(afid);
+                }
                 for (Class<?> clazz : getRelatedToAF()) {
                     for (Long afid : ascendingIds)
                         count += getStorage().removeAll(Filter.where("alignedFeatureId").eq(afid), clazz);
                 }
+                LongIterator it = compoundIds.iterator();
+                while (it.hasNext())
+                    count += deleteIfOrphaned(it.nextLong());
             } finally {
                 // Commit and GC once for the whole cascade, not per class: the entire write() runs under the
                 // storage write lock as a single transaction, so a per-class commit buys no consistency and only
