@@ -234,7 +234,17 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        List<File> files = DragAndDrop.getFileListFromDrop(this, dtde);
+        List<File> files = List.copyOf(DragAndDrop.getFileListFromDrop(this, dtde));
+        dtde.dropComplete(!files.isEmpty());
+        if (files.isEmpty())
+            return;
+
+        // Return from the native drop callback before opening modal dialogs or waiting for imports.
+        // Otherwise Windows Explorer waits for the entire import to finish.
+        Jobs.runEDTLater(() -> handleDroppedFiles(files));
+    }
+
+    private void handleDroppedFiles(List<File> files) {
         //todo projectspace: add project file check to open project via drag and drop
 
 
