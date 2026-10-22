@@ -100,6 +100,13 @@ jobs:
           # This value is shown as application name when windows asks for install permission.
           description: 'SIRIUS Installer'
 
+      # the build wrote the checksums before signing: the signed MSI needs new ones
+      - if: matrix.os == 'windows-latest'
+        name: Checksums of the signed MSI
+        shell: bash
+        working-directory: ./sirius_dist/sirius_gui_dist/build/jpDists
+        run: for f in *.msi; do sha256sum "$f" > "$f.sha256"; done
+
       - name: Upload Distributions
         uses: actions/upload-artifact@v4
         with:
