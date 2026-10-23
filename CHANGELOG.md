@@ -37,6 +37,7 @@
 - upgrade: Spring Boot 4.0.9 with Tomcat 11.0.27, Spring Framework 7.0.10 and Netty 4.2.19, and
   Swagger UI 5.34.0, which fix known vulnerabilities of the versions shipped before (API)
 - upgrade: the bundled Java runtime is 25.0.4.1 on all platforms (GUI, CLI and API)
+- fix: on Windows, `sirius.exe` and `sirius-gui.exe` are signed now, not only the installer
 
 ### 6.5.4 (2026-08-25)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,
