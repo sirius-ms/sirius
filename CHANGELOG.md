@@ -34,6 +34,8 @@
   on all network interfaces, which made its unencrypted HTTP API reachable from the whole network.
   To reach it from another computer or from outside a container, start it with
   `--address 0.0.0.0` or set the `SERVER_ADDRESS` environment variable (API)
+- upgrade: Spring Boot 4.0.9 with Tomcat 11.0.27, Spring Framework 7.0.10 and Netty 4.2.19, and
+  Swagger UI 5.34.0, which fix known vulnerabilities of the versions shipped before (API)
 
 ### 6.5.4 (2026-08-25)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,
