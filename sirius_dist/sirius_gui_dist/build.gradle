@@ -241,7 +241,7 @@ distributions {
             if (includeRuntime) {
                 into('runtime') {
                     from {
-                        "${parent.tasks.getByName('extractRuntimeImage').outputs.files.singleFile}"
+                        "${parent.tasks.getByName(parent.runtimeImageTask).outputs.files.singleFile}"
                     }
                     eachFile { f ->
                         // Restore the executable bit for the bin/ launchers AND for the native
@@ -284,9 +284,9 @@ if (siriusTargetPlatform.isWin()) {
 
 
 if (includeRuntime) {
-    installSiriusDist.dependsOn parent.tasks.named('extractRuntimeImage')
-    siriusDistZip.dependsOn parent.tasks.named('extractRuntimeImage')
-    siriusDistTar.dependsOn parent.tasks.named('extractRuntimeImage')
+    installSiriusDist.dependsOn parent.tasks.named(parent.runtimeImageTask)
+    siriusDistZip.dependsOn parent.tasks.named(parent.runtimeImageTask)
+    siriusDistTar.dependsOn parent.tasks.named(parent.runtimeImageTask)
 }
 
 

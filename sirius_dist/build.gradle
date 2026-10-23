@@ -87,6 +87,11 @@ ext {
     }
     jre_download_link = "${jre_download_base_link}${jre_fname}"
 
+    // Microsoft ships full JDKs only, with compiler, debugger, jshell, jwebserver, jlink, jmods and C headers. The
+    // distribution gets a runtime jlinked from it instead (jlinkRuntimeImage). That uses the JDK's own jlink, so it
+    // only runs when building on Windows, which is where the Windows distribution is built.
+    runtimeImageTask = (distJre == DistJRE.MICROSOFT && OS.isWindows()) ? 'jlinkRuntimeImage' : 'extractRuntimeImage'
+
     // Build-time fingerprint used to isolate Project Leyden AOT caches per build. It is injected
     // into the launcher templates as #aotCacheId# and combined there with a runtime JDK tag, so
     // installer / zip / conda builds, platforms and versions never share an incompatible cache.
@@ -118,6 +123,42 @@ tasks.register('extractRuntimeImage', ExtractRuntime) {
     dependsOn downloadRuntimeImage
     inputArchive = downloadRuntimeImage.dest
     outputDir = file(downloadRuntimeImage.dest.absolutePath.substring(0, downloadRuntimeImage.dest.absolutePath.lastIndexOf(".")))
+}
+
+// Every module of the JDK except the development tools, i.e. what a JRE contains. Runtime diagnostics (jcmd, JFR)
+// stay, and so do the Java debug attributes, so that stack traces in bug reports keep their line numbers.
+def jdkDevelopmentModules = ['jdk.compiler', 'jdk.javadoc', 'jdk.internal.md', 'jdk.jshell', 'jdk.editpad', 'jdk.internal.ed',
+                             'jdk.internal.le', 'jdk.internal.opt', 'jdk.jdeps', 'jdk.jlink', 'jdk.jpackage',
+                             'jdk.jartool', 'jdk.jdi', 'jdk.jdwp.agent', 'jdk.hotspot.agent', 'jdk.jconsole',
+                             'jdk.jstatd', 'jdk.httpserver']
+
+tasks.register('jlinkRuntimeImage', Exec) {
+    group = "runtime"
+    dependsOn extractRuntimeImage
+    def jdkDir = extractRuntimeImage.outputDir
+    def outDir = file("${jdkDir}-jlink")
+    inputs.dir(jdkDir)
+    inputs.property('excludedModules', jdkDevelopmentModules)
+    outputs.dir(outDir)
+
+    doFirst {
+        delete outDir
+        def jmods = new File(jdkDir, 'jmods')
+        def modules = jmods.list().findAll { it.endsWith('.jmod') }.collect { it - '.jmod' } - jdkDevelopmentModules
+        // jlink writes only JAVA_VERSION and MODULES to the release file. Keep the vendor's entries, which the
+        // launchers key the AOT cache on and scanners identify the runtime by.
+        def release = new Properties()
+        new File(jdkDir, 'release').withReader('UTF-8') { release.load(it) }
+        def vendorInfo = ['IMPLEMENTOR', 'IMPLEMENTOR_VERSION', 'JAVA_RUNTIME_VERSION', 'JAVA_VERSION_DATE']
+                .findAll { release.getProperty(it) }
+                .collect { "${it}=${release.getProperty(it).replaceAll(/^"|"$/, '')}" }
+        commandLine new File(jdkDir, 'bin/jlink').absolutePath,
+                '--module-path', jmods.absolutePath,
+                '--add-modules', modules.sort().join(','),
+                '--no-header-files', '--no-man-pages', '--generate-cds-archive',
+                '--release-info', "add:${vendorInfo.join(':')}",
+                '--output', outDir.absolutePath
+    }
 }
 
 subprojects {
