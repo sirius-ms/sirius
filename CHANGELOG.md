@@ -44,6 +44,8 @@
   known vulnerabilities of the versions shipped before
 - change: the Windows version bundles a Java runtime without the JDK's development tools (compiler,
   debugger, jshell, jwebserver, jlink), which makes it about 210 MB smaller
+- feature: SIRIUS ships a software bill of materials (`sbom.cdx.json`, CycloneDX) that lists its
+  libraries, the bundled Java runtime and the helper programs; every release also publishes it
 
 ### 6.5.4 (2026-08-25)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,

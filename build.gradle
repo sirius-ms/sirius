@@ -17,19 +17,10 @@ buildscript {
     }
 }
 
-plugins {
-    alias(libs.plugins.sonatypeScan)
-}
-
 //this task is used to update the gradle wrapper properties to a new version
 // it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
 wrapper {
     gradleVersion = '9.4.1'
-}
-
-ossIndexAudit {
-    username = System.getenv("OSS_INDEX_UNAME")
-    password = System.getenv("OSS_INDEX_TOKEN")
 }
 
 //Global Properties

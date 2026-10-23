@@ -268,4 +268,4 @@ xxindex = { group = "psidev.psi.tools", name = "xxindex", version.ref = "xxindex
 legacyJaxbImpl = { group = "stealth.com.sun.xml.bind", name = "jaxb-impl", version = { strictly = "2.3.9" } }
 
 [plugins]
-sonatypeScan = { id = "org.sonatype.gradle.plugins.scan", version = "3.1.5" }
+cyclonedx = { id = "org.cyclonedx.bom", version = "3.5.1" }

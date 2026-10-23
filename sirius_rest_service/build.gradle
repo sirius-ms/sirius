@@ -4,6 +4,9 @@ import java.nio.file.Files
 
 plugins {
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
+    // SBOM of the libraries the boot jar ships (cyclonedxBom); :sirius_dist:sirius_gui_dist adds what the
+    // distribution ships outside of it
+    alias(libs.plugins.cyclonedx)
 }
 
 apply plugin: 'org.springframework.boot'
@@ -112,6 +115,14 @@ configurations.configureEach { conf ->
     conf.exclude group: 'org.springframework.data', module: 'spring-data-jpa'
     conf.exclude group: 'org.springframework.data', module: 'spring-data-mongodb'
     conf.exclude group: 'org.mongodb'
+}
+
+// the SBOM describes what bootJar ships, not the build and test tooling
+tasks.named('cyclonedxDirectBom') {
+    includeConfigs = ['runtimeClasspath']
+}
+tasks.named('cyclonedxBom') {
+    projectType = org.cyclonedx.model.Component.Type.APPLICATION
 }
 
 jar {
