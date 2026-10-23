@@ -9,10 +9,6 @@ plugins {
     id 'edu.sc.seis.launch4j' version '4.0.0'
 }
 
-dependencies {
-    implementation libs.junitJupiter
-}
-
 version = siriusFrontendVersion
 
 enum DistJRE {
