@@ -1,6 +1,9 @@
 [versions]
-springBoot = "4.0.7"
+springBoot = "4.0.9"
 springDoc = "3.0.3"
+# springDoc 3.0.3 bundles swagger-ui 5.32.2, whose DOMPurify (3.3.2) has known CVEs; 5.34.0 carries DOMPurify 3.4.16.
+# Drop this pin once a springDoc release for our Spring Boot line bundles a newer swagger-ui by itself.
+swaggerUi = "5.34.0"
 jjobs = "0.13.2"
 cdk = "2.12"
 jetbrainsAnnotations = "26.0.1"
@@ -176,6 +179,7 @@ commonsCompress = { group = "org.apache.commons", name = "commons-compress", ver
 commonsIo = { group = "commons-io", name = "commons-io", version.ref = "commonsIo"}
 springdocOpenapiUi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version.ref = "springDoc" }
 springdocOpenapiApi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-api", version.ref = "springDoc" }
+swaggerUiWebjar = { group = "org.webjars", name = "swagger-ui", version.ref = "swaggerUi" }
 concurrentLocks = { group = "com.googlecode.concurrent-locks", name = "concurrent-locks", version.ref = "concurrentLocks" }
 trove4j = { group = "net.sf.trove4j", name = "core", version.ref = "trove4j" }
 minio = { group = "io.minio", name = "minio", version.ref = "minio" }

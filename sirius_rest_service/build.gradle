@@ -46,6 +46,8 @@ dependencies {
     // Generate interactive documentation from a Swagger-compliant API
     implementation libs.springdocOpenapiApi
     implementation libs.springdocOpenapiUi
+    // newer swagger-ui than springdoc bundles, see libs.versions.toml
+    implementation libs.swaggerUiWebjar
 
     //process javadoc for swagger/openapi
     annotationProcessor libs.therapiRuntimeJavadocScribe
