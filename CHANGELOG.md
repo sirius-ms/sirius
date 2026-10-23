@@ -40,6 +40,8 @@
 - fix: on Windows, `sirius.exe` and `sirius-gui.exe` are signed now, not only the installer
 - change: libraries that SIRIUS does not use are no longer shipped: Apache Batik and FOP, the
   PostgreSQL and MongoDB drivers, Spring Data JPA and MongoDB, plexus-utils and JUnit
+- upgrade: commons-beanutils 1.11.0, Apache POI 5.5.1, zip4j 2.11.6 and Bouncy Castle 1.86, which fix
+  known vulnerabilities of the versions shipped before
 
 ### 6.5.4 (2026-08-25)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,
