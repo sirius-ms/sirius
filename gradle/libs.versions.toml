@@ -21,6 +21,8 @@ commonsConfiguration2 = "2.11.0"
 gradleUtilPlugins = "0.1.0-RELEASE"
 snakeyaml = "1.29"
 jxbrowserPlugin = "2.0.0"
+# update the JxBrowser entries in license-overrides.txt along with it, or the licence report lists JxBrowser
+# under "Unknown"
 jxbrowser = "9.3.1"
 concurrentLocks = "1.0.0"
 minio = "8.6.0"
