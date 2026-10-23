@@ -50,7 +50,7 @@ ext {
     // configure infos for bundled JRE
     def distJre = siriusTargetPlatform.isLinux() ? DistJRE.JBR_FT :
             (siriusTargetPlatform.isWin() ? DistJRE.MICROSOFT : DistJRE.TEMURIN)
-    jre_version = '25.0.3'
+    jre_version = '25.0.4.1'
     jre_major = jre_version.split("[.]")[0]
 
     switch (distJre) {
@@ -62,8 +62,8 @@ ext {
             break
         case DistJRE.JBR_JCEF:
         case DistJRE.JBR_FT:
-            jbr_jre_version = '25.0.2' //jre_version
-            jre_distributor_version = 'b432.48'//'b329.72'//'b895.149'//'b1038.71'//'b1138.52'
+            jbr_jre_version = '25.0.4.1' //jre_version
+            jre_distributor_version = 'b635.78'//'b432.48'//'b329.72'//'b895.149'//'b1038.71'//'b1138.52'
             jre_mac_prefix = "Contents/Home"
             jre_fname = "jbr_${DistJRE.JBR_FT?"ft":jcef}-${jbr_jre_version}-${siriusTargetPlatform.jbrClassifier().get()}-${jre_distributor_version}.tar.gz"
             jre_download_base_link = "https://cache-redirector.jetbrains.com/intellij-jbr/"
@@ -78,8 +78,8 @@ ext {
             //https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.3%2B9/OpenJDK25U-jdk_x64_mac_hotspot_25.0.3_9.tar.gz
             //https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.8%2B9/OpenJDK21U-jre_x64_mac_hotspot_21.0.8_9.tar.gz
             jre_mac_prefix = "Contents/Home"
-            jre_distributor_version = "9"
-            jre_fname = "jdk-${jre_version}%2B9/OpenJDK${jre_major}U-jre_${siriusTargetPlatform.adoptClassifier().get()}_hotspot_${jre_version}_${jre_distributor_version}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
+            jre_distributor_version = "1" // build number, not always the same across updates
+            jre_fname = "jdk-${jre_version}%2B${jre_distributor_version}/OpenJDK${jre_major}U-jre_${siriusTargetPlatform.adoptClassifier().get()}_hotspot_${jre_version}_${jre_distributor_version}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
             jre_download_base_link = "https://github.com/adoptium/temurin${jre_major}-binaries/releases/download/"
             break;
         case DistJRE.MICROSOFT:
