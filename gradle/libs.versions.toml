@@ -40,8 +40,6 @@ timingframework = "0.55"
 opencsv = "2.3"
 swingx = "1.6.5-1"
 glazedlists = "1.11.0"
-batik = "1.16"
-fop = "2.7"
 flatlaf = "3.5.2"
 jsvg = "1.6.1"
 spinnerProgress = "1.0.0"
@@ -199,8 +197,6 @@ timingframework = { group = "org.jdesktop", name = "timingframework", version.re
 opencsv = { group = "net.sf.opencsv", name = "opencsv", version.ref = "opencsv" }
 swingx = { group = "org.swinglabs.swingx", name = "swingx-all", version.ref = "swingx" }
 glazedlists = { group = "com.glazedlists", name = "glazedlists", version.ref = "glazedlists" }
-batikRasterizer = { group = "org.apache.xmlgraphics", name = "batik-rasterizer", version.ref = "batik" }
-fop = { group = "org.apache.xmlgraphics", name = "fop", version.ref = "fop" }
 flatlaf = { group = "com.formdev", name = "flatlaf", version.ref = "flatlaf" }
 flatlafExtras = { group = "com.formdev", name = "flatlaf-extras", version.ref = "flatlaf" }
 jsvg = { group = "com.github.weisj", name = "jsvg", version.ref = "jsvg" }

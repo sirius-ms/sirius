@@ -38,6 +38,8 @@
   Swagger UI 5.34.0, which fix known vulnerabilities of the versions shipped before (API)
 - upgrade: the bundled Java runtime is 25.0.4.1 on all platforms (GUI, CLI and API)
 - fix: on Windows, `sirius.exe` and `sirius-gui.exe` are signed now, not only the installer
+- change: libraries that SIRIUS does not use are no longer shipped: Apache Batik and FOP, the
+  PostgreSQL and MongoDB drivers, Spring Data JPA and MongoDB, plexus-utils and JUnit
 
 ### 6.5.4 (2026-08-25)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,
