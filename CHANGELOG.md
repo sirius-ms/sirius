@@ -30,6 +30,10 @@
   intermediate metabolite to a third-party server without the user asking for it. The option is
   still available, now describes what enabling it transmits, and can be switched on in the GUI
   (GUI, CLI and API)
+- change: the SIRIUS service now accepts connections from the same computer only. It used to listen
+  on all network interfaces, which made its unencrypted HTTP API reachable from the whole network.
+  To reach it from another computer or from outside a container, start it with
+  `--address 0.0.0.0` or set the `SERVER_ADDRESS` environment variable (API)
 
 ### 6.5.4 (2026-08-25)
 - feature: **searchable projects**. Projects now carry a full text search index over their features,
