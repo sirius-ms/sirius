@@ -141,6 +141,20 @@ jobs:
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.pkg
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.deb
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.sha256
+            ./sirius_dist/sirius_gui_dist/build/sbom/*.cdx.json
+
+      - name: Locate SBOM
+        id: sbom
+        shell: bash
+        run: echo "file=$(ls ./sirius_dist/sirius_gui_dist/build/sbom/*.cdx.json)" >> "$GITHUB_OUTPUT"
+
+      # Informational: findings that do not apply to SIRIUS are documented in dependency-check-suppressions.xml
+      - name: Scan SBOM for known vulnerabilities
+        uses: anchore/scan-action@v7
+        with:
+          sbom: ${{ steps.sbom.outputs.file }}
+          fail-build: false
+          output-format: table
 
 #  dockergen:
 #    needs: [ distGUI ]

@@ -209,7 +209,95 @@ startScripts {
     }
 }
 
+//###################################### SBOM ##############################################
+// The SBOM of the Java libraries comes from :sirius_rest_service (CycloneDX plugin). The distribution also ships what
+// that SBOM cannot see: the bundled Java runtime, on Windows the .NET ExplorerLicTester of the Agilent MassHunter
+// Explorer integration, and libraries bundled inside other libraries (DOMPurify in the swagger-ui bundle, zlib in the
+// CBC solver natives). distSbom adds them, so that an SBOM-based analysis sees them; the result is shipped as
+// sbom.cdx.json and published with each release.
+tasks.register('distSbom') {
+    group = 'distribution'
+    description = 'Writes the SBOM of the distribution: the Java libraries plus the bundled runtime and native helpers.'
 
+    def appSbom = project(':sirius_rest_service').tasks.named('cyclonedxBom').flatMap { it.jsonOutput }
+    def appLibDir = tasks.named('extractForLeyden').map { new File(it.outputs.files.singleFile, 'lib') }
+    // vendor and version of the runtime as published; an image jlinked from it keeps neither in its release file
+    def runtimeRelease = includeRuntime
+            ? parent.tasks.named('extractRuntimeImage').map { new File(it.outputs.files.singleFile, 'release') }
+            : null
+    boolean withExplorerLicTester = siriusTargetPlatform.isWin()
+    def sbomFile = layout.buildDirectory.file("sbom/sirius-${version}-${osName}.cdx.json")
+
+    inputs.file(appSbom)
+    dependsOn tasks.named('extractForLeyden')
+    inputs.dir(appLibDir)
+    if (runtimeRelease != null) {
+        dependsOn parent.tasks.named('extractRuntimeImage')
+        inputs.file(runtimeRelease)
+    }
+    inputs.property('withExplorerLicTester', withExplorerLicTester)
+    outputs.file(sbomFile)
+
+    doLast {
+        def bom = new groovy.json.JsonSlurper().parse(appSbom.get().asFile)
+        // a different document than the one it is made from, so it gets its own serial number
+        bom.serialNumber = "urn:uuid:${UUID.randomUUID()}".toString()
+        def components = bom.components as List
+
+        if (runtimeRelease != null) {
+            def release = new Properties()
+            runtimeRelease.get().withReader('UTF-8') { release.load(it) }
+            def value = { String key -> release.getProperty(key)?.replaceAll(/^"|"$/, '') }
+            String javaVersion = value('JAVA_VERSION')
+            // 'application', not 'platform': scanners such as Grype skip platform components and would not match the CPE
+            components << [
+                    type       : 'application',
+                    'bom-ref'  : "openjdk@${javaVersion}".toString(),
+                    supplier   : [name: value('IMPLEMENTOR')],
+                    name       : 'openjdk',
+                    version    : value('JAVA_RUNTIME_VERSION') ?: javaVersion,
+                    description: "Java runtime bundled with SIRIUS: ${value('IMPLEMENTOR')} build of OpenJDK".toString(),
+                    cpe        : "cpe:2.3:a:oracle:openjdk:${javaVersion}:*:*:*:*:*:*:*".toString()
+            ]
+        }
+        if (withExplorerLicTester) {
+            // the binaries in dist/ExplorerLicTester: update these versions when they change
+            components << [type: 'application', 'bom-ref': 'ExplorerLicTester@1.0.1.0', name: 'ExplorerLicTester', version: '1.0.1.0',
+                           description: 'License check helper of the Agilent MassHunter Explorer integration (.NET Framework 4.8.1)']
+            components << [type: 'library', 'bom-ref': 'Licensing@1.0.0.0', name: 'Licensing', version: '1.0.0.0']
+            components << [type: 'library', 'bom-ref': 'Agilent.Licensing.Client.v2@1.9.0', supplier: [name: 'Agilent Technologies'],
+                           name: 'Agilent.Licensing.Client.v2', version: '1.9.0']
+            components << [type: 'library', 'bom-ref': 'pkg:nuget/Newtonsoft.Json@13.0.1', supplier: [name: 'Newtonsoft'],
+                           name: 'Newtonsoft.Json', version: '13.0.1', purl: 'pkg:nuget/Newtonsoft.Json@13.0.1']
+        }
+
+        // bundled libraries, with the version read from the bundled file itself so that it cannot go stale
+        def bundled = [:]
+        appLibDir.get().listFiles().findAll { it.name.endsWith('.jar') }.sort().each { jar ->
+            new java.util.zip.ZipFile(jar).withCloseable { zip ->
+                zip.entries().each { entry ->
+                    if (entry.name.endsWith('/swagger-ui-bundle.js')) {
+                        def m = zip.getInputStream(entry).getText('UTF-8') =~ /DOMPurify\.version="(\d+(?:\.\d+)+)"/
+                        if (m.find())
+                            bundled["pkg:npm/dompurify@${m.group(1)}"] = [type: 'library', name: 'dompurify', version: m.group(1),
+                                    purl: "pkg:npm/dompurify@${m.group(1)}", description: "bundled in ${jar.name}"]
+                    } else if (entry.name ==~ /(.*\/)?(zlib1\.dll|libz\.so[.0-9]*|libz[.0-9]*\.dylib)/) {
+                        def m = new String(zip.getInputStream(entry).bytes, 'ISO-8859-1') =~ /inflate (\d+(?:\.\d+)+) Copyright/
+                        if (m.find())
+                            bundled["zlib@${m.group(1)}:${jar.name}"] = [type: 'library', name: 'zlib', version: m.group(1),
+                                    purl: "pkg:generic/zlib@${m.group(1)}", cpe: "cpe:2.3:a:zlib:zlib:${m.group(1)}:*:*:*:*:*:*:*",
+                                    description: "bundled in ${jar.name} (${entry.name})"]
+                    }
+                }
+            }
+        }
+        bundled.each { ref, component -> components << ([('bom-ref'): ref.toString()] + component.collectEntries { k, v -> [k, v.toString()] }) }
+
+        def out = sbomFile.get().asFile
+        out.parentFile.mkdirs()
+        out.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(bom))
+    }
+}
 
 distributions {
     sirius {
@@ -237,6 +325,9 @@ distributions {
             }
             from(layout.buildDirectory.dir("reports/dependency-license").get().asFile) {
                 include('licenses.md')
+            }
+            from(tasks.named('distSbom')) {
+                rename { 'sbom.cdx.json' }
             }
             if (includeRuntime) {
                 into('runtime') {
