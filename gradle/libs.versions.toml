@@ -27,10 +27,11 @@ jxbrowser = "9.3.1"
 concurrentLocks = "1.0.0"
 minio = "8.6.0"
 okhttp = "5.1.0"  # matches minio
+bouncycastle = "1.86"  # minio 8.6.0 brings 1.81, which has known vulnerabilities (fixed in 1.85)
 xz = "1.9"
 zstd = "1.5.7-8"
 googleCloudStorage = "2.68.0"
-zip4j = "2.10.0"
+zip4j = "2.11.6"
 zip4jvm = "1.8"
 jimfs = "1.3.0"
 therapi = "0.15.0"
@@ -48,7 +49,7 @@ jmzml = "1.7.11"
 xxindex = "0.23"
 hypersistenceTsid = "2.1.1"
 ssj = "3.1.0"
-commonsBeanutils = "1.9.4"
+commonsBeanutils = "1.11.0"
 reflections8 = "0.11.7"
 args4j = "2.33"
 jfreechart = "1.5.2"
@@ -56,7 +57,7 @@ jfreechartLegacy = "1.0.19"
 joptSimple = "4.8"
 vecmath = "1.3.1"
 auth0 = "3.16.0"
-poi = "5.3.0"
+poi = "5.5.1"
 jmztabm = "1.0.6"
 jbibtex = "1.0.17"
 commonsCollections4 = "4.4"  # todo deprecated, can be removed with old SIRIUS ProjectSpaceManager
@@ -184,6 +185,7 @@ concurrentLocks = { group = "com.googlecode.concurrent-locks", name = "concurren
 trove4j = { group = "net.sf.trove4j", name = "core", version.ref = "trove4j" }
 minio = { group = "io.minio", name = "minio", version.ref = "minio" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+bcprov = { group = "org.bouncycastle", name = "bcprov-jdk18on", version.ref = "bouncycastle" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 zstdJni = { group = "com.github.luben", name = "zstd-jni", version.ref = "zstd" }
 googleCloudStorage = { group = "com.google.cloud", name = "google-cloud-storage", version.ref = "googleCloudStorage" }
