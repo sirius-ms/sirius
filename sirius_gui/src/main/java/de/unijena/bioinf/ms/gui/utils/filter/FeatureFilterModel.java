@@ -263,6 +263,10 @@ public class FeatureFilterModel implements SiriusPCS {
     // of truth, used both to build the executed query (above) and to render the facets as query chips
     // (PanelQueryNodeFactory / FacetCodecs). Must match the backend @IndexField names.
     public static final String FIELD_MZ = "ionMass";
+    public static final String FIELD_INTENSITY_APEX = IntensityFilter.Measure.APEX.getField();
+    public static final String FIELD_INTENSITY_AUC = IntensityFilter.Measure.AUC.getField();
+    public static final String FIELD_INTENSITY_APEX_RELATIVE = IntensityFilter.Measure.APEX.getRelativeField();
+    public static final String FIELD_INTENSITY_AUC_RELATIVE = IntensityFilter.Measure.AUC.getRelativeField();
     public static final String FIELD_RT_START = "rtStartSeconds";
     public static final String FIELD_RT_APEX = "rtApexSeconds";
     public static final String FIELD_RT_END = "rtEndSeconds";

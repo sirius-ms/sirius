@@ -71,20 +71,25 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueFormatter;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.ProjectSchemaMigrator;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
+import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.NoSQLInstance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -115,10 +120,12 @@ import java.net.URI;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.LARGE_BATCH_SIZE;
 import static de.unijena.bioinf.ms.middleware.Pages.*;
@@ -243,6 +250,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     // Mark incomplete for the duration of the (re)build so an interrupted build is not
                     // persisted and gets rebuilt on the next open (M5).
                     searchService.setIndexComplete(projectId, AlignedFeature.class, false);
+                    upsertIndexedMaxima(maxima()); // what the documents about to be written are held against
                     feedAllFeaturesToIndex(alfs -> searchService.addDocuments(projectId, alfs));
                     searchService.setIndexComplete(projectId, AlignedFeature.class, true);
                 }
@@ -285,41 +293,233 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         );
     }
 
+    // The maxima the documents in the search index were written against. The stored maxima rise as features are
+    // written - the storage layer folds every feature it writes into them - so comparing the two says which runs'
+    // documents carry a relative intensity that no longer holds. Kept as its own project property rather than
+    // an in-memory field: the project's own maxima property is already overwritten by the write that triggers a
+    // reindex, so it cannot also serve as the "before" the diff needs, and a dedicated key survives a project
+    // close/reopen exactly instead of being inferred.
+    private static final String INDEXED_MAXIMA_PROPERTY_KEY = "indexedMaximumIntensities";
+
+    private Optional<ProjectMaximumIntensities> findIndexedMaxima() {
+        return project().findJsonProjectProperty(INDEXED_MAXIMA_PROPERTY_KEY, ProjectMaximumIntensities.class);
+    }
+
+    private void upsertIndexedMaxima(@NotNull ProjectMaximumIntensities maxima) {
+        project().upsertJsonProjectProperty(INDEXED_MAXIMA_PROPERTY_KEY, maxima);
+    }
+
+    /** The runs whose maximum rose, and whether the global maximum, which the features without a run refer to, did. */
+    record RaisedMaxima(@NotNull Set<Long> runs, boolean global) {
+        static final RaisedMaxima NONE = new RaisedMaxima(Set.of(), false);
+
+        boolean isEmpty() {
+            return runs.isEmpty() && !global;
+        }
+    }
+
+    /** The project's maximum intensities - derived by the project once, if it has none yet. */
+    private ProjectMaximumIntensities maxima() {
+        return project().getMaximumIntensities();
+    }
+
     /**
-     * Reads the given features as the documents the index is defined to hold and hands them over batch by batch.
+     * The LC-MS runs tagged as blank, whose features do not count towards the intensity an aligned feature
+     * reports. Derived on every use rather than kept: the tag changes through the API, and the LC-MS import
+     * writes it straight to storage. The query reads the tags of runs only - the leading fields of the tag index.
+     */
+    @SneakyThrows
+    private LongSet blankRuns() {
+        LongOpenHashSet blank = new LongOpenHashSet();
+        try (Stream<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> runTypes = storage().findStr(Filter.and(
+                Filter.where("taggedObjectClass").eq(LCMSRun.class.getName()),
+                Filter.where("tagName").eq(TagDefinitions.SAMPLE_TYPE.getTagName())
+        ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)) {
+            runTypes.filter(tag -> TagDefinitions.SAMPLE_TYPE_BLANK.equals(tag.getValue()))
+                    .forEach(tag -> blank.add(tag.getTaggedObjectId()));
+        }
+        return blank;
+    }
+
+    /** The aligned features with a run feature in one of {@code runIds}, over the runId index. */
+    @SneakyThrows
+    private Set<Long> alignedFeaturesOfRuns(@NotNull Collection<Long> runIds) {
+        Set<Long> alignedFeatures = new HashSet<>();
+        for (Long runId : runIds) {
+            try (Stream<Feature> runFeatures = storage().findStr(Filter.where("runId").eq(runId), Feature.class)) {
+                runFeatures.forEach(f -> alignedFeatures.add(f.getAlignedFeatureId()));
+            }
+        }
+        return alignedFeatures;
+    }
+
+    /**
+     * A run's type changed: whether it is a blank decides whether its features count towards the intensities
+     * its aligned features report, so their documents are rewritten. The maxima count every run whatever its
+     * type, so nothing else moves.
+     */
+    @SneakyThrows
+    private void reindexFeaturesOfRuns(@NotNull Collection<Long> runIds) {
+        if (searchService == null || runIds.isEmpty())
+            return;
+        synchronized (searchIndexLock) {
+            feedFeaturesToIndex(alignedFeaturesOfRuns(runIds), alfs -> searchService.updateDocuments(projectId, alfs));
+            searchService.makeWritesSearchable(projectId, AlignedFeature.class);
+        }
+    }
+
+    /**
+     * The maxima that rose since the index was last written against them, and the current maxima taken as what
+     * it is written against from now on. Every other feature of a run that rose carries a relative intensity in
+     * the index that no longer holds, see {@link #reindexRuns}.
+     */
+    private RaisedMaxima refreshIndexedMaxima() {
+        ProjectMaximumIntensities before = findIndexedMaxima().orElse(null);
+        ProjectMaximumIntensities now = maxima();
+        upsertIndexedMaxima(now);
+        if (before == null)
+            // No indexed-maxima property yet: an index built by a SIRIUS version before this bookkeeping
+            // existed. What it was written against is unknown, and the index rebuilds once anyway when its
+            // schema fingerprint changes with this release.
+            return RaisedMaxima.NONE;
+        return raisedSince(before, now);
+    }
+
+    /**
+     * The maxima that rose between what the index was written against and now, as far as they matter to a
+     * document it holds. Only what the index already holds can be out of date: a run it has no maximum for has
+     * no documents yet but the ones being written, and before the first feature without a run nothing refers
+     * to the global maximum.
+     */
+    static RaisedMaxima raisedSince(@NotNull ProjectMaximumIntensities indexed, @NotNull ProjectMaximumIntensities now) {
+        Set<Long> runs = new HashSet<>(now.runsRaisedSince(indexed));
+        runs.retainAll(indexed.getRuns().keySet());
+        return new RaisedMaxima(runs, indexed.isFeaturesWithoutRun() && now.globalRaisedSince(indexed));
+    }
+
+    /**
+     * Rewrites the index documents of every feature that has a run feature in one of the raised runs - or, when
+     * the global maximum rose, a run feature without a run - except the features in {@code alreadyWritten},
+     * which the caller indexes itself with the current maxima.
+     */
+    @SneakyThrows
+    private void reindexRuns(@NotNull RaisedMaxima raised, @Nullable Collection<Long> alreadyWritten) {
+        if (raised.isEmpty())
+            return;
+        // over the runId index: a run's features, not every feature of the project
+        Set<Long> affected = alignedFeaturesOfRuns(raised.runs());
+        // the features without a run are what the global maximum is for: in a peak-list project all of them.
+        // Filter.eq(null) over the runId index instead of a full scan filtered client-side - Nitrite's
+        // EqualsFilter treats a null value as "field is null or absent" on both the indexed and scan paths.
+        if (raised.global()) {
+            try (Stream<Feature> runFeatures = storage().findStr(Filter.where("runId").eq(null), Feature.class)) {
+                runFeatures.forEach(f -> affected.add(f.getAlignedFeatureId()));
+            }
+        }
+        if (alreadyWritten != null)
+            alreadyWritten.forEach(affected::remove);
+        feedFeaturesToIndex(affected, alfs -> searchService.updateDocuments(projectId, alfs));
+    }
+
+    /**
+     * Below this many ids, splitting into per-core batches and submitting sub-jobs for them costs more than it
+     * saves - handled inline instead, as a single batch on the calling thread. Covers the common case of a
+     * single compound or feature added through the REST API, which would otherwise pay job-submission overhead
+     * for a "batch" of one.
+     */
+    private static final int MIN_IDS_TO_PARALLELIZE = 64;
+
+    /** Overridable so a benchmark can ask what the right number is - mirrors {@code ConversionJob.workerCount}. */
+    static int workerCount = 0;
+
+    private static int workers() {
+        return workerCount > 0 ? workerCount : SiriusJobs.getGlobalJobManager().getCPUThreads();
+    }
+
+    /**
+     * Reads the given ids as the documents the index is defined to hold and hands them over batch by batch, one
+     * {@code JobType.CPU} sub-job per batch so the read-and-annotate work of one batch overlaps the next's
+     * instead of waiting for it - the batches write disjoint ids, so nothing about doing it out of order changes
+     * what ends up indexed. The batch size is not fixed: {@code ids} is split into as many equally-sized batches
+     * as there are cores, so a run of 300 features and a full-project rebuild of 300,000 both spread evenly
+     * across the available parallelism instead of one being too fine-grained and the other too coarse for a
+     * single {@link Utils#LARGE_BATCH_SIZE}-style constant to suit both. {@code CPU}, not {@code IO}:
+     * {@code JobType.IO} shares a process-wide semaphore capped at {@code min(cpuThreads, 3)} with no
+     * re-entrancy, and the calls that reach this already run inside an IO-category job ({@code BackgroundRuns}),
+     * so IO sub-jobs here could deadlock once enough of those are in flight at once. {@code CPU} jobs run on a
+     * ForkJoinPool-backed executor with no such limit - the same reason {@code ProjectSchemaMigrator.ConversionJob}
+     * uses it for its own per-batch workers.
      * <p>
      * Which fields that is, is deliberately not the caller's to choose. A document written with fewer fields
      * than {@link AlignedFeature#INDEXED_OPT_FIELDS} is missing them until something rewrites it, and
      * {@link #findAlignedFeatures(String, Pageable, boolean, EnumSet)} serves a request for exactly those
      * fields straight from the index - so a field that was never written comes back absent instead of being
-     * re-read from the database. Every path that feeds features to the index therefore goes through here or
-     * through {@link #feedAllFeaturesToIndex(Consumer)}, and neither has an opt-field parameter to disagree
-     * about.
+     * re-read from the database. {@link #feedFeaturesToIndex} and {@link #feedAllFeaturesToIndex} are the only
+     * two sources of {@code ids} - an explicit collection, or every primary key of the project - and neither
+     * has an opt-field parameter to disagree about.
      *
-     * @param batchConsumer what to do with each batch: add the documents, or replace the existing ones
+     * @param batchConsumer what to do with each batch: add the documents, or replace the existing ones. Called
+     *                      from whichever sub-job's batch finished reading and annotating first, so it must be
+     *                      safe to call from several threads at once - {@code searchService.*Documents} already
+     *                      is, each POJO type's Lucene writer serializes on its own instance.
      */
+    private void feedIdsToIndex(@NotNull List<Long> ids, @NotNull Consumer<List<AlignedFeature>> batchConsumer)
+            throws IOException {
+        if (ids.isEmpty())
+            return;
+        if (ids.size() < MIN_IDS_TO_PARALLELIZE) {
+            batchConsumer.accept(findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS));
+            return;
+        }
+
+        int cores = Math.clamp(workers(), 1, ids.size());
+        int batchSize = (ids.size() + cores - 1) / cores; // ceil: as many batches as cores, evenly loaded
+        Partition<Long> partition = Partition.ofSize(ids, batchSize);
+        try {
+            SiriusJobs.getGlobalJobManager().submitJob(new BasicMasterJJob<Boolean>(JJob.JobType.CPU) {
+                @Override
+                protected Boolean compute() throws Exception {
+                    List<BasicJJob<Boolean>> running = new ArrayList<>();
+                    for (List<Long> batch : partition)
+                        running.add(submitSubJob(new BasicJJob<>(JobType.CPU) {
+                            @Override
+                            protected Boolean compute() throws Exception {
+                                checkForInterruption();
+                                batchConsumer.accept(findAlignedFeaturesByIds(batch, false, AlignedFeature.INDEXED_OPT_FIELDS));
+                                return Boolean.TRUE;
+                            }
+                        }));
+                    for (BasicJJob<Boolean> job : running)
+                        job.awaitResult();
+                    return Boolean.TRUE;
+                }
+            }).awaitResult();
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof IOException io)
+                throw io;
+            throw new IOException("Could not feed features to the search index.", e.getCause());
+        }
+    }
+
     private void feedFeaturesToIndex(@Nullable Collection<Long> featureIds,
                                      @NotNull Consumer<List<AlignedFeature>> batchConsumer) throws IOException {
         if (!Utils.notNullOrEmpty(featureIds))
             return;
-        Partition<Long> partition = Partition.ofSize(featureIds.stream().sorted().toList(), LARGE_BATCH_SIZE);
-        for (List<Long> ids : partition)
-            batchConsumer.accept(findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS));
+        feedIdsToIndex(featureIds.stream().sorted().toList(), batchConsumer);
     }
 
     /**
      * The same for every feature in the project, for building the index from scratch rather than adding to it.
      * <p>
-     * Pages rather than taking a list of ids: a rebuild spans the whole project, and what bounds what it holds
-     * is one page of assembled features at a time. It is a sibling of {@link #feedFeaturesToIndex} rather than a
-     * caller of it for that reason alone - what matters is that the two agree on the fields, which they do by
-     * both naming {@link AlignedFeature#INDEXED_OPT_FIELDS} and neither taking it as a parameter.
+     * Primary keys rather than a page cursor: reading a collection's keys off its primary-key index costs a few
+     * microseconds each against about fifty to walk the documents (see {@code Database#primaryKeys}), and a key
+     * is a unit of work {@link #feedIdsToIndex} can hand to any worker - the same reason
+     * {@code ProjectSchemaMigrator.ConversionJob} reads keys up front instead of paging.
      */
-    private void feedAllFeaturesToIndex(@NotNull Consumer<List<AlignedFeature>> batchConsumer) {
-        Pages.forEach(
-                pageable -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS),
-                page -> batchConsumer.accept(page.getContent())
-        );
+    private void feedAllFeaturesToIndex(@NotNull Consumer<List<AlignedFeature>> batchConsumer) throws IOException {
+        List<Long> ids = storage().primaryKeys(AlignedFeatures.class).stream()
+                .map(id -> ((Number) id).longValue()).sorted().toList();
+        feedIdsToIndex(ids, batchConsumer);
     }
 
     @SneakyThrows
@@ -328,7 +528,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (searchService != null) {
             synchronized (searchIndexLock) {
                 //Handle FEATURES
+                // the new features may have raised the maxima the relative intensities refer to: they are indexed
+                // with the current maxima, and the other features of a run whose maximum rose are rewritten afterwards
+                RaisedMaxima raised = refreshIndexedMaxima();
                 feedFeaturesToIndex(alignedFeaturesToUpdate, alfs -> searchService.addDocuments(projectId, alfs));
+                reindexRuns(raised, alignedFeaturesToUpdate);
 
                 //Handle COMPOUNDS
                 //todo IMPLEMENT!
@@ -365,18 +569,82 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public void updateSearchIndex(Collection<String> alignedFeaturesToUpdate) {
         updateSearchIndexLongIds(alignedFeaturesToUpdate.stream().filter(Objects::nonNull).map(Long::parseLong).toList());
-
     }
 
+    /**
+     * Reindexes a computation's result: merges {@code computedTools} and, when asked, {@code topAnnotationsSummary}
+     * onto the documents the index already holds for {@code alignedFeaturesToUpdate}, instead of
+     * {@link #feedFeaturesToIndex}'s full {@link AlignedFeature#INDEXED_OPT_FIELDS} read-and-replace - a
+     * computation cannot change a feature's intensity, so there is nothing to gain from rederiving it. A caller
+     * with only ids, not knowing which subtools ran, always asks for both.
+     */
     @SneakyThrows
     public void updateSearchIndexLongIds(Collection<Long> alignedFeaturesToUpdate) {
-        if (searchService != null) {
-            synchronized (searchIndexLock) {
-                // request results from db.
-                feedFeaturesToIndex(alignedFeaturesToUpdate, alfs -> searchService.updateDocuments(projectId, alfs));
-            }
-        }
+        if (searchService == null || Utils.isNullOrEmpty(alignedFeaturesToUpdate))
+            return;
+        for (List<Long> ids : Partition.ofSize(alignedFeaturesToUpdate.stream().sorted().toList(), LARGE_BATCH_SIZE))
+            mergeComputedFieldsIntoIndex(storage().findAllByPrimaryKeyStr(ids, AlignedFeatures.class).toList(), true);
+    }
 
+    /**
+     * The same reindex as {@link #updateSearchIndexLongIds}, but for a caller that already holds the
+     * {@link AlignedFeatures} of the instances it just computed over - sparing the database lookup
+     * {@link #updateSearchIndexLongIds} needs to re-fetch them by id.
+     *
+     * @param reindexTopAnnotations whether the computation could have changed {@code topAnnotationsSummary} -
+     *                              the caller's call, since it knows which subtools ran and this method does not.
+     */
+    @SneakyThrows
+    public void updateSearchIndex(Iterable<? extends Instance> instances, boolean reindexTopAnnotations) {
+        if (searchService == null || instances == null)
+            return;
+        List<AlignedFeatures> alignedFeatures = StreamSupport.stream(instances.spliterator(), false)
+                .filter(NoSQLInstance.class::isInstance).map(NoSQLInstance.class::cast)
+                .map(NoSQLInstance::getAlignedFeatures)
+                .toList();
+        if (alignedFeatures.isEmpty())
+            return;
+
+        for (List<AlignedFeatures> batch : Partition.ofSize(alignedFeatures, LARGE_BATCH_SIZE))
+            mergeComputedFieldsIntoIndex(batch, reindexTopAnnotations);
+    }
+
+    /**
+     * Merges the opt fields worth refreshing after a computation onto the documents already in the index, via
+     * {@link SearchService#updateDocumentsFields}, which reads the current indexed document and leaves every
+     * field the modifier does not touch - intensity above all - as already indexed. A feature with no document
+     * in the index yet (not reachable from a computation in practice - a feature is indexed at import time,
+     * before anything can compute over it - but kept correct for any other caller) falls back to the same full
+     * add {@link #feedFeaturesToIndex} does.
+     */
+    @SneakyThrows
+    private void mergeComputedFieldsIntoIndex(@NotNull List<AlignedFeatures> alignedFeatures, boolean reindexTopAnnotations) {
+        if (alignedFeatures.isEmpty())
+            return;
+        synchronized (searchIndexLock) {
+            // computedTools always needs a refresh - every subtool marks itself done there; whether
+            // topAnnotationsSummary also needs one is the caller's call (BackgroundRuns knows which subtools
+            // ran), not something to bake into a shared constant.
+            EnumSet<AlignedFeature.OptField> optFields = EnumSet.of(AlignedFeature.OptField.computedTools);
+            if (reindexTopAnnotations)
+                optFields.add(AlignedFeature.OptField.topAnnotationsSummary);
+
+            Map<String, AlignedFeature> fresh = annotateApiFeatures(alignedFeatures.stream(), false, optFields)
+                    .stream().collect(Collectors.toMap(AlignedFeature::getAlignedFeatureId, Function.identity()));
+
+            Set<String> merged = new HashSet<>();
+            searchService.updateDocumentsFields(projectId, fresh.keySet(), (AlignedFeature existing) -> {
+                AlignedFeature f = fresh.get(existing.getAlignedFeatureId());
+                existing.setComputedTools(f.getComputedTools());
+                if (reindexTopAnnotations)
+                    existing.setTopAnnotations(f.getTopAnnotations());
+                merged.add(existing.getAlignedFeatureId());
+            }, AlignedFeature.class);
+
+            List<Long> missing = fresh.keySet().stream().filter(id -> !merged.contains(id)).map(Long::parseLong).toList();
+            if (!missing.isEmpty())
+                feedFeaturesToIndex(missing, alfs -> searchService.updateDocuments(projectId, alfs));
+        }
     }
 
     @Override
@@ -394,6 +662,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             synchronized (searchIndexLock) {
                 // Delete by id per POJO type. removeDocuments(beans) would infer the index type from
                 // the element type (Long) and thus target a bogus index, so we must use removeDocumentsById.
+                // a deletion never lowers a maximum, so the documents of the remaining features still hold
                 if (Utils.notNullOrEmpty(alignedFeaturesIds))
                     searchService.removeDocumentsById(projectId, alignedFeaturesIds, AlignedFeature.class);
                 if (Utils.notNullOrEmpty(compoundIds))
@@ -669,8 +938,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         AlignedFeatures feature = maybeFeature.get();
         storage.fetchAllChildren(feature, "alignedFeatureId", "features", Feature.class);
         project().fetchMsData(feature);
-        // only use features with LC/MS information
-        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x -> x.getApexIntensity() != null).toList();
+        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream)
+                .filter(x -> x.getTraceReference().isPresent()).toList();
 
         // get all samples in the project
         List<LCMSRun> allSamples = storage.findAllStr(LCMSRun.class, "runId", Database.SortOrder.ASCENDING).toList();
@@ -1121,7 +1390,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         List<String> labels = new ArrayList<>();
         Long fid = currentFeatureId.map(Long::valueOf).orElse(null);
         for (AlignedFeatures f : compound.getAdductFeatures().stream().flatMap(Collection::stream).toList()) {
-            if (f.getApexIntensity() == null) continue; // ignore features without lcms information
+            if (f.getTraceReference().isEmpty()) continue;
             String prefix = "[CORRELATED]";
             if (fid != null && fid == f.getAlignedFeatureId()) {
                 prefix = "[SELECTED]";
@@ -1139,7 +1408,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             storage.fetchAllChildren(f, "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
             allFeatures.add(f);
             labels.add(mainLabel + String.format(Locale.US, " (%.2f m/z) ", f.getAverageMass()));
-            List<AlignedIsotopicFeatures> isotopes = f.getIsotopicFeatures().orElse(new ArrayList<>()).stream().filter(x -> x.getApexIntensity() != null).sorted(Comparator.comparingDouble(AbstractFeature::getAverageMass)).toList();
+            List<AlignedIsotopicFeatures> isotopes = f.getIsotopicFeatures().orElse(new ArrayList<>()).stream().filter(x -> x.getTraceReference().isPresent()).sorted(Comparator.comparingDouble(AbstractFeature::getAverageMass)).toList();
             for (int k = 0; k < isotopes.size(); ++k) {
                 allFeatures.add(isotopes.get(k));
                 labels.add(mainLabel + String.format(Locale.US, " (%.2f m/z) ", isotopes.get(k).getAverageMass()) + (k + 1) + "-th isotope");
@@ -1319,7 +1588,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.hasMs1(msData.getMergedMs1Spectrum() != null);
             builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
 
-            builder.retentionTime(RetentionTime.of(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds(), featureImport.getRtApexSeconds()));
+            RetentionTime retentionTime = RetentionTime.of(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds(), featureImport.getRtApexSeconds());
+            builder.retentionTime(retentionTime);
+
+            // An import is one measurement of the feature, so it becomes one feature of its own, belonging to
+            // no run - the same shape a peak-list import has. There is no trace to take an apex from, so its
+            // MS1 intensity is the height of the precursor peak.
+            builder.features(List.of(Feature.builder()
+                    .averageMass(featureImport.getIonMass())
+                    .charge((byte) featureImport.getCharge())
+                    .retentionTime(retentionTime)
+                    .apexIntensity(StorageUtils.precursorIntensityOf(msData.getMergedMs1Spectrum(),
+                            featureImport.getIonMass(), FeatureImports.ms1MassDeviation(profile).allowedMassDeviation))
+                    .build()));
 
             return builder.build();
         } catch (IllegalArgumentException e) {
@@ -1371,7 +1652,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 builder.rtEndSeconds(rt.getMiddleTime());
             }
         }
-        return annotateApiFeature(feature.getAlignedFeatureId(), builder.build(), msDataSearchPrepared, optFields);
+        AlignedFeature apiFeature = builder.build();
+        // run features that are already at hand - a feature that has just been imported - spare annotateApiFeature
+        // the query it would make for them
+        if (optFields.contains(AlignedFeature.OptField.intensities) && feature.getFeatures().isPresent())
+            apiFeature.setIntensity(FeatureIntensities.of(feature.getFeatures().get(), maxima(), blankRuns()));
+        return annotateApiFeature(feature.getAlignedFeatureId(), apiFeature, msDataSearchPrepared, optFields);
     }
 
     @SneakyThrows
@@ -1431,6 +1717,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                         .collect(Collectors.toMap(Tag::getTagName, Function.identity())));
         } else {
             feature.setTags(null);
+        }
+
+        // what was measured lives on the run features: the aligned feature's own apex is a merged trace's, see
+        // FeatureIntensities
+        if (optFields.contains(AlignedFeature.OptField.intensities)) {
+            if (feature.getIntensity() == null)
+                feature.setIntensity(FeatureIntensities.of(
+                        storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), Feature.class).toList(),
+                        maxima(), blankRuns()));
+        } else {
+            feature.setIntensity(null);
         }
 
         // Dropped like every other field nobody asked for - but, unlike them, never loaded here. Fold changes
@@ -2125,10 +2422,26 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             });
         }
 
+        TinyBackgroundJJob<Long2ObjectOpenHashMap<Intensity>> intensityJob = null;
+        if (optFields.contains(AlignedFeature.OptField.intensities)) {
+            List<Long> intensityIds = Arrays.asList(ids);
+            intensityJob = SiriusJobs.runInBackground(() -> {
+                Long2ObjectOpenHashMap<List<Feature>> runFeatures = new Long2ObjectOpenHashMap<>();
+                storage().findAllByIndexedFieldStr("alignedFeatureId", intensityIds, Feature.class)
+                        .forEach(f -> runFeatures.computeIfAbsent(f.getAlignedFeatureId(), id -> new ArrayList<>()).add(f));
+                ProjectMaximumIntensities maxima = maxima();
+                LongSet blankRuns = blankRuns();
+                Long2ObjectOpenHashMap<Intensity> intensities = new Long2ObjectOpenHashMap<>(runFeatures.size());
+                runFeatures.long2ObjectEntrySet().forEach(e -> intensities.put(e.getLongKey(), FeatureIntensities.of(e.getValue(), maxima, blankRuns)));
+                return intensities;
+            });
+        }
+
         @NotNull Long2ObjectOpenHashMap<QualityReport> quality = qualJob != null ? qualJob.getResult() : new Long2ObjectOpenHashMap<>();
         @NotNull Long2ObjectOpenHashMap<ComputedSubtools> computed = compJob != null ? compJob.getResult() : new Long2ObjectOpenHashMap<>();
         @NotNull Long2ObjectOpenHashMap<Map<String, Tag>> tags = tagJob != null ? tagJob.getResult() : new Long2ObjectOpenHashMap<>();
         @NotNull Long2ObjectOpenHashMap<List<Statistics>> stats = statJob != null ? statJob.getResult() : new Long2ObjectOpenHashMap<>();
+        @NotNull Long2ObjectOpenHashMap<Intensity> intensities = intensityJob != null ? intensityJob.getResult() : new Long2ObjectOpenHashMap<>();
 
 
         TinyBackgroundJJob<Long2ObjectOpenHashMap<CsiStructureSearchResult>> csiJob = null;
@@ -2149,7 +2462,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .parallel()
                 .map(alf -> {
                     long fid = alf.getAlignedFeatureId();
-                    AlignedFeature apiFeture = convertToApiFeature(alf, msDataAsCosineQuery, EnumSet.noneOf(AlignedFeature.OptField.class));
+                    AlignedFeature apiFeture = convertToApiFeature(alf, msDataAsCosineQuery,
+                            EnumSet.noneOf(AlignedFeature.OptField.class));
                     // Empty rather than null for whatever the bulk query did not find, because null is what
                     // annotateApiFeature below reads as "not fetched yet" and answers with a query per feature -
                     // over exactly the features the bulk query has just established have nothing. These are the
@@ -2165,6 +2479,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     apiFeture.setTags(bulkResult(optFields, AlignedFeature.OptField.tags, tags, fid, HashMap::new));
                     apiFeture.setStats(bulkResult(optFields, AlignedFeature.OptField.statistics,
                             stats, fid, ArrayList::new));
+                    apiFeture.setIntensity(bulkResult(optFields, AlignedFeature.OptField.intensities,
+                            intensities, fid, FeatureIntensities::unknown));
                     if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
                         apiFeture.setTopAnnotations(extractSearchIndexTopAnnotations(fid, csires.get(fid)));
                     //add additional anotations that are not yes covered by bulk retrieval.
@@ -2221,7 +2537,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     @SneakyThrows
     public void deleteAlignedFeaturesByIds(List<String> alignedFeatureIds) {
-        project().cascadeDeleteAlignedFeatures(alignedFeatureIds.stream().map(Long::parseLong).sorted().toList());
+        List<Long> ids = alignedFeatureIds.stream().map(Long::parseLong).sorted().toList();
+        project().cascadeDeleteAlignedFeatures(ids);
         removeFromSearchIndex(alignedFeatureIds, null, null);
     }
 
@@ -2393,6 +2710,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
             if (searchService != null)
                 searchService.addTagsToDocuments(projectId, objectToTags, taggedObjectClass);
+
+            if (taggedObjectClass.equals(Run.class))
+                reindexFeaturesOfRuns(objectToTags.entrySet().stream()
+                        .filter(e -> e.getValue().stream().anyMatch(tag -> TagDefinitions.SAMPLE_TYPE.getTagName().equals(tag.getTagName())))
+                        .map(e -> Long.parseLong(e.getKey())).toList());
         } catch (IOException e) {
             log.error("Error when assigning tags to Object", e);
             throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
@@ -2411,6 +2733,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         //todo optimize performance / find better solution
         if (searchService != null)
             searchService.removeTagsFromDocument(projectId, taggedObjectId, tagNames, (Class<? extends Taggable>) taggedOobjectClass);
+
+        if (taggedOobjectClass.equals(Run.class) && tagNames.contains(TagDefinitions.SAMPLE_TYPE.getTagName()))
+            reindexFeaturesOfRuns(List.of(Long.parseLong(taggedObjectId)));
     }
 
     @SneakyThrows

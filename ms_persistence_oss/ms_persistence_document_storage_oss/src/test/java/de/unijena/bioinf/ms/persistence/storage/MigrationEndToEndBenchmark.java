@@ -1,10 +1,11 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
+import com.sun.management.OperatingSystemMXBean;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.persistence.storage.ProjectSchemaMigrator.ConversionJob;
 import de.unijena.bioinf.ms.persistence.storage.ProjectSchemaMigrator.ConversionJob.Pass;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
@@ -16,16 +17,10 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import com.sun.management.OperatingSystemMXBean;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -341,6 +336,44 @@ public class MigrationEndToEndBenchmark {
         onACopy("formula candidates (lipid annotations)", (project, storage) -> {
             ConversionJob job = ProjectSchemaMigrator.convert(project, EnumSet.of(Pass.FORMULA_CANDIDATES));
             System.out.printf("BENCH|   %d formula candidates%n", job.getFormulaCandidatesFilled().get());
+        });
+    }
+
+    /**
+     * {@link Pass#FEATURES} and {@link Pass#FEATURE_INTENSITIES} on their own, each on its own copy - skipping
+     * {@link Pass#FORMULA_CANDIDATES} and {@link Pass#BLANK_REMOVAL_REPAIR}, which do nothing on a project with
+     * no formula candidates or blank-removal fold changes to begin with.
+     */
+    @Test
+    public void benchmarkFeaturesAndFeatureIntensities() throws Exception {
+        onACopy("features (MS flags, adducts, database links)", (project, storage) -> {
+            ConversionJob job = ProjectSchemaMigrator.convert(project, EnumSet.of(Pass.FEATURES));
+            System.out.printf("BENCH|   %d features, %d structure-search results%n",
+                    job.getFeaturesFilled().get(), job.getStructureResultsFilled().get());
+        });
+        onACopy("feature intensities (MS1 backfill)", (project, storage) -> {
+            ConversionJob job = ProjectSchemaMigrator.convert(project, EnumSet.of(Pass.FEATURE_INTENSITIES));
+            System.out.printf("BENCH|   %d intensities filled%n", job.getIntensitiesFilled().get());
+        });
+    }
+
+    /**
+     * Deriving a project's maximum intensities from scratch - not a {@link ProjectSchemaMigrator} pass, but
+     * the other full-project scan intensity filtering pays for: {@code SiriusProjectDatabaseImpl
+     * .getMaximumIntensities()} falls back to this the first time it is asked on a project with no
+     * {@code projectMaximumIntensities} property yet, reading every {@link Feature} to fold it in. Every
+     * ordinary write folds incrementally instead; this is what a project that predates that bookkeeping, or
+     * one whose property was dropped, pays once to catch up - and, with it, what the index has to be rebuilt
+     * against (see {@code NoSQLProjectImpl.refreshIndexedMaxima}).
+     */
+    @Test
+    public void benchmarkMaximumIntensitiesDerivedFromScratch() throws Exception {
+        onACopy("maximum intensities derived from scratch", (project, storage) -> {
+            project.removeProjectProperty(SiriusProjectDocumentDatabase.PROJECT_MAXIMUM_INTENSITIES_KEY);
+            long featureCount = storage.countAll(Feature.class);
+            ProjectMaximumIntensities derived = project.getMaximumIntensities();
+            System.out.printf("BENCH|   %d run features scanned, %d runs seen, global apex %.1f%n",
+                    featureCount, derived.getRuns().size(), derived.getGlobal().getApex());
         });
     }
 

@@ -77,6 +77,28 @@ public class FeatureFilterModelTest {
                 "multimeric adduct is not supported");
     }
 
+    @Test
+    public void testAbsoluteIntensityFilterAloneIsActive() {
+        FeatureFilterModel model = cleanSlate();
+        assertFalse(model.get().isActive(model.getContext()), "a minimum of zero, the default, filters nothing");
+
+        model.update(f -> f.withIntensity(f.intensity().withMinAbsolute(100_000)));
+        assertTrue(model.get().isActive(model.getContext()), "a minimum above zero alone must mark the model active");
+        assertEquals("intensity.apex:[100000 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
+    @Test
+    public void testRelativeIntensityFilterSearchesTheRelativeField() {
+        FeatureFilterModel model = cleanSlate();
+        model.update(f -> f.withIntensity(f.intensity().withMeasure(IntensityFilter.Measure.AUC)));
+        model.update(f -> f.withIntensity(f.intensity().withMode(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX)));
+        model.update(f -> f.withIntensity(f.intensity().withMinPercent(10)));
+
+        // the index holds the percentage as a field of its own, so the model needs nothing about the project
+        assertTrue(model.get().isActive(model.getContext()));
+        assertEquals("intensity.aucPercent:[10 TO *]", model.toLuceneQuery(ConfidenceDisplayMode.EXACT).orElseThrow());
+    }
+
     /**
      * The committed "restore defaults" (the search bar's in-field button) must land on the same state a
      * fresh model carries - MS/MS required, quality DECENT/GOOD, the supported detected adducts - and

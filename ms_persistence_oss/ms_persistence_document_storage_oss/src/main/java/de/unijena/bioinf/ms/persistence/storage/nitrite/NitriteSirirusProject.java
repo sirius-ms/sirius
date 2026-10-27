@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.persistence.storage.nitrite;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
@@ -51,7 +52,11 @@ import java.util.function.Function;
 
 @Slf4j
 public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteDatabase> {
-    private final ObjectMapper mapper = new ObjectMapper();
+    // Unknown fields are ignored, as with every other deserializer in the storage layer (Nitrite's own
+    // JacksonMapper does the same for typed repositories) - a project property is exactly the kind of
+    // persisted data a schema change or an older/newer SIRIUS release can shape differently.
+    private final ObjectMapper mapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     //this is just needed to update json serializers with fingerprint data if it arrives
     private final Metadata metadata;

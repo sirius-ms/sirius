@@ -51,4 +51,11 @@ public @interface SearchableFieldDoc {
      * not declared here at all - it is handed to the description by whoever owns the project state.
      */
     Class<? extends FieldVocabulary> possibleValues() default FieldVocabulary.None.class;
+
+    /**
+     * How many trailing segments of the field name a client needs to show for a short label to say what the
+     * field is - {@code intensity.apex} is ambiguous as just {@code apex}, beside a retention time apex. One,
+     * the last segment, is enough for most fields.
+     */
+    int significantSuffixLength() default 1;
 }

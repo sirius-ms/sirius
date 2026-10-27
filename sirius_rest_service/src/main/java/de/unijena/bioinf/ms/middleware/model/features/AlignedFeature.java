@@ -58,6 +58,7 @@ public class AlignedFeature implements Taggable {
     // topAnnotationsSummary are the indext summary field that can be retrieved very fast and are needed for quick gui loading.
     @Schema(name = "AlignedFeatureOptField", nullable = true)
     public enum OptField {none, msData, topAnnotationsSummary, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags,
+        intensities,
         //hidden from API via SwaggerConfig.java
         statistics}
 
@@ -76,7 +77,7 @@ public class AlignedFeature implements Taggable {
      */
     public static final EnumSet<OptField> INDEXED_OPT_FIELDS =  EnumSet.of(
             OptField.tags, OptField.computedTools, OptField.topAnnotationsSummary, OptField.qualities,
-            OptField.statistics);
+            OptField.intensities, OptField.statistics);
 
     // identifier
     /**
@@ -113,6 +114,17 @@ public class AlignedFeature implements Taggable {
      */
     @IndexField(sortable = true, defaultSearchField = true) // a bare number in a query is (also) an m/z
     protected Double ionMass;
+
+    /**
+     * MS1 intensity of the feature: peak height and area under the peak, in raw instrument counts and in percent
+     * of the strongest feature it is compared with. Searchable as {@code intensity.apex}, {@code intensity.auc},
+     * {@code intensity.apexPercent} and {@code intensity.aucPercent}.
+     * <p>
+     * Optional field: only filled when the opt field {@code intensities} is requested.
+     */
+    @IndexField
+    @Schema(nullable = true)
+    protected Intensity intensity;
 
     /**
      * Ion mode (charge) the feature has been measured in.

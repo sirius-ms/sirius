@@ -24,11 +24,13 @@ import de.unijena.bioinf.ms.gui.utils.filter.DbFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FilterContext;
+import de.unijena.bioinf.ms.gui.utils.filter.IntensityFilter;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import org.junit.jupiter.api.Test;
 
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
@@ -160,5 +162,60 @@ public class FilterWidgetBindingsTest {
         assertEquals(Boolean.TRUE, roundTrip(lipid, EMPTY.withLipidClassDetected(true)).lipidClassDetected());
         assertEquals(Boolean.FALSE, roundTrip(lipid, EMPTY.withLipidClassDetected(false)).lipidClassDetected());
         assertNull(roundTrip(lipid, EMPTY).lipidClassDetected());
+    }
+
+    private static FilterWidgetBindings.WidgetBinding intensity(JComboBox<IntensityFilter.Measure> measure,
+                                                                JComboBox<IntensityFilter.Mode> unit,
+                                                                JSpinner absolute, JSpinner percent) {
+        return FilterWidgetBindings.intensity(measure, unit, absolute, percent);
+    }
+
+    @Test
+    public void theIntensityWidgetsRoundTripBothUnitsAndTheMeasure() {
+        var measure = new JComboBox<>(IntensityFilter.Measure.values());
+        var unit = new JComboBox<>(IntensityFilter.Mode.values());
+        JSpinner absolute = spinner(0, 0, Double.POSITIVE_INFINITY), percent = spinner(0, 0, IntensityFilter.MAX_PERCENT);
+        var binding = intensity(measure, unit, absolute, percent);
+
+        IntensityFilter relativeArea = new IntensityFilter(IntensityFilter.Measure.AUC, IntensityFilter.Mode.RELATIVE_TO_RUN_MAX, 250_000, 12.5);
+        assertEquals(relativeArea, roundTrip(binding, EMPTY.withIntensity(relativeArea)).intensity(),
+                "the threshold of the unit not shown comes back too");
+        assertEquals(IntensityFilter.DEFAULT, roundTrip(binding, EMPTY).intensity());
+    }
+
+    /** Picking the other unit is an edit of the unit alone: neither threshold is lost or moved to the other. */
+    @Test
+    public void switchingTheUnitKeepsBothThresholds() {
+        var measure = new JComboBox<>(IntensityFilter.Measure.values());
+        var unit = new JComboBox<>(IntensityFilter.Mode.values());
+        JSpinner absolute = spinner(0, 0, Double.POSITIVE_INFINITY), percent = spinner(0, 0, IntensityFilter.MAX_PERCENT);
+        var binding = intensity(measure, unit, absolute, percent);
+        binding.seed().accept(EMPTY.withIntensity(IntensityFilter.DEFAULT.withMinAbsolute(1.0e6).withMinPercent(5)));
+
+        unit.setSelectedItem(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX);
+        IntensityFilter read = binding.read().apply(EMPTY).intensity();
+
+        assertEquals(IntensityFilter.Mode.RELATIVE_TO_RUN_MAX, read.mode());
+        assertEquals(5, read.min(), "the percentage now applies");
+        assertEquals(1.0e6, read.minAbsolute(), "and the intensity is still there for a switch back");
+    }
+
+    @Test
+    public void anIntensitySeedThatChangesNothingFiresNoEvent() {
+        var measure = new JComboBox<>(IntensityFilter.Measure.values());
+        var unit = new JComboBox<>(IntensityFilter.Mode.values());
+        JSpinner absolute = spinner(0, 0, Double.POSITIVE_INFINITY), percent = spinner(0, 0, IntensityFilter.MAX_PERCENT);
+        var binding = intensity(measure, unit, absolute, percent);
+        FeatureFilter target = EMPTY.withIntensity(IntensityFilter.DEFAULT.withMinAbsolute(1.0e5));
+        binding.seed().accept(target);
+
+        AtomicInteger events = new AtomicInteger();
+        absolute.addChangeListener(e -> events.incrementAndGet());
+        percent.addChangeListener(e -> events.incrementAndGet());
+        measure.addActionListener(e -> events.incrementAndGet());
+        unit.addActionListener(e -> events.incrementAndGet());
+        binding.seed().accept(target);
+
+        assertEquals(0, events.get(), "a seed that echoes the widgets' own state must not touch them");
     }
 }

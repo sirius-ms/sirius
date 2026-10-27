@@ -266,6 +266,27 @@ public final class FacetCodecs {
                         .filter(b -> !Double.isInfinite(b[0]) && Double.isInfinite(b[1])) // exactly [min TO *]
                         .map(b -> x -> x.withBlankFoldChangeEnabled(true).withMinBlankFoldChange(b[0]))));
 
+        codecs.add(new Codec("intensity",
+                // The unit is the field, not a suffix on the number: a threshold in percent of the run maximum is
+                // matched against the feature's own relative intensity, which the index holds as a field of its own.
+                (f, ctx, mode) -> !f.isIntensityFilterActive() ? Optional.empty() : Optional.of(new Facet("intensity",
+                        QueryClause.numeric(f.intensity().field(), NumberOp.RANGE_INCLUSIVE, number(f.intensity().min()), "", false), // [min TO *]
+                        x -> x.withIntensity(IntensityFilter.DEFAULT))),
+                (node, ctx) -> singleClause(node).flatMap(c -> {
+                    for (IntensityFilter.Measure measure : IntensityFilter.Measure.values())
+                        for (IntensityFilter.Mode unit : IntensityFilter.Mode.values()) {
+                            if (!c.field().equals(measure.getField(unit)))
+                                continue;
+                            // exactly [min TO *] with a minimum the filter can hold: above zero (zero is no
+                            // filter), and no more than a percentage can be
+                            return bounds(c, c.field(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY)
+                                    .filter(b -> !Double.isInfinite(b[0]) && Double.isInfinite(b[1]) && b[0] > 0)
+                                    .filter(b -> unit == IntensityFilter.Mode.ABSOLUTE || b[0] <= IntensityFilter.MAX_PERCENT)
+                                    .map(b -> x -> x.withIntensity(x.intensity().withMeasure(measure).withMode(unit).withMin(unit, b[0])));
+                        }
+                    return Optional.empty();
+                })));
+
         codecs.add(new Codec("lipid",
                 (f, ctx, mode) -> {
                     if (!f.isLipidFilterEnabled())

@@ -102,42 +102,28 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
             cleanupFoldChanges();
 
-            if (leftRuns.isEmpty() || rightRuns.isEmpty())
-                return;
+            // Whether the two groups can be compared at all. Even when they cannot (e.g. the right group has
+            // lost every run it had), FEATURES still has to settle every feature's index stats: cleanupFoldChanges
+            // just dropped this run's slot from the project, and the index has to lose it too, not keep the
+            // last value it saw.
+            boolean hasComparison = !leftRuns.isEmpty() && !rightRuns.isEmpty();
 
             switch (statsTarget) {
                 case FEATURES -> forEachBatch(project.project().getAllAlignedFeatures(), af -> {
-                    List<AlignedFeaturesFoldChangeJob> jobs =
-                            Partition.ofNumber(af, SiriusJobs.getGlobalJobManager().getCPUThreads() * 2)
-                                    .stream()
-                                    .map(afs -> new AlignedFeaturesFoldChangeJob(
-                                            project.project(),
-                                            jobSubmission.getLeftRunGroup(), leftRuns,
-                                            jobSubmission.getRightRunGroup(), rightRuns,
-                                            jobSubmission.getQuantificationMeasures(),
-                                            jobSubmission.getAggregationTypes(), afs))
-                                    .peek(jj -> jj.addJobProgressListener(progressSupport))
-                                    .peek(SiriusJobs.getGlobalJobManager()::submitJob)
-                                    .toList();
+                    Map<String, List<de.unijena.bioinf.ms.middleware.model.statistics.FoldChange>> foldChanges =
+                            hasComparison ? computeFeatureFoldChanges(af, leftRuns, rightRuns) : Map.of();
 
-                    @NotNull final Map<String, List<de.unijena.bioinf.ms.middleware.model.statistics.FoldChange>> foldChanges =
-                            jobs.stream()
-                                    .map(JJob::takeResult)
-                                    .flatMap(List::stream)
-                                    .map(NoSQLProjectImpl::convertToApiFoldChange)
-                                    .collect(Collectors.groupingBy(de.unijena.bioinf.ms.middleware.model.statistics.FoldChange::getObjectId));
-
-                    // Update the index. Belt and braces since the fold changes reach the index from the project
-                    // anyway: this job locks every instance in the project, so the background run that owns it
-                    // re-indexes all of them from the database once this returns, and that read carries the fold
-                    // changes. Kept because it is what makes the index right the moment the values exist rather
-                    // than at the end of the run, and because nothing here should depend on what a caller does
-                    // afterwards - but it is not the reason the blank filter finds anything.
+                    // Update the index: every feature this batch considered needs its stats re-settled, not
+                    // just the ones a fold change was found for - a feature that lost its only match (including
+                    // every feature, when the two groups cannot be compared at all) is absent from foldChanges,
+                    // and that absence is exactly what has to clear its stale entry. This is the sole place
+                    // stats reach the index; the generic post-computation reindex does not touch that field.
                     if (project.getSearchService() != null) {
-                        project.getSearchService().updateDocumentsFields(project.getProjectId(), foldChanges.keySet(), alf -> {
-                            List<FoldChange> nuFC = foldChanges.get(alf.getAlignedFeatureId());
-                            if (nuFC != null && !nuFC.isEmpty())
-                                alf.setStats(mergeStats(alf.getStats(), nuFC));
+                        Set<String> batchIds = af.stream().map(f -> String.valueOf(f.getAlignedFeatureId())).collect(Collectors.toSet());
+                        project.getSearchService().updateDocumentsFields(project.getProjectId(), batchIds, alf -> {
+                            List<Statistics> kept = alf.getStats() == null ? null :
+                                    alf.getStats().stream().filter(stat -> !ownsSlot(stat)).toList();
+                            alf.setStats(mergeStats(kept, foldChanges.getOrDefault(alf.getAlignedFeatureId(), List.of())));
                         }, AlignedFeature.class);
                     }
                 });
@@ -147,56 +133,62 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                  * TODO parallelize loops inside compute methods?
                  */
                 case NPC_CLASSES -> {
-                    List<de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures> allFeatures =
-                            project.project().getAllAlignedFeatures().toList();
-                    NpcFoldChangeJob job = new NpcFoldChangeJob(
-                            project.project(),
-                            jobSubmission.getLeftRunGroup(), leftRuns,
-                            jobSubmission.getRightRunGroup(), rightRuns,
-                            jobSubmission.getQuantificationMeasures(),
-                            jobSubmission.getAggregationTypes(),
-                            allFeatures, 0.5);
-                    job.addJobProgressListener(progressSupport);
-                    SiriusJobs.getGlobalJobManager().submitJob(job).takeResult();
+                    if (hasComparison) {
+                        List<de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures> allFeatures =
+                                project.project().getAllAlignedFeatures().toList();
+                        NpcFoldChangeJob job = new NpcFoldChangeJob(
+                                project.project(),
+                                jobSubmission.getLeftRunGroup(), leftRuns,
+                                jobSubmission.getRightRunGroup(), rightRuns,
+                                jobSubmission.getQuantificationMeasures(),
+                                jobSubmission.getAggregationTypes(),
+                                allFeatures, 0.5);
+                        job.addJobProgressListener(progressSupport);
+                        SiriusJobs.getGlobalJobManager().submitJob(job).takeResult();
+                    }
                 }
 
                 case CLASSYFIRE_CLASSES -> {
-                    List<de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures> allFeatures =
-                            project.project().getAllAlignedFeatures().toList();
-                    ClassyfireFoldChangeJob job = new ClassyfireFoldChangeJob(
-                            project.project(),
-                            jobSubmission.getLeftRunGroup(), leftRuns,
-                            jobSubmission.getRightRunGroup(), rightRuns,
-                            jobSubmission.getQuantificationMeasures(),
-                            jobSubmission.getAggregationTypes(),
-                            allFeatures, 0.5);
-                    job.addJobProgressListener(progressSupport);
-                    SiriusJobs.getGlobalJobManager().submitJob(job).takeResult();
+                    if (hasComparison) {
+                        List<de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures> allFeatures =
+                                project.project().getAllAlignedFeatures().toList();
+                        ClassyfireFoldChangeJob job = new ClassyfireFoldChangeJob(
+                                project.project(),
+                                jobSubmission.getLeftRunGroup(), leftRuns,
+                                jobSubmission.getRightRunGroup(), rightRuns,
+                                jobSubmission.getQuantificationMeasures(),
+                                jobSubmission.getAggregationTypes(),
+                                allFeatures, 0.5);
+                        job.addJobProgressListener(progressSupport);
+                        SiriusJobs.getGlobalJobManager().submitJob(job).takeResult();
+                    }
                 }
 
-                case COMPOUNDS -> forEachBatch(project.project().getAllCompounds(), af -> {
-                    List<CompoundsFoldChangeJob> jobs =
-                            Partition.ofNumber(af, SiriusJobs.getGlobalJobManager().getCPUThreads() * 2)
-                                    .stream()
-                                    .map(c -> new CompoundsFoldChangeJob(
-                                            project.project(),
-                                            jobSubmission.getLeftRunGroup(), leftRuns,
-                                            jobSubmission.getRightRunGroup(), rightRuns,
-                                            jobSubmission.getQuantificationMeasures(),
-                                            jobSubmission.getAggregationTypes(), c))
-                                    .peek(jj -> jj.addJobProgressListener(progressSupport))
-                                    .peek(SiriusJobs.getGlobalJobManager()::submitJob)
-                                    .toList();
+                case COMPOUNDS -> {
+                    if (hasComparison)
+                        forEachBatch(project.project().getAllCompounds(), af -> {
+                            List<CompoundsFoldChangeJob> jobs =
+                                    Partition.ofNumber(af, SiriusJobs.getGlobalJobManager().getCPUThreads() * 2)
+                                            .stream()
+                                            .map(c -> new CompoundsFoldChangeJob(
+                                                    project.project(),
+                                                    jobSubmission.getLeftRunGroup(), leftRuns,
+                                                    jobSubmission.getRightRunGroup(), rightRuns,
+                                                    jobSubmission.getQuantificationMeasures(),
+                                                    jobSubmission.getAggregationTypes(), c))
+                                            .peek(jj -> jj.addJobProgressListener(progressSupport))
+                                            .peek(SiriusJobs.getGlobalJobManager()::submitJob)
+                                            .toList();
 
-                    @NotNull Map<String, List<de.unijena.bioinf.ms.middleware.model.statistics.FoldChange>> foldChanges =
-                            jobs.stream()
-                                    .map(JJob::takeResult)
-                                    .flatMap(List::stream)
-                                    .map(NoSQLProjectImpl::convertToApiFoldChange)
-                                    .collect(Collectors.groupingBy(de.unijena.bioinf.ms.middleware.model.statistics.FoldChange::getObjectId));
+                            @NotNull Map<String, List<de.unijena.bioinf.ms.middleware.model.statistics.FoldChange>> foldChanges =
+                                    jobs.stream()
+                                            .map(JJob::takeResult)
+                                            .flatMap(List::stream)
+                                            .map(NoSQLProjectImpl::convertToApiFoldChange)
+                                            .collect(Collectors.groupingBy(de.unijena.bioinf.ms.middleware.model.statistics.FoldChange::getObjectId));
 
-                    //update index
-                    //todo add if compound index is implemented
+                            //update index
+                            //todo add if compound index is implemented
 //                    if (project.getSearchService() != null) {
 //                        project.getSearchService().updateDocumentsFields(project.getProjectId(), foldChanges.keySet(), c -> {
 //                            List<FoldChange> nuFC = foldChanges.get(c.getCompoundId());
@@ -209,11 +201,51 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 //                            }
 //                        }, Compound.class);
 //                    }
-                });
+                        });
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Computes the fold changes for one batch of aligned features, keyed by {@code objectId}. Only called
+     * when the two groups actually have runs to compare - with nothing to compare, there is nothing to submit.
+     */
+    private Map<String, List<de.unijena.bioinf.ms.middleware.model.statistics.FoldChange>> computeFeatureFoldChanges(
+            List<de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures> af, LongSet leftRuns, LongSet rightRuns) {
+        List<AlignedFeaturesFoldChangeJob> jobs =
+                Partition.ofNumber(af, SiriusJobs.getGlobalJobManager().getCPUThreads() * 2)
+                        .stream()
+                        .map(afs -> new AlignedFeaturesFoldChangeJob(
+                                project.project(),
+                                jobSubmission.getLeftRunGroup(), leftRuns,
+                                jobSubmission.getRightRunGroup(), rightRuns,
+                                jobSubmission.getQuantificationMeasures(),
+                                jobSubmission.getAggregationTypes(), afs))
+                        .peek(jj -> jj.addJobProgressListener(progressSupport))
+                        .peek(SiriusJobs.getGlobalJobManager()::submitJob)
+                        .toList();
+
+        return jobs.stream()
+                .map(JJob::takeResult)
+                .flatMap(List::stream)
+                .map(NoSQLProjectImpl::convertToApiFoldChange)
+                .collect(Collectors.groupingBy(de.unijena.bioinf.ms.middleware.model.statistics.FoldChange::getObjectId));
+    }
+
+    /**
+     * Whether {@code stat} occupies one of the slots this run owns: its own (leftGroup, rightGroup) pair
+     * crossed with every aggregation/quantification it was submitted for - exactly what
+     * {@link #cleanupFoldChanges()} just dropped from the project. A feature with nothing recomputed for
+     * such a slot must lose the stale entry too, not just the slots a recompute actually replaces.
+     */
+    private boolean ownsSlot(@NotNull Statistics stat) {
+        return Objects.equals(stat.getLeftGroup(), jobSubmission.getLeftRunGroup())
+                && Objects.equals(stat.getRightGroup(), jobSubmission.getRightRunGroup())
+                && jobSubmission.getAggregationTypes().contains(stat.getAggregation())
+                && jobSubmission.getQuantificationMeasures().contains(stat.getQuantification());
     }
 
     /**

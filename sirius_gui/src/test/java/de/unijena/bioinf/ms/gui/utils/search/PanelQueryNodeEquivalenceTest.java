@@ -77,7 +77,9 @@ public class PanelQueryNodeEquivalenceTest {
         for (String f : List.of(FeatureFilterModel.FIELD_MZ, FeatureFilterModel.FIELD_RT_START,
                 FeatureFilterModel.FIELD_RT_APEX, FeatureFilterModel.FIELD_RT_END,
                 FeatureFilterModel.FIELD_CONFIDENCE_APPROX, FeatureFilterModel.FIELD_CONFIDENCE_EXACT,
-                FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME))
+                FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME, FeatureFilterModel.FIELD_INTENSITY_APEX,
+                FeatureFilterModel.FIELD_INTENSITY_AUC, FeatureFilterModel.FIELD_INTENSITY_APEX_RELATIVE,
+                FeatureFilterModel.FIELD_INTENSITY_AUC_RELATIVE))
             map.put(f, dbl);
         PointsConfig integer = new PointsConfig(plainFormat(), Integer.class);
         for (String f : intFields)
@@ -230,6 +232,13 @@ public class PanelQueryNodeEquivalenceTest {
     public void testBlankFoldChange() {
         FeatureFilterModel model = cleanSlate();
         model.update(f -> f.withBlankFoldChangeEnabled(true));
+        assertEquivalent(model, ConfidenceDisplayMode.EXACT);
+    }
+
+    @Test
+    public void testIntensity() {
+        FeatureFilterModel model = cleanSlate();
+        model.update(f -> f.withIntensity(f.intensity().withMinAbsolute(100_000)));
         assertEquivalent(model, ConfidenceDisplayMode.EXACT);
     }
 

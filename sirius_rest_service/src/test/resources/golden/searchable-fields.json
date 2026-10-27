@@ -45,6 +45,42 @@
     "possibleValues" : null,
     "description" : "Mass-to-charge ratio (m/z) of the precursor ion of the feature. A bare number in the query (no field) also matches this field within a window around it: half a unit of the number's last decimal, at least 10 ppm - so 301.14 finds [301.135 TO 301.145], 301 finds [300.5 TO 301.5]."
   }, {
+    "name" : "intensity.apex",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "Peak height: the highest apex intensity over the runs the feature was detected in, or the precursor peak height for data without an LC-MS trace. In raw instrument counts."
+  }, {
+    "name" : "intensity.auc",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "Area under the chromatographic peak: the highest over the runs the feature was detected in. In raw instrument counts. Null for data without an LC-MS trace."
+  }, {
+    "name" : "intensity.apexPercent",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "Peak height in percent of the highest peak height its run has held, the best over its runs: intensity.apexPercent:[10 TO *] keeps the features that reach 10 % of that in at least one run. A feature without a run is compared with the highest peak height the project has held."
+  }, {
+    "name" : "intensity.aucPercent",
+    "fieldType" : "DOUBLE",
+    "fullTextSearch" : false,
+    "sortable" : true,
+    "defaultSearchField" : false,
+    "significantSuffixLength" : 2,
+    "possibleValues" : null,
+    "description" : "Area under the peak in percent of the highest area its run has held, the best over its runs. Null for data without an LC-MS trace."
+  }, {
     "name" : "charge",
     "fieldType" : "INTEGER",
     "fullTextSearch" : false,

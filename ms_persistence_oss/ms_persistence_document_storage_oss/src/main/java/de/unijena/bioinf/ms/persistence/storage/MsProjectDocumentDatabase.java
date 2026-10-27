@@ -84,7 +84,9 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(MSData.class)
 
                 .addRepository(Feature.class,
-                        Index.nonUnique("alignedFeatureId")
+                        Index.nonUnique("alignedFeatureId"),
+                        // the features of one run, which a run whose maximum rose has to have re-indexed
+                        Index.nonUnique("runId")
                 )
 
                 .addRepository(AlignedFeatures.class
@@ -250,6 +252,14 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
         }
 
         getStorage().insertAll(features);
+        featuresWritten(features);
+    }
+
+    /**
+     * Called with every batch of {@code Feature} rows once they are stored - the one place all of them pass
+     * through, whatever writes them. A project keeps what it derives from them current here.
+     */
+    default void featuresWritten(@NotNull List<Feature> features) throws IOException {
     }
 
     private <T> void importOptionals(Optional<List<T>> optionals, long parentId, IOFunctions.BiIOConsumer<List<T>, Long> importer) throws IOException {

@@ -31,6 +31,7 @@ import de.unijena.bioinf.chemdb.nitrite.serializers.NitriteCompoundSerializers;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
@@ -161,6 +162,30 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return upsertJsonProjectProperty("projectSourceFormats", projectSourceFormats);
     }
 
+    /** Project property holding the {@link ProjectMaximumIntensities}; absent until they have been derived. */
+    String PROJECT_MAXIMUM_INTENSITIES_KEY = "projectMaximumIntensities";
+
+    /**
+     * The maxima as stored, without deriving them: empty for a project whose maxima have not been derived yet.
+     * Use {@link #getMaximumIntensities()} to read them as the project holds them.
+     */
+    default Optional<ProjectMaximumIntensities> findProjectMaximumIntensities() {
+        return findJsonProjectProperty(PROJECT_MAXIMUM_INTENSITIES_KEY, ProjectMaximumIntensities.class);
+    }
+
+    default Optional<ProjectMaximumIntensities> upsertProjectMaximumIntensities(@NotNull ProjectMaximumIntensities maxima) {
+        return upsertJsonProjectProperty(PROJECT_MAXIMUM_INTENSITIES_KEY, maxima);
+    }
+
+    /**
+     * The project's maximum intensities, derived from every feature and stored the first time they are asked
+     * for in a project that has none yet - a read of the whole {@code Feature} collection, once per project.
+     * From then on every feature written is folded in as it is written.
+     * <p>
+     * The value returned is shared: read it, never fold into it - {@link ProjectMaximumIntensities#copy()} for that.
+     */
+    @NotNull ProjectMaximumIntensities getMaximumIntensities();
+
     /**
      * Project property tracking the SIRIUS project-data schema version this project's data conforms to.
      * Says nothing about how the storage underneath lays that data out - see
@@ -176,7 +201,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
      * {@code ProjectSchemaMigrator} to produce it in the same change - the two are asserted to agree, because a
      * conversion left behind would quietly hand back projects a version older than newly created ones.
      */
-    int CURRENT_PROJECT_SCHEMA_VERSION = 3;
+    int CURRENT_PROJECT_SCHEMA_VERSION = 4;
 
     default Optional<Integer> findProjectSchemaVersion() {
         return findProjectPropertyAsInt(PROJECT_SCHEMA_VERSION_KEY);

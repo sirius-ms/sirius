@@ -231,9 +231,10 @@ public class InstanceBean implements SiriusPCS {
     // Opt-fields preloaded for every bean in the compound list. This MUST cover everything the compound-list
     // sort comparators and cell renderer read, or those accessors fall through to a lazy getSourceFeature(...)
     // reload - a synchronous per-bean backend call on the EDT (the landmine class fixed elsewhere). In
-    // particular TOP_ANNOTATIONS_SUMMARY backs the confidence sort/column; COMPUTED_TOOLS backs isComputing().
+    // particular TOP_ANNOTATIONS_SUMMARY backs the confidence sort/column; COMPUTED_TOOLS backs isComputing();
+    // INTENSITIES backs the sorts by peak height and by peak area.
     // If you trim this list to save bandwidth, move the affected sort/render off the feature snapshot first.
-    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(COMPUTED_TOOLS, TOP_ANNOTATIONS_SUMMARY);
+    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(COMPUTED_TOOLS, TOP_ANNOTATIONS_SUMMARY, INTENSITIES);
 
     private final Set<AlignedFeatureOptField> optsLoaded;
 
@@ -337,6 +338,18 @@ public class InstanceBean implements SiriusPCS {
 
     public double getIonMass() {
         return getSourceFeature().getIonMass();
+    }
+
+    /** The MS1 peak height: the highest raw apex intensity over the runs the feature was detected in; null if unknown. */
+    public @Nullable Double getIntensityApex() {
+        Intensity intensity = getSourceFeature(INTENSITIES).getIntensity();
+        return intensity == null ? null : intensity.getApex();
+    }
+
+    /** The MS1 peak area: the highest raw area under the curve over the runs the feature was detected in; null if unknown. */
+    public @Nullable Double getIntensityAUC() {
+        Intensity intensity = getSourceFeature(INTENSITIES).getIntensity();
+        return intensity == null ? null : intensity.getAuc();
     }
 
 

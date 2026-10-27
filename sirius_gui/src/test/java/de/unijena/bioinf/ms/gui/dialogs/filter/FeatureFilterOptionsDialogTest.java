@@ -33,6 +33,7 @@ public class FeatureFilterOptionsDialogTest {
         assertEquals("Input", FeatureFilterOptionsDialog.tabTitleForFacet("mz"));
         assertEquals("Input", FeatureFilterOptionsDialog.tabTitleForFacet("rt"));
         assertEquals("Input", FeatureFilterOptionsDialog.tabTitleForFacet("adducts"));
+        assertEquals("Input", FeatureFilterOptionsDialog.tabTitleForFacet("intensity"));
         assertEquals("Fold Change", FeatureFilterOptionsDialog.tabTitleForFacet("blank"));
         assertEquals("Data Quality", FeatureFilterOptionsDialog.tabTitleForFacet("hasMs1"));
         assertEquals("Data Quality", FeatureFilterOptionsDialog.tabTitleForFacet("hasMsMs"));

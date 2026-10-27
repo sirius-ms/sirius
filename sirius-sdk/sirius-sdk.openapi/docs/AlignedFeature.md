@@ -13,6 +13,7 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 |**name** | **String** | Informative, human-readable name of the feature. |  [optional] |
 |**externalFeatureId** | **String** | Externally provided FeatureId (e.g. by some preprocessing tool).  This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source. |  [optional] |
 |**ionMass** | **Double** | Mass-to-charge ratio (m/z) of the precursor ion of the feature. |  [optional] |
+|**intensity** | [**Intensity**](Intensity.md) |  |  [optional] |
 |**charge** | **Integer** | Ion mode (charge) the feature has been measured in. |  |
 |**detectedAdducts** | **Set&lt;String&gt;** | Adducts that have been detected for the feature during preprocessing.  Never empty: if no adduct could be detected, the unknown ion type matching the feature&#39;s  charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct. |  |
 |**rtStartSeconds** | **Double** | Start of the retention time range the feature was detected in, in seconds. |  [optional] |
