@@ -103,9 +103,9 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(AdductNetwork.class)
 
                 .addRepository(CorrelatedIonPair.class
-//                        ,Index.nonUnique("alignedFeatureId1") //add if used needed
-//                        ,Index.nonUnique("alignedFeatureId2") //add if used needed
-//                        ,Index.nonUnique("compoundId") //add if needed
+                        ,Index.nonUnique("alignedFeatureId1")
+                        ,Index.nonUnique("alignedFeatureId2")
+                        ,Index.nonUnique("compoundId")
 //                        ,Index.nonUnique("type")
                 )
 

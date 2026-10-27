@@ -28,20 +28,20 @@ jobs:
       SIRIUS_USER: ${{ secrets.SIRIUS_USER }}
       SIRIUS_PW: ${{ secrets.SIRIUS_PW }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
         with:
           lfs: true
       - name: Git LFS Pull
         run: git lfs pull
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: '25' # The JDK version to make available on the path.
           java-package: 'jdk' # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: 'x64' # (x64 or x86N) - defaults to x64
       - name: Load Build properties
-        uses: Reedyuk/read-properties@v1.0.1
+        uses: Reedyuk/read-properties@v1.0.4
         id: sirius_version
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
@@ -49,7 +49,7 @@ jobs:
 
       - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_APP_IDENTITY_ID != '') }}
         name: Import Apple APP Code-signing ID and p12
-        uses: apple-actions/import-codesign-certs@v1
+        uses: apple-actions/import-codesign-certs@v7
         with:
           keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
           p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
@@ -57,7 +57,7 @@ jobs:
 
       - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_IDENTITY_ID != '') }}
         name: Import Apple Installer Code-signing ID and p12
-        uses: apple-actions/import-codesign-certs@v1
+        uses: apple-actions/import-codesign-certs@v7
         with:
           create-keychain: false
           keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
@@ -84,13 +84,13 @@ jobs:
 
       - if: matrix.os == 'windows-latest'
         name: Azure Trusted Signing for Widows MSI
-        uses: azure/trusted-signing-action@v0.3.16
+        uses: Azure/artifact-signing-action@v2
         with:
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
           azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           endpoint: ${{ secrets.AZURE_ENDPOINT }}
-          code-signing-account-name: ${{ secrets.AZURE_CODE_SIGNING_NAME }}
+          signing-account-name: ${{ secrets.AZURE_CODE_SIGNING_NAME }}
           certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
 
           # Sign all exes inside the folder
@@ -101,7 +101,7 @@ jobs:
           description: 'SIRIUS Installer'
 
       - name: Upload Distributions
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           retention-days: 3
           name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ matrix.os }}-${{ matrix.targetArchitecture }}"
@@ -122,20 +122,20 @@ jobs:
 #    needs: [ distCLI, distGUI]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
         with:
           lfs: true
       - name: Git LFS Pull
         run: git lfs pull
       - name: Inject slug/short variables
-        uses: rlespinasse/github-slug-action@v3.x
+        uses: rlespinasse/github-slug-action@v5
       - name: Load Build properties
-        uses: Reedyuk/read-properties@v1.0.1
+        uses: Reedyuk/read-properties@v1.0.4
         id: sirius_version
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v8
         with:
           path: sirius_dist/build/tmp/artifacts/
       - name: Display downloaded artifact files
