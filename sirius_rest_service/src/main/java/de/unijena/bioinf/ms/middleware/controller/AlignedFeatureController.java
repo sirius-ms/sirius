@@ -118,7 +118,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * by a field name.
      * </p>
      *
-     * Searchable fields are the indexed properties of the feature (e.g. {@code ionMass}, {@code name},
+     * Searchable fields are the indexed properties of the feature (e.g. {@code ionMass}, {@code intensityApex}, {@code name},
      * {@code quality}, {@code hasMsMs}), its annotations addressed via dot notation
      * (e.g. {@code topAnnotations.structureAnnotation.structureName}), and project tags prefixed with the
      * namespace {@code tags.} (e.g. {@code tags.MyTag}).

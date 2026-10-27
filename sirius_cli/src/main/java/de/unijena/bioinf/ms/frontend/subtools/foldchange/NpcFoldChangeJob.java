@@ -52,6 +52,8 @@ public class NpcFoldChangeJob extends FoldChangeSubToolJJob<FoldChange.NpcFoldCh
                 project.fetchFeatures(af);
                 if (af.getFeatures().isPresent()) {
                     for (Feature f : af.getFeatures().get()) {
+                        if (f.getRunId() == null)
+                            continue; // a feature that belongs to no run belongs to neither side
                         if (leftRuns.contains((long) f.getRunId()))
                             leftFeatures.computeIfAbsent(f.getRunId(), k -> new ArrayList<>()).add(f);
                         else if (rightRuns.contains((long) f.getRunId()))

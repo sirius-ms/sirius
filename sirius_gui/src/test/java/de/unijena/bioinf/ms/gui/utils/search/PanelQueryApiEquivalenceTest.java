@@ -86,6 +86,9 @@ public class PanelQueryApiEquivalenceTest {
                 new State("default-quality", m -> { /* fresh model keeps the default feature-quality filter */ }),
                 new State("elements", m -> m.update(f -> f.withElementFilter(new ElementFilter("CHNOPS")))),
                 new State("blank", m -> m.update(f -> f.withBlankFoldChangeEnabled(true))),
+                new State("intensity", m -> m.update(f -> f.withIntensity(f.intensity().withMinAbsolute(100_000)))),
+                new State("intensity-relative", m -> m.update(f -> f.withIntensity(f.intensity()
+                        .withMode(de.unijena.bioinf.ms.gui.utils.filter.IntensityFilter.Mode.RELATIVE_TO_RUN_MAX).withMinPercent(10)))),
                 new State("lipid-any", m -> m.update(f -> f.withLipidClassDetected(true))),
                 new State("lipid-no", m -> m.update(f -> f.withLipidClassDetected(false))),
                 new State("pfas-tagged", m -> m.update(f -> f.withPfasDetected(true))),

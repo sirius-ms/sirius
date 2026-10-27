@@ -324,7 +324,7 @@ public class WorkflowBuilder {
             //find dependent jobs
             assignEarliestInputProvider(toolchain, toolchainOptions);
 
-            final ToolChainWorkflow wf = new ToolChainWorkflow(preproJob, postproJob, configOptionLoader.config, toolchain, bufferFactory);
+            final ToolChainWorkflow wf = new ToolChainWorkflow(preproJob, postproJob, configOptionLoader.config, toolchain, toolchainOptions, bufferFactory);
             return returnResultOrExit(wf);
         }
 

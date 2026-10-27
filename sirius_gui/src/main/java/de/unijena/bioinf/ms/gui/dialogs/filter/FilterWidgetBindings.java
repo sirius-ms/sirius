@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.utils.SegmentedFilterToggle;
 import de.unijena.bioinf.ms.gui.utils.filter.DbFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilter;
+import de.unijena.bioinf.ms.gui.utils.filter.IntensityFilter;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import io.sirius.ms.sdk.model.DataQuality;
 import io.sirius.ms.sdk.model.SearchableDatabase;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JSpinner;
 import javax.swing.text.JTextComponent;
 import java.util.HashSet;
@@ -188,6 +190,30 @@ final class FilterWidgetBindings {
                     setIfDiffers(min, f.minBlankFoldChange());
                 },
                 f -> f.withBlankFoldChangeEnabled(enabled.isSelected()).withMinBlankFoldChange(value(min)));
+    }
+
+    /**
+     * The intensity threshold over the intensity facet: one spinner per unit, each with that unit's range - a
+     * percentage cannot be more than {@link IntensityFilter#MAX_PERCENT} - and the unit and measure drop-downs.
+     * Which spinner is visible follows the unit drop-down; the threshold of the unit not shown stays what the
+     * filter holds, so switching back and forth loses neither.
+     */
+    static WidgetBinding intensity(@NotNull JComboBox<IntensityFilter.Measure> measure, @NotNull JComboBox<IntensityFilter.Mode> unit,
+                                   @NotNull JSpinner absolute, @NotNull JSpinner percent) {
+        return new WidgetBinding("intensity",
+                f -> {
+                    IntensityFilter target = f.intensity();
+                    if (measure.getSelectedItem() != target.measure())
+                        measure.setSelectedItem(target.measure());
+                    if (unit.getSelectedItem() != target.mode())
+                        unit.setSelectedItem(target.mode());
+                    setIfDiffers(absolute, target.minAbsolute());
+                    setIfDiffers(percent, Math.min(target.minPercent(), IntensityFilter.MAX_PERCENT));
+                },
+                f -> f.withIntensity(new IntensityFilter(
+                        (IntensityFilter.Measure) Objects.requireNonNull(measure.getSelectedItem()),
+                        (IntensityFilter.Mode) Objects.requireNonNull(unit.getSelectedItem()),
+                        value(absolute), value(percent))));
     }
 
     /** A yes / no / any toggle over a nullable-boolean facet (lipid, PFAS). */

@@ -11450,7 +11450,7 @@
           "Features"
         ],
         "summary": "Get features (aligned over runs) in the given project-space",
-        "description": "Get features (aligned over runs) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefixed\n by a field name.\n \u003c/p\u003e\n\n Searchable fields are the indexed properties of the feature (e.g. \u003ccode\u003eionMass\u003c/code\u003e, \u003ccode\u003ename\u003c/code\u003e,\n \u003ccode\u003equality\u003c/code\u003e, \u003ccode\u003ehasMsMs\u003c/code\u003e), its annotations addressed via dot notation\n (e.g. \u003ccode\u003etopAnnotations.structureAnnotation.structureName\u003c/code\u003e), and project tags prefixed with the\n namespace \u003ccode\u003etags.\u003c/code\u003e (e.g. \u003ccode\u003etags.MyTag\u003c/code\u003e).\n Use the \u003ccode\u003esearchable-fields\u003c/code\u003e endpoint (getAlignedFeaturesSearchableFields) to list all fields that\n can be searched, including their value type, whether they support word based (full text) search, and\n whether results can be sorted by them.\n Possible value types are \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003edouble\u003c/strong\u003e,\n \u003cstrong\u003eboolean\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e.\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003ename:\u0026quot;Bicuculline methiodide\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003eionMass\u0026lt;300\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003eionMass:[300 TO 400]\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eboolean\u003c/strong\u003e: boolean fields are matched as follows: e.g. \u003ccode\u003ehasMsMs:true\u003c/code\u003e, \u003ccode\u003etags.MyTagA:false\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003evalue-less\u003c/strong\u003e: tags without values (See TagDefinition) are matched as follows: e.g. \u003ccode\u003etags.MyTagA:*\u003c/code\u003e or \u003ccode\u003etags.MyTagA:true\u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003eionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:\u0026quot;Alkaloids\u0026quot; AND tags.city:\u0026quot;new york\u0026quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
+        "description": "Get features (aligned over runs) in the given project-space.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefixed\n by a field name.\n \u003c/p\u003e\n\n Searchable fields are the indexed properties of the feature (e.g. \u003ccode\u003eionMass\u003c/code\u003e, \u003ccode\u003eintensityApex\u003c/code\u003e, \u003ccode\u003ename\u003c/code\u003e,\n \u003ccode\u003equality\u003c/code\u003e, \u003ccode\u003ehasMsMs\u003c/code\u003e), its annotations addressed via dot notation\n (e.g. \u003ccode\u003etopAnnotations.structureAnnotation.structureName\u003c/code\u003e), and project tags prefixed with the\n namespace \u003ccode\u003etags.\u003c/code\u003e (e.g. \u003ccode\u003etags.MyTag\u003c/code\u003e).\n Use the \u003ccode\u003esearchable-fields\u003c/code\u003e endpoint (getAlignedFeaturesSearchableFields) to list all fields that\n can be searched, including their value type, whether they support word based (full text) search, and\n whether results can be sorted by them.\n Possible value types are \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003edouble\u003c/strong\u003e,\n \u003cstrong\u003eboolean\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e.\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003ename:\u0026quot;Bicuculline methiodide\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003eionMass\u0026lt;300\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003eionMass:[300 TO 400]\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eboolean\u003c/strong\u003e: boolean fields are matched as follows: e.g. \u003ccode\u003ehasMsMs:true\u003c/code\u003e, \u003ccode\u003etags.MyTagA:false\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003evalue-less\u003c/strong\u003e: tags without values (See TagDefinition) are matched as follows: e.g. \u003ccode\u003etags.MyTagA:*\u003c/code\u003e or \u003ccode\u003etags.MyTagA:true\u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003eionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:\u0026quot;Alkaloids\u0026quot; AND tags.city:\u0026quot;new york\u0026quot; OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
         "operationId": "getAlignedFeaturesPage",
         "parameters": [
           {
@@ -14924,7 +14924,8 @@
           "topAnnotationsDeNovo",
           "computedTools",
           "qualities",
-          "tags"
+          "tags",
+          "intensities"
         ]
       },
       "AlignedFeature": {
@@ -14954,6 +14955,9 @@
             "type": "number",
             "description": "Mass-to-charge ratio (m/z) of the precursor ion of the feature.",
             "format": "double"
+          },
+          "intensity": {
+            "$ref": "#/components/schemas/Intensity"
           },
           "charge": {
             "type": "integer",
@@ -15652,6 +15656,37 @@
           }
         },
         "description": "Simple and easy serializable fragmentation tree model with annotated fragments/nodes and losses/edges\n Root fragment has index 0;\n Molecular formula and adduct are identical to the ones of the corresponding molecular formula candidate and SpectrumAnnotation",
+        "nullable": true
+      },
+      "Intensity": {
+        "type": "object",
+        "properties": {
+          "apex": {
+            "type": "number",
+            "description": "Peak height: the highest apex intensity over the runs the feature was detected in, or the precursor peak\n height for data without an LC-MS trace. In raw instrument counts.",
+            "format": "double",
+            "nullable": true
+          },
+          "auc": {
+            "type": "number",
+            "description": "Area under the chromatographic peak: the highest over the runs the feature was detected in. In raw\n instrument counts. Null for data without an LC-MS trace.",
+            "format": "double",
+            "nullable": true
+          },
+          "apexPercent": {
+            "type": "number",
+            "description": "Peak height in percent of the highest peak height its run has held, the best over its runs:\n \u003ccode\u003eintensity.apexPercent:[10 TO *]\u003c/code\u003e keeps the features that reach 10 % of that in at least one run.\n A feature without a run is compared with the highest peak height the project has held.",
+            "format": "double",
+            "nullable": true
+          },
+          "aucPercent": {
+            "type": "number",
+            "description": "Area under the peak in percent of the highest area its run has held, the best over its runs.\n Null for data without an LC-MS trace.",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "description": "The MS1 intensity of a feature (aligned over runs), as peak height and as area under the chromatographic\n peak, each in raw instrument counts and in percent of the strongest feature it is compared with.\n \u003cp\u003e\n The values in counts are the highest over the runs the feature was detected in, as in the quantification\n table. Data imported without an LC-MS trace (peak lists, features imported through the API) has the height\n of the precursor peak in its MS1 spectrum and no area.\n \u003cp\u003e\n The percentages compare the feature with the strongest feature its run has held - or, for a feature without\n a run, with the strongest feature the project has held - and take the best run. The reference only ever\n rises: after the strongest feature of a run is deleted, the remaining ones keep the percentage they had, so\n none of them reaches 100.\n \u003cp\u003e\n Each value is null when it is unknown.",
         "nullable": true
       },
       "IsotopePatternAnnotation": {

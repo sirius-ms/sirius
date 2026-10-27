@@ -68,6 +68,7 @@ docs/ImportResult.md
 docs/Info.md
 docs/InfoApi.md
 docs/InstrumentProfile.md
+docs/Intensity.md
 docs/IsotopeMs2Strategy.md
 docs/IsotopePatternAnnotation.md
 docs/Job.md
@@ -261,6 +262,7 @@ src/main/java/io/sirius/ms/sdk/model/GuiInfo.java
 src/main/java/io/sirius/ms/sdk/model/ImportResult.java
 src/main/java/io/sirius/ms/sdk/model/Info.java
 src/main/java/io/sirius/ms/sdk/model/InstrumentProfile.java
+src/main/java/io/sirius/ms/sdk/model/Intensity.java
 src/main/java/io/sirius/ms/sdk/model/IsotopeMs2Strategy.java
 src/main/java/io/sirius/ms/sdk/model/IsotopePatternAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/Job.java

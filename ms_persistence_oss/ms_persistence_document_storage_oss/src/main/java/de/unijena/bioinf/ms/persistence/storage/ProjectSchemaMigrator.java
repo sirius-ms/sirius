@@ -22,6 +22,8 @@ package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.elgordo.LipidSpecies;
@@ -31,6 +33,7 @@ import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
@@ -38,6 +41,7 @@ import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureMatch;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.FTreeResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -50,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,7 +90,7 @@ public class ProjectSchemaMigrator {
      * same number while someone keeps them so. Taking the schema's number would make a forgotten conversion
      * invisible - every project would claim to be current whether or not anything had filled it in.
      */
-    public static final int MIGRATES_TO_SCHEMA_VERSION = 3;
+    public static final int MIGRATES_TO_SCHEMA_VERSION = 4;
 
     /** How many records gather before they are written, which is what bounds what a conversion holds. */
     private static final int BUFFER = 10_000;
@@ -271,6 +276,10 @@ public class ProjectSchemaMigrator {
         // project with none needs no repair, and the pass over an empty collection is free.
         if (recorded < 3)
             needed.add(ConversionJob.Pass.BLANK_REMOVAL_REPAIR);
+        // Version 4 gives features imported without an LC-MS trace their MS1 intensity. Nothing cheaper to probe
+        // for: an LC-MS feature has carried one all along, so a mixed project would always answer "present".
+        if (recorded < 4)
+            needed.add(ConversionJob.Pass.FEATURE_INTENSITIES);
         // There is no legitimate reason for a feature to carry a null compoundId, or for a project to hold
         // more compounds than features - every real compound has at least one, so either means this project
         // carries the LC/MS-align bug's zombies. Checked every open, not gated by version: a version bump
@@ -312,7 +321,12 @@ public class ProjectSchemaMigrator {
              * that leaves: compounds every feature the bug left unlinked, each into a fresh singleton exactly
              * as a current import would.
              */
-            COMPOUND_LINKING
+            COMPOUND_LINKING,
+            /**
+             * Over the feature keys: the MS1 intensity of features imported without an LC-MS trace - from a peak
+             * list or through the API - which an import before version 4 did not record.
+             */
+            FEATURE_INTENSITIES
         }
 
         /** How many workers a pass uses. Overridable so a benchmark can ask what the right number is. */
@@ -356,6 +370,18 @@ public class ProjectSchemaMigrator {
         private final AtomicInteger compoundsLinked = new AtomicInteger();
         @Getter
         private final AtomicInteger orphanedCompoundsDeleted = new AtomicInteger();
+        @Getter
+        private final AtomicInteger intensitiesFilled = new AtomicInteger();
+
+        /**
+         * The run features whose intensity the backfill wrote, so the project can fold them into its maxima once
+         * the pass is done. A feature the backfill creates is folded in as it is imported.
+         */
+        private final Queue<Feature> intensityFeaturesUpdated = new ConcurrentLinkedQueue<>();
+
+        /** The window around the precursor mass its MS1 peak is looked for in - the default an import uses. */
+        private static final Deviation PRECURSOR_PEAK_DEVIATION =
+                PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class).allowedMassDeviation;
 
         /**
          * Progress is one count over the whole conversion - a unit of work is one primary key handled, and the
@@ -395,6 +421,8 @@ public class ProjectSchemaMigrator {
             }
             if (passes.contains(Pass.FORMULA_CANDIDATES))
                 work += storage.countAll(FormulaCandidate.class);
+            if (passes.contains(Pass.FEATURE_INTENSITIES))
+                work += storage.countAll(AlignedFeatures.class);
             // The blank removal repair is not counted: it does not walk keys one at a time, it reads the fold
             // changes once and deletes in one go, so it has no per-key progress to contribute.
             if (passes.contains(Pass.COMPOUND_LINKING)) {
@@ -467,6 +495,17 @@ public class ProjectSchemaMigrator {
                 dropBlankRemovalFoldChanges();
             }
 
+            if (passes.contains(Pass.FEATURE_INTENSITIES)) {
+                // Nothing has its indices dropped: the pass looks run features up by their aligned feature.
+                overPrimaryKeysOf(AlignedFeatures.class, "Recording feature intensities...", List.of(),
+                        this::backfillIntensity);
+                // The run features were written through the buffer, past the import that folds them into the
+                // project's maxima - so fold them here, once, rather than per feature.
+                if (!intensityFeaturesUpdated.isEmpty())
+                    project.featuresWritten(new ArrayList<>(intensityFeaturesUpdated));
+                intensityFeaturesUpdated.clear();
+            }
+
             if (passes.contains(Pass.COMPOUND_LINKING)) {
                 // Orphans removed before anything is linked, not after: linking a feature never reuses an
                 // existing compound, only ever inserts a fresh one, so nothing this pass is about to link
@@ -488,10 +527,10 @@ public class ProjectSchemaMigrator {
 
             log.info("Converted project '{}' to schema version {} in {} ms ({} features, {} structure-search "
                             + "results, {} formula candidates, {} blank removal fold changes dropped for "
-                            + "recomputation, {} compounds linked, {} orphaned compounds removed).",
+                            + "recomputation, {} feature intensities recorded, {} compounds linked, {} orphaned compounds removed).",
                     storage.location(), MIGRATES_TO_SCHEMA_VERSION, millisSince(start), featuresFilled.get(),
                     structureResultsFilled.get(), formulaCandidatesFilled.get(),
-                    blankRemovalFoldChangesDropped.get(), compoundsLinked.get(), orphanedCompoundsDeleted.get());
+                    blankRemovalFoldChangesDropped.get(), intensitiesFilled.get(), compoundsLinked.get(), orphanedCompoundsDeleted.get());
             return rewroteAnything();
         }
 
@@ -506,6 +545,7 @@ public class ProjectSchemaMigrator {
         boolean rewroteAnything() {
             return featuresFilled.get() > 0 || structureResultsFilled.get() > 0
                     || formulaCandidatesFilled.get() > 0 || blankRemovalFoldChangesDropped.get() > 0
+                    || intensitiesFilled.get() > 0
                     || compoundsLinked.get() > 0 || orphanedCompoundsDeleted.get() > 0;
         }
 
@@ -810,6 +850,48 @@ public class ProjectSchemaMigrator {
 
         /** The adducts the features carry, which the project records as its own once the pass is done. */
         private final Set<PrecursorIonType> detectedAdducts = ConcurrentHashMap.newKeySet();
+        /**
+         * The MS1 intensity of one feature imported without an LC-MS trace: the height of its precursor peak in
+         * its merged MS1, as the import records it now.
+         * <p>
+         * The checks run cheapest first, which is what makes the pass affordable. An LC-MS feature has a trace
+         * and is skipped without reading anything else; a feature whose run features carry an intensity already
+         * is skipped after one indexed lookup. Only what is left reads its MS1 spectrum - in a peak-list project
+         * that is every feature, once.
+         */
+        private void backfillIntensity(Object alignedFeatureId, WriteBuffer buffer) throws Exception {
+            AlignedFeatures feature = storage.getByPrimaryKey(alignedFeatureId, AlignedFeatures.class).orElse(null);
+            if (feature == null || feature.getTraceReference().isPresent())
+                return;
+            List<Feature> runFeatures = storage.findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), Feature.class).toList();
+            if (runFeatures.stream().anyMatch(f -> f.getApexIntensity() != null || f.getRunId() != null))
+                return;
+
+            MSData msData = storage.findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), MSData.class)
+                    .findFirst().orElse(null);
+            Double intensity = StorageUtils.precursorIntensityOf(msData == null ? null : msData.getMergedMs1Spectrum(),
+                    feature.getAverageMass(), PRECURSOR_PEAK_DEVIATION);
+            if (intensity == null)
+                return; // no MS1, or no precursor peak in it: there is nothing to record, as at an import
+
+            if (runFeatures.isEmpty()) {
+                // An API import before version 4 wrote no run feature at all. It gets the one an import writes now.
+                project.importFeatures(List.of(Feature.builder()
+                        .averageMass(feature.getAverageMass())
+                        .charge(feature.getCharge())
+                        .retentionTime(feature.getRetentionTime())
+                        .apexIntensity(intensity)
+                        .build()), feature.getAlignedFeatureId());
+            } else {
+                for (Feature runFeature : runFeatures) {
+                    runFeature.setApexIntensity(intensity);
+                    intensityFeaturesUpdated.add(runFeature);
+                    buffer.add(runFeature);
+                }
+            }
+            intensitiesFilled.incrementAndGet();
+        }
+
         /**
          * Collects what the workers produce and writes it once {@link #BUFFER} records have gathered.
          * <p>

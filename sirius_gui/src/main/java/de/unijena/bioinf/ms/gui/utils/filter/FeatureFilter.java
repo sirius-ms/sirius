@@ -64,6 +64,7 @@ public record FeatureFilter(boolean inverted,
                             @Nullable DbFilter dbFilter,
                             boolean blankFoldChangeEnabled,
                             double minBlankFoldChange,
+                            @NotNull IntensityFilter intensity,
                             @Nullable Boolean lipidClassDetected,
                             @Nullable Boolean pfasDetected) {
 
@@ -100,6 +101,7 @@ public record FeatureFilter(boolean inverted,
         Objects.requireNonNull(rt);
         Objects.requireNonNull(confidence);
         Objects.requireNonNull(elementFilter);
+        Objects.requireNonNull(intensity);
         adducts = Set.copyOf(adducts);
         featureQuality = qualitySet(featureQuality);
         // every category is always present: a missing one means "not filtering" (the full selection)
@@ -125,7 +127,7 @@ public record FeatureFilter(boolean inverted,
                 new Range(ctx.minMz(), ctx.maxMz()), new Range(ctx.minRt(), ctx.maxRt()),
                 new Range(ctx.minConfidence(), ctx.maxConfidence()),
                 false, false, Set.of(), ALL_QUALITIES, Map.of(),
-                ElementFilter.disabled(), null, false, DEFAULT_MIN_BLANK_FOLD_CHANGE, null, null);
+                ElementFilter.disabled(), null, false, DEFAULT_MIN_BLANK_FOLD_CHANGE, IntensityFilter.DEFAULT, null, null);
     }
 
     /**
@@ -143,19 +145,19 @@ public record FeatureFilter(boolean inverted,
     // --- with… (one per component, plus the convenient forms) ---
 
     public FeatureFilter withInverted(boolean inverted) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withQueryJoin(@NotNull LogicOp queryJoin) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withUserQuery(@NotNull String userQuery) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withMz(@NotNull Range mz) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withMz(double min, double max) {
@@ -163,7 +165,7 @@ public record FeatureFilter(boolean inverted,
     }
 
     public FeatureFilter withRt(@NotNull Range rt) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withRt(double min, double max) {
@@ -171,7 +173,7 @@ public record FeatureFilter(boolean inverted,
     }
 
     public FeatureFilter withConfidence(@NotNull Range confidence) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withConfidence(double min, double max) {
@@ -179,23 +181,23 @@ public record FeatureFilter(boolean inverted,
     }
 
     public FeatureFilter withHasMs1(boolean hasMs1) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withHasMsMs(boolean hasMsMs) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withAdducts(@NotNull Collection<PrecursorIonType> adducts) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, Set.copyOf(adducts), featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, Set.copyOf(adducts), featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withFeatureQuality(@NotNull Collection<DataQuality> featureQuality) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, qualitySet(featureQuality), categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, qualitySet(featureQuality), categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withCategorizedQuality(@NotNull Map<DefaultQualityCategory, Set<DataQuality>> categorizedQuality) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     /** The filter with one category's quality selection replaced. */
@@ -206,27 +208,31 @@ public record FeatureFilter(boolean inverted,
     }
 
     public FeatureFilter withElementFilter(@NotNull ElementFilter elementFilter) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withDbFilter(@Nullable DbFilter dbFilter) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withBlankFoldChangeEnabled(boolean blankFoldChangeEnabled) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withMinBlankFoldChange(double minBlankFoldChange) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
+    }
+
+    public FeatureFilter withIntensity(@NotNull IntensityFilter intensity) {
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withLipidClassDetected(@Nullable Boolean lipidClassDetected) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     public FeatureFilter withPfasDetected(@Nullable Boolean pfasDetected) {
-        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, lipidClassDetected, pfasDetected);
+        return new FeatureFilter(inverted, queryJoin, userQuery, mz, rt, confidence, hasMs1, hasMsMs, adducts, featureQuality, categorizedQuality, elementFilter, dbFilter, blankFoldChangeEnabled, minBlankFoldChange, intensity, lipidClassDetected, pfasDetected);
     }
 
     // --- adduct selection rules ---
@@ -320,6 +326,11 @@ public record FeatureFilter(boolean inverted,
         return elementFilter.isActive();
     }
 
+    /** The intensity filter contributes a clause as soon as the minimum of its unit is above zero. */
+    public boolean isIntensityFilterActive() {
+        return intensity.isActive();
+    }
+
     public boolean isDbFilterEnabled() {
         return dbFilter != null && !dbFilter.getDbs().isEmpty();
     }
@@ -333,6 +344,7 @@ public record FeatureFilter(boolean inverted,
                 || isFeatureQualityFilterEnabled()
                 || categorizedQuality.keySet().stream().anyMatch(this::isCategorizedQualityFilterEnabled)
                 || isLipidFilterEnabled() || isPfasFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled()
-                || blankFoldChangeEnabled;
+                || blankFoldChangeEnabled
+                || isIntensityFilterActive();
     }
 }

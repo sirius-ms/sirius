@@ -105,6 +105,7 @@ public class StorageUtils {
         // build MsData
         MSData.MSDataBuilder builder = MSData.builder();
 
+        Double precursorIntensity = null;
         //processed MS1 information
         if (hasMS1) {
             ProcessedInput pinput;
@@ -123,8 +124,12 @@ public class StorageUtils {
                 pinput = sirius.preprocessForMs1Analysis(exp);
             }
 
-            pinput.getAnnotation(MergedMs1Spectrum.class).filter(MergedMs1Spectrum::notEmpty)
-                    .ifPresent(mergedAno -> builder.mergedMs1Spectrum(cleanMergedMs1DataForImport(mergedAno.mergedSpectrum)));
+            Optional<SimpleSpectrum> mergedMs1 = pinput.getAnnotation(MergedMs1Spectrum.class)
+                    .filter(MergedMs1Spectrum::notEmpty).map(mergedAno -> mergedAno.mergedSpectrum);
+            mergedMs1.ifPresent(spectrum -> builder.mergedMs1Spectrum(cleanMergedMs1DataForImport(spectrum)));
+            // there is no LC-MS trace to take an apex from, so the precursor peak in the MS1 is the feature's MS1 intensity
+            precursorIntensity = mergedMs1.map(spectrum -> precursorIntensityOf(spectrum, exp.getIonMass(),
+                    exp.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation)).orElse(null);
             pinput.getAnnotation(Ms1IsotopePattern.class).filter(Ms1IsotopePattern::notEmpty)
                     .ifPresent(isotopeAno -> builder.isotopePattern(new IsotopePattern(isotopeAno.getSpectrum(), IsotopePattern.Type.AVERAGE)));
         }
@@ -170,6 +175,7 @@ public class StorageUtils {
         Feature feature = Feature.builder()
                 .retentionTime(exp.getAnnotation(RetentionTime.class).orElse(null))
                 .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(exp.getIonMass()))
+                .apexIntensity(precursorIntensity)
                 .charge((byte) charge)
                 .build();
 
@@ -249,6 +255,22 @@ public class StorageUtils {
             map.put(entry.getKey(), elems);
         }
         return new de.unijena.bioinf.ChemistryBase.ms.DetectedElements(map);
+    }
+
+    /**
+     * The MS1 intensity of a feature that has no LC-MS trace to take an apex from: the intensity of the most
+     * intense peak within {@code dev} of {@code ionMass} in the merged MS1 spectrum - the precursor peak.
+     *
+     * @return that intensity, or null when there is no spectrum, no peak within the window, or no positive intensity
+     */
+    public static @Nullable Double precursorIntensityOf(@Nullable SimpleSpectrum mergedMs1, double ionMass, @NotNull Deviation dev) {
+        if (mergedMs1 == null || mergedMs1.isEmpty() || !(ionMass > 0))
+            return null;
+        int peak = Spectrums.mostIntensivePeakWithin(mergedMs1, ionMass, dev);
+        if (peak < 0)
+            return null;
+        double intensity = mergedMs1.getIntensityAt(peak);
+        return intensity > 0 ? intensity : null;
     }
 
     public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum cleanMergedMs1DataForImport(S mergedMs1Spectrum) {

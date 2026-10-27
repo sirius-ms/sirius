@@ -124,7 +124,8 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
                 .features(List.of(feature))
                 .averageMass(feature.averageMass)
                 .apexMass(feature.apexMass)
-                .apexIntensity(feature.apexIntensity)
+                // no apex intensity: on an aligned feature that field holds a merged trace's apex, and a
+                // single measurement has no trace
                 .snr(feature.snr)
                 .detectedAdducts(new DetectedAdducts())
                 .charge(feature.getCharge())

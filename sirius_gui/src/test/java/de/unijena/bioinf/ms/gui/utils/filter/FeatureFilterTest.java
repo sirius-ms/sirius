@@ -64,6 +64,7 @@ public class FeatureFilterTest {
             case "elementFilter" -> new ElementFilter("CHNOPS");
             case "dbFilter" -> new DbFilter(List.of(new SearchableDatabase().databaseId("PubChem")), 3);
             case "minBlankFoldChange" -> 5.0;
+            case "intensity" -> IntensityFilter.DEFAULT.withMinAbsolute(100_000);
             case "lipidClassDetected", "pfasDetected" -> Boolean.FALSE;
             default -> throw new AssertionError("no test value for component '" + component.getName()
                     + "' - a component was added to FeatureFilter; give it one here (and a with… method)");

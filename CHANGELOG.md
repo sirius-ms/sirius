@@ -2,6 +2,20 @@
 
 ## SIRIUS 6
 ### 6.6.0 (unreleased)
+- feature: filter and sort features by MS1 intensity:
+  - a minimum peak height or peak area in the filter dialog, either in raw instrument counts or in
+    percent of the strongest feature of the same run, and two sort orders for the feature list (GUI)
+  - the search fields `intensity.apex`, `intensity.auc`, `intensity.apexPercent` and
+    `intensity.aucPercent`, and the opt field `intensities`, which adds an `intensity` object to a
+    feature (API)
+  - a percentage refers to the strongest feature its run has held: deleting that feature leaves the
+    others' percentages as they were. Features without a run - from peak lists or the API - are held
+    against the strongest feature of the project (GUI and API)
+  - features measured in runs tagged as blank do not count towards a feature's intensity; tagging or
+    untagging a run updates its features (GUI and API)
+  - projects created with an earlier version are updated on first open: peak-list and API-imported
+    features get the precursor peak height from their MS1, and the search index is rebuilt once
+    (GUI, CLI and API)
 - fix: projects took up to three times more disk space than they need, and grew further with every
   recompute. Every project written by an earlier SIRIUS version is affected, as is every custom
   structure and spectral database: the storage engine's default put a single record on each storage

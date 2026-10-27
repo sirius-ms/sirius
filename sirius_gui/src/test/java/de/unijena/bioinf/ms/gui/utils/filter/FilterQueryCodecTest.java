@@ -77,6 +77,9 @@ public class FilterQueryCodecTest {
             f -> f.withElementFilter(new ElementFilter("CHNOPS")),
             f -> f.withElementFilter(new ElementFilter("C[1-20]H[0-40]N[0-5]")),
             f -> f.withBlankFoldChangeEnabled(true).withMinBlankFoldChange(3.5),
+            // a whole intensity filter each: the query names one unit, so only that unit's threshold comes back
+            f -> f.withIntensity(new IntensityFilter(IntensityFilter.Measure.APEX, IntensityFilter.Mode.ABSOLUTE, 100_000, 0)),
+            f -> f.withIntensity(new IntensityFilter(IntensityFilter.Measure.AUC, IntensityFilter.Mode.RELATIVE_TO_RUN_MAX, 0, 2.5)),
             f -> f.withLipidClassDetected(true),
             f -> f.withLipidClassDetected(false),
             f -> f.withPfasDetected(true),
@@ -184,6 +187,12 @@ public class FilterQueryCodecTest {
         assertEquals(0, FilterQueryCodec.decode("NOT hasMsMs:true", CTX, List.of()).facetCount());
         // an adduct that is not one
         assertEquals(0, FilterQueryCodec.decode("detectedAdducts:banana", CTX, List.of()).facetCount());
+        // intensity thresholds the filter cannot hold: none at all, a closed range, more than a percentage
+        assertEquals(0, FilterQueryCodec.decode("intensity.apex:[0 TO *]", CTX, List.of()).facetCount());
+        assertEquals(0, FilterQueryCodec.decode("intensity.apex:[1000 TO 5000]", CTX, List.of()).facetCount());
+        assertEquals(0, FilterQueryCodec.decode("intensity.apexPercent:[150 TO *]", CTX, List.of()).facetCount());
+        assertEquals(1, FilterQueryCodec.decode("intensity.auc:[150 TO *]", CTX, List.of()).facetCount(),
+                "an absolute threshold has no ceiling");
     }
 
     @Test
@@ -251,7 +260,9 @@ public class FilterQueryCodecTest {
         PointsConfig dbl = new PointsConfig(plain, Double.class);
         for (String f : List.of(FeatureFilterModel.FIELD_MZ, FeatureFilterModel.FIELD_RT_START, FeatureFilterModel.FIELD_RT_APEX,
                 FeatureFilterModel.FIELD_RT_END, FeatureFilterModel.FIELD_CONFIDENCE_APPROX, FeatureFilterModel.FIELD_CONFIDENCE_EXACT,
-                FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME))
+                FeatureFilterModel.BLANK_REMOVAL_SEARCH_FIELD_NAME, FeatureFilterModel.FIELD_INTENSITY_APEX,
+                FeatureFilterModel.FIELD_INTENSITY_AUC, FeatureFilterModel.FIELD_INTENSITY_APEX_RELATIVE,
+                FeatureFilterModel.FIELD_INTENSITY_AUC_RELATIVE))
             points.put(f, dbl);
         PointsConfig integer = new PointsConfig((NumberFormat) plain.clone(), Integer.class);
         for (String f : List.of("C", "H", "N", "O", "P", "S"))
