@@ -115,6 +115,11 @@ public class ProcessedInput implements Cloneable, AnnotatedWithDefaults<DataAnno
         try {
             ProcessedInput p = (ProcessedInput) super.clone();
             p.annotations = p.annotations.clone();
+            // the registry hands out the array index a PeakAnnotation stores its value under inside each
+            // ProcessedPeak. Sharing it with the clone lets concurrently scored clones overwrite each other's
+            // indices, after which a clone reads back null for annotations it has written itself. The entries
+            // are copied so indices handed out before cloning still resolve against the cloned peaks below.
+            p.peakAnnotations = new HashMap<>(peakAnnotations);
             p.mergedPeaks = new ArrayList<>();
             for (ProcessedPeak k : mergedPeaks) p.mergedPeaks.add(k.clone());
             p.setParentPeak(p.mergedPeaks.get(getParentPeak().getIndex()));

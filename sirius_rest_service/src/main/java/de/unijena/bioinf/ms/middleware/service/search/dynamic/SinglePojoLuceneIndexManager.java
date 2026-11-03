@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.projectspace.QueryRewriter;
@@ -14,13 +15,21 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexCommit;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.KeepOnlyLastCommitDeletionPolicy;
 import org.apache.lucene.index.SnapshotDeletionPolicy;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.flexible.core.processors.QueryNodeProcessorPipeline;
+import org.apache.lucene.queryparser.flexible.standard.processors.MultiFieldQueryNodeProcessor;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
+import org.apache.lucene.queryparser.flexible.standard.config.NumberDateFormat;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
@@ -54,6 +63,8 @@ import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappi
 @Slf4j
 class SinglePojoLuceneIndexManager<T> implements Closeable {
     private final Directory directory;
+    /** What the index holds, recorded while the query parser was configured for it. */
+    private final IndexSchema indexSchema;
     private final IndexWriter writer;
     private final SearcherManager searcherManager;
     private final SnapshotDeletionPolicy snapshotDeletionPolicy;
@@ -75,12 +86,29 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
      */
     public void setComplete(boolean complete) {
         this.complete = complete;
-        if (complete) {
-            try {
-                searcherManager.maybeRefreshBlocking();
-            } catch (IOException e) {
-                log.warn("Could not refresh searcher after completing index build for '{}'.", pojoMapper.getPojoClass().getSimpleName(), e);
-            }
+        if (complete)
+            makeWritesSearchable();
+    }
+
+    /**
+     * Makes every write issued so far visible to queries, and waits until it is.
+     * <p>
+     * Writes are NRT: they land in the writer but not in the searcher, and the read path only tries
+     * ({@code maybeRefresh()}) rather than waits - it returns at once when another thread already holds the
+     * refresh lock, leaving that query on the searcher as it was. That is the right trade for a query, which
+     * would rather be slightly stale than slow, and the wrong one for whoever just wrote: a writer that
+     * announces its work (an import that fires its finished event) must know the work can be found.
+     * <p>
+     * So a writer that is about to announce something calls this. Ordinary bulk ingest does not - refreshing
+     * per batch is what makes a rebuild slow - which is why this is a separate step rather than part of
+     * {@link #addDocuments}.
+     */
+    public void makeWritesSearchable() {
+        try {
+            searcherManager.maybeRefreshBlocking();
+        } catch (IOException e) {
+            log.warn("Could not refresh searcher of '{}'; recent writes may not be found yet.",
+                    pojoMapper.getPojoClass().getSimpleName(), e);
         }
     }
 
@@ -126,17 +154,91 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             // Scans the bean class’s @IndexField annotations to set PointConfigs and Analyzers.
             // Adds PointsConfig entries to the query parser.
             // Adds default search fields to query parser
-            pojoMapper.detectAnalyzersAndPointConfigs(pointsConfigMap, fieldAnalyzers, defaultSearchFields, sortTypes, queryRewriters);
-            // Initialize the query with  points config map and default search fields.
-            queryParser.setMultiFields(defaultSearchFields.toArray(CharSequence[]::new));
+            this.indexSchema = pojoMapper.detectAnalyzersAndPointConfigs(pointsConfigMap, fieldAnalyzers, defaultSearchFields, sortTypes, queryRewriters);
+            // Initialize the query with the points config map and the default search fields: a bare term is
+            // expanded to the TEXT default fields by the parser; the NUMERIC default fields are searched for a bare
+            // number as a window by our own processor (a numeric field cannot take a text term at all).
             queryParser.setPointsConfigMap(pointsConfigMap);
+            installDefaultFieldSearch();
         } catch (IOException e) {
             throw new RuntimeException("IO Error when initializing Lucene index for " + pojoClass.getSimpleName(), e);
         }
     }
 
+    /**
+     * Splits the default search fields by type. The text ones become the parser's multi-fields, which a bare term is
+     * expanded to. The numeric ones (the precursor m/z of a feature) are searched for a bare NUMBER as a window by
+     * {@link NumericFreeTextQueryNodeProcessor}; they must stay out of the multi-field expansion, since a text term
+     * expanded to a point field fails to parse and would reject the whole query. The processor has to see keyless
+     * terms, so it goes in front of the multi-field expansion in the pipeline; with no numeric default field nothing
+     * is installed.
+     */
+    private void installDefaultFieldSearch() {
+        List<String> numericDefaults = defaultSearchFields.stream().map(CharSequence::toString)
+                .filter(this::isNumericPointField).toList();
+        List<CharSequence> textDefaults = defaultSearchFields.stream()
+                .filter(f -> !numericDefaults.contains(f.toString())).toList();
+        queryParser.setMultiFields(textDefaults.toArray(CharSequence[]::new));
+        if (numericDefaults.isEmpty())
+            return;
+        if (!(queryParser.getQueryNodeProcessor() instanceof QueryNodeProcessorPipeline pipeline))
+            throw new IllegalStateException("the standard query parser is expected to run a processor pipeline");
+        int multiField = -1;
+        for (int i = 0; i < pipeline.size(); i++)
+            if (pipeline.get(i) instanceof MultiFieldQueryNodeProcessor)
+                multiField = i;
+        if (multiField < 0)
+            throw new IllegalStateException("the standard query parser pipeline is expected to expand keyless terms to the default fields");
+        pipeline.add(multiField, new NumericFreeTextQueryNodeProcessor(() -> numericDefaults, pointsConfigMap,
+                NumericFreeTextQueryNodeProcessor.DEFAULT_PPM));
+    }
+
+    /** A point field holding a number (not a date or time, whose points config formats as a date). */
+    private boolean isNumericPointField(@NotNull String field) {
+        PointsConfig config = pointsConfigMap.get(field);
+        return config != null && !(config.getNumberFormat() instanceof NumberDateFormat);
+    }
+
     public boolean isEmpty() {
         return getNumOfDocs().key() <= 0;
+    }
+
+    /**
+     * What this index holds, as recorded while it was configured. Says nothing about how it is presented -
+     * that is for whoever describes the index (see the {@code search.description} package).
+     */
+    public IndexSchema getIndexSchema() {
+        return indexSchema;
+    }
+
+    /**
+     * The concrete field names currently present in the index, read from the segment {@link FieldInfos}.
+     * Used to expand dynamic-key field templates (e.g. {@code matchedDatabases.*}) into the keys that
+     * actually occur. This reads only index metadata (no document scan); it refreshes the searcher first
+     * so freshly indexed keys are visible, and returns an empty set if the index cannot be read.
+     */
+    public Set<String> getIndexedFieldNames() {
+        IndexSearcher searcher;
+        try {
+            searcherManager.maybeRefreshBlocking();
+            searcher = searcherManager.acquire();
+        } catch (IOException e) {
+            log.warn("Could not read indexed field names for '{}'; treating as none.",
+                    pojoMapper.getPojoClass().getSimpleName(), e);
+            return Set.of();
+        }
+        try {
+            Set<String> names = new HashSet<>();
+            for (FieldInfo fieldInfo : FieldInfos.getMergedFieldInfos(searcher.getIndexReader()))
+                names.add(fieldInfo.name);
+            return names;
+        } finally {
+            try {
+                searcherManager.release(searcher);
+            } catch (IOException e) {
+                log.warn("Could not release searcher after reading indexed field names.", e);
+            }
+        }
     }
 
     public boolean isTaggable() {
@@ -379,12 +481,19 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                 doc -> doc.get(pojoMapper.getPojoIdField()));
     }
 
-    @SneakyThrows
     private Query parseQuery(@Nullable String query) {
         if (Utils.isNullOrBlank(query))
             return new MatchAllDocsQuery();
         synchronized (configLock) {
-            return queryParser.parse(query, null);
+            try {
+                return queryParser.parse(query, null);
+            } catch (QueryNodeException | IllegalArgumentException e) {
+                //the client wrote the query, so a query it cannot express is its error, not ours.
+                //IllegalArgumentException (and NumberFormatException below it) is what the field configuration
+                //throws when a value cannot be coerced for its field, e.g. a non numeric bound in a range.
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Malformed or unsupported search query: " + e.getMessage(), e);
+            }
         }
     }
 

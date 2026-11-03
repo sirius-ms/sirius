@@ -52,6 +52,11 @@ import java.util.stream.Stream;
 @Getter
 public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, WriteableSpectralLibrary, Closeable {
 
+    /** requesting no optional field at all - a literal null would ask for a field named "null" */
+    private static final String[] NO_OPTIONAL_FIELDS = new String[0];
+    private static final String[] SEARCH_PREPARED = {"searchPreparedSpectrum"};
+
+
     final protected Database<Doctype> storage;
 
     public Database<Doctype> getStorage() {
@@ -76,10 +81,11 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
                 ).addDeserializer(
                         SpectrumAnnotation.class,
                         new SimpleSerializers.AnnotationDeserializer()
-                ).setOptionalFields(Ms2ReferenceSpectrum.class, "spectrum", "querySpectrum")
+                ).setOptionalFields(Ms2ReferenceSpectrum.class, "spectrum", "searchPreparedSpectrum")
 
                 .addRepository(ReferenceFragmentationTree.class)
-                .addRepository(MergedReferenceSpectrum.class, Index.unique("candidateInChiKey", "precursorIonType"), Index.nonUnique("precursorMz"));
+                .addRepository(MergedReferenceSpectrum.class, Index.unique("candidateInChiKey", "precursorIonType"), Index.nonUnique("precursorMz"))
+                .setOptionalFields(MergedReferenceSpectrum.class, "searchPreparedSpectrum");
     }
 
     public abstract <O> Doctype asDocument(O object);
@@ -105,7 +111,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
             double abs = deviation.absoluteFor(precursorMz);
             Filter filter = Filter.where("exactMass").betweenBothInclusive(precursorMz - abs, precursorMz + abs);
             if (withData) {
-                return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum", "querySpectrum"));
+                return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum", "searchPreparedSpectrum"));
             } else {
                 return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class));
             }
@@ -122,7 +128,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         try {
             Filter filter = Filter.where(field).eq(value);
             if (withData) {
-                return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum", "querySpectrum"));
+                return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum", "searchPreparedSpectrum"));
             } else {
                 return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class));
             }
@@ -156,11 +162,11 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     public ReferenceSpectrum getReferenceSpectrum(long uuid, SpectrumType type) throws ChemicalDatabaseException {
         try {
             if (type == SpectrumType.SPECTRUM) {
-                Iterator<Ms2ReferenceSpectrum> specs = this.storage.find(Filter.where("uuid").eq(uuid), Ms2ReferenceSpectrum.class, "querySpectrum").iterator();
+                Iterator<Ms2ReferenceSpectrum> specs = this.storage.find(Filter.where("uuid").eq(uuid), Ms2ReferenceSpectrum.class, "searchPreparedSpectrum").iterator();
                 if (specs.hasNext()) return fillLibrary(specs.next());
                 else throw new ChemicalDatabaseException("No spectrum with uuid " + uuid + " found.");
             } else if (type == SpectrumType.MERGED_SPECTRUM) {
-                Iterator<MergedReferenceSpectrum> specs = this.storage.find(Filter.where("uuid").eq(uuid), MergedReferenceSpectrum.class).iterator();
+                Iterator<MergedReferenceSpectrum> specs = this.storage.find(Filter.where("uuid").eq(uuid), MergedReferenceSpectrum.class, SEARCH_PREPARED).iterator();
                 if (specs.hasNext()) return fillLibrary(specs.next());
                 else throw new ChemicalDatabaseException("No spectrum with uuid " + uuid + " found.");
             } else throw new ChemicalDatabaseException("Unknown spectrum type: " + type);
@@ -175,7 +181,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         double abs = precursorDeviation.absoluteFor(precursorMz);
         try {
             Filter filter = Filter.where("exactMass").betweenBothInclusive(precursorMz - abs, precursorMz + abs);
-            return storage.findStr(filter, MergedReferenceSpectrum.class, withSpectrum ? "querySpectrum" : null)
+            return storage.findStr(filter, MergedReferenceSpectrum.class, withSpectrum ? SEARCH_PREPARED : NO_OPTIONAL_FIELDS)
                     .filter(x -> x.getPrecursorIonType().getCharge() == chargeAndPolarity)
                     .peek(this::fillLibrary);
         } catch (IOException e) {
@@ -192,7 +198,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
                     Filter.where("precursorIonType").eq(precursorIonType.toString())
             );
 
-            return storage.findStr(filter, MergedReferenceSpectrum.class, withSpectrum ? "querySpectrum" : null)
+            return storage.findStr(filter, MergedReferenceSpectrum.class, withSpectrum ? SEARCH_PREPARED : NO_OPTIONAL_FIELDS)
                     .peek(this::fillLibrary).findFirst().orElseThrow(() ->
                             new ChemicalDatabaseException("No spectrum with candidateInChiKey=" + candidateInChiKey + " and precursorIonType=" + precursorIonType + " found."));
         } catch (IOException e) {
@@ -216,7 +222,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     @Override
     public Ms2ReferenceSpectrum queryAgainstIndividualSpectrum(long uuid) throws ChemicalDatabaseException {
         try {
-            Iterator<Ms2ReferenceSpectrum> specs = this.storage.find(Filter.where("uuid").eq(uuid), Ms2ReferenceSpectrum.class, "querySpectrum").iterator();
+            Iterator<Ms2ReferenceSpectrum> specs = this.storage.find(Filter.where("uuid").eq(uuid), Ms2ReferenceSpectrum.class, "searchPreparedSpectrum").iterator();
             if (specs.hasNext()) return fillLibrary(specs.next());
             else throw new ChemicalDatabaseException("No spectrum with uuid " + uuid + " found.");
         } catch (IOException e) {
@@ -227,7 +233,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     @Override
     public Iterable<Ms2ReferenceSpectrum> fetchSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException {
         try {
-            return withLibrary(this.storage.injectOptionalFields(Ms2ReferenceSpectrum.class, references, "spectrum", "querySpectrum"));
+            return withLibrary(this.storage.injectOptionalFields(Ms2ReferenceSpectrum.class, references, "spectrum", "searchPreparedSpectrum"));
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -236,7 +242,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     @Override
     public Ms2ReferenceSpectrum fetchSpectralData(Ms2ReferenceSpectrum reference) throws ChemicalDatabaseException {
         try {
-            return fillLibrary(this.storage.injectOptionalFields(reference, "spectrum", "querySpectrum"));
+            return fillLibrary(this.storage.injectOptionalFields(reference, "spectrum", "searchPreparedSpectrum"));
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -319,7 +325,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
     @Override
     public Stream<LibraryHit> queryAgainstLibrary(int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<SearchPreparedSpectrum> query) throws IOException {
-        return queryAgainstLibraryByMergedReference(storage.findAllStr(MergedReferenceSpectrum.class, "querySpectrum").filter(x -> x.getPrecursorIonType().getCharge() == chargeAndPolarity).toList(), settings, query, null);
+        return queryAgainstLibraryByMergedReference(storage.findAllStr(MergedReferenceSpectrum.class, "searchPreparedSpectrum").filter(x -> x.getPrecursorIonType().getCharge() == chargeAndPolarity).toList(), settings, query, null);
     }
 
     @Override
@@ -355,7 +361,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
             // only retrieve single ref spectra and compute cosine if they are a target
             if (settings.containsTargetType(SpectrumType.SPECTRUM)) {
                 for (long uid : mergedRef.getIndividualSpectraUIDs()) {
-                    for (Ms2ReferenceSpectrum spec : withLibrary(storage.find(Filter.where("uuid").eq(uid), Ms2ReferenceSpectrum.class, "querySpectrum"))) {
+                    for (Ms2ReferenceSpectrum spec : withLibrary(storage.find(Filter.where("uuid").eq(uid), Ms2ReferenceSpectrum.class, "searchPreparedSpectrum"))) {
                         if (!queriesToProcess.isEmpty()) // compute single query spectra if requested and above bound
                             hits.addAll(getHits(query, spec, settings));
                         if (doMergedQuery) // compute merged query if provided, requested and above bound
@@ -418,11 +424,11 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
     @Override
     public void forEachSpectrum(Consumer<Ms2ReferenceSpectrum> consumer, boolean withData) throws IOException {
-        this.storage.findAllStr(Ms2ReferenceSpectrum.class,"querySpectrum").map(this::fillLibrary).forEach(consumer);
+        this.storage.findAllStr(Ms2ReferenceSpectrum.class,"searchPreparedSpectrum").map(this::fillLibrary).forEach(consumer);
     }
 
     @Override
     public void forEachMergedSpectrum(Consumer<MergedReferenceSpectrum> consumer) throws IOException {
-        this.storage.findAllStr(MergedReferenceSpectrum.class).map(this::fillLibrary).forEach(consumer);
+        this.storage.findAllStr(MergedReferenceSpectrum.class, SEARCH_PREPARED).map(this::fillLibrary).forEach(consumer);
     }
 }

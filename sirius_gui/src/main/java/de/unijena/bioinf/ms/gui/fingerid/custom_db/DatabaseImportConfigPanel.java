@@ -48,7 +48,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
     private DefaultListModel<File> fileListModel;
 
 
-    private final FileFilter supportedStructureFiles = new FileNameExtensionFilter("Structure files (.tsv, .csv, .sdf)", "tsv", "csv", "sdf");
+    private final FileFilter supportedStructureFiles = new FileNameExtensionFilter("Structure files (tab-separated .tsv/.csv, .sdf)", "tsv", "csv", "sdf");
 
     private final FileFilter supportedSpectraFiles = new FileFilter() {
         @Override
@@ -156,8 +156,8 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
 
         dbDisplayNameField = new PlaceholderTextField("");
         smalls.addNamed("Name", dbDisplayNameField, GuiUtils.formatToolTip("Displayable name of the custom database. " +
-                "This is the preferred name to be shown in the GUI. Maximum Length: 15 characters. " +
-                "If not given the filename will be used."));
+                "This is the preferred name to be shown in the GUI. Maximum length: 15 characters. " +
+                "If not given, the filename will be used."));
         dbFileNameField = new PlaceholderTextField("");
         smalls.addNamed("Filename", dbFileNameField, GuiUtils.formatToolTip("Filename and unique identifier of the new custom database, should end in " + CUSTOM_DB_SUFFIX));
 

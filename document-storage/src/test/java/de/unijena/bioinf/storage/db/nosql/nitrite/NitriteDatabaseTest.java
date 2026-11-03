@@ -951,4 +951,80 @@ public class NitriteDatabaseTest {
 
     }
 
+    /**
+     * A compound index's field order defines its sort/prefix semantics, so re-declaring the same fields in a
+     * different order must drop and rebuild the index. Reconciling indexes by an unordered set of field names
+     * would treat the two as identical and silently keep the stale on-disk order.
+     */
+    @Test
+    public void testCompoundIndexFieldReorderTriggersRebuild() throws Exception {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
+                .addRepository(NitriteEntryWithDoubleKey.class, Index.nonUnique("otherKey", "someProperty")))) {
+            db.insert(new NitriteEntryWithDoubleKey(1, 1.0, "a"));
+            assertEquals(List.of("otherKey", "someProperty"), twoFieldIndexOrder(db, NitriteEntryWithDoubleKey.class));
+        }
+
+        // reopen declaring the SAME fields in reversed order: it is a different index and must be rebuilt
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
+                .addRepository(NitriteEntryWithDoubleKey.class, Index.nonUnique("someProperty", "otherKey")))) {
+            assertEquals(List.of("someProperty", "otherKey"), twoFieldIndexOrder(db, NitriteEntryWithDoubleKey.class));
+        }
+    }
+
+    @Test
+    public void testABatchLookupAnswersInTheOrderItWasAskedIn() throws IOException {
+        // the lookups run in key order for the sake of page locality, which must not reach the caller
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(LongKeyEntry.class))) {
+            for (long pk = 1; pk <= 10; pk++)
+                db.insert(LongKeyEntry.builder().pk(pk).build());
+
+            List<Long> asked = List.of(7L, 3L, 9L, 1L);
+            assertEquals(asked, db.findAllByPrimaryKeyStr(asked, LongKeyEntry.class)
+                    .map(e -> e.pk).toList());
+        }
+    }
+
+    @Test
+    public void testABatchLookupSkipsMissingKeysAndRepeatedOnes() throws IOException {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(LongKeyEntry.class))) {
+            for (long pk = 1; pk <= 3; pk++)
+                db.insert(LongKeyEntry.builder().pk(pk).build());
+
+            assertEquals(List.of(3L, 1L), db.findAllByPrimaryKeyStr(List.of(3L, 99L, 1L, 3L), LongKeyEntry.class)
+                    .map(e -> e.pk).toList());
+        }
+    }
+
+    @Test
+    public void testABatchDeleteRemovesEveryDistinctKeyOnce() throws IOException {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(LongKeyEntry.class))) {
+            for (long pk = 1; pk <= 5; pk++)
+                db.insert(LongKeyEntry.builder().pk(pk).build());
+
+            assertEquals(3, db.removeAllByPrimaryKey(List.of(4L, 2L, 4L, 99L, 1L), LongKeyEntry.class));
+            assertEquals(List.of(3L, 5L), db.findAllStr(LongKeyEntry.class).map(e -> e.pk).sorted().toList());
+        }
+    }
+
+    /** Reflectively read the ordered field names of the (single) two-field index on the repository. */
+    private static List<String> twoFieldIndexOrder(NitriteDatabase db, Class<?> clazz) throws Exception {
+        java.lang.reflect.Field dbField = NitriteDatabase.class.getDeclaredField("db");
+        dbField.setAccessible(true);
+        org.dizitart.no2.Nitrite nitrite = (org.dizitart.no2.Nitrite) dbField.get(db);
+        return nitrite.getRepository(clazz).listIndices().stream()
+                .map(d -> d.getFields().getFieldNames())
+                .filter(names -> names.size() == 2)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no two-field index found"));
+    }
+
 }

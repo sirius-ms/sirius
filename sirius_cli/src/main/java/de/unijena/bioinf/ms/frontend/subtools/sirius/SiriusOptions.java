@@ -82,13 +82,13 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         }
     }
 
-    @Option(names = {"-p", "--profile"}, descriptionKey ="AlgorithmProfile" , description = {"Name of the configuration profile.", "Predefined profiles are: `default`, 'qtof', 'orbitrap', 'fticr'."})
+    @Option(names = {"-p", "--profile"}, descriptionKey ="AlgorithmProfile" , description = {"Name of the configuration profile.", "Predefined profiles are: 'default', 'qtof', 'orbitrap', 'fticr'."})
     public void setProfile(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("AlgorithmProfile", value);
     }
 
     // candidates
-    @Option(names = {"-c", "--candidates"}, descriptionKey ="NumberOfCandidates" , description = "Number of precursor formula candidates in the output - each can correspond to  multiple adducts.")
+    @Option(names = {"-c", "--candidates"}, descriptionKey ="NumberOfCandidates" , description = "Number of precursor formula candidates in the output - each can correspond to multiple adducts.")
     public void setNumberOfCandidates(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("NumberOfCandidates", value);
     }
@@ -99,7 +99,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     // Elements
-    @Option(names = {"-e", "--elements-considered"}, descriptionKey = "FormulaSettings.detectable", description = {"Set the allowed elements for rare element detection.", "Example: `SBrClBSe` to allow the elements S,Br,Cl,B and Se."})
+    @Option(names = {"-e", "--elements-considered"}, descriptionKey = "FormulaSettings.detectable", description = {"Set the allowed elements for rare element detection.", "Example: 'SBrClBSe' to allow the elements S, Br, Cl, B and Se."})
     public void setDetectableElements(DefaultParameter elements) throws Exception {
         defaultConfigOptions.changeOption("FormulaSettings.detectable", elements);
         defaultConfigOptions.changeOption("FormulaSettings.fallback", elements);
@@ -139,7 +139,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         defaultConfigOptions.changeOption("EnforceElGordoFormula", value);
     }
 
-    @Option(names = {"--no-isotope-filter"}, description = "Disable molecular formula filter. When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.")
+    @Option(names = {"--no-isotope-filter"}, description = "Disable molecular formula filter. When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the measured one, even if their MS/MS pattern has high score.")
     public void disableIsotopeFilter(boolean disable) throws Exception {
         defaultConfigOptions.changeOption("IsotopeSettings.filter", !disable);
     }
@@ -176,7 +176,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
 
 
     //ILP solver from the command Line
-    @Option(names = {"--solver", "--ilp-solver"}, description = {"Set ILP solver to be used for fragmentation computation. Valid values: 'CLP' (included), 'CPLEX', 'GUROBI'.", "For GUROBI and CPLEX environment variables need to be configure (see Manual)."})
+    @Option(names = {"--solver", "--ilp-solver"}, description = {"Set ILP solver to be used for fragmentation computation. Valid values: 'CLP' (included), 'CPLEX', 'GUROBI'.", "For GUROBI and CPLEX, environment variables need to be configured (see manual)."})
     public void setSolver(TreeBuilderFactory.DefaultBuilder solver) {
         SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", solver.name());
         LoggerFactory.getLogger(getClass()).info("ILP solver changed to '" + solver + "' by command line.");

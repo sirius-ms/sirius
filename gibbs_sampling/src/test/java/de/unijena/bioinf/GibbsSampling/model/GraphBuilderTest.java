@@ -27,7 +27,6 @@ import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistr
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionFix;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorerNoiseIntensityWeighted;
-import de.unijena.bioinf.jjobs.JJob;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
@@ -38,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -73,22 +73,26 @@ public class GraphBuilderTest {
 
         FragmentsCandidate[][] candidates = candidateList.toArray(new FragmentsCandidate[0][]);
 
-        GraphBuilder<FragmentsCandidate> graphBuilder =GraphBuilder.createGraphBuilder(ids, candidates, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
-        graphBuilder.registerJobManager(SiriusJobs.getGlobalJobManager());
-        graphBuilder.setState(JJob.JobState.RUNNING);
-        graphBuilder.calculateWeight();
+        // The job must run through the job manager: its RUNNING state can no longer be faked from
+        // the outside (setState is not part of the JJob interface anymore) and calculateWeight()
+        // forks sub jobs, which requires a properly started master job. The intermediate state after
+        // calculateWeight() is still asserted, via a hook in the protected step itself.
+        Graph<FragmentsCandidate> initialGraph = GraphBuilder.createGraph(ids, candidates, nodeScorers, edgeScorers, edgeFilter, null);
+        GraphBuilder<FragmentsCandidate> graphBuilder = new GraphBuilder<>(initialGraph, edgeScorers, edgeFilter, FragmentsCandidate.class) {
+            @Override
+            protected void calculateWeight() throws ExecutionException {
+                super.calculateWeight();
 
-        System.out.println("weights");
-        for (int i = 0; i < graphBuilder.graph.weights.length; i++) {
-            System.out.println(Arrays.toString(graphBuilder.graph.weights[i].toArray()));
+                System.out.println("weights");
+                for (int i = 0; i < graph.weights.length; i++) {
+                    System.out.println(Arrays.toString(graph.weights[i].toArray()));
+                }
 
-        }
+                assertAfterCalculatingWeights(graph);
+            }
+        };
 
-        assertAfterCalculatingWeights(graphBuilder.graph);
-
-        graphBuilder.setConnections();
-
-        Graph<FragmentsCandidate> graph = graphBuilder.graph;
+        Graph<FragmentsCandidate> graph = SiriusJobs.getGlobalJobManager().submitJob(graphBuilder).awaitResult();
 
         assertResults(graph);
 

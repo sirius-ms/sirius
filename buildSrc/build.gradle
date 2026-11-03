@@ -1,0 +1,12 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Build-only: powers the `aiOverview` task (see src/main/java/aioverview).
+    implementation libs.javaparser
+}

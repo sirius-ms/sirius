@@ -21,37 +21,29 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.*;
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.event.ListEventListener;
-import ca.odell.glazedlists.matchers.AbstractMatcherEditorListenerSupport;
-import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
-import ca.odell.glazedlists.matchers.Matcher;
-import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.filter.FeatureFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
-import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
+import de.unijena.bioinf.ms.gui.utils.filter.FilterSession;
+import de.unijena.bioinf.ms.gui.utils.filter.QuickFilterSwitch;
+import de.unijena.bioinf.ms.gui.utils.search.LuceneSearchBar;
+import de.unijena.bioinf.ms.gui.utils.search.PanelFilterTerms;
 import de.unijena.bioinf.ms.gui.utils.loading.LazyLoadingPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
-import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
-import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import io.sirius.ms.sdk.model.DataQuality;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Queue;
@@ -67,13 +59,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @Slf4j
 public class CompoundList {
 
-    final PlaceholderTextField searchField;
-    final JToggleSwitch adductToggleSwitch;
-    final JToggleSwitch qualityToggleSwitch;
-    final JToggleSwitch msMsToggleSwitch;
+    final LuceneSearchBar searchBar;
 
-
-    final JButton openFilterPanelButton;
     final ObservableElementList<InstanceBean> observableScource;
     @Getter
     final SortedList<InstanceBean> sortedSource;
@@ -85,8 +72,6 @@ public class CompoundList {
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
-    private final Color defaultOpenFilterPanelButtonColor;
-
     @Getter
     private @NotNull SiriusGui gui;
     private final GuiProjectManager projectManager;
@@ -97,34 +82,24 @@ public class CompoundList {
         this.projectManager = gui.getProjectManager();
         //additional filter based on specific parameters
         filterModel = projectManager.getFeatureFilterModel();
-        // filter based ion full text field
-        searchField = new PlaceholderTextField();
-        searchField.setDocument(filterModel.getSearchTextDoc());
-        searchField.setPlaceholder("Type and hit enter to search");
-        searchField.setToolTipText("Type text to perform a full text search on the data below. Hit enter to start searching.");
-        searchField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER)
-                    filterModel.fireUpdateCompleted();
-            }
-        });
-
-        adductToggleSwitch = makeAdductToggleSwitch(filterModel);
-        qualityToggleSwitch = makeQualityToggleSwitch(filterModel);
-        msMsToggleSwitch = makeMsMsToggleSwitch(filterModel);
+        // lucene query search bar: collapsed summary here, chip-based query builder with
+        // autocompletion in an overlay expanding over the result view
+        // the full filter dialog is now opened from an in-field funnel icon inside the search bar
+        // (see LuceneSearchBar) instead of a separate "..." button next to it
+        // the overlay's editing session over the applied filter: one per model, shared by every editor
+        FilterSession session = new FilterSession(filterModel);
+        searchBar = new LuceneSearchBar(gui.getSiriusClient(), projectManager.getProjectId(), filterModel, session,
+                () -> PanelFilterTerms.of(filterModel, gui.getProperties().getConfidenceDisplayMode()),
+                () -> PanelFilterTerms.of(session, gui.getProperties().getConfidenceDisplayMode()),
+                QuickFilterSwitch.standard(),
+                term -> new FeatureFilterOptionsDialog(gui, filterModel, this, term.id()),
+                () -> new FeatureFilterOptionsDialog(gui, filterModel, this),
+                this::resetFilter,
+                this::resetFilterToDefaults);
 
         observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(observableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
         compoundList = GlazedListsSwing.swingThreadProxyList(sortedSource);
-
-        //filter dialog
-        openFilterPanelButton = new JButton("...");
-        openFilterPanelButton.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.OpenFilterPanelButton);
-        openFilterPanelButton.setToolTipText("Open filter panel");
-        defaultOpenFilterPanelButtonColor = openFilterPanelButton.getBackground();
-
-        openFilterPanelButton.addActionListener(e -> new FeatureFilterOptionsDialog(gui, filterModel, this));
 
         compoundListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
@@ -133,17 +108,15 @@ public class CompoundList {
         compoundList.addListEventListener(this::notifyListenerDataChange);
 
         //init filters
-        filterModel.addUpdateCompleteListener(evt -> {
-            colorByActiveFilter();
-            updateTogglesByActiveFilter();
-        });
-        filterModel.addPropertyChangeListener("possibleAdductsUpdated", evt -> updateTogglesByActiveFilter());
         filterModel.updateAdducts(projectManager.getDetectedAdducts());
         filterModel.fireUpdateCompleted();
     }
 
 
     private boolean selectionListenerRegistered = false;
+    // Applies a selection change outside the event dispatch that caused it, see applySelectionChange().
+    private final CoalescingEdtUpdater selectionUpdater = new CoalescingEdtUpdater("compound list selection", this::applySelectionChange);
+
     public synchronized void initializedSelectionListener(@NotNull LazyLoadingPanel<ResultPanel> resultPanelProvider){
         if (!selectionListenerRegistered) {
             compoundListSelectionModel.addListSelectionListener(e -> {
@@ -152,83 +125,31 @@ public class CompoundList {
                 if (c instanceof Loadable l)
                     l.setLoading(true, true);
 
-                if (!e.getValueIsAdjusting()) {
-                    //we only enable listener for first selected because this is the one where results are visible.
-                    compoundListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
-                    compoundListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
-                    if (!compoundListSelectionModel.isSelectionEmpty()){
-                        InstanceBean selected = compoundListSelectionModel.getSelected().getFirst();
-                        selected.enableProjectSpaceListener();
-                        projectManager.removeTemporaryJumpToFeatureIfNotSelected(selected.getFeatureId());
-                    }
-                    notifyListenerSelectionChange();
-                }
+                if (!e.getValueIsAdjusting())
+                    selectionUpdater.request();
             });
             selectionListenerRegistered = true;
         }
     }
 
-    private void colorByActiveFilter() {
-        //is any filtering option active (despite the text filter which is visible all the time)
-        if (filterModel.isActive()) {
-            if (filterModel.isInverted()) {
-                openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON_INVERTED);
-                openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_INVERTED_TEXT);
-            } else {
-                openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON);
-                openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_TEXT);
-            }
-        } else {
-            openFilterPanelButton.setBackground(defaultOpenFilterPanelButtonColor);
-            openFilterPanelButton.setForeground(Colors.FOREGROUND_DATA);
+    /**
+     * Reacts to a finished selection change. Runs deferred on the EDT (never inline in the listener) because a
+     * selection change caused by a <i>list</i> change is fired from within the GlazedLists event dispatch: reading
+     * the live selection views there sees a half-updated list (the swing thread proxy cache and the selection
+     * barcode disagree, e.g. "Index 64 out of bounds for length 63"), and removing the temporary jump-to feature
+     * would be a nested structural mutation. Either one aborts the dispatch and leaves the selection model
+     * permanently broken ("Invalid range for invert selection"), i.e. kills the whole feature list.
+     */
+    private void applySelectionChange() {
+        //we only enable listener for first selected because this is the one where results are visible.
+        compoundListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
+        compoundListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
+        if (!compoundListSelectionModel.isSelectionEmpty()) {
+            InstanceBean selected = compoundListSelectionModel.getSelected().getFirst();
+            selected.enableProjectSpaceListener();
+            projectManager.removeTemporaryJumpToFeatureIfNotSelected(selected.getFeatureId());
         }
-    }
-
-    protected void updateTogglesByActiveFilter() {
-        msMsToggleSwitch.setSelected(!filterModel.isHasMsMs(), false, false);
-        adductToggleSwitch.setSelected(filterModel.isMultiAdductsAllowed(), false, false);
-        qualityToggleSwitch.setSelected(filterModel.getFeatureQualityFilter().isQualitySelected(DataQuality.BAD), false, false);
-    }
-
-    private static @NotNull JToggleSwitch makeAdductToggleSwitch(FeatureFilterModel model) {
-        JToggleSwitch tSwitch = new JToggleSwitch();
-        tSwitch.setSelected(model.isMultiAdductsAllowed(), false, false);
-        tSwitch.addEventToggleSelected(selected -> {
-            if (selected)
-                model.addMultiAdducts();
-            else
-                model.removeMultiAdducts();
-            model.fireUpdateCompleted();
-        });
-        return tSwitch;
-    }
-
-    private static @NotNull JToggleSwitch makeQualityToggleSwitch(FeatureFilterModel model) {
-        final QualityFilter fqFilter = model.getFeatureQualityFilter();
-        JToggleSwitch tSwitch = new JToggleSwitch();
-        tSwitch.setSelected(fqFilter.isQualitySelected(DataQuality.BAD), false, false); //initialize from model
-        tSwitch.addEventToggleSelected(selected -> {
-            if (selected) {
-                // we add only the bad ones when enabling
-                fqFilter.addQuality(DataQuality.BAD);
-            } else {
-                fqFilter.removeQuality(DataQuality.LOWEST);
-                fqFilter.removeQuality(DataQuality.BAD);
-            }
-            model.fireUpdateCompleted();
-        });
-        // ensure default value is propagated
-        return tSwitch;
-    }
-
-    private static @NotNull JToggleSwitch makeMsMsToggleSwitch(FeatureFilterModel model) {
-        JToggleSwitch tSwitch = new JToggleSwitch();
-        tSwitch.setSelected(!model.isHasMsMs(), false, false); ///initialize from model
-        tSwitch.addEventToggleSelected(selected -> {
-            model.setHasMsMs(!selected);
-            model.fireUpdateCompleted();
-        });
-        return tSwitch;
+        notifyListenerSelectionChange();
     }
 
     public void orderBy(@NotNull final Comparator<InstanceBean> comp) {
@@ -237,11 +158,19 @@ public class CompoundList {
 
     public void resetFilter() {
         //filtering consists of the text filter and the filter model
-        filterModel.resetFilter();
-        searchField.setText("");
-        searchField.postActionEvent();
-        colorByActiveFilter();
-        updateTogglesByActiveFilter();
+        filterModel.resetFilter(); // nothing filtered, no query
+        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilter() only fires the value change
+        searchBar.refreshSummary(); // also re-tints the in-field funnel icon for the (now inactive) filter
+    }
+
+    /**
+     * Restores the default filter configuration (see {@link FeatureFilterModel#resetFilterToDefaults()})
+     * and clears the search query - the search bar's in-field restore button.
+     */
+    public void resetFilterToDefaults() {
+        filterModel.resetFilterToDefaults(); // the recommended starting filter, no query
+        filterModel.fireUpdateCompleted(); // re-filter the list: resetFilterToDefaults() only fires the value change
+        searchBar.refreshSummary(); // also re-tints the in-field funnel icon for the (now active) default filter
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
@@ -259,6 +188,19 @@ public class CompoundList {
             l.listSelectionChanged(compoundListSelectionModel, selected, deselected, total);
     }
 
+    /**
+     * Tells the listeners that features started or stopped computing, once for the whole batch.
+     * <p>
+     * Not a list change: nothing about the list itself changed, and raising one per affected feature is what a
+     * job over a whole project must not do. Called from the event dispatch thread, like the repaint it
+     * accompanies.
+     */
+    public void notifyComputeStateChange() {
+        long total = projectManager.getTotalInstances();
+        for (ExperimentListChangeListener l : listeners)
+            l.computeStateChanged(compoundListSelectionModel, total);
+    }
+
     //API methods
     public void addChangeListener(ExperimentListChangeListener l) {
         listeners.add(l);
@@ -269,7 +211,8 @@ public class CompoundList {
     }
 
     public int getFullSize() {
-        return sortedSource.size();
+        // read locked: the pipeline may be mutated from any thread (e.g. a feature reload swapping the page)
+        return EventLists.readLocked(sortedSource, sortedSource::size);
     }
 
     /**
@@ -281,12 +224,12 @@ public class CompoundList {
      * @param featureId The non-null featureId of the InstanceBean to find and select.
      */
     public boolean selectInstanceByFeatureId(@NotNull String featureId) {
-        // 1. Search for the InstanceBean in the complete list (sortedSource).
-        InstanceBean targetInstance = sortedSource.stream()
-                .filter(bean -> bean.getFeatureId().equals(featureId))
-                .findAny().orElse(null);
+        // 1. O(1) check whether the feature is already shown, via the GuiProjectManager present-features
+        //    snapshot, instead of an O(n) scan over the whole list.
+        InstanceBean targetInstance = projectManager.getPresentFeature(featureId);
 
-        // 2. if not in list assume its filter by lucene search and try loading it from api
+        // 2. if not present assume it is filtered out by the lucene search and load it as a temporary
+        //    jump-to feature from the api (this also drops any previous jump-to feature from the list).
         if (targetInstance == null)
             targetInstance = projectManager.findAndAddTemporaryJumpToFeature(featureId);
 

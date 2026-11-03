@@ -25,7 +25,11 @@ import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.Run;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
+import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workflow.ToolChainWorkflow;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
@@ -291,9 +295,10 @@ public final class BackgroundRuns {
         final WorkflowBuilder wfBuilder = new WorkflowBuilder(new ComputeRootOption(instances), configOptionLoader, null, false);
         final Run computation = new Run(wfBuilder, false);
         CommandLine.ParseResult pr = computation.parseArgs(command.toArray(String[]::new));
+        final Workflow workflow = computation.makeWorkflow(bufferfactory);
 
-        return new BackgroundRunJob(
-                computation.makeWorkflow(bufferfactory),
+        BackgroundRunJob run = new BackgroundRunJob(
+                workflow,
                 instances,
                 RUN_COUNTER.incrementAndGet(),
                 command.stream().collect(Collectors.joining(" ")),
@@ -301,6 +306,10 @@ public final class BackgroundRuns {
                 "Computation",
                 JobEffect.COMPUTATION
         );
+        // Of the commands, only a tool chain changes the instances it runs on. A standalone tool reads them (e.g.
+        // writing summaries, which still needs them locked) or does not touch them at all (e.g. a custom database import).
+        run.reindexInstances = workflow instanceof ToolChainWorkflow;
+        return run;
     }
 
     private BackgroundRunJob submitRunAndLockInstances(final BackgroundRunJob runToSubmit) {
@@ -349,6 +358,13 @@ public final class BackgroundRuns {
 
         @Nullable
         private Iterable<? extends Instance> instances;
+
+        /**
+         * Whether the instances are re-indexed when the run finishes; they are locked while it runs either way.
+         * On by default: a run other than a command relies on it - a fold change run, for one, would otherwise
+         * leave the fold changes it removed in the index.
+         */
+        private boolean reindexInstances = true;
 
         @Nullable
         private List<String> affectedFeatureIds = null;
@@ -420,34 +436,55 @@ public final class BackgroundRuns {
                 computation.run();
 
                 logInfo("Assign computed affected ids...");
-                updateProgress(-1, "Updating search index...");
+                updateProgress(-1, "Postprocessing...");
                 if (instances != null) {
-                    logInfo("Updating search-index after Computation...");
                     ArrayList<String> affIds = new ArrayList<>();
                     instances.forEach(i -> affIds.add(i.getId()));
                     try {
                         if (!affIds.isEmpty()){
                             affectedFeatureIds = affIds;
-                            submitJob(() -> project.updateSearchIndex(affectedFeatureIds), JobType.CPU).awaitResult();
+                            if (reindexInstances) {
+                                logInfo("Updating search-index after Computation...");
+                                // topAnnotationsSummary is drawn from the top formula candidate, the structure
+                                // search result and the compound class prediction - only Sirius/Zodiac (they can
+                                // change which formula ranks top), Fingerblast and Canopus can change any of
+                                // that. Fingerprint, MsNovelist, Passatutto and SpectraSearch only ever change
+                                // computedTools, which the reindex always refreshes.
+                                boolean reindexTopAnnotations = computation instanceof ToolChainWorkflow tcw
+                                        && tcw.getToolchainOptions().stream().anyMatch(o ->
+                                                o instanceof SiriusOptions || o instanceof ZodiacOptions
+                                                        || o instanceof FingerblastOptions || o instanceof CanopusOptions);
+                                submitJob(() -> {
+                                    // the instances already hold the AlignedFeatures they were computed over,
+                                    // sparing NoSQLProjectImpl the database lookup updateSearchIndex(ids) needs
+                                    if (project instanceof NoSQLProjectImpl noSqlProject)
+                                        noSqlProject.updateSearchIndex(instances, reindexTopAnnotations);
+                                    else
+                                        project.updateSearchIndex(affectedFeatureIds);
+                                }, JobType.IO).awaitResult();
+                            }
                         }
-                        logInfo("Unlocking Instances after Computation...");
                     } finally {
+                        logInfo("Unlocking Instances after Computation...");
                         withWriteLock(() -> affectedFeatureIds.forEach(computingInstances::remove));
                     }
                     logInfo("All Instances unlocked!");
                 } else if (computation instanceof ImportPeaksFomResourceWorkflow peakImport) {
                     logInfo("Collecting imported compounds...");
                     extractIds(peakImport.getImportedInstances());
-                    if (affectedFeatureIds != null)
-                        submitJob(() -> project.addToSearchIndex(affectedFeatureIds, null), JobType.CPU).awaitResult();
+                    if (affectedFeatureIds != null){
+                        logInfo("Updating search-index after Import...");
+                        submitJob(() -> project.addToSearchIndex(affectedFeatureIds, null), JobType.IO).awaitResult();
+                    }
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ImportMsFromResourceWorkflow msImport) {
                     logInfo("Collecting imported compounds...");
                     affectedFeatureIds = msImport.getImportedFeatureIds().longStream().mapToObj(String::valueOf).toList();
                     affectedCompoundIds = msImport.getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
-                    if (affectedFeatureIds != null) // MS data import is once from scratch anyway. so rebuilding index is straightforward and fast
-                        submitJob(() -> project.createSearchIndex(true), JobType.CPU).awaitResult();
-
+                    if (affectedFeatureIds != null){ // MS data import is once from scratch anyway. so rebuilding index is straightforward and fast
+                        logInfo("Rebuilding search-index after Import...");
+                        submitJob(() -> project.createSearchIndex(true), JobType.IO).awaitResult();
+                    }
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ToolChainWorkflow) {
                     logWarn("ToolChainWorkflow without instances? Should no happen! Job name: " + getName());

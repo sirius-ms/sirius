@@ -22,6 +22,7 @@ package de.unijena.bioinf.babelms.massbank;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.babelms.utils.ParserUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -154,37 +155,56 @@ public enum MassbankFormat {
     }
 
     public static Optional<PrecursorIonType> parsePrecursorIonType(Map<String, String> metaInfo) {
+        // empty values count as missing
         String value = metaInfo.get(MS_FOCUSED_ION_PRECURSOR_TYPE.k());
-        if (value != null)
+        if (value != null && !value.isBlank())
             return Optional.of(PrecursorIonType.fromString(value));
 
         value = metaInfo.get(MS_FOCUSED_ION_ION_TYPE.k());
-        if (value != null)
+        if (value != null && !value.isBlank())
             return Optional.of(PrecursorIonType.fromString(value));
 
         value = metaInfo.get(AC_MASS_SPECTROMETRY_ION_MODE.k());
-        if (value != null) {
+        if (value != null && !value.isBlank()) {
             return Optional.of(value.toLowerCase().charAt(0) == 'n' ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
         }
         return Optional.empty();
     }
 
+    /**
+     * The precursor m/z, or else computed from the neutral CH$EXACT_MASS and the adduct - only if the adduct is known.
+     * A mass of 0 or below means none is known.
+     *
+     * @throws IllegalArgumentException from {@link #parsePrecursorIonType} if the exact mass has to be used, but the
+     *                                  adduct cannot be parsed or is not supported
+     */
     public static Optional<Double> parsePrecursorMZ(Map<String, String> metaInfo) {
-        String value = metaInfo.get(MS_FOCUSED_ION_PRECURSOR_MZ.k());
-        try {
-            if (value != null) {
-                String[] arr = value.split("/");
-                return Optional.of(Double.parseDouble(arr[arr.length - 1]));
-            }
-        } catch (NumberFormatException ignored) {}
+        final Optional<Double> precursorMz = parseGivenPrecursorMz(metaInfo);
+        if (precursorMz.isPresent())
+            return precursorMz;
 
-        try {
-            value = metaInfo.get(CH_EXACT_MASS.k());
-            if (value != null)
-                return Optional.of(Double.parseDouble(value));
-        } catch (NumberFormatException ignored) {}
+        final Optional<Double> exactMass = ParserUtils.parsePositiveMass(metaInfo.get(CH_EXACT_MASS.k()));
+        if (exactMass.isEmpty())
+            return Optional.empty();
+        return ParserUtils.precursorMzFromExactMass(exactMass.get(), parsePrecursorIonType(metaInfo).orElse(null));
+    }
 
-        return Optional.empty();
+    /**
+     * @return the precursor m/z field as given, whether usable or not - empty if missing or blank
+     */
+    static Optional<String> getGivenPrecursorMzField(Map<String, String> metaInfo) {
+        return Optional.ofNullable(metaInfo.get(MS_FOCUSED_ION_PRECURSOR_MZ.k())).filter(v -> !v.isBlank());
+    }
+
+    /**
+     * @return the precursor m/z as given in MS$FOCUSED_ION: PRECURSOR_M/Z, empty if missing or not a usable m/z
+     */
+    static Optional<Double> parseGivenPrecursorMz(Map<String, String> metaInfo) {
+        final String value = metaInfo.get(MS_FOCUSED_ION_PRECURSOR_MZ.k());
+        if (value == null)
+            return Optional.empty();
+        final String[] parts = value.split("/");
+        return parts.length == 0 ? Optional.empty() : ParserUtils.parsePositiveMass(parts[parts.length - 1]);
     }
 
     public static Optional<String> parseName(Map<String, String> metaInfo) {

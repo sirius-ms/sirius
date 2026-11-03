@@ -37,6 +37,7 @@ import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.*;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
@@ -72,8 +73,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -109,24 +114,30 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * <h2>Supported filter syntax</h2>
      *
-     * <p>The filter string must contain one or more clauses. A clause is prefíxed
+     * <p>The filter string must contain one or more clauses. A clause is prefixed
      * by a field name.
      * </p>
      *
-     * Currently the only searchable fields are names of tags ({@code tagName}) followed by a clause that is valued for the value type of the tag (See TagDefinition).
-     * Tag name based field need to be prefixed with the namespace {@code tags.}.
-     * Possible value types of tags are <strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value
+     * Searchable fields are the indexed properties of the feature (e.g. {@code ionMass}, {@code intensityApex}, {@code name},
+     * {@code quality}, {@code hasMsMs}), its annotations addressed via dot notation
+     * (e.g. {@code topAnnotations.structureAnnotation.structureName}), and project tags prefixed with the
+     * namespace {@code tags.} (e.g. {@code tags.MyTag}).
+     * Use the {@code searchable-fields} endpoint (getAlignedFeaturesSearchableFields) to list all fields that
+     * can be searched, including their value type, whether they support word based (full text) search, and
+     * whether results can be sorted by them.
+     * Possible value types are <strong>text</strong>, <strong>integer</strong>, <strong>double</strong>,
+     * <strong>boolean</strong>, <strong>date</strong>, or <strong>time</strong>.
      *
      * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
      *
      * <p>A clause may be:</p>
      * <ul>
      *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tags.MyTagA:sample}</li>
-     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code tags.MyTagA:"Some Text"}</li>
+     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code name:"Bicuculline methiodide"}</li>
      *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code tags.MyTagA:/[mb]oat/}</li>
-     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code tags.MyTagB<3}</li>
-     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code tags.MyTagB:[* TO 3] }</li>
-     *     <li>a <strong>boolean</strong>: tags with boolean value are matched as follows: e.g. {@code tags.MyTagA:true}, {@code tags.MyTagA:false}</li>
+     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code ionMass<300}</li>
+     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code ionMass:[300 TO 400]}</li>
+     *     <li>a <strong>boolean</strong>: boolean fields are matched as follows: e.g. {@code hasMsMs:true}, {@code tags.MyTagA:false}</li>
      *     <li>a <strong>value-less</strong>: tags without values (See TagDefinition) are matched as follows: e.g. {@code tags.MyTagA:*} or {@code tags.MyTagA:true}</li>
      * </ul>
      *
@@ -136,7 +147,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * <p>The syntax allows to build complex filter queries such as:</p>
      *
-     * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
+     * <p>{@code ionMass:[300 TO 400] AND quality:GOOD AND topAnnotations.compoundClassAnnotation.npcPathway:"Alkaloids" AND tags.city:"new york" OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.time<10\:00\:00 }</p>
      *
      * @param projectId    project space to get features (aligned over runs) from.
      * @param searchQuery  Optional search query in lucene syntax. Omit this parameter to page over all features.
@@ -158,6 +169,23 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @RequestParam(defaultValue = "tags, computedTools, qualities") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(searchQuery, pageable, msDataSearchPrepared, removeNone(optFields));
+    }
+
+    /**
+     * Get all fields that can be used in the searchQuery parameter of feature (aligned over runs) endpoints.
+     * <p>
+     * Use this to build valid lucene queries: the field type determines which clauses are supported
+     * (e.g. range queries like {@code ionMass:[300 TO 400]} for numeric fields, word based search for
+     * full-text fields). Includes the dynamic tag fields ({@code tags.<tagName>}) of this project.
+     * An empty list means there are no searchable fields.
+     *
+     * @param projectId project space to read the searchable feature fields from.
+     * @return fields usable in searchQuery parameters of feature endpoints.
+     */
+    @Operation(operationId = "getAlignedFeaturesSearchableFields")
+    @GetMapping(value = "/searchable-fields", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SearchableField> getAlignedFeaturesSearchableFields(@PathVariable String projectId) {
+        return projectsProvider.getProjectOrThrow(projectId).getSearchableFields(AlignedFeature.class);
     }
 
     /**
@@ -228,15 +256,13 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param searchQuery tag/text/range query in lucene syntax; must be non-empty (a blank query would match
      *                    every feature).
      */
-    @Operation(operationId = "deleteAlignedFeaturesByQueryExperimental")
     @PutMapping(value = "/delete-by-query")
     public void deleteAlignedFeaturesByQuery(@PathVariable String projectId, @RequestParam String searchQuery) {
         projectsProvider.getProjectOrThrow(projectId).deleteAlignedFeaturesByQuery(searchQuery);
     }
 
     /**
-     * Import (aligned) features into the project. Features must not exist in the project.
-     * Otherwise, they will exist twice.
+     * Import (aligned) features into the project. Features must not exist in the project, otherwise they will be duplicated.
      *
      * @param projectId project-space to import into.
      * @param features  the feature data to be imported
@@ -420,7 +446,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * @param projectId           project-space to read from.
      * @param alignedFeatureId    feature (aligned over runs) the structure candidates belong to.
-     * @param smiles              smiles
+     * @param smiles              SMILES strings of the structures to add
      * @param skipExistenceCheck  if true, skips a check if this compound is an existing candidate, potentially leading to duplicate structures.
      * @return StructureCandidate of this feature candidate with specified optional fields.
      */
@@ -520,7 +546,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         }
 
         if (matches != null && removeNone(optFields).contains(SpectralLibraryMatch.OptField.referenceSpectrum))
-            matches.getContent().forEach(this::extractRefSpectraSneaky);
+            extractRefSpectraSneaky(matches.getContent());
         return matches;
     }
 
@@ -788,7 +814,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     /**
      * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey
      * <p>
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result.
      * These annotations are only available if a fragmentation tree is available.
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
@@ -932,7 +958,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.
      * <p>
      * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses
-     * for the given formula result identifier
+     * for the given formula result identifier.
      * These annotations are only available if a fragmentation tree and the structure candidate are available.
      *
      * @param projectId        project-space to read from.
@@ -1045,7 +1071,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     /**
      * Return Best matching compound classes for given formulaId.
      * <p>
-     * Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     * Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of the ClassyFire and NPC ontology,
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1281,14 +1307,44 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not load Spectrum: '%s'. Database '%s' does not exist!", match.getUuid(), match.getDbName())));
     }
 
+    /**
+     * Loads the reference spectrum of the given match, leaving it without reference spectrum if unavailable.
+     * A reference spectrum that cannot be loaded (usually a custom database that is not installed on this
+     * machine anymore) is a user-side condition, not a server error, so it is reported as a plain warning
+     * without a stack trace. The stack trace is available on debug level.
+     */
     @Nullable
     private ReferenceSpectrum extractRefSpectraSneaky(SpectralLibraryMatch match) {
         try {
             return extractRefSpectra(match);
         } catch (ResponseStatusException e) {
-            log.error(e.getReason(), e);
+            log.warn("{}", e.getReason());
+            log.debug("Could not load reference spectrum of match '{}'.", match.getUuid(), e);
             return null;
         }
+    }
+
+    /**
+     * Loads the reference spectra of all given matches (see the single-match variant above). Failures are
+     * summarized per database, so a single missing database does not produce one warning per match.
+     */
+    private void extractRefSpectraSneaky(Collection<SpectralLibraryMatch> matches) {
+        Map<String, List<String>> reasonsByDb = new LinkedHashMap<>();
+        for (SpectralLibraryMatch match : matches) {
+            try {
+                extractRefSpectra(match);
+            } catch (ResponseStatusException e) {
+                reasonsByDb.computeIfAbsent(match.getDbName(), db -> new ArrayList<>()).add(e.getReason());
+                log.debug("Could not load reference spectrum of match '{}'.", match.getUuid(), e);
+            }
+        }
+
+        reasonsByDb.values().forEach(reasons -> {
+            if (reasons.size() == 1)
+                log.warn("{}", reasons.getFirst());
+            else
+                log.warn("{} ({} of {} spectral library matches affected)", reasons.getFirst(), reasons.size(), matches.size());
+        });
     }
 
     /**

@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.gui.login;
 
+import com.formdev.flatlaf.util.ScaledImageIcon;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthService;
@@ -98,7 +99,7 @@ public class AccountPanel extends LoadablePanel implements PropertyChangeListene
                 }));
         refresh.setPreferredSize(new Dimension(45, 45));
         refresh.setToolTipText(
-                GuiUtils.formatToolTip("Refresh access token (also reloads account an license information)."));
+                GuiUtils.formatToolTip("Refresh access token (also reloads account and license information)."));
 
         Box right = Box.createHorizontalBox();
         right.add(Box.createHorizontalGlue());
@@ -160,9 +161,10 @@ public class AccountPanel extends LoadablePanel implements PropertyChangeListene
                 try {
                     Image image = ImageIO.read(new URL(userInfo.getClaim("picture").asString()));
                     image = Icons.makeEllipse(image);
-                    image = Icons.scaledInstance(image, 128, 128);
-
-                    userIconLabel.setIcon(new ImageIcon(image));
+                    // handed over unscaled: ScaledImageIcon rasterises the original at the device
+                    // resolution, while a 128x128 raster in an ImageIcon would be stretched by the
+                    // desktop scale factor (Windows 125% / 150%) and look blurry
+                    userIconLabel.setIcon(new ScaledImageIcon(new ImageIcon(image), 128, 128));
                 } catch (Throwable e) {
                     LoggerFactory.getLogger(getClass()).warn("Could not load profile image: {}", e.getMessage());
                     userIconLabel.setIcon(Icons.USER_GREEN.derive(128,128));

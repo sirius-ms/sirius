@@ -122,7 +122,7 @@ public class Run {
   }
 
   /**
-   * Informative, human-readable name of this run
+   * Informative, human-readable name of the run
    * @return name
    */
   @jakarta.annotation.Nullable
@@ -172,7 +172,7 @@ public class Run {
   }
 
   /**
-   * Get chromatography
+   * Chromatography the run was measured with, e.g. &#39;Liquid Chromatography&#39;.
    * @return chromatography
    */
   @jakarta.annotation.Nullable
@@ -197,7 +197,7 @@ public class Run {
   }
 
   /**
-   * Get ionization
+   * Ionization the run was measured with, named as in the HUPO PSI-MS controlled vocabulary,  e.g. &#39;electrospray ionization&#39;.
    * @return ionization
    */
   @jakarta.annotation.Nullable
@@ -222,7 +222,7 @@ public class Run {
   }
 
   /**
-   * Get fragmentation
+   * Fragmentation the run was measured with, named as in the HUPO PSI-MS controlled vocabulary,  e.g. &#39;beam-type collision-induced dissociation&#39;.
    * @return fragmentation
    */
   @jakarta.annotation.Nullable
@@ -255,7 +255,7 @@ public class Run {
   }
 
   /**
-   * Get massAnalyzers
+   * Mass analyzers of the instrument the run was measured on, named as in the HUPO PSI-MS  controlled vocabulary, e.g. &#39;orbitrap&#39;.
    * @return massAnalyzers
    */
   @jakarta.annotation.Nullable

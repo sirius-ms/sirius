@@ -34,17 +34,23 @@ public class BioTransformerParameters {
 
     /**
      * Specify the Phase II mode for all provided BioTransformerSequenceSteps. Will only be applied to Steps that
-     * require the Phase II mode  as parameter. Can be null in cases where only BioTransformerSequenceSteps are specified
+     * require the Phase II mode as parameter. Can be null in cases where only BioTransformerSequenceSteps are specified
      * that do not need the Phase II mode.
      */
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.REQUIRED, defaultValue = "BT_RULE_BASED")
     private P2Mode p2Mode = P2Mode.BT_RULE_BASED;
 
     /**
-     * "Specify if you want to enable the retrieving from database (HMDB) feature."
+     * Additionally look up known biotransformations in the online HMDB database (a third-party MySQL server
+     * operated by the BioTransformer authors), instead of relying on rule-based prediction alone.
+     * <p>
+     * WARNING: when enabled, the first block of the InChIKey (the 2D skeleton) of every input structure and
+     * of every predicted intermediate metabolite is sent to that external server over the internet. Do not
+     * enable this for confidential structures. Requires internet access; the lookup fails without it.
+     * Disabled by default.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "true")
-    private boolean useDB = true;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "false")
+    private boolean useDB = false;
 
     /**
      * Specify BioTransformerSequenceSteps to be applied to input structures. MultiStep MetabolicTransformations can
@@ -65,7 +71,7 @@ public class BioTransformerParameters {
         }
 
         if (bioTransformerSequenceSteps.stream().map(BioTransformerSequenceStep::getMetabolicTransformation).anyMatch(HUMAN_CUSTOM_MULTI::equals))
-            throw new IllegalArgumentException(HUMAN_CUSTOM_MULTI.getDisplayName() + " is not allowed as parameter. Please the specify the individual steps instead.");
+            throw new IllegalArgumentException(HUMAN_CUSTOM_MULTI.getDisplayName() + " is not allowed as parameter. Please specify the individual steps instead.");
 
         BioTransformerSettings settings = new BioTransformerSettings()
                 .setUseSub(true)

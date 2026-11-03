@@ -55,6 +55,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     private static class MgfSpec {
 
         private String featureId;
+        private String scans;
         private MutableMs2Spectrum spectrum;
         private PrecursorIonType ionType;
         private HashMap<String, String> fields;
@@ -64,6 +65,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
         private SpecType type;
         private FunctionalMetabolomics fmet = null;
+        /** Error of an ION* field that could not be parsed - only raised if no other field defines the ion type. */
+        private RuntimeException ionTypeParseError;
 
         public MgfSpec(MgfSpec s) {
             this.spectrum = new MutableMs2Spectrum(s.spectrum);
@@ -73,8 +76,10 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             this.smiles = s.smiles;
             this.name = s.name;
             this.featureId = s.featureId;
+            this.scans = s.scans;
             this.retentionTime = s.retentionTime;
             this.type = s.type;
+            this.ionTypeParseError = s.ionTypeParseError;
             this.formula = null;
         }
 
@@ -130,6 +135,18 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
         private static final Pattern CHARGE_PATTERN = Pattern.compile("([+-]?)(\\d*)([+-]?)"); //Group 1: optional +-, Group 2: 0,1 or multiple digits, Group 3: optional +-
         private static final Pattern NOT_AVAILABLE = Pattern.compile("\\s*N/A\\s*");
+        private static final Pattern MS_LEVEL_NAME = Pattern.compile("MS(\\d+)");
+
+        /**
+         * MS level as number (2) or as name (MS2, MSMS, MS/MS).
+         */
+        private static int parseMsLevel(String value) {
+            final String name = value.toUpperCase();
+            if (!name.contains("MS")) return Integer.parseInt(value);
+            if (name.contains("MSMS") || name.contains("MS/MS")) return 2;
+            final Matcher m = MS_LEVEL_NAME.matcher(name);
+            return m.find() ? Integer.parseInt(m.group(1)) : 1;
+        }
 
         private void handleKeyword(MgfSpec spec, String keyword, String value) throws IOException {
             keyword = keyword.toUpperCase();
@@ -176,7 +193,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 if (spec.spectrum.getIonization() == null || spec.spectrum.getIonization().getCharge() != charge)
                     spec.spectrum.setIonization(new Charge(charge));
                 if (spec.ionType == null) spec.ionType = PrecursorIonType.unknown(charge);
-            } else if (keyword.startsWith("ION") || keyword.contains("ADDUCT")) {
+            } else if ((keyword.startsWith("ION") || keyword.contains("ADDUCT")) && !keyword.contains("SOURCE")) {
                 final PrecursorIonType ion;
                 final Matcher cm = CHARGE_PATTERN.matcher(value);
                 if (value.toLowerCase().startsWith("pos")) {
@@ -192,7 +209,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     if ("-".equals(cm.group(1)) || "-".equals(cm.group(3)))
                         charge = charge * -1;
                     ion = PrecursorIonType.unknown(charge);
-                } else {
+                } else if (value.contains("+") || value.contains("-")) {
                     try {
                         ion = PeriodicTable.getInstance().ionByNameOrNull(value);
                         if (ion == null) {
@@ -205,11 +222,12 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         if (!ignoreUnsupportedIonTypes) throw (e);
                         else return;
                     } catch (RuntimeException e) {
-                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-                        if (!ignoreUnsupportedIonTypes) throw (e);
-                        else return;
+                        // MGF is not standardised, so this may be a field that just starts with ION. Postpone the
+                        // error in case another field defines the ion type.
+                        spec.ionTypeParseError = e;
+                        return;
                     }
-                }
+                } else return; // no charge sign, so this is no ion type
                 if (spec.ionType == null || spec.ionType.isIonizationUnknown()) {
                     spec.spectrum.setIonization(ion.getIonization());
                     spec.ionType = ion;
@@ -221,7 +239,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     spec.type = SpecType.CORRELATED;
                 }
             } else if (keyword.contains("LEVEL")) {
-                final int level = Integer.parseInt(value);
+                final int level = parseMsLevel(value);
                 spec.spectrum.setMsLevel(level);
                 if (level == 1 && spec.type != SpecType.CORRELATED) spec.type = SpecType.MS1;
                 else if (level > 1) spec.type = SpecType.MSMS;
@@ -238,6 +256,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         spec.smiles = value;
                     }
                 } else if (keyword.equalsIgnoreCase("SCANS")){
+                    spec.scans = value; //kept independently of the name, so it can serve as feature id fallback
                     if(spec.name==null){ //Only use SCANS field if actual fields dont exist, if they do they overwrite
                         spec.name=value;
                     }
@@ -320,7 +339,10 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         }
 
         private void checkSpecIntegrity(MgfSpec spec) {
-            if (spec.ionType == null) throw new RuntimeException("Ion type is not defined");
+            if (spec.ionType == null) {
+                if (spec.ionTypeParseError != null) throw spec.ionTypeParseError;
+                else throw new RuntimeException("Ion type is not defined");
+            }
         }
     }
 
@@ -381,6 +403,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         exp.setIonMass(inst.peekNext().spectrum.getPrecursorMz());
         exp.setName(inst.peekNext().name);
         exp.setFeatureId(inst.peekNext().featureId);
+        if (exp.getFeatureId() == null) //MS-DIAL writes no FEATURE_ID; its identifier is the SCANS value
+            exp.setFeatureId(inst.peekNext().scans);
         if (exp.getName() == null)
             exp.setName(exp.getFeatureId());
         if (exp.getName() == null) {

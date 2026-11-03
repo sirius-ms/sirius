@@ -1,0 +1,13 @@
+#!/bin/sh
+# Refresh the AI code overview (build/ai-overview) and the .claude/skills pointer after a real
+# branch switch. Opt-in: enable with `./gradlew installGitHooks`. Runs in the background so
+# checkouts stay fast; Gradle up-to-date checking means aiOverview is a no-op unless .java sources
+# actually changed, and installAgentSkills is a no-op unless the pointer is missing or stale.
+# Args: $1 old HEAD, $2 new HEAD, $3 = 1 for branch checkout / 0 for file checkout.
+[ "$3" = "1" ] || exit 0
+# Foreground and JVM-free (~40ms), so its warning is actually visible; the Gradle run below is
+# backgrounded to /dev/null and could not surface one.
+[ -x ./.githooks/check-agent-docs ] && ./.githooks/check-agent-docs
+[ -x ./gradlew ] || exit 0
+(./gradlew aiOverview installAgentSkills -q >/dev/null 2>&1 &)
+exit 0

@@ -58,7 +58,7 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableView, spectraVisualizationPanel);
         major.setDividerLocation(250);
-        loadablePanel = new LoadablePanel(major);
+        loadablePanel = LoadablePanel.overlaying(major);
         add(loadablePanel, BorderLayout.CENTER);
         matchList.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
     }

@@ -21,5 +21,7 @@
 
 * `TAGS` (value: `"tags"`)
 
+* `INTENSITIES` (value: `"intensities"`)
+
 
 

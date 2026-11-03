@@ -105,7 +105,7 @@ public class SpectralLibrarySearch {
   }
 
   /**
-   * tags whether the tool is enabled
+   * Indicates whether the tool is enabled.
    * @return enabled
    */
   @jakarta.annotation.Nullable
@@ -138,7 +138,7 @@ public class SpectralLibrarySearch {
   }
 
   /**
-   * Structure Databases with Reference spectra to search in.  &lt;p&gt;  Defaults to BIO + Custom Databases. Possible values are available to Database API.
+   * Structure Databases with Reference spectra to search in.  &lt;p&gt;  Defaults to BIO + Custom Databases. Possible values are available via the Database API.
    * @return spectraSearchDBs
    */
   @jakarta.annotation.Nullable

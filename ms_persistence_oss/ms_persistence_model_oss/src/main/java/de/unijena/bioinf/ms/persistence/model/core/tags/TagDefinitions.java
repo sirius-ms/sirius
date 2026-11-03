@@ -28,7 +28,7 @@ public class TagDefinitions {
             .tagName("pfas").tagType("IMPORT").editable(false)
             .valueDefinition(new ValueDefinition<>(ValueType.TEXT, List.of(PFAS_TYPE_0, PFAS_TYPE_1, PFAS_TYPE_2), null, null))
             .displayName("Potential PFAS detected")
-            .description("For features which are part of a PFAS homologue series, PFAS isotope pattern or for which SIRIUS or CSI found a PFAS molecular formula/structure.")
+            .description("For features which are part of a PFAS homologue series, PFAS isotope pattern or for which SIRIUS or CSI:FingerID found a PFAS molecular formula/structure.")
             .build();
 
     public static final Set<TagDefinition> DEFAULT_TAG_DEFINITIONS = Set.of(SAMPLE_TYPE, PFAS_TYPE);

@@ -32,6 +32,7 @@ import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.webapi.WebAPI;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ import static io.sirius.ms.utils.jwt.AccessTokens.ACCESS_TOKENS;
 /**
  * TREAD SAFE
  */
+@Slf4j
 public final class ConnectionChecker {
     private volatile ConnectionCheck checkResult = new ConnectionCheck(new HashMap<>(), new LicenseInfo());
     private volatile CheckJob checkJob = null;
@@ -131,10 +133,10 @@ public final class ConnectionChecker {
                     }
                 }
             } catch (Exception e) {
+                String message = "Error when requesting computation limits.";
+                log.warn("{}: {}", message, e.getMessage(), e);
                 errors.computeIfAbsent(ConnectionError.Klass.APP_SERVER, k -> new LinkedHashSet<>())
-                        .add(new ConnectionError(93,
-                                "Error when requesting computation limits.",
-                                ConnectionError.Klass.APP_SERVER, e));
+                        .add(new ConnectionError(93, message, ConnectionError.Klass.APP_SERVER, e));
             } finally {
                 webAPI.checkConnection().forEach((k, v) -> errors.computeIfAbsent(k, k2 -> new LinkedHashSet<>()).addAll(v));
             }
@@ -176,7 +178,7 @@ public final class ConnectionChecker {
         private final LicenseInfo licenseInfo;
 
         /**
-         * List of errors ordered by significance. first error should be reported and addressed first.
+         * List of errors ordered by significance. First error should be reported and addressed first.
          * Following errors might just be follow-up errors
          */
         @NotNull

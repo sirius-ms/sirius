@@ -45,7 +45,7 @@ public class DecompOptions implements StandaloneTool<DecompWorkflow> {
             description = {"Set the strictness of the chemical filter.","Example: levels are STRICT < COMMON < PERMISSIVE < RDBE < NONE."})
     FilterLevel level;
 
-    @CommandLine.Option(names = {"--errors", "-r"}, description = "print mass errors")
+    @CommandLine.Option(names = {"--errors", "-r"}, description = "Print mass errors.")
     boolean massErrors;
 
     @CommandLine.Option(names = {"--elements", "-e"}, defaultValue = "CHNOPS",
@@ -63,7 +63,7 @@ public class DecompOptions implements StandaloneTool<DecompWorkflow> {
     String ionization;
 
     @CommandLine.Option(names = {"--max-decomps","-d"},
-            description = {"Maximum number of decompositions to be computed. The output might contain less " +
+            description = {"Maximum number of decompositions to be computed. The output might contain fewer " +
                     "than [--max-decomps] decompositions if there are not more available."})
     Integer maxDecomps;
 
@@ -74,7 +74,7 @@ public class DecompOptions implements StandaloneTool<DecompWorkflow> {
     @CommandLine.Option(names = {"--mass", "-m"}, arity = "0..*", description = {"Masses that will be decomposed."})
     double[] masses;
 
-    @CommandLine.Option(names = {"--output", "-o"}, description = {"File to with output to."})
+    @CommandLine.Option(names = {"--output", "-o"}, description = {"File to write output to."})
     Path out;
 
     @Override

@@ -53,7 +53,7 @@ public class LicenseInfo {
     @Schema(nullable = true)
     private Subscription subscription;
     /**
-     * Status of the consumable resources of the {@link Subscription}.
+     * Status of the consumable resources of the {@code Subscription}.
      */
     @Schema(nullable = true)
     private SubscriptionConsumables consumables;

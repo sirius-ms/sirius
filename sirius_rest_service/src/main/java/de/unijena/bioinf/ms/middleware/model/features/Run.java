@@ -53,7 +53,7 @@ public class Run implements Taggable {
     protected String runId;
 
     /**
-     * Informative, human-readable name of this run
+     * Informative, human-readable name of the run
      */
     @IndexField(defaultSearchField = true, fullTextSearch = true, sortable = true)
     protected String name;
@@ -64,18 +64,33 @@ public class Run implements Taggable {
     @IndexField(defaultSearchField = true, fullTextSearch = true)
     protected String source;
 
+    /**
+     * Chromatography the run was measured with, e.g. 'Liquid Chromatography'.
+     */
     @IndexField
     @Schema(nullable = true)
     protected String chromatography;
 
+    /**
+     * Ionization the run was measured with, named as in the HUPO PSI-MS controlled vocabulary,
+     * e.g. 'electrospray ionization'.
+     */
     @IndexField
     @Schema(nullable = true)
     protected String ionization;
 
+    /**
+     * Fragmentation the run was measured with, named as in the HUPO PSI-MS controlled vocabulary,
+     * e.g. 'beam-type collision-induced dissociation'.
+     */
     @IndexField
     @Schema(nullable = true)
     protected String fragmentation;
 
+    /**
+     * Mass analyzers of the instrument the run was measured on, named as in the HUPO PSI-MS
+     * controlled vocabulary, e.g. 'orbitrap'.
+     */
     @IndexField
     @Schema(nullable = true)
     protected List<String> massAnalyzers;

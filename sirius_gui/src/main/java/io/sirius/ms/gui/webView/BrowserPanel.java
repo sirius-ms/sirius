@@ -52,12 +52,15 @@ public abstract class BrowserPanel extends JPanel {
     // Some arbitrary size numbers to fix JSplitPane divider not moving
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(500,300);
+        // a web view has no meaningful preferred size of its own, so callers that need a specific
+        // one (e.g. to pack the window around it) can set it explicitly
+        return isPreferredSizeSet() ? super.getPreferredSize() : new Dimension(500,300);
     }
 
     @Override
     public Dimension getMinimumSize() {
-        return new Dimension(50,20);
+        // see getPreferredSize(): an explicitly set size wins over the arbitrary fallback
+        return isMinimumSizeSet() ? super.getMinimumSize() : new Dimension(50,20);
     }
 
     public abstract void showDevTools();

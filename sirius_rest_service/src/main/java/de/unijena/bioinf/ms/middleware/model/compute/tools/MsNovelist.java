@@ -46,7 +46,7 @@ public class MsNovelist extends Tool<MsNovelistOptions> {
     /**
      * Number of structure candidates to be predicted by MsNovelist.
      * Max Value 128. Values > 128 will be set to 128.
-     * Actual number of returned candidate might be lower du to duplicates being created by MsNovelist.
+     * The actual number of returned candidates might be lower due to duplicates being created by MsNovelist.
      */
     @Schema(nullable = true)
     Integer numberOfCandidateToPredict;

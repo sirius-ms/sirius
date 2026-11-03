@@ -5,6 +5,8 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -22,6 +24,7 @@ import de.unijena.bioinf.chemdb.CompoundJsonMapper;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
@@ -112,6 +115,27 @@ public class SiriusProjectDatabaseImplTest {
         });
     }
 
+
+    // issue sirius#326: opening a second project (here one without fingerprint data) must not reset
+    // the fingerprint versions the first project needs to read its predictions
+    @ParameterizedTest
+    @ValueSource(ints = {1, -1})
+    public void testFingerprintsReadableAfterOpeningOtherProject(int charge) {
+        withDb("/sirius-project-all-fp-data.sirius", withFp -> {
+            MaskedFingerprintVersion version = withFp.findFingerprintData(FingerIdData.class, charge).orElseThrow().getFingerprintVersion();
+            double[] probs = new double[version.size()];
+            Arrays.fill(probs, 0.5);
+            withFp.getStorage().insert(CsiPrediction.builder().alignedFeatureId(1).formulaId(1).charge(charge)
+                    .fingerprint(new ProbabilityFingerprint(version, probs)).build());
+
+            withDb(empty -> {
+                CsiPrediction read = withFp.getStorage().getByPrimaryKey(1L, CsiPrediction.class).orElseThrow();
+                assertNotNull(read.getFingerprint());
+                assertTrue(version.identical(read.getFingerprint().getFingerprintVersion()));
+                assertArrayEquals(probs, read.getFingerprint().toProbabilityArray());
+            });
+        });
+    }
 
     @ParameterizedTest
     @ValueSource(ints = {1, -1})
@@ -660,6 +684,156 @@ public class SiriusProjectDatabaseImplTest {
                     }
                 }
             }
+        });
+    }
+
+    /** Imports the first spectrum of a bundled peak list as its own aligned feature and compound. */
+    private static AlignedFeatures importFirst(NitriteSirirusProject db, String resource) throws Exception {
+        try (InputStream in = Objects.requireNonNull(SiriusProjectDatabaseImplTest.class.getResourceAsStream(resource))) {
+            CloseableIterator<Ms2Experiment> it = new MsExperimentParser().getParser(resource).parseIterator(in, URI.create(resource));
+            return db.importMs2ExperimentAsAlignedFeature(it.next());
+        }
+    }
+
+    /** Merges the given features under one freshly-inserted compound, removing their original singleton ones. */
+    private static Compound mergeUnderSharedCompound(NitriteSirirusProject db, AlignedFeatures... features) throws IOException {
+        for (AlignedFeatures f : features)
+            db.getStorage().removeByPrimaryKey(f.getCompoundId(), Compound.class);
+        Compound shared = Compound.builder().adductFeatures(List.of(features)).build();
+        db.getStorage().insert(shared);
+        for (AlignedFeatures f : features) {
+            f.setCompoundId(shared.getCompoundId());
+            db.getStorage().upsert(f);
+        }
+        return shared;
+    }
+
+    @Test
+    public void cascadeDeleteSingleFeatureDeletesChildlessCompoundTest() {
+        withDb(db -> {
+            AlignedFeatures feature = importFirst(db, "/peaklists/laudanosine.mgf");
+            long compoundId = feature.getCompoundId();
+
+            assertTrue(db.cascadeDeleteAlignedFeatures(feature.getAlignedFeatureId()) > 0);
+
+            assertTrue(db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), AlignedFeatures.class).isEmpty());
+            assertTrue(db.getStorage().getByPrimaryKey(compoundId, Compound.class).isEmpty(),
+                    "the compound's only feature is gone, so the compound must be too");
+        });
+    }
+
+    @Test
+    public void cascadeDeleteOneOfSeveralFeaturesLeavesCompoundIntactTest() {
+        withDb(db -> {
+            AlignedFeatures f1 = importFirst(db, "/peaklists/laudanosine.mgf");
+            AlignedFeatures f2 = importFirst(db, "/peaklists/laudanosine.mgf");
+            Compound shared = mergeUnderSharedCompound(db, f1, f2);
+
+            assertTrue(db.cascadeDeleteAlignedFeatures(f1.getAlignedFeatureId()) > 0);
+
+            assertTrue(db.getStorage().getByPrimaryKey(f1.getAlignedFeatureId(), AlignedFeatures.class).isEmpty());
+            Optional<AlignedFeatures> remainingFeature =
+                    db.getStorage().getByPrimaryKey(f2.getAlignedFeatureId(), AlignedFeatures.class);
+            assertTrue(remainingFeature.isPresent(), "the other feature of the compound must survive");
+            assertEquals(shared.getCompoundId(), remainingFeature.get().getCompoundId());
+            assertTrue(db.getStorage().getByPrimaryKey(shared.getCompoundId(), Compound.class).isPresent(),
+                    "the compound still has a feature, so it must survive too");
+        });
+    }
+
+    @Test
+    public void cascadeDeleteAlignedFeaturesBatchAcrossTwoCompoundsTest() {
+        withDb(db -> {
+            AlignedFeatures f1 = importFirst(db, "/peaklists/laudanosine.mgf");
+            AlignedFeatures f2 = importFirst(db, "/peaklists/laudanosine.mgf");
+            long c1 = f1.getCompoundId();
+            long c2 = f2.getCompoundId();
+            assertNotEquals(c1, c2);
+
+            assertTrue(db.cascadeDeleteAlignedFeatures(List.of(f1.getAlignedFeatureId(), f2.getAlignedFeatureId())) > 0);
+
+            assertTrue(db.getStorage().getByPrimaryKey(c1, Compound.class).isEmpty());
+            assertTrue(db.getStorage().getByPrimaryKey(c2, Compound.class).isEmpty());
+        });
+    }
+
+    @Test
+    public void cascadeDeleteAlignedFeaturesBatchSameCompoundTest() {
+        withDb(db -> {
+            AlignedFeatures f1 = importFirst(db, "/peaklists/laudanosine.mgf");
+            AlignedFeatures f2 = importFirst(db, "/peaklists/laudanosine.mgf");
+            AlignedFeatures untouched = importFirst(db, "/peaklists/laudanosine.mgf");
+            Compound shared = mergeUnderSharedCompound(db, f1, f2);
+            long untouchedCompoundId = untouched.getCompoundId();
+
+            // both ids belong to the same compound - its distinct id must still only be checked/removed once
+            assertTrue(db.cascadeDeleteAlignedFeatures(List.of(f1.getAlignedFeatureId(), f2.getAlignedFeatureId())) > 0);
+
+            assertTrue(db.getStorage().getByPrimaryKey(shared.getCompoundId(), Compound.class).isEmpty());
+            assertTrue(db.getStorage().getByPrimaryKey(untouched.getAlignedFeatureId(), AlignedFeatures.class).isPresent());
+            assertTrue(db.getStorage().getByPrimaryKey(untouchedCompoundId, Compound.class).isPresent());
+        });
+    }
+
+    @Test
+    public void cascadeDeleteAlignedFeatureRemovesItsCorrelatedIonPairsTest() {
+        withDb(db -> {
+            AlignedFeatures f1 = importFirst(db, "/peaklists/laudanosine.mgf");
+            AlignedFeatures f2 = importFirst(db, "/peaklists/laudanosine.mgf");
+            AlignedFeatures f3 = importFirst(db, "/peaklists/laudanosine.mgf");
+
+            CorrelatedIonPair asFirst = CorrelatedIonPair.builder()
+                    .compoundId(f1.getCompoundId())
+                    .alignedFeatureId1(f1.getAlignedFeatureId())
+                    .alignedFeatureId2(f2.getAlignedFeatureId())
+                    .type(CorrelatedIonPair.Type.ADDUCT)
+                    .build();
+            CorrelatedIonPair asSecond = CorrelatedIonPair.builder()
+                    .compoundId(f1.getCompoundId())
+                    .alignedFeatureId1(f3.getAlignedFeatureId())
+                    .alignedFeatureId2(f1.getAlignedFeatureId())
+                    .type(CorrelatedIonPair.Type.ADDUCT)
+                    .build();
+            CorrelatedIonPair unrelated = CorrelatedIonPair.builder()
+                    .compoundId(f2.getCompoundId())
+                    .alignedFeatureId1(f2.getAlignedFeatureId())
+                    .alignedFeatureId2(f3.getAlignedFeatureId())
+                    .type(CorrelatedIonPair.Type.ADDUCT)
+                    .build();
+            db.getStorage().insertAll(List.of(asFirst, asSecond, unrelated));
+
+            db.cascadeDeleteAlignedFeatures(f1.getAlignedFeatureId());
+
+            assertTrue(db.getStorage().getByPrimaryKey(asFirst.getIonPairId(), CorrelatedIonPair.class).isEmpty(),
+                    "a pair naming the deleted feature as alignedFeatureId1 must be gone");
+            assertTrue(db.getStorage().getByPrimaryKey(asSecond.getIonPairId(), CorrelatedIonPair.class).isEmpty(),
+                    "a pair naming the deleted feature as alignedFeatureId2 must be gone");
+            assertTrue(db.getStorage().getByPrimaryKey(unrelated.getIonPairId(), CorrelatedIonPair.class).isPresent(),
+                    "a pair naming two other features must be untouched");
+        });
+    }
+
+    @Test
+    public void cascadeDeleteCompoundWithNoFeaturesStillRemovesItsCorrelatedIonPairsTest() {
+        withDb(db -> {
+            AlignedFeatures feature = importFirst(db, "/peaklists/laudanosine.mgf");
+            long compoundId = feature.getCompoundId();
+            // left with no features at all, as if they had been removed through some other path - nothing
+            // drives deleteIfOrphaned in this case, so cascadeDeleteCompound's own cleanup has to catch it
+            db.getStorage().removeByPrimaryKey(feature.getAlignedFeatureId(), AlignedFeatures.class);
+
+            CorrelatedIonPair stranded = CorrelatedIonPair.builder()
+                    .compoundId(compoundId)
+                    .alignedFeatureId1(123L)
+                    .alignedFeatureId2(456L)
+                    .type(CorrelatedIonPair.Type.ADDUCT)
+                    .build();
+            db.getStorage().insert(stranded);
+
+            assertTrue(db.cascadeDeleteCompound(compoundId) > 0);
+
+            assertTrue(db.getStorage().getByPrimaryKey(stranded.getIonPairId(), CorrelatedIonPair.class).isEmpty());
+            assertTrue(db.getStorage().getByPrimaryKey(compoundId, Compound.class).isEmpty());
         });
     }
 

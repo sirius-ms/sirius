@@ -113,15 +113,20 @@ public class FeatureImports {
         return new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();
     }
 
+    /** The MS1 mass accuracy assumed for imported data: tight for an Orbitrap, the configured default otherwise. */
+    public static @NotNull MS1MassDeviation ms1MassDeviation(@Nullable InstrumentProfile profile) {
+        return profile == InstrumentProfile.ORBITRAP
+                ? new MS1MassDeviation(new Deviation(5), new Deviation(5), new Deviation(2))
+                : PropertyManager.DEFAULTS.createInstanceWithDefaults((MS1MassDeviation.class));
+    }
+
     @NotNull
     public static MSData extractMsData(FeatureImport featureImport, @Nullable InstrumentProfile profile) {
         MSData.MSDataBuilder msDataBuilder = MSData.builder();
 
         // build MS1 data
         if (featureImport.getMergedMs1() != null || notNullOrEmpty(featureImport.getMs1Spectra())) {
-            MS1MassDeviation ms1dev = profile == InstrumentProfile.ORBITRAP
-                    ? new MS1MassDeviation(new Deviation(5), new Deviation(5), new Deviation(2))
-                    : PropertyManager.DEFAULTS.createInstanceWithDefaults((MS1MassDeviation.class));
+            MS1MassDeviation ms1dev = ms1MassDeviation(profile);
 
             SimpleSpectrum mergeMs1 = featureImport.getMergedMs1() != null
                     ? new SimpleSpectrum(featureImport.getMergedMs1())

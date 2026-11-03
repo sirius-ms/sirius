@@ -57,14 +57,17 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
     private final InstanceBufferFactory<?> bufferFactory;
 
     protected List<ToolChainJob.Factory<?>> toolchain;
+    @Getter
+    private final List<ToolChainOptions<?, ?>> toolchainOptions;
 
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     private InstanceBuffer submitter = null;
 
-    public ToolChainWorkflow(@NotNull PreprocessingJob<?> preprocessingJob, @Nullable PostprocessingJob<?> postprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<ToolChainJob.Factory<?>> toolchain, InstanceBufferFactory<?> bufferFactory) {
+    public ToolChainWorkflow(@NotNull PreprocessingJob<?> preprocessingJob, @Nullable PostprocessingJob<?> postprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<ToolChainJob.Factory<?>> toolchain, @NotNull List<ToolChainOptions<?, ?>> toolchainOptions, InstanceBufferFactory<?> bufferFactory) {
         this.preprocessingJob = preprocessingJob;
         this.parameters = parameters;
         this.toolchain = toolchain;
+        this.toolchainOptions = toolchainOptions;
         this.postprocessingJob = postprocessingJob;
         this.bufferFactory = bufferFactory;
     }

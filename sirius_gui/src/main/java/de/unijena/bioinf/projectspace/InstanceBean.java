@@ -145,12 +145,16 @@ public class InstanceBean implements SiriusPCS {
         if (SwingUtilities.isEventDispatchThread())
             log.warn("Cache update happened in GUI thread. Might cause GUI stutters!");
         synchronized (this) {
-            this.optsLoaded.clear();
             try {
-                this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+                AlignedFeature reloaded = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+                this.sourceFeature = reloaded;
+                this.optsLoaded.clear();
                 this.optsLoaded.addAll(DEFAULT_OPT_FEATURE_FIELDS);
-            } catch (WebClientResponseException.NotFound e) {  // feature has been deleted on server, will be deleted on client with a following event
-                this.sourceFeature = null;
+            } catch (WebClientResponseException.NotFound e) {
+                // Feature deleted on the server; the following FEATURE_DELETED event will remove this bean.
+                // Keep the last-known snapshot (and its loaded opt-fields) rather than nulling it: a null
+                // source is a landmine - any EDT access in the meantime (the action-enablement list scan,
+                // the cell renderer) would otherwise force a blocking reload or NPE for every such bean.
             }
 
             //todo this should go into  clearResultCache but this seems to have side effects, due to suboptimal caching architecture
@@ -224,7 +228,13 @@ public class InstanceBean implements SiriusPCS {
         return Optional.ofNullable(sourceFeature);
     }
 
-    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(COMPUTED_TOOLS, TOP_ANNOTATIONS_SUMMARY);
+    // Opt-fields preloaded for every bean in the compound list. This MUST cover everything the compound-list
+    // sort comparators and cell renderer read, or those accessors fall through to a lazy getSourceFeature(...)
+    // reload - a synchronous per-bean backend call on the EDT (the landmine class fixed elsewhere). In
+    // particular TOP_ANNOTATIONS_SUMMARY backs the confidence sort/column; COMPUTED_TOOLS backs isComputing();
+    // INTENSITIES backs the sorts by peak height and by peak area.
+    // If you trim this list to save bandwidth, move the affected sort/render off the feature snapshot first.
+    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(COMPUTED_TOOLS, TOP_ANNOTATIONS_SUMMARY, INTENSITIES);
 
     private final Set<AlignedFeatureOptField> optsLoaded;
 
@@ -246,7 +256,7 @@ public class InstanceBean implements SiriusPCS {
                 // we update every time here since we do not know which optional fields are already loaded.
                 if (sourceFeature == null || !optsLoaded.containsAll(of)) {
                     if (SwingUtilities.isEventDispatchThread())
-                        log.warn("Reload Featured '{}' with nu [{}] vs current [{}] in Event Thread. Might cause GUI stutters!", sourceFeature.getAlignedFeatureId(), of.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")), this.optsLoaded.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")));
+                        log.warn("Reload Featured '{}' with nu [{}] vs current [{}] in Event Thread. Might cause GUI stutters!", getFeatureId(), of.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")), this.optsLoaded.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")));
 
                     optsLoaded.clear();
                     sourceFeature = withIds((pid, fid) ->
@@ -330,9 +340,24 @@ public class InstanceBean implements SiriusPCS {
         return getSourceFeature().getIonMass();
     }
 
+    /** The MS1 peak height: the highest raw apex intensity over the runs the feature was detected in; null if unknown. */
+    public @Nullable Double getIntensityApex() {
+        Intensity intensity = getSourceFeature(INTENSITIES).getIntensity();
+        return intensity == null ? null : intensity.getApex();
+    }
+
+    /** The MS1 peak area: the highest raw area under the curve over the runs the feature was detected in; null if unknown. */
+    public @Nullable Double getIntensityAUC() {
+        Intensity intensity = getSourceFeature(INTENSITIES).getIntensity();
+        return intensity == null ? null : intensity.getAuc();
+    }
+
 
     public boolean isComputing() {
-        return getSourceFeature().isComputing();
+        // Polled over the whole list on every list change (action enablement). Read the cached snapshot only:
+        // it must never force a blocking reload, and must tolerate a feature whose source is gone/not-yet-loaded
+        // (treated as not computing). isComputing is part of the default opt-fields, so the cache always has it.
+        return sourceFeature().map(AlignedFeature::isComputing).orElse(false);
     }
 
     public Optional<RetentionTime> getRT() {
@@ -644,12 +669,25 @@ public class InstanceBean implements SiriusPCS {
         throw new UnsupportedOperationException("Implement modification features in nightsky api");
     }
 
+    /**
+     * Applies a compute-state change from the server.
+     * <p>
+     * Deliberately silent: a job usually covers every feature of the project, so starting or finishing one
+     * flips thousands of these at once. Firing a property change per feature would turn each flip into a list
+     * change, and every list change makes each toolbar action scan the whole list again - quadratic in the
+     * number of features, on the event dispatch thread. The list is repainted once for the whole batch
+     * instead, and the actions are told once, see {@code ExperimentListChangeListener.computeStateChanged}.
+     *
+     * @return whether this actually changed anything, so a batch can tell whether it has something to report.
+     * The server repeats the state of a job on every progress event, so most calls change nothing.
+     */
     synchronized boolean changeComputeStateOfCache(boolean computeState) {
-        if (sourceFeature != null) {
-            sourceFeature.setComputing(computeState);
-            return true;
-        }
-        return false;
+        if (sourceFeature == null)
+            return false;
+        if (Boolean.valueOf(computeState).equals(sourceFeature.isComputing()))
+            return false;
+        sourceFeature.setComputing(computeState);
+        return true;
     }
 
     public class Setter {

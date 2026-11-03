@@ -22,7 +22,7 @@ public class CreateDBOptions implements StandaloneTool<Workflow> {
 
     @CommandLine.Option(names = "--location", required = true,
             description = {"Location of the custom database to add to SIRIUS.",
-                    "An absolute local path to a new database file file to be created (file name must end with .siriusdb)"})
+                    "An absolute local path to a new database file to be created (file name must end with .siriusdb)"})
     private String location = null;
 
     @CommandLine.Option(names = "--name",
@@ -35,7 +35,7 @@ public class CreateDBOptions implements StandaloneTool<Workflow> {
 
     @CommandLine.Option(names = "--displayName",
             description = {"Displayable name of the custom database.",
-                    "This is the preferred name to be shown in the GUI. Maximum Length: 15 characters.",
+                    "This is the preferred name to be shown in the GUI. Maximum length: 15 characters.",
                     "If not given, name will be used."})
     public void setDisplayName(String displayName) {
         if (displayName.length() > 15)
