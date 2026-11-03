@@ -176,6 +176,33 @@ public class ProjectMaximumIntensitiesTest {
         assertEquals(9.9e5, stored().run(RUN_B).getApex(), "and folded into from then on");
     }
 
+    /** Enough features that the derivation is split across workers; what it finds must not depend on that. */
+    @Test
+    public void testDerivingTheMaximaOfManyFeaturesFindsWhatFoldingThemOneByOneDoes() throws IOException {
+        java.util.Random random = new java.util.Random(42);
+        ProjectMaximumIntensities expected = new ProjectMaximumIntensities();
+        List<AlignedFeatures> batch = new java.util.ArrayList<>();
+        for (int i = 0; i < 5000; i++) {
+            Long runId = switch (i % 4) {
+                case 0 -> RUN_A;
+                case 1 -> RUN_B;
+                case 2 -> 3L;
+                default -> null; // a peak-list feature
+            };
+            Double apex = i % 50 == 0 ? null : Math.exp(random.nextDouble(8, 16));
+            Feature feature = runFeature(runId, apex, Math.exp(random.nextDouble(10, 18)));
+            expected.fold(List.of(feature));
+            batch.add(AlignedFeatures.singleton(feature));
+        }
+        ps.importAlignedFeatures(batch);
+        ps.removeProjectProperty(SiriusProjectDocumentDatabase.PROJECT_MAXIMUM_INTENSITIES_KEY);
+        ps.close();
+        ps = new NitriteSirirusProject(location);
+
+        assertEquals(expected, ps.getMaximumIntensities());
+        assertEquals(expected, stored(), "derived once, and kept");
+    }
+
     @Test
     public void testConcurrentImportsAllLandInTheMaxima() throws Exception {
         importFeature(runFeature(RUN_A, 1.0e5, 1.0e6));
