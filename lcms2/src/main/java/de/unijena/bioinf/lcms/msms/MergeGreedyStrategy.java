@@ -36,22 +36,30 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
         return mtrx;
     }
 
+    /**
+     * What makes two spectra of one feature comparable at all.
+     * <p>
+     * The collision energy has always been part of it: the same compound at another energy produces other fragments,
+     * so merging across energies would discard whichever measurement is in the minority. How the fragments were
+     * acquired is the same kind of distinction. A pseudo spectrum's peak heights are fitted shares of a least squares
+     * problem and a measured spectrum's are recorded intensity, and the greedy merge keeps only what agrees with its
+     * seed - so in an experiment that mixes acquisitions the more numerous kind silently discards the other, however
+     * good the measurement it throws away.
+     */
+    private record Comparable_(CollisionEnergy energy, boolean dataIndependent) {
+    }
+
     public static MergedSpectrum[] groupByCeAndMerge(List<MsMsQuerySpectrum> msMsQuerySpectrums) {
-        // first group all spectra according to their collision energy
-        HashMap<CollisionEnergy, List<MsMsQuerySpectrum>> e2msms = new HashMap<>();
-        List<MsMsQuerySpectrum> noce=new ArrayList<>();
+        // grouped in encounter order, which is by descending score, so the seed of each group is its best spectrum
+        // and the order of the result does not depend on a hash
+        final LinkedHashMap<Comparable_, List<MsMsQuerySpectrum>> groups = new LinkedHashMap<>();
         for (MsMsQuerySpectrum spec : msMsQuerySpectrums) {
-            if (spec.header.getEnergy().isPresent()) {
-                CollisionEnergy ce = spec.header.getEnergy().get();
-                e2msms.computeIfAbsent(ce, c->new ArrayList<>()).add(spec);
-            } else {
-                noce.add(spec);
-            }
+            groups.computeIfAbsent(new Comparable_(spec.header.getEnergy().orElse(null),
+                    spec.header.isDataIndependent()), c -> new ArrayList<>()).add(spec);
         }
-        MergedSpectrum[] specs = new MergedSpectrum[(noce.isEmpty() ? 0 : 1) + e2msms.size()];
-        int k=0;
-        if (!noce.isEmpty()) specs[k++] = merge(noce);
-        for (List<MsMsQuerySpectrum> alist : e2msms.values()) specs[k++] = merge(alist);
+        final MergedSpectrum[] specs = new MergedSpectrum[groups.size()];
+        int k = 0;
+        for (List<MsMsQuerySpectrum> alist : groups.values()) specs[k++] = merge(alist);
         return specs;
     }
 

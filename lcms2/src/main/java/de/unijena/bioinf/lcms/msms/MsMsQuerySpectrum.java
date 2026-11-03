@@ -36,27 +36,19 @@ public class MsMsQuerySpectrum {
         this.originalSpectrum = originalSpectrum;
         this.filteredSpectrum = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(10))).createQuery(filtered(originalSpectrum), header.getPrecursorMz(), true, false);
         IsolationWindow isolationWindow = header.getIsolationWindow().orElse(new IsolationWindow(0, 1d));
-        final double L = header.getPrecursorMz() + isolationWindow.getLeftOffset();
-        final double R = header.getPrecursorMz() + isolationWindow.getRightOffset();
         int target = Spectrums.mostIntensivePeakWithin(ms1Spectrum, header.getPrecursorMz(), new Deviation(10));
         if (target<0) {
+            final double L = header.getPrecursorMz() + isolationWindow.getLeftOffset();
+            final double R = header.getPrecursorMz() + isolationWindow.getRightOffset();
             target = findPrecursorPeak(header, ms1Spectrum,  header.getPrecursorMz(), L, R, originalSpectrum);
         }
-        exactParentMass = ms1Spectrum.getMzAt(target);
-        int left=target-1, right=target+1;
-        while (left >= 0 && ms1Spectrum.getMzAt(left) >= L)
-            --left;
-        ++left;
-        while (right < ms1Spectrum.size() && ms1Spectrum.getMzAt(right) <= R)
-            ++right;
-        --right;
-        this.chimericSpectrum = Spectrums.subspectrum(ms1Spectrum, left, right-left+1);
-        double chi = 0d;
-        for (int k=0; k < chimericSpectrum.size(); ++k) {
-            if (k!=(target-left)) chi += chimericSpectrum.getIntensityAt(k) * Math.exp(-Math.pow(chimericSpectrum.getMzAt(k)-(header.getTargetedMz()+isolationWindow.getWindowOffset()), 2)/(isolationWindow.getWindowWidth()*isolationWindow.getWindowWidth()));
-        }
-        this.chimericPollution = chi;
-        this.ms1Intensity = ms1Spectrum.getIntensityAt(target);
+        // the precursor's own isotopes are counted, as they always have been here: the merge score's preference for
+        // the cleanest measurement of a precursor is calibrated on that number
+        final ChimericPollution.Result pollution = ChimericPollution.from(header, ms1Spectrum, target, true);
+        this.exactParentMass = pollution.exactParentMass();
+        this.chimericSpectrum = pollution.withinWindow();
+        this.chimericPollution = pollution.pollution();
+        this.ms1Intensity = pollution.precursorIntensity();
     }
 
     private int findPrecursorPeak(Ms2SpectrumHeader header, SimpleSpectrum ms1Spectrum, double c, double l, double r, SimpleSpectrum originalSpectrum) {
@@ -108,6 +100,9 @@ public class MsMsQuerySpectrum {
     }
 
     private SimpleSpectrum filtered(SimpleSpectrum originalSpectrum) {
+        // a spectrum without peaks has nothing to filter, and asking for its base peak would throw. This happens
+        // when a computed spectrum ends up empty, e.g. a DIA pseudo spectrum whose fragments were all reassigned.
+        if (originalSpectrum.isEmpty()) return originalSpectrum;
         // remove everything below 0.005% intensity and keep top 60 peaks
         Spectrum<Peak> intensityOrderedSpectrum = Spectrums.getIntensityOrderedSpectrum(originalSpectrum);
         final double threshold = intensityOrderedSpectrum.getIntensityAt(0)*0.005;

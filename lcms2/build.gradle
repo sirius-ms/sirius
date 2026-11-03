@@ -15,6 +15,12 @@ application {
                                  '-XX:+ExitOnOutOfMemoryError']
 }
 
+// The tests that put a whole measurement through the pipeline need real memory, and Gradle defaults the test JVM
+// to 512m. The DIA/DDA comparison runs three measurements, so it needs the most.
+tasks.named('test') {
+    maxHeapSize = '24G'
+}
+
 dependencies {
 
     implementation libs.commonsText
@@ -37,6 +43,10 @@ dependencies {
     }
     //needed by jmzml in exactly this version
     runtimeOnly libs.legacyJaxbImpl
+    //jmzml needs the javax.xml.bind API, which legacyJaxbImpl does not ship. In the assembled application this
+    //happens to arrive as a transitive dependency of the mzTab libraries, but this module's own tests need it
+    //explicitly to be able to parse mzML.
+    testRuntimeOnly libs.legacyJaxbApi
     implementation (libs.xxindex){
         exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
         exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'

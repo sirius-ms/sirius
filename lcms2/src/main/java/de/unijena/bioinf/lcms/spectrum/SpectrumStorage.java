@@ -20,6 +20,14 @@ public abstract class SpectrumStorage {
 
     public abstract Ms2SpectrumHeader updateMs2Header(Ms2SpectrumHeader ms2SpectrumHeader);
 
+    /**
+     * Replaces the peaks of a spectrum that is already stored, keeping its header and therefore everything that
+     * points at it. Used to revise a computed spectrum: the assignment behind a DIA pseudo spectrum is redone once
+     * the final feature boundaries are known, and the references to it were copied into the projected traces during
+     * merging and can no longer be changed.
+     */
+    public abstract void updateMs2Spectrum(int uid, SimpleSpectrum spectrum);
+
 
     public static class MvSpectrumStorage extends SpectrumStorage {
         private MVMap<Integer, SimpleSpectrum> spectraMap, ms2SpectraMap;
@@ -98,6 +106,14 @@ public abstract class SpectrumStorage {
         public Ms2SpectrumHeader updateMs2Header(Ms2SpectrumHeader ms2SpectrumHeader) {
             ms2headers.put(ms2SpectrumHeader.getUid(), ms2SpectrumHeader);
             return ms2SpectrumHeader;
+        }
+
+        @Override
+        public void updateMs2Spectrum(int uid, SimpleSpectrum spectrum) {
+            if (!ms2headers.containsKey(uid)) {
+                throw new IllegalArgumentException("There is no MS2 spectrum with uid " + uid + " to update.");
+            }
+            ms2SpectraMap.put(uid, spectrum);
         }
 
     }
