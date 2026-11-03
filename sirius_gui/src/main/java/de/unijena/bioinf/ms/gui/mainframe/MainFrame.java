@@ -169,13 +169,17 @@ public class MainFrame extends JFrame implements DropTargetListener {
         landingPanelSwitcher.add("landing", landingPage);
         landingPanelSwitcher.add("results", resultPanelContainer);
 
-        compoundList.getSortedSource().addListEventListener(listEvent -> {
-            if (listEvent.getSourceList().isEmpty())
-                layout.show(landingPanelSwitcher, "landing");
-            else
-                layout.show(landingPanelSwitcher, "results");
-        });
-        layout.show(landingPanelSwitcher, compoundList.getFullSize() < 1 ? "landing" : "results");
+        // The landing page is for a project WITHOUT features. An empty list alone does not mean that: since the
+        // filter runs server side, a filter that matches nothing empties the list too, and that has to show an
+        // empty result list ("0 of N"), not the landing page. Hiding the results card also takes its JxBrowser
+        // views with it, and doing that inside the list's event dispatch - on the EDT, under the list's write lock -
+        // has hung the EDT in a native JxBrowser call. So the decision looks at the project's feature count (the
+        // list itself counts too, for a feature that arrives before the counters are refreshed), and it runs after
+        // the dispatch that triggered it has returned.
+        Runnable showCardForProject = () -> layout.show(landingPanelSwitcher,
+                compoundList.getFullSize() > 0 || gui.getProjectManager().getTotalInstances() > 0 ? "results" : "landing");
+        compoundList.getSortedSource().addListEventListener(listEvent -> SwingUtilities.invokeLater(showCardForProject));
+        showCardForProject.run();
 
         // toolbar
         toolbar = new SiriusToolbar(gui);
@@ -189,8 +193,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         //build left sidepane
         compoundListView = new CompoundListView(gui, compoundList);
         filterableCompoundListPanel = new FilterableCompoundListPanel(compoundListView);
-        filterableCompoundListPanel.setPreferredSize(new Dimension(228, (int) filterableCompoundListPanel.getPreferredSize().getHeight()));
-        mainPanel.setDividerLocation(232);
+        // wide enough for the search bar's three in-field buttons (clear, restore, funnel) plus a few chips
+        filterableCompoundListPanel.setPreferredSize(new Dimension(256, (int) filterableCompoundListPanel.getPreferredSize().getHeight()));
+        mainPanel.setDividerLocation(260);
 
         //BUILD the MainFrame (GUI)
         mainPanel.setLeftComponent(filterableCompoundListPanel);

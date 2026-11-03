@@ -58,7 +58,9 @@ public abstract class SearchableDBAnnotation implements Ms2ExperimentAnnotation 
         if (names.equalsIgnoreCase(DataSource.ALL.name()) || names.equalsIgnoreCase(DataSource.ALL.realName()))
             return CustomDataSources.getAllSelectableDbs();
 
-        return Arrays.stream(names.trim().split("\\s*,\\s*"))
-                .map(CustomDataSources::getSourceFromName).filter(Objects::nonNull).distinct().toList();
+        //via CustomDataSources so an unknown name is reported rather than silently dropped: this is the
+        //path every formula, structure and spectral library list from the CLI and the config takes
+        return CustomDataSources.getSourcesFromNames(Arrays.asList(names.trim().split("\\s*,\\s*")))
+                .stream().distinct().toList();
     }
 }

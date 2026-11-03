@@ -2,6 +2,8 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.GenericPojoMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -146,6 +148,14 @@ public class PerPojoSearchContext implements SearchContext {
     }
 
     @Override
+    public <T> void makeWritesSearchable(Class<T> clazz) {
+        // Nothing was written for a type that has no index, and asking for one would create it.
+        if (!GenericPojoMapper.isIndexable(clazz))
+            return;
+        getIndexManager(clazz).makeWritesSearchable();
+    }
+
+    @Override
     public <T> Page<T> search(@Nullable String query, Pageable pageable, Class<T> beanClass) {
         return getIndexManager(beanClass).search(query, pageable);
     }
@@ -160,7 +170,34 @@ public class PerPojoSearchContext implements SearchContext {
         return getIndexManager(beanClass).searchFields(query, pageable, fields, mapper);
     }
 
-    @NotNull
+    @Override
+    public <T> IndexSchema getIndexSchema(Class<T> beanClass) {
+        // Objects without a document id field have no search index at all - they hold nothing.
+        if (!GenericPojoMapper.isIndexable(beanClass))
+            return IndexSchema.EMPTY;
+        return getIndexManager(beanClass).getIndexSchema();
+    }
+
+    @Override
+    public <T> Set<String> getMaterializedFieldNames(Class<T> beanClass) {
+        if (!GenericPojoMapper.isIndexable(beanClass))
+            return Set.of();
+        return getIndexManager(beanClass).getIndexedFieldNames();
+    }
+
+    @Override
+    public Map<String, ValueType> getTagValueTypes() {
+        synchronized (tagDefs) {
+            return Map.copyOf(tagDefs);
+        }
+    }
+
+    /**
+     * @return the value type of the given tag, or {@code null} if no definition for it has been registered
+     * with this context. Callers must handle the null: this is a cache of the project's tag definitions, so a
+     * tag can legitimately be unknown here (e.g. before its definition has been registered).
+     */
+    @Nullable
     @Override
     public ValueType getTagValueType(String tagName) {
         synchronized (tagDefs) {

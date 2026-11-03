@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 public class TagSubmission extends Tag {
     /**
      * ID of the object where the tag should be added.
-     * Then Object type is taken from context of the API endpoint.
+     * The object type is taken from the context of the API endpoint.
      */
     @NotNull
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)

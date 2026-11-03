@@ -29,6 +29,8 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrumWithAdditionalFiel
 import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.SpectralParser;
+import de.unijena.bioinf.babelms.utils.ParserUtils;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +38,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static de.unijena.bioinf.babelms.massbank.MassbankFormat.*;
 
@@ -46,12 +49,33 @@ import static de.unijena.bioinf.babelms.massbank.MassbankFormat.*;
 public class MassbankSpectralParser extends SpectralParser {
     public static final String MULTILINE_INDENT = "  ";
 
+    /** Peaks allocated before any peak line is read - a record with more grows as its peak lines arrive. */
+    private static final int INITIAL_PEAK_CAPACITY = 4096;
+
     @Override
     public CloseableIterator<? extends SpectrumWithAdditionalFields<Peak>> parseSpectra(BufferedReader reader) throws IOException {
         return new Iterator(reader);
     }
 
 
+    /**
+     * A record that cannot be read as declared. The reader is left after the record's '//', so parsing can go on with
+     * the next record.
+     */
+    static class MalformedRecordException extends RuntimeException {
+        @Nullable
+        final String accession;
+
+        MalformedRecordException(String message, @Nullable Throwable cause, @Nullable String accession) {
+            super(cause == null ? message : message + ": " + cause.getMessage(), cause);
+            this.accession = accession;
+        }
+    }
+
+    /**
+     * @throws MalformedRecordException if a record ended by '//' cannot be read - the reader is then after its '//'
+     * @throws RuntimeException         if the input ends inside a record (e.g. no MassBank file at all)
+     */
     @Nullable
     SpectrumWithAdditionalFields<Peak> parseSpectrum(BufferedReader reader) throws IOException {
         List<String> peakAnnotationsCSV = new ArrayList<>();
@@ -59,70 +83,127 @@ public class MassbankSpectralParser extends SpectralParser {
         SpectrumWithAdditionalFields<Peak> spectrum = null;
         String line;
         boolean seenContent = false;
+        boolean peaksRead = false;
+        boolean recordEnded = false; // the '//' of this record has been read
 
-        while (!"//".equals(line = reader.readLine())) {
+        try {
+            // an empty record ('//' before any content) does not end the loop, see below
+            while ((line = reader.readLine()) == null || !isRecordEnd(line) || !seenContent) {
 
-            if (line == null) {
-                if (seenContent) {
-                    throw new RuntimeException("Unexpected end of stream in a MassBank file");
-                } else {
+                if (line == null) {
+                    if (seenContent) {
+                        throw new EndOfStreamException();
+                    } else {
+                        break;
+                    }
+                }
+
+                if (line.isBlank())
+                    continue;
+                if (!seenContent && isRecordEnd(line))
+                    continue; // an empty record ('//' right after '//'), e.g. from joining files
+                seenContent = true;
+
+                // PK$PEAK is the last field of a record - anything after its peaks means the peak count is wrong
+                if (peaksRead)
+                    throw new MalformedRecordException("Line after the peak list - '" + PK_NUM_PEAK.k() + "' is too low: '" + line.strip() + "'", null, null);
+
+                if (line.startsWith(PK_ANNOTATION.k())) {
+                    while ((line = reader.readLine()) != null && line.startsWith(MULTILINE_INDENT) && !isRecordEnd(line)) {
+                        peakAnnotationsCSV.add(line.strip());
+                    }
+                }
+
+                if (line == null)
+                    throw new EndOfStreamException();
+                if (isRecordEnd(line)) // right after PK$ANNOTATION
                     break;
-                }
-            }
+                if (line.startsWith(PK_PEAK.k())) {
+                    int peaks;
+                    try {
+                        peaks = metaInfo.getField(PK_NUM_PEAK.k()).map(Integer::parseInt).orElse(-1);
+                    } catch (NumberFormatException e) {
+                        throw new MalformedRecordException("'" + PK_NUM_PEAK.k() + "' is not a number", null, null);
+                    }
+                    if (peaks < 0)
+                        throw new MalformedRecordException("'" + PK_NUM_PEAK.k() + "' is missing or not valid", null, null);
+                    {
+                        // the declared count only proves itself by the peak lines that follow - do not allocate for it up front
+                        final int initialCapacity = Math.min(peaks, INITIAL_PEAK_CAPACITY);
+                        final DoubleArrayList mzValues = new DoubleArrayList(initialCapacity);
+                        final DoubleArrayList intensities = new DoubleArrayList(initialCapacity);
 
-            if (line.isBlank())
-                continue;
-            seenContent = true;
-
-            if (line.startsWith(PK_ANNOTATION.k())) {
-                while ((line = reader.readLine()).startsWith(MULTILINE_INDENT)) {
-                    peakAnnotationsCSV.add(line.strip());
-                }
-            }
-
-            if (line.startsWith(PK_PEAK.k())) {
-                int peaks = metaInfo.getField(PK_NUM_PEAK.k()).map(Integer::parseInt).orElse(-1);
-                {
-                    double[] masses = new double[peaks];
-                    double[] intensities = new double[peaks];
-
-                    for (int i = 0; i < masses.length; ) {
-                        line = reader.readLine();
-                        if (line == null) {
-                            log.warn("Unexpected end of peak list. Ended at '" + i + "/" + peaks + "'.");
-                            break;
+                        for (int i = 0; i < peaks; ) {
+                            line = reader.readLine();
+                            if (line == null)
+                                throw new EndOfStreamException();
+                            if (isRecordEnd(line)) {
+                                recordEnded = true;
+                                throw new MalformedRecordException("'" + PK_NUM_PEAK.k() + " " + peaks + "' is too high, the peak list ends after " + i + " peaks", null, null);
+                            }
+                            if (!line.isBlank()) {
+                                String[] sl = line.strip().split("\\s+");
+                                if (sl.length < 2)
+                                    throw new MalformedRecordException("Malformed peak line '" + line.strip() + "'", null, null);
+                                final double mz = ParserUtils.parseDecimal(sl[0]);
+                                final double intensity = ParserUtils.parseDecimal(sl[1]);
+                                if (!Double.isFinite(mz) || !Double.isFinite(intensity))
+                                    throw new MalformedRecordException("Malformed peak line '" + line.strip() + "'", null, null);
+                                mzValues.add(mz);
+                                intensities.add(intensity);
+                                i++;
+                            }
                         }
-                        if (!line.isBlank()) {
-                            String[] sl = line.strip().split("\\s+");
-                            masses[i] = Double.parseDouble(sl[0]);
-                            intensities[i] = Double.parseDouble(sl[1]);
-                            i++;
-                        }
+
+                        spectrum = new SimpleSpectrumWithAdditionalFields(mzValues.toDoubleArray(), intensities.toDoubleArray());
+                        peaksRead = true;
+
+                        if (spectrum.isEmpty())
+                            log.error("0 Peaks found in current Block, Returning empty spectrum with meta data");
                     }
 
-                    spectrum = new SimpleSpectrumWithAdditionalFields(masses, intensities);
+                    // SIRIUS only needs to know whether this is a fragmentation spectrum - without a usable MS_TYPE, a
+                    // precursor field makes it MS2 if a precursor m/z can be determined at all, also from the exact mass
+                    final String precursorField = getGivenPrecursorMzField(metaInfo).orElse(null);
+                    final Supplier<String> accession = () -> metaInfo.getField(ACCESSION.k()).orElse("N/A");
+                    final int msLevel = ParserUtils.inferMsLevel(metaInfo.get(AC_MASS_SPECTROMETRY_MS_TYPE.k()), precursorField,
+                            () -> parsePrecursorMZ(metaInfo).isPresent(), log, accession);
+                    if (msLevel > 1) { // we have MSn
+                        final double precursorMz = parsePrecursorMZ(metaInfo).orElseThrow(() -> new MalformedRecordException("Could not parse '" + MS_FOCUSED_ION_PRECURSOR_MZ.k() + "':'" + metaInfo.get(MS_FOCUSED_ION_PRECURSOR_MZ.k()) + "' OR '" + CH_EXACT_MASS.k() + "':'" + metaInfo.get(CH_EXACT_MASS.k()) + "' with a known adduct.", null, null));
+                        spectrum = new MutableMs2SpectrumWithAdditionalFields(
+                                spectrum,
+                                precursorMz,
+                                metaInfo.getField(AC_MASS_SPECTROMETRY_COLLISION_ENERGY.k()).map(CollisionEnergy::fromStringOrNull).orElse(null),
+                                msLevel
+                        );
 
-                    if (spectrum.isEmpty())
-                        log.error("0 Peaks found in current Block, Returning empty spectrum with meta data");
+                        ((MutableMs2Spectrum) spectrum).setIonization(parsePrecursorIonType(metaInfo)
+                                .orElseThrow(() -> new MalformedRecordException("Could neither parse '" + MS_FOCUSED_ION_ION_TYPE.k() + "' nor '" + AC_MASS_SPECTROMETRY_ION_MODE.k() + "'", null, null))
+                                .getIonization());
+                    }
+                    continue; // the peak lines are no key-value lines
                 }
 
-                String msLevel = metaInfo.get(AC_MASS_SPECTROMETRY_MS_TYPE.k());
-                if ((msLevel == null && (metaInfo.containsKey(MS_FOCUSED_ION_PRECURSOR_MZ.k()))) ||
-                        (msLevel != null && (!"MS".equalsIgnoreCase(msLevel)) && !"MS1".equalsIgnoreCase(msLevel))) { // we have MSn
-                    spectrum = new MutableMs2SpectrumWithAdditionalFields(
-                            spectrum,
-                            parsePrecursorMZ(metaInfo).orElseThrow(() -> new IOException("Could not parse '" + MS_FOCUSED_ION_PRECURSOR_MZ.k() + "':'" + metaInfo.get(MS_FOCUSED_ION_PRECURSOR_MZ.k()) + "' OR '" + CH_EXACT_MASS.k() + "':'" + metaInfo.get(CH_EXACT_MASS.k()) + "'.")),
-                            metaInfo.getField(AC_MASS_SPECTROMETRY_COLLISION_ENERGY.k()).map(CollisionEnergy::fromStringOrNull).orElse(null),
-                            msLevel == null || msLevel.isBlank() ? 2 : Character.getNumericValue(msLevel.charAt(msLevel.indexOf("MS") + 2))
-                    );
-
-                    ((MutableMs2Spectrum) spectrum).setIonization(parsePrecursorIonType(metaInfo)
-                            .orElseThrow(() -> new IOException("Could neither parse '" + MS_FOCUSED_ION_ION_TYPE.k() + "' nor '" + AC_MASS_SPECTROMETRY_ION_MODE.k() + "!"))
-                            .getIonization());
-                }
+                withKeyValue(line, metaInfo::putIfAbsent);
             }
-
-            withKeyValue(line, metaInfo::putIfAbsent);
+            if (seenContent && spectrum == null) { // ended by '//', but without PK$PEAK
+                recordEnded = true;
+                throw new MalformedRecordException("Record without peak list", null, null);
+            }
+        } catch (EndOfStreamException e) {
+            throw new RuntimeException("Unexpected end of stream in a MassBank file");
+        } catch (RuntimeException e) {
+            // skip the rest of the record, the next one starts after its '//'
+            if (!recordEnded) {
+                while ((line = reader.readLine()) != null && !isRecordEnd(line)) {
+                }
+                if (line == null) // no '//' to continue after
+                    throw new RuntimeException("Unexpected end of stream in a MassBank file", e);
+            }
+            final String accession = metaInfo.get(ACCESSION.k());
+            if (e instanceof MalformedRecordException m)
+                throw new MalformedRecordException(m.getMessage(), m.getCause(), accession);
+            throw new MalformedRecordException("Record cannot be read", e, accession);
         }
         if (spectrum != null) {
             spectrum.setAdditionalFields(metaInfo);
@@ -130,6 +211,13 @@ public class MassbankSpectralParser extends SpectralParser {
         return spectrum;
     }
 
+    private static boolean isRecordEnd(String line) {
+        return "//".equals(line.strip());
+    }
+
+    /** The input ends inside a record - not recoverable, as there is no '//' to continue after. */
+    private static class EndOfStreamException extends RuntimeException {
+    }
 
     private class Iterator implements CloseableIterator<SpectrumWithAdditionalFields<Peak>> {
         private SpectrumWithAdditionalFields<Peak> next;

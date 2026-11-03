@@ -52,7 +52,9 @@ public enum AlignedFeatureOptField {
   
   QUALITIES("qualities"),
   
-  TAGS("tags");
+  TAGS("tags"),
+  
+  INTENSITIES("intensities");
 
   private String value;
 

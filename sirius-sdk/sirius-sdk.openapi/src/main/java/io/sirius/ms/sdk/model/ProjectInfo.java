@@ -51,6 +51,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ProjectInfo.JSON_PROPERTY_NUM_OF_FEATURES,
   ProjectInfo.JSON_PROPERTY_NUM_OF_COMPOUNDS,
   ProjectInfo.JSON_PROPERTY_NUM_OF_BYTES,
+  ProjectInfo.JSON_PROPERTY_COMPACTION_RECOMMENDED,
   ProjectInfo.JSON_PROPERTY_DETECTED_ADDUCTS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.17.0")
@@ -87,6 +88,10 @@ public class ProjectInfo {
   @jakarta.annotation.Nullable
   private Long numOfBytes;
 
+  public static final String JSON_PROPERTY_COMPACTION_RECOMMENDED = "compactionRecommended";
+  @jakarta.annotation.Nullable
+  private Boolean compactionRecommended;
+
   public static final String JSON_PROPERTY_DETECTED_ADDUCTS = "detectedAdducts";
   @jakarta.annotation.Nullable
   private Set<String> detectedAdducts;
@@ -101,7 +106,7 @@ public class ProjectInfo {
   }
 
   /**
-   * a user selected unique name of the project for easy access.
+   * A user-selected unique name of the project for easy access.
    * @return projectId
    */
   @jakarta.annotation.Nullable
@@ -126,7 +131,7 @@ public class ProjectInfo {
   }
 
   /**
-   * storage location of the project.
+   * Storage location of the project.
    * @return location
    */
   @jakarta.annotation.Nullable
@@ -201,7 +206,7 @@ public class ProjectInfo {
   }
 
   /**
-   * Indicates whether computed results (e.g. fingerprints, compounds classes) are compatible with the backend.  If true project is up-to-date and there are no restrictions regarding usage.  If false project is incompatible and therefore \&quot;read only\&quot; until the incompatible results have been removed. See updateProject endpoint for further information  If NULL the information has not been requested.
+   * Indicates whether computed results (e.g. fingerprints, compound classes) are compatible with the backend.  If true, the project is up-to-date and there are no restrictions regarding usage.  If false, the project is incompatible and therefore \&quot;read only\&quot; until the incompatible results have been removed. See the updateProject endpoint for further information.  If NULL, the information has not been requested.
    * @return compatible
    */
   @jakarta.annotation.Nullable
@@ -251,7 +256,7 @@ public class ProjectInfo {
   }
 
   /**
-   * Number of compounds (group of ion identities) in this project. If NULL, Information has not been requested (See OptField &#39;sizeInformation&#39;) or might be unavailable for this project type.
+   * Number of compounds (group of ion identities) in this project. If NULL, information has not been requested (See OptField &#39;sizeInformation&#39;) or might be unavailable for this project type.
    * @return numOfCompounds
    */
   @jakarta.annotation.Nullable
@@ -276,7 +281,7 @@ public class ProjectInfo {
   }
 
   /**
-   * Size in Bytes this project consumes on disk If NULL, Information has not been requested (See OptField &#39;sizeInformation&#39;).
+   * Size in bytes this project consumes on disk. If NULL, information has not been requested (See OptField &#39;sizeInformation&#39;).
    * @return numOfBytes
    */
   @jakarta.annotation.Nullable
@@ -294,6 +299,31 @@ public class ProjectInfo {
     this.numOfBytes = numOfBytes;
   }
 
+  public ProjectInfo compactionRecommended(@jakarta.annotation.Nullable Boolean compactionRecommended) {
+    
+    this.compactionRecommended = compactionRecommended;
+    return this;
+  }
+
+  /**
+   * Whether compacting this project would reclaim markedly more space than an ordinary compaction does, so  that it is worth offering. What makes it worthwhile varies - a project written in an older, space-wasting  storage format, or a large amount of data removed from it.  If NULL, the information has not been requested (See OptField &#39;sizeInformation&#39;).
+   * @return compactionRecommended
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_COMPACTION_RECOMMENDED, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isCompactionRecommended() {
+    return compactionRecommended;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_COMPACTION_RECOMMENDED, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCompactionRecommended(@jakarta.annotation.Nullable Boolean compactionRecommended) {
+    this.compactionRecommended = compactionRecommended;
+  }
+
   public ProjectInfo detectedAdducts(@jakarta.annotation.Nullable Set<String> detectedAdducts) {
     
     this.detectedAdducts = detectedAdducts;
@@ -309,7 +339,7 @@ public class ProjectInfo {
   }
 
   /**
-   * Set of all detected adducts available in this projects
+   * Set of all detected adducts available in this project.
    * @return detectedAdducts
    */
   @jakarta.annotation.Nullable
@@ -346,12 +376,13 @@ public class ProjectInfo {
         Objects.equals(this.numOfFeatures, projectInfo.numOfFeatures) &&
         Objects.equals(this.numOfCompounds, projectInfo.numOfCompounds) &&
         Objects.equals(this.numOfBytes, projectInfo.numOfBytes) &&
+        Objects.equals(this.compactionRecommended, projectInfo.compactionRecommended) &&
         Objects.equals(this.detectedAdducts, projectInfo.detectedAdducts);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(projectId, location, description, type, compatible, numOfFeatures, numOfCompounds, numOfBytes, detectedAdducts);
+    return Objects.hash(projectId, location, description, type, compatible, numOfFeatures, numOfCompounds, numOfBytes, compactionRecommended, detectedAdducts);
   }
 
   @Override
@@ -366,6 +397,7 @@ public class ProjectInfo {
     sb.append("    numOfFeatures: ").append(toIndentedString(numOfFeatures)).append("\n");
     sb.append("    numOfCompounds: ").append(toIndentedString(numOfCompounds)).append("\n");
     sb.append("    numOfBytes: ").append(toIndentedString(numOfBytes)).append("\n");
+    sb.append("    compactionRecommended: ").append(toIndentedString(compactionRecommended)).append("\n");
     sb.append("    detectedAdducts: ").append(toIndentedString(detectedAdducts)).append("\n");
     sb.append("}");
     return sb.toString();

@@ -46,7 +46,7 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
     }
 
     @Option(names = {"--database", "-d", "--db"}, descriptionKey = "SpectralSearchDB" , paramLabel = DataSourceCandidates.PARAM_LABEL, completionCandidates = DataSourceCandidates.class,
-            description = {"Search spectra in the union of the given databases. If no database is given, all database are used.", DataSourceCandidates.VALID_DATA_STRING})
+            description = {"Search spectra in the union of the given databases. If no database is given, all databases are used.", DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
         defaultConfigOptions.changeOption("SpectralSearchDB", dbList);
     }

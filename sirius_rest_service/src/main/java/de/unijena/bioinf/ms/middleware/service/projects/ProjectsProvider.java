@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,16 @@ public interface ProjectsProvider<P extends Project> extends DisposableBean {
 
     ProjectInfo openProject(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
+    /**
+     * Opens a project in the background and returns the job doing it, so that opening one that has to be
+     * converted first - minutes of work on a large project - can be watched rather than waited on blindly.
+     * The project is usable once the job is done.
+     */
+    Job openProjectAsJob(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<Job.OptField> optFields);
+
+    /** The job opening, or that opened, the given project, if this service still remembers one. */
+    Optional<Job> findOpenJob(@NotNull String projectId, @NotNull EnumSet<Job.OptField> optFields);
+
     ProjectInfo createTempProject(@NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
     default ProjectInfo createProject(String projectIdSuggestion, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
@@ -71,6 +82,10 @@ public interface ProjectsProvider<P extends Project> extends DisposableBean {
 
     default void closeProjectSpace(String projectId, boolean compact) throws IOException {
         closeProjectSpace(projectId);
+    }
+
+    default void closeProjectSpace(String projectId, boolean compact, boolean rewriteLayout) throws IOException {
+        closeProjectSpace(projectId, compact || rewriteLayout);
     }
 
     @Deprecated

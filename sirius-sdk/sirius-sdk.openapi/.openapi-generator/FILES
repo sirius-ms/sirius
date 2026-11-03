@@ -68,6 +68,7 @@ docs/ImportResult.md
 docs/Info.md
 docs/InfoApi.md
 docs/InstrumentProfile.md
+docs/Intensity.md
 docs/IsotopeMs2Strategy.md
 docs/IsotopePatternAnnotation.md
 docs/Job.md
@@ -128,6 +129,8 @@ docs/RunsApi.md
 docs/SearchableDatabase.md
 docs/SearchableDatabaseParameters.md
 docs/SearchableDatabasesApi.md
+docs/SearchableField.md
+docs/SearchableFieldType.md
 docs/SecurityContext.md
 docs/SecurityContextPrincipal.md
 docs/SimplePeak.md
@@ -259,6 +262,7 @@ src/main/java/io/sirius/ms/sdk/model/GuiInfo.java
 src/main/java/io/sirius/ms/sdk/model/ImportResult.java
 src/main/java/io/sirius/ms/sdk/model/Info.java
 src/main/java/io/sirius/ms/sdk/model/InstrumentProfile.java
+src/main/java/io/sirius/ms/sdk/model/Intensity.java
 src/main/java/io/sirius/ms/sdk/model/IsotopeMs2Strategy.java
 src/main/java/io/sirius/ms/sdk/model/IsotopePatternAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/Job.java
@@ -311,6 +315,8 @@ src/main/java/io/sirius/ms/sdk/model/ReactionSequenceStepsInner.java
 src/main/java/io/sirius/ms/sdk/model/Run.java
 src/main/java/io/sirius/ms/sdk/model/RunOptField.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabaseParameters.java
+src/main/java/io/sirius/ms/sdk/model/SearchableField.java
+src/main/java/io/sirius/ms/sdk/model/SearchableFieldType.java
 src/main/java/io/sirius/ms/sdk/model/SecurityContext.java
 src/main/java/io/sirius/ms/sdk/model/SecurityContextPrincipal.java
 src/main/java/io/sirius/ms/sdk/model/SimplePeak.java

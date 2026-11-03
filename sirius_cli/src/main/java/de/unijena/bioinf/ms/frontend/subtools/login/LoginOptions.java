@@ -78,7 +78,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
     protected String sid = null;
 
     @CommandLine.Option(names = {"--request-token-only"},
-            description = {"Requests and prints a new SECRET refresh token but does not store the token as login.", "This can be used to request a token to be used in third party applications that wish to call SIRIUS Web Services using your account.", "Do never store your username and password in third party apps.", "Do not store the output of this command in any log. We recommend redirecting the output into a file."})
+            description = {"Requests and prints a new SECRET refresh token but does not store the token as login.", "This can be used to request a token to be used in third-party applications that wish to call SIRIUS Web Services using your account.", "Never store your username and password in third-party apps.", "Do not store the output of this command in any log. We recommend redirecting the output into a file."})
     protected boolean tokenRequestOnly = false;
 
     //todo token invalidation command.
@@ -240,7 +240,9 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 throw new IllegalStateException("Not logged in! Please log in to perform this operation!");
             } finally {
                 try {
-                    AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
+                    //ignoreMissing: this also runs after a failed login, and complaining that there is no token
+                    //to store would replace the real error - wrong credentials - with a bookkeeping one.
+                    AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE, true);
                 } catch (IOException e) {
                     throw new RuntimeException("Error when storing refresh token. You may have to re-login.", e);
                 }

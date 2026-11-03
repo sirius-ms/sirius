@@ -117,7 +117,7 @@ public class StructureCandidateScored {
   }
 
   /**
-   * Get inchiKey
+   * InChIKey of the structure candidate.  Searching with a full 27 character key matches its 2D (skeleton) part, so stereoisomers of the  searched structure are found alike.
    * @return inchiKey
    */
   @jakarta.annotation.Nullable
@@ -167,7 +167,7 @@ public class StructureCandidateScored {
   }
 
   /**
-   * Get structureName
+   * Name of the structure candidate.  Searching also resolves the searched term as a PubChem synonym, so a structure is found by any  of its common names.
    * @return structureName
    */
   @jakarta.annotation.Nullable
@@ -225,7 +225,7 @@ public class StructureCandidateScored {
   }
 
   /**
-   * List of structure database links belonging to this structure candidate  OPTIONAL: needs to be added by parameter
+   * List of structure database links belonging to the structure candidate  OPTIONAL: needs to be added by parameter
    * @return dbLinks
    */
   @jakarta.annotation.Nullable
@@ -258,7 +258,7 @@ public class StructureCandidateScored {
   }
 
   /**
-   * List of spectral library matches belonging to this structure candidate  OPTIONAL: needs to be added by parameter
+   * List of spectral library matches belonging to the structure candidate  OPTIONAL: needs to be added by parameter
    * @return spectralLibraryMatches
    */
   @jakarta.annotation.Nullable
@@ -308,7 +308,7 @@ public class StructureCandidateScored {
   }
 
   /**
-   * the overall rank of this candidate among all candidates of this feature
+   * The overall rank of this candidate among all candidates of this feature.
    * @return rank
    */
   @jakarta.annotation.Nullable
@@ -358,7 +358,7 @@ public class StructureCandidateScored {
   }
 
   /**
-   * Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
+   * Tanimoto similarity of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
    * @return tanimotoSimilarity
    */
   @jakarta.annotation.Nullable

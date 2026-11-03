@@ -57,6 +57,7 @@ public class Feature extends AbstractFeature {
     @SuppressWarnings("unchecked")
     @Override
     public Optional<RawTraceRef> getTraceReference() {
-        return Optional.of(getTraceRef());
+        // a feature imported without an LC-MS run has no trace
+        return Optional.ofNullable(getTraceRef());
     }
 }

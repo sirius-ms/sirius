@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
+import de.unijena.bioinf.projectspace.FieldVocabulary;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
@@ -11,6 +12,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Maps one pojo field onto the lucene fields it is indexed as, and back.
+ * <p>
+ * A mapper that knows a closed vocabulary for the fields it contributes may say so by also implementing
+ * {@code FieldVocabulary} of the description package - that is documentation and no concern of the mapping, so
+ * it is not part of this contract.
+ */
 public interface FieldMapper<T> {
 
     default void toDocument(@NotNull String rootFieldName, @NotNull Document docToAdd, @Nullable T pojo){

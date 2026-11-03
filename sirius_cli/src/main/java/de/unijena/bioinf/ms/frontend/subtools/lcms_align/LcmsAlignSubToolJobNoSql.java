@@ -454,6 +454,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
             {
                 AlignedFeatures[] alignedFeatures = ps.getStorage().findAllStr(AlignedFeatures.class)
+                        // the network reads a run id and an apex intensity per feature, and unboxes both
+                        .filter(f -> f.getTraceReference().isPresent())
                         .filter(f -> f.getApexIntensity() != null)
                         .filter(AbstractFeature::isRTInterval)
                         .toArray(AlignedFeatures[]::new);
@@ -474,7 +476,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         merged.getPolarity(),
                         x->ps.getStorage().upsert(x),
                         (net)->{ps.getStorage().insert(net); return net.getNetworkId();},
-                        (feature)->{Compound c = Compound.singleton(feature); ps.getStorage().insert(c); return c.getCompoundId();}
+                        (feature)->{Compound c = Compound.singleton(feature); ps.getStorage().insert(c); feature.setCompoundId(c.getCompoundId()); return c.getCompoundId();}
                 );
                 // add to project wide property that holds all detected adducts in the project
                 ps.addToDetectedAdducts(detectedAdducts);

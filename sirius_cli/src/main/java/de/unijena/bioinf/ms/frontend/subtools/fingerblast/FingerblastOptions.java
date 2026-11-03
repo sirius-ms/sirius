@@ -40,7 +40,7 @@ import java.util.function.Consumer;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "structures", aliases = {"structure-db-search", "structure"}, description = "@|bold <COMPOUND TOOL>|@ Search in molecular structure db for each compound Individually using CSI:FingerID structure database search. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "structures", aliases = {"structure-db-search", "structure"}, description = "@|bold <COMPOUND TOOL>|@ Search in a molecular structure database for each compound individually using CSI:FingerID structure database search. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJob, InstanceJob.Factory<FingerblastSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
@@ -68,7 +68,7 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
     }
 
     @Option(names = {"-e", "--exp"}, descriptionKey = "ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode",
-            description = {"Confidence mode that is used for expansive search. OFF -> no expansive search. EXACT -> Exact mode confidence score is used for expansive search. APPROXIMATE ->  Approximate mode confidence score is used for expansive search"})
+            description = {"Confidence mode that is used for expansive search. OFF -> no expansive search. EXACT -> Exact mode confidence score is used for expansive search. APPROXIMATE -> Approximate mode confidence score is used for expansive search"})
     public void setExpansiveSearchConfMode(String expansiveSearchConfMode) throws Exception {
         defaultConfigOptions.changeOption("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", expansiveSearchConfMode);
     }

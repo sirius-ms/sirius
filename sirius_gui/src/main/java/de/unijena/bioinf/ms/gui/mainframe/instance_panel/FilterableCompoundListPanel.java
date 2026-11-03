@@ -73,44 +73,17 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         view.sourceList.addChangeListener(sizeListener);
         compoundListView = view;
 
-        Box includeBox = Box.createHorizontalBox();
-        includeBox.add(new JLabel("Include"));
-        includeBox.add(Box.createHorizontalGlue());
-
-        JLabel ms1onlyLabel = new JLabel("MS1-only:");
-        ms1onlyLabel.setToolTipText("Include features that have no MS/MS data.");
-        JLabel badQualityLabel = new JLabel("Bad:");
-        ms1onlyLabel.setToolTipText("Include features with overall quality 'Bad' and 'Lowest'.");
-        JLabel mulimereLabel = new JLabel("Multi:");
-        ms1onlyLabel.setToolTipText("Include multimeres and multiple charged features.");
-
-        Box filterButtonPanel = Box.createHorizontalBox();
-        filterButtonPanel.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 0));
-        filterButtonPanel.add(Box.createHorizontalStrut(2));
-        filterButtonPanel.add(ms1onlyLabel);
-        filterButtonPanel.add(Box.createHorizontalStrut(1));
-        filterButtonPanel.add(view.sourceList.msMsToggleSwitch);
-        filterButtonPanel.add(Box.createHorizontalStrut(2));
-        filterButtonPanel.add(badQualityLabel);
-        filterButtonPanel.add(Box.createHorizontalStrut(1));
-        filterButtonPanel.add(view.sourceList.qualityToggleSwitch);
-        filterButtonPanel.add(Box.createHorizontalStrut(2));
-        filterButtonPanel.add(mulimereLabel);
-        filterButtonPanel.add(Box.createHorizontalStrut(1));
-        filterButtonPanel.add(view.sourceList.adductToggleSwitch);
-        filterButtonPanel.add(Box.createHorizontalGlue());
-
-
+        // The default-active filters (MS/MS present, quality, single adducts) are no longer exposed
+        // as quick-toggle switches here - they are shown as chips in the search bar/overlay, which
+        // both indicates they are active and lets the user change them.
+        // the full filter dialog is opened from the funnel icon inside the search bar now (no
+        // separate button beside it)
         Box searchButtonPanel = Box.createHorizontalBox();
-        searchButtonPanel.add(view.sourceList.searchField);
-        searchButtonPanel.add(view.sourceList.openFilterPanelButton);
+        searchButtonPanel.add(view.sourceList.searchBar);
+        // a little breathing room so the (taller) search bar does not butt directly against the list
+        searchButtonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
 
-        Box searchPanel = Box.createVerticalBox();
-        searchPanel.add(searchButtonPanel);
-        searchPanel.add(includeBox);
-        searchPanel.add(Box.createHorizontalGlue());
-        searchPanel.add(filterButtonPanel);
-        add(searchPanel, BorderLayout.NORTH);
+        add(searchButtonPanel, BorderLayout.NORTH);
         add(center, BorderLayout.CENTER);
         JPanel j = new JPanel(new GridBagLayout());
         j.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));

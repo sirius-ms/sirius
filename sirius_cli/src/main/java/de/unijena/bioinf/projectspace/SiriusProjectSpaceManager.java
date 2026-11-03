@@ -416,7 +416,7 @@ public class SiriusProjectSpaceManager extends AbstractProjectSpaceManager {
 
     @Override
     public @NotNull ProjectDetectedAdducts getDetectedAdducts() {
-        throw new UnsupportedOperationException("Compacting is not supported.");
+        throw new UnsupportedOperationException("Detected adducts are not supported.");
     }
 
     //region static helper

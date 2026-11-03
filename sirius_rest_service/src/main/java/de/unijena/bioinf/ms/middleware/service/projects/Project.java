@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
+import de.unijena.bioinf.ms.middleware.model.search.SearchableField;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
@@ -43,7 +44,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
@@ -66,6 +70,19 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     @SneakyThrows
     void removeFromSearchIndex(@Nullable Collection<String> alignedFeaturesIds, @Nullable Collection<String> compoundIds, @Nullable Collection<String> runIds);
+
+    /**
+     * Describes the fields that can be used in lucene search queries (searchQuery parameter) for the given
+     * API model type (e.g. AlignedFeature, Run), including this project's dynamic tag fields.
+     * Empty if no searchable fields exist for the given type - which is what a project without a search index
+     * answers.
+     * <p>
+     * How the answer is put together - what is indexed, what is materialized, which vocabularies apply - is
+     * the project's business and stays inside it.
+     */
+    default List<SearchableField> getSearchableFields(@NotNull Class<?> modelClass) {
+        return List.of();
+    }
 
     /**
      * Technical Identifier for the project file/directory on the filesystem/dbms
@@ -365,5 +382,13 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     default void close(boolean compact) throws IOException {
         close();
+    }
+
+    /**
+     * @param rewriteLayout compact and rewrite how the records are laid out on disk even if that does not
+     *                      look necessary. Implies {@code compact}.
+     */
+    default void close(boolean compact, boolean rewriteLayout) throws IOException {
+        close(compact || rewriteLayout);
     }
 }

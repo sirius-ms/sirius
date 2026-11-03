@@ -19,8 +19,10 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import de.unijena.bioinf.projectspace.SearchableFieldDoc;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
+import de.unijena.bioinf.ms.middleware.service.search.description.CompoundClassVocabulary;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.CompoundClassesMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.projectspace.IndexField;
@@ -62,6 +64,7 @@ public class FeatureAnnotations {
      * Best matching compound classes that correspond to the formulaAnnotation
      */
     @IndexFieldWithMapper(mapper = CompoundClassesMapper.class)
+    @SearchableFieldDoc(possibleValues = CompoundClassVocabulary.class)
     @Schema(nullable = true)
     protected CompoundClasses compoundClassAnnotation; // CANOPUS
 
@@ -87,7 +90,7 @@ public class FeatureAnnotations {
     protected ExpansiveSearchConfidenceMode.Mode expansiveSearchState;
 
     /**
-     * List of databases that have been specified by for structure db search. Null if no structure db search has been performed.
+     * List of databases that have been specified for structure db search. Null if no structure db search has been performed.
      */
     @Schema(nullable = true)
     protected List<String> specifiedDatabases;
@@ -98,10 +101,11 @@ public class FeatureAnnotations {
     @Schema(nullable = true)
     protected List<String> expandedDatabases;
 
+
     /**
-     * A mapping of structural database names (keys) to the rank (value) of the highest-ranked match found in each database.
-     * NOTE: This field is mainly for search index building and therefore hidden from the api
+     * Rank (value) of the highest-ranked match found in a structure database (key).
      */
+    //NOTE: This field is mainly for search index building and therefore hidden from the api
     @IndexField(sortable = true)
     @Schema(nullable = true, hidden = true)
     private Map<String, Integer> matchedDatabases;

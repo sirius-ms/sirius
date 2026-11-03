@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -190,6 +191,30 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
     @Override
     public void compact() {
         project.getStorage().compact();
+    }
+
+    /**
+     * Compacts the project, rewriting how its records are laid out on disk whether or not the storage
+     * thinks that is needed - see {@code NitriteDatabase#compactByRewriting()} for when that is
+     * worth asking for. Falls back to an ordinary compaction for a storage that has no layout to
+     * rewrite.
+     */
+    public void compactByRewriting() {
+        if (project.getStorage() instanceof NitriteDatabase nitrite)
+            nitrite.compactByRewriting();
+        else
+            project.getStorage().compact();
+    }
+
+    /**
+     * Whether compacting this project would reclaim markedly more than the garbage a
+     * compaction usually reclaims, because the layout it is stored in is out of date.
+     * <p>
+     * Not on {@link ProjectSpaceManager}: only a storage that has a page layout can have an
+     * outdated one, and the file-based project space has none.
+     */
+    public boolean isCompactionRecommended() {
+        return project.getStorage().isCompactionRecommended();
     }
 
     @Override

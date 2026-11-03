@@ -31,7 +31,7 @@ public class MgfExporterConfigPanel extends SubToolConfigPanel<MgfExporterOption
         getOptionDescriptionByName("write-ms1").ifPresent(it -> addMs1.setToolTipText(GuiUtils.formatToolTip(it)));
         paras.add(addMs1);
 
-        JCheckBox ignoreMs1Only = new JCheckBox("Ignore MS1 only features?", true);
+        JCheckBox ignoreMs1Only = new JCheckBox("Ignore MS1-only features?", true);
         parameterBindings.put("ignore-ms1-only", () -> "~" + ignoreMs1Only.isSelected());
         getOptionDescriptionByName("ignore-ms1-only").ifPresent(it -> ignoreMs1Only.setToolTipText(GuiUtils.formatToolTip(it)));
         paras.add(ignoreMs1Only);

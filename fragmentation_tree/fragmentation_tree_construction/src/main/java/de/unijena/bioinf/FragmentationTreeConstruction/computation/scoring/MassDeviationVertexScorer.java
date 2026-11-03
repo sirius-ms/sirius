@@ -84,8 +84,12 @@ public class MassDeviationVertexScorer implements DecompositionScorer<MassDeviat
         final double sd = dev.absoluteFor(realMass);
         double score = weight * Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
         // prevent infeasible exceptions if the vertex is, for whatever reason, above the allowed
-        // ppm
-        if (score < -100) {
+        // ppm. NaN has to be caught explicitly: erfc underflows to 0 for a hopeless deviation, so
+        // the log is -Infinity, and both weight==0 and a zero mass tolerance turn that into NaN.
+        // "score < -100" alone lets it pass, because every comparison with NaN is false. The score
+        // ends up as a loss weight, where a NaN silently breaks tree construction
+        // (see MassDeviationEdgeScorer, which guards the same way).
+        if (score < -100 || !Double.isFinite(score)) {
             LoggerFactory.getLogger(MassDeviationVertexScorer.class).warn("Vertex " + realMass + " has a too large mass deviation of " + Math.abs(realMass-theoreticalMass) + " for molecular formula " + formula + " (" + ion + ").");
             score = -100;
         }

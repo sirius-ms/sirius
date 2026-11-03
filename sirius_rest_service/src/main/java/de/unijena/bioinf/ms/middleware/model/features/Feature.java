@@ -93,13 +93,13 @@ public class Feature {
     protected Double rtFwhmSeconds;
 
     /**
-     * Feature Quantity measured as Intensity of the apex of the feature
+     * Feature quantity measured as the intensity of the apex of the feature
      */
     @Schema(nullable = true)
     protected Double apexIntensity;
 
     /**
-     * Feature Quantity measured as Area under curve of the whole feature
+     * Feature quantity measured as the area under the curve of the whole feature
      */
     @Schema(nullable = true)
     protected Double areaUnderCurve;

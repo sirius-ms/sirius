@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.gui.table.SiriusListCellRenderer;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
+import io.sirius.ms.sdk.model.AllowedFeatures;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -119,6 +120,10 @@ public class DatabaseDialog extends JFrame {
     @Getter
     protected CustomDbContext context;
 
+    /** Whether the active subscription includes the transformation-products feature. Resolved on show;
+     *  gates the transformation-product tool button (the server enforces this too). */
+    private boolean transformationProductsAllowed = false;
+
     protected JList<SearchableDatabase> dbList;
     protected List<SearchableDatabase> customDatabases;
 
@@ -136,14 +141,14 @@ public class DatabaseDialog extends JFrame {
         dbList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         dbView = new DatabaseView();
 
-        JButton addCustomDb = Buttons.getAddButton(BUTTON_ICON_SIZE, "Create custom database");
-        JButton deleteDB = Buttons.getRemoveButton(BUTTON_ICON_SIZE, "Delete custom database");
-        JButton editDB = Buttons.getEditButton(BUTTON_ICON_SIZE, "Edit custom database");
-        JButton openDB = Buttons.getPlainFolderButton(BUTTON_ICON_SIZE, "Add existing database");
-        JButton exportDB = Buttons.getExportButton(BUTTON_ICON_SIZE, "Export database");
-        JButton transformationDB = new ToolbarButton(Icons.TRANSFORMATION_DB.derive(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE), "Create Transformation product database");
-        JButton showContentsDB = new ToolbarButton(Icons.DB_LENS.derive(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE), "Show database contents");
-        JButton downloadableDBs = Buttons.getDownloadButton(BUTTON_ICON_SIZE, "Download curated custom databases for local use");
+        JButton addCustomDb = Buttons.getAddButton(BUTTON_ICON_SIZE, "Create custom database", true);
+        JButton deleteDB = Buttons.getRemoveButton(BUTTON_ICON_SIZE, "Delete custom database", true);
+        JButton editDB = Buttons.getEditButton(BUTTON_ICON_SIZE, "Edit custom database", true);
+        JButton openDB = Buttons.getPlainFolderButton(BUTTON_ICON_SIZE, "Add existing database", true);
+        JButton exportDB = Buttons.getExportButton(BUTTON_ICON_SIZE, "Export database", true);
+        JButton transformationDB = new ToolbarButton(Icons.TRANSFORMATION_DB.derive(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE), "Create Transformation product database", true);
+        JButton showContentsDB = new ToolbarButton(Icons.DB_LENS.derive(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE), "Show database contents", true);
+        JButton downloadableDBs = Buttons.getDownloadButton(BUTTON_ICON_SIZE, "Download curated custom databases for local use", true);
 
         downloadableDBs.addActionListener(e -> new DownloadableDBsDialog(this));
 
@@ -152,7 +157,7 @@ public class DatabaseDialog extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 SearchableDatabase db = dbList.getSelectedValue();
                 if (db != null)
-                    CustomDbBrowserWindow.showDatabaseContent(db, context, DatabaseDialog.this);
+                    CustomDbWebViews.showDatabaseContent(db, context, DatabaseDialog.this);
             }
         };
 
@@ -195,7 +200,7 @@ public class DatabaseDialog extends JFrame {
                     }
 
                     //no window may be left showing a database that does not exist anymore
-                    CustomDbBrowserWindow.disposeInstances(name);
+                    CustomDbWebViews.disposeInstances(name);
                     loadDatabaseList();
                 }
             }
@@ -228,7 +233,12 @@ public class DatabaseDialog extends JFrame {
             editDB.setEnabled(editSelectedDb.isEnabled());
             deleteDB.setEnabled(deleteSelectedDb.isEnabled());
             exportDB.setEnabled(deleteSelectedDb.isEnabled());
-            transformationDB.setEnabled(editSelectedDb.isEnabled());
+            // gate the transformation-product tool on the license feature (button stays visible but is
+            // not executable without it); the server enforces the same via allowedFeature:transformationProducts
+            transformationDB.setEnabled(editSelectedDb.isEnabled() && transformationProductsAllowed);
+            transformationDB.setToolTipText(transformationProductsAllowed
+                    ? "Create Transformation product database"
+                    : GuiUtils.formatAndStripToolTip("The Transformation product tool is not included in your subscription (or you are not logged in)."));
             showContentsDB.setEnabled(db != null && !db.isUpdateNeeded());
         });
 
@@ -263,9 +273,11 @@ public class DatabaseDialog extends JFrame {
         showContentsDB.addActionListener(showSelectedDb);
 
         transformationDB.addActionListener(e -> {
+            if (!transformationProductsAllowed) // defense-in-depth: the button should already be disabled
+                return;
             SearchableDatabase db = dbList.getSelectedValue();
             if (db != null) //the tool may have created a database, so refresh the list when it is closed
-                CustomDbBrowserWindow.showReactionTool(db, context, this, DatabaseDialog::refreshInstance);
+                CustomDbWebViews.showReactionTool(db, context, this, DatabaseDialog::refreshInstance);
         });
 
         JFileChooser openDbFileChooser = new JFileChooser();
@@ -329,6 +341,9 @@ public class DatabaseDialog extends JFrame {
      */
     private void showWithContext(@NotNull CustomDbContext context, @Nullable Window relativeTo) {
         this.context = context;
+        // resolve the license feature once per open; the selection listener reads this to gate the button
+        transformationProductsAllowed = context.getAllowedFeatures()
+                .map(AllowedFeatures::isTransformationProducts).orElse(false);
 
         if (relativeTo != null)
             setLocationRelativeTo(relativeTo);

@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.sirius.ms.sdk.model.ComputedSubtools;
 import io.sirius.ms.sdk.model.DataQuality;
 import io.sirius.ms.sdk.model.FeatureAnnotations;
+import io.sirius.ms.sdk.model.Intensity;
 import io.sirius.ms.sdk.model.MsData;
 import io.sirius.ms.sdk.model.Tag;
 import java.util.Arrays;
@@ -54,6 +55,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_NAME,
   AlignedFeature.JSON_PROPERTY_EXTERNAL_FEATURE_ID,
   AlignedFeature.JSON_PROPERTY_ION_MASS,
+  AlignedFeature.JSON_PROPERTY_INTENSITY,
   AlignedFeature.JSON_PROPERTY_CHARGE,
   AlignedFeature.JSON_PROPERTY_DETECTED_ADDUCTS,
   AlignedFeature.JSON_PROPERTY_RT_START_SECONDS,
@@ -91,6 +93,10 @@ public class AlignedFeature {
   public static final String JSON_PROPERTY_ION_MASS = "ionMass";
   @jakarta.annotation.Nullable
   private Double ionMass;
+
+  public static final String JSON_PROPERTY_INTENSITY = "intensity";
+  @jakarta.annotation.Nullable
+  private Intensity intensity;
 
   public static final String JSON_PROPERTY_CHARGE = "charge";
   @jakarta.annotation.Nonnull
@@ -162,7 +168,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get alignedFeatureId
+   * Unique identifier of the aligned feature within the project.
    * @return alignedFeatureId
    */
   @jakarta.annotation.Nullable
@@ -187,7 +193,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get compoundId
+   * Identifier of the compound the feature belongs to.  Features that are different adducts or isotopologues of the same molecule share it.
    * @return compoundId
    */
   @jakarta.annotation.Nullable
@@ -212,7 +218,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get name
+   * Informative, human-readable name of the feature.
    * @return name
    */
   @jakarta.annotation.Nullable
@@ -262,7 +268,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get ionMass
+   * Mass-to-charge ratio (m/z) of the precursor ion of the feature.
    * @return ionMass
    */
   @jakarta.annotation.Nullable
@@ -280,6 +286,31 @@ public class AlignedFeature {
     this.ionMass = ionMass;
   }
 
+  public AlignedFeature intensity(@jakarta.annotation.Nullable Intensity intensity) {
+    
+    this.intensity = intensity;
+    return this;
+  }
+
+  /**
+   * Get intensity
+   * @return intensity
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Intensity getIntensity() {
+    return intensity;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_INTENSITY, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setIntensity(@jakarta.annotation.Nullable Intensity intensity) {
+    this.intensity = intensity;
+  }
+
   public AlignedFeature charge(@jakarta.annotation.Nonnull Integer charge) {
     
     this.charge = charge;
@@ -287,7 +318,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Ion mode (charge) this feature has been measured in.
+   * Ion mode (charge) the feature has been measured in.
    * @return charge
    */
   @jakarta.annotation.Nonnull
@@ -320,7 +351,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Adducts of this feature that have been detected during preprocessing.  Never empty: if no adduct could be detected, the unknown ion type matching the feature&#39;s  charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.
+   * Adducts that have been detected for the feature during preprocessing.  Never empty: if no adduct could be detected, the unknown ion type matching the feature&#39;s  charge ([M+?]+ or [M+?]-) is reported instead, so every feature is filterable by adduct.
    * @return detectedAdducts
    */
   @jakarta.annotation.Nonnull
@@ -346,7 +377,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get rtStartSeconds
+   * Start of the retention time range the feature was detected in, in seconds.
    * @return rtStartSeconds
    */
   @jakarta.annotation.Nullable
@@ -371,7 +402,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get rtEndSeconds
+   * End of the retention time range the feature was detected in, in seconds.
    * @return rtEndSeconds
    */
   @jakarta.annotation.Nullable
@@ -396,7 +427,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Get rtApexSeconds
+   * Retention time of the intensity apex of the feature, in seconds.
    * @return rtApexSeconds
    */
   @jakarta.annotation.Nullable
@@ -446,7 +477,7 @@ public class AlignedFeature {
   }
 
   /**
-   * If true, the feature has at lease one MS1 spectrum
+   * If true, the feature has at least one MS1 spectrum
    * @return hasMs1
    */
   @jakarta.annotation.Nullable
@@ -471,7 +502,7 @@ public class AlignedFeature {
   }
 
   /**
-   * If true, the feature has at lease one MS/MS spectrum
+   * If true, the feature has at least one MS/MS spectrum
    * @return hasMsMs
    */
   @jakarta.annotation.Nullable
@@ -571,7 +602,7 @@ public class AlignedFeature {
   }
 
   /**
-   * Write lock for this feature. If the feature is locked no write operations are possible.  True if any computation is modifying this feature or its results
+   * Write lock for the feature. If the feature is locked no write operations are possible.  True if any computation is modifying the feature or its results.
    * @return computing
    */
   @jakarta.annotation.Nullable
@@ -695,6 +726,7 @@ public class AlignedFeature {
         Objects.equals(this.name, alignedFeature.name) &&
         Objects.equals(this.externalFeatureId, alignedFeature.externalFeatureId) &&
         Objects.equals(this.ionMass, alignedFeature.ionMass) &&
+        Objects.equals(this.intensity, alignedFeature.intensity) &&
         Objects.equals(this.charge, alignedFeature.charge) &&
         Objects.equals(this.detectedAdducts, alignedFeature.detectedAdducts) &&
         Objects.equals(this.rtStartSeconds, alignedFeature.rtStartSeconds) &&
@@ -714,7 +746,7 @@ public class AlignedFeature {
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing, computedTools, qualities, tags);
+    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, intensity, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing, computedTools, qualities, tags);
   }
 
   @Override
@@ -726,6 +758,7 @@ public class AlignedFeature {
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    externalFeatureId: ").append(toIndentedString(externalFeatureId)).append("\n");
     sb.append("    ionMass: ").append(toIndentedString(ionMass)).append("\n");
+    sb.append("    intensity: ").append(toIndentedString(intensity)).append("\n");
     sb.append("    charge: ").append(toIndentedString(charge)).append("\n");
     sb.append("    detectedAdducts: ").append(toIndentedString(detectedAdducts)).append("\n");
     sb.append("    rtStartSeconds: ").append(toIndentedString(rtStartSeconds)).append("\n");

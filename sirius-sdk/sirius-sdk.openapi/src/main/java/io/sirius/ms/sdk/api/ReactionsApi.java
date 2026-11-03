@@ -53,6 +53,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Add a new reaction to the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reaction The reaction parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -87,6 +89,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Add a new reaction to the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reaction The reaction parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -99,6 +103,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Add a new reaction to the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reaction The reaction parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -111,6 +117,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Add a new reaction to the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reaction The reaction parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -123,6 +131,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Add a new reaction sequence to the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reactionSequence The reactionSequence parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -157,6 +167,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Add a new reaction sequence to the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reactionSequence The reactionSequence parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -169,6 +181,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Add a new reaction sequence to the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reactionSequence The reactionSequence parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -181,6 +195,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Add a new reaction sequence to the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reactionSequence The reactionSequence parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -193,6 +209,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.
      * [EXPERIMENTAL] Returns the final pool of SMILES strings. [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reactionRequest The reactionRequest parameter
      * @param limit The limit parameter
      * @return PagedModelString
@@ -215,7 +233,7 @@ public class ReactionsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "limit", limit));
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -233,6 +251,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.
      * [EXPERIMENTAL] Returns the final pool of SMILES strings. [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reactionRequest The reactionRequest parameter
      * @param limit The limit parameter
      * @return PagedModelString
@@ -247,6 +267,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.
      * [EXPERIMENTAL] Returns the final pool of SMILES strings. [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reactionRequest The reactionRequest parameter
      * @param limit The limit parameter
      * @return ResponseEntity&lt;PagedModelString&gt;
@@ -261,6 +283,8 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Apply a sequence of reactions to a list of SMILES strings or structures from a database.
      * [EXPERIMENTAL] Returns the final pool of SMILES strings. [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param reactionRequest The reactionRequest parameter
      * @param limit The limit parameter
      * @return ResponseSpec
@@ -274,6 +298,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Delete a reaction from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -308,6 +335,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Delete a reaction from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -320,6 +350,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Delete a reaction from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -332,6 +365,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Delete a reaction from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -344,6 +380,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Delete a reaction sequence from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -378,6 +417,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Delete a reaction sequence from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -390,6 +432,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Delete a reaction sequence from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -402,6 +447,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Delete a reaction sequence from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -414,6 +462,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get a specific reaction from the library by name.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @return Reaction
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -435,7 +486,7 @@ public class ReactionsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -451,6 +502,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get a specific reaction from the library by name.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @return Reaction
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -464,6 +518,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get a specific reaction from the library by name.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @return ResponseEntity&lt;Reaction&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -477,6 +534,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get a specific reaction from the library by name.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -489,6 +549,7 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get all reactions from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;Reaction&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -503,7 +564,7 @@ public class ReactionsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -519,6 +580,7 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get all reactions from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;Reaction&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -531,6 +593,7 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get all reactions from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;List&lt;Reaction&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -543,6 +606,7 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get all reactions from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -554,6 +618,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get a specific reaction sequence from the library by name.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @return ReactionSequence
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -575,7 +642,7 @@ public class ReactionsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -591,6 +658,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get a specific reaction sequence from the library by name.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @return ReactionSequence
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -604,6 +674,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get a specific reaction sequence from the library by name.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @return ResponseEntity&lt;ReactionSequence&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -617,6 +690,9 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get a specific reaction sequence from the library by name.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
+     * <p><b>404</b> - The referenced object does not exist in this SIRIUS instance or project.
+     * <p><b>400</b> - The request body or a parameter is malformed or violates a constraint.
      * @param name The name parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -629,6 +705,7 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get all reaction sequences from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;ReactionSequence&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -643,7 +720,7 @@ public class ReactionsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/json"
+            "application/json", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -659,6 +736,7 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get all reaction sequences from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return List&lt;ReactionSequence&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -671,6 +749,7 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get all reaction sequences from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseEntity&lt;List&lt;ReactionSequence&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -683,6 +762,7 @@ public class ReactionsApi {
      * [EXPERIMENTAL] Get all reaction sequences from the library.
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
+     * <p><b>500</b> - Unexpected server-side error. The problem detail carries the reason.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */

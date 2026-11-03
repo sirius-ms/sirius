@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.middleware.service.search;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexSchema;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +87,12 @@ public interface SearchService extends AutoCloseable {
      */
     <T> void setIndexComplete(String projectId, Class<T> clazz, boolean complete);
 
+    /**
+     * Makes the documents written for the given type findable, waiting until they are. See
+     * {@code SearchContext.makeWritesSearchable}.
+     */
+    <T> void makeWritesSearchable(String projectId, Class<T> clazz);
+
     <T> Page<T> search(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
     <T> Page<String> searchIds(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
 
@@ -98,6 +105,15 @@ public interface SearchService extends AutoCloseable {
      */
     <T, R> Page<R> searchFields(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass,
                                 Set<String> fields, Function<IndexedFields, R> mapper);
+
+    /** What the given project's index of that type holds, as recorded when it was configured. */
+    <T> IndexSchema getIndexSchema(String projectId, Class<T> beanClass);
+
+    /** The field names actually present in that index, including the keys a dynamic field has taken. */
+    <T> Set<String> getMaterializedFieldNames(String projectId, Class<T> beanClass);
+
+    /** The tag definitions the given project knows, by name. */
+    Map<String, ValueType> getTagValueTypes(String projectId);
 
     ValueType getTagValueType(String projectId, String tagName);
     void addTagValueType(String projectId, String tagName, ValueType valueType);

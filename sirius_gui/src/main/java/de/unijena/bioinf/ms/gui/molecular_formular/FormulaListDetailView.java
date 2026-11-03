@@ -26,6 +26,7 @@ import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.table.*;
+import de.unijena.bioinf.ms.gui.utils.NumberFormats;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -35,7 +36,6 @@ import lombok.Getter;
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -75,7 +75,7 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.siriusScoreStats, AbstractBarTableCellRenderer.PercentageMode.MULTIPLY_PROBABILITIES));
         table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, AbstractBarTableCellRenderer.PercentageMode.DEACTIVATED));
         table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.treeScoreStats, AbstractBarTableCellRenderer.PercentageMode.DEACTIVATED));
-        table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.explainedPeaks, AbstractBarTableCellRenderer.PercentageMode.DEACTIVATED, true, new DecimalFormat("#0")));
+        table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.explainedPeaks, AbstractBarTableCellRenderer.PercentageMode.DEACTIVATED, true, NumberFormats.decimalFormat("#0")));
         table.getColumnModel().getColumn(8).setCellRenderer(BarTableCellRenderer.newProbabilityBar(tableFormat.highlightColumnIndex()));
 
         loadingWrapper = new LoadablePanel(new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));

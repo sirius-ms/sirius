@@ -48,14 +48,35 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ms.middleware.security.Authorities.*;
 
 @EnableMethodSecurity
 @Configuration
 public class SecurityConfig {
+
+    /**
+     * A group of endpoints locked behind a single license feature: the react GUI view(s) served by
+     * {@link de.unijena.bioinf.ms.middleware.controller.WebAppController} together with the matching REST
+     * API. The patterns are matched before the general access rules and require exactly the given feature
+     * authority (no gui/explorer bypass).
+     */
+    private record FeatureGate(GrantedAuthority feature, String... patterns) {}
+
+    /**
+     * License-gated endpoint groups. To gate another tool the same way, add one entry with its feature
+     * authority and the view + api path patterns - no other security change is required.
+     */
+    private static final List<FeatureGate> FEATURE_GATES = List.of(
+            new FeatureGate(ALLOWED_FEATURE__TRANSFORMATION_PRODUCTS,
+                    "/reactionTool", "/reactionTool/**",   // WebAppController react view
+                    "/api/reactions", "/api/reactions/**"), // ReactionController API
+            new FeatureGate(ALLOWED_FEATURE__DENOVO,
+                    "/structEdit", "/structEdit/**",       // WebAppController structure sketcher react view
+                    "/api/projects/*/aligned-features/*/denovo-structures/add-candidate") // add sketched structure candidate
+    );
     @Bean
     @Profile("local")
     public WebMvcConfigurer corsConfigurerLocal() {
@@ -98,16 +119,22 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                  // This is the line that disables anonymous authentication
                 .anonymous(AbstractHttpConfigurer::disable)
-                // exclude endpoints from security filters and authorities
-                .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/sse", "/actuator/**", "/api/account/**", "/api/info", "/api/connection-status",
-                                "/", "/api", "/api/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error",
-                                "/reactionTool", "/reactionTool/**", "/*.js", "/*.wasm", "/*.woff2", "/assets/**", "/sirius_java_integrated/**").permitAll()
-                        // configure authorities to check for general api access
-                        .anyRequest().hasAnyAuthority(
-                                ALLOWED_FEATURE__API.getAuthority(),
-                                BYPASS__EXPLORER.getAuthority(),
-                                BYPASS__GUI.getAuthority()))
+                .authorizeHttpRequests(authz -> {
+                        // License-gated endpoint groups first, so they take precedence over the general rules
+                        // below. Each is restricted STRICTLY to its license feature authority - the gui/explorer
+                        // bypass does NOT unlock them (a single authority check, not hasAnyAuthority).
+                        FEATURE_GATES.forEach(gate ->
+                                authz.requestMatchers(gate.patterns()).hasAuthority(gate.feature().getAuthority()));
+                        // exclude endpoints from security filters and authorities
+                        authz.requestMatchers("/sse", "/actuator/**", "/api/account/**", "/api/info", "/api/connection-status",
+                                        "/", "/api", "/api/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error",
+                                        "/*.js", "/*.wasm", "/*.woff2", "/assets/**", "/sirius_java_integrated/**").permitAll()
+                                // configure authorities to check for general api access
+                                .anyRequest().hasAnyAuthority(
+                                        ALLOWED_FEATURE__API.getAuthority(),
+                                        BYPASS__EXPLORER.getAuthority(),
+                                        BYPASS__GUI.getAuthority());
+                })
                 //configure jwt converter
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.decoder(jwtDecoder)

@@ -154,7 +154,8 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
         tb.setRollover(true);
 
         scoreSlider = new FilterRangeSlider<>(source, source.similarityStats, true);
-        peaksSlider = new FilterRangeSlider<>(source, source.sharedPeaksStats);
+        //shared peaks is a count, so no decimals - same as the atom size slider in FingerprintTableView
+        peaksSlider = new FilterRangeSlider<>(source, source.sharedPeaksStats, false, FilterRangeSlider.DEFAUTL_INT_FORMAT);
 
         tb.add(new NameFilterRangeSlider("Similarity:", scoreSlider));
         tb.addSeparator();
