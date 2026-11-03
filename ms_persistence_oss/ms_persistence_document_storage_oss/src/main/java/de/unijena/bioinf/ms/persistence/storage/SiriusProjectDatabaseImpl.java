@@ -25,6 +25,7 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
@@ -42,7 +43,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage>, Closeable, AutoCloseable {
     public static Metadata buildMetadata() {
@@ -140,41 +143,49 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
         }
     }
 
-    /** Below this many features per worker, splitting the derivation costs more than it saves. */
-    private static final int MIN_FEATURES_PER_WORKER = 1000;
+    /** How many alignments a worker takes from the shared cursor at a time. */
+    private static final int ALIGNMENTS_PER_CHUNK = 128;
 
     /**
-     * Folds every stored feature into fresh maxima. The features are read by primary key, spread over one
-     * {@code JobType.CPU} sub-job per core, each folding its share into maxima of its own, which are merged at
-     * the end. A sequential walk of the collection deserializes one page after another on a single thread:
-     * 5.2 s for 125,000 run features read cold, against 2.6 s on 12 cores - most of either is the store
-     * deserializing its pages, which reading in parallel only spreads. This runs the first time an
-     * older project's maxima are asked for - which is while its search index is being built, before anything
-     * is written to it.
+     * Folds every stored feature into fresh maxima, read alignment by alignment: the keys of the aligned and of
+     * the isotopic-aligned features - whose run features are stored under the isotopic alignment's own id, and
+     * are folded in on import like any other - handed out in chunks from a shared cursor to one
+     * {@code JobType.CPU} sub-job per core, each fetching a chunk's run features over the alignedFeatureId index
+     * and folding them into maxima of its own, merged at the end.
+     * <p>
+     * Alignments rather than the run features' own keys: there are far fewer of them, so reading the keys to hand
+     * out costs a fraction. A shared cursor rather than one contiguous block of chunks per worker: workers taking
+     * neighbouring chunks in order read neighbouring records and share the pages they decode, where a block per
+     * worker has each of them decode pages of its own. Both were measured against the alternatives and against a
+     * single-threaded walk of the collection, on a large LC-MS project read cold, and both win clearly. This runs
+     * the first time an older project's maxima are asked for - which is while its search index is being built,
+     * before anything is written to it.
      */
     private ProjectMaximumIntensities deriveMaxima() throws Exception {
-        List<Object> keys = getStorage().primaryKeys(Feature.class);
+        List<Object> keys = new ArrayList<>(getStorage().primaryKeys(AlignedFeatures.class));
+        keys.addAll(getStorage().primaryKeys(AlignedIsotopicFeatures.class));
         if (keys.isEmpty())
             return new ProjectMaximumIntensities();
         int workers = Math.clamp(SiriusJobs.getGlobalJobManager().getCPUThreads(), 1,
-                Math.max(1, keys.size() / MIN_FEATURES_PER_WORKER));
-        int batchSize = (keys.size() + workers - 1) / workers;
-        List<List<Object>> batches = new ArrayList<>(workers);
-        for (int from = 0; from < keys.size(); from += batchSize)
-            batches.add(keys.subList(from, Math.min(keys.size(), from + batchSize)));
+                (keys.size() + ALIGNMENTS_PER_CHUNK - 1) / ALIGNMENTS_PER_CHUNK);
+        AtomicInteger cursor = new AtomicInteger();
 
         return SiriusJobs.getGlobalJobManager().submitJob(new BasicMasterJJob<ProjectMaximumIntensities>(JJob.JobType.CPU) {
             @Override
             protected ProjectMaximumIntensities compute() throws Exception {
-                List<BasicJJob<ProjectMaximumIntensities>> running = new ArrayList<>(batches.size());
-                for (List<Object> batch : batches)
+                List<BasicJJob<ProjectMaximumIntensities>> running = new ArrayList<>(workers);
+                for (int worker = 0; worker < workers; worker++)
                     running.add(submitSubJob(new BasicJJob<>(JobType.CPU) {
                         @Override
                         protected ProjectMaximumIntensities compute() throws Exception {
                             ProjectMaximumIntensities part = new ProjectMaximumIntensities();
-                            for (Object key : batch) {
+                            int from;
+                            while ((from = cursor.getAndAdd(ALIGNMENTS_PER_CHUNK)) < keys.size()) {
                                 checkForInterruption();
-                                getStorage().getByPrimaryKey(key, Feature.class).ifPresent(f -> part.fold(List.of(f)));
+                                try (Stream<Feature> features = getStorage().findAllByIndexedFieldStr("alignedFeatureId",
+                                        keys.subList(from, Math.min(keys.size(), from + ALIGNMENTS_PER_CHUNK)), Feature.class)) {
+                                    features.forEach(f -> part.fold(List.of(f)));
+                                }
                             }
                             return part;
                         }

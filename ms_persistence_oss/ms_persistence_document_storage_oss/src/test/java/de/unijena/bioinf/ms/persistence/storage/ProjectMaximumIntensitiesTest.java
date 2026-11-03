@@ -192,7 +192,16 @@ public class ProjectMaximumIntensitiesTest {
             Double apex = i % 50 == 0 ? null : Math.exp(random.nextDouble(8, 16));
             Feature feature = runFeature(runId, apex, Math.exp(random.nextDouble(10, 18)));
             expected.fold(List.of(feature));
-            batch.add(AlignedFeatures.singleton(feature));
+            AlignedFeatures aligned = AlignedFeatures.singleton(feature);
+            if (i == 4001) {
+                // an isotope peak that sets its run's maximum: its run feature is stored under the isotopic
+                // alignment, not the aligned feature, and still counts like every other written feature
+                Feature isotopePeak = runFeature(3L, 1.0e9, 1.0e10);
+                expected.fold(List.of(isotopePeak));
+                aligned.setIsotopicFeatures(List.of(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures
+                        .builder().features(List.of(isotopePeak)).build()));
+            }
+            batch.add(aligned);
         }
         ps.importAlignedFeatures(batch);
         ps.removeProjectProperty(SiriusProjectDocumentDatabase.PROJECT_MAXIMUM_INTENSITIES_KEY);
