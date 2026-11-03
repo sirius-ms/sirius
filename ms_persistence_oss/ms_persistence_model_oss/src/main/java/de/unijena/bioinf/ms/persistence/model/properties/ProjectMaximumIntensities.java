@@ -82,6 +82,11 @@ public class ProjectMaximumIntensities {
         Maximum copy() {
             return new Maximum(apex, auc);
         }
+
+        void merge(@NotNull Maximum other) {
+            apex = Math.max(apex, other.apex);
+            auc = Math.max(auc, other.auc);
+        }
     }
 
     private static final Maximum NONE = new Maximum();
@@ -122,6 +127,16 @@ public class ProjectMaximumIntensities {
             raised |= global.fold(feature);
         }
         return raised;
+    }
+
+    /**
+     * Takes in what {@code other} was folded from, as if its features had been folded in here - so features
+     * can be folded in parts, in any order, and the parts merged.
+     */
+    public void merge(@NotNull ProjectMaximumIntensities other) {
+        other.runs.forEach((runId, maximum) -> runs.computeIfAbsent(runId, id -> new Maximum()).merge(maximum));
+        global.merge(other.global);
+        featuresWithoutRun |= other.featuresWithoutRun;
     }
 
     /** The runs whose maximum is higher here than in {@code earlier}, in either measure. */
