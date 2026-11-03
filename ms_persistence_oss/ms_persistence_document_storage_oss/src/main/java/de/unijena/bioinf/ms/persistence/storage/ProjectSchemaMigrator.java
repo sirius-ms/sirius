@@ -516,7 +516,8 @@ public class ProjectSchemaMigrator {
                 overPrimaryKeysOf(Compound.class, "Removing orphaned compounds...", List.of(),
                         this::deleteOrphanedCompound);
                 overPrimaryKeysOf(AlignedFeatures.class, "Linking features to compounds...",
-                        List.of(AlignedFeatures.class), this::linkOrphanedAlignedFeatures);
+                        List.of(AlignedFeatures.class), this::linkOrphanedAlignedFeatures,
+                        buffer -> linkPending(takePendingLinks(0), buffer));
             }
 
             // Stamped last: a pass that threw leaves the version behind, so the next open converts again.
@@ -625,6 +626,18 @@ public class ProjectSchemaMigrator {
          */
         private void overPrimaryKeysOf(Class<?> keyOwner, String message, List<Class<?>> rewritten, KeyTask task)
                 throws Exception {
+            overPrimaryKeysOf(keyOwner, message, rewritten, task, buffer -> {});
+        }
+
+        /** What a pass does once every key is done, before what is left in the buffer is written. */
+        @FunctionalInterface
+        private interface AfterLastKey {
+            void accept(WriteBuffer buffer) throws Exception;
+        }
+
+        /** @param afterLastKey hands over whatever the task held back for a batch of its own */
+        private void overPrimaryKeysOf(Class<?> keyOwner, String message, List<Class<?>> rewritten, KeyTask task,
+                                       AfterLastKey afterLastKey) throws Exception {
             // Announced before the keys are read: on millions of records that read alone takes seconds, and
             // until it is done the bar would still be naming whatever came before it.
             report(workDone.get(), message);
@@ -658,6 +671,7 @@ public class ProjectSchemaMigrator {
 
                 for (BasicJJob<Boolean> worker : running)
                     worker.awaitResult();
+                afterLastKey.accept(buffer);
                 buffer.flush();
             } finally {
                 for (Class<?> collection : rewritten)
@@ -778,7 +792,40 @@ public class ProjectSchemaMigrator {
         }
 
         /**
-         * The feature's own fresh compound, if the LC/MS-align bug left it without one.
+         * The features {@link #linkOrphanedAlignedFeatures} found unlinked, waiting for their compounds. A compound
+         * gets its id when it is inserted and the feature needs that id, so linking one feature at a time would
+         * insert one compound at a time - one write lock each. Collecting them inserts the compounds
+         * {@link #BUFFER} at a time instead, which measured clearly faster.
+         */
+        private final List<AlignedFeatures> pendingLinks = new ArrayList<>();
+
+        /** Takes the pending features once at least {@code atLeast} have gathered, else nothing. */
+        private List<AlignedFeatures> takePendingLinks(int atLeast) {
+            synchronized (pendingLinks) {
+                if (pendingLinks.isEmpty() || pendingLinks.size() < atLeast)
+                    return List.of();
+                List<AlignedFeatures> taken = new ArrayList<>(pendingLinks);
+                pendingLinks.clear();
+                return taken;
+            }
+        }
+
+        /** Gives each feature a compound of its own, as a current import would, and hands it to the buffer. */
+        private void linkPending(List<AlignedFeatures> features, WriteBuffer buffer) throws IOException {
+            if (features.isEmpty())
+                return;
+            List<Compound> compounds = features.stream().map(Compound::singleton).toList();
+            storage.insertAll(compounds); // assigns their ids
+            for (int i = 0; i < features.size(); i++) {
+                features.get(i).setCompoundId(compounds.get(i).getCompoundId());
+                buffer.add(features.get(i));
+            }
+            compoundsLinked.addAndGet(features.size());
+        }
+
+        /**
+         * The feature's own fresh compound, if the LC/MS-align bug left it without one - collected, see
+         * {@link #pendingLinks}, and linked once enough have gathered.
          * <p>
          * A null compoundId never means "not yet linked" for any other reason: every correct import path sets
          * it before the feature is ever stored (see MsProjectDocumentDatabase#importAlignedFeatures). What
@@ -792,11 +839,10 @@ public class ProjectSchemaMigrator {
             AlignedFeatures feature = storage.getByPrimaryKey(alignedFeatureId, AlignedFeatures.class).orElse(null);
             if (feature == null || feature.getCompoundId() != null)
                 return;
-            Compound c = Compound.singleton(feature);
-            storage.insert(c);
-            feature.setCompoundId(c.getCompoundId());
-            compoundsLinked.incrementAndGet();
-            buffer.add(feature);
+            synchronized (pendingLinks) {
+                pendingLinks.add(feature);
+            }
+            linkPending(takePendingLinks(BUFFER), buffer);
         }
 
         /**
