@@ -425,7 +425,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     /**
-     * Below this many ids, splitting into per-core batches and submitting sub-jobs for them costs more than it
+     * Below this many ids, spreading them over workers and submitting sub-jobs for them costs more than it
      * saves - handled inline instead, as a single batch on the calling thread. Covers the common case of a
      * single compound or feature added through the REST API, which would otherwise pay job-submission overhead
      * for a "batch" of one.
@@ -439,14 +439,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return workerCount > 0 ? workerCount : SiriusJobs.getGlobalJobManager().getCPUThreads();
     }
 
+    /** How many ids a worker takes from the shared cursor at a time - one batch to read, annotate and hand over. */
+    private static final int IDS_PER_CHUNK = 256;
+
     /**
-     * Reads the given ids as the documents the index is defined to hold and hands them over batch by batch, one
-     * {@code JobType.CPU} sub-job per batch so the read-and-annotate work of one batch overlaps the next's
-     * instead of waiting for it - the batches write disjoint ids, so nothing about doing it out of order changes
-     * what ends up indexed. The batch size is not fixed: {@code ids} is split into as many equally-sized batches
-     * as there are cores, so a run of 300 features and a full-project rebuild of 300,000 both spread evenly
-     * across the available parallelism instead of one being too fine-grained and the other too coarse for a
-     * single {@link Utils#LARGE_BATCH_SIZE}-style constant to suit both. {@code CPU}, not {@code IO}:
+     * Reads the given ids as the documents the index is defined to hold and hands them over batch by batch, on
+     * one {@code JobType.CPU} sub-job per core - the batches write disjoint ids, so nothing about doing it out of
+     * order changes what ends up indexed. Each worker takes the next {@link #IDS_PER_CHUNK} ids from a shared
+     * cursor rather than one contiguous share of them up front: the workers then read neighbouring records and
+     * share the pages they decode instead of each decoding pages of its own, and a batch in memory is a chunk,
+     * not a core's whole share of the project. Measured a little faster than one contiguous share per worker,
+     * and handing out ids one at a time measured far slower: the workers then contend for the same pages.
+     * {@code CPU}, not {@code IO}:
      * {@code JobType.IO} shares a process-wide semaphore capped at {@code min(cpuThreads, 3)} with no
      * re-entrancy, and the calls that reach this already run inside an IO-category job ({@code BackgroundRuns}),
      * so IO sub-jobs here could deadlock once enough of those are in flight at once. {@code CPU} jobs run on a
@@ -475,20 +479,24 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             return;
         }
 
-        int cores = Math.clamp(workers(), 1, ids.size());
-        int batchSize = (ids.size() + cores - 1) / cores; // ceil: as many batches as cores, evenly loaded
-        Partition<Long> partition = Partition.ofSize(ids, batchSize);
+        int workers = Math.clamp(workers(), 1, (ids.size() + IDS_PER_CHUNK - 1) / IDS_PER_CHUNK);
+        AtomicInteger cursor = new AtomicInteger();
         try {
             SiriusJobs.getGlobalJobManager().submitJob(new BasicMasterJJob<Boolean>(JJob.JobType.CPU) {
                 @Override
                 protected Boolean compute() throws Exception {
-                    List<BasicJJob<Boolean>> running = new ArrayList<>();
-                    for (List<Long> batch : partition)
+                    List<BasicJJob<Boolean>> running = new ArrayList<>(workers);
+                    for (int worker = 0; worker < workers; worker++)
                         running.add(submitSubJob(new BasicJJob<>(JobType.CPU) {
                             @Override
                             protected Boolean compute() throws Exception {
-                                checkForInterruption();
-                                batchConsumer.accept(findAlignedFeaturesByIds(batch, false, AlignedFeature.INDEXED_OPT_FIELDS));
+                                int from;
+                                while ((from = cursor.getAndAdd(IDS_PER_CHUNK)) < ids.size()) {
+                                    checkForInterruption();
+                                    batchConsumer.accept(findAlignedFeaturesByIds(
+                                            ids.subList(from, Math.min(ids.size(), from + IDS_PER_CHUNK)),
+                                            false, AlignedFeature.INDEXED_OPT_FIELDS));
+                                }
                                 return Boolean.TRUE;
                             }
                         }));
