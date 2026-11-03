@@ -1,22 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>SiriusJavaIntegrated</title>
+  <!-- / is Vite's configured `base` (see vite.config.mts): "/" in dev, "/sirius-gui-views/" in the production build the GUI serves. -->
   <base href="/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <script th:inline="javascript">
-    /*
-    Configuration script for providing API base URL from spring boot server
-    via thymeleaf templating.
-    [OPTIONAL] Also runs without templating engine.
-    */
-    window.APP_CONFIG = {
-      apiBaseUrl: /*[[${apiBaseUrl}]]*/ null
-    };
-
+  <script>
     /*
     Resolve the theme before anything else loads.
 
@@ -39,6 +31,43 @@
     })();
 
     /*
+    The Java-embedded browser calls window.urlUtils.* to push selection changes into
+    this page (see URLUtils.ts). That object is only defined once the React bundle has
+    been parsed and evaluated, which can race against Java calling in right after the
+    page starts loading (e.g. immediately after opening/raising a viewer). Define a
+    stub here, synchronously, so those methods always exist; calls made before the
+    real implementation attaches are queued and replayed once it does.
+    */
+    (function () {
+      var methodNames = [
+        'updateSelectedEntity',
+        'updateSelectedSpectrum',
+        'updateFeatureID',
+        'updateSpectrumIndex',
+        'updateSpectrumType',
+        'updateInchikey',
+        'updateFormulaID',
+        'updateMatchID',
+        'updateSmiles'
+      ];
+      var queue = [];
+      var stub = {};
+      methodNames.forEach(function (name) {
+        stub[name] = function () {
+          queue.push({ name: name, args: Array.prototype.slice.call(arguments) });
+        };
+      });
+      window.urlUtils = stub;
+      window.__flushUrlUtilsQueue = function (realUrlUtils) {
+        window.urlUtils = realUrlUtils;
+        queue.forEach(function (call) {
+          realUrlUtils[call.name].apply(realUrlUtils, call.args);
+        });
+        queue = [];
+      };
+    })();
+
+    /*
     Define a new console, which serializes all objects to JSON.
     */
     var console=(function(oldCons) {
@@ -52,10 +81,10 @@
     }(window.console));
     window.console = console;
   </script>
-  <script type="module" crossorigin src="/assets/index-5DvXe-6f.js"></script>
+  <script type="module" crossorigin src="/assets/index-2tj6IRFC.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-D4bXzIGS.css">
 </head>
 <body>
-<div id="root"></div>
+<div id="root"></div>
 </body>
 </html>
