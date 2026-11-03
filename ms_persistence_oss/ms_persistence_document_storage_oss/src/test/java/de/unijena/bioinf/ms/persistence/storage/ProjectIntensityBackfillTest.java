@@ -109,6 +109,62 @@ public class ProjectIntensityBackfillTest {
         assertFalse(ProjectSchemaMigrator.migrateIfNeeded(db), "converted once, and then never again");
     }
 
+    /**
+     * A project with LC-MS runs is an LC-MS project throughout - peak lists are never imported into one - so its
+     * features all carry the intensity of their traces and there is nothing to record. The pass is not run at
+     * all, which is what keeps it from reading every feature to find that out.
+     */
+    @Test
+    public void testAnLcmsProjectIsNotWalkedForIntensities() throws Exception {
+        db.getStorage().insert(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.builder().name("run")
+                .chromatography(de.unijena.bioinf.ms.persistence.model.core.run.Chromatography.LC).build());
+        AlignedFeatures imported = importPeakList("/peaklists/laudanosine.mgf");
+        asBeforeVersion4(imported.getAlignedFeatureId());
+        reopen();
+
+        assertFalse(ProjectSchemaMigrator.neededPasses(db, db.getStorage())
+                .contains(ProjectSchemaMigrator.ConversionJob.Pass.FEATURE_INTENSITIES));
+        ProjectSchemaMigrator.migrateIfNeeded(db);
+        assertNull(runFeaturesOf(imported.getAlignedFeatureId()).getFirst().getApexIntensity(),
+                "not walked, so not recorded");
+        assertEquals(4, db.findProjectSchemaVersion().orElseThrow(), "and still brought up to date");
+    }
+
+    /**
+     * Every pass over the features at once, as an old project needs them: they share one read of each feature
+     * and one write, so what each of them fills in must survive the others - the flags, the compound and the
+     * intensity all on the same feature.
+     */
+    @Test
+    public void testTheFeaturePassesTogetherKeepWhatEachOfThemFilledIn() throws Exception {
+        AlignedFeatures imported = importPeakList("/peaklists/laudanosine.mgf");
+        long id = imported.getAlignedFeatureId();
+        Double recorded = runFeaturesOf(id).getFirst().getApexIntensity();
+        long zombie = imported.getCompoundId();
+        asBeforeVersion4(id);
+        AlignedFeatures stale = db.getStorage().getByPrimaryKey(id, AlignedFeatures.class).orElseThrow();
+        stale.setHasMs1(false);
+        stale.setHasMsMs(false);
+        stale.setCompoundId(null); // what the LC/MS-align bug left
+        db.getStorage().upsert(stale);
+        reopen();
+
+        ProjectSchemaMigrator.convert(db, java.util.EnumSet.of(ProjectSchemaMigrator.ConversionJob.Pass.FEATURES,
+                ProjectSchemaMigrator.ConversionJob.Pass.FEATURE_INTENSITIES,
+                ProjectSchemaMigrator.ConversionJob.Pass.COMPOUND_LINKING));
+        reopen();
+
+        AlignedFeatures converted = db.getStorage().getByPrimaryKey(id, AlignedFeatures.class).orElseThrow();
+        assertTrue(converted.isHasMs1(), "the flags");
+        assertTrue(converted.isHasMsMs(), "the flags");
+        assertNotNull(converted.getCompoundId(), "the compound");
+        assertNotEquals(zombie, converted.getCompoundId(), "a fresh one");
+        assertTrue(db.getStorage().getByPrimaryKey(zombie, de.unijena.bioinf.ms.persistence.model.core.Compound.class).isEmpty(),
+                "the zombie is gone");
+        assertEquals(1, db.getStorage().countAll(de.unijena.bioinf.ms.persistence.model.core.Compound.class));
+        assertEquals(recorded, runFeaturesOf(id).getFirst().getApexIntensity(), "the intensity");
+    }
+
     @Test
     public void testAnApiImportWithoutARunFeatureGetsOne() throws Exception {
         AlignedFeatures imported = importPeakList("/peaklists/laudanosine.mgf");

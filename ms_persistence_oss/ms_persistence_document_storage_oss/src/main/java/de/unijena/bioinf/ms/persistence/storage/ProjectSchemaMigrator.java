@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
@@ -44,6 +45,9 @@ import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.Getter;
@@ -179,8 +183,13 @@ public class ProjectSchemaMigrator {
                                           @NotNull CandidateCache candidateCache, int candidateCacheLimit,
                                           @Nullable JobProgressEventListener onProgress) throws IOException {
         EnumSet<ConversionJob.Pass> needed = neededPasses(project, project.getStorage());
-        if (needed.isEmpty())
+        if (needed.isEmpty()) {
+            // Nothing to convert can still mean an older version: an LC-MS project needs nothing version 4 does.
+            // Stamped, so it reads as what it is - up to date.
+            if (project.findProjectSchemaVersion().orElse(0) < MIGRATES_TO_SCHEMA_VERSION)
+                project.upsertProjectSchemaVersion(MIGRATES_TO_SCHEMA_VERSION);
             return false;
+        }
         // What the caller does with this is rebuild the index from scratch, so it answers what was rewritten
         // rather than what was run: a project brought up to date by a conversion that corrected nothing keeps
         // the index it already had.
@@ -276,9 +285,10 @@ public class ProjectSchemaMigrator {
         // project with none needs no repair, and the pass over an empty collection is free.
         if (recorded < 3)
             needed.add(ConversionJob.Pass.BLANK_REMOVAL_REPAIR);
-        // Version 4 gives features imported without an LC-MS trace their MS1 intensity. Nothing cheaper to probe
-        // for: an LC-MS feature has carried one all along, so a mixed project would always answer "present".
-        if (recorded < 4)
+        // Version 4 gives features imported without an LC-MS trace their MS1 intensity. A project with LC-MS runs
+        // has none of those - peak lists and API imports never go into one - and its features have carried the
+        // intensity of their traces all along, so it is not walked feature by feature to find that out.
+        if (recorded < 4 && storage.countAll(LCMSRun.class) == 0)
             needed.add(ConversionJob.Pass.FEATURE_INTENSITIES);
         // There is no legitimate reason for a feature to carry a null compoundId, or for a project to hold
         // more compounds than features - every real compound has at least one, so either means this project
@@ -304,7 +314,9 @@ public class ProjectSchemaMigrator {
      * <p>
      * Collections that share a key share a pass. A structure-search result is stored under the id of the feature
      * it belongs to, so one pass over the feature keys fills in both; a fragmentation tree is stored under the
-     * id of its formula candidate, so one pass over the formula keys fills in those.
+     * id of its formula candidate, so one pass over the formula keys fills in those. And passes over the same
+     * keys share one walk: every pass over the features works on the same read of a feature, its spectra and its
+     * run features, and writes it once - so each record is read once, however many passes a project needs.
      */
     static class ConversionJob extends BasicMasterJJob<Boolean> {
 
@@ -316,10 +328,10 @@ public class ProjectSchemaMigrator {
             /** Over the fold changes: the blank removal ones are dropped, to be recomputed from the tags. */
             BLANK_REMOVAL_REPAIR,
             /**
-             * Over the compound keys: removes every one no feature references - every zombie the LC/MS-align
-             * bug left behind, since none of them was ever referenced to begin with. Over the feature keys
-             * that leaves: compounds every feature the bug left unlinked, each into a fresh singleton exactly
-             * as a current import would.
+             * Over the feature keys: links every feature the LC/MS-align bug left unlinked into a fresh singleton
+             * compound, exactly as a current import would, and notes the compounds the others reference. Then
+             * removes every compound no feature references - every zombie the bug left behind, since none of
+             * them was ever referenced to begin with.
              */
             COMPOUND_LINKING,
             /**
@@ -414,21 +426,15 @@ public class ProjectSchemaMigrator {
         /** How many keys the enabled passes will walk, counted off the collections before anything starts. */
         private long plannedWork() throws IOException {
             long work = 0;
-            if (passes.contains(Pass.FEATURES)) {
-                if (candidateCache == CandidateCache.PREFETCH)
-                    work += storage.countAll(FingerprintCandidate.class);
+            if (passes.contains(Pass.FEATURES) && candidateCache == CandidateCache.PREFETCH)
+                work += storage.countAll(FingerprintCandidate.class);
+            // one walk over the features, whichever of the passes over them it does
+            if (overFeatures())
                 work += storage.countAll(AlignedFeatures.class);
-            }
             if (passes.contains(Pass.FORMULA_CANDIDATES))
                 work += storage.countAll(FormulaCandidate.class);
-            if (passes.contains(Pass.FEATURE_INTENSITIES))
-                work += storage.countAll(AlignedFeatures.class);
-            // The blank removal repair is not counted: it does not walk keys one at a time, it reads the fold
-            // changes once and deletes in one go, so it has no per-key progress to contribute.
-            if (passes.contains(Pass.COMPOUND_LINKING)) {
-                work += storage.countAll(AlignedFeatures.class);
-                work += storage.countAll(Compound.class);
-            }
+            // The blank removal repair and the removal of orphaned compounds are not counted: neither walks keys
+            // one at a time, so neither has per-key progress to contribute.
             return work;
         }
 
@@ -471,19 +477,35 @@ public class ProjectSchemaMigrator {
             totalWork = Math.max(1, plannedWork());
             report(0, "Updating project schema...");
 
-            if (passes.contains(Pass.FEATURES)) {
-                // Nothing is written here, so nothing has its indices dropped.
-                if (candidateCache == CandidateCache.PREFETCH)
-                    overPrimaryKeysOf(FingerprintCandidate.class, "Migration: Reading structure candidates...",
-                            List.of(), this::addCandidateAndCache);
+            // Nothing is written here, so nothing has its indices dropped.
+            if (passes.contains(Pass.FEATURES) && candidateCache == CandidateCache.PREFETCH)
+                overPrimaryKeysOf(FingerprintCandidate.class, "Migration: Reading structure candidates...",
+                        List.of(), this::addCandidateAndCache);
 
-                overPrimaryKeysOf(AlignedFeatures.class, "Updating features...",
-                        List.of(AlignedFeatures.class, CsiStructureSearchResult.class), this::convertFeature);
-                // Once, at the end of the pass that collected them, rather than per feature: this is a single
+            // Read before the walk over the features inserts the compounds it links, so every compound in it is
+            // one that existed before - and is an orphan unless some feature turns out to reference it.
+            List<Object> compoundsBefore = passes.contains(Pass.COMPOUND_LINKING)
+                    ? storage.primaryKeys(Compound.class) : List.of();
+
+            if (overFeatures()) {
+                // The run features the intensity backfill looks up by their aligned feature keep their indices.
+                List<Class<?>> rewritten = new ArrayList<>();
+                if (passes.contains(Pass.FEATURES) || passes.contains(Pass.COMPOUND_LINKING))
+                    rewritten.add(AlignedFeatures.class);
+                if (passes.contains(Pass.FEATURES))
+                    rewritten.add(CsiStructureSearchResult.class);
+                overPrimaryKeysOf(AlignedFeatures.class, "Updating features...", rewritten, this::convertAlignedFeature,
+                        buffer -> linkPending(takePendingLinks(0), buffer));
+                // Once, at the end of the walk that collected them, rather than per feature: this is a single
                 // project-level record that every feature would otherwise rewrite.
                 if (!detectedAdducts.isEmpty())
                     project.addToDetectedAdducts(new HashSet<>(detectedAdducts));
                 inchi2Candidate.clear();
+                // The run features were written through the buffer, past the import that folds them into the
+                // project's maxima - so fold them here, once, rather than per feature.
+                if (!intensityFeaturesUpdated.isEmpty())
+                    project.featuresWritten(new ArrayList<>(intensityFeaturesUpdated));
+                intensityFeaturesUpdated.clear();
             }
 
             if (passes.contains(Pass.FORMULA_CANDIDATES))
@@ -495,29 +517,9 @@ public class ProjectSchemaMigrator {
                 dropBlankRemovalFoldChanges();
             }
 
-            if (passes.contains(Pass.FEATURE_INTENSITIES)) {
-                // Nothing has its indices dropped: the pass looks run features up by their aligned feature.
-                overPrimaryKeysOf(AlignedFeatures.class, "Recording feature intensities...", List.of(),
-                        this::backfillIntensity);
-                // The run features were written through the buffer, past the import that folds them into the
-                // project's maxima - so fold them here, once, rather than per feature.
-                if (!intensityFeaturesUpdated.isEmpty())
-                    project.featuresWritten(new ArrayList<>(intensityFeaturesUpdated));
-                intensityFeaturesUpdated.clear();
-            }
-
             if (passes.contains(Pass.COMPOUND_LINKING)) {
-                // Orphans removed before anything is linked, not after: linking a feature never reuses an
-                // existing compound, only ever inserts a fresh one, so nothing this pass is about to link
-                // could possibly be the compound a not-yet-run deletion would wrongly take down - and
-                // deleting first means that walk's primary keys are read before linking inserts a single new
-                // row, so it never has to look at (and dismiss) compounds that were only ever going to be
-                // trivially non-orphaned, just created and immediately referenced.
-                overPrimaryKeysOf(Compound.class, "Removing orphaned compounds...", List.of(),
-                        this::deleteOrphanedCompound);
-                overPrimaryKeysOf(AlignedFeatures.class, "Linking features to compounds...",
-                        List.of(AlignedFeatures.class), this::linkOrphanedAlignedFeatures,
-                        buffer -> linkPending(takePendingLinks(0), buffer));
+                report(workDone.get(), "Removing orphaned compounds...");
+                deleteOrphanedCompounds(compoundsBefore);
             }
 
             // Stamped last: a pass that threw leaves the version behind, so the next open converts again.
@@ -679,36 +681,71 @@ public class ProjectSchemaMigrator {
             }
         }
 
+        /** Whether any pass walks the features - they all share one walk. */
+        private boolean overFeatures() {
+            return passes.contains(Pass.FEATURES) || passes.contains(Pass.FEATURE_INTENSITIES)
+                    || passes.contains(Pass.COMPOUND_LINKING);
+        }
+
         /**
-         * Everything one feature needs: its MS availability flags, the adducts it contributes to the project,
-         * and the database links of its structure-search result.
-         * <p>
-         * The flags drive the default feature filter and the adducts the adduct filter, and both are derived -
-         * the flags from the feature's spectra, the adducts from the union of what its features carry. The
-         * database links are recomputed from exactly what the search itself uses, the rank of each structure
-         * match and the links of its candidate, so a migrated project holds what a freshly computed one would.
+         * Everything the enabled passes do to one feature, on one read of it and at most one write: the passes
+         * over the features share this walk, so a feature, its spectra and its run features are read once
+         * whatever number of them a project needs.
          */
-        private void convertFeature(Object alignedFeatureId, WriteBuffer buffer) throws Exception {
+        private void convertAlignedFeature(Object alignedFeatureId, WriteBuffer buffer) throws Exception {
             AlignedFeatures feature = storage.getByPrimaryKey(alignedFeatureId, AlignedFeatures.class).orElse(null);
             if (feature != null) {
-                // Mirrors what an import records via addToDetectedAdducts. Features without detected adducts
-                // contribute nothing - they are exposed with the unknown-adduct fallback, exactly as in a freshly
-                // imported project - so an old project ends up consistent with a new one.
-                if (feature.getDetectedAdducts() != null)
-                    detectedAdducts.addAll(feature.getDetectedAdducts().getAllAdducts());
+                MSData msData = null;
+                if (passes.contains(Pass.FEATURES))
+                    msData = fillFlagsAndAdducts(feature);
+                if (passes.contains(Pass.FEATURE_INTENSITIES))
+                    backfillIntensity(feature, msData, passes.contains(Pass.FEATURES), buffer);
 
-                project.fetchMsData(feature);
-                MSData msData = feature.getMSData().orElse(null);
-                feature.setHasMs1(computeHasMs1(msData));
-                feature.setHasMsMs(computeHasMsMs(msData));
-                // Let the spectra go before the buffer takes the feature. They are what this reads and the
-                // largest thing in the project; keeping them would make the buffer's size mean megabytes.
-                feature.setMsData(null);
-
-                featuresFilled.incrementAndGet();
-                buffer.add(feature);
+                if (passes.contains(Pass.COMPOUND_LINKING) && feature.getCompoundId() == null)
+                    linkToFreshCompound(feature, buffer); // written once it has its compound
+                else {
+                    if (passes.contains(Pass.COMPOUND_LINKING))
+                        referencedCompounds.add(feature.getCompoundId().longValue());
+                    if (passes.contains(Pass.FEATURES))
+                        buffer.add(feature);
+                }
             }
+            if (passes.contains(Pass.FEATURES))
+                fillMatchedDatabases(alignedFeatureId, buffer);
+        }
 
+        /**
+         * A feature's MS availability flags and the adducts it contributes to the project. The flags drive the
+         * default feature filter and the adducts the adduct filter, and both are derived - the flags from the
+         * feature's spectra, the adducts from the union of what its features carry.
+         *
+         * @return the feature's spectra, for the intensity backfill to take its MS1 from rather than read again
+         */
+        private @Nullable MSData fillFlagsAndAdducts(@NotNull AlignedFeatures feature) throws IOException {
+            // Mirrors what an import records via addToDetectedAdducts. Features without detected adducts
+            // contribute nothing - they are exposed with the unknown-adduct fallback, exactly as in a freshly
+            // imported project - so an old project ends up consistent with a new one.
+            if (feature.getDetectedAdducts() != null)
+                detectedAdducts.addAll(feature.getDetectedAdducts().getAllAdducts());
+
+            project.fetchMsData(feature);
+            MSData msData = feature.getMSData().orElse(null);
+            feature.setHasMs1(computeHasMs1(msData));
+            feature.setHasMsMs(computeHasMsMs(msData));
+            // Let the spectra go before the buffer takes the feature. They are what this reads and the
+            // largest thing in the project; keeping them would make the buffer's size mean megabytes.
+            feature.setMsData(null);
+
+            featuresFilled.incrementAndGet();
+            return msData;
+        }
+
+        /**
+         * The database links of a feature's structure-search result, recomputed from exactly what the search
+         * itself uses, the rank of each structure match and the links of its candidate, so a migrated project
+         * holds what a freshly computed one would.
+         */
+        private void fillMatchedDatabases(Object alignedFeatureId, WriteBuffer buffer) throws IOException {
             // Stored under the id of the feature it belongs to, so the same key finds it.
             CsiStructureSearchResult searchResult = project
                     .findCsiStructureSearchResult((Long) alignedFeatureId, true).orElse(null);
@@ -792,7 +829,7 @@ public class ProjectSchemaMigrator {
         }
 
         /**
-         * The features {@link #linkOrphanedAlignedFeatures} found unlinked, waiting for their compounds. A compound
+         * The features {@link #linkToFreshCompound} found unlinked, waiting for their compounds. A compound
          * gets its id when it is inserted and the feature needs that id, so linking one feature at a time would
          * insert one compound at a time - one write lock each. Collecting them inserts the compounds
          * {@link #BUFFER} at a time instead, which measured clearly faster.
@@ -824,42 +861,50 @@ public class ProjectSchemaMigrator {
         }
 
         /**
-         * The feature's own fresh compound, if the LC/MS-align bug left it without one - collected, see
+         * Gives a feature the LC/MS-align bug left without a compound a fresh one of its own - collected, see
          * {@link #pendingLinks}, and linked once enough have gathered.
          * <p>
          * A null compoundId never means "not yet linked" for any other reason: every correct import path sets
          * it before the feature is ever stored (see MsProjectDocumentDatabase#importAlignedFeatures). What
          * this creates is field-for-field what the bug's own Compound.singleton call would have created at
          * import time - the old zombie it bypassed never carried anything else, Compound#adductFeatures being
-         * the only other thing on it and never persisted - so recreating it loses nothing. The old zombie was
-         * already swept up by the pass over Compound keys above, which runs first precisely so it never has
-         * to consider the fresh compound this creates.
+         * the only other thing on it and never persisted - so recreating it loses nothing.
          */
-        private void linkOrphanedAlignedFeatures(Object alignedFeatureId, WriteBuffer buffer) throws Exception {
-            AlignedFeatures feature = storage.getByPrimaryKey(alignedFeatureId, AlignedFeatures.class).orElse(null);
-            if (feature == null || feature.getCompoundId() != null)
-                return;
+        private void linkToFreshCompound(@NotNull AlignedFeatures feature, WriteBuffer buffer) throws IOException {
             synchronized (pendingLinks) {
                 pendingLinks.add(feature);
             }
             linkPending(takePendingLinks(BUFFER), buffer);
         }
 
+        /** The compounds the features reference, collected on the walk over them. */
+        private final LongSet referencedCompounds = LongSets.synchronize(new LongOpenHashSet());
+
         /**
-         * Deletes one compound if no feature references it any more - every zombie the LC/MS-align bug left,
-         * since none of them was ever referenced in the first place.
+         * Deletes every compound that existed before the walk over the features and that no feature references -
+         * every zombie the LC/MS-align bug left, since none of them was ever referenced in the first place. The
+         * compounds the walk created are not among {@code compoundsBefore}, so they are never considered.
          * <p>
          * Only AlignedFeatures.compoundId is checked. CorrelatedIonPair also carries a compoundId field; its
-         * pairs for this compound are removed here too (a correlation has no meaning once its compound is
-         * gone), but whether a stray one can exist at all currently depends on nothing live writing
-         * CorrelatedIonPair.compoundId outside AdductNetwork#assign, which is dead code (commented out). If
-         * that ever changes, this still removes them correctly - it just means the case stops being rare.
+         * pairs for a deleted compound are removed too (a correlation has no meaning once its compound is gone),
+         * but whether a stray one can exist at all currently depends on nothing live writing
+         * CorrelatedIonPair.compoundId outside AdductNetwork#assign, which is dead code (commented out). If that
+         * ever changes, this still removes them correctly - it just means the case stops being rare.
          */
-        private void deleteOrphanedCompound(Object compoundId, WriteBuffer buffer) throws Exception {
-            if (storage.count(Filter.where("compoundId").eq(compoundId), AlignedFeatures.class) == 0) {
-                storage.removeAll(Filter.where("compoundId").eq(compoundId), CorrelatedIonPair.class);
-                storage.removeByPrimaryKey(compoundId, Compound.class);
-                orphanedCompoundsDeleted.incrementAndGet();
+        private void deleteOrphanedCompounds(@NotNull List<Object> compoundsBefore) throws IOException {
+            List<Object> orphans = compoundsBefore.stream()
+                    .filter(id -> !referencedCompounds.contains(((Number) id).longValue()))
+                    .toList();
+            if (orphans.isEmpty())
+                return;
+            boolean anyPairs = storage.countAll(CorrelatedIonPair.class) > 0;
+            for (int from = 0; from < orphans.size(); from += deleteBatch) {
+                List<Object> batch = orphans.subList(from, Math.min(from + deleteBatch, orphans.size()));
+                if (anyPairs)
+                    for (Object compoundId : batch)
+                        storage.removeAll(Filter.where("compoundId").eq(compoundId), CorrelatedIonPair.class);
+                storage.removeAllByPrimaryKey(batch, Compound.class);
+                orphanedCompoundsDeleted.addAndGet(batch.size());
             }
         }
 
@@ -905,15 +950,17 @@ public class ProjectSchemaMigrator {
          * is skipped after one indexed lookup. Only what is left reads its MS1 spectrum - in a peak-list project
          * that is every feature, once.
          */
-        private void backfillIntensity(Object alignedFeatureId, WriteBuffer buffer) throws Exception {
-            AlignedFeatures feature = storage.getByPrimaryKey(alignedFeatureId, AlignedFeatures.class).orElse(null);
-            if (feature == null || feature.getTraceReference().isPresent())
+        private void backfillIntensity(@NotNull AlignedFeatures feature, @Nullable MSData msDataIfRead,
+                                       boolean msDataWasRead, WriteBuffer buffer) throws Exception {
+            if (feature.getTraceReference().isPresent())
                 return;
+            long alignedFeatureId = feature.getAlignedFeatureId();
             List<Feature> runFeatures = storage.findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), Feature.class).toList();
             if (runFeatures.stream().anyMatch(f -> f.getApexIntensity() != null || f.getRunId() != null))
                 return;
 
-            MSData msData = storage.findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), MSData.class)
+            MSData msData = msDataWasRead ? msDataIfRead
+                    : storage.findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), MSData.class)
                     .findFirst().orElse(null);
             Double intensity = StorageUtils.precursorIntensityOf(msData == null ? null : msData.getMergedMs1Spectrum(),
                     feature.getAverageMass(), PRECURSOR_PEAK_DEVIATION);

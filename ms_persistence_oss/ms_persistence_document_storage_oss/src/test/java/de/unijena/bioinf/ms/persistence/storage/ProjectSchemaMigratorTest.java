@@ -617,8 +617,8 @@ public class ProjectSchemaMigratorTest {
                 ProjectSchemaMigrator.migrateIfNeeded(db, ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE,
                         ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE_LIMIT, events::add);
 
-                // the feature keys are walked twice: once to fill in the pre-index fields, once for the intensities
-                long total = 2 * db.getStorage().countAll(AlignedFeatures.class)
+                // the feature keys are walked once, for the pre-index fields and the intensities alike
+                long total = db.getStorage().countAll(AlignedFeatures.class)
                         + db.getStorage().countAll(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
                 java.util.List<de.unijena.bioinf.jjobs.JobProgressEvent> determined = events.stream()
                         .filter(de.unijena.bioinf.jjobs.JobProgressEvent::isDetermined).toList();
@@ -663,8 +663,8 @@ public class ProjectSchemaMigratorTest {
                 ProjectSchemaMigrator.migrateIfNeeded(db, ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE,
                         ProjectSchemaMigrator.DEFAULT_CANDIDATE_CACHE_LIMIT, events::add);
 
-                // the feature keys are walked twice: once to fill in the pre-index fields, once for the intensities
-                long total = 2 * db.getStorage().countAll(AlignedFeatures.class)
+                // the feature keys are walked once, for the pre-index fields and the intensities alike
+                long total = db.getStorage().countAll(AlignedFeatures.class)
                         + db.getStorage().countAll(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
                 long distinctCounts = events.stream()
                         .filter(de.unijena.bioinf.jjobs.JobProgressEvent::isDetermined)
