@@ -245,6 +245,31 @@ public class RunMaximumRefreshTest {
         assertTrue(ps.findProjectMaximumIntensities().isEmpty(), "opening and reading must not derive the maxima");
     }
 
+    /**
+     * Building the index of a project that has no maxima yet derives them, and computes the intensities of the
+     * documents from the run features that derivation read rather than reading them again: what ends up in the
+     * index is what the stored features say, against the maxima just derived.
+     */
+    @Test
+    @SneakyThrows
+    public void testBuildingTheIndexOfAProjectWithoutMaximaIndexesTheIntensitiesItDerives() {
+        addFeature("weak", 1.0e5);
+        addFeature("strong", 1.0e6);
+        addPeakListFeature("peak", 2.0e5);
+        // as if the project had been written before the maxima were stored - reopened, so none are in memory
+        ps.removeProjectProperty(SiriusProjectDocumentDatabase.PROJECT_MAXIMUM_INTENSITIES_KEY);
+        ps.close();
+        ps = new NitriteSirirusProject(location);
+
+        NoSQLProjectImpl session = session(); // nothing indexed yet, so it is built from scratch
+        assertTrue(ps.findProjectMaximumIntensities().isPresent(), "derived by the build");
+        assertEquals(List.of("strong"), namesMatching(session, "intensity.apexPercent:[99 TO *]"));
+        assertEquals(List.of("weak"), namesMatching(session, "intensity.apexPercent:[9 TO 11]"),
+                "10 % of its run's maximum");
+        assertEquals(List.of("peak"), namesMatching(session, "intensity.apexPercent:[19 TO 21]"),
+                "20 % of the global maximum, which counts the run features too");
+    }
+
     private static Feature measured(@Nullable Long runId, double apex) {
         return Feature.builder().runId(runId).apexIntensity(apex).areaUnderCurve(apex * 20).build();
     }
