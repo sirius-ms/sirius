@@ -82,6 +82,7 @@ import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.ProjectSchemaMigrator;
+import de.unijena.bioinf.ms.persistence.storage.RunFeatureValues;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
@@ -250,8 +251,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     // Mark incomplete for the duration of the (re)build so an interrupted build is not
                     // persisted and gets rebuilt on the next open (M5).
                     searchService.setIndexComplete(projectId, AlignedFeature.class, false);
+                    // A project without maxima yet has them derived here, from every run feature - kept, so the
+                    // intensities of the documents are computed from what that read instead of a second one.
+                    RunFeatureValues runFeatures = project().deriveMaximumIntensitiesKeepingRunFeatures().orElse(null);
                     upsertIndexedMaxima(maxima()); // what the documents about to be written are held against
-                    feedAllFeaturesToIndex(alfs -> searchService.addDocuments(projectId, alfs));
+                    feedAllFeaturesToIndex(alfs -> searchService.addDocuments(projectId, alfs), runFeatures);
                     searchService.setIndexComplete(projectId, AlignedFeature.class, true);
                 }
 
@@ -469,13 +473,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      *                      from whichever sub-job's batch finished reading and annotating first, so it must be
      *                      safe to call from several threads at once - {@code searchService.*Documents} already
      *                      is, each POJO type's Lucene writer serializes on its own instance.
+     * @param runFeatures   the run features the intensities are computed from, if they were read already -
+     *                      else they are read batch by batch
      */
-    private void feedIdsToIndex(@NotNull List<Long> ids, @NotNull Consumer<List<AlignedFeature>> batchConsumer)
-            throws IOException {
+    private void feedIdsToIndex(@NotNull List<Long> ids, @NotNull Consumer<List<AlignedFeature>> batchConsumer,
+                                @Nullable RunFeatureValues runFeatures) throws IOException {
         if (ids.isEmpty())
             return;
         if (ids.size() < MIN_IDS_TO_PARALLELIZE) {
-            batchConsumer.accept(findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS));
+            batchConsumer.accept(findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS, runFeatures));
             return;
         }
 
@@ -495,7 +501,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                     checkForInterruption();
                                     batchConsumer.accept(findAlignedFeaturesByIds(
                                             ids.subList(from, Math.min(ids.size(), from + IDS_PER_CHUNK)),
-                                            false, AlignedFeature.INDEXED_OPT_FIELDS));
+                                            false, AlignedFeature.INDEXED_OPT_FIELDS, runFeatures));
                                 }
                                 return Boolean.TRUE;
                             }
@@ -516,7 +522,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                      @NotNull Consumer<List<AlignedFeature>> batchConsumer) throws IOException {
         if (!Utils.notNullOrEmpty(featureIds))
             return;
-        feedIdsToIndex(featureIds.stream().sorted().toList(), batchConsumer);
+        feedIdsToIndex(featureIds.stream().sorted().toList(), batchConsumer, null);
     }
 
     /**
@@ -527,10 +533,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * is a unit of work {@link #feedIdsToIndex} can hand to any worker - the same reason
      * {@code ProjectSchemaMigrator.ConversionJob} reads keys up front instead of paging.
      */
-    private void feedAllFeaturesToIndex(@NotNull Consumer<List<AlignedFeature>> batchConsumer) throws IOException {
+    private void feedAllFeaturesToIndex(@NotNull Consumer<List<AlignedFeature>> batchConsumer,
+                                        @Nullable RunFeatureValues runFeatures) throws IOException {
         List<Long> ids = storage().primaryKeys(AlignedFeatures.class).stream()
                 .map(id -> ((Number) id).longValue()).sorted().toList();
-        feedIdsToIndex(ids, batchConsumer);
+        feedIdsToIndex(ids, batchConsumer, runFeatures);
     }
 
     @SneakyThrows
@@ -2340,10 +2347,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
 
     private List<AlignedFeature> findAlignedFeaturesByIds(Collection<Long> featureIds, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) throws IOException {
+        return findAlignedFeaturesByIds(featureIds, msDataAsCosineQuery, optFields, null);
+    }
+
+    private List<AlignedFeature> findAlignedFeaturesByIds(Collection<Long> featureIds, boolean msDataAsCosineQuery,
+                                                          @NotNull EnumSet<AlignedFeature.OptField> optFields,
+                                                          @Nullable RunFeatureValues runFeatures) throws IOException {
         return annotateApiFeatures(
                 storage().findAllByPrimaryKeyStr(featureIds, AlignedFeatures.class),
                 msDataAsCosineQuery,
-                optFields);
+                optFields,
+                runFeatures);
     }
 
     /**
@@ -2366,6 +2380,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private List<AlignedFeature> annotateApiFeatures(@NotNull Stream<AlignedFeatures> apifeatures, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        return annotateApiFeatures(apifeatures, msDataAsCosineQuery, optFields, null);
+    }
+
+    /**
+     * @param runFeatures the run features the intensities are computed from, if they were read already - else
+     *                    they are read here
+     */
+    private List<AlignedFeature> annotateApiFeatures(@NotNull Stream<AlignedFeatures> apifeatures, boolean msDataAsCosineQuery,
+                                                     @NotNull EnumSet<AlignedFeature.OptField> optFields,
+                                                     @Nullable RunFeatureValues runFeatures) {
         //third
         Long2ObjectOpenHashMap<AlignedFeatures> dbalf = apifeatures.collect(Collectors.toMap(AlignedFeatures::getAlignedFeatureId, Function.identity(),
                 (existing, replacement) -> existing, Long2ObjectOpenHashMap::new));
@@ -2437,13 +2461,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (optFields.contains(AlignedFeature.OptField.intensities)) {
             List<Long> intensityIds = Arrays.asList(ids);
             intensityJob = SiriusJobs.runInBackground(() -> {
-                Long2ObjectOpenHashMap<List<Feature>> runFeatures = new Long2ObjectOpenHashMap<>();
-                storage().findAllByIndexedFieldStr("alignedFeatureId", intensityIds, Feature.class)
-                        .forEach(f -> runFeatures.computeIfAbsent(f.getAlignedFeatureId(), id -> new ArrayList<>()).add(f));
+                Long2ObjectOpenHashMap<List<Feature>> runFeaturesOf = new Long2ObjectOpenHashMap<>();
+                if (runFeatures != null) {
+                    for (Long id : intensityIds) {
+                        List<Feature> ofFeature = runFeatures.runFeaturesOf(id);
+                        if (!ofFeature.isEmpty())
+                            runFeaturesOf.put(id.longValue(), ofFeature);
+                    }
+                } else {
+                    storage().findAllByIndexedFieldStr("alignedFeatureId", intensityIds, Feature.class)
+                            .forEach(f -> runFeaturesOf.computeIfAbsent(f.getAlignedFeatureId(), id -> new ArrayList<>()).add(f));
+                }
                 ProjectMaximumIntensities maxima = maxima();
                 LongSet blankRuns = blankRuns();
-                Long2ObjectOpenHashMap<Intensity> intensities = new Long2ObjectOpenHashMap<>(runFeatures.size());
-                runFeatures.long2ObjectEntrySet().forEach(e -> intensities.put(e.getLongKey(), FeatureIntensities.of(e.getValue(), maxima, blankRuns)));
+                Long2ObjectOpenHashMap<Intensity> intensities = new Long2ObjectOpenHashMap<>(runFeaturesOf.size());
+                runFeaturesOf.long2ObjectEntrySet().forEach(e -> intensities.put(e.getLongKey(), FeatureIntensities.of(e.getValue(), maxima, blankRuns)));
                 return intensities;
             });
         }

@@ -42,6 +42,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -135,12 +136,32 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
             known = readMaximaLocked();
             if (known != null)
                 return known;
-            ProjectMaximumIntensities derived = deriveMaxima();
-            upsertProjectMaximumIntensities(derived);
-            maxima = derived;
-            maximaAwaitDerivation = false;
-            return derived;
+            return keepDerivedLocked(deriveMaxima(false)).maxima();
         }
+    }
+
+    @SneakyThrows
+    @Override
+    public Optional<RunFeatureValues> deriveMaximumIntensitiesKeepingRunFeatures() {
+        if (maxima != null)
+            return Optional.empty();
+        synchronized (maximaLock) {
+            if (readMaximaLocked() != null)
+                return Optional.empty();
+            return Optional.of(keepDerivedLocked(deriveMaxima(true)).runFeatures());
+        }
+    }
+
+    /** Stores the derived maxima as the project's own. Guarded by maximaLock. */
+    private Derived keepDerivedLocked(Derived derived) throws IOException {
+        upsertProjectMaximumIntensities(derived.maxima());
+        maxima = derived.maxima();
+        maximaAwaitDerivation = false;
+        return derived;
+    }
+
+    /** The derived maxima, and the run features of the aligned features they were derived from if asked for. */
+    private record Derived(@NotNull ProjectMaximumIntensities maxima, RunFeatureValues runFeatures) {
     }
 
     /** How many alignments a worker takes from the shared cursor at a time. */
@@ -160,40 +181,63 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
      * single-threaded walk of the collection, on a large LC-MS project read cold, and both win clearly. This runs
      * the first time an older project's maxima are asked for - which is while its search index is being built,
      * before anything is written to it.
+     *
+     * @param keepRunFeatures whether to also keep what the intensities of the aligned features are computed
+     *                        from - not of the isotopic ones, which have no intensity of their own to report
      */
-    private ProjectMaximumIntensities deriveMaxima() throws Exception {
-        List<Object> keys = new ArrayList<>(getStorage().primaryKeys(AlignedFeatures.class));
-        keys.addAll(getStorage().primaryKeys(AlignedIsotopicFeatures.class));
-        if (keys.isEmpty())
-            return new ProjectMaximumIntensities();
-        int workers = Math.clamp(SiriusJobs.getGlobalJobManager().getCPUThreads(), 1,
-                (keys.size() + ALIGNMENTS_PER_CHUNK - 1) / ALIGNMENTS_PER_CHUNK);
-        AtomicInteger cursor = new AtomicInteger();
+    private Derived deriveMaxima(boolean keepRunFeatures) throws Exception {
+        // the chunks of aligned features first, so whether a chunk's values are kept is a matter of its index
+        List<List<Object>> chunks = new ArrayList<>();
+        List<Object> aligned = getStorage().primaryKeys(AlignedFeatures.class);
+        for (int from = 0; from < aligned.size(); from += ALIGNMENTS_PER_CHUNK)
+            chunks.add(aligned.subList(from, Math.min(aligned.size(), from + ALIGNMENTS_PER_CHUNK)));
+        int alignedChunks = chunks.size();
+        List<Object> isotopic = getStorage().primaryKeys(AlignedIsotopicFeatures.class);
+        for (int from = 0; from < isotopic.size(); from += ALIGNMENTS_PER_CHUNK)
+            chunks.add(isotopic.subList(from, Math.min(isotopic.size(), from + ALIGNMENTS_PER_CHUNK)));
+        if (chunks.isEmpty())
+            return new Derived(new ProjectMaximumIntensities(), keepRunFeatures ? RunFeatureValues.of(List.of()) : null);
 
-        return SiriusJobs.getGlobalJobManager().submitJob(new BasicMasterJJob<ProjectMaximumIntensities>(JJob.JobType.CPU) {
+        int workers = Math.clamp(SiriusJobs.getGlobalJobManager().getCPUThreads(), 1, chunks.size());
+        AtomicInteger cursor = new AtomicInteger();
+        record Share(ProjectMaximumIntensities maxima, RunFeatureValues.Part runFeatures) {
+        }
+
+        return SiriusJobs.getGlobalJobManager().submitJob(new BasicMasterJJob<Derived>(JJob.JobType.CPU) {
             @Override
-            protected ProjectMaximumIntensities compute() throws Exception {
-                List<BasicJJob<ProjectMaximumIntensities>> running = new ArrayList<>(workers);
+            protected Derived compute() throws Exception {
+                List<BasicJJob<Share>> running = new ArrayList<>(workers);
                 for (int worker = 0; worker < workers; worker++)
                     running.add(submitSubJob(new BasicJJob<>(JobType.CPU) {
                         @Override
-                        protected ProjectMaximumIntensities compute() throws Exception {
-                            ProjectMaximumIntensities part = new ProjectMaximumIntensities();
-                            int from;
-                            while ((from = cursor.getAndAdd(ALIGNMENTS_PER_CHUNK)) < keys.size()) {
+                        protected Share compute() throws Exception {
+                            Share share = new Share(new ProjectMaximumIntensities(),
+                                    keepRunFeatures ? new RunFeatureValues.Part() : null);
+                            int chunk;
+                            while ((chunk = cursor.getAndIncrement()) < chunks.size()) {
                                 checkForInterruption();
+                                boolean keep = keepRunFeatures && chunk < alignedChunks;
                                 try (Stream<Feature> features = getStorage().findAllByIndexedFieldStr("alignedFeatureId",
-                                        keys.subList(from, Math.min(keys.size(), from + ALIGNMENTS_PER_CHUNK)), Feature.class)) {
-                                    features.forEach(f -> part.fold(List.of(f)));
+                                        chunks.get(chunk), Feature.class)) {
+                                    features.forEach(f -> {
+                                        share.maxima().fold(List.of(f));
+                                        if (keep)
+                                            share.runFeatures().add(f);
+                                    });
                                 }
                             }
-                            return part;
+                            return share;
                         }
                     }));
                 ProjectMaximumIntensities derived = new ProjectMaximumIntensities();
-                for (BasicJJob<ProjectMaximumIntensities> part : running)
-                    derived.merge(part.awaitResult());
-                return derived;
+                List<RunFeatureValues.Part> parts = new ArrayList<>(workers);
+                for (BasicJJob<Share> worker : running) {
+                    Share share = worker.awaitResult();
+                    derived.merge(share.maxima());
+                    if (keepRunFeatures)
+                        parts.add(share.runFeatures());
+                }
+                return new Derived(derived, keepRunFeatures ? RunFeatureValues.of(parts) : null);
             }
         }).awaitResult();
     }

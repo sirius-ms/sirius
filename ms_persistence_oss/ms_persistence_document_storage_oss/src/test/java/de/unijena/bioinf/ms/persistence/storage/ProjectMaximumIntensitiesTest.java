@@ -212,6 +212,52 @@ public class ProjectMaximumIntensitiesTest {
         assertEquals(expected, stored(), "derived once, and kept");
     }
 
+    /**
+     * Deriving the maxima for the search index build keeps what the intensities of the aligned features are
+     * computed from: their run features as stored - run, apex and area, a missing run or apex included - and
+     * not those of an isotopic alignment, which reports no intensity of its own.
+     */
+    @Test
+    public void testDerivingForTheIndexKeepsTheRunFeaturesOfTheAlignedFeatures() throws IOException {
+        List<AlignedFeatures> batch = new java.util.ArrayList<>();
+        for (int i = 0; i < 600; i++) {
+            Feature inA = runFeature(RUN_A, i % 7 == 0 ? null : 1.0e5 + i, 2.0e6 + i);
+            Feature inB = runFeature(RUN_B, 3.0e5 + i, 4.0e6 + i);
+            AlignedFeatures aligned = AlignedFeatures.builder().charge((byte) 1).features(List.of(inA, inB)).build();
+            if (i == 17)
+                aligned.setIsotopicFeatures(List.of(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures
+                        .builder().features(List.of(runFeature(RUN_A, 9.0e9, 9.0e9))).build()));
+            batch.add(aligned);
+        }
+        batch.add(AlignedFeatures.singleton(runFeature(null, 5.0e4, 6.0e5))); // a peak-list feature
+        ps.importAlignedFeatures(batch);
+        ProjectMaximumIntensities expected = ps.getMaximumIntensities();
+        ps.removeProjectProperty(SiriusProjectDocumentDatabase.PROJECT_MAXIMUM_INTENSITIES_KEY);
+        ps.close();
+        ps = new NitriteSirirusProject(location);
+
+        RunFeatureValues kept = ps.deriveMaximumIntensitiesKeepingRunFeatures().orElseThrow();
+        assertEquals(expected, ps.getMaximumIntensities(), "derived as getMaximumIntensities would");
+        assertEquals(expected, stored(), "and kept");
+
+        for (AlignedFeatures aligned : batch) {
+            List<Feature> stored = ps.getStorage().findStr(de.unijena.bioinf.storage.db.nosql.Filter.where("alignedFeatureId")
+                    .eq(aligned.getAlignedFeatureId()), Feature.class).toList();
+            List<Feature> values = kept.runFeaturesOf(aligned.getAlignedFeatureId());
+            assertEquals(stored.size(), values.size());
+            for (Feature s : stored)
+                assertTrue(values.stream().anyMatch(v -> java.util.Objects.equals(v.getRunId(), s.getRunId())
+                                && java.util.Objects.equals(v.getApexIntensity(), s.getApexIntensity())
+                                && v.getAreaUnderCurve() == s.getAreaUnderCurve()
+                                && v.getAlignedFeatureId() == s.getAlignedFeatureId()),
+                        "run feature " + s.getFeatureId() + " kept as stored");
+        }
+        long isotopic = batch.get(17).getIsotopicFeatures().orElseThrow().getFirst().getAlignedIsotopeFeatureId();
+        assertTrue(kept.runFeaturesOf(isotopic).isEmpty(), "an isotopic alignment's run features are not kept");
+
+        assertTrue(ps.deriveMaximumIntensitiesKeepingRunFeatures().isEmpty(), "derived once - nothing read again");
+    }
+
     @Test
     public void testConcurrentImportsAllLandInTheMaxima() throws Exception {
         importFeature(runFeature(RUN_A, 1.0e5, 1.0e6));

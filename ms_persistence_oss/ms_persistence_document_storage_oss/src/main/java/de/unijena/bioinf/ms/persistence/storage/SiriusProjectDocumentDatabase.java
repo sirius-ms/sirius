@@ -187,6 +187,16 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     @NotNull ProjectMaximumIntensities getMaximumIntensities();
 
     /**
+     * Derives and stores the maxima as {@link #getMaximumIntensities()} would - if the project has none yet -
+     * and hands back what it read for them that the intensities of the aligned features are computed from, so
+     * that whoever is about to compute all of those - the search index build - does not read every run feature
+     * a second time. About 24 bytes per run feature, for as long as the caller holds on to it.
+     *
+     * @return empty if the maxima were derived already, and nothing was read
+     */
+    Optional<RunFeatureValues> deriveMaximumIntensitiesKeepingRunFeatures();
+
+    /**
      * Project property tracking the SIRIUS project-data schema version this project's data conforms to.
      * Says nothing about how the storage underneath lays that data out - see
      * {@code NitriteDatabase#isCompactionRecommended()} for that; it gates the one-time data conversion of
