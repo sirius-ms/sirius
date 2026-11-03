@@ -84,9 +84,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(MSData.class)
 
                 .addRepository(Feature.class,
-                        Index.nonUnique("alignedFeatureId"),
-                        // the features of one run, which a run whose maximum rose has to have re-indexed
-                        Index.nonUnique("runId")
+                        Index.nonUnique("alignedFeatureId")
                 )
 
                 .addRepository(AlignedFeatures.class

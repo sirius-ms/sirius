@@ -341,29 +341,30 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return blank;
     }
 
-    /** The aligned features with a run feature in one of {@code runIds}, over the runId index. */
+    /**
+     * Every aligned feature of the project, standing in for "the aligned features of these runs". Narrowing it
+     * down would take a runId index on {@code Feature}, which costs a full index build when a project without it
+     * is opened and a slower insert on every import. Rewriting every feature is measurably slower than rewriting
+     * a run's features over that index - accepted, because it is needed only when the maxima of runs already in
+     * the index rise or a run's type changes, and neither happens in a normal workflow: no data is imported into
+     * an existing LC-MS project, and a run type is changed only to correct a mistake made at import.
+     */
     @SneakyThrows
-    private Set<Long> alignedFeaturesOfRuns(@NotNull Collection<Long> runIds) {
-        Set<Long> alignedFeatures = new HashSet<>();
-        for (Long runId : runIds) {
-            try (Stream<Feature> runFeatures = storage().findStr(Filter.where("runId").eq(runId), Feature.class)) {
-                runFeatures.forEach(f -> alignedFeatures.add(f.getAlignedFeatureId()));
-            }
-        }
-        return alignedFeatures;
+    private List<Long> allAlignedFeatureIds() {
+        return storage().primaryKeys(AlignedFeatures.class).stream().map(id -> ((Number) id).longValue()).toList();
     }
 
     /**
      * A run's type changed: whether it is a blank decides whether its features count towards the intensities
-     * its aligned features report, so their documents are rewritten. The maxima count every run whatever its
-     * type, so nothing else moves.
+     * its aligned features report, so their documents are rewritten - all of them, see
+     * {@link #allAlignedFeatureIds}. The maxima count every run whatever its type, so nothing else moves.
      */
     @SneakyThrows
     private void reindexFeaturesOfRuns(@NotNull Collection<Long> runIds) {
         if (searchService == null || runIds.isEmpty())
             return;
         synchronized (searchIndexLock) {
-            feedFeaturesToIndex(alignedFeaturesOfRuns(runIds), alfs -> searchService.updateDocuments(projectId, alfs));
+            feedFeaturesToIndex(allAlignedFeatureIds(), alfs -> searchService.updateDocuments(projectId, alfs));
             searchService.makeWritesSearchable(projectId, AlignedFeature.class);
         }
     }
@@ -400,18 +401,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     /**
      * Rewrites the index documents of every feature that has a run feature in one of the raised runs - or, when
      * the global maximum rose, a run feature without a run - except the features in {@code alreadyWritten},
-     * which the caller indexes itself with the current maxima.
+     * which the caller indexes itself with the current maxima. A raised run rewrites every feature, see
+     * {@link #allAlignedFeatureIds}.
      */
     @SneakyThrows
     private void reindexRuns(@NotNull RaisedMaxima raised, @Nullable Collection<Long> alreadyWritten) {
         if (raised.isEmpty())
             return;
-        // over the runId index: a run's features, not every feature of the project
-        Set<Long> affected = alignedFeaturesOfRuns(raised.runs());
+        Set<Long> affected = new HashSet<>();
+        if (!raised.runs().isEmpty())
+            affected.addAll(allAlignedFeatureIds());
         // the features without a run are what the global maximum is for: in a peak-list project all of them.
-        // Filter.eq(null) over the runId index instead of a full scan filtered client-side - Nitrite's
-        // EqualsFilter treats a null value as "field is null or absent" on both the indexed and scan paths.
-        if (raised.global()) {
+        // Without an index on runId this scans the Feature collection, once, and only when the global maximum
+        // rose - Nitrite's EqualsFilter treats a null value as "field is null or absent".
+        else if (raised.global()) {
             try (Stream<Feature> runFeatures = storage().findStr(Filter.where("runId").eq(null), Feature.class)) {
                 runFeatures.forEach(f -> affected.add(f.getAlignedFeatureId()));
             }
