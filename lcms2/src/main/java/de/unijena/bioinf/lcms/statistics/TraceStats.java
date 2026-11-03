@@ -78,6 +78,32 @@ public class TraceStats {
                 averageDeviationWithinFwhm(dev).build();
     }
 
+    /**
+     * The average peak width of a sample's MS1 traces, available as soon as the traces have been picked.
+     * <p>
+     * Same estimator as {@link #collect}, over a different population and for a different reason. {@code collect}
+     * averages over the traces that carry a confident mass of interest with isotopes, which is the better population
+     * but only exists once {@code extractMoIsForAlignment} has run. The DIA decision is made before that and needs a
+     * peak width to judge whether a window is revisited inside an elution, so it averages over every segmented trace
+     * instead. Both call {@link #estimatePeakWidth}, so the quantity cannot drift between the two.
+     *
+     * @return the intensity weighted retention time standard deviation, a gaussian sigma and not a width at half
+     * maximum, or zero if the sample has no segmented trace to measure
+     */
+    public static double averagePeakWidthOf(ProcessedSample sample) {
+        double total = 0d;
+        int count = 0;
+        for (ContiguousTrace trace : sample.getStorage().getTraceStorage()) {
+            for (TraceSegment seg : trace.getSegments()) {
+                if (seg.rightEdge - seg.leftEdge >= 1) {
+                    total += estimatePeakWidth(sample.getMapping(), trace, seg);
+                    ++count;
+                }
+            }
+        }
+        return count == 0 ? 0d : total / count;
+    }
+
     private static double estimatePeakWidth(ScanPointMapping mapping, Trace trace, TraceSegment seg) {
         double meanStd = 0d; double intsum = 0d;
         for (int i=seg.leftEdge; i <= seg.rightEdge; ++i) {

@@ -28,7 +28,13 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.LCMSProcessing;
+import de.unijena.bioinf.lcms.deconvolution.CorrelationAssignmentStrategy;
+import de.unijena.bioinf.lcms.deconvolution.DiaAssignmentStrategy;
+import de.unijena.bioinf.lcms.deconvolution.GroupedAssignmentStrategy;
+import de.unijena.bioinf.lcms.deconvolution.UncontestedAssignmentStrategy;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.lcms.adducts.AdductManager;
 import de.unijena.bioinf.lcms.adducts.AdductNetwork;
 import de.unijena.bioinf.lcms.adducts.ProjectSpaceTraceProvider;
@@ -254,6 +260,52 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
      * @param indexOfFirstFile index of the first of the given files within the input files, needed to match
      *                         the user specified sample names and types to the files
      */
+    /**
+     * Which way the fragments of a data independent acquisition are assigned to precursors.
+     * <p>
+     * There is more than one defensible answer and the choice is a question for measurement rather than for a
+     * default, so it is selectable: {@code correlation} scores every precursor against every fragment and spreads
+     * each fragment over the candidates, {@code grouped} first collapses the precursors a channel cannot separate and
+     * gives the fragments to the group, and {@code uncontested} judges each pair against fixed thresholds with no
+     * competition at all. Ignored for data dependent input, which has nothing to assign.
+     *
+     * @see de.unijena.bioinf.lcms.deconvolution.DiaAssignmentStrategy
+     */
+    public static final String DIA_STRATEGY_PROPERTY = "de.unijena.bioinf.sirius.dia.strategy";
+
+    /**
+     * The precursor height {@code uncontested} attempts a spectrum from, with the fragment bar a tenth of it.
+     * <p>
+     * Absolute intensities do not transfer between instruments: this strategy's Orbitrap default rejected 99.2% of the
+     * precursors of a TripleTOF series. Judging pairs against fixed bars is the whole of what it is, so the bars have
+     * to be rescalable or it cannot be compared against the two strategies that learn theirs.
+     */
+    public static final String DIA_UNCONTESTED_INTENSITY_PROPERTY =
+            "de.unijena.bioinf.sirius.dia.uncontested.minPrecursorIntensity";
+
+    private static DiaAssignmentStrategy diaAssignmentStrategy() {
+        // the system property first, because PropertyManager composes only the persistent and file based configs and
+        // never sees -D, and being able to set this per invocation is the whole point of it being selectable
+        final String name = System.getProperty(DIA_STRATEGY_PROPERTY,
+                PropertyManager.getProperty(DIA_STRATEGY_PROPERTY, null, "correlation"));
+        return switch (name.toLowerCase(java.util.Locale.US)) {
+            case "correlation" -> new CorrelationAssignmentStrategy();
+            case "grouped" -> new GroupedAssignmentStrategy();
+            case "uncontested" -> {
+                final UncontestedAssignmentStrategy strategy = new UncontestedAssignmentStrategy();
+                final String bar = System.getProperty(DIA_UNCONTESTED_INTENSITY_PROPERTY,
+                        PropertyManager.getProperty(DIA_UNCONTESTED_INTENSITY_PROPERTY, null, null));
+                if (bar != null && !bar.isBlank()) {
+                    strategy.setMinPrecursorIntensity(Double.parseDouble(bar.trim()));
+                    strategy.setMinFragmentIntensity(strategy.getMinPrecursorIntensity() / 10d);
+                }
+                yield strategy;
+            }
+            default -> throw new IllegalArgumentException(DIA_STRATEGY_PROPERTY + " is '" + name
+                    + "', which is not one of correlation, grouped or uncontested");
+        };
+    }
+
     private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, List<Path> files, int indexOfFirstFile) throws IOException {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -269,6 +321,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         //
         processing.setSegmentationStrategy(new PersistentHomology(this.filter, Math.min(2, this.minSNR), PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT));
         processing.setAlignmentThresholds(this.alignmentThresholds);
+        processing.setDiaAssignmentStrategy(diaAssignmentStrategy());
         processing.setTracker(tracker);
         if (userSpecifiedThresholds.hasUserInput()) {
             processing.setStatisticsCollector(userSpecifiedThresholds);
@@ -277,39 +330,41 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         try {
             {
                 updateProgress(totalProgress, progress, "Processing Runs");
-                List<BasicJJob<ProcessedSample>> jobs = new ArrayList<>();
+                List<JJob<ProcessedSample>> jobs = new ArrayList<>();
+                List<Path> sources = new ArrayList<>();
                 int atmost = Integer.MAX_VALUE;
                 for (int i = 0; i < files.size(); i++) {
                     if (--atmost < 0) break;
                     final Path f = files.get(i);
                     final String sampleName = sampleNameAt(indexOfFirstFile + i);
-                    jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
-                        @Override
-                        protected ProcessedSample compute() throws Exception {
-                            ProcessedSample sample;
-                            try {
-                                sample = processing.processSample(f, sampleName);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                                LoggerFactory.getLogger(LCMSProcessing.class).warn("Ignore input file " + f);
-                                return null;
-                            }
-                            int hasIsotopes = 0, hasNoIsotopes = 0;
-                            for (MoI m : sample.getStorage().getAlignmentStorage()) {
-                                if (m.hasIsotopes()) ++hasIsotopes;
-                                else ++hasNoIsotopes;
-                            }
-                            sample.inactive();
-                            System.out.println(sample.getUid() + " with " + hasIsotopes + " / " + (hasIsotopes + hasNoIsotopes) + " isotope features");
-                            return sample;
-                        }
-                    }));
+                    // Created in the order the files were given, which is what numbers the samples: processSampleAsync
+                    // reserves the uid here rather than inside the job, so the alignment does not depend on which file
+                    // finishes parsing first. Submitting processSample into jobs of our own would undo that.
+                    jobs.add(submitSubJob(processing.processSampleAsync(f, sampleName)));
+                    sources.add(f);
                 }
 
                 int count = 0;
-                for (BasicJJob<ProcessedSample> job : jobs) {
-                    ProcessedSample processedSample = job.takeResult();
-                    if (processedSample==null) continue;
+                for (int i = 0; i < jobs.size(); i++) {
+                    final ProcessedSample processedSample;
+                    try {
+                        processedSample = jobs.get(i).awaitResult();
+                    } catch (Exception e) {
+                        // one unreadable file is not a reason to abandon the experiment, and its uid simply stays unused
+                        LoggerFactory.getLogger(LCMSProcessing.class).warn("Ignore input file " + sources.get(i), e);
+                        continue;
+                    }
+                    if (processedSample == null) continue;
+                    // processSampleAsync leaves the sample released, so it has to be woken to be counted
+                    processedSample.active();
+                    int hasIsotopes = 0, hasNoIsotopes = 0;
+                    for (MoI m : processedSample.getStorage().getAlignmentStorage()) {
+                        if (m.hasIsotopes()) ++hasIsotopes;
+                        else ++hasNoIsotopes;
+                    }
+                    processedSample.inactive();
+                    System.out.println(processedSample.getUid() + " with " + hasIsotopes + " / "
+                            + (hasIsotopes + hasNoIsotopes) + " isotope features");
                     System.out.println(processedSample.getUid() + " (" + ++count + " / " + jobs.size() + ")");
                     updateProgress(totalProgress, ++progress, "Processing Runs");
                 }
@@ -329,6 +384,20 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 ps.getStorage().insertAll(sampleTypeTags);
             }
 
+            if (!processing.hasLcMsRuns()) {
+                // every run given here holds fragmentation spectra and no MS1 scan at all. There is no chromatogram
+                // to align, to merge or to pick features from, so all the experiment can contribute is its spectra:
+                // each of them becomes a compound of its own if it is worth keeping.
+                updateProgress(totalProgress, ++progress, "Importing runs without MS1 scans");
+                int imported = processing.importMs2OnlyRunsAlone();
+                importedFeatureIds.addAll(processing.getImportedFeatureIds());
+                if (imported == 0) System.err.println("No features found.");
+                else System.out.printf("Imported %d features from runs that contain no MS1 scans.%n", imported);
+                progress += 4;
+                updateProgress(totalProgress, progress, imported == 0 ? "No features" : "Done");
+                return;
+            }
+
             updateProgress(totalProgress, progress, "Aligning runs");
             AlignmentBackbone bac = processing.align();
             HashMap<DataQuality, Integer> countMap, countMapMs2;
@@ -340,6 +409,10 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
             System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
             */
+            // for a data independent acquisition: redo the fragment assignment now that the final feature
+            // boundaries exist and every sample can be judged at once. Does nothing for DDA runs.
+            processing.refineDiaAssignments(merged, bac);
+
             updateProgress(totalProgress, ++progress, "Importing features");
             if (processing.extractFeaturesAndExportToProjectSpace(merged, bac) == 0) {
                 System.err.println("No features found.");

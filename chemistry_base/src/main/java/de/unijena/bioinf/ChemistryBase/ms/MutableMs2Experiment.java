@@ -58,6 +58,27 @@ public class MutableMs2Experiment implements Ms2Experiment {
         return annotations;
     }
 
+    /**
+     * Copied into a list this experiment owns, rather than stored as handed over.
+     * <p>
+     * Everything above treats these spectra as mutable - the parsers add to them in place, and the validator drops
+     * empty ones through an iterator - while a caller naturally builds the list with {@code Stream.toList()} or
+     * {@code Arrays.asList}, neither of which can be changed. The result was an unsupported operation raised deep
+     * inside a validator, for the one experiment that happened to contain an empty spectrum, and a whole feature
+     * losing its spectral library search because of it.
+     * <p>
+     * An absent list stays absent: the validator distinguishes a missing MS2 list, which is an invalid experiment,
+     * from an empty one.
+     */
+    public void setMs2Spectra(List<MutableMs2Spectrum> ms2Spectra) {
+        this.ms2Spectra = ms2Spectra == null ? null : new ArrayList<>(ms2Spectra);
+    }
+
+    /** @see #setMs2Spectra(List) */
+    public void setMs1Spectra(List<SimpleSpectrum> ms1Spectra) {
+        this.ms1Spectra = ms1Spectra == null ? null : new ArrayList<>(ms1Spectra);
+    }
+
     public MutableMs2Experiment() {
         this.ms1Spectra = new ArrayList<>();
         this.ms2Spectra = new ArrayList<>();

@@ -12,7 +12,7 @@ public class MsSpectrumHeaderDatatype extends CustomDataType<Ms1SpectrumHeader> 
 
     @Override
     public int getMemory(Ms1SpectrumHeader obj) {
-        return 48; // TODO: calculate exact
+        return 56; // TODO: calculate exact
     }
 
     @Override
@@ -22,10 +22,13 @@ public class MsSpectrumHeaderDatatype extends CustomDataType<Ms1SpectrumHeader> 
         if (obj.polarity<0) flags |= 4;
         if (obj.centroided) flags |= 8;
         if (obj instanceof Ms2SpectrumHeader) flags |= 16;
+        if (obj instanceof Ms2SpectrumHeader header && header.isDataIndependent()) flags |= 32;
         buff.putInt(obj.uid);
         buff.putInt(obj.scanId);
-        buff.putInt(obj.sourceId.length());
-        buff.putStringData(obj.sourceId, obj.sourceId.length());
+        // the source id is nullable; getSourceId() derives one from the scan id in that case
+        final String sourceId = obj.getSourceId();
+        buff.putInt(sourceId.length());
+        buff.putStringData(sourceId, sourceId.length());
         buff.put(flags);
         if (obj instanceof Ms2SpectrumHeader header2) {
             String ce = header2.energy==null ? "" : header2.energy.toString();
@@ -35,6 +38,9 @@ public class MsSpectrumHeaderDatatype extends CustomDataType<Ms1SpectrumHeader> 
             buff.putDouble(header2.isolationWindow!=null ? header2.isolationWindow.getWindowWidth() : -1);
             buff.putInt(header2.parentId);
             buff.putDouble(header2.precursorMz);
+            // the targeted mass is what the instrument was asked to isolate, which for a wide window is nowhere near
+            // the precursor it turned out to hold, so it cannot be recovered from the precursor mass
+            buff.putDouble(header2.targetedMz);
             buff.putDouble(header2.retentionTime);
             buff.putInt(header2.msLevel);
         }
@@ -63,10 +69,12 @@ public class MsSpectrumHeaderDatatype extends CustomDataType<Ms1SpectrumHeader> 
             } else window = new IsolationWindow(iso1, iso2);
             int pid =buff.getInt();
             double mz = buff.getDouble();
+            double targeted = buff.getDouble();
             double rt = buff.getDouble();
             int level = buff.getInt();
             return new Ms2SpectrumHeader(
-                    uid, scanid, sourceId, polarity, level, centroided, ce, window, pid, mz,mz, rt
+                    uid, scanid, sourceId, polarity, level, centroided, ce, window, pid, mz, targeted, rt,
+                    (flags & 32) != 0
             );
         } else { // MS1 Header
             return new Ms1SpectrumHeader(uid,scanid, sourceId, polarity, centroided);
