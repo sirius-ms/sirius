@@ -28,7 +28,7 @@ import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.ParallelChunks;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
@@ -208,8 +208,8 @@ public class ProjectSchemaMigrator {
     }
 
     /**
-     * Runs the conversion as a job, so its reads use the job manager's threads rather than a pool of its own,
-     * and so it can report where it is and be cancelled with everything else.
+     * Runs the conversion as a job, so it can report where it is and be cancelled, and its walks use the job
+     * manager's threads rather than a pool of its own.
      */
     static ConversionJob convert(@NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
                                  @NotNull EnumSet<ConversionJob.Pass> passes) throws IOException {
@@ -237,13 +237,18 @@ public class ProjectSchemaMigrator {
         if (onProgress != null)
             job.addJobProgressListener(onProgress);
         try {
-            SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+            // On the calling thread rather than submitted: a submitted job would wait behind every computation
+            // queued before it, and opening a project waits for this. Its walks take every CPU thread that is
+            // free besides, see overPrimaryKeysOf.
+            job.call();
             return job;
-        } catch (ExecutionException e) {
-            if (e.getCause() instanceof IOException io)
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
+            Throwable cause = e instanceof ExecutionException && e.getCause() != null ? e.getCause() : e;
+            if (cause instanceof IOException io)
                 throw io;
-            throw new IOException("Could not convert project '" + project.getStorage().location() + "'.",
-                    e.getCause());
+            throw new IOException("Could not convert project '" + project.getStorage().location() + "'.", cause);
         }
     }
 
@@ -318,7 +323,7 @@ public class ProjectSchemaMigrator {
      * keys share one walk: every pass over the features works on the same read of a feature, its spectra and its
      * run features, and writes it once - so each record is read once, however many passes a project needs.
      */
-    static class ConversionJob extends BasicMasterJJob<Boolean> {
+    static class ConversionJob extends BasicJJob<Boolean> {
 
         enum Pass {
             /** Over the feature keys: MS flags, detected adducts, and structure-search database links. */
@@ -617,7 +622,7 @@ public class ProjectSchemaMigrator {
 
         /**
          * Runs {@code task} for every primary key of {@code keyOwner}, spread over workers that each take the
-         * next key themselves.
+         * next key themselves - the calling thread and every CPU thread that is free, see {@link ParallelChunks}.
          * <p>
          * Taking one key at a time is what keeps them even: the work behind a key varies enormously - one
          * feature in a real project has 17,434 structure matches against a median of 94 - and handing out equal
@@ -650,29 +655,19 @@ public class ProjectSchemaMigrator {
                 return;
 
             WriteBuffer buffer = new WriteBuffer();
-            AtomicInteger cursor = new AtomicInteger();
-            int workers = Math.clamp(workers(), 1, length);
             try {
                 for (Class<?> collection : rewritten)
                     storage.disableIndices(collection);
 
-                List<BasicJJob<Boolean>> running = new ArrayList<>(workers);
-                for (int worker = 0; worker < workers; worker++)
-                    running.add(submitSubJob(new BasicJJob<>(JobType.CPU) {
-                        @Override
-                        protected Boolean compute() throws Exception {
-                            int at;
-                            while ((at = cursor.getAndIncrement()) < length) {
-                                checkForInterruption();
+                // the calling thread walks keys itself, and every CPU thread that is free joins in
+                ParallelChunks.run(SiriusJobs.getGlobalJobManager(), length, 1, workers(), () -> Boolean.TRUE,
+                        (none, from, to) -> {
+                            for (int at = from; at < to; at++) {
                                 task.accept(keys.get(at), buffer);
                                 oneKeyDone(message);
                             }
-                            return Boolean.TRUE;
-                        }
-                    }));
-
-                for (BasicJJob<Boolean> worker : running)
-                    worker.awaitResult();
+                        },
+                        this::checkForInterruption);
                 afterLastKey.accept(buffer);
                 buffer.flush();
             } finally {
