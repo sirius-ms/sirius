@@ -437,14 +437,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         feedFeaturesToIndex(affected, alfs -> searchService.updateDocuments(projectId, alfs));
     }
 
-    /**
-     * Below this many ids, spreading them over workers and submitting sub-jobs for them costs more than it
-     * saves - handled inline instead, as a single batch on the calling thread. Covers the common case of a
-     * single compound or feature added through the REST API, which would otherwise pay job-submission overhead
-     * for a "batch" of one.
-     */
-    private static final int MIN_IDS_TO_PARALLELIZE = 64;
-
     /** Overridable so a benchmark can ask what the right number is - mirrors {@code ConversionJob.workerCount}. */
     static int workerCount = 0;
 
@@ -457,18 +449,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     /**
      * Reads the given ids as the documents the index is defined to hold and hands them over batch by batch, on
-     * one {@code JobType.CPU} sub-job per core - the batches write disjoint ids, so nothing about doing it out of
-     * order changes what ends up indexed. Each worker takes the next {@link #IDS_PER_CHUNK} ids from a shared
-     * cursor rather than one contiguous share of them up front: the workers then read neighbouring records and
-     * share the pages they decode instead of each decoding pages of its own, and a batch in memory is a chunk,
-     * not a core's whole share of the project. Measured a little faster than one contiguous share per worker,
-     * and handing out ids one at a time measured far slower: the workers then contend for the same pages.
-     * {@code CPU}, not {@code IO}:
+     * the calling thread and every CPU thread that is free, see {@link ParallelChunks} - the batches write
+     * disjoint ids, so nothing about doing it out of order changes what ends up indexed. The calling thread
+     * working too is what keeps opening a project, or an import, from waiting until a running computation has
+     * freed a CPU thread; ids that make up a single batch never leave it. Each worker takes the next
+     * {@link #IDS_PER_CHUNK} ids from a shared cursor rather than one contiguous share of them up front: the
+     * workers then read neighbouring records and share the pages they decode instead of each decoding pages of
+     * its own, and a batch in memory is a chunk, not a core's whole share of the project. Measured a little
+     * faster than one contiguous share per worker, and handing out ids one at a time measured far slower: the
+     * workers then contend for the same pages. The helping workers are {@code CPU} jobs, not {@code IO}:
      * {@code JobType.IO} shares a process-wide semaphore capped at {@code min(cpuThreads, 3)} with no
      * re-entrancy, and the calls that reach this already run inside an IO-category job ({@code BackgroundRuns}),
-     * so IO sub-jobs here could deadlock once enough of those are in flight at once. {@code CPU} jobs run on a
-     * ForkJoinPool-backed executor with no such limit - the same reason {@code ProjectSchemaMigrator.ConversionJob}
-     * uses it for its own per-batch workers.
+     * so IO workers here could deadlock once enough of those are in flight at once.
      * <p>
      * Which fields that is, is deliberately not the caller's to choose. A document written with fewer fields
      * than {@link AlignedFeature#INDEXED_OPT_FIELDS} is missing them until something rewrites it, and
@@ -479,7 +471,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * has an opt-field parameter to disagree about.
      *
      * @param batchConsumer what to do with each batch: add the documents, or replace the existing ones. Called
-     *                      from whichever sub-job's batch finished reading and annotating first, so it must be
+     *                      from whichever worker's batch finished reading and annotating first, so it must be
      *                      safe to call from several threads at once - {@code searchService.*Documents} already
      *                      is, each POJO type's Lucene writer serializes on its own instance.
      * @param runFeatures   the run features the intensities are computed from, if they were read already -
@@ -487,43 +479,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      */
     private void feedIdsToIndex(@NotNull List<Long> ids, @NotNull Consumer<List<AlignedFeature>> batchConsumer,
                                 @Nullable RunFeatureValues runFeatures) throws IOException {
-        if (ids.isEmpty())
-            return;
-        if (ids.size() < MIN_IDS_TO_PARALLELIZE) {
-            batchConsumer.accept(findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS, runFeatures));
-            return;
-        }
-
-        int workers = Math.clamp(workers(), 1, (ids.size() + IDS_PER_CHUNK - 1) / IDS_PER_CHUNK);
-        AtomicInteger cursor = new AtomicInteger();
         try {
-            SiriusJobs.getGlobalJobManager().submitJob(new BasicMasterJJob<Boolean>(JJob.JobType.CPU) {
-                @Override
-                protected Boolean compute() throws Exception {
-                    List<BasicJJob<Boolean>> running = new ArrayList<>(workers);
-                    for (int worker = 0; worker < workers; worker++)
-                        running.add(submitSubJob(new BasicJJob<>(JobType.CPU) {
-                            @Override
-                            protected Boolean compute() throws Exception {
-                                int from;
-                                while ((from = cursor.getAndAdd(IDS_PER_CHUNK)) < ids.size()) {
-                                    checkForInterruption();
-                                    batchConsumer.accept(findAlignedFeaturesByIds(
-                                            ids.subList(from, Math.min(ids.size(), from + IDS_PER_CHUNK)),
-                                            false, AlignedFeature.INDEXED_OPT_FIELDS, runFeatures));
-                                }
-                                return Boolean.TRUE;
-                            }
-                        }));
-                    for (BasicJJob<Boolean> job : running)
-                        job.awaitResult();
-                    return Boolean.TRUE;
-                }
-            }).awaitResult();
+            ParallelChunks.run(SiriusJobs.getGlobalJobManager(), ids.size(), IDS_PER_CHUNK, workers(),
+                    () -> Boolean.TRUE,
+                    (none, from, to) -> batchConsumer.accept(findAlignedFeaturesByIds(
+                            ids.subList(from, to), false, AlignedFeature.INDEXED_OPT_FIELDS, runFeatures)),
+                    null);
         } catch (ExecutionException e) {
             if (e.getCause() instanceof IOException io)
                 throw io;
             throw new IOException("Could not feed features to the search index.", e.getCause());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while feeding features to the search index.", e);
         }
     }
 
@@ -2554,47 +2522,24 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private static final int ITEMS_PER_MAP_CHUNK = 8;
 
     /**
-     * Applies {@code mapping} to every item on {@code JobType.CPU} jjobs workers, taking chunks of
-     * {@link #ITEMS_PER_MAP_CHUNK} from a shared cursor, and keeps the order of {@code items}. jjobs rather than a
-     * parallel stream: a parallel stream runs on the JVM's common fork-join pool, which jjobs neither sizes nor
-     * knows about, so its threads would compete with every job on the same cores. Fewer items than a chunk are
-     * mapped on the calling thread.
+     * Applies {@code mapping} to every item on the calling thread and every CPU thread that is free, taking
+     * chunks of {@link #ITEMS_PER_MAP_CHUNK} from a shared cursor (see {@link ParallelChunks}), and keeps the
+     * order of {@code items}. jjobs rather than a parallel stream: a parallel stream runs on the JVM's common
+     * fork-join pool, which jjobs neither sizes nor knows about, so its threads would compete with every job on
+     * the same cores. And the calling thread working too keeps a request from waiting until a running
+     * computation has freed a CPU thread.
      */
     @SneakyThrows
     private static <T, R> List<R> mapOnJobs(@NotNull List<T> items, @NotNull Function<T, R> mapping) {
-        if (items.size() <= ITEMS_PER_MAP_CHUNK)
-            return items.stream().map(mapping).toList();
-
         Object[] mapped = new Object[items.size()];
-        int workers = Math.clamp(workers(), 1, (items.size() + ITEMS_PER_MAP_CHUNK - 1) / ITEMS_PER_MAP_CHUNK);
-        AtomicInteger cursor = new AtomicInteger();
         try {
-            SiriusJobs.getGlobalJobManager().submitJob(new BasicMasterJJob<Boolean>(JJob.JobType.CPU) {
-                @Override
-                protected Boolean compute() throws Exception {
-                    List<BasicJJob<Boolean>> running = new ArrayList<>(workers);
-                    for (int worker = 0; worker < workers; worker++)
-                        running.add(submitSubJob(new BasicJJob<>(JobType.CPU) {
-                            @Override
-                            protected Boolean compute() throws Exception {
-                                int from;
-                                while ((from = cursor.getAndAdd(ITEMS_PER_MAP_CHUNK)) < items.size()) {
-                                    checkForInterruption();
-                                    for (int i = from; i < Math.min(items.size(), from + ITEMS_PER_MAP_CHUNK); i++)
-                                        mapped[i] = mapping.apply(items.get(i));
-                                }
-                                return Boolean.TRUE;
-                            }
-                        }));
-                    for (BasicJJob<Boolean> job : running)
-                        job.awaitResult();
-                    return Boolean.TRUE;
-                }
-            }).awaitResult();
+            ParallelChunks.run(SiriusJobs.getGlobalJobManager(), items.size(), ITEMS_PER_MAP_CHUNK, (from, to) -> {
+                for (int i = from; i < to; i++)
+                    mapped[i] = mapping.apply(items.get(i));
+            });
         } catch (ExecutionException e) {
             // unwrapped, so a caller sees what the mapping threw - as it would have on its own thread
-            throw e.getCause() instanceof ExecutionException nested && nested.getCause() != null
-                    ? nested.getCause() : e.getCause();
+            throw e.getCause();
         }
         @SuppressWarnings("unchecked") List<R> result = (List<R>) Collections.unmodifiableList(Arrays.asList(mapped));
         return result;
